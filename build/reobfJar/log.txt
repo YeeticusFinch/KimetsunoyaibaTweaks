@@ -155,6 +155,10 @@ Writing Output: C:\Users\carlf\eclipse-workspace-2\Kimetsunoyaiba-Multiplayer\bu
   com/lerdorf/kimetsunoyaibamultiplayer/client/AnimationSyncHandler.class
   com/lerdorf/kimetsunoyaibamultiplayer/client/AnimationTracker$AnimationState.class
   com/lerdorf/kimetsunoyaibamultiplayer/client/AnimationTracker.class
+  com/lerdorf/kimetsunoyaibamultiplayer/client/ClientCommandHandler$1.class
+  com/lerdorf/kimetsunoyaibamultiplayer/client/ClientCommandHandler.class
+  com/lerdorf/kimetsunoyaibamultiplayer/commands/
+  com/lerdorf/kimetsunoyaibamultiplayer/commands/TestAnimationCommand.class
   com/lerdorf/kimetsunoyaibamultiplayer/network/
   com/lerdorf/kimetsunoyaibamultiplayer/network/ModNetworking.class
   com/lerdorf/kimetsunoyaibamultiplayer/network/packets/

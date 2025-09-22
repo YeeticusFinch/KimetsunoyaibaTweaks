@@ -66,6 +66,22 @@ description='''Kimetsunoyaiba Multiplayer allows for player animations to work i
     ordering="NONE"
     side="BOTH"
 
+# PlayerAnimator dependency - required for animation system
+[[dependencies.kimetsunoyaibamultiplayer]]
+    modId="playeranimator"
+    mandatory=true
+    versionRange="[1,)"
+    ordering="NONE"
+    side="BOTH"
+
+# Mob Player Animator dependency - enables animations on other players
+[[dependencies.kimetsunoyaibamultiplayer]]
+    modId="mobplayeranimator"
+    mandatory=true
+    versionRange="[0.0.1,)"
+    ordering="AFTER"
+    side="BOTH"
+
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares
 # that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't
 # stop your mod loading on the server for example.

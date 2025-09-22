@@ -4,9 +4,12 @@ import com.mojang.logging.LogUtils;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientCommandHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimationCommand;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -57,6 +60,13 @@ public class KimetsunoyaibaMultiplayer
         LOGGER.info("Kimetsunoyaiba Multiplayer server starting");
     }
 
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event)
+    {
+        LOGGER.info("Registering test animation command");
+        TestAnimationCommand.register(event.getDispatcher());
+    }
+
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class ClientModEvents
@@ -92,6 +102,12 @@ public class KimetsunoyaibaMultiplayer
                 AnimationTracker.clearTrackedAnimations();
                 AnimationSyncHandler.clearAllAnimations();
             }
+        }
+
+        @SubscribeEvent
+        public static void onRegisterClientCommands(net.minecraftforge.client.event.RegisterClientCommandsEvent event)
+        {
+            ClientCommandHandler.onRegisterClientCommands(event);
         }
     }
 }

@@ -118,26 +118,26 @@ public class AnimationSyncHandler {
                 }
             }
 
-            // Try multiple approaches to get the animation
+            // With Mob Player Animator, we can now apply animations to other players!
             if (animationData != null) {
                 if (Config.logDebug) {
                     LOGGER.info("Using transmitted animation data for {}", animationId);
                 }
                 applyAnimationToPlayer(player, animationData, currentTick, playerUUID, animationId);
             } else {
-                // Try to find the animation from the registry using different approaches
+                // Try to find the animation from the registry
                 KeyframeAnimation foundAnimation = findAnimationAlternative(animationId);
                 if (foundAnimation != null) {
                     if (Config.logDebug) {
-                        LOGGER.info("Found animation {} via alternative method", animationId);
+                        LOGGER.info("Found animation {} via registry lookup", animationId);
                     }
                     applyAnimationToPlayer(player, foundAnimation, currentTick, playerUUID, animationId);
                 } else {
-                    // Try to trigger the animation through the kimetsunoyaiba mod directly
+                    // Create a fallback animation using kimetsunoyaiba animations
                     if (Config.logDebug) {
-                        LOGGER.info("Attempting direct animation trigger for {} on player {}", animationId, player.getName().getString());
+                        LOGGER.info("Creating fallback animation for {} on player {}", animationId, player.getName().getString());
                     }
-                    attemptDirectAnimationTrigger(player, animationId);
+                    createFallbackAnimation(player, animationId, playerUUID);
                 }
             }
 
@@ -204,26 +204,48 @@ public class AnimationSyncHandler {
 
     private static KeyframeAnimation findAnimationAlternative(ResourceLocation animationId) {
         try {
-            // Try different ways to find the animation
+            String animationName = animationId.getPath();
 
-            // 1. Try PlayerAnimationRegistry with exact ID
-            KeyframeAnimation anim = PlayerAnimationRegistry.getAnimation(animationId);
-            if (anim != null) return anim;
-
-            // 2. Try with just the path (without namespace)
-            ResourceLocation pathOnly = ResourceLocation.fromNamespaceAndPath("playeranimator", animationId.getPath());
-            anim = PlayerAnimationRegistry.getAnimation(pathOnly);
-            if (anim != null) return anim;
-
-            // 3. Try with minecraft namespace
-            ResourceLocation minecraftNS = ResourceLocation.fromNamespaceAndPath("minecraft", animationId.getPath());
-            anim = PlayerAnimationRegistry.getAnimation(minecraftNS);
-            if (anim != null) return anim;
-
-            // 4. Log what animations are actually available
             if (Config.logDebug) {
-                LOGGER.info("Could not find animation {}, checking registry...", animationId);
-                // Try to log available animations if possible
+                LOGGER.info("Searching for animation with name: '{}'", animationName);
+            }
+
+            // Try multiple namespace combinations
+            ResourceLocation[] possibleLocations = {
+                // Original ID
+                animationId,
+                // Common namespaces for kimetsunoyaiba animations
+                ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", animationName),
+                ResourceLocation.fromNamespaceAndPath("playeranimator", animationName),
+                ResourceLocation.fromNamespaceAndPath("minecraft", animationName),
+                ResourceLocation.fromNamespaceAndPath("forge", animationName),
+                // Try with animations/ prefix (common in some mods)
+                ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "animations/" + animationName),
+                ResourceLocation.fromNamespaceAndPath("playeranimator", "animations/" + animationName),
+                // Try with biped/ prefix (since the JSON is biped.animation.json)
+                ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "biped/" + animationName),
+                ResourceLocation.fromNamespaceAndPath("playeranimator", "biped/" + animationName),
+                // Try without namespace (bare name)
+                ResourceLocation.fromNamespaceAndPath("", animationName)
+            };
+
+            for (ResourceLocation loc : possibleLocations) {
+                try {
+                    KeyframeAnimation anim = PlayerAnimationRegistry.getAnimation(loc);
+                    if (anim != null) {
+                        if (Config.logDebug) {
+                            LOGGER.info("Found animation '{}' at ResourceLocation: {}", animationName, loc);
+                        }
+                        return anim;
+                    }
+                } catch (Exception e) {
+                    // Ignore individual lookup failures, try next one
+                }
+            }
+
+            if (Config.logDebug) {
+                LOGGER.warn("Could not find animation '{}' in registry with any namespace combination", animationName);
+                logAvailableAnimations();
             }
 
         } catch (Exception e) {
@@ -234,66 +256,87 @@ public class AnimationSyncHandler {
         return null;
     }
 
-    private static void attemptDirectAnimationTrigger(AbstractClientPlayer player, ResourceLocation animationId) {
+    private static void logAvailableAnimations() {
         try {
-            // This is a more experimental approach - try to trigger animations directly
-            // by mimicking what the kimetsunoyaiba mod does
-
-            AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
-            if (animationStack != null) {
-                if (Config.logDebug) {
-                    LOGGER.info("Got animation stack for player {}, attempting direct trigger", player.getName().getString());
-                }
-
-                // Create a simple placeholder animation to show that sync is working
-                // This won't be the actual kimetsunoyaiba animation, but it will prove the system works
-                createPlaceholderAnimation(player, animationId);
-            }
-
-        } catch (Exception e) {
+            // Try to introspect the PlayerAnimationRegistry to see what's available
             if (Config.logDebug) {
-                LOGGER.error("Failed to trigger animation directly", e);
+                LOGGER.info("Attempting to log available animations in registry...");
+                // This might require additional reflection to access registry contents
+                // For now, just log that we tried
+                LOGGER.info("Registry introspection not implemented yet");
             }
+        } catch (Exception e) {
+            LOGGER.debug("Failed to log available animations: {}", e.getMessage());
         }
     }
 
-    private static void createPlaceholderAnimation(AbstractClientPlayer player, ResourceLocation animationId) {
+    private static void createFallbackAnimation(AbstractClientPlayer player, ResourceLocation animationId, UUID playerUUID) {
         try {
-            // Create a very simple animation that at least shows movement
-            // This proves the sync system works even if we can't get the exact kimetsunoyaiba animations
+            // Try multiple fallback animations
+            String[] fallbackNames = {"sword_to_left", "punch_right", "walk", "idle"};
 
-            AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
-            if (animationStack == null) return;
+            for (String fallbackName : fallbackNames) {
+                KeyframeAnimation fallbackAnim = findAnimationAlternative(
+                    ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", fallbackName)
+                );
 
-            // For now, just add an empty modifier layer that shows we can modify the player
-            ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
-
-            // Add a very basic animation (even if empty) to show sync is working
-            animationStack.addAnimLayer(1001, modifierLayer);
-
-            if (Config.logDebug) {
-                LOGGER.info("Applied placeholder animation layer for {} to {}", animationId, player.getName().getString());
+                if (fallbackAnim != null) {
+                    if (Config.logDebug) {
+                        LOGGER.info("Using fallback animation '{}' for {}", fallbackName, animationId);
+                    }
+                    applyAnimationToPlayer(player, fallbackAnim, 0, playerUUID,
+                        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", fallbackName));
+                    return;
+                }
             }
 
-            // Remove it after a short time to simulate animation ending
-            java.util.Timer timer = new java.util.Timer();
-            timer.schedule(new java.util.TimerTask() {
-                @Override
-                public void run() {
-                    try {
-                        modifierLayer.setAnimation(null);
-                        if (Config.logDebug) {
-                            LOGGER.info("Removed placeholder animation for {}", player.getName().getString());
-                        }
-                    } catch (Exception e) {
-                        // Ignore
+            // Last resort: create a simple test animation to show system is working
+            AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
+            if (animationStack != null) {
+                ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
+
+                // Track this as an active animation
+                syncedAnimations.put(playerUUID, new ActiveAnimation(modifierLayer, animationId));
+
+                // Add the empty modifier layer (Mob Player Animator should allow this to work on other players)
+                animationStack.addAnimLayer(1000, modifierLayer);
+
+                if (Config.logDebug) {
+                    LOGGER.info("Applied fallback empty animation layer for {} to {} (testing Mob Player Animator)", animationId, player.getName().getString());
+                }
+
+                // Show success message
+                if (Config.onScreenDebug) {
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player != null) {
+                        mc.player.displayClientMessage(
+                            Component.literal("§e[AnimSync] Applied fallback animation to " + player.getName().getString()),
+                            true
+                        );
                     }
                 }
-            }, 2000); // Remove after 2 seconds
+
+                // Remove it after a short time
+                java.util.Timer timer = new java.util.Timer();
+                timer.schedule(new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+                        try {
+                            modifierLayer.setAnimation(null);
+                            syncedAnimations.remove(playerUUID);
+                            if (Config.logDebug) {
+                                LOGGER.info("Removed fallback animation for {}", player.getName().getString());
+                            }
+                        } catch (Exception e) {
+                            // Ignore
+                        }
+                    }
+                }, 3000); // Remove after 3 seconds
+            }
 
         } catch (Exception e) {
             if (Config.logDebug) {
-                LOGGER.error("Failed to create placeholder animation", e);
+                LOGGER.error("Failed to create fallback animation", e);
             }
         }
     }

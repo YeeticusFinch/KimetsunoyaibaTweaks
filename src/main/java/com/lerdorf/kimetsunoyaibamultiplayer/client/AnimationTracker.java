@@ -167,35 +167,57 @@ public class AnimationTracker {
         UUID playerUUID = player.getUUID();
 
         ResourceLocation animationId = null;
-        UUID animUuid = data.getUuid();
-        if (animUuid != null) {
-            // Check if UUID is being corrupted
-            if (Config.logDebug) {
-                LOGGER.info("Animation UUID: {}", animUuid);
-            }
-            animationId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", animUuid.toString());
-        }
+        String animationName = null;
 
-        if (animationId == null) {
-            try {
-                Field extraDataField = KeyframeAnimation.class.getDeclaredField("extraData");
-                extraDataField.setAccessible(true);
-                @SuppressWarnings("unchecked")
-                Map<String, Object> extraData = (Map<String, Object>) extraDataField.get(data);
-                if (extraData != null) {
-                    Object name = extraData.get("name");
-                    if (name instanceof String && !((String) name).isEmpty()) {
-                        animationId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", (String) name);
+        // Try multiple approaches to extract the animation name
+
+        // 1. Try to get name from extraData first (most reliable)
+        try {
+            Field extraDataField = KeyframeAnimation.class.getDeclaredField("extraData");
+            extraDataField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> extraData = (Map<String, Object>) extraDataField.get(data);
+            if (extraData != null) {
+                Object name = extraData.get("name");
+                if (name instanceof String && !((String) name).isEmpty()) {
+                    animationName = (String) name;
+                    if (Config.logDebug) {
+                        LOGGER.info("Found animation name from extraData: {}", animationName);
                     }
                 }
-            } catch (Exception ex) {
-                LOGGER.debug("Could not get extra data from animation: {}", ex.getMessage());
+            }
+        } catch (Exception ex) {
+            if (Config.logDebug) {
+                LOGGER.debug("Could not get extraData: {}", ex.getMessage());
             }
         }
 
-        if (animationId == null) {
-            animationId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "unknown_" + System.currentTimeMillis());
+        // 2. Try reflection to find any field containing animation name/identifier
+        if (animationName == null) {
+            animationName = extractAnimationNameViaReflection(data);
         }
+
+        // 3. Try to match UUID against known animation names (fallback)
+        if (animationName == null) {
+            UUID animUuid = data.getUuid();
+            if (animUuid != null) {
+                if (Config.logDebug) {
+                    LOGGER.info("Animation UUID: {}", animUuid);
+                }
+                animationName = mapUuidToAnimationName(animUuid);
+            }
+        }
+
+        // 4. Final fallback
+        if (animationName == null) {
+            animationName = "unknown_" + System.currentTimeMillis();
+            if (Config.logDebug) {
+                LOGGER.warn("Could not determine animation name, using fallback: {}", animationName);
+            }
+        }
+
+        // Create ResourceLocation with the detected/fallback name
+        animationId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", animationName);
 
         int currentTick = animPlayer.getTick();
         int length = data.getLength();
@@ -276,6 +298,81 @@ public class AnimationTracker {
             }
         } catch (Exception e) {
             LOGGER.debug("Failed to extract KeyframeAnimationPlayer via reflection: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    private static String extractAnimationNameViaReflection(KeyframeAnimation data) {
+        try {
+            // Try to find fields that might contain the animation name
+            Field[] fields = KeyframeAnimation.class.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true);
+                Object value = field.get(data);
+
+                if (value instanceof String) {
+                    String strValue = (String) value;
+                    // Check if this looks like an animation name from our list
+                    if (isKnownAnimationName(strValue)) {
+                        if (Config.logDebug) {
+                            LOGGER.info("Found animation name via reflection in field '{}': {}", field.getName(), strValue);
+                        }
+                        return strValue;
+                    }
+                } else if (value instanceof ResourceLocation) {
+                    ResourceLocation resLoc = (ResourceLocation) value;
+                    String path = resLoc.getPath();
+                    if (isKnownAnimationName(path)) {
+                        if (Config.logDebug) {
+                            LOGGER.info("Found animation name via ResourceLocation in field '{}': {}", field.getName(), path);
+                        }
+                        return path;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            if (Config.logDebug) {
+                LOGGER.debug("Failed to extract animation name via reflection: {}", e.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private static boolean isKnownAnimationName(String name) {
+        // List of known kimetsunoyaiba animation names
+        String[] knownNames = {
+            "idle", "idle_senior", "walk", "walk_senior", "swim", "sprint", "sprint_senior", "death",
+            "punch_right", "punch_left", "kick_right", "kick_left", "kick_rotate1", "kick_rotate2",
+            "kick_rotate3", "kick_rotate4", "kick_rotate5", "kick_flying", "punch_right_jinbe",
+            "sword_to_right", "sword_to_left", "sword_rotate", "punch_overhead", "sword_overhead",
+            "backstep", "guard", "right_arm_front", "right_arm_front2", "right_arm_up", "both_arm_up",
+            "both_arm_ground", "both_arm_front", "right_leg_front", "yasakani_no_magatama", "negative",
+            "cancel", "fall1", "invisibility", "enkai", "amane_dachi", "punch_gomu_pistol1",
+            "punch_gomu_pistol2", "punch_gomu_gatling1", "punch_gomu_gatling2", "gear_2", "energy_charge",
+            "speed_attack1", "speed_attack_punch", "speed_attack_sword", "hakoku_right1", "hakoku_right2",
+            "hakoku_left1", "hakoku_left2", "headbutt_1", "headbutt_2", "ul_zugan", "rin",
+            "raimei_hakke1", "raimei_hakke2", "ragnaraku1", "ragnaraku2", "ragnaraku3", "ragnaraku4",
+            "iai1", "rokuogan", "fly_front", "fly_back", "fly_front2", "fly_back2", "fly_front3",
+            "yamiyami_blackhole", "clap", "kaishin1", "kaishin2", "kaishin3", "kaishin4",
+            "kamusari1", "kamusari2", "kamusari3", "togen_totsuka1", "togen_totsuka2", "breath1",
+            "breath2", "rashin", "kick_akaza1", "kick_akaza2", "sword_to_right_reverse",
+            "sword_to_left_reverse", "breath_sun2_1", "breath_sun2_2", "breath_sound5", "breath_sound5_p",
+            "breath_beast1", "breath_beast2", "sword_to_upper"
+        };
+
+        for (String known : knownNames) {
+            if (known.equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String mapUuidToAnimationName(UUID uuid) {
+        // This is a fallback - in practice, we'd need to build a mapping of UUIDs to names
+        // For now, we'll just use this for logging and return null
+        if (Config.logDebug) {
+            LOGGER.info("No UUID-to-name mapping available for UUID: {}", uuid);
         }
         return null;
     }
