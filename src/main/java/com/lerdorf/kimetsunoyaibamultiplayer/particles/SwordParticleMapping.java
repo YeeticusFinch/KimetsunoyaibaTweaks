@@ -66,6 +66,12 @@ public class SwordParticleMapping {
             // Create green dust particles (RGB: 0.0, 1.0, 0.2 for bright green)
             return new DustParticleOptions(new Vector3f(0.0f, 1.0f, 0.2f), 1.0f);
         }
+        
+     // Special case for thunder sword - use yellow dust particles
+        if (swordType.equals("nichirinsword_thunder")) {
+            // Create green dust particles (RGB: 1.0, 1.0, 0.2 for bright yellow)
+            return new DustParticleOptions(new Vector3f(1.0f, 1.0f, 0.2f), 1.0f);
+        }
 
         // Look up the particle mapping
         ResourceLocation particleId = SWORD_TO_PARTICLE_MAP.get(swordType);

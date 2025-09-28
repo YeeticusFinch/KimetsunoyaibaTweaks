@@ -55,7 +55,7 @@ public class BonePositionTracker {
             return;
         }
 
-        Minecraft mc = Minecraft.getInstance();
+        //Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (level == null) {
             System.out.println("Early return: null level");
@@ -134,7 +134,7 @@ public class BonePositionTracker {
                 // Calculate arc position
                 double localX = radius * Math.cos(arcAngle) * (leftToRight ? -1 : 1);
                 double localZ = radius * Math.sin(arcAngle) * 0.5;
-                double localY = (leftToRight ? -0.15 : 0.15) * Math.sin(arcAngle);
+                double localY = (leftToRight ? -0.35 : 0.35) * Math.sin(arcAngle);
 
                 // Rotate to match player facing direction (centered on player)
                 double worldX = entityPos.x + (localX * Math.cos(yawRad) - localZ * Math.sin(yawRad));
@@ -158,15 +158,15 @@ public class BonePositionTracker {
                                                 float progress, ParticleOptions particleType) {
         double centerY = entityHeight * 0.9;
 
-        // Create continuous particle arc without gaps (60° arc for overhead)
-        double totalSteps = 60.0 / ParticleConfig.particleAngleIncrement;
+        // Create continuous particle arc without gaps
+        double totalSteps = ParticleConfig.particleArcDegrees / ParticleConfig.particleAngleIncrement;
         int stepsToProcess = (int)Math.ceil(totalSteps * progress);
 
         for (int stepIdx = 0; stepIdx < stepsToProcess; stepIdx++) {
             double stepProgress = stepIdx / totalSteps;
             if (stepProgress > progress) break;
 
-            double arcAngle = Math.toRadians(stepProgress * 60.0);
+            double arcAngle = Math.toRadians(stepProgress * ParticleConfig.particleArcDegrees);
 
             // Create radial layers at different radii
             for (int radiusIdx = 0; radiusIdx < ParticleConfig.radialLayers; radiusIdx++) {
@@ -177,9 +177,9 @@ public class BonePositionTracker {
                 double localForward = radius * Math.sin(arcAngle);
 
                 // Apply to world coordinates (centered on player)
-                double worldX = entityPos.x + localForward * Math.cos(yawRad);
+                double worldX = entityPos.x + localForward * Math.cos(yawRad+Math.PI/2);
                 double worldY = entityPos.y + centerY + localY;
-                double worldZ = entityPos.z + localForward * Math.sin(yawRad);
+                double worldZ = entityPos.z + localForward * Math.sin(yawRad+Math.PI/2);
 
                 // Spawn particles directly (check max particles per tick)
                 if (ParticleConfig.maxParticlesPerTick <= 0 || getTotalParticlesThisTick() < ParticleConfig.maxParticlesPerTick) {
