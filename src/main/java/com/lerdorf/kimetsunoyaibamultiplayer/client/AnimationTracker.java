@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
@@ -61,11 +62,6 @@ public class AnimationTracker {
         }
 
         checkPlayerAnimation(mc.player);
-
-        // Update particle effect states
-        if (mc.level != null) {
-            SwordParticleHandler.updateParticleStates(mc.level.getGameTime());
-        }
     }
 
     private static void checkPlayerAnimation(AbstractClientPlayer player) {
@@ -413,12 +409,12 @@ public class AnimationTracker {
      * @param animationTick The current animation tick
      */
     private static void triggerSwordParticles(AbstractClientPlayer player, String animationName, int animationTick) {
-        if (!Config.swordParticlesEnabled) {
+        if (!ParticleConfig.swordParticlesEnabled) {
             return;
         }
 
         // Check trigger mode configuration
-        if (Config.particleTriggerMode == Config.ParticleTriggerMode.ATTACK_ONLY) {
+        if (ParticleConfig.particleTriggerMode == ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
             // For attack-only mode, we would need to detect actual attacks
             // For now, we'll only trigger on certain animation names that suggest attacks
             if (!isAttackAnimation(animationName)) {

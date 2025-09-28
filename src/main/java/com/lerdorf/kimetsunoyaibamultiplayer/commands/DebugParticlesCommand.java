@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.commands;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
@@ -31,9 +32,9 @@ public class DebugParticlesCommand {
 
             // Config status
             player.sendSystemMessage(Component.literal("§bConfig:"));
-            player.sendSystemMessage(Component.literal("  - Particles Enabled: " + Config.swordParticlesEnabled));
-            player.sendSystemMessage(Component.literal("  - Other Entities: " + Config.swordParticlesForOtherEntities));
-            player.sendSystemMessage(Component.literal("  - Trigger Mode: " + Config.particleTriggerMode));
+            player.sendSystemMessage(Component.literal("  - Particles Enabled: " + ParticleConfig.swordParticlesEnabled));
+            player.sendSystemMessage(Component.literal("  - Other Entities: " + ParticleConfig.swordParticlesForOtherEntities));
+            player.sendSystemMessage(Component.literal("  - Trigger Mode: " + ParticleConfig.particleTriggerMode));
             player.sendSystemMessage(Component.literal("  - Debug Logging: " + Config.logDebug));
 
             // Current item
@@ -64,9 +65,9 @@ public class DebugParticlesCommand {
             // Test different animation positions
             String[] testAnims = {"sword_to_right", "sword_to_left", "sword_rotate", "breath_sun2_1"};
             for (String anim : testAnims) {
-                Vec3 swordTip = BonePositionTracker.getSwordTipPosition(player, anim);
+                Vec3[] swordTip = BonePositionTracker.getSwordTipPosition(player, anim);
                 if (swordTip != null) {
-                    player.sendSystemMessage(Component.literal("  - " + anim + ": " + String.format("(%.2f, %.2f, %.2f)", swordTip.x, swordTip.y, swordTip.z)));
+                    player.sendSystemMessage(Component.literal("  - " + anim + ": " + String.format("(%.2f, %.2f, %.2f)", swordTip[0].x, swordTip[0].y, swordTip[0].z)));
                 } else {
                     player.sendSystemMessage(Component.literal("  - " + anim + ": null"));
                 }

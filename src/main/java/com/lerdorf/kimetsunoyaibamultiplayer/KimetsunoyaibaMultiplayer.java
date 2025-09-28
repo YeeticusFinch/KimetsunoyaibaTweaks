@@ -51,8 +51,13 @@ public class KimetsunoyaibaMultiplayer
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 
+        // Register config event handlers on the mod event bus
+        modEventBus.register(Config.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.class);
+
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
-        context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        context.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "kimetsunoyaibamultiplayer/common.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.SPEC, "kimetsunoyaibamultiplayer/particles.toml");
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)
@@ -85,7 +90,8 @@ public class KimetsunoyaibaMultiplayer
     public void onLivingAttack(LivingAttackEvent event)
     {
         // Handle attack-based particle triggering (for server-side events)
-        if (Config.particleTriggerMode == Config.ParticleTriggerMode.ATTACK_ONLY) {
+        if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
+            com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
             LivingEntity target = event.getEntity();
             if (event.getSource().getEntity() instanceof Player attacker) {
                 ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
@@ -146,7 +152,9 @@ public class KimetsunoyaibaMultiplayer
         public static void onClientLivingAttack(LivingAttackEvent event)
         {
             // Client-side attack detection for immediate particle response
-            if (!Config.swordParticlesEnabled || Config.particleTriggerMode != Config.ParticleTriggerMode.ATTACK_ONLY) {
+            if (!com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.swordParticlesEnabled ||
+                com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode !=
+                com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
                 return;
             }
 

@@ -1,378 +1,271 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.particles;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.mojang.logging.LogUtils;
-import dev.kosmx.playerAnim.api.layered.AnimationStack;
-import dev.kosmx.playerAnim.api.layered.IAnimation;
-import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
-import dev.kosmx.playerAnim.api.layered.ModifierLayer;
-import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
-import dev.kosmx.playerAnim.core.util.Pair;
-import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
-import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
-import java.lang.reflect.Field;
-import java.util.List;
+import java.util.*;
+import java.util.UUID;
 
 public class BonePositionTracker {
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static int particlesSpawnedThisTick = 0;
+    private static final Map<UUID, Long> lastAnimationTime = new HashMap<>();
 
     /**
-     * Calculates the world position of the sword tip for a given entity based on animation
-     * @param entity The entity to calculate sword tip position for
-     * @param animationName The name of the animation being performed
-     * @return The world position of the sword tip, or null if it cannot be calculated
-     */
-    @Nullable
-    public static Vec3 getSwordTipPosition(LivingEntity entity, String animationName) {
-        return getSwordTipPosition(entity, animationName, -1);
-    }
-
-    /**
-     * Calculates the world position of the sword tip for a given entity based on animation with tick info
-     * @param entity The entity to calculate sword tip position for
-     * @param animationName The name of the animation being performed
-     * @param animationTick The current animation tick (-1 if unknown)
-     * @return The world position of the sword tip, or null if it cannot be calculated
-     */
-    @Nullable
-    public static Vec3 getSwordTipPosition(LivingEntity entity, String animationName, int animationTick) {
-        if (entity == null) {
-            return null;
-        }
-
-        // Use animation progress to determine position along swing arc
-        float animationProgress = getAnimationProgress(entity, animationTick);
-
-        // Use hardcoded paths based on animation name for better accuracy
-        Vec3 swordTipOffset = getSwordTipOffsetForAnimation(entity, animationName, animationProgress);
-        if (swordTipOffset == null) {
-            return null;
-        }
-
-        // Get entity position and add the offset
-        Vec3 entityPos = entity.position();
-        return entityPos.add(swordTipOffset);
-    }
-
-    /**
-     * Gets the current animation progress (0.0 to 1.0) for varying particle positions
+     * Spawns radial ribbon particles directly for a given entity and animation
      * @param entity The entity performing the animation
+     * @param animationName The name of the animation being performed
      * @param animationTick The current animation tick (-1 if unknown)
-     * @return A value between 0.0 and 1.0 representing animation progress
+     * @param particleType The type of particles to spawn
      */
+    public static void spawnRadialRibbonParticles(LivingEntity entity, String animationName, int animationTick, ParticleOptions particleType) {
+        System.out.println("spawnRadialRibbonParticles called: entity=" + entity + ", anim=" + animationName + ", tick=" + animationTick);
+
+        // Reset particle counter at start of each animation call
+        particlesSpawnedThisTick = 0;
+
+        // Track animation timing to prevent missing fast swings
+        UUID entityId = entity.getUUID();
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level != null) {
+            long currentTime = mc.level.getGameTime();
+            Long lastTime = lastAnimationTime.get(entityId);
+
+            // If this is a new animation or there's been a gap, ensure we show particles
+            if (lastTime == null || (currentTime - lastTime) > 5) {
+                System.out.println("New animation detected or gap found, ensuring particles show");
+                // For rapid swings, force progress to show complete arc
+                if (animationTick == -1) {
+                    animationTick = 0; // Convert to tick-based for consistent timing
+                }
+            }
+            lastAnimationTime.put(entityId, currentTime);
+        }
+
+        if (entity == null || animationName == null || particleType == null) {
+            System.out.println("Early return: null parameters");
+            return;
+        }
+
+        Minecraft mc = Minecraft.getInstance();
+        ClientLevel level = mc.level;
+        if (level == null) {
+            System.out.println("Early return: null level");
+            return;
+        }
+
+        float progress = getAnimationProgress(entity, animationTick);
+        System.out.println("Animation progress: " + progress + ", spawning particles...");
+        spawnRadialRibbonForAnimation(level, entity, animationName, progress, particleType);
+    }
+
     private static float getAnimationProgress(LivingEntity entity, int animationTick) {
         if (animationTick >= 0) {
-            // Use actual animation tick for more accurate progress
-            // Make sword swings much faster - complete in 4 ticks (almost instant)
-            return Math.min(1.0f, animationTick / 4.0f);
+            // Calculate total ticks needed for full arc based on config
+            double totalSteps = ParticleConfig.particleArcDegrees / ParticleConfig.particleAngleIncrement;
+            double totalTicks = totalSteps / ParticleConfig.particleStepsPerTick;
+
+            // For very fast animations (1-2 ticks), ensure we get meaningful progress
+            if (totalTicks < 3.0) {
+                totalTicks = 3.0; // Minimum animation duration
+            }
+
+            return Math.min(1.0f, animationTick / (float)totalTicks);
         } else {
-            // Fallback: Use world time for a very fast animation cycle
-            long worldTime = entity.level().getGameTime();
-            // Create a 4-tick animation cycle for very fast sword swings
-            return (worldTime % 4) / 4.0f;
+            // Fallback: immediate full animation for attack events
+            return 1.0f; // Show complete arc immediately for attack-based triggers
         }
     }
 
-    /**
-     * Gets the sword tip offset based on the specific animation being performed
-     * @param entity The entity performing the animation
-     * @param animationName The name of the animation
-     * @param progress The animation progress (0.0 to 1.0)
-     * @return The offset from entity position to sword tip
-     */
-    @Nullable
-    private static Vec3 getSwordTipOffsetForAnimation(LivingEntity entity, String animationName, float progress) {
-        if (animationName == null) {
-            return null;
-        }
-
+    private static void spawnRadialRibbonForAnimation(ClientLevel level, LivingEntity entity, String animationName,
+                                                    float progress, ParticleOptions particleType) {
         float yaw = entity.getYRot();
         double entityHeight = entity.getBbHeight();
-
-        // Convert yaw to radians for calculations
         double yawRad = Math.toRadians(yaw);
-
-        // Define sword tip positions based on animation using circular arcs
-        double tipX, tipY, tipZ;
+        Vec3 entityPos = entity.position();
 
         switch (animationName) {
             case "sword_to_right":
-                // Circular arc from left to right, slightly upward
-                // Arc starts at player's left side, sweeps to right side with upward motion
-                double rightArcAngle = Math.PI * progress; // 0 to π (180°)
-                double rightRadius = 1.6; // Arc radius (moved further from player)
-
-                // Center the arc further in front of player at chest height
-                double rightCenterX = 1.6 * Math.cos(yawRad);
-                double rightCenterY = entityHeight * 0.75;
-                double rightCenterZ = 1.6 * Math.sin(yawRad);
-
-                // Calculate position on arc (starts from left, goes right)
-                // FIXED: Reversed the direction to match sword motion
-                double rightLocalX = rightRadius * Math.cos(rightArcAngle); // Start left (-), end right (+)
-                double rightLocalZ = rightRadius * Math.sin(rightArcAngle) * 0.3; // Less forward motion
-                double rightLocalY = 0.3 * Math.sin(rightArcAngle); // Slight upward arc
-
-                // Rotate to match player's facing direction
-                tipX = rightCenterX + (rightLocalX * Math.cos(yawRad) - rightLocalZ * Math.sin(yawRad));
-                tipY = rightCenterY + rightLocalY;
-                tipZ = rightCenterZ + (rightLocalX * Math.sin(yawRad) + rightLocalZ * Math.cos(yawRad));
+                spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
                 break;
-
             case "sword_to_left":
-                // Circular arc from right to left, slightly downward
-                // Arc starts at player's right side, sweeps to left side with downward motion
-                double leftArcAngle = Math.PI * progress; // 0 to π (180°)
-                double leftRadius = 1.6; // Arc radius (moved further from player)
-
-                // Center the arc further in front of player at chest height
-                double leftCenterX = 1.6 * Math.cos(yawRad);
-                double leftCenterY = entityHeight * 0.75;
-                double leftCenterZ = 1.6 * Math.sin(yawRad);
-
-                // Calculate position on arc (starts from right, goes left)
-                // FIXED: Reversed the direction to match sword motion
-                double leftLocalX = -leftRadius * Math.cos(leftArcAngle); // Start right (+), end left (-)
-                double leftLocalZ = leftRadius * Math.sin(leftArcAngle) * 0.3; // Less forward motion
-                double leftLocalY = -0.2 * Math.sin(leftArcAngle); // Slight downward arc
-
-                // Rotate to match player's facing direction
-                tipX = leftCenterX + (leftLocalX * Math.cos(yawRad) - leftLocalZ * Math.sin(yawRad));
-                tipY = leftCenterY + leftLocalY;
-                tipZ = leftCenterZ + (leftLocalX * Math.sin(yawRad) + leftLocalZ * Math.cos(yawRad));
+                spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
                 break;
-
-            case "sword_rotate":
-                // Spinning attack - full 360° rotation
-                double rotateAngle = yawRad + (progress * 2.0 * Math.PI);
-                double rotateRadius = 1.5;
-
-                tipX = rotateRadius * Math.cos(rotateAngle);
-                tipY = entityHeight * 0.8 + 0.2;
-                tipZ = rotateRadius * Math.sin(rotateAngle);
-                break;
-
             case "sword_overhead":
-                // Overhead attack - arcs from above and forward
-                double overheadProgress = progress * Math.PI; // 0 to π
-                double cosYaw = Math.cos(yawRad);
-                double sinYaw = Math.sin(yawRad);
-
-                double overheadCenterX = 0.2 * cosYaw;
-                double overheadCenterY = entityHeight * 1.0;
-                double overheadCenterZ = 0.2 * sinYaw;
-
-                tipX = overheadCenterX + (1.0 * cosYaw + 0.5 * Math.sin(overheadProgress) * cosYaw);
-                tipY = overheadCenterY + 0.3 - 0.4 * Math.cos(overheadProgress);
-                tipZ = overheadCenterZ + (1.0 * sinYaw + 0.5 * Math.sin(overheadProgress) * sinYaw);
+                spawnVerticalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType);
                 break;
-
+            case "sword_rotate":
+                spawnSpinRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType);
+                break;
             default:
-                // Generic sword animation - simple forward arc
                 if (animationName.contains("sword") || animationName.contains("breath")) {
-                    double genericAngle = Math.PI * 0.4 * (progress - 0.5); // -36° to +36°
-                    double genericCenterX = 0.3 * Math.cos(yawRad);
-                    double genericCenterY = entityHeight * 0.8;
-                    double genericCenterZ = 0.3 * Math.sin(yawRad);
-
-                    tipX = genericCenterX + (1.0 * Math.cos(yawRad + genericAngle));
-                    tipY = genericCenterY + 0.1 + 0.1 * Math.sin(progress * Math.PI);
-                    tipZ = genericCenterZ + (1.0 * Math.sin(yawRad + genericAngle));
-                } else {
-                    return null; // Not a sword animation
+                    spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
                 }
                 break;
         }
-
-        return new Vec3(tipX, tipY, tipZ);
     }
 
-    /**
-     * Gets the itemMainHand bone position from the animation system
-     * @param entity The entity to get bone position for
-     * @return The bone position offset, or null if not available
-     */
-    @Nullable
-    private static Vec3 getItemMainHandBonePosition(LivingEntity entity) {
-        try {
-            if (!(entity instanceof AbstractClientPlayer)) {
-                return null;
-            }
+    private static void spawnHorizontalRadialRibbon(ClientLevel level, Vec3 entityPos, double yawRad, double entityHeight,
+                                                  float progress, ParticleOptions particleType, boolean leftToRight) {
+        double centerY = entityHeight * 0.75;
 
-            AbstractClientPlayer player = (AbstractClientPlayer) entity;
-            AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
-            if (animationStack == null) {
-                return null;
-            }
+        // Create continuous particle arc without gaps
+        double totalSteps = ParticleConfig.particleArcDegrees / ParticleConfig.particleAngleIncrement;
+        int stepsToProcess = (int)Math.ceil(totalSteps * progress);
 
-            // Look for active animations that might provide bone transformation data
-            Field layersField = AnimationStack.class.getDeclaredField("layers");
-            layersField.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            List<Pair<Integer, IAnimation>> layers = (List<Pair<Integer, IAnimation>>) layersField.get(animationStack);
+        for (int stepIdx = 0; stepIdx < stepsToProcess; stepIdx++) {
+            double stepProgress = stepIdx / totalSteps;
+            if (stepProgress > progress) break;
 
-            for (Pair<Integer, IAnimation> pair : layers) {
-                IAnimation anim = pair.getRight();
-                if (anim != null && anim.isActive()) {
-                    Vec3 bonePos = extractBonePositionFromAnimation(anim);
-                    if (bonePos != null) {
-                        return bonePos;
+            double arcAngle = Math.toRadians(stepProgress * ParticleConfig.particleArcDegrees);
+
+            // Create radial layers at different radii
+            for (int radiusIdx = 0; radiusIdx < ParticleConfig.radialLayers; radiusIdx++) {
+                double radius = ParticleConfig.baseRadius + (radiusIdx * ParticleConfig.radiusIncrement);
+
+                // Calculate arc position
+                double localX = radius * Math.cos(arcAngle) * (leftToRight ? -1 : 1);
+                double localZ = radius * Math.sin(arcAngle) * 0.5;
+                double localY = (leftToRight ? -0.15 : 0.15) * Math.sin(arcAngle);
+
+                // Rotate to match player facing direction (centered on player)
+                double worldX = entityPos.x + (localX * Math.cos(yawRad) - localZ * Math.sin(yawRad));
+                double worldY = entityPos.y + centerY + localY;
+                double worldZ = entityPos.z + (localX * Math.sin(yawRad) + localZ * Math.cos(yawRad));
+
+                // Spawn particles directly (check max particles per tick)
+                if (ParticleConfig.maxParticlesPerTick <= 0 || getTotalParticlesThisTick() < ParticleConfig.maxParticlesPerTick) {
+                    for (int i = 0; i < ParticleConfig.particlesPerPosition; i++) {
+                        if (ParticleConfig.maxParticlesPerTick > 0 && getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick) break;
+                        System.out.println("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
+                        level.addParticle(particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
+                        incrementParticleCount();
                     }
                 }
             }
-
-        } catch (Exception e) {
-            if (Config.logDebug) {
-                LOGGER.debug("Failed to get bone position from animation system: {}", e.getMessage());
-            }
         }
-
-        return null;
     }
 
-    /**
-     * Attempts to extract bone position data from an active animation
-     * @param animation The animation to extract bone data from
-     * @return The bone position, or null if not available
-     */
+    private static void spawnVerticalRadialRibbon(ClientLevel level, Vec3 entityPos, double yawRad, double entityHeight,
+                                                float progress, ParticleOptions particleType) {
+        double centerY = entityHeight * 0.9;
+
+        // Create continuous particle arc without gaps (60° arc for overhead)
+        double totalSteps = 60.0 / ParticleConfig.particleAngleIncrement;
+        int stepsToProcess = (int)Math.ceil(totalSteps * progress);
+
+        for (int stepIdx = 0; stepIdx < stepsToProcess; stepIdx++) {
+            double stepProgress = stepIdx / totalSteps;
+            if (stepProgress > progress) break;
+
+            double arcAngle = Math.toRadians(stepProgress * 60.0);
+
+            // Create radial layers at different radii
+            for (int radiusIdx = 0; radiusIdx < ParticleConfig.radialLayers; radiusIdx++) {
+                double radius = ParticleConfig.baseRadius + (radiusIdx * ParticleConfig.radiusIncrement);
+
+                // Vertical arc calculation
+                double localY = radius * Math.cos(arcAngle);
+                double localForward = radius * Math.sin(arcAngle);
+
+                // Apply to world coordinates (centered on player)
+                double worldX = entityPos.x + localForward * Math.cos(yawRad);
+                double worldY = entityPos.y + centerY + localY;
+                double worldZ = entityPos.z + localForward * Math.sin(yawRad);
+
+                // Spawn particles directly (check max particles per tick)
+                if (ParticleConfig.maxParticlesPerTick <= 0 || getTotalParticlesThisTick() < ParticleConfig.maxParticlesPerTick) {
+                    for (int i = 0; i < ParticleConfig.particlesPerPosition; i++) {
+                        if (ParticleConfig.maxParticlesPerTick > 0 && getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick) break;
+                        System.out.println("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
+                        level.addParticle(particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
+                        incrementParticleCount();
+                    }
+                }
+            }
+        }
+    }
+
+    private static void spawnSpinRadialRibbon(ClientLevel level, Vec3 entityPos, double yawRad, double entityHeight,
+                                            float progress, ParticleOptions particleType) {
+        double centerY = entityHeight * 0.8;
+
+        // Create continuous particle arc without gaps (360° spin)
+        double totalSteps = 360.0 / ParticleConfig.particleAngleIncrement;
+        int stepsToProcess = (int)Math.ceil(totalSteps * progress);
+
+        for (int stepIdx = 0; stepIdx < stepsToProcess; stepIdx++) {
+            double stepProgress = stepIdx / totalSteps;
+            if (stepProgress > progress) break;
+
+            double rotateAngle = yawRad + Math.toRadians(stepProgress * 360.0);
+
+            // Create radial layers at different radii
+            for (int radiusIdx = 0; radiusIdx < ParticleConfig.radialLayers; radiusIdx++) {
+                double radius = ParticleConfig.baseRadius + (radiusIdx * ParticleConfig.radiusIncrement);
+
+                double worldX = entityPos.x + radius * Math.cos(rotateAngle);
+                double worldY = entityPos.y + centerY;
+                double worldZ = entityPos.z + radius * Math.sin(rotateAngle);
+
+                // Spawn particles directly (check max particles per tick)
+                if (ParticleConfig.maxParticlesPerTick <= 0 || getTotalParticlesThisTick() < ParticleConfig.maxParticlesPerTick) {
+                    for (int i = 0; i < ParticleConfig.particlesPerPosition; i++) {
+                        if (ParticleConfig.maxParticlesPerTick > 0 && getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick) break;
+                        System.out.println("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
+                        level.addParticle(particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
+                        incrementParticleCount();
+                    }
+                }
+            }
+        }
+    }
+
+    // Legacy compatibility methods (deprecated)
     @Nullable
-    private static Vec3 extractBonePositionFromAnimation(IAnimation animation) {
-        // Try to get bone data from KeyframeAnimationPlayer
-        KeyframeAnimationPlayer animPlayer = null;
-
-        if (animation instanceof KeyframeAnimationPlayer) {
-            animPlayer = (KeyframeAnimationPlayer) animation;
-        } else if (animation instanceof ModifierLayer) {
-            ModifierLayer<?> modLayer = (ModifierLayer<?>) animation;
-            IAnimation innerAnim = modLayer.getAnimation();
-            if (innerAnim instanceof KeyframeAnimationPlayer) {
-                animPlayer = (KeyframeAnimationPlayer) innerAnim;
-            }
-        }
-
-        if (animPlayer != null) {
-            return extractBonePositionFromKeyframes(animPlayer);
-        }
-
-        return null;
+    @Deprecated
+    public static Vec3[] getSwordTipPosition(LivingEntity entity, String animationName) {
+        return null; // No longer used
     }
 
-    /**
-     * Extracts bone position from keyframe animation data
-     * @param animPlayer The keyframe animation player
-     * @return The bone position, or null if not available
-     */
     @Nullable
-    private static Vec3 extractBonePositionFromKeyframes(KeyframeAnimationPlayer animPlayer) {
-        try {
-            KeyframeAnimation data = animPlayer.getData();
-            if (data == null) {
-                return null;
-            }
-
-            // For now, we'll use a simplified approach since accessing bone-specific
-            // transform data requires deeper integration with the animation system
-            // In the future, this could be enhanced to read actual bone transforms
-
-            if (Config.logDebug) {
-                LOGGER.debug("Found keyframe animation, using estimated bone position");
-            }
-
-            // Return a basic offset that represents the hand position
-            // This will be enhanced when we have access to actual bone transform data
-            return new Vec3(0.3, -0.2, 0.4); // Approximate hand position relative to entity center
-
-        } catch (Exception e) {
-            if (Config.logDebug) {
-                LOGGER.debug("Failed to extract bone position from keyframes: {}", e.getMessage());
-            }
-        }
-
-        return null;
+    @Deprecated
+    public static Vec3[] getSwordTipPosition(LivingEntity entity, String animationName, int animationTick) {
+        return null; // No longer used
     }
 
-    /**
-     * Estimates the main hand position based on entity orientation when bone data is not available
-     * @param entity The entity to estimate hand position for
-     * @return Estimated hand position offset
-     */
-    private static Vec3 estimateMainHandPosition(LivingEntity entity) {
-        // Basic hand position estimation based on entity type and orientation
-        double handX = 0.3; // Slightly to the right (main hand)
-        double handY = entity.getBbHeight() * 0.7; // About chest height
-        double handZ = 0.2; // Slightly forward
-
-        // Adjust based on entity rotation
-        float yawRad = (float) Math.toRadians(entity.getYRot());
-
-        double rotatedX = handX * Math.cos(yawRad) - handZ * Math.sin(yawRad);
-        double rotatedZ = handX * Math.sin(yawRad) + handZ * Math.cos(yawRad);
-
-        return new Vec3(rotatedX, handY, rotatedZ);
-    }
-
-    /**
-     * Calculates the sword tip position based on hand position and entity orientation
-     * @param entity The entity holding the sword
-     * @param handPosition The position of the hand relative to entity center
-     * @return The sword tip position offset
-     */
-    private static Vec3 calculateSwordTipOffset(LivingEntity entity, Vec3 handPosition) {
-        // Estimate sword length (about 1 block)
-        double swordLength = 1.0;
-
-        // Get entity's looking direction for sword orientation
-        Vec3 lookDirection = entity.getLookAngle();
-
-        // Calculate sword tip position (extend from hand in looking direction)
-        Vec3 swordDirection = lookDirection.multiply(swordLength, swordLength * 0.3, swordLength);
-
-        return handPosition.add(swordDirection);
-    }
-
-    /**
-     * Legacy method for backward compatibility
-     * @param entity The entity to calculate sword tip position for
-     * @return The world position of the sword tip, or null if it cannot be calculated
-     */
     @Nullable
-    public static Vec3 getSwordTipPosition(LivingEntity entity) {
-        return getSwordTipPosition(entity, "sword_to_right"); // Default to basic attack
+    @Deprecated
+    public static Vec3[] getSwordTipPosition(LivingEntity entity) {
+        return null; // No longer used
     }
 
-    /**
-     * Validates that a calculated position is reasonable for particle spawning
-     * @param entityPos The entity's position
-     * @param calculatedPos The calculated sword tip position
-     * @return true if the position is valid for spawning particles
-     */
     public static boolean isValidParticlePosition(Vec3 entityPos, Vec3 calculatedPos) {
         if (entityPos == null || calculatedPos == null) {
             return false;
         }
-
-        // Check that the sword tip isn't too far from the entity
         double distance = entityPos.distanceTo(calculatedPos);
-        return distance <= 3.0; // Maximum 3 blocks from entity
+        return distance <= 5.0;
     }
 
-    /**
-     * Gets a debug string describing the bone position calculation
-     * @param entity The entity
-     * @return Debug information string
-     */
     public static String getDebugInfo(LivingEntity entity) {
-        Vec3 swordTip = getSwordTipPosition(entity);
-        if (swordTip == null) {
-            return "Sword tip position: null";
-        }
+        return String.format("Radial ribbon: %d layers, %.1f base radius, %d particles per position",
+            ParticleConfig.radialLayers, ParticleConfig.baseRadius, ParticleConfig.particlesPerPosition);
+    }
 
-        return String.format("Sword tip position: (%.2f, %.2f, %.2f)", swordTip.x, swordTip.y, swordTip.z);
+    private static int getTotalParticlesThisTick() {
+        return particlesSpawnedThisTick;
+    }
+
+    private static void incrementParticleCount() {
+        particlesSpawnedThisTick++;
     }
 }

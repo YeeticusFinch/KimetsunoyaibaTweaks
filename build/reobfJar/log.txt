@@ -145,7 +145,6 @@ Writing Output: C:\Users\carlf\eclipse-workspace-2\Kimetsunoyaiba-Multiplayer\bu
   com/
   com/lerdorf/
   com/lerdorf/kimetsunoyaibamultiplayer/
-  com/lerdorf/kimetsunoyaibamultiplayer/Config$ParticleTriggerMode.class
   com/lerdorf/kimetsunoyaibamultiplayer/Config.class
   com/lerdorf/kimetsunoyaibamultiplayer/KimetsunoyaibaMultiplayer$ClientForgeEvents.class
   com/lerdorf/kimetsunoyaibamultiplayer/KimetsunoyaibaMultiplayer$ClientModEvents.class
@@ -163,6 +162,9 @@ Writing Output: C:\Users\carlf\eclipse-workspace-2\Kimetsunoyaiba-Multiplayer\bu
   com/lerdorf/kimetsunoyaibamultiplayer/commands/TestAnimCommand.class
   com/lerdorf/kimetsunoyaibamultiplayer/commands/TestAnimationCommand.class
   com/lerdorf/kimetsunoyaibamultiplayer/commands/TestParticlesCommand.class
+  com/lerdorf/kimetsunoyaibamultiplayer/config/
+  com/lerdorf/kimetsunoyaibamultiplayer/config/ParticleConfig$ParticleTriggerMode.class
+  com/lerdorf/kimetsunoyaibamultiplayer/config/ParticleConfig.class
   com/lerdorf/kimetsunoyaibamultiplayer/network/
   com/lerdorf/kimetsunoyaibamultiplayer/network/ModNetworking.class
   com/lerdorf/kimetsunoyaibamultiplayer/network/packets/

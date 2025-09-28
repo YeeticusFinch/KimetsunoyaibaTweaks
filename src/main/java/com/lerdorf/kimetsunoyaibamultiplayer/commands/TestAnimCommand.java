@@ -31,12 +31,15 @@ public class TestAnimCommand {
     }
 
     private static int testAnimation(CommandContext<CommandSourceStack> context, String animationName) {
+        System.out.println("TestAnimCommand executed with animation: " + animationName);
+
         if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
             context.getSource().sendFailure(Component.literal("This command can only be used by players"));
             return 0;
         }
 
         ItemStack mainHand = player.getItemInHand(InteractionHand.MAIN_HAND);
+        System.out.println("Player holding: " + mainHand.getItem());
 
         if (mainHand.isEmpty()) {
             player.sendSystemMessage(Component.literal("§cYou need to hold a sword to test particles"));
@@ -46,8 +49,16 @@ public class TestAnimCommand {
         player.sendSystemMessage(Component.literal("§aTesting animation: §b" + animationName));
         player.sendSystemMessage(Component.literal("§7This will spawn particles following the animation arc"));
 
-        // Simulate animation progression over multiple ticks (much faster now - 4 ticks)
-        for (int tick = 0; tick < 4; tick++) {
+        // Calculate animation duration based on actual config parameters
+        double totalSteps = com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleArcDegrees /
+                           com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleAngleIncrement;
+        double totalTicks = totalSteps / com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleStepsPerTick;
+        int animationTicks = Math.max(1, (int)Math.ceil(totalTicks));
+
+        player.sendSystemMessage(Component.literal("§7Animation will complete in " + animationTicks + " ticks"));
+
+        // Simulate the fast animation progression
+        for (int tick = 0; tick < animationTicks; tick++) {
             final int currentTick = tick;
             player.getServer().execute(() -> {
                 // Force spawn particles for each tick of the animation
