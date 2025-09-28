@@ -6,12 +6,23 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientCommandHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimationCommand;
+import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestParticlesCommand;
+import com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugParticlesCommand;
+import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimCommand;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -63,8 +74,29 @@ public class KimetsunoyaibaMultiplayer
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event)
     {
-        LOGGER.info("Registering test animation command");
+        LOGGER.info("Registering test commands");
         TestAnimationCommand.register(event.getDispatcher());
+        TestParticlesCommand.register(event.getDispatcher());
+        DebugParticlesCommand.register(event.getDispatcher());
+        TestAnimCommand.register(event.getDispatcher());
+    }
+
+    @SubscribeEvent
+    public void onLivingAttack(LivingAttackEvent event)
+    {
+        // Handle attack-based particle triggering (for server-side events)
+        if (Config.particleTriggerMode == Config.ParticleTriggerMode.ATTACK_ONLY) {
+            LivingEntity target = event.getEntity();
+            if (event.getSource().getEntity() instanceof Player attacker) {
+                ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
+                if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
+                    LOGGER.debug("Attack detected with kimetsunoyaiba sword: {} -> {}",
+                        attacker.getName().getString(),
+                        target.getName().getString());
+                    // Note: Particle spawning will be handled client-side via animation tracking
+                }
+            }
+        }
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
@@ -108,6 +140,35 @@ public class KimetsunoyaibaMultiplayer
         public static void onRegisterClientCommands(net.minecraftforge.client.event.RegisterClientCommandsEvent event)
         {
             ClientCommandHandler.onRegisterClientCommands(event);
+        }
+
+        @SubscribeEvent
+        public static void onClientLivingAttack(LivingAttackEvent event)
+        {
+            // Client-side attack detection for immediate particle response
+            if (!Config.swordParticlesEnabled || Config.particleTriggerMode != Config.ParticleTriggerMode.ATTACK_ONLY) {
+                return;
+            }
+
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player == null || mc.level == null) {
+                return;
+            }
+
+            // Check if the local player is attacking with a kimetsunoyaiba sword
+            if (event.getSource().getEntity() instanceof AbstractClientPlayer attacker) {
+                if (attacker.getUUID().equals(mc.player.getUUID())) {
+                    ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
+                    if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
+                        // Force spawn particles on attack
+                        SwordParticleHandler.forceSpawnParticles(attacker, weapon, "attack");
+
+                        if (Config.logDebug) {
+                            LOGGER.debug("Triggered attack-based particles for local player");
+                        }
+                    }
+                }
+            }
         }
     }
 }

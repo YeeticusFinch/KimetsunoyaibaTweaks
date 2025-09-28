@@ -7,6 +7,7 @@ import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
 import org.slf4j.Logger;
@@ -24,6 +25,8 @@ public class AnimationSyncPacket {
     private final boolean isLooping;
     private final boolean stopAnimation;
     private final KeyframeAnimation animationData; // The actual animation
+    private final ItemStack swordItem; // The sword being used for particle effects
+    private final ResourceLocation particleType; // The particle type to spawn
 
     public AnimationSyncPacket(UUID playerUUID, ResourceLocation animationId, int currentTick, int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData) {
         this.playerUUID = playerUUID;
@@ -33,6 +36,20 @@ public class AnimationSyncPacket {
         this.isLooping = isLooping;
         this.stopAnimation = stopAnimation;
         this.animationData = animationData;
+        this.swordItem = ItemStack.EMPTY; // Default for backward compatibility
+        this.particleType = null; // Default for backward compatibility
+    }
+
+    public AnimationSyncPacket(UUID playerUUID, ResourceLocation animationId, int currentTick, int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData, ItemStack swordItem, ResourceLocation particleType) {
+        this.playerUUID = playerUUID;
+        this.animationId = animationId;
+        this.currentTick = currentTick;
+        this.animationLength = animationLength;
+        this.isLooping = isLooping;
+        this.stopAnimation = stopAnimation;
+        this.animationData = animationData;
+        this.swordItem = swordItem != null ? swordItem : ItemStack.EMPTY;
+        this.particleType = particleType;
     }
 
     // Constructor for stop packets
@@ -51,6 +68,16 @@ public class AnimationSyncPacket {
             this.isLooping = buf.readBoolean();
             this.stopAnimation = buf.readBoolean();
 
+            // Read sword item and particle data
+            boolean hasSwordData = buf.readBoolean();
+            if (hasSwordData) {
+                this.swordItem = buf.readItem();
+                this.particleType = buf.readResourceLocation();
+            } else {
+                this.swordItem = ItemStack.EMPTY;
+                this.particleType = null;
+            }
+
             // For now, we can't easily serialize KeyframeAnimation
             // So we'll just pass null and work with the IDs
             this.animationData = null;
@@ -61,6 +88,8 @@ public class AnimationSyncPacket {
             this.isLooping = false;
             this.stopAnimation = true;
             this.animationData = null;
+            this.swordItem = ItemStack.EMPTY;
+            this.particleType = null;
         }
     }
 
@@ -78,6 +107,14 @@ public class AnimationSyncPacket {
             buf.writeVarInt(animationLength);
             buf.writeBoolean(isLooping);
             buf.writeBoolean(stopAnimation);
+
+            // Write sword item and particle data
+            boolean hasSwordData = !swordItem.isEmpty() && particleType != null;
+            buf.writeBoolean(hasSwordData);
+            if (hasSwordData) {
+                buf.writeItem(swordItem);
+                buf.writeResourceLocation(particleType);
+            }
         } else {
             buf.writeBoolean(false);
         }
@@ -95,7 +132,7 @@ public class AnimationSyncPacket {
                     }
 
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClientsExcept(
-                        new AnimationSyncPacket(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation),
+                        new AnimationSyncPacket(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, swordItem, particleType),
                         sender
                     );
 
@@ -108,7 +145,7 @@ public class AnimationSyncPacket {
                     LOGGER.info("Client received animation sync for player {}: animation={}, tick={}, stop={}",
                         playerUUID, animationId, currentTick, stopAnimation);
                 }
-                AnimationSyncHandler.handleAnimationSync(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData);
+                AnimationSyncHandler.handleAnimationSync(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, swordItem, particleType);
             }
         });
         ctx.setPacketHandled(true);

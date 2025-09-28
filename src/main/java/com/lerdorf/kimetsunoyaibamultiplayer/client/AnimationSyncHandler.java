@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
 import com.mojang.logging.LogUtils;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
@@ -16,6 +17,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
@@ -40,6 +42,12 @@ public class AnimationSyncHandler {
 
     public static void handleAnimationSync(UUID playerUUID, ResourceLocation animationId, int currentTick,
                                           int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData) {
+        handleAnimationSync(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, ItemStack.EMPTY, null);
+    }
+
+    public static void handleAnimationSync(UUID playerUUID, ResourceLocation animationId, int currentTick,
+                                          int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData,
+                                          ItemStack swordItem, ResourceLocation particleType) {
         if (Config.logDebug) {
             LOGGER.info("handleAnimationSync called: player={}, animation={}, tick={}, stop={}",
                 playerUUID, animationId, currentTick, stopAnimation);
@@ -96,6 +104,17 @@ public class AnimationSyncHandler {
             stopPlayerAnimation(playerUUID, clientPlayer);
         } else {
             playAnimation(playerUUID, clientPlayer, animationId, currentTick, animationLength, isLooping, animationData);
+
+            // Trigger sword particles for synchronized animations if sword data is available
+            if (!swordItem.isEmpty()) {
+                String animationName = animationId.getPath();
+                SwordParticleHandler.spawnSwordParticles(clientPlayer, swordItem, animationName);
+
+                if (Config.logDebug) {
+                    LOGGER.debug("Triggered synchronized sword particles for player {} with animation {}",
+                        clientPlayer.getName().getString(), animationName);
+                }
+            }
         }
     }
 

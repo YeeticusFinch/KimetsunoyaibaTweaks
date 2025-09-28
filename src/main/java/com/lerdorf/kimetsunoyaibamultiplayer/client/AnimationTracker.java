@@ -3,6 +3,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.mojang.logging.LogUtils;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
@@ -15,6 +17,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
@@ -57,6 +61,11 @@ public class AnimationTracker {
         }
 
         checkPlayerAnimation(mc.player);
+
+        // Update particle effect states
+        if (mc.level != null) {
+            SwordParticleHandler.updateParticleStates(mc.level.getGameTime());
+        }
     }
 
     private static void checkPlayerAnimation(AbstractClientPlayer player) {
@@ -244,14 +253,31 @@ public class AnimationTracker {
                 }
             }
 
+            // Get sword item and particle information for synchronization
+            ItemStack mainHandItem = player.getItemInHand(InteractionHand.MAIN_HAND);
+            ResourceLocation particleTypeId = null;
+
+            if (SwordParticleMapping.isKimetsunoyaibaSword(mainHandItem)) {
+                var particleType = SwordParticleMapping.getParticleForSword(mainHandItem);
+                if (particleType != null) {
+                    particleTypeId = net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE.getKey(particleType.getType());
+                }
+            }
+
             AnimationSyncPacket packet = new AnimationSyncPacket(
-                playerUUID, animationId, currentTick, length, isLooping, false, data
+                playerUUID, animationId, currentTick, length, isLooping, false, data, mainHandItem, particleTypeId
             );
             ModNetworking.sendToServer(packet);
 
             activeAnimations.put(playerUUID, new AnimationState(animationId, currentTick));
+
+            // Trigger sword particles if configured
+            triggerSwordParticles(player, animationName, currentTick);
         } else {
             currentState.lastTick = currentTick;
+
+            // Still trigger particles for ongoing animations
+            triggerSwordParticles(player, animationName, currentTick);
         }
     }
 
@@ -278,6 +304,9 @@ public class AnimationTracker {
 
             state.isActive = false;
             activeAnimations.remove(playerUUID);
+
+            // Clear particle effect state when animation stops
+            SwordParticleHandler.clearParticleEffectState(playerUUID);
         }
     }
 
@@ -377,7 +406,59 @@ public class AnimationTracker {
         return null;
     }
 
+    /**
+     * Triggers sword particle effects for a player if they are holding a kimetsunoyaiba sword
+     * @param player The player performing the animation
+     * @param animationName The name of the animation being performed
+     * @param animationTick The current animation tick
+     */
+    private static void triggerSwordParticles(AbstractClientPlayer player, String animationName, int animationTick) {
+        if (!Config.swordParticlesEnabled) {
+            return;
+        }
+
+        // Check trigger mode configuration
+        if (Config.particleTriggerMode == Config.ParticleTriggerMode.ATTACK_ONLY) {
+            // For attack-only mode, we would need to detect actual attacks
+            // For now, we'll only trigger on certain animation names that suggest attacks
+            if (!isAttackAnimation(animationName)) {
+                return;
+            }
+        }
+
+        // Check if player is holding a kimetsunoyaiba sword
+        ItemStack mainHandItem = player.getItemInHand(InteractionHand.MAIN_HAND);
+        if (!SwordParticleMapping.isKimetsunoyaibaSword(mainHandItem)) {
+            return;
+        }
+
+        // Spawn particles with animation tick information
+        SwordParticleHandler.spawnSwordParticles(player, mainHandItem, animationName, animationTick);
+
+        if (Config.logDebug) {
+            LOGGER.debug("Triggered sword particles for player {} with sword {} during animation {}",
+                player.getName().getString(),
+                SwordParticleMapping.getSwordTypeName(mainHandItem),
+                animationName);
+        }
+    }
+
+    /**
+     * Determines if an animation name is a basic left-click attack (sword_to_right or sword_to_left)
+     * @param animationName The animation name to check
+     * @return true if this is a basic attack animation (left-click)
+     */
+    private static boolean isAttackAnimation(String animationName) {
+        if (animationName == null) {
+            return false;
+        }
+
+        // Only sword_to_right and sword_to_left are basic left-click attacks
+        return animationName.equals("sword_to_right") || animationName.equals("sword_to_left");
+    }
+
     public static void clearTrackedAnimations() {
         activeAnimations.clear();
+        SwordParticleHandler.clearAllParticleEffectStates();
     }
 }
