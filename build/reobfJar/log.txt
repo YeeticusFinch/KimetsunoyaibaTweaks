@@ -163,6 +163,7 @@ Writing Output: C:\Users\carlf\eclipse-workspace-2\Kimetsunoyaiba-Multiplayer\bu
   com/lerdorf/kimetsunoyaibamultiplayer/commands/TestAnimationCommand.class
   com/lerdorf/kimetsunoyaibamultiplayer/commands/TestParticlesCommand.class
   com/lerdorf/kimetsunoyaibamultiplayer/config/
+  com/lerdorf/kimetsunoyaibamultiplayer/config/ParticleConfig$ParticleMapping.class
   com/lerdorf/kimetsunoyaibamultiplayer/config/ParticleConfig$ParticleTriggerMode.class
   com/lerdorf/kimetsunoyaibamultiplayer/config/ParticleConfig.class
   com/lerdorf/kimetsunoyaibamultiplayer/network/

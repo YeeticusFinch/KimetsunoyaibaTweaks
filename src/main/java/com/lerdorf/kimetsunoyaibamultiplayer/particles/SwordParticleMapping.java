@@ -7,6 +7,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.mojang.logging.LogUtils;
 import org.joml.Vector3f;
 
@@ -21,12 +24,12 @@ public class SwordParticleMapping {
     static {
         // Initialize hardcoded mappings for specific sword types
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_thunder", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_thunder"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_water", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_water"));
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_water", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_blue_smoke"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_flame", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_flame"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_stone", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_stone"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_wind", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_wind"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_sun", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_sun"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_moon", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_moon"));
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_sun", ResourceLocation.fromNamespaceAndPath("minecraft", "flame"));
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_moon", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_blue_smoke"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_flower", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_flower"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_insect", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_insect"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_sound", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_sound"));
@@ -38,7 +41,7 @@ public class SwordParticleMapping {
         // Special cases with vanilla particles
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_inosuke", ResourceLocation.fromNamespaceAndPath("minecraft", "crit"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_basic", ResourceLocation.fromNamespaceAndPath("minecraft", "crit"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_generic", ResourceLocation.fromNamespaceAndPath("minecraft", "enchanted_hit"));
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_generic", ResourceLocation.fromNamespaceAndPath("minecraft", "cloud"));
     }
 
     /**
@@ -52,8 +55,15 @@ public class SwordParticleMapping {
         }
 
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(swordItem.getItem());
+        String itemIdString = itemId.toString();
 
-        // Check if this is a kimetsunoyaiba nichirin sword
+        // First, check config-based particle mappings
+        if (ParticleConfig.particleMappings != null && ParticleConfig.particleMappings.containsKey(itemIdString)) {
+            ParticleConfig.ParticleMapping mapping = ParticleConfig.particleMappings.get(itemIdString);
+            return createParticleFromMapping(mapping);
+        }
+
+        // Check if this is a kimetsunoyaiba nichirin sword (fallback to legacy logic)
         if (!itemId.getNamespace().equals("kimetsunoyaiba") || !itemId.getPath().startsWith("nichirinsword_")) {
             return null;
         }
@@ -61,19 +71,7 @@ public class SwordParticleMapping {
         // Extract the sword type (part after "nichirinsword_")
         String swordType = itemId.getPath();
 
-        // Special case for wind sword - use green dust particles
-        if (swordType.equals("nichirinsword_wind")) {
-            // Create green dust particles (RGB: 0.0, 1.0, 0.2 for bright green)
-            return new DustParticleOptions(new Vector3f(0.0f, 1.0f, 0.2f), 1.0f);
-        }
-        
-     // Special case for thunder sword - use yellow dust particles
-        if (swordType.equals("nichirinsword_thunder")) {
-            // Create green dust particles (RGB: 1.0, 1.0, 0.2 for bright yellow)
-            return new DustParticleOptions(new Vector3f(1.0f, 1.0f, 0.2f), 1.0f);
-        }
-
-        // Look up the particle mapping
+        // Legacy fallback: Look up the particle mapping
         ResourceLocation particleId = SWORD_TO_PARTICLE_MAP.get(swordType);
 
         if (particleId == null) {
@@ -93,14 +91,42 @@ public class SwordParticleMapping {
         }
 
         // Ultimate fallback: use a generic particle effect
-        LOGGER.debug("No particle found for sword {}, using fallback particle", itemId);
-        return ParticleTypes.ENCHANTED_HIT;
+        if (Config.logDebug)
+        	LOGGER.debug("No particle found for sword {}, using fallback particle", itemId);
+        return ParticleTypes.CLOUD;
     }
 
     /**
-     * Checks if an item is a kimetsunoyaiba nichirin sword
+     * Creates a ParticleOptions from a config-based particle mapping
+     * @param mapping The particle mapping from config
+     * @return ParticleOptions for the particle, or null if invalid
+     */
+    private static ParticleOptions createParticleFromMapping(ParticleConfig.ParticleMapping mapping) {
+        try {
+            ResourceLocation particleId = ResourceLocation.parse(mapping.particleType);
+
+            if (mapping.isDust) {
+                // Create dust particle with custom size and color
+                Vector3f color = new Vector3f(mapping.red, mapping.green, mapping.blue);
+                return new DustParticleOptions(color, mapping.size);
+            } else {
+                // Try to get the particle from the registry
+                if (BuiltInRegistries.PARTICLE_TYPE.containsKey(particleId)) {
+                    var particleType = BuiltInRegistries.PARTICLE_TYPE.get(particleId);
+                    return (ParticleOptions) particleType;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to create particle from mapping: {}", mapping.particleType, e);
+        }
+
+        return null;
+    }
+
+    /**
+     * Checks if an item should have particle effects
      * @param item The ItemStack to check
-     * @return true if this is a nichirin sword that should have particle effects
+     * @return true if this item has particle effects configured
      */
     public static boolean isKimetsunoyaibaSword(ItemStack item) {
         if (item.isEmpty()) {
@@ -108,6 +134,14 @@ public class SwordParticleMapping {
         }
 
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item.getItem());
+        String itemIdString = itemId.toString();
+
+        // First check config-based mappings
+        if (ParticleConfig.particleMappings != null && ParticleConfig.particleMappings.containsKey(itemIdString)) {
+            return true;
+        }
+
+        // Fallback: check if this is a kimetsunoyaiba nichirin sword
         return itemId.getNamespace().equals("kimetsunoyaiba") && itemId.getPath().startsWith("nichirinsword_");
     }
 
