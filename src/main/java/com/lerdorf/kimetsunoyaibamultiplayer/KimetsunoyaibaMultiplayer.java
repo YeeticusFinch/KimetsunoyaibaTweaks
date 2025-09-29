@@ -9,14 +9,19 @@ import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimationCommand;
 import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestParticlesCommand;
 import com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugParticlesCommand;
 import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimCommand;
+import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestCrowQuestCommand;
+import com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugCrowCommand;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -54,10 +59,12 @@ public class KimetsunoyaibaMultiplayer
         // Register config event handlers on the mod event bus
         modEventBus.register(Config.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig.class);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "kimetsunoyaibamultiplayer/common.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.SPEC, "kimetsunoyaibamultiplayer/particles.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig.SPEC, "kimetsunoyaibamultiplayer/entities.toml");
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)
@@ -84,6 +91,8 @@ public class KimetsunoyaibaMultiplayer
         TestParticlesCommand.register(event.getDispatcher());
         DebugParticlesCommand.register(event.getDispatcher());
         TestAnimCommand.register(event.getDispatcher());
+        TestCrowQuestCommand.register(event.getDispatcher());
+        DebugCrowCommand.register(event.getDispatcher());
     }
 
     @SubscribeEvent
@@ -100,6 +109,19 @@ public class KimetsunoyaibaMultiplayer
                         attacker.getName().getString(),
                         target.getName().getString());
                     // Note: Particle spawning will be handled client-side via animation tracking
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event)
+    {
+        if (event.phase == TickEvent.Phase.END) {
+            // Update flying crows on each server level
+            if (event.getServer() != null) {
+                for (ServerLevel level : event.getServer().getAllLevels()) {
+                    CrowEnhancementHandler.tick(level);
                 }
             }
         }
@@ -130,6 +152,7 @@ public class KimetsunoyaibaMultiplayer
                     LOGGER.info("Client tick event handler is working, tick: {}", debugTickCounter);
                 }
                 AnimationTracker.tick();
+                CrowQuestMarkerHandler.clientTick();
             }
         }
 
@@ -139,6 +162,8 @@ public class KimetsunoyaibaMultiplayer
             if (Minecraft.getInstance().level == null && event.phase == TickEvent.Phase.END) {
                 AnimationTracker.clearTrackedAnimations();
                 AnimationSyncHandler.clearAllAnimations();
+                CrowQuestMarkerHandler.clearAllMarkers();
+                CrowEnhancementHandler.clearFlyingCrows();
             }
         }
 
@@ -177,6 +202,14 @@ public class KimetsunoyaibaMultiplayer
                     }
                 }
             }
+        }
+
+        @SubscribeEvent
+        public static void onChatReceived(net.minecraftforge.client.event.ClientChatReceivedEvent event)
+        {
+            // Monitor chat for crow quest messages
+            String message = event.getMessage().getString();
+            CrowQuestMarkerHandler.onChatMessage(message);
         }
     }
 }
