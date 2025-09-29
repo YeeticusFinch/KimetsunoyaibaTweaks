@@ -99,9 +99,9 @@ public class ParticleConfig {
                     "kimetsunoyaiba:nichirinsword_water:kimetsunoyaiba:particle_blue_smoke",
                     "kimetsunoyaiba:nichirinsword_flame:minecraft:dust:0.8:1.0:0.8:0.1",
                     "kimetsunoyaiba:nichirinsword_stone:minecraft:dust:0.8:0.6:0.6:0.6",
-                    "kimetsunoyaiba:nichirinsword_wind:minecraft:dust:0.8:1.0:0.0:1.0",
+                    "kimetsunoyaiba:nichirinsword_wind:minecraft:dust:0.8:0.1:1.0:0.1",
                     "kimetsunoyaiba:nichirinsword_sun:minecraft:flame",
-                    "kimetsunoyaiba:nichirinswordmoon:minecraft:end_rod",
+                    "kimetsunoyaiba:nichirinswordmoon:minecraft:end_rod", // moon is missing an underscore, not a typo!!!
                     "kimetsunoyaiba:nichirinsword_flower:kimetsunoyaiba:particle_flower",
                     "kimetsunoyaiba:nichirinsword_insect:minecraft:dust:0.6:0.8:1.0:0.9",
                     "kimetsunoyaiba:nichirinsword_sound:kimetsunoyaiba:particle_sound",
@@ -124,7 +124,7 @@ public class ParticleConfig {
                     "kimetsunoyaiba:nichirinsword_tokito:minecraft:dust:1.0:1.0:1.0:1.0",
                     "kimetsunoyaiba:nichirinsword_kanroji:minecraft:dust:0.9:1.0:0.9:0.9",
                     "kimetsunoyaiba:nichirinsword_iguro:minecraft:dust:1.0:1.0:1.0:1.0",
-                    "kimetsunoyaiba:nichirinsword_wind:minecraft:shinazugawa:0.8:1.0:0.0:1.0",
+                    "kimetsunoyaiba:nichirinsword_shinazugawa:minecraft:dust:0.8:0.1:1.0:0.1",
                     "kimetsunoyaiba:nichirinsword_kanae:minecraft:dust:0.7:1.0:0.9:0.9",
                     "kimetsunoyaiba:nichirinsword_yoriichi:minecraft:flame"
                     
@@ -206,9 +206,13 @@ public class ParticleConfig {
         List<? extends String> mappingStrings = PARTICLE_MAPPINGS.get();
         for (String mapping : mappingStrings) {
             try {
+                System.out.println("Parsing mapping: " + mapping);
                 ParticleMapping parsed = parseParticleMapping(mapping);
                 if (parsed != null) {
                     particleMappings.put(parsed.itemId, parsed);
+                    System.out.println("Successfully added mapping: " + parsed.itemId + " -> " + parsed.particleType);
+                } else {
+                    System.err.println("Failed to parse mapping (returned null): " + mapping);
                 }
             } catch (Exception e) {
                 System.err.println("Failed to parse particle mapping: " + mapping + " - " + e.getMessage());
@@ -222,8 +226,8 @@ public class ParticleConfig {
 
     private static ParticleMapping parseParticleMapping(String mapping) {
         String[] parts = mapping.split(":");
-        if (parts.length < 2) {
-            System.err.println("Invalid particle mapping format: " + mapping);
+        if (parts.length < 4) {
+            System.err.println("Invalid particle mapping format (need at least 4 parts): " + mapping);
             return null;
         }
 

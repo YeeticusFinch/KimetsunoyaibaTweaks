@@ -29,7 +29,7 @@ public class SwordParticleMapping {
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_stone", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_stone"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_wind", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_wind"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_sun", ResourceLocation.fromNamespaceAndPath("minecraft", "flame"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_moon", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_blue_smoke"));
+        SWORD_TO_PARTICLE_MAP.put("nichirinswordmoon", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_blue_smoke")); // moon is missing an underscore, not a typo!!!
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_flower", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_flower"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_insect", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_insect"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_sound", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_sound"));
@@ -58,9 +58,25 @@ public class SwordParticleMapping {
         String itemIdString = itemId.toString();
 
         // First, check config-based particle mappings
-        if (ParticleConfig.particleMappings != null && ParticleConfig.particleMappings.containsKey(itemIdString)) {
-            ParticleConfig.ParticleMapping mapping = ParticleConfig.particleMappings.get(itemIdString);
-            return createParticleFromMapping(mapping);
+        System.out.println("Looking for particle mapping for item: " + itemIdString);
+        if (ParticleConfig.particleMappings != null) {
+            System.out.println("Config mappings available: " + ParticleConfig.particleMappings.size());
+            if (ParticleConfig.particleMappings.containsKey(itemIdString)) {
+                ParticleConfig.ParticleMapping mapping = ParticleConfig.particleMappings.get(itemIdString);
+                System.out.println("Found config mapping: " + mapping.particleType);
+                ParticleOptions result = createParticleFromMapping(mapping);
+                if (result != null) {
+                    System.out.println("Successfully created particle from config mapping");
+                    return result;
+                } else {
+                    System.err.println("Failed to create particle from config mapping");
+                }
+            } else {
+                System.out.println("No config mapping found for: " + itemIdString);
+                System.out.println("Available mappings: " + ParticleConfig.particleMappings.keySet());
+            }
+        } else {
+            System.err.println("ParticleConfig.particleMappings is null!");
         }
 
         // Check if this is a kimetsunoyaiba nichirin sword (fallback to legacy logic)
@@ -103,21 +119,30 @@ public class SwordParticleMapping {
      */
     private static ParticleOptions createParticleFromMapping(ParticleConfig.ParticleMapping mapping) {
         try {
+            System.out.println("Creating particle from mapping: " + mapping.particleType + " (isDust: " + mapping.isDust + ")");
             ResourceLocation particleId = ResourceLocation.parse(mapping.particleType);
 
             if (mapping.isDust) {
                 // Create dust particle with custom size and color
                 Vector3f color = new Vector3f(mapping.red, mapping.green, mapping.blue);
-                return new DustParticleOptions(color, mapping.size);
+                System.out.println("Creating dust particle with color (" + mapping.red + ", " + mapping.green + ", " + mapping.blue + ") size " + mapping.size);
+                DustParticleOptions dustOptions = new DustParticleOptions(color, mapping.size);
+                System.out.println("Successfully created dust particle options");
+                return dustOptions;
             } else {
                 // Try to get the particle from the registry
+                System.out.println("Looking for particle in registry: " + particleId);
                 if (BuiltInRegistries.PARTICLE_TYPE.containsKey(particleId)) {
                     var particleType = BuiltInRegistries.PARTICLE_TYPE.get(particleId);
+                    System.out.println("Found particle type in registry: " + particleType);
                     return (ParticleOptions) particleType;
+                } else {
+                    System.err.println("Particle not found in registry: " + particleId);
                 }
             }
         } catch (Exception e) {
             LOGGER.error("Failed to create particle from mapping: {}", mapping.particleType, e);
+            e.printStackTrace();
         }
 
         return null;
