@@ -36,42 +36,42 @@ public class SwordDisplayConfig {
     // Left hip
     private static final ForgeConfigSpec.DoubleValue HIP_LEFT_TRANSLATE_X = BUILDER
             .comment("Left hip X translation")
-            .defineInRange("left_translate_x", -0.15, -5.0, 5.0);
+            .defineInRange("left_translate_x", 0.3, -5.0, 5.0);
     private static final ForgeConfigSpec.DoubleValue HIP_LEFT_TRANSLATE_Y = BUILDER
             .comment("Left hip Y translation")
-            .defineInRange("left_translate_y", 0.5, -5.0, 5.0);
+            .defineInRange("left_translate_y", 0.55, -5.0, 5.0);
     private static final ForgeConfigSpec.DoubleValue HIP_LEFT_TRANSLATE_Z = BUILDER
             .comment("Left hip Z translation")
-            .defineInRange("left_translate_z", 0.2, -5.0, 5.0);
+            .defineInRange("left_translate_z", -0.1, -5.0, 5.0);
     private static final ForgeConfigSpec.DoubleValue HIP_LEFT_ROTATE_Z = BUILDER
             .comment("Left hip Z rotation (degrees)")
             .defineInRange("left_rotate_z", 0, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue HIP_LEFT_ROTATE_Y = BUILDER
             .comment("Left hip Y rotation (degrees)")
-            .defineInRange("left_rotate_y", 0, -360.0, 360.0);
+            .defineInRange("left_rotate_y", 180, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue HIP_LEFT_ROTATE_X = BUILDER
             .comment("Left hip X rotation (degrees)")
-            .defineInRange("left_rotate_x", -45.0, -360.0, 360.0);
+            .defineInRange("left_rotate_x", -46.0, -360.0, 360.0);
 
     // Right hip
     private static final ForgeConfigSpec.DoubleValue HIP_RIGHT_TRANSLATE_X = BUILDER
             .comment("Right hip X translation")
-            .defineInRange("right_translate_x", 0.15, -5.0, 5.0);
+            .defineInRange("right_translate_x", -0.3, -5.0, 5.0);
     private static final ForgeConfigSpec.DoubleValue HIP_RIGHT_TRANSLATE_Y = BUILDER
             .comment("Right hip Y translation")
-            .defineInRange("right_translate_y", 0.5, -5.0, 5.0);
+            .defineInRange("right_translate_y", 0.55, -5.0, 5.0);
     private static final ForgeConfigSpec.DoubleValue HIP_RIGHT_TRANSLATE_Z = BUILDER
             .comment("Right hip Z translation")
-            .defineInRange("right_translate_z", 0.2, -5.0, 5.0);
+            .defineInRange("right_translate_z", -0.1, -5.0, 5.0);
     private static final ForgeConfigSpec.DoubleValue HIP_RIGHT_ROTATE_Z = BUILDER
             .comment("Right hip Z rotation (degrees)")
             .defineInRange("right_rotate_z", 0, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue HIP_RIGHT_ROTATE_Y = BUILDER
             .comment("Right hip Y rotation (degrees)")
-            .defineInRange("right_rotate_y", 0, -360.0, 360.0);
+            .defineInRange("right_rotate_y", 180, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue HIP_RIGHT_ROTATE_X = BUILDER
             .comment("Right hip X rotation (degrees)")
-            .defineInRange("right_rotate_x", 45.0, -360.0, 360.0);
+            .defineInRange("right_rotate_x", -65.0, -360.0, 360.0);
 
     static {
         BUILDER.pop(); // hip_position
@@ -86,42 +86,42 @@ public class SwordDisplayConfig {
     // Left back
     private static final ForgeConfigSpec.DoubleValue BACK_LEFT_TRANSLATE_X = BUILDER
             .comment("Left back X translation")
-            .defineInRange("left_translate_x", -0.2, -2.0, 2.0);
+            .defineInRange("left_translate_x", 0.2, -2.0, 2.0);
     private static final ForgeConfigSpec.DoubleValue BACK_LEFT_TRANSLATE_Y = BUILDER
             .comment("Left back Y translation")
-            .defineInRange("left_translate_y", 0.3, -2.0, 2.0);
+            .defineInRange("left_translate_y", -0.1, -2.0, 2.0);
     private static final ForgeConfigSpec.DoubleValue BACK_LEFT_TRANSLATE_Z = BUILDER
             .comment("Left back Z translation")
-            .defineInRange("left_translate_z", -0.15, -2.0, 2.0);
+            .defineInRange("left_translate_z", 0.2, -2.0, 2.0);
     private static final ForgeConfigSpec.DoubleValue BACK_LEFT_ROTATE_Z = BUILDER
             .comment("Left back Z rotation (degrees)")
-            .defineInRange("left_rotate_z", 165.0, -360.0, 360.0);
+            .defineInRange("left_rotate_z", 35, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue BACK_LEFT_ROTATE_Y = BUILDER
             .comment("Left back Y rotation (degrees)")
-            .defineInRange("left_rotate_y", -10.0, -360.0, 360.0);
+            .defineInRange("left_rotate_y", 90.0, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue BACK_LEFT_ROTATE_X = BUILDER
             .comment("Left back X rotation (degrees)")
-            .defineInRange("left_rotate_x", -10.0, -360.0, 360.0);
+            .defineInRange("left_rotate_x", 0.0, -360.0, 360.0);
 
     // Right back
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_TRANSLATE_X = BUILDER
             .comment("Right back X translation")
-            .defineInRange("right_translate_x", 0.2, -2.0, 2.0);
+            .defineInRange("right_translate_x", -0.4, -2.0, 2.0);
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_TRANSLATE_Y = BUILDER
             .comment("Right back Y translation")
-            .defineInRange("right_translate_y", 0.3, -2.0, 2.0);
+            .defineInRange("right_translate_y", 0.0, -2.0, 2.0);
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_TRANSLATE_Z = BUILDER
             .comment("Right back Z translation")
-            .defineInRange("right_translate_z", -0.15, -2.0, 2.0);
+            .defineInRange("right_translate_z", 0.2, -2.0, 2.0);
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_ROTATE_Z = BUILDER
             .comment("Right back Z rotation (degrees)")
-            .defineInRange("right_rotate_z", -165.0, -360.0, 360.0);
+            .defineInRange("right_rotate_z", -35.0, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_ROTATE_Y = BUILDER
             .comment("Right back Y rotation (degrees)")
-            .defineInRange("right_rotate_y", 10.0, -360.0, 360.0);
+            .defineInRange("right_rotate_y", 90.0, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_ROTATE_X = BUILDER
             .comment("Right back X rotation (degrees)")
-            .defineInRange("right_rotate_x", -10.0, -360.0, 360.0);
+            .defineInRange("right_rotate_x", 0.0, -360.0, 360.0);
 
     static {
         BUILDER.pop(); // back_position
