@@ -174,8 +174,8 @@ public class CrowGeoRenderer extends EntityRenderer<Entity> implements GeoRender
         return 0.0F;
     }
 
-    // Add this to get overlay coordinates including damage flash
-    public static int getOverlayCoords(Entity entity, float whiteOverlay) {
+    // Updated overlay method
+    public static int getOverlayCoords(net.minecraft.world.entity.LivingEntity entity, float whiteOverlay) {
         return net.minecraft.client.renderer.texture.OverlayTexture.pack(
             net.minecraft.client.renderer.texture.OverlayTexture.u(whiteOverlay),
             net.minecraft.client.renderer.texture.OverlayTexture.v(entity.hurtTime > 0 || entity.deathTime > 0)

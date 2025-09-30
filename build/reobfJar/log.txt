@@ -136,10 +136,10 @@ Adding Libraries to Inheritance
 Reading Input: C:\Users\carlf\eclipse-workspace-2\Kimetsunoyaiba-Multiplayer\build\libs\kimetsunoyaibamultiplayer-1.3.8.jar
 Adding input to inheritance map
 Processing entries
+Conflicting propagated mapping for net/minecraft/world/entity/LivingEntity/lambda$addAdditionalSaveData$3(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/Tag;)V from net/minecraft/world/entity/player/Player/lambda$addAdditionalSaveData$3(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/Tag;)V: lambda$addAdditionalSaveData$3 -> m_219754_
+Conflicting propagated mapping for com/lerdorf/kimetsunoyaibamultiplayer/client/renderer/SwordDisplayRenderer/render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/Entity;FFFFFF)V from net/minecraft/client/renderer/entity/layers/RenderLayer/render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/Entity;FFFFFF)V: render -> m_6494_
 Conflicting propagated mapping for com/lerdorf/kimetsunoyaibamultiplayer/client/renderer/CrowGeoRenderer/getTextureLocation(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/resources/ResourceLocation; from net/minecraft/client/renderer/entity/EntityRenderer/getTextureLocation(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/resources/ResourceLocation;: getTextureLocation -> m_5478_
 Conflicting propagated mapping for com/lerdorf/kimetsunoyaibamultiplayer/client/renderer/CrowGeoRenderer/render(Lnet/minecraft/world/entity/Entity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V from net/minecraft/client/renderer/entity/EntityRenderer/render(Lnet/minecraft/world/entity/Entity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V: render -> m_7392_
-Conflicting propagated mapping for com/lerdorf/kimetsunoyaibamultiplayer/client/renderer/SwordDisplayRenderer/render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/Entity;FFFFFF)V from net/minecraft/client/renderer/entity/layers/RenderLayer/render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/Entity;FFFFFF)V: render -> m_6494_
-Conflicting propagated mapping for net/minecraft/world/entity/LivingEntity/lambda$addAdditionalSaveData$3(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/Tag;)V from net/minecraft/world/entity/player/Player/lambda$addAdditionalSaveData$3(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/Tag;)V: lambda$addAdditionalSaveData$3 -> m_219754_
 Adding extras
 Sorting
 Writing Output: C:\Users\carlf\eclipse-workspace-2\Kimetsunoyaiba-Multiplayer\build\reobfJar\output.jar
@@ -152,6 +152,7 @@ Writing Output: C:\Users\carlf\eclipse-workspace-2\Kimetsunoyaiba-Multiplayer\bu
   assets/kimetsunoyaibamultiplayer/animations/biped.animation.json
   assets/kimetsunoyaibamultiplayer/animations/crow.animation.json
   assets/kimetsunoyaibamultiplayer/geo/
+  assets/kimetsunoyaibamultiplayer/geo/crow.animation.json
   assets/kimetsunoyaibamultiplayer/geo/crow.bbmodel
   assets/kimetsunoyaibamultiplayer/geo/crow.geo.json
   assets/kimetsunoyaibamultiplayer/geo/crow.png
