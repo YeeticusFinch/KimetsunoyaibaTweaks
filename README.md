@@ -1,4 +1,4 @@
-# Kimetsunoyaiba Multiplayer (Forge)
+# Kimetsunoyaiba Tweaks (Forge)
 
 A comprehensive Forge mod that enhances the [Kimetsu no Yaiba mod](https://www.curseforge.com/minecraft/mc-mods/kimetsunoyaiba) with multiplayer features, visual effects, and gameplay enhancements.
 
