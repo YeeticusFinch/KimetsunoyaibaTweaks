@@ -69,9 +69,14 @@ public class CrowGeoRenderer extends EntityRenderer<Entity> implements GeoRender
             poseStack.scale(2.0F, 2.0F, 2.0F);  // Make it 2x bigger for debugging
             LOGGER.info("Applied 2x scale");
 
-            // Render using defaultRender
-            defaultRender(poseStack, currentAnimatable, bufferSource, renderType, buffer,
-                         entityYaw, partialTick, packedLight);
+            // Actually render the model geometry
+            model.setCustomAnimations(currentAnimatable, this.getInstanceId(currentAnimatable), null);
+
+            // Render each bone
+            for (software.bernie.geckolib.cache.object.GeoBone bone : bakedModel.topLevelBones()) {
+                renderRecursively(poseStack, currentAnimatable, bone, renderType, bufferSource, buffer,
+                    false, partialTick, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, 1.0f, 1.0f, 1.0f, 1.0f);
+            }
 
             poseStack.popPose();
 
