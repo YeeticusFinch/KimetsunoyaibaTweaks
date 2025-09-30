@@ -1,6 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.particles.ParticleTypes;
@@ -35,6 +34,7 @@ public class CrowEnhancementHandler {
         public int ticksSinceLastDamage;
         public boolean reachedFlightHeight;
         public int takeoffTicks;
+        public Vec3 lastKnownPos;
 
         public CrowFlyingState(UUID crowId, Vec3 startPos) {
             this.crowId = crowId;
@@ -44,6 +44,7 @@ public class CrowEnhancementHandler {
             this.ticksSinceLastDamage = 0;
             this.reachedFlightHeight = false;
             this.takeoffTicks = 0;
+            this.lastKnownPos = startPos;
         }
 
         public boolean isFlying() {
@@ -61,10 +62,6 @@ public class CrowEnhancementHandler {
 
     @SubscribeEvent
     public static void onCrowHurt(LivingHurtEvent event) {
-        if (!EntityConfig.crowEnhancementsEnabled || !EntityConfig.crowFlyingDodgeEnabled) {
-            return;
-        }
-
         Entity entity = event.getEntity();
         DamageSource source = event.getSource();
 
@@ -73,48 +70,54 @@ public class CrowEnhancementHandler {
             return;
         }
 
-        LOGGER.info("Crow {} taking damage from {}, amount: {}",
-            entity.getName().getString(), source.getMsgId(), event.getAmount());
-
-        // Prevent fall damage for crows
+        // Prevent fall damage for crows ALWAYS (even if not tamed, even if config disabled)
         if (source.getMsgId().equals("fall")) {
             event.setCanceled(true);
-            LOGGER.info("Cancelled fall damage for crow");
+            return;
+        }
+
+        // Check if enhancements are enabled before handling flying dodge
+        if (!EntityConfig.crowEnhancementsEnabled || !EntityConfig.crowFlyingDodgeEnabled) {
             return;
         }
 
         // Check if it's tamed
-        if (entity instanceof TamableAnimal tamable && tamable.isTame() && tamable.getOwner() != null) {
-            CrowFlyingState state = flyingCrows.get(entity.getUUID());
-
-            LOGGER.info("Crow is tamed, owner: {}, flying state: {}",
-                tamable.getOwner().getName().getString(),
-                state != null ? "exists, timer=" + state.flyingTimer : "null");
-
-            // If crow is on ground or coming down from flight
-            if (state == null || !state.isFlying()) {
-                // Cancel damage
-                event.setCanceled(true);
-                LOGGER.info("Cancelling damage and initiating flight for crow");
-
-                // Initiate flight
-                initiateCrowFlight(entity);
-            } else if (state.isFlying()) {
-                // Crow is already flying - extend flight duration if taking damage
-                state.flyingTimer = Math.max(state.flyingTimer, 100); // At least 5 seconds more
-                state.ticksSinceLastDamage = 0;
-
-                // Cancel damage while flying
-                event.setCanceled(true);
-
-                LOGGER.info("Kasugai crow {} extended flight due to continued danger", entity.getName().getString());
-            }
-        } else {
-            LOGGER.info("Crow is not tamed or has no owner");
+        if (!(entity instanceof TamableAnimal tamable) || !tamable.isTame() || tamable.getOwner() == null) {
+            return; // Only handle tamed crows
         }
+
+        CrowFlyingState state = flyingCrows.get(entity.getUUID());
+
+        LOGGER.info("Crow {} taking damage from {}, flying state: {}",
+            entity.getName().getString(),
+            source.getMsgId(),
+            state != null ? "FLYING (timer=" + state.flyingTimer + ")" : "ON GROUND");
+
+        // If crow is ALREADY flying, just extend timer and cancel damage
+        if (state != null && state.isFlying()) {
+            state.flyingTimer = Math.max(state.flyingTimer, 100); // At least 5 seconds more
+            state.ticksSinceLastDamage = 0;
+            event.setCanceled(true);
+            LOGGER.info("Crow already flying - extended timer, cancelled damage");
+            return;
+        }
+
+        // Crow is on ground - initiate flight
+        event.setCanceled(true);
+        LOGGER.info("Crow on ground - initiating flight");
+        initiateCrowFlight(entity);
     }
 
     private static void initiateCrowFlight(Entity crow) {
+        // Check if already flying - don't add duplicate
+        if (flyingCrows.containsKey(crow.getUUID())) {
+            LOGGER.info("Crow {} is already in flying map, skipping duplicate add", crow.getUUID());
+            // Just extend the timer
+            CrowFlyingState existingState = flyingCrows.get(crow.getUUID());
+            existingState.flyingTimer = Math.max(existingState.flyingTimer, 100);
+            return;
+        }
+
         // Create flying state
         CrowFlyingState state = new CrowFlyingState(crow.getUUID(), crow.position());
         flyingCrows.put(crow.getUUID(), state);
@@ -126,22 +129,20 @@ public class CrowEnhancementHandler {
         LOGGER.info("Flight duration: {} ticks", state.flyingTimer);
         LOGGER.info("Flying crows map now has {} entries", flyingCrows.size());
 
-        // Give the crow strong upward velocity for fast takeoff
-        crow.setDeltaMovement(0, 2.0, 0);
+        // Give the crow upward velocity for takeoff (reduced from 2.0 to 1.0)
+        crow.setDeltaMovement(0, 1.0, 0);
 
         // Disable gravity while flying
         crow.setNoGravity(true);
 
-        // Make the crow look like it's flying (spreads wings if possible)
-        if (crow instanceof Mob mob) {
-            // Set the mob to think it's in "no-clip" mode which often triggers flying animations
-            crow.noPhysics = false; // Keep physics but set flying flag
-        }
+        // Note: The kasugai_crow entity uses its own animation system from the kimetsunoyaiba mod.
+        // Custom flying animations would require creating a GeckoLib model replacement.
+        // The fast movement and circular flight pattern provide visual flight behavior regardless.
 
         LOGGER.info("Set crow velocity to: {}", crow.getDeltaMovement());
         LOGGER.info("Set noGravity to true");
 
-        // Spawn particles to indicate takeoff
+        // Spawn particles to indicate takeoff (ONLY ONCE)
         if (crow.level() instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.CLOUD,
                     crow.getX(), crow.getY(), crow.getZ(),
@@ -177,9 +178,14 @@ public class CrowEnhancementHandler {
                 }
             }
 
-            if (entity == null || !entity.isAlive()) {
-                LOGGER.info("Removing crow from flying map - entity not found or dead");
-                return true; // Remove dead or unloaded crows
+            if (entity == null) {
+                LOGGER.warn("Crow entity {} not found in any level - might be unloaded. Keeping in map for now.", crowId);
+                return false; // Keep for now, might reload
+            }
+
+            if (!entity.isAlive()) {
+                LOGGER.info("Removing crow from flying map - entity dead");
+                return true; // Remove dead crows
             }
 
             if (!isKasugaiCrow(entity)) {
@@ -209,17 +215,59 @@ public class CrowEnhancementHandler {
     private static void updateFlyingCrow(Entity crow, CrowFlyingState state, ServerLevel level) {
         Vec3 currentPos = crow.position();
 
+        // Detect if crow was forcibly teleported (distance > 10 blocks from last known position)
+        if (state.lastKnownPos != null) {
+            double distanceMoved = currentPos.distanceTo(state.lastKnownPos);
+            if (distanceMoved > 10.0) {
+                // Kimetsunoyaiba mod is trying to teleport crow to ground - counter it!
+
+                // Calculate where the crow SHOULD be in the circular pattern
+                double targetX = state.circleCenter.x + Math.cos(state.circleAngle) * EntityConfig.crowCircleRadius;
+                double targetZ = state.circleCenter.z + Math.sin(state.circleAngle) * EntityConfig.crowCircleRadius;
+                double targetY = state.circleCenter.y + Math.sin(state.circleAngle * 3) * 2;
+
+                // Force crow to correct position
+                crow.teleportTo(targetX, targetY, targetZ);
+
+                // Calculate direction and set velocity to continue circular motion
+                Vec3 targetPos = new Vec3(targetX, targetY, targetZ);
+                state.circleAngle += 0.05f; // Advance angle (reduced from 0.2 to 0.05 to slow down)
+
+                double nextX = state.circleCenter.x + Math.cos(state.circleAngle) * EntityConfig.crowCircleRadius;
+                double nextZ = state.circleCenter.z + Math.sin(state.circleAngle) * EntityConfig.crowCircleRadius;
+                double nextY = state.circleCenter.y + Math.sin(state.circleAngle * 3) * 2;
+
+                Vec3 nextPos = new Vec3(nextX, nextY, nextZ);
+                Vec3 direction = nextPos.subtract(targetPos).normalize();
+                crow.setDeltaMovement(direction.scale(0.4)); // Reduced from 0.6 to 0.4
+                crow.setNoGravity(true);
+
+                // Update last known position to new correct position
+                state.lastKnownPos = targetPos;
+                return;
+            }
+        }
+
+        // Update last known position
+        state.lastKnownPos = currentPos;
+
         // Phase 1: Fast takeoff until reaching flight height
         if (!state.reachedFlightHeight) {
             if (currentPos.y >= state.circleCenter.y - 2) {
                 state.reachedFlightHeight = true;
                 LOGGER.info("Crow reached flight height, starting circular pattern");
             } else {
-                // Fast upward movement
-                crow.setDeltaMovement(0, 2.5, 0);
+                // Upward movement (reduced from 2.5 to 1.2 for smoother takeoff)
+                crow.setDeltaMovement(0, 1.2, 0);
                 crow.setNoGravity(true);
 
-                if (state.takeoffTicks % 5 == 0) {
+                // Stop navigation while taking off
+                if (crow instanceof Mob mob) {
+                    mob.getNavigation().stop();
+                }
+
+                // Particles during takeoff (less frequent)
+                if (state.takeoffTicks % 10 == 0) {
                     level.sendParticles(ParticleTypes.CLOUD,
                             crow.getX(), crow.getY(), crow.getZ(),
                             3, 0.2, 0.1, 0.2, 0.02);
@@ -235,8 +283,8 @@ public class CrowEnhancementHandler {
             state.circleCenter = new Vec3(ownerPos.x, state.circleCenter.y, ownerPos.z);
         }
 
-        // Fast circular motion - 0.2 radians per tick = full circle in ~31 ticks (~1.5 seconds)
-        state.circleAngle += 0.2f;
+        // Slower circular motion - 0.1 radians per tick = full circle in ~63 ticks (~3 seconds)
+        state.circleAngle += 0.1f;
 
         // Calculate circular flight path
         double x = state.circleCenter.x + Math.cos(state.circleAngle) * EntityConfig.crowCircleRadius;
@@ -246,8 +294,8 @@ public class CrowEnhancementHandler {
         Vec3 targetPos = new Vec3(x, y, z);
         Vec3 direction = targetPos.subtract(currentPos).normalize();
 
-        // Fast horizontal movement
-        double speed = 0.6;
+        // Slower horizontal movement (reduced from 0.6 to 0.4)
+        double speed = 0.4;
         crow.setDeltaMovement(direction.scale(speed));
         crow.setNoGravity(true); // Make sure gravity stays off
 
@@ -264,11 +312,17 @@ public class CrowEnhancementHandler {
             mob.yBodyRot = yaw;
         }
 
-        // Wing flap particles more frequently during flight
-        if (state.flyingTimer % 5 == 0) {
+        // Wing flap particles occasionally during flight (not constantly)
+        if (state.flyingTimer % 40 == 0) { // Every 2 seconds instead of every 5 ticks
             level.sendParticles(ParticleTypes.CLOUD,
                     crow.getX(), crow.getY(), crow.getZ(),
                     2, 0.3, 0.1, 0.3, 0.02);
+        }
+
+        // Disable crow AI goals while flying to prevent it trying to pathfind back
+        if (crow instanceof Mob mob) {
+            // Clear the navigation so it stops trying to pathfind
+            mob.getNavigation().stop();
         }
     }
 
@@ -309,45 +363,8 @@ public class CrowEnhancementHandler {
         LOGGER.info("Caught teleport event for flying crow from {} to ({}, {}, {})",
             entity.position(), event.getTargetX(), event.getTargetY(), event.getTargetZ());
 
-        // Crow is flying - determine if we should cancel or redirect
-        Vec3 currentPos = entity.position();
-        Vec3 originalTarget = new Vec3(event.getTargetX(), event.getTargetY(), event.getTargetZ());
-
-        // Get owner position
-        Vec3 ownerPos = null;
-        if (entity instanceof TamableAnimal tamable && tamable.getOwner() != null) {
-            ownerPos = tamable.getOwner().position();
-        }
-
-        if (ownerPos != null) {
-            // Calculate target position (20 blocks above owner)
-            Vec3 desiredFlyPos = new Vec3(ownerPos.x, ownerPos.y + 20, ownerPos.z);
-            double distanceToDesiredPos = currentPos.distanceTo(desiredFlyPos);
-
-            // If crow is within 20 blocks of the desired flying position, CANCEL the teleport
-            if (distanceToDesiredPos <= 20.0) {
-                LOGGER.info("Crow is within 20 blocks of desired fly position ({}), CANCELING teleport", distanceToDesiredPos);
-                event.setCanceled(true);
-                return;
-            }
-
-            // If crow is far away, redirect teleport to above owner instead of to ground
-            LOGGER.info("Crow is {} blocks from desired position, redirecting teleport to above owner", distanceToDesiredPos);
-            double newY = ownerPos.y + 20 + Math.random() * 10; // 20-30 blocks above owner
-            event.setTargetX(ownerPos.x + (Math.random() - 0.5) * 5); // Small randomness
-            event.setTargetY(newY);
-            event.setTargetZ(ownerPos.z + (Math.random() - 0.5) * 5);
-
-            LOGGER.info("Redirected flying crow teleport to ({}, {}, {})",
-                event.getTargetX(), event.getTargetY(), event.getTargetZ());
-
-            // Update circle center to new position
-            state.circleCenter = new Vec3(ownerPos.x, newY, ownerPos.z);
-            state.reachedFlightHeight = true; // Already at flight height after teleport
-        } else {
-            // No owner, just cancel all teleports while flying
-            LOGGER.info("Crow has no owner, canceling teleport");
-            event.setCanceled(true);
-        }
+        // ALWAYS CANCEL TELEPORTS WHILE FLYING - This prevents the constant teleporting issue
+        LOGGER.info("Crow is currently flying - CANCELING ALL TELEPORTS to prevent takeoff loop");
+        event.setCanceled(true);
     }
 }

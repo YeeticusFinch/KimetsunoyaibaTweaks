@@ -20,7 +20,7 @@ license="All Rights Reserved"
 # The modid of the mod
 modId="kimetsunoyaibamultiplayer" #mandatory
 # The version number of the mod
-version="1.3.0" #mandatory
+version="1.3.5" #mandatory
 # A display name for the mod
 displayName="Kimetsunoyaiba Tweaks" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/
@@ -79,6 +79,14 @@ description='''Kimetsunoyaiba Tweaks modifies several elements in the Kimetsu No
     modId="mobplayeranimator"
     mandatory=true
     versionRange="[0.0.1,)"
+    ordering="AFTER"
+    side="BOTH"
+
+# GeckoLib dependency - enables custom crow animations
+[[dependencies.kimetsunoyaibamultiplayer]]
+    modId="geckolib"
+    mandatory=true
+    versionRange="[4.4,)"
     ordering="AFTER"
     side="BOTH"
 

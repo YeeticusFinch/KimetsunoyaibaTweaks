@@ -21,7 +21,7 @@ public class CrowAnimationHandler {
 
     /**
      * Attempts to set the crow to flying animation state
-     * This is called client-side to try to trigger visual animations
+     * This is called server-side to manipulate the entity's state
      */
     public static void setFlyingAnimation(Entity entity, boolean flying) {
         if (reflectionFailed) {
@@ -29,22 +29,28 @@ public class CrowAnimationHandler {
         }
 
         try {
-            // Try common animation field/method names
-            // Many mobs use a "flying" flag or animation state
+            // Minecraft entities have an EntityDataAccessor for various flags
+            // Try to set the entity to "fall flying" state (like elytra)
+            // This often triggers wing-spread animations
 
-            // Attempt 1: Check for a setFlying or setIsFlying method
+            // Attempt 1: Try to set fall flying flag (used by players with elytra)
+            tryInvokeMethod(entity, "setSharedFlag", 7, flying); // Flag 7 is fall flying
+
+            // Attempt 2: Check for flying-related methods
             tryInvokeMethod(entity, "setFlying", flying);
             tryInvokeMethod(entity, "setIsFlying", flying);
 
-            // Attempt 2: Check for flying field
+            // Attempt 3: Try parrot-like methods (crows might use similar model)
+            if (flying) {
+                tryInvokeMethod(entity, "setOnGround", false);
+            }
+
+            // Attempt 4: Check for flying field
             trySetField(entity, "flying", flying);
             trySetField(entity, "isFlying", flying);
 
-            // Attempt 3: If it's a Mob, try to set AI goal flags
-            if (entity instanceof Mob mob) {
-                // Many flying mobs have a "startFlying" method
-                tryInvokeMethod(mob, "startFlying", (Object) null);
-            }
+            // Attempt 5: Try to manipulate entity pose
+            trySetPose(entity, flying);
 
             if (Config.logDebug) {
                 LOGGER.debug("Attempted to set flying animation for crow");
@@ -55,6 +61,24 @@ public class CrowAnimationHandler {
                 LOGGER.warn("Could not set flying animation via reflection: {}", e.getMessage());
             }
             reflectionFailed = true;
+        }
+    }
+
+    private static void trySetPose(Entity entity, boolean flying) {
+        try {
+            // Try to set entity pose to FALL_FLYING (wings spread)
+            Class<?> poseClass = Class.forName("net.minecraft.world.entity.Pose");
+            Object[] poses = poseClass.getEnumConstants();
+
+            for (Object pose : poses) {
+                if (pose.toString().contains("FALL_FLYING") || pose.toString().contains("FLYING")) {
+                    tryInvokeMethod(entity, "setPose", pose);
+                    LOGGER.info("Set entity pose to: {}", pose);
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // Silent fail
         }
     }
 

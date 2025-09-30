@@ -35,6 +35,14 @@ public class ModNetworking {
                 .encoder(AnimationSyncPacket::toBytes)
                 .consumerMainThread(AnimationSyncPacket::handle)
                 .add();
+
+        // Register sword display sync packet
+        int swordDisplayPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordDisplaySyncPacket.class, swordDisplayPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordDisplaySyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordDisplaySyncPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordDisplaySyncPacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

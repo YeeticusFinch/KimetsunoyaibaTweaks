@@ -28,15 +28,15 @@ public class EntityConfig {
 
     private static final ForgeConfigSpec.DoubleValue CROW_FLIGHT_HEIGHT = BUILDER
             .comment("Height in blocks the crow flies to when dodging (above its current position)")
-            .defineInRange("flight-height", 25.0, 10.0, 50.0);
+            .defineInRange("flight-height", 15.0, 10.0, 50.0);
 
     private static final ForgeConfigSpec.IntValue CROW_FLIGHT_DURATION = BUILDER
             .comment("How long the crow stays flying in ticks (20 ticks = 1 second)")
-            .defineInRange("flight-duration", 1200, 200, 2400);
+            .defineInRange("flight-duration", 600, 200, 2400);
 
     private static final ForgeConfigSpec.DoubleValue CROW_CIRCLE_RADIUS = BUILDER
             .comment("Radius in blocks of the circular flying pattern")
-            .defineInRange("circle-radius", 25.0, 10.0, 50.0);
+            .defineInRange("circle-radius", 15.0, 10.0, 50.0);
 
     private static final ForgeConfigSpec.BooleanValue CROW_QUEST_ARROW_ENABLED = BUILDER
             .comment("Enable particle arrow pointing to quest locations when crow gives a quest")

@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:github.com)",
-      "Bash(./gradlew:*)"
+      "Bash(./gradlew:*)",
+      "Bash(sed:*)",
+      "Bash(timeout:*)",
+      "Read(//c/Users/carlf/eclipse-workspace-2/**)",
+      "Bash(jar:*)"
     ],
     "deny": [],
     "ask": []

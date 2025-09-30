@@ -135,6 +135,10 @@ repositories {
     maven {
         url "https://cursemaven.com"
     }
+    maven {
+        name "GeckoLib"
+        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+    }
 }
 
 dependencies {
@@ -164,7 +168,10 @@ dependencies {
     
     //If you don't want to include the library in your jar, remove the include word
     implementation fg.deobf("dev.kosmx.player-anim:player-animation-lib-forge:${player_anim_version}")
-    
+
+    // GeckoLib for crow animations
+    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${geckolib_version}")
+
     //Bendy-lib also has a Forge version:
     //runtimeOnly fg.deobf("io.github.kosmx.bendy-lib:bendy-lib-forge:${project.bendylib_version}")
 
@@ -186,6 +193,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_authors: mod_authors, mod_description: mod_description,
             player_anim_version: player_anim_version, player_anim_version_min: player_anim_version_min, player_anim_version_range: player_anim_version_range,
             mob_player_anim_version: mob_player_anim_version, mob_player_anim_version_min: mob_player_anim_version_min, mob_player_anim_version_range: mob_player_anim_version_range,
+            geckolib_version: geckolib_version, geckolib_version_range: geckolib_version_range,
     ]
     inputs.properties replaceProperties
 

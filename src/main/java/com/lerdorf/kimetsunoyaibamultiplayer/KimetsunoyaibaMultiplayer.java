@@ -60,11 +60,13 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(Config.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig.class);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "kimetsunoyaibamultiplayer/common.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.SPEC, "kimetsunoyaibamultiplayer/particles.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig.SPEC, "kimetsunoyaibamultiplayer/entities.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig.SPEC, "kimetsunoyaibamultiplayer/sword_display.toml");
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)
@@ -118,11 +120,11 @@ public class KimetsunoyaibaMultiplayer
     public void onServerTick(TickEvent.ServerTickEvent event)
     {
         if (event.phase == TickEvent.Phase.END) {
-            // Update flying crows on each server level
+            // Update flying crows ONCE per tick (not per dimension)
             if (event.getServer() != null) {
-                for (ServerLevel level : event.getServer().getAllLevels()) {
-                    CrowEnhancementHandler.tick(level);
-                }
+                // Just pass the overworld level, the handler will search all levels for crows
+                ServerLevel overworld = event.getServer().overworld();
+                CrowEnhancementHandler.tick(overworld);
             }
         }
     }
@@ -153,6 +155,16 @@ public class KimetsunoyaibaMultiplayer
                 }
                 AnimationTracker.tick();
                 CrowQuestMarkerHandler.clientTick();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.tick();
+
+                // Update gun animations for local player
+                if (Minecraft.getInstance().player != null) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.updatePlayerGunAnimation(
+                            Minecraft.getInstance().player);
+                }
+
+                // Update gun animations for all nearby entities (including mobs)
+                com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.updateAllEntityGunAnimations();
             }
         }
 
@@ -164,6 +176,9 @@ public class KimetsunoyaibaMultiplayer
                 AnimationSyncHandler.clearAllAnimations();
                 CrowQuestMarkerHandler.clearAllMarkers();
                 CrowEnhancementHandler.clearFlyingCrows();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.CrowAnimatableWrapper.clearAll();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.clearAll();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.clearAll();
             }
         }
 
@@ -176,11 +191,10 @@ public class KimetsunoyaibaMultiplayer
         @SubscribeEvent
         public static void onClientLivingAttack(LivingAttackEvent event)
         {
-            // Client-side attack detection for immediate particle response
-            if (!com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.swordParticlesEnabled ||
-                com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode !=
-                com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
-                return;
+            // IMPORTANT: This event fires on BOTH client and server threads!
+            // We MUST check that we're on the logical client side
+            if (!event.getEntity().level().isClientSide()) {
+                return; // Skip server-side events
             }
 
             Minecraft mc = Minecraft.getInstance();
@@ -188,16 +202,45 @@ public class KimetsunoyaibaMultiplayer
                 return;
             }
 
-            // Check if the local player is attacking with a kimetsunoyaiba sword
-            if (event.getSource().getEntity() instanceof AbstractClientPlayer attacker) {
-                if (attacker.getUUID().equals(mc.player.getUUID())) {
-                    ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
-                    if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
-                        // Force spawn particles on attack
-                        SwordParticleHandler.forceSpawnParticles(attacker, weapon, "attack");
+            // ONLY handle attacks by the LOCAL PLAYER
+            // Other players' and mobs' gun attacks should NOT trigger effects here
+            // (they would be handled via network sync or other mechanisms)
+            if (event.getSource().getEntity() instanceof LivingEntity attacker) {
+                // Only process if it's the local player attacking
+                if (!attacker.getUUID().equals(mc.player.getUUID())) {
+                    return; // Not the local player - ignore
+                }
 
-                        if (Config.logDebug) {
-                            LOGGER.debug("Triggered attack-based particles for local player");
+                ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
+
+                // Check for gun attacks by LOCAL PLAYER ONLY
+                if (com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.isGun(weapon)) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.GunType gunType =
+                            com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.getGunType(attacker);
+
+                    // Play shoot animation for local player
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.playShootAnimation(
+                            mc.player, gunType);
+
+                    if (Config.logDebug) {
+                        LOGGER.debug("Triggered gun shoot animation for local player: {}", gunType);
+                    }
+                    return;
+                }
+
+                // Check for sword attacks (existing code, only for local player)
+                if (attacker instanceof AbstractClientPlayer clientAttacker) {
+                    if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.swordParticlesEnabled &&
+                        com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
+                        com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
+
+                        if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
+                            // Force spawn particles on attack
+                            SwordParticleHandler.forceSpawnParticles(clientAttacker, weapon, "attack");
+
+                            if (Config.logDebug) {
+                                LOGGER.debug("Triggered attack-based particles for local player");
+                            }
                         }
                     }
                 }
@@ -210,6 +253,40 @@ public class KimetsunoyaibaMultiplayer
             // Monitor chat for crow quest messages
             String message = event.getMessage().getString();
             CrowQuestMarkerHandler.onChatMessage(message);
+        }
+
+        /**
+         * Handle left-click attacks (works for both air and entity clicks)
+         * This is called BEFORE LivingAttackEvent, so we can handle air clicks here
+         */
+        @SubscribeEvent
+        public static void onLeftClickEmpty(net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered event)
+        {
+            // Only handle attack key
+            if (!event.isAttack()) {
+                return;
+            }
+
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player == null || mc.level == null) {
+                return;
+            }
+
+            ItemStack heldItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
+
+            // Check if holding rifle
+            if (heldItem.getItem().toString().contains("rifle")) {
+                com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.GunType gunType =
+                        com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.GunType.RIFLE;
+
+                // Play shoot animation and effects
+                com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.playShootAnimation(
+                        mc.player, gunType);
+
+                if (Config.logDebug) {
+                    LOGGER.debug("Triggered rifle shoot animation (air click)");
+                }
+            }
         }
     }
 }
