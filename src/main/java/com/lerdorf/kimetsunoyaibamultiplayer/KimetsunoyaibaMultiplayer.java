@@ -95,7 +95,7 @@ public class KimetsunoyaibaMultiplayer
         TestAnimCommand.register(event.getDispatcher());
         TestCrowQuestCommand.register(event.getDispatcher());
         DebugCrowCommand.register(event.getDispatcher());
-        com.lerdorf.kimetsunoyaibamultiplayer.commands.TestCrowRenderCommand.register(event.getDispatcher());
+        //com.lerdorf.kimetsunoyaibamultiplayer.commands.TestCrowRenderCommand.register(event.getDispatcher());
     }
 
     @SubscribeEvent

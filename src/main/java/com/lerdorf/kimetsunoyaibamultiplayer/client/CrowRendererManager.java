@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CrowGeoRenderer;
 import com.mojang.logging.LogUtils;
@@ -21,7 +22,8 @@ public class CrowRendererManager {
 
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        LOGGER.info("Registering custom crow renderer...");
+        if (Config.logDebug)
+        	LOGGER.info("Registering custom crow renderer...");
 
         // Find the kasugai_crow entity type
         EntityType<?> crowType = ForgeRegistries.ENTITY_TYPES.getValue(
@@ -29,13 +31,16 @@ public class CrowRendererManager {
         );
 
         if (crowType != null) {
-            LOGGER.info("Found kasugai_crow entity type, registering GeckoLib renderer");
+        	if (Config.logDebug)
+        		LOGGER.info("Found kasugai_crow entity type, registering GeckoLib renderer");
             // Register our GeckoLib renderer for the crow
             // We need to create a renderer that wraps entities in CrowAnimatableWrapper
             event.registerEntityRenderer(crowType, context -> new CrowGeoRenderer(context));
-            LOGGER.info("GeckoLib renderer registered successfully for kasugai_crow");
+            if (Config.logDebug)
+            	LOGGER.info("GeckoLib renderer registered successfully for kasugai_crow");
         } else {
-            LOGGER.warn("Could not find kasugai_crow entity type - renderer not registered");
+        	if (Config.logDebug)
+        		LOGGER.warn("Could not find kasugai_crow entity type - renderer not registered");
         }
     }
 
@@ -50,7 +55,8 @@ class CrowRendererForcer {
     public static void onClientSetup(net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
         // Queue this to run after all mod setup is complete
         event.enqueueWork(() -> {
-            LOGGER.info("Forcing crow renderer override after client setup...");
+        	if (Config.logDebug)
+        		LOGGER.info("Forcing crow renderer override after client setup...");
 
             // Find the kasugai_crow entity type
             EntityType<?> crowType = ForgeRegistries.ENTITY_TYPES.getValue(
@@ -61,7 +67,8 @@ class CrowRendererForcer {
                 try {
                     // Force override the renderer to use our GeckoLib version
                     EntityRenderers.register(crowType, CrowGeoRenderer::new);
-                    LOGGER.info("Successfully forced crow renderer override to GeckoLib renderer");
+                    if (Config.logDebug)
+                    	LOGGER.info("Successfully forced crow renderer override to GeckoLib renderer");
                 } catch (Exception e) {
                     LOGGER.error("Failed to force crow renderer override", e);
                 }
