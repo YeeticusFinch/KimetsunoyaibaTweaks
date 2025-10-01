@@ -1,0 +1,29 @@
+{
+  "crow1": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.crow",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:crow1",
+        "stream": false
+      }
+    ]
+  },
+  "crow2": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.crow",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:crow2",
+        "stream": false
+      }
+    ]
+  },
+  "crow3": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.crow",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:crow3",
+        "stream": false
+      }
+    ]
+  }
+}

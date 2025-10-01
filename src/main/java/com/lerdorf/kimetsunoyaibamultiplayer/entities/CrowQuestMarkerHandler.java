@@ -2,9 +2,11 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
@@ -73,6 +75,21 @@ public class CrowQuestMarkerHandler {
 
         QuestMarker marker = new QuestMarker(playerId, targetLocation, currentTime, durationTicks);
         activeQuests.put(playerId, marker);
+
+        // Play random crow sound to indicate waypoint was set
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.player.getUUID().equals(playerId)) {
+            // Pick a random crow sound
+            SoundEvent[] crowSounds = {
+                ModSounds.CROW1.get(),
+                ModSounds.CROW2.get(),
+                ModSounds.CROW3.get()
+            };
+            SoundEvent randomCrowSound = crowSounds[mc.player.getRandom().nextInt(crowSounds.length)];
+
+            mc.level.playSound(mc.player, mc.player.blockPosition(),
+                randomCrowSound, SoundSource.NEUTRAL, 1.0f, 1.0f);
+        }
 
         if (Config.logDebug) {
             LOGGER.info("Set quest marker for player {} to location {}", playerId, targetLocation);
@@ -224,7 +241,7 @@ public class CrowQuestMarkerHandler {
 
         // Draw arrow particles in front of the player
         double arrowLength = EntityConfig.crowArrowLength;
-        int particleCount = (int) (arrowLength * 3); // 3 particles per block
+        int particleCount = (int) (arrowLength * 4); // 4 particles per block
 
         for (int i = 0; i < particleCount; i++) {
             double progress = (double) i / particleCount;
@@ -236,7 +253,7 @@ public class CrowQuestMarkerHandler {
                     0, 0, 0);
 
             // Arrow head at the end
-            if (progress > 0.8) {
+            if (progress > 0.7 && progress < 0.9) {
                 // Create arrow head effect with angled particles
                 Vec3 perpendicular1 = new Vec3(-direction.z, 0, direction.x).normalize().scale(0.2);
                 Vec3 perpendicular2 = new Vec3(0, 1, 0).cross(direction).normalize().scale(0.2);
@@ -289,6 +306,16 @@ public class CrowQuestMarkerHandler {
             level.addParticle(ParticleTypes.GLOW,
                     target.x + offsetX, target.y + 0.5, target.z + offsetZ,
                     0, 0, 0);
+        }
+
+        // Play subtle ambient sound at waypoint (every 3 seconds)
+        if (level.getGameTime() % 60 == 0) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null) {
+                level.playSound(mc.player,
+                    (int) target.x, (int) target.y, (int) target.z,
+                    SoundEvents.BEACON_AMBIENT, SoundSource.BLOCKS, 0.3f, 1.2f);
+            }
         }
     }
 

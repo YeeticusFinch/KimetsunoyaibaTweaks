@@ -153,6 +153,8 @@ public class CrowMirrorHandler {
                     LOGGER.warn("Mirror crow was removed, recreating...");
                     CROW_MIRRORS.remove(entity.getUUID());
                 } else {
+                    // Mirror exists and is valid - ensure original crow is still invisible
+                    ensureCrowInvisibility(entity);
                     continue; // Mirror exists and is valid
                 }
             }
@@ -160,6 +162,26 @@ public class CrowMirrorHandler {
             // No mirror exists - create one
             LOGGER.info("Found unmirror kasugai crow, creating GeckoLib mirror...");
             createMirrorForCrow(entity, level);
+        }
+    }
+
+    /**
+     * Ensure a crow has the invisibility effect
+     * Re-applies it if missing (e.g., if cleared by commands)
+     */
+    private static void ensureCrowInvisibility(Entity crow) {
+        if (crow instanceof LivingEntity livingCrow) {
+            // Check if invisibility effect is present
+            if (!livingCrow.hasEffect(MobEffects.INVISIBILITY)) {
+                LOGGER.info("Re-applying invisibility to crow {} (was removed)", crow.getUUID());
+                livingCrow.addEffect(new MobEffectInstance(
+                    MobEffects.INVISIBILITY,
+                    Integer.MAX_VALUE,
+                    0,
+                    false,
+                    false
+                ));
+            }
         }
     }
 

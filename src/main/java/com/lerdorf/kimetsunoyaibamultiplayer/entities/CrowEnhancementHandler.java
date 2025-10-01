@@ -4,6 +4,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -39,6 +41,7 @@ public class CrowEnhancementHandler {
         public int takeoffTicks;
         public Vec3 lastKnownPos;
         public boolean isLanding; // Crow is descending with slow falling
+        public int landingGracePeriod; // Ticks of invulnerability after landing
 
         public CrowFlyingState(UUID crowId, Vec3 startPos) {
             this.crowId = crowId;
@@ -50,6 +53,7 @@ public class CrowEnhancementHandler {
             this.takeoffTicks = 0;
             this.lastKnownPos = startPos;
             this.isLanding = false;
+            this.landingGracePeriod = 0;
         }
 
         public boolean isFlying() {
@@ -60,11 +64,18 @@ public class CrowEnhancementHandler {
             return flyingTimer > 0 || isLanding;
         }
 
+        public boolean isInLandingGracePeriod() {
+            return landingGracePeriod > 0;
+        }
+
         public void tick() {
             flyingTimer--;
             ticksSinceLastDamage++;
             if (!reachedFlightHeight) {
                 takeoffTicks++;
+            }
+            if (landingGracePeriod > 0) {
+                landingGracePeriod--;
             }
         }
     }
@@ -79,9 +90,26 @@ public class CrowEnhancementHandler {
             return;
         }
 
+        // DEBUG: Print detailed damage source information
+        LOGGER.info("===== CROW DAMAGE DEBUG =====");
+        LOGGER.info("Crow: {} (UUID: {})", entity.getName().getString(), entity.getUUID());
+        LOGGER.info("Damage Amount: {}", event.getAmount());
+        LOGGER.info("Damage Source ID: {}", source.getMsgId());
+        LOGGER.info("Damage Type: {}", source.type());
+        Entity directEntity = source.getDirectEntity();
+        Entity causingEntity = source.getEntity();
+        LOGGER.info("Direct Entity: {} ({})",
+            directEntity != null ? directEntity.getName().getString() : "null",
+            directEntity != null ? directEntity.getClass().getSimpleName() : "N/A");
+        LOGGER.info("Causing Entity: {} ({})",
+            causingEntity != null ? causingEntity.getName().getString() : "null",
+            causingEntity != null ? causingEntity.getClass().getSimpleName() : "N/A");
+        LOGGER.info("============================");
+
         // Prevent fall damage for crows ALWAYS (even if not tamed, even if config disabled)
         if (source.getMsgId().equals("fall")) {
             event.setCanceled(true);
+            LOGGER.info("Cancelled fall damage");
             return;
         }
 
@@ -97,23 +125,34 @@ public class CrowEnhancementHandler {
 
         CrowFlyingState state = flyingCrows.get(entity.getUUID());
 
-        LOGGER.info("Crow {} taking damage from {}, flying state: {}",
-            entity.getName().getString(),
-            source.getMsgId(),
-            state != null ? "FLYING (timer=" + state.flyingTimer + ")" : "ON GROUND");
+        LOGGER.info("Crow flying state: {}",
+            state != null ? (state.isFlying() ? "FLYING" : state.isLanding ? "LANDING" : state.isInLandingGracePeriod() ? "LANDING_GRACE" : "GROUNDED") : "GROUNDED");
 
-        // If crow is ALREADY flying, just extend timer and cancel damage
-        if (state != null && state.isFlying()) {
-            state.flyingTimer = Math.max(state.flyingTimer, 100); // At least 5 seconds more
-            state.ticksSinceLastDamage = 0;
-            event.setCanceled(true);
-            LOGGER.info("Crow already flying - extended timer, cancelled damage");
+        // If crow is in landing grace period
+        if (state != null && state.isInLandingGracePeriod()) {
+            // Only allow damage from living entities during grace period
+            if (causingEntity instanceof LivingEntity) {
+                LOGGER.info("Crow in landing grace period - damage from living entity, initiating flight");
+                event.setCanceled(true);
+                initiateCrowFlight(entity);
+            } else {
+                // Cancel non-living entity damage during grace period
+                event.setCanceled(true);
+                LOGGER.info("Crow in landing grace period - cancelled damage from non-living source");
+            }
             return;
         }
 
-        // Crow is on ground - initiate flight
+        // If crow is ALREADY flying, allow damage (crow can be killed while flying)
+        if (state != null && state.isFlying()) {
+            // Don't cancel - let the crow take damage
+            LOGGER.info("Crow is flying - allowing damage (crow can die while flying)");
+            return;
+        }
+
+        // Crow is on ground - initiate flight and cancel this damage
         event.setCanceled(true);
-        LOGGER.info("Crow on ground - initiating flight");
+        LOGGER.info("Crow on ground - initiating flight, cancelled initial damage");
         initiateCrowFlight(entity);
     }
 
@@ -156,12 +195,21 @@ public class CrowEnhancementHandler {
             serverLevel.sendParticles(ParticleTypes.CLOUD,
                     crow.getX(), crow.getY(), crow.getZ(),
                     10, 0.3, 0.1, 0.3, 0.05);
+
+            // Play takeoff sound
+            serverLevel.playSound(null, crow.blockPosition(),
+                SoundEvents.ENDER_DRAGON_FLAP, SoundSource.NEUTRAL, 0.5f, 1.5f);
         }
     }
 
     public static void tick(ServerLevel level) {
         if (!EntityConfig.crowEnhancementsEnabled || !EntityConfig.crowFlyingDodgeEnabled) {
             return;
+        }
+
+        // Periodically check for crows stuck levitating (every 2 seconds)
+        if (level.getGameTime() % 40 == 0) {
+            checkForLevitatingCrows(level);
         }
 
         if (flyingCrows.isEmpty()) {
@@ -207,14 +255,8 @@ public class CrowEnhancementHandler {
             if (state.isFlying()) {
                 updateFlyingCrow(entity, state, (ServerLevel) entity.level());
                 return false; // Keep in map
-            } else {
-                // Flight duration ended, start landing phase
-                if (!state.isLanding) {
-                    state.isLanding = true;
-                    entity.setNoGravity(false); // Re-enable gravity for landing
-                    LOGGER.info("Crow {} starting landing phase", entity.getName().getString());
-                }
-
+            } else if (state.isLanding) {
+                // Flight duration ended, landing phase
                 // Apply slow falling effect during landing
                 if (entity instanceof LivingEntity living) {
                     living.addEffect(new MobEffectInstance(
@@ -226,14 +268,41 @@ public class CrowEnhancementHandler {
                     ));
                 }
 
+                // CRITICAL: Reset fall distance to prevent fall damage
+                // Fall damage is calculated from the fallDistance field, so we clear it
+                entity.fallDistance = 0.0f;
+
                 if (entity.onGround()) {
                     // Crow has landed - trigger landing animation on mirror
                     triggerLandingAnimation(entity.getUUID());
                     LOGGER.info("Crow {} has landed", entity.getName().getString());
+
+                    // Play landing sound
+                    if (entity.level() instanceof ServerLevel serverLevel) {
+                        serverLevel.playSound(null, entity.blockPosition(),
+                            SoundEvents.PARROT_FLY, SoundSource.NEUTRAL, 0.7f, 0.8f);
+                    }
+
                     entity.noPhysics = false; // Reset physics
-                    return true; // Remove from flying map
+
+                    // Set landing grace period (3 seconds = 60 ticks)
+                    state.isLanding = false;
+                    state.landingGracePeriod = 60;
+                    LOGGER.info("Crow entered landing grace period (60 ticks / 3 seconds)");
+
+                    // Keep in map during grace period
+                    return false;
                 }
                 return false; // Keep tracking until it lands
+            } else if (state.isInLandingGracePeriod()) {
+                // Still in grace period, keep tracking
+                return false;
+            } else {
+                // Not flying, not landing, grace period ended - start landing
+                state.isLanding = true;
+                entity.setNoGravity(false); // Re-enable gravity for landing
+                LOGGER.info("Crow {} starting landing phase", entity.getName().getString());
+                return false;
             }
         });
     }
@@ -376,6 +445,58 @@ public class CrowEnhancementHandler {
         }
     }
 
+    /**
+     * Check for crows that are stuck levitating when they shouldn't be
+     */
+    private static void checkForLevitatingCrows(ServerLevel level) {
+        for (Entity entity : level.getAllEntities()) {
+            // Check if this is a kasugai_crow
+            if (!isKasugaiCrow(entity)) {
+                continue;
+            }
+
+            CrowFlyingState state = flyingCrows.get(entity.getUUID());
+
+            // Check if crow is stuck in landing phase for too long (more than 10 seconds)
+            if (state != null && state.isLanding && !entity.onGround()) {
+                // Check how long it's been landing - if flying timer is deeply negative, it's stuck
+                if (state.flyingTimer < -200) { // 200 ticks = 10 seconds past flight end
+                    LOGGER.warn("Crow {} stuck in landing phase for too long! Force removing from flying state", entity.getUUID());
+
+                    // Force remove from flying state
+                    entity.setNoGravity(false);
+                    entity.setDeltaMovement(entity.getDeltaMovement().x, -0.5, entity.getDeltaMovement().z);
+                    entity.fallDistance = 0.0f;
+
+                    // Trigger landing animation on mirror
+                    triggerLandingAnimation(entity.getUUID());
+
+                    // This will be removed on next iteration
+                    return;
+                }
+            }
+
+            // Skip if the crow is currently flying/landing (that's expected)
+            if (state != null && state.isFlyingOrLanding()) {
+                continue;
+            }
+
+            // Check if crow is floating/levitating when it shouldn't be
+            if (entity.isNoGravity() || (!entity.onGround() && Math.abs(entity.getDeltaMovement().y) < 0.001)) {
+                LOGGER.warn("Crow {} is stuck levitating! Resetting gravity and velocity", entity.getUUID());
+
+                // Fix the levitation
+                entity.setNoGravity(false);
+                entity.fallDistance = 0.0f;
+
+                // If floating in air, give it a small downward velocity to land
+                if (!entity.onGround()) {
+                    entity.setDeltaMovement(entity.getDeltaMovement().x, -0.5, entity.getDeltaMovement().z);
+                }
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onEntityTeleport(EntityTeleportEvent event) {
         if (!EntityConfig.crowEnhancementsEnabled || !EntityConfig.crowFlyingDodgeEnabled) {
@@ -384,21 +505,21 @@ public class CrowEnhancementHandler {
 
         Entity entity = event.getEntity();
 
-        // Check if this is a kasugai_crow that's currently flying
+        // Check if this is a kasugai_crow that's currently flying OR landing
         if (!isKasugaiCrow(entity)) {
             return;
         }
 
         CrowFlyingState state = flyingCrows.get(entity.getUUID());
-        if (state == null || !state.isFlying()) {
+        if (state == null || !state.isFlyingOrLanding()) {
             return;
         }
 
-        LOGGER.info("Caught teleport event for flying crow from {} to ({}, {}, {})",
+        LOGGER.info("Caught teleport event for flying/landing crow from {} to ({}, {}, {})",
             entity.position(), event.getTargetX(), event.getTargetY(), event.getTargetZ());
 
-        // ALWAYS CANCEL TELEPORTS WHILE FLYING - This prevents the constant teleporting issue
-        LOGGER.info("Crow is currently flying - CANCELING ALL TELEPORTS to prevent takeoff loop");
+        // ALWAYS CANCEL TELEPORTS WHILE FLYING OR LANDING - This prevents the teleport-to-ground issue
+        LOGGER.info("Crow is currently flying/landing - CANCELING ALL TELEPORTS");
         event.setCanceled(true);
     }
 }

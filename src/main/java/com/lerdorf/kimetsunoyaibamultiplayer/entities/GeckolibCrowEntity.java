@@ -10,6 +10,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -57,6 +58,10 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
     // Grace period before giving up on finding original crow (100 ticks = 5 seconds)
     private int ticksAlive = 0;
     private static final int GRACE_PERIOD_TICKS = 100;
+
+    // Death animation timer (2 seconds = 40 ticks to match animation length)
+    private int deathAnimationTimer = 0;
+    private static final int DEATH_ANIMATION_DURATION = 40;
 
     // Idle animation system
     private int ticksSinceLastIdleAction = 0;
@@ -211,6 +216,11 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
         this.setNoGravity(originalCrow.isNoGravity());
         this.setOnGround(originalCrow.onGround());
 
+        // Sync health from original crow
+        if (originalCrow instanceof LivingEntity livingOriginal) {
+            this.setHealth(livingOriginal.getHealth());
+        }
+
         // Update flying state
         UUID originalCrowUUID = getOriginalCrowUUID();
         boolean isFlying = originalCrowUUID != null && CrowEnhancementHandler.isCrowFlying(originalCrowUUID);
@@ -226,7 +236,25 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
 
         // Check if dead
         if (originalCrow.isRemoved() || !originalCrow.isAlive()) {
-            this.entityData.set(IS_DEAD, true);
+            if (!this.entityData.get(IS_DEAD)) {
+                // Just died, trigger death animation
+                this.entityData.set(IS_DEAD, true);
+                deathAnimationTimer = DEATH_ANIMATION_DURATION;
+                LOGGER.info("Mirror crow starting death animation (will remove in {} ticks)", DEATH_ANIMATION_DURATION);
+            }
+        }
+
+        // Handle death animation timer
+        if (this.entityData.get(IS_DEAD)) {
+            if (deathAnimationTimer > 0) {
+                deathAnimationTimer--;
+                if (deathAnimationTimer == 0) {
+                    // Death animation finished, remove this mirror
+                    LOGGER.info("Mirror crow death animation finished, removing entity");
+                    this.discard();
+                    return;
+                }
+            }
         }
 
         // Update idle action timer
@@ -312,6 +340,7 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
         if (originalCrowUUID != null) {
             tag.putUUID("OriginalCrowUUID", originalCrowUUID);
         }
+        tag.putInt("DeathAnimationTimer", deathAnimationTimer);
     }
 
     @Override
@@ -319,6 +348,9 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
         super.readAdditionalSaveData(tag);
         if (tag.hasUUID("OriginalCrowUUID")) {
             setOriginalCrow(tag.getUUID("OriginalCrowUUID"));
+        }
+        if (tag.contains("DeathAnimationTimer")) {
+            deathAnimationTimer = tag.getInt("DeathAnimationTimer");
         }
     }
 

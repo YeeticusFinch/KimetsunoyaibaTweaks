@@ -3,7 +3,7 @@
 # Auto-update mods script for Kimetsunoyaiba Multiplayer
 # Automatically detects the correct mod version and copies to Minecraft instances
 
-set -e  # Exit on any error
+# set -e  # Exit on any error
 
 # Colors for output
 RED='\033[0;31m'
@@ -68,10 +68,14 @@ print_status "Found jar file: $JAR_FILE"
 
 # Define Minecraft instance paths
 INSTANCES=(
-    "C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite(2)/minecraft/mods/"
-    "C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite(1)/minecraft/mods/"
-    "C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite/minecraft/mods/"
+    'C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite(2)/minecraft/mods/'
+    'C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite(1)/minecraft/mods/'
+    'C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite/minecraft/mods/'
 )
+
+for i in "${INSTANCES[@]}"; do
+    echo "Instance: $i"
+done
 
 # Function to update a single instance
 update_instance() {
@@ -80,23 +84,27 @@ update_instance() {
 
     if [ ! -d "$instance_path" ]; then
         print_warning "Instance path not found: $instance_path"
-        return 1
-    fi
-
-    print_status "Updating instance: $instance_name"
-
-    # Remove old versions of the mod
-    old_files_count=$(ls "$instance_path"${MOD_ID}-*.jar 2>/dev/null | wc -l || echo "0")
-    if [ "$old_files_count" -gt 0 ]; then
-        print_status "Removing $old_files_count old mod file(s)"
-        rm -f "$instance_path"${MOD_ID}-*.jar
-    fi
-
-    # Copy new version
-    cp "$JAR_FILE" "$instance_path"
-    print_status "Copied $JAR_FILE to $instance_name"
-
-    return 0
+    else
+	    
+	
+	    print_status "Updating instance: $instance_name"
+	
+	    # Remove old versions of the mod
+	    shopt -s nullglob
+		old_files=("$instance_path"${MOD_ID}-*.jar)
+		old_files_count=${#old_files[@]}
+		if [ "$old_files_count" -gt 0 ]; then
+		    print_status "Removing $old_files_count old mod file(s)"
+		    rm -f "${old_files[@]}"
+		fi
+		shopt -u nullglob
+	
+	    # Copy new version
+	    cp "$JAR_FILE" "$instance_path"
+	    print_status "Copied $JAR_FILE to $instance_name"
+	
+	    return 0
+	fi
 }
 
 # Update all instances
@@ -104,6 +112,7 @@ successful_updates=0
 total_instances=${#INSTANCES[@]}
 
 for instance_path in "${INSTANCES[@]}"; do
+    print_status "Updating instance at $instance_path"
     if update_instance "$instance_path"; then
         ((successful_updates++))
     fi

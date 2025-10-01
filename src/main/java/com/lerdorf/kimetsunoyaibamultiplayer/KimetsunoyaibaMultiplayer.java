@@ -16,6 +16,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
+import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
@@ -59,6 +60,9 @@ public class KimetsunoyaibaMultiplayer
 
         // Register entities
         ModEntities.register(modEventBus);
+
+        // Register sounds
+        ModSounds.register(modEventBus);
 
         // Register config event handlers on the mod event bus
         modEventBus.register(Config.class);
