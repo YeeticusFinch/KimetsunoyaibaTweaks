@@ -43,13 +43,26 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
         SynchedEntityData.defineId(GeckolibCrowEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> IS_DEAD =
         SynchedEntityData.defineId(GeckolibCrowEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_LANDING =
+        SynchedEntityData.defineId(GeckolibCrowEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<java.util.Optional<UUID>> ORIGINAL_CROW_UUID =
+        SynchedEntityData.defineId(GeckolibCrowEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
     // Reference to the original kasugai_crow entity this mirrors
-    private UUID originalCrowUUID;
     private Entity originalCrowCache;
 
     // Hurt flash timer
     private int hurtFlashTimer = 0;
+
+    // Grace period before giving up on finding original crow (100 ticks = 5 seconds)
+    private int ticksAlive = 0;
+    private static final int GRACE_PERIOD_TICKS = 100;
+
+    // Idle animation system
+    private int ticksSinceLastIdleAction = 0;
+    private static final int IDLE_ACTION_COOLDOWN = 200; // 10 seconds
+    private static final double IDLE_ACTION_CHANCE = 0.005; // 0.5% chance per tick when idle (avg 10 seconds between checks)
+    private String currentIdleAnimation = null;
 
     public GeckolibCrowEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -74,14 +87,30 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
         this.entityData.define(IS_FLYING, false);
         this.entityData.define(IS_HURT, false);
         this.entityData.define(IS_DEAD, false);
+        this.entityData.define(IS_LANDING, false);
+        this.entityData.define(ORIGINAL_CROW_UUID, java.util.Optional.empty());
     }
 
     /**
      * Set the UUID of the original crow this entity should mirror
      */
     public void setOriginalCrow(UUID crowUUID) {
-        this.originalCrowUUID = crowUUID;
+        this.entityData.set(ORIGINAL_CROW_UUID, java.util.Optional.ofNullable(crowUUID));
         this.originalCrowCache = null; // Clear cache
+    }
+
+    /**
+     * Get the UUID of the original crow
+     */
+    public UUID getOriginalCrowUUID() {
+        return this.entityData.get(ORIGINAL_CROW_UUID).orElse(null);
+    }
+
+    /**
+     * Trigger landing animation
+     */
+    public void triggerLanding() {
+        this.entityData.set(IS_LANDING, true);
     }
 
     /**
@@ -89,7 +118,12 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
      * Works on both client and server side
      */
     public Entity getOriginalCrow() {
+        UUID originalCrowUUID = getOriginalCrowUUID();
+
         if (originalCrowUUID == null) {
+            if (ticksAlive % 20 == 0) {
+                LOGGER.error("Mirror crow {} has null originalCrowUUID!", this.getUUID());
+            }
             return null;
         }
 
@@ -108,8 +142,13 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
                 if (this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
                     Entity entity = serverLevel.getEntity(originalCrowUUID);
                     if (entity != null) {
+                        if (ticksAlive % 20 == 0) {
+                            LOGGER.info("Found original crow via ServerLevel.getEntity(): {}", entity.getName().getString());
+                        }
                         originalCrowCache = entity;
                         return entity;
+                    } else if (ticksAlive % 20 == 0) {
+                        LOGGER.warn("ServerLevel.getEntity() returned null for UUID: {}", originalCrowUUID);
                     }
                 }
             } else {
@@ -122,6 +161,8 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
                     }
                 }
             }
+        } else if (ticksAlive % 20 == 0) {
+            LOGGER.warn("Mirror crow level is null!");
         }
 
         return null;
@@ -130,13 +171,34 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
     @Override
     public void tick() {
         super.tick();
+        ticksAlive++;
 
         Entity originalCrow = getOriginalCrow();
 
         // If original crow is gone, remove this entity
+        // BUT give it a grace period to find the original crow (handles entity loading delays)
         if (originalCrow == null || !originalCrow.isAlive()) {
-            this.discard();
-            return;
+            UUID originalCrowUUID = getOriginalCrowUUID(); // Get UUID from synced data, not from null entity
+            if (ticksAlive < GRACE_PERIOD_TICKS) {
+                // Still in grace period - don't remove yet
+                if (ticksAlive % 20 == 0) { // Log every second
+                    LOGGER.warn("Mirror crow {} can't find original crow {} yet (tick {}), waiting...",
+                        this.getUUID(), originalCrowUUID, ticksAlive);
+                }
+                return; // Don't do anything else this tick, just wait
+            } else {
+                // Grace period expired
+                LOGGER.warn("Mirror crow {} giving up on finding original crow {} after {} ticks",
+                    this.getUUID(), originalCrowUUID, ticksAlive);
+                this.discard();
+                return;
+            }
+        }
+
+        // Found the original crow! Log it once
+        if (ticksAlive == 1 || (ticksAlive < GRACE_PERIOD_TICKS && ticksAlive % 20 == 0)) {
+            LOGGER.info("Mirror crow {} successfully linked to original crow {} at tick {}",
+                this.getUUID(), originalCrow.getUUID(), ticksAlive);
         }
 
         // Sync position, rotation, and velocity from original crow
@@ -150,7 +212,8 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
         this.setOnGround(originalCrow.onGround());
 
         // Update flying state
-        boolean isFlying = CrowEnhancementHandler.isCrowFlying(originalCrowUUID);
+        UUID originalCrowUUID = getOriginalCrowUUID();
+        boolean isFlying = originalCrowUUID != null && CrowEnhancementHandler.isCrowFlying(originalCrowUUID);
         this.entityData.set(IS_FLYING, isFlying);
 
         // Update hurt flash timer
@@ -165,6 +228,9 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
         if (originalCrow.isRemoved() || !originalCrow.isAlive()) {
             this.entityData.set(IS_DEAD, true);
         }
+
+        // Update idle action timer
+        ticksSinceLastIdleAction++;
     }
 
     /**
@@ -184,6 +250,11 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        // Never take fall damage
+        if (source.getMsgId().equals("fall")) {
+            return false;
+        }
+
         // Forward damage to original crow
         Entity originalCrow = getOriginalCrow();
         if (originalCrow != null) {
@@ -237,6 +308,7 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        UUID originalCrowUUID = getOriginalCrowUUID();
         if (originalCrowUUID != null) {
             tag.putUUID("OriginalCrowUUID", originalCrowUUID);
         }
@@ -246,7 +318,7 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.hasUUID("OriginalCrowUUID")) {
-            this.originalCrowUUID = tag.getUUID("OriginalCrowUUID");
+            setOriginalCrow(tag.getUUID("OriginalCrowUUID"));
         }
     }
 
@@ -265,6 +337,22 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
             return PlayState.CONTINUE;
         }
 
+        // Check landing animation
+        if (this.entityData.get(IS_LANDING)) {
+            if (this.onGround()) {
+                // Play landing animation once, then clear flag
+                event.getController().setAnimation(RawAnimation.begin()
+                    .then("kimetsunoyaibamultiplayer.crow.landing", Animation.LoopType.PLAY_ONCE)
+                    .thenLoop("kimetsunoyaibamultiplayer.crow.idle"));
+                this.entityData.set(IS_LANDING, false);
+            } else {
+                // Still in air, keep flying animation
+                event.getController().setAnimation(RawAnimation.begin()
+                    .thenLoop("kimetsunoyaibamultiplayer.crow.flying"));
+            }
+            return PlayState.CONTINUE;
+        }
+
         // Check if hurt
         if (this.entityData.get(IS_HURT)) {
             // Don't change animation, just apply red tint in renderer
@@ -277,14 +365,44 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
         boolean isMovingOnGround = horizontalSpeed > 0.01 && this.onGround();
 
         if (isFlying) {
+            currentIdleAnimation = null; // Clear idle animation when not idle
             event.getController().setAnimation(RawAnimation.begin()
                 .thenLoop("kimetsunoyaibamultiplayer.crow.flying"));
         } else if (isMovingOnGround) {
+            currentIdleAnimation = null; // Clear idle animation when not idle
             event.getController().setAnimation(RawAnimation.begin()
                 .thenLoop("kimetsunoyaibamultiplayer.crow.walk"));
         } else {
-            event.getController().setAnimation(RawAnimation.begin()
-                .thenLoop("kimetsunoyaibamultiplayer.crow.idle"));
+            // Crow is idle - check if we should play an idle action animation
+            if (currentIdleAnimation != null) {
+                // Currently playing an idle action - check if it's finished
+                if (event.getController().isPlayingTriggeredAnimation()) {
+                    // Still playing, keep it
+                    return PlayState.CONTINUE;
+                } else {
+                    // Finished, reset
+                    currentIdleAnimation = null;
+                    ticksSinceLastIdleAction = 0;
+                }
+            } else if (ticksSinceLastIdleAction >= IDLE_ACTION_COOLDOWN &&
+                       this.random.nextDouble() < IDLE_ACTION_CHANCE) {
+                // Cooldown passed and random chance hit - play a random idle action
+                String[] idleActions = {
+                    "kimetsunoyaibamultiplayer.crow.idle_action",
+                    "kimetsunoyaibamultiplayer.crow.idle_action2",
+                    "kimetsunoyaibamultiplayer.crow.idle_action3",
+                    "kimetsunoyaibamultiplayer.crow.idle_action4"
+                };
+                currentIdleAnimation = idleActions[this.random.nextInt(idleActions.length)];
+
+                event.getController().setAnimation(RawAnimation.begin()
+                    .then(currentIdleAnimation, Animation.LoopType.PLAY_ONCE)
+                    .thenLoop("kimetsunoyaibamultiplayer.crow.idle"));
+            } else {
+                // Just play regular idle
+                event.getController().setAnimation(RawAnimation.begin()
+                    .thenLoop("kimetsunoyaibamultiplayer.crow.idle"));
+            }
         }
 
         return PlayState.CONTINUE;
@@ -306,5 +424,9 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
 
     public boolean isDead() {
         return this.entityData.get(IS_DEAD);
+    }
+
+    public boolean isLanding() {
+        return this.entityData.get(IS_LANDING);
     }
 }

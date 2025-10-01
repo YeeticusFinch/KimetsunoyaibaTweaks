@@ -5,7 +5,10 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.phys.Vec3;
@@ -35,6 +38,7 @@ public class CrowEnhancementHandler {
         public boolean reachedFlightHeight;
         public int takeoffTicks;
         public Vec3 lastKnownPos;
+        public boolean isLanding; // Crow is descending with slow falling
 
         public CrowFlyingState(UUID crowId, Vec3 startPos) {
             this.crowId = crowId;
@@ -45,10 +49,15 @@ public class CrowEnhancementHandler {
             this.reachedFlightHeight = false;
             this.takeoffTicks = 0;
             this.lastKnownPos = startPos;
+            this.isLanding = false;
         }
 
         public boolean isFlying() {
             return flyingTimer > 0;
+        }
+
+        public boolean isFlyingOrLanding() {
+            return flyingTimer > 0 || isLanding;
         }
 
         public void tick() {
@@ -199,10 +208,27 @@ public class CrowEnhancementHandler {
                 updateFlyingCrow(entity, state, (ServerLevel) entity.level());
                 return false; // Keep in map
             } else {
-                // Flight duration ended, let crow land naturally
-                entity.setNoGravity(false); // Re-enable gravity for landing
+                // Flight duration ended, start landing phase
+                if (!state.isLanding) {
+                    state.isLanding = true;
+                    entity.setNoGravity(false); // Re-enable gravity for landing
+                    LOGGER.info("Crow {} starting landing phase", entity.getName().getString());
+                }
+
+                // Apply slow falling effect during landing
+                if (entity instanceof LivingEntity living) {
+                    living.addEffect(new MobEffectInstance(
+                        MobEffects.SLOW_FALLING,
+                        5, // 5 ticks duration (re-applied every tick)
+                        0,
+                        false,
+                        false
+                    ));
+                }
 
                 if (entity.onGround()) {
+                    // Crow has landed - trigger landing animation on mirror
+                    triggerLandingAnimation(entity.getUUID());
                     LOGGER.info("Crow {} has landed", entity.getName().getString());
                     entity.noPhysics = false; // Reset physics
                     return true; // Remove from flying map
@@ -312,12 +338,8 @@ public class CrowEnhancementHandler {
             mob.yBodyRot = yaw;
         }
 
-        // Wing flap particles occasionally during flight (not constantly)
-        if (state.flyingTimer % 40 == 0) { // Every 2 seconds instead of every 5 ticks
-            level.sendParticles(ParticleTypes.CLOUD,
-                    crow.getX(), crow.getY(), crow.getZ(),
-                    2, 0.3, 0.1, 0.3, 0.02);
-        }
+        // Don't spawn wing flap particles during circular flight
+        // (removed to reduce visual clutter)
 
         // Disable crow AI goals while flying to prevent it trying to pathfind back
         if (crow instanceof Mob mob) {
@@ -339,7 +361,19 @@ public class CrowEnhancementHandler {
 
     public static boolean isCrowFlying(UUID crowId) {
         CrowFlyingState state = flyingCrows.get(crowId);
-        return state != null && state.isFlying();
+        return state != null && state.isFlyingOrLanding();
+    }
+
+    private static void triggerLandingAnimation(UUID crowId) {
+        // Find the mirror crow and trigger landing animation
+        for (com.lerdorf.kimetsunoyaibamultiplayer.entities.GeckolibCrowEntity mirror :
+             com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowMirrorHandler.getAllMirrors()) {
+            if (mirror.getOriginalCrowUUID() != null &&
+                mirror.getOriginalCrowUUID().equals(crowId)) {
+                mirror.triggerLanding();
+                break;
+            }
+        }
     }
 
     @SubscribeEvent

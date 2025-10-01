@@ -46,7 +46,19 @@ public class CrowMirrorHandler {
 
         // Check if we already have a mirror for this crow
         if (CROW_MIRRORS.containsKey(entity.getUUID())) {
-            return; // Already mirrored
+            // Check if the mirror still exists
+            GeckolibCrowEntity existingMirror = CROW_MIRRORS.get(entity.getUUID());
+            if (existingMirror != null && existingMirror.isAlive() && !existingMirror.isRemoved()) {
+                LOGGER.info("Crow {} already has a valid mirror, skipping", entity.getUUID());
+                return; // Already has a valid mirror
+            } else {
+                // Mirror is gone or invalid, remove from map and create new one
+                LOGGER.warn("Crow {} had invalid mirror, removing and recreating", entity.getUUID());
+                if (existingMirror != null && !existingMirror.isRemoved()) {
+                    existingMirror.discard();
+                }
+                CROW_MIRRORS.remove(entity.getUUID());
+            }
         }
 
         LOGGER.info("Kasugai crow spawned! Creating GeckoLib mirror entity...");
@@ -112,6 +124,13 @@ public class CrowMirrorHandler {
      */
     public static GeckolibCrowEntity getMirror(UUID originalCrowUUID) {
         return CROW_MIRRORS.get(originalCrowUUID);
+    }
+
+    /**
+     * Get all mirror crows
+     */
+    public static java.util.Collection<GeckolibCrowEntity> getAllMirrors() {
+        return CROW_MIRRORS.values();
     }
 
     /**
