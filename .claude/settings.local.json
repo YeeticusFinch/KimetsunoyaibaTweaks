@@ -6,7 +6,8 @@
       "Bash(sed:*)",
       "Bash(timeout:*)",
       "Read(//c/Users/carlf/eclipse-workspace-2/**)",
-      "Bash(jar:*)"
+      "Bash(jar:*)",
+      "Bash(\"./gradlew.bat\" build --no-daemon)"
     ],
     "deny": [],
     "ask": []

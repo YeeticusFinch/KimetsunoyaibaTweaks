@@ -1,0 +1,396 @@
+---- Minecraft Crash Report ----
+
+// Hi. I'm Connector, and I'm a crashaholic
+=========================
+SINYTRA CONNECTOR IS PRESENT!
+Please verify issues are not caused by Connector before reporting them to mod authors.
+If you're unsure, file a report on Connector's issue tracker found at https://github.com/Sinytra/Connector/issues.
+=========================
+
+// Hi. I'm Minecraft, and I'm a crashaholic.
+
+Time: 2025-10-01 09:47:18
+Description: Unexpected error
+
+java.util.ConcurrentModificationException: Async entity unload
+	at net.minecraft.server.level.ChunkMap.handler$zdd000$c2me_fixes_general_threading_issues$preventAsyncEntityUnload(ChunkMap.java:3889) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:surveyor.mixins.json:MixinThreadedAnvilChunkStorage from mod surveyor,pl:mixin:APP:fabric-networking-api-v1.mixins.json:accessor.ThreadedAnvilChunkStorageAccessor from mod fabric_networking_api_v1,pl:mixin:APP:fabric-lifecycle-events-v1.mixins.json:ThreadedAnvilChunkStorageMixin from mod fabric_lifecycle_events_v1,pl:mixin:APP:c2me-fixes-worldgen-threading-issues.mixins.json:threading.checks.MixinThreadedAnvilChunkStorage from mod c2me_fixes_worldgen_threading_issues,pl:mixin:APP:c2me-fixes-general-threading-issues.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_fixes_general_threading_issues,pl:mixin:APP:c2me-fixes-general-threading-issues.mixins.json:asynccatchers.MixinThreadedAnvilChunkStorage from mod c2me_fixes_general_threading_issues,pl:mixin:APP:c2me-base.mixins.json:access.IThreadedAnvilChunkStorage from mod c2me_base,pl:mixin:APP:c2me-base.mixins.json:scheduler.MixinThreadedAnvilChunkStorage from mod c2me_base,pl:mixin:APP:c2me-threading-lighting.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_threading_lighting,pl:mixin:APP:c2me-threading-chunkio.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_threading_chunkio,pl:mixin:APP:c2me-opts-scheduling.mixins.json:fix_unload.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:general_overheads.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:idle_tasks.autosave.disable_vanilla_mid_tick_autosave.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:idle_tasks.autosave.enhanced_autosave.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:task_scheduling.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-notickvd.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_notickvd,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.server.level.ChunkMap.m_140331_(ChunkMap.java) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:surveyor.mixins.json:MixinThreadedAnvilChunkStorage from mod surveyor,pl:mixin:APP:fabric-networking-api-v1.mixins.json:accessor.ThreadedAnvilChunkStorageAccessor from mod fabric_networking_api_v1,pl:mixin:APP:fabric-lifecycle-events-v1.mixins.json:ThreadedAnvilChunkStorageMixin from mod fabric_lifecycle_events_v1,pl:mixin:APP:c2me-fixes-worldgen-threading-issues.mixins.json:threading.checks.MixinThreadedAnvilChunkStorage from mod c2me_fixes_worldgen_threading_issues,pl:mixin:APP:c2me-fixes-general-threading-issues.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_fixes_general_threading_issues,pl:mixin:APP:c2me-fixes-general-threading-issues.mixins.json:asynccatchers.MixinThreadedAnvilChunkStorage from mod c2me_fixes_general_threading_issues,pl:mixin:APP:c2me-base.mixins.json:access.IThreadedAnvilChunkStorage from mod c2me_base,pl:mixin:APP:c2me-base.mixins.json:scheduler.MixinThreadedAnvilChunkStorage from mod c2me_base,pl:mixin:APP:c2me-threading-lighting.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_threading_lighting,pl:mixin:APP:c2me-threading-chunkio.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_threading_chunkio,pl:mixin:APP:c2me-opts-scheduling.mixins.json:fix_unload.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:general_overheads.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:idle_tasks.autosave.disable_vanilla_mid_tick_autosave.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:idle_tasks.autosave.enhanced_autosave.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:task_scheduling.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-notickvd.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_notickvd,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.server.level.ServerChunkCache.m_8443_(ServerChunkCache.java:461) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:c2me-fixes-general-threading-issues.mixins.json:asynccatchers.MixinServerChunkManager from mod c2me_fixes_general_threading_issues,pl:mixin:APP:c2me-base.mixins.json:access.IServerChunkManager from mod c2me_base,pl:mixin:APP:c2me-base.mixins.json:priority.MixinServerChunkManager from mod c2me_base,pl:mixin:APP:c2me-opts-allocs.mixins.json:asm.ASMTargets from mod c2me_opts_allocs,pl:mixin:APP:c2me-opts-chunk-access.mixins.json:asm.ASMTargets from mod c2me_opts_chunk_access,pl:mixin:APP:c2me-opts-chunk-access.mixins.json:async_chunk_request.MixinServerChunkManager from mod c2me_opts_chunk_access,pl:mixin:APP:c2me-opts-scheduling.mixins.json:mid_tick_chunk_tasks.MixinServerChunkManager from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:task_scheduling.MixinServerChunkManager from mod c2me_opts_scheduling,pl:mixin:APP:c2me-notickvd.mixins.json:MixinServerChunkManager from mod c2me_notickvd,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.server.level.ServerLevel$EntityCallbacks.m_141981_(ServerLevel.java:1531) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:connector_pre_launch:A,re:classloading,pl:mixin:APP:fabric-lifecycle-events-v1.mixins.json:ServerWorldServerEntityHandlerMixin from mod fabric_lifecycle_events_v1,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.server.level.ServerLevel$EntityCallbacks.m_141981_(ServerLevel.java:1489) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:connector_pre_launch:A,re:classloading,pl:mixin:APP:fabric-lifecycle-events-v1.mixins.json:ServerWorldServerEntityHandlerMixin from mod fabric_lifecycle_events_v1,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.world.level.entity.PersistentEntitySectionManager.m_157580_(PersistentEntitySectionManager.java:140) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:connector_pre_launch:A,re:classloading,pl:mixin:APP:c2me-base.mixins.json:access.IServerEntityManager from mod c2me_base,pl:mixin:APP:c2me-opts-scheduling.mixins.json:shutdown.MixinServerEntityManager from mod c2me_opts_scheduling,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.world.level.entity.PersistentEntitySectionManager$Callback.m_142472_(PersistentEntitySectionManager.java:439) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:classloading,pl:connector_pre_launch:A}
+	at net.minecraft.world.entity.Entity.m_142467_(Entity.java:3367) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:computing_frames,pl:accesstransformer:B,pl:connector_pre_launch:A,re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:mixins.replay.replaymod.json:entity_tracking.Mixin_EntityExt from mod reforgedplaymod,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:AttachmentTargetsMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:EntityMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:entity_model_features.mixins.json:MixinEntity from mod entity_model_features,pl:mixin:APP:entity_texture_features.mixins.json:entity.misc.MixinEntity from mod entity_texture_features,pl:mixin:APP:fabric-entity-events-v1.mixins.json:EntityMixin from mod fabric_entity_events_v1,pl:mixin:APP:transition.mixins.json:ExtensionMixin from mod transition,pl:mixin:APP:kubejs-forge.mixins.json:EntityMixin from mod kubejs,pl:mixin:APP:kubejs-common.mixins.json:EntityMixin from mod kubejs,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.world.entity.Entity.m_142687_(Entity.java:354) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:computing_frames,pl:accesstransformer:B,pl:connector_pre_launch:A,re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:mixins.replay.replaymod.json:entity_tracking.Mixin_EntityExt from mod reforgedplaymod,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:AttachmentTargetsMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:EntityMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:entity_model_features.mixins.json:MixinEntity from mod entity_model_features,pl:mixin:APP:entity_texture_features.mixins.json:entity.misc.MixinEntity from mod entity_texture_features,pl:mixin:APP:fabric-entity-events-v1.mixins.json:EntityMixin from mod fabric_entity_events_v1,pl:mixin:APP:transition.mixins.json:ExtensionMixin from mod transition,pl:mixin:APP:kubejs-forge.mixins.json:EntityMixin from mod kubejs,pl:mixin:APP:kubejs-common.mixins.json:EntityMixin from mod kubejs,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.world.entity.LivingEntity.m_142687_(LivingEntity.java:664) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,xf:fml:connectormod:insertInjectionTarget,xf:fml:connectormod:updateItemUseStartTreshold,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,xf:fml:connectormod:insertInjectionTarget,xf:fml:connectormod:updateItemUseStartTreshold,pl:mixin:APP:mobbattle.mixins.json:LivingMixin from mod mobbattle,pl:mixin:APP:citadel.mixins.json:LivingEntityMixin from mod citadel,pl:mixin:APP:mixins.recording.replaymod.json:EntityLivingBaseAccessor from mod reforgedplaymod,pl:mixin:APP:mixins.replay.replaymod.json:EntityLivingBaseAccessor from mod reforgedplaymod,pl:mixin:APP:fabric-entity-events-v1.mixins.json:LivingEntityMixin from mod fabric_entity_events_v1,pl:mixin:APP:fabric-entity-events-v1.mixins.json:elytra.LivingEntityMixin from mod fabric_entity_events_v1,pl:mixin:APP:fabric-lifecycle-events-v1.mixins.json:LivingEntityMixin from mod fabric_lifecycle_events_v1,pl:mixin:APP:kubejs-common.mixins.json:LivingEntityMixin from mod kubejs,pl:mixin:APP:notenoughanimations.mixins.json:LivingEntityMixin from mod notenoughanimations,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.world.entity.Entity.m_146870_(Entity.java:332) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:computing_frames,pl:accesstransformer:B,pl:connector_pre_launch:A,re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:mixins.replay.replaymod.json:entity_tracking.Mixin_EntityExt from mod reforgedplaymod,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:AttachmentTargetsMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:EntityMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:entity_model_features.mixins.json:MixinEntity from mod entity_model_features,pl:mixin:APP:entity_texture_features.mixins.json:entity.misc.MixinEntity from mod entity_texture_features,pl:mixin:APP:fabric-entity-events-v1.mixins.json:EntityMixin from mod fabric_entity_events_v1,pl:mixin:APP:transition.mixins.json:ExtensionMixin from mod transition,pl:mixin:APP:kubejs-forge.mixins.json:EntityMixin from mod kubejs,pl:mixin:APP:kubejs-common.mixins.json:EntityMixin from mod kubejs,pl:mixin:A,pl:connector_pre_launch:A}
+	at com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowMirrorHandler.clearAllMirrors(CrowMirrorHandler.java:196) ~[kimetsunoyaibamultiplayer-1.3.92.jar%23232!/:1.3.92] {re:classloading}
+	at com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer$ClientForgeEvents.onPlayerLoggedOut(KimetsunoyaibaMultiplayer.java:192) ~[kimetsunoyaibamultiplayer-1.3.92.jar%23232!/:1.3.92] {re:classloading}
+	at com.lerdorf.kimetsunoyaibamultiplayer.__ClientForgeEvents_onPlayerLoggedOut_ClientTickEvent.invoke(.dynamic) ~[kimetsunoyaibamultiplayer-1.3.92.jar%23232!/:1.3.92] {re:classloading,pl:eventbus:B}
+	at net.minecraftforge.eventbus.ASMEventHandler.invoke(ASMEventHandler.java:73) ~[eventbus-6.0.5.jar%23137!/:?] {}
+	at net.minecraftforge.eventbus.EventBus.post(EventBus.java:315) ~[eventbus-6.0.5.jar%23137!/:?] {}
+	at net.minecraftforge.eventbus.EventBus.post(EventBus.java:296) ~[eventbus-6.0.5.jar%23137!/:?] {}
+	at net.minecraftforge.event.ForgeEventFactory.onPostClientTick(ForgeEventFactory.java:965) ~[forge-1.20.1-47.4.0-universal.jar%23255!/:?] {re:classloading}
+	at net.minecraft.client.Minecraft.m_91398_(Minecraft.java:1875) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,pl:runtimedistcleaner:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.m_91383_(Minecraft.java:1112) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,pl:runtimedistcleaner:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.m_91374_(Minecraft.java:718) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,pl:runtimedistcleaner:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.main(Main.java:218) ~[minecraft-1.20.1-client.jar:?] {re:classloading,pl:connector_pre_launch:A,pl:runtimedistcleaner:A}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:111) ~[fmlloader-1.20.1-47.4.0.jar:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.clientService(CommonLaunchHandler.java:99) ~[fmlloader-1.20.1-47.4.0.jar:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$makeService$0(CommonClientLaunchHandler.java:25) ~[fmlloader-1.20.1-47.4.0.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:108) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:78) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?] {}
+	at io.github.zekerzhayard.forgewrapper.installer.Main.main(Main.java:69) ~[?:?] {}
+	at org.prismlauncher.launcher.impl.StandardLauncher.launch(StandardLauncher.java:105) ~[?:?] {}
+	at org.prismlauncher.EntryPoint.listen(EntryPoint.java:129) ~[?:?] {}
+	at org.prismlauncher.EntryPoint.main(EntryPoint.java:70) ~[?:?] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Suspected Mods: 
+	Connectored Concurrent Chunk Management Engine (Fixes/General/Threading Issues) (c2me_fixes_general_threading_issues), Version: 0.2.0-c3me-alpha.11.61
+		Mixin class: com.ishland.c2me.fixes.general.threading_issues.mixin.asynccatchers.MixinThreadedAnvilChunkStorage
+		Target: net.minecraft.server.level.ChunkMap
+		at TRANSFORMER/minecraft@1.20.1/net.minecraft.server.level.ChunkMap.handler$zdd000$c2me_fixes_general_threading_issues$preventAsyncEntityUnload(ChunkMap.java:3889)
+
+	Kimetsunoyaiba Tweaks (kimetsunoyaibamultiplayer), Version: 1.3.92
+		at TRANSFORMER/kimetsunoyaibamultiplayer@1.3.92/com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowMirrorHandler.clearAllMirrors(CrowMirrorHandler.java:196)
+Stacktrace:
+	at net.minecraft.server.level.ChunkMap.handler$zdd000$c2me_fixes_general_threading_issues$preventAsyncEntityUnload(ChunkMap.java:3889) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:surveyor.mixins.json:MixinThreadedAnvilChunkStorage from mod surveyor,pl:mixin:APP:fabric-networking-api-v1.mixins.json:accessor.ThreadedAnvilChunkStorageAccessor from mod fabric_networking_api_v1,pl:mixin:APP:fabric-lifecycle-events-v1.mixins.json:ThreadedAnvilChunkStorageMixin from mod fabric_lifecycle_events_v1,pl:mixin:APP:c2me-fixes-worldgen-threading-issues.mixins.json:threading.checks.MixinThreadedAnvilChunkStorage from mod c2me_fixes_worldgen_threading_issues,pl:mixin:APP:c2me-fixes-general-threading-issues.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_fixes_general_threading_issues,pl:mixin:APP:c2me-fixes-general-threading-issues.mixins.json:asynccatchers.MixinThreadedAnvilChunkStorage from mod c2me_fixes_general_threading_issues,pl:mixin:APP:c2me-base.mixins.json:access.IThreadedAnvilChunkStorage from mod c2me_base,pl:mixin:APP:c2me-base.mixins.json:scheduler.MixinThreadedAnvilChunkStorage from mod c2me_base,pl:mixin:APP:c2me-threading-lighting.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_threading_lighting,pl:mixin:APP:c2me-threading-chunkio.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_threading_chunkio,pl:mixin:APP:c2me-opts-scheduling.mixins.json:fix_unload.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:general_overheads.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:idle_tasks.autosave.disable_vanilla_mid_tick_autosave.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:idle_tasks.autosave.enhanced_autosave.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:task_scheduling.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-notickvd.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_notickvd,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.server.level.ChunkMap.m_140331_(ChunkMap.java) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:surveyor.mixins.json:MixinThreadedAnvilChunkStorage from mod surveyor,pl:mixin:APP:fabric-networking-api-v1.mixins.json:accessor.ThreadedAnvilChunkStorageAccessor from mod fabric_networking_api_v1,pl:mixin:APP:fabric-lifecycle-events-v1.mixins.json:ThreadedAnvilChunkStorageMixin from mod fabric_lifecycle_events_v1,pl:mixin:APP:c2me-fixes-worldgen-threading-issues.mixins.json:threading.checks.MixinThreadedAnvilChunkStorage from mod c2me_fixes_worldgen_threading_issues,pl:mixin:APP:c2me-fixes-general-threading-issues.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_fixes_general_threading_issues,pl:mixin:APP:c2me-fixes-general-threading-issues.mixins.json:asynccatchers.MixinThreadedAnvilChunkStorage from mod c2me_fixes_general_threading_issues,pl:mixin:APP:c2me-base.mixins.json:access.IThreadedAnvilChunkStorage from mod c2me_base,pl:mixin:APP:c2me-base.mixins.json:scheduler.MixinThreadedAnvilChunkStorage from mod c2me_base,pl:mixin:APP:c2me-threading-lighting.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_threading_lighting,pl:mixin:APP:c2me-threading-chunkio.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_threading_chunkio,pl:mixin:APP:c2me-opts-scheduling.mixins.json:fix_unload.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:general_overheads.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:idle_tasks.autosave.disable_vanilla_mid_tick_autosave.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:idle_tasks.autosave.enhanced_autosave.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:task_scheduling.MixinThreadedAnvilChunkStorage from mod c2me_opts_scheduling,pl:mixin:APP:c2me-notickvd.mixins.json:MixinThreadedAnvilChunkStorage from mod c2me_notickvd,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.server.level.ServerChunkCache.m_8443_(ServerChunkCache.java:461) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:c2me-fixes-general-threading-issues.mixins.json:asynccatchers.MixinServerChunkManager from mod c2me_fixes_general_threading_issues,pl:mixin:APP:c2me-base.mixins.json:access.IServerChunkManager from mod c2me_base,pl:mixin:APP:c2me-base.mixins.json:priority.MixinServerChunkManager from mod c2me_base,pl:mixin:APP:c2me-opts-allocs.mixins.json:asm.ASMTargets from mod c2me_opts_allocs,pl:mixin:APP:c2me-opts-chunk-access.mixins.json:asm.ASMTargets from mod c2me_opts_chunk_access,pl:mixin:APP:c2me-opts-chunk-access.mixins.json:async_chunk_request.MixinServerChunkManager from mod c2me_opts_chunk_access,pl:mixin:APP:c2me-opts-scheduling.mixins.json:mid_tick_chunk_tasks.MixinServerChunkManager from mod c2me_opts_scheduling,pl:mixin:APP:c2me-opts-scheduling.mixins.json:task_scheduling.MixinServerChunkManager from mod c2me_opts_scheduling,pl:mixin:APP:c2me-notickvd.mixins.json:MixinServerChunkManager from mod c2me_notickvd,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.server.level.ServerLevel$EntityCallbacks.m_141981_(ServerLevel.java:1531) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:connector_pre_launch:A,re:classloading,pl:mixin:APP:fabric-lifecycle-events-v1.mixins.json:ServerWorldServerEntityHandlerMixin from mod fabric_lifecycle_events_v1,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.server.level.ServerLevel$EntityCallbacks.m_141981_(ServerLevel.java:1489) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:connector_pre_launch:A,re:classloading,pl:mixin:APP:fabric-lifecycle-events-v1.mixins.json:ServerWorldServerEntityHandlerMixin from mod fabric_lifecycle_events_v1,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.world.level.entity.PersistentEntitySectionManager.m_157580_(PersistentEntitySectionManager.java:140) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:connector_pre_launch:A,re:classloading,pl:mixin:APP:c2me-base.mixins.json:access.IServerEntityManager from mod c2me_base,pl:mixin:APP:c2me-opts-scheduling.mixins.json:shutdown.MixinServerEntityManager from mod c2me_opts_scheduling,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.world.level.entity.PersistentEntitySectionManager$Callback.m_142472_(PersistentEntitySectionManager.java:439) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:classloading,pl:connector_pre_launch:A}
+	at net.minecraft.world.entity.Entity.m_142467_(Entity.java:3367) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:computing_frames,pl:accesstransformer:B,pl:connector_pre_launch:A,re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:mixins.replay.replaymod.json:entity_tracking.Mixin_EntityExt from mod reforgedplaymod,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:AttachmentTargetsMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:EntityMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:entity_model_features.mixins.json:MixinEntity from mod entity_model_features,pl:mixin:APP:entity_texture_features.mixins.json:entity.misc.MixinEntity from mod entity_texture_features,pl:mixin:APP:fabric-entity-events-v1.mixins.json:EntityMixin from mod fabric_entity_events_v1,pl:mixin:APP:transition.mixins.json:ExtensionMixin from mod transition,pl:mixin:APP:kubejs-forge.mixins.json:EntityMixin from mod kubejs,pl:mixin:APP:kubejs-common.mixins.json:EntityMixin from mod kubejs,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.world.entity.Entity.m_142687_(Entity.java:354) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:computing_frames,pl:accesstransformer:B,pl:connector_pre_launch:A,re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:mixins.replay.replaymod.json:entity_tracking.Mixin_EntityExt from mod reforgedplaymod,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:AttachmentTargetsMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:EntityMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:entity_model_features.mixins.json:MixinEntity from mod entity_model_features,pl:mixin:APP:entity_texture_features.mixins.json:entity.misc.MixinEntity from mod entity_texture_features,pl:mixin:APP:fabric-entity-events-v1.mixins.json:EntityMixin from mod fabric_entity_events_v1,pl:mixin:APP:transition.mixins.json:ExtensionMixin from mod transition,pl:mixin:APP:kubejs-forge.mixins.json:EntityMixin from mod kubejs,pl:mixin:APP:kubejs-common.mixins.json:EntityMixin from mod kubejs,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.world.entity.LivingEntity.m_142687_(LivingEntity.java:664) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,xf:fml:connectormod:insertInjectionTarget,xf:fml:connectormod:updateItemUseStartTreshold,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,xf:fml:connectormod:insertInjectionTarget,xf:fml:connectormod:updateItemUseStartTreshold,pl:mixin:APP:mobbattle.mixins.json:LivingMixin from mod mobbattle,pl:mixin:APP:citadel.mixins.json:LivingEntityMixin from mod citadel,pl:mixin:APP:mixins.recording.replaymod.json:EntityLivingBaseAccessor from mod reforgedplaymod,pl:mixin:APP:mixins.replay.replaymod.json:EntityLivingBaseAccessor from mod reforgedplaymod,pl:mixin:APP:fabric-entity-events-v1.mixins.json:LivingEntityMixin from mod fabric_entity_events_v1,pl:mixin:APP:fabric-entity-events-v1.mixins.json:elytra.LivingEntityMixin from mod fabric_entity_events_v1,pl:mixin:APP:fabric-lifecycle-events-v1.mixins.json:LivingEntityMixin from mod fabric_lifecycle_events_v1,pl:mixin:APP:kubejs-common.mixins.json:LivingEntityMixin from mod kubejs,pl:mixin:APP:notenoughanimations.mixins.json:LivingEntityMixin from mod notenoughanimations,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.world.entity.Entity.m_146870_(Entity.java:332) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:computing_frames,pl:accesstransformer:B,pl:connector_pre_launch:A,re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:mixins.replay.replaymod.json:entity_tracking.Mixin_EntityExt from mod reforgedplaymod,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:AttachmentTargetsMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:fabric-data-attachment-api-v1.mixins.json:EntityMixin from mod fabric_data_attachment_api_v1,pl:mixin:APP:entity_model_features.mixins.json:MixinEntity from mod entity_model_features,pl:mixin:APP:entity_texture_features.mixins.json:entity.misc.MixinEntity from mod entity_texture_features,pl:mixin:APP:fabric-entity-events-v1.mixins.json:EntityMixin from mod fabric_entity_events_v1,pl:mixin:APP:transition.mixins.json:ExtensionMixin from mod transition,pl:mixin:APP:kubejs-forge.mixins.json:EntityMixin from mod kubejs,pl:mixin:APP:kubejs-common.mixins.json:EntityMixin from mod kubejs,pl:mixin:A,pl:connector_pre_launch:A}
+	at com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowMirrorHandler.clearAllMirrors(CrowMirrorHandler.java:196) ~[kimetsunoyaibamultiplayer-1.3.92.jar%23232!/:1.3.92] {re:classloading}
+	at com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer$ClientForgeEvents.onPlayerLoggedOut(KimetsunoyaibaMultiplayer.java:192) ~[kimetsunoyaibamultiplayer-1.3.92.jar%23232!/:1.3.92] {re:classloading}
+	at com.lerdorf.kimetsunoyaibamultiplayer.__ClientForgeEvents_onPlayerLoggedOut_ClientTickEvent.invoke(.dynamic) ~[kimetsunoyaibamultiplayer-1.3.92.jar%23232!/:1.3.92] {re:classloading,pl:eventbus:B}
+	at net.minecraftforge.eventbus.ASMEventHandler.invoke(ASMEventHandler.java:73) ~[eventbus-6.0.5.jar%23137!/:?] {}
+	at net.minecraftforge.eventbus.EventBus.post(EventBus.java:315) ~[eventbus-6.0.5.jar%23137!/:?] {}
+	at net.minecraftforge.eventbus.EventBus.post(EventBus.java:296) ~[eventbus-6.0.5.jar%23137!/:?] {}
+	at net.minecraftforge.event.ForgeEventFactory.onPostClientTick(ForgeEventFactory.java:965) ~[forge-1.20.1-47.4.0-universal.jar%23255!/:?] {re:classloading}
+-- Last reload --
+Details:
+	Reload number: 1
+	Reload reason: initial
+	Finished: Yes
+	Packs: vanilla, mod_resources, fabric, KubeJS Resource Pack [assets], file/Better-Leaves-9.3.zip, file/Fast Better Grass.zip, file/FreshAnimations_v1.10.1.zip, file/Round-Trees-8.0.zip, file/Kimetsu Textures.zip, file/Kimetsu Models, replaymod_lang
+Stacktrace:
+	at net.minecraft.client.ResourceLoadStateTracker.m_168562_(ResourceLoadStateTracker.java:49) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:connector_pre_launch:A,re:classloading,pl:mixin:APP:entity_model_features.mixins.json:MixinResourceReloadEnd from mod entity_model_features,pl:mixin:APP:entity_texture_features.mixins.json:reloading.MixinResourceReload from mod entity_texture_features,pl:mixin:A,pl:connector_pre_launch:A}
+	at net.minecraft.client.Minecraft.m_91354_(Minecraft.java:2326) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,pl:runtimedistcleaner:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A,pl:runtimedistcleaner:A}
+	at net.minecraft.client.Minecraft.m_91374_(Minecraft.java:740) ~[client-1.20.1-20230612.114412-srg.jar%23250!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,pl:runtimedistcleaner:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A,pl:runtimedistcleaner:A}
+	at net.minecraft.client.main.Main.main(Main.java:218) ~[minecraft-1.20.1-client.jar:?] {re:classloading,pl:connector_pre_launch:A,pl:runtimedistcleaner:A}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.runTarget(CommonLaunchHandler.java:111) ~[fmlloader-1.20.1-47.4.0.jar:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonLaunchHandler.clientService(CommonLaunchHandler.java:99) ~[fmlloader-1.20.1-47.4.0.jar:?] {}
+	at net.minecraftforge.fml.loading.targets.CommonClientLaunchHandler.lambda$makeService$0(CommonClientLaunchHandler.java:25) ~[fmlloader-1.20.1-47.4.0.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandlerDecorator.launch(LaunchServiceHandlerDecorator.java:30) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:53) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.LaunchServiceHandler.launch(LaunchServiceHandler.java:71) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.run(Launcher.java:108) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.Launcher.main(Launcher.java:78) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:26) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.modlauncher.BootstrapLaunchConsumer.accept(BootstrapLaunchConsumer.java:23) ~[modlauncher-10.0.9.jar:?] {}
+	at cpw.mods.bootstraplauncher.BootstrapLauncher.main(BootstrapLauncher.java:141) ~[bootstraplauncher-1.1.2.jar:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?] {}
+	at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?] {}
+	at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?] {}
+	at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?] {}
+	at io.github.zekerzhayard.forgewrapper.installer.Main.main(Main.java:69) ~[?:?] {}
+	at org.prismlauncher.launcher.impl.StandardLauncher.launch(StandardLauncher.java:105) ~[?:?] {}
+	at org.prismlauncher.EntryPoint.listen(EntryPoint.java:129) ~[?:?] {}
+	at org.prismlauncher.EntryPoint.main(EntryPoint.java:70) ~[?:?] {}
+
+
+-- System Details --
+Details:
+	Minecraft Version: 1.20.1
+	Minecraft Version ID: 1.20.1
+	Operating System: Windows 11 (amd64) version 10.0
+	Java Version: 17.0.8, Microsoft
+	Java VM Version: OpenJDK 64-Bit Server VM (mixed mode), Microsoft
+	Memory: 930986480 bytes (887 MiB) / 2640314368 bytes (2518 MiB) up to 4294967296 bytes (4096 MiB)
+	CPUs: 16
+	Processor Vendor: AuthenticAMD
+	Processor Name: AMD Ryzen 9 7940HS w/ Radeon 780M Graphics     
+	Identifier: AuthenticAMD Family 25 Model 116 Stepping 1
+	Microarchitecture: Zen 3
+	Frequency (GHz): 3.99
+	Number of physical packages: 1
+	Number of physical CPUs: 8
+	Number of logical CPUs: 16
+	Graphics card #0 name: NVIDIA GeForce RTX 4070 Laptop GPU
+	Graphics card #0 vendor: NVIDIA (0x10de)
+	Graphics card #0 VRAM (MB): 4095.00
+	Graphics card #0 deviceId: 0x2860
+	Graphics card #0 versionInfo: DriverVersion=32.0.15.5597
+	Graphics card #1 name: AMD Radeon 780M Graphics
+	Graphics card #1 vendor: Advanced Micro Devices, Inc. (0x1002)
+	Graphics card #1 VRAM (MB): 512.00
+	Graphics card #1 deviceId: 0x15bf
+	Graphics card #1 versionInfo: DriverVersion=31.0.14084.3001
+	Memory slot #0 capacity (MB): 16384.00
+	Memory slot #0 clockSpeed (GHz): 4.80
+	Memory slot #0 type: Unknown
+	Memory slot #1 capacity (MB): 16384.00
+	Memory slot #1 clockSpeed (GHz): 4.80
+	Memory slot #1 type: Unknown
+	Virtual memory max (MB): 63926.38
+	Virtual memory used (MB): 21403.05
+	Swap memory total (MB): 31963.19
+	Swap memory used (MB): 20.06
+	JVM Flags: 3 total; -XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump -Xms512m -Xmx4096m
+	Launched Version: 1.20.1
+	Backend library: LWJGL version 3.3.1 build 7
+	Backend API: NVIDIA GeForce RTX 4070 Laptop GPU/PCIe/SSE2 GL version 4.6.0 NVIDIA 555.97, NVIDIA Corporation
+	Window size: 1622x871
+	GL Caps: Using framebuffer using OpenGL 3.2
+	GL debug messages: 
+	Using VBOs: Yes
+	Is Modded: Definitely; Client brand changed to 'forge'; Server brand changed to 'forge'
+	Type: Integrated Server (map_client.txt)
+	Graphics mode: fancy
+	Resource Packs: vanilla, mod_resources, fabric, file/Better-Leaves-9.3.zip, file/Fast Better Grass.zip, file/FreshAnimations_v1.10.1.zip, file/Round-Trees-8.0.zip, file/Kimetsu Textures.zip, file/Kimetsu Models
+	Current Language: en_us
+	CPU: 16x AMD Ryzen 9 7940HS w/ Radeon 780M Graphics 
+	Server Running: true
+	Player Count: 0 / 8; []
+	Data Packs: vanilla, mod:c2me_fixes_worldgen_threading_issues, mod:fabric_renderer_api_v1, mod:fabric_language_kotlin, mod:mobbattle (incompatible), mod:geckolib, mod:playeranimator (incompatible), mod:org_jetbrains_kotlinx_kotlinx_coroutines_core_jvm, mod:fabric_item_api_v1, mod:com_github_llamalad7_mixinextras, mod:c2me_rewrites_chunk_serializer, mod:fabric_rendering_fluids_v1, mod:fabric_models_v0, mod:c2me_fixes_general_threading_issues, mod:fabric_convention_tags_v1, mod:citadel (incompatible), mod:alexsmobs (incompatible), mod:fabric_command_api_v1, mod:fabric_block_view_api_v2, mod:fabric_command_api_v2, mod:reforgedplaymod (incompatible), mod:fabric_data_attachment_api_v1, mod:mixinextras (incompatible), mod:c2me_opts_math, mod:surveyor, mod:fabric_screen_api_v1, mod:melody (incompatible), mod:c2me_base, mod:antique_atlas, mod:org_jetbrains_kotlinx_atomicfu_jvm, mod:cloth_config (incompatible), mod:kimetsu, mod:fabric_api, mod:c2me_fixes_worldgen_vanilla_bugs, mod:fabric_content_registries_v0, mod:konkrete (incompatible), mod:healthbars, mod:entity_model_features (incompatible), mod:entity_texture_features (incompatible), mod:fabric_game_rule_api_v1, mod:modmenu, mod:fabric_api_lookup_api_v1, mod:c2me_fixes_chunkio_threading_issues, mod:c2me_client_uncapvd, mod:org_jetbrains_kotlinx_kotlinx_coroutines_jdk8, mod:bendylib (incompatible), mod:org_jetbrains_kotlinx_kotlinx_serialization_core_jvm, mod:org_jetbrains_kotlinx_kotlinx_serialization_cbor_jvm, mod:com_electronwill_night_config_toml, mod:org_threadly_threadly, mod:connectormod, mod:fabric_entity_events_v1, mod:architectury (incompatible), mod:fabric_loot_api_v2, mod:transition, mod:fabric_rendering_data_attachment_v1, mod:fabric_networking_api_v1, mod:c2me_rewrites_chunkio, mod:org_jetbrains_kotlin_kotlin_stdlib, mod:fabric_lifecycle_events_v1, mod:c2me_opts_allocs, mod:com_ibm_async_asyncutil, mod:fabric_key_binding_api_v1, mod:fabric_client_tags_api_v1, mod:org_jetbrains_kotlin_kotlin_stdlib_jdk8, mod:fabric_dimensions_v1, mod:fabric_transfer_api_v1, mod:org_jetbrains_kotlin_kotlin_stdlib_jdk7, mod:bhmenu, mod:rhino (incompatible), mod:c2me_threading_lighting, mod:folk_sisby_kaleido_config, mod:fabric_model_loading_api_v1, mod:jei, mod:kubejs (incompatible), mod:fabric_screen_handler_api_v1, mod:fabric_resource_loader_v0, mod:trender, mod:geckoanimfix (incompatible), mod:fabric_rendering_v1, mod:fabric_renderer_indigo, mod:com_electronwill_night_config_core, mod:c2me_threading_chunkio, mod:mobplayeranimator (incompatible), mod:kimetsunoyaibamodels, mod:fabric_mining_level_api_v1, mod:travelersbackpack, mod:configured (incompatible), mod:capes, mod:org_jetbrains_kotlinx_kotlinx_datetime_jvm, mod:waveycapes, mod:kimetsunoyaibamultiplayer, mod:experimentalsettingsdisabler, mod:fabric_particles_v1, mod:c2me_opts_chunk_access, mod:skinlayers3d, mod:org_jetbrains_kotlinx_kotlinx_serialization_json_jvm, mod:forge, mod:c2me_opts_worldgen_vanilla, mod:c2me_opts_scheduling, mod:fabric_transitive_access_wideners_v1, mod:fabric_api_base, mod:org_jetbrains_kotlinx_kotlinx_io_bytestring_jvm, mod:fabric_blockrenderlayer_v1, mod:shouldersurfing, mod:fabric_block_api_v1, mod:c2me_server_utils, mod:org_jetbrains_kotlinx_kotlinx_io_core_jvm, mod:fabric_resource_conditions_api_v1, mod:kotlinforforge (incompatible), mod:notenoughanimations, mod:gravestone, mod:fabric_item_group_api_v1, mod:shimmer (incompatible), mod:c2me_notickvd, mod:bnbloodparticles, mod:fabric_biome_api_v1, mod:c2me_opts_worldgen_general, mod:c3me, mod:c2me_opts_chunkio, mod:fabric_registry_sync_v0, mod:c2me_threading_worldgen, mod:appleskin (incompatible), mod:fabric_recipe_api_v1, mod:fabric_object_builder_api_v1, mod:justzoom (incompatible), mod:org_jetbrains_kotlin_kotlin_reflect, mod:kimetsunoyaiba, mod:fabric_sound_api_v1, mod:fabric_message_api_v1, mod:net_objecthunter_exp4j, mod:fabric_data_generation_api_v1, mod:fabric_events_interaction_v0, fabric
+	Enabled Feature Flags: minecraft:vanilla
+	World Generation: Experimental
+	Sinytra Connector: 1.0.0-beta.46+1.20.1
+		SINYTRA CONNECTOR IS PRESENT!
+		Please verify issues are not caused by Connector before reporting them to mod authors. If you're unsure, file a report on Connector's issue tracker.
+		Connector's issue tracker can be found at https://github.com/Sinytra/Connector/issues.
+		Installed Fabric mods:
+		| ================================================== | ============================== | ============================== | ==================== |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-f | Connectored Concurrent Chunk M | c2me_fixes_worldgen_threading_ | 0.2.0-c3me-alpha.11. |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20_mapped | Fabric Language Kotlin         | fabric_language_kotlin         | 1.13.6kotlin.2.2.20  |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlinx-coroutines-core-jvm    | org_jetbrains_kotlinx_kotlinx_ | 1.10.2               |
+		| capes-1.5.2+1.20-fabric$mixinextras-fabric-0.2.0-b | MixinExtras                    | com_github_llamalad7_mixinextr | 0.2.0-beta.8         |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-r | Connectored Concurrent Chunk M | c2me_rewrites_chunk_serializer | 0.2.0-c3me-alpha.11. |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-f | Connectored Concurrent Chunk M | c2me_fixes_general_threading_i | 0.2.0-c3me-alpha.11. |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o | Connectored Concurrent Chunk M | c2me_opts_math                 | 0.2.0-c3me-alpha.11. |
+		| surveyor-0.6.26+1.20_mapped_srg_1.20.1.jar         | Surveyor Map Framework         | surveyor                       | 0.6.261.20           |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-b | Connectored Concurrent Chunk M | c2me_base                      | 0.2.0-c3me-alpha.11. |
+		| antique-atlas-2.11.2+1.20_mapped_srg_1.20.1.jar    | Antique Atlas                  | antique_atlas                  | 2.11.21.20           |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$atomic | atomicfu-jvm                   | org_jetbrains_kotlinx_atomicfu | 0.29.0               |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-f | Connectored Concurrent Chunk M | c2me_fixes_worldgen_vanilla_bu | 0.2.0-c3me-alpha.11. |
+		| modmenu-7.2.2_mapped_srg_1.20.1.jar                | Mod Menu                       | modmenu                        | 7.2.2                |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-f | Connectored Concurrent Chunk M | c2me_fixes_chunkio_threading_i | 0.2.0-c3me-alpha.11. |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-c | Connectored Concurrent Chunk M | c2me_client_uncapvd            | 0.2.0-c3me-alpha.11. |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlinx-coroutines-jdk8        | org_jetbrains_kotlinx_kotlinx_ | 1.10.2               |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlinx-serialization-core-jvm | org_jetbrains_kotlinx_kotlinx_ | 1.9.0                |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlinx-serialization-cbor-jvm | org_jetbrains_kotlinx_kotlinx_ | 1.9.0                |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$toml-3 | toml                           | com_electronwill_night_config_ | 3.6.5                |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$thread | threadly                       | org_threadly_threadly          | 7.0                  |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-r | Connectored Concurrent Chunk M | c2me_rewrites_chunkio          | 0.2.0-c3me-alpha.11. |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlin-stdlib                  | org_jetbrains_kotlin_kotlin_st | 2.2.20               |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o | Connectored Concurrent Chunk M | c2me_opts_allocs               | 0.2.0-c3me-alpha.11. |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$asyncu | asyncutil                      | com_ibm_async_asyncutil        | 0.1.0                |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlin-stdlib-jdk8             | org_jetbrains_kotlin_kotlin_st | 2.2.20               |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlin-stdlib-jdk7             | org_jetbrains_kotlin_kotlin_st | 2.2.20               |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-t | Connectored Concurrent Chunk M | c2me_threading_lighting        | 0.2.0-c3me-alpha.11. |
+		| surveyor-0.6.26+1.20$kaleido-config-0.3.1+1.3.2_ma | kaleido-config                 | folk_sisby_kaleido_config      | 0.3.11.3.2           |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$core-3 | core                           | com_electronwill_night_config_ | 3.6.5                |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-t | Connectored Concurrent Chunk M | c2me_threading_chunkio         | 0.2.0-c3me-alpha.11. |
+		| capes-1.5.2+1.20-fabric_mapped_srg_1.20.1.jar      | Capes                          | capes                          | 1.5.21.20            |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlinx-datetime-jvm           | org_jetbrains_kotlinx_kotlinx_ | 0.7.1                |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o | Connectored Concurrent Chunk M | c2me_opts_chunk_access         | 0.2.0-c3me-alpha.11. |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlinx-serialization-json-jvm | org_jetbrains_kotlinx_kotlinx_ | 1.9.0                |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o | Connectored Concurrent Chunk M | c2me_opts_worldgen_vanilla     | 0.2.0-c3me-alpha.11. |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o | Connectored Concurrent Chunk M | c2me_opts_scheduling           | 0.2.0-c3me-alpha.11. |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlinx-io-bytestring-jvm      | org_jetbrains_kotlinx_kotlinx_ | 0.8.0                |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-s | Connectored Concurrent Chunk M | c2me_server_utils              | 0.2.0-c3me-alpha.11. |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlinx-io-core-jvm            | org_jetbrains_kotlinx_kotlinx_ | 0.8.0                |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-n | Connectored Concurrent Chunk M | c2me_notickvd                  | 0.2.0-c3me-alpha.11. |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o | Connectored Concurrent Chunk M | c2me_opts_worldgen_general     | 0.2.0-c3me-alpha.11. |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61_mapped | Connectored Concurrent Chunk M | c3me                           | 0.2.0-c3me-alpha.11. |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o | Connectored Concurrent Chunk M | c2me_opts_chunkio              | 0.2.0-c3me-alpha.11. |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-t | Connectored Concurrent Chunk M | c2me_threading_worldgen        | 0.2.0-c3me-alpha.11. |
+		| fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin | kotlin-reflect                 | org_jetbrains_kotlin_kotlin_re | 2.2.20               |
+		| c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$exp4j- | exp4j                          | net_objecthunter_exp4j         | 0.4.8                |
+	ModLauncher: 10.0.9+10.0.9+main.dcd20f30
+	ModLauncher launch target: forgeclient
+	ModLauncher naming: srg
+	ModLauncher services: 
+		mixin-0.8.5.jar mixin PLUGINSERVICE 
+		eventbus-6.0.5.jar eventbus PLUGINSERVICE 
+		fmlloader-1.20.1-47.4.0.jar slf4jfixer PLUGINSERVICE 
+		fmlloader-1.20.1-47.4.0.jar object_holder_definalize PLUGINSERVICE 
+		fmlloader-1.20.1-47.4.0.jar runtime_enum_extender PLUGINSERVICE 
+		fmlloader-1.20.1-47.4.0.jar capability_token_subclass PLUGINSERVICE 
+		accesstransformers-8.0.4.jar accesstransformer PLUGINSERVICE 
+		fmlloader-1.20.1-47.4.0.jar runtimedistcleaner PLUGINSERVICE 
+		modlauncher-10.0.9.jar mixin TRANSFORMATIONSERVICE 
+		modlauncher-10.0.9.jar fml TRANSFORMATIONSERVICE 
+		modlauncher-10.0.9.jar mixin-transmogrifier TRANSFORMATIONSERVICE 
+		modlauncher-10.0.9.jar connector_loader TRANSFORMATIONSERVICE 
+	FML Language Providers: 
+		minecraft@1.0
+		kotlinforforge@4.11.0
+		javafml@null
+		lowcodefml@null
+	Mod List: 
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-f|Connectored Concurrent Chunk M|c2me_fixes_worldgen_threading_|0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		fabric-renderer-api-v1-3.2.2+cf68abbe77.jar       |Fabric Renderer API (v1)      |fabric_renderer_api_v1        |3.2.2+cf68abbe77    |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20_mapped|Fabric Language Kotlin        |fabric_language_kotlin        |1.13.6kotlin.2.2.20 |DONE      |Manifest: NOSIGNATURE
+		mobbattle-1.20.1-2.5.3-forge.jar                  |Mob Battle Mod                |mobbattle                     |1.20.1-2.5.3        |DONE      |Manifest: NOSIGNATURE
+		geckolib-forge-1.20.1-4.7.4.jar                   |GeckoLib 4                    |geckolib                      |4.7.4               |DONE      |Manifest: NOSIGNATURE
+		player-animation-lib-forge-1.0.2-rc1+1.20.jar     |Player Animator               |playeranimator                |1.0.2-rc1+1.20      |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlinx-coroutines-core-jvm   |org_jetbrains_kotlinx_kotlinx_|1.10.2              |DONE      |Manifest: NOSIGNATURE
+		fabric-item-api-v1-2.1.29+4d0bbcfa77.jar          |Fabric Item API (v1)          |fabric_item_api_v1            |2.1.29+4d0bbcfa77   |DONE      |Manifest: NOSIGNATURE
+		capes-1.5.2+1.20-fabric$mixinextras-fabric-0.2.0-b|MixinExtras                   |com_github_llamalad7_mixinextr|0.2.0-beta.8        |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-r|Connectored Concurrent Chunk M|c2me_rewrites_chunk_serializer|0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		fabric-rendering-fluids-v1-3.0.29+4ac5e37a77.jar  |Fabric Rendering Fluids (v1)  |fabric_rendering_fluids_v1    |3.0.29+4ac5e37a77   |DONE      |Manifest: NOSIGNATURE
+		fabric-models-v0-0.4.3+7c3892a477.jar             |Fabric Models (v0)            |fabric_models_v0              |0.4.3+7c3892a477    |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-f|Connectored Concurrent Chunk M|c2me_fixes_general_threading_i|0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		fabric-convention-tags-v1-1.5.6+fa3d1c0177.jar    |Fabric Convention Tags        |fabric_convention_tags_v1     |1.5.6+fa3d1c0177    |DONE      |Manifest: NOSIGNATURE
+		citadel-2.6.2-1.20.1.jar                          |Citadel                       |citadel                       |2.6.2               |DONE      |Manifest: NOSIGNATURE
+		alexsmobs-1.22.9.jar                              |Alex's Mobs                   |alexsmobs                     |1.22.9              |DONE      |Manifest: NOSIGNATURE
+		fabric-command-api-v1-1.2.35+f71b366f77.jar       |Fabric Command API (v1)       |fabric_command_api_v1         |1.2.35+f71b366f77   |DONE      |Manifest: NOSIGNATURE
+		fabric-block-view-api-v2-1.0.3+53347ba977.jar     |Fabric BlockView API (v2)     |fabric_block_view_api_v2      |1.0.3+53347ba977    |DONE      |Manifest: NOSIGNATURE
+		fabric-command-api-v2-2.2.14+561530ec77.jar       |Fabric Command API (v2)       |fabric_command_api_v2         |2.2.14+561530ec77   |DONE      |Manifest: NOSIGNATURE
+		reforgedplaymod-1.20.1-0.3.1.jar                  |ReForgedPlay Mod              |reforgedplaymod               |0.3.1               |DONE      |Manifest: NOSIGNATURE
+		fabric-data-attachment-api-v1-1.0.2+30ef839e77.jar|Fabric Data Attachment API (v1|fabric_data_attachment_api_v1 |1.0.2+30ef839e77    |DONE      |Manifest: NOSIGNATURE
+		mixinextras-forge-0.4.1.jar                       |MixinExtras                   |mixinextras                   |0.4.1               |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o|Connectored Concurrent Chunk M|c2me_opts_math                |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		surveyor-0.6.26+1.20_mapped_srg_1.20.1.jar        |Surveyor Map Framework        |surveyor                      |0.6.261.20          |DONE      |Manifest: NOSIGNATURE
+		fabric-screen-api-v1-2.0.9+45a670a577.jar         |Fabric Screen API (v1)        |fabric_screen_api_v1          |2.0.9+45a670a577    |DONE      |Manifest: NOSIGNATURE
+		melody_forge_1.0.3_MC_1.20.1-1.20.4.jar           |Melody                        |melody                        |1.0.2               |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-b|Connectored Concurrent Chunk M|c2me_base                     |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		antique-atlas-2.11.2+1.20_mapped_srg_1.20.1.jar   |Antique Atlas                 |antique_atlas                 |2.11.21.20          |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$atomic|atomicfu-jvm                  |org_jetbrains_kotlinx_atomicfu|0.29.0              |DONE      |Manifest: NOSIGNATURE
+		cloth-config-11.1.136-forge.jar                   |Cloth Config v10 API          |cloth_config                  |11.1.136            |DONE      |Manifest: NOSIGNATURE
+		kimetsu-10.0.0.jar                                |kimetsu                       |kimetsu                       |1.0.0               |DONE      |Manifest: NOSIGNATURE
+		fabric-api-0.92.6+1.11.14+1.20.1.jar              |Forgified Fabric API          |fabric_api                    |0.92.6+1.11.14+1.20.|DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-f|Connectored Concurrent Chunk M|c2me_fixes_worldgen_vanilla_bu|0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		fabric-content-registries-v0-4.0.13+a670df1e77.jar|Fabric Content Registries (v0)|fabric_content_registries_v0  |4.0.13+a670df1e77   |DONE      |Manifest: NOSIGNATURE
+		konkrete_forge_1.8.0_MC_1.20-1.20.1.jar           |Konkrete                      |konkrete                      |1.8.0               |DONE      |Manifest: NOSIGNATURE
+		healthbars-1.0.0-forge-1.20.1.jar                 |Health bars                   |healthbars                    |1.0.0               |DONE      |Manifest: NOSIGNATURE
+		entity_model_features_1.20.1-forge-3.0.1.jar      |Entity Model Features         |entity_model_features         |3.0.1               |DONE      |Manifest: NOSIGNATURE
+		entity_texture_features_1.20.1-forge-7.0.2.jar    |Entity Texture Features       |entity_texture_features       |7.0.2               |DONE      |Manifest: NOSIGNATURE
+		fabric-game-rule-api-v1-1.0.41+683d4da877.jar     |Fabric Game Rule API (v1)     |fabric_game_rule_api_v1       |1.0.41+683d4da877   |DONE      |Manifest: NOSIGNATURE
+		modmenu-7.2.2_mapped_srg_1.20.1.jar               |Mod Menu                      |modmenu                       |7.2.2               |DONE      |Manifest: NOSIGNATURE
+		fabric-api-lookup-api-v1-1.6.37+67f9824077.jar    |Fabric API Lookup API (v1)    |fabric_api_lookup_api_v1      |1.6.37+67f9824077   |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-f|Connectored Concurrent Chunk M|c2me_fixes_chunkio_threading_i|0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-c|Connectored Concurrent Chunk M|c2me_client_uncapvd           |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlinx-coroutines-jdk8       |org_jetbrains_kotlinx_kotlinx_|1.10.2              |DONE      |Manifest: NOSIGNATURE
+		bendy-lib-forge-4.0.0.jar                         |Bendy lib                     |bendylib                      |4.0.0               |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlinx-serialization-core-jvm|org_jetbrains_kotlinx_kotlinx_|1.9.0               |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlinx-serialization-cbor-jvm|org_jetbrains_kotlinx_kotlinx_|1.9.0               |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$toml-3|toml                          |com_electronwill_night_config_|3.6.5               |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$thread|threadly                      |org_threadly_threadly         |7.0                 |DONE      |Manifest: NOSIGNATURE
+		Connector-1.0.0-beta.46+1.20.1-mod.jar            |Connector                     |connectormod                  |1.0.0-beta.46+1.20.1|DONE      |Manifest: NOSIGNATURE
+		fabric-entity-events-v1-1.6.1+4ca7515277.jar      |Fabric Entity Events (v1)     |fabric_entity_events_v1       |1.6.1+4ca7515277    |DONE      |Manifest: NOSIGNATURE
+		architectury-9.2.14-forge.jar                     |Architectury                  |architectury                  |9.2.14              |DONE      |Manifest: NOSIGNATURE
+		fabric-loot-api-v2-1.2.3+eb28f93e77.jar           |Fabric Loot API (v2)          |fabric_loot_api_v2            |1.2.3+eb28f93e77    |DONE      |Manifest: NOSIGNATURE
+		TRansition-1.0.4-1.20.1-forge-SNAPSHOT.jar        |TRansition                    |transition                    |1.0.4               |DONE      |Manifest: NOSIGNATURE
+		fabric-rendering-data-attachment-v1-0.3.39+a6081af|Fabric Rendering Data Attachme|fabric_rendering_data_attachme|0.3.39+a6081afc77   |DONE      |Manifest: NOSIGNATURE
+		fabric-networking-api-v1-1.3.14+fb7c822677.jar    |Fabric Networking API (v1)    |fabric_networking_api_v1      |1.3.14+fb7c822677   |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-r|Connectored Concurrent Chunk M|c2me_rewrites_chunkio         |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlin-stdlib                 |org_jetbrains_kotlin_kotlin_st|2.2.20              |DONE      |Manifest: NOSIGNATURE
+		fabric-lifecycle-events-v1-2.2.23+afab492177.jar  |Fabric Lifecycle Events (v1)  |fabric_lifecycle_events_v1    |2.2.23+afab492177   |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o|Connectored Concurrent Chunk M|c2me_opts_allocs              |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$asyncu|asyncutil                     |com_ibm_async_asyncutil       |0.1.0               |DONE      |Manifest: NOSIGNATURE
+		fabric-key-binding-api-v1-1.0.38+561530ec77.jar   |Fabric Key Binding API (v1)   |fabric_key_binding_api_v1     |1.0.38+561530ec77   |DONE      |Manifest: NOSIGNATURE
+		fabric-client-tags-api-v1-1.1.3+5d6761b877.jar    |Fabric Client Tags            |fabric_client_tags_api_v1     |1.1.3+5d6761b877    |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlin-stdlib-jdk8            |org_jetbrains_kotlin_kotlin_st|2.2.20              |DONE      |Manifest: NOSIGNATURE
+		fabric-dimensions-v1-2.1.55+8005d10d77.jar        |Fabric Dimensions API (v1)    |fabric_dimensions_v1          |2.1.55+8005d10d77   |DONE      |Manifest: NOSIGNATURE
+		fabric-transfer-api-v1-3.3.6+631c9cd677.jar       |Fabric Transfer API (v1)      |fabric_transfer_api_v1        |3.3.6+631c9cd677    |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlin-stdlib-jdk7            |org_jetbrains_kotlin_kotlin_st|2.2.20              |DONE      |Manifest: NOSIGNATURE
+		BHMenu-Forge-1.20.1-2.4.2.jar                     |BHMenu                        |bhmenu                        |2.4.2               |DONE      |Manifest: NOSIGNATURE
+		rhino-forge-2001.2.3-build.10.jar                 |Rhino                         |rhino                         |2001.2.3-build.10   |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-t|Connectored Concurrent Chunk M|c2me_threading_lighting       |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		surveyor-0.6.26+1.20$kaleido-config-0.3.1+1.3.2_ma|kaleido-config                |folk_sisby_kaleido_config     |0.3.11.3.2          |DONE      |Manifest: NOSIGNATURE
+		fabric-model-loading-api-v1-1.0.4+6274ab9d77.jar  |Fabric Model Loading API (v1) |fabric_model_loading_api_v1   |1.0.4+6274ab9d77    |DONE      |Manifest: NOSIGNATURE
+		jei-1.20.1-forge-15.20.0.112.jar                  |Just Enough Items             |jei                           |15.20.0.112         |DONE      |Manifest: NOSIGNATURE
+		kubejs-forge-2001.6.5-build.16.jar                |KubeJS                        |kubejs                        |2001.6.5-build.16   |DONE      |Manifest: NOSIGNATURE
+		fabric-screen-handler-api-v1-1.3.33+561530ec77.jar|Fabric Screen Handler API (v1)|fabric_screen_handler_api_v1  |1.3.33+561530ec77   |DONE      |Manifest: NOSIGNATURE
+		fabric-resource-loader-v0-0.11.12+4b4151c077.jar  |Fabric Resource Loader (v0)   |fabric_resource_loader_v0     |0.11.12+4b4151c077  |DONE      |Manifest: NOSIGNATURE
+		TRender-1.0.6-1.20.1-forge-SNAPSHOT.jar           |TRender                       |trender                       |1.0.6               |DONE      |Manifest: NOSIGNATURE
+		GeckoLibOculusCompat-Forge-1.0.1.jar              |GeckoLibIrisCompat            |geckoanimfix                  |1.0.0               |DONE      |Manifest: NOSIGNATURE
+		fabric-rendering-v1-3.0.9+66e9a48f77.jar          |Fabric Rendering (v1)         |fabric_rendering_v1           |3.0.9+66e9a48f77    |DONE      |Manifest: NOSIGNATURE
+		fabric-renderer-indigo-1.5.3+b5b2da4177.jar       |Fabric Renderer - Indigo      |fabric_renderer_indigo        |1.5.3+b5b2da4177    |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$core-3|core                          |com_electronwill_night_config_|3.6.5               |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-t|Connectored Concurrent Chunk M|c2me_threading_chunkio        |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		mobplayeranimator-forge-1.20.1-1.3.3-all.jar      |Mob Player Animator           |mobplayeranimator             |1.3.3               |DONE      |Manifest: NOSIGNATURE
+		kimetsunoyaibamodels-1.0.0.jar                    |Kimetsunoyaiba Models         |kimetsunoyaibamodels          |1.0.0               |DONE      |Manifest: NOSIGNATURE
+		fabric-mining-level-api-v1-2.1.52+561530ec77.jar  |Fabric Mining Level API (v1)  |fabric_mining_level_api_v1    |2.1.52+561530ec77   |DONE      |Manifest: NOSIGNATURE
+		travelersbackpack-forge-1.20.1-9.1.41.jar         |Traveler's Backpack           |travelersbackpack             |9.1.41              |DONE      |Manifest: NOSIGNATURE
+		configured-forge-1.20.1-2.2.3.jar                 |Configured                    |configured                    |2.2.3               |DONE      |Manifest: 0d:78:5f:44:c0:47:0c:8c:e2:63:a3:04:43:d4:12:7d:b0:7c:35:37:dc:40:b1:c1:98:ec:51:eb:3b:3c:45:99
+		capes-1.5.2+1.20-fabric_mapped_srg_1.20.1.jar     |Capes                         |capes                         |1.5.21.20           |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlinx-datetime-jvm          |org_jetbrains_kotlinx_kotlinx_|0.7.1               |DONE      |Manifest: NOSIGNATURE
+		waveycapes-forge-1.6.2-mc1.20.1.jar               |WaveyCapes                    |waveycapes                    |1.6.2               |DONE      |Manifest: NOSIGNATURE
+		kimetsunoyaibamultiplayer-1.3.92.jar              |Kimetsunoyaiba Tweaks         |kimetsunoyaibamultiplayer     |1.3.92              |DONE      |Manifest: NOSIGNATURE
+		experimentalsettingsdisabler-1.20.1-3.0.jar       |Experimental Settings Disabler|experimentalsettingsdisabler  |3.0                 |DONE      |Manifest: NOSIGNATURE
+		fabric-particles-v1-1.1.3+78e1ecb877.jar          |Fabric Particles (v1)         |fabric_particles_v1           |1.1.3+78e1ecb877    |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o|Connectored Concurrent Chunk M|c2me_opts_chunk_access        |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		skinlayers3d-forge-1.9.0-mc1.20.1.jar             |3d-Skin-Layers                |skinlayers3d                  |1.9.0               |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlinx-serialization-json-jvm|org_jetbrains_kotlinx_kotlinx_|1.9.0               |DONE      |Manifest: NOSIGNATURE
+		forge-1.20.1-47.4.0-universal.jar                 |Forge                         |forge                         |47.4.0              |DONE      |Manifest: 84:ce:76:e8:45:35:e4:0e:63:86:df:47:59:80:0f:67:6c:c1:5f:6e:5f:4d:b3:54:47:1a:9f:7f:ed:5e:f2:90
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o|Connectored Concurrent Chunk M|c2me_opts_worldgen_vanilla    |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o|Connectored Concurrent Chunk M|c2me_opts_scheduling          |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		fabric-transitive-access-wideners-v1-4.3.2+1880499|Fabric Transitive Access Widen|fabric_transitive_access_widen|4.3.2+1880499877    |DONE      |Manifest: NOSIGNATURE
+		client-1.20.1-20230612.114412-srg.jar             |Minecraft                     |minecraft                     |1.20.1              |DONE      |Manifest: a1:d4:5e:04:4f:d3:d6:e0:7b:37:97:cf:77:b0:de:ad:4a:47:ce:8c:96:49:5f:0a:cf:8c:ae:b2:6d:4b:8a:3f
+		fabric-api-base-0.4.32+ef105b4977.jar             |Fabric API Base               |fabric_api_base               |0.4.32+ef105b4977   |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlinx-io-bytestring-jvm     |org_jetbrains_kotlinx_kotlinx_|0.8.0               |DONE      |Manifest: NOSIGNATURE
+		fabric-blockrenderlayer-v1-1.1.42+1d0da21e77.jar  |Fabric BlockRenderLayer Regist|fabric_blockrenderlayer_v1    |1.1.42+1d0da21e77   |DONE      |Manifest: NOSIGNATURE
+		ShoulderSurfing-Forge-1.20.1-4.14.3.jar           |Shoulder Surfing Reloaded     |shouldersurfing               |1.20.1-4.14.3       |DONE      |Manifest: NOSIGNATURE
+		fabric-block-api-v1-1.0.12+0e6cb7f777.jar         |Fabric Block API (v1)         |fabric_block_api_v1           |1.0.12+0e6cb7f777   |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-s|Connectored Concurrent Chunk M|c2me_server_utils             |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlinx-io-core-jvm           |org_jetbrains_kotlinx_kotlinx_|0.8.0               |DONE      |Manifest: NOSIGNATURE
+		fabric-resource-conditions-api-v1-2.3.9+996d00b277|Fabric Resource Conditions API|fabric_resource_conditions_api|2.3.9+996d00b277    |DONE      |Manifest: NOSIGNATURE
+		kffmod-4.11.0.jar                                 |Kotlin For Forge              |kotlinforforge                |4.11.0              |DONE      |Manifest: NOSIGNATURE
+		notenoughanimations-forge-1.10.2-mc1.20.1.jar     |NotEnoughAnimations           |notenoughanimations           |1.10.2              |DONE      |Manifest: NOSIGNATURE
+		gravestone-forge-1.20.1-1.0.33.jar                |Gravestone Mod                |gravestone                    |1.20.1-1.0.33       |DONE      |Manifest: NOSIGNATURE
+		fabric-item-group-api-v1-4.0.14+c9161c2d77.jar    |Fabric Item Group API (v1)    |fabric_item_group_api_v1      |4.0.14+c9161c2d77   |DONE      |Manifest: NOSIGNATURE
+		Shimmer-forge-1.20.1-0.2.4.jar                    |Shimmer                       |shimmer                       |1.20.1-0.2.4        |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-n|Connectored Concurrent Chunk M|c2me_notickvd                 |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		BN-Blood-Particles-1.20.1-2.0.0.jar               |BN Blood Particles            |bnbloodparticles              |2.0.0               |DONE      |Manifest: NOSIGNATURE
+		fabric-biome-api-v1-13.0.14+dc36698e77.jar        |Fabric Biome API (v1)         |fabric_biome_api_v1           |13.0.14+dc36698e77  |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o|Connectored Concurrent Chunk M|c2me_opts_worldgen_general    |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61_mapped|Connectored Concurrent Chunk M|c3me                          |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-o|Connectored Concurrent Chunk M|c2me_opts_chunkio             |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		fabric-registry-sync-v0-2.3.6+1c0ea72177.jar      |Fabric Registry Sync (v0)     |fabric_registry_sync_v0       |2.3.6+1c0ea72177    |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$c2me-t|Connectored Concurrent Chunk M|c2me_threading_worldgen       |0.2.0-c3me-alpha.11.|DONE      |Manifest: NOSIGNATURE
+		appleskin-forge-mc1.20.1-2.5.1.jar                |AppleSkin                     |appleskin                     |2.5.1+mc1.20.1      |DONE      |Manifest: NOSIGNATURE
+		fabric-recipe-api-v1-1.0.24+514a076577.jar        |Fabric Recipe API (v1)        |fabric_recipe_api_v1          |1.0.24+514a076577   |DONE      |Manifest: NOSIGNATURE
+		fabric-object-builder-api-v1-11.1.5+f8c414ce77.jar|Fabric Object Builder API (v1)|fabric_object_builder_api_v1  |11.1.5+f8c414ce77   |DONE      |Manifest: NOSIGNATURE
+		justzoom_forge_2.1.1_MC_1.20.1.jar                |Just Zoom                     |justzoom                      |2.1.1               |DONE      |Manifest: NOSIGNATURE
+		fabric-language-kotlin-1.13.6+kotlin.2.2.20$kotlin|kotlin-reflect                |org_jetbrains_kotlin_kotlin_re|2.2.20              |DONE      |Manifest: NOSIGNATURE
+		KimetsunoYaiba-ver2-forge-1.20.1.jar              |Kimetsunoyaiba                |kimetsunoyaiba                |2                   |DONE      |Manifest: NOSIGNATURE
+		fabric-sound-api-v1-1.0.14+4f23bd8477.jar         |Fabric Sound API (v1)         |fabric_sound_api_v1           |1.0.14+4f23bd8477   |DONE      |Manifest: NOSIGNATURE
+		fabric-message-api-v1-5.1.10+52cc178c77.jar       |Fabric Message API (v1)       |fabric_message_api_v1         |5.1.10+52cc178c77   |DONE      |Manifest: NOSIGNATURE
+		c3me-fabric-mc1.20.1-0.2.0-c3me-alpha.11.61$exp4j-|exp4j                         |net_objecthunter_exp4j        |0.4.8               |DONE      |Manifest: NOSIGNATURE
+		fabric-data-generation-api-v1-12.3.7+369cb3a477.ja|Fabric Data Generation API (v1|fabric_data_generation_api_v1 |12.3.7+369cb3a477   |DONE      |Manifest: NOSIGNATURE
+		fabric-events-interaction-v0-0.6.5+0f26153f77.jar |Fabric Events Interaction (v0)|fabric_events_interaction_v0  |0.6.5+0f26153f77    |DONE      |Manifest: NOSIGNATURE
+	Crash Report UUID: 2275f25a-6fd4-4b19-b8cf-be04928d1f4b
+	FML: 47.4
+	Forge: net.minecraftforge:47.4.0

@@ -27,17 +27,24 @@ public class CrowAnimatableWrapper implements GeoAnimatable {
     private static boolean hasLoggedController = false;
 
     private final Entity entity;
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final AnimatableInstanceCache cache;
 
     private CrowAnimatableWrapper(Entity entity) {
         this.entity = entity;
+        LOGGER.info("CrowAnimatableWrapper constructor called for entity {}", entity.getUUID());
+        LOGGER.info("About to create AnimatableInstanceCache...");
+        this.cache = GeckoLibUtil.createInstanceCache(this);
+        LOGGER.info("AnimatableInstanceCache created");
     }
 
     /**
      * Get or create a wrapper for the given crow entity
      */
     public static CrowAnimatableWrapper getOrCreate(Entity entity) {
-        return wrappers.computeIfAbsent(entity.getUUID(), uuid -> new CrowAnimatableWrapper(entity));
+        return wrappers.computeIfAbsent(entity.getUUID(), uuid -> {
+            LOGGER.info("Creating new CrowAnimatableWrapper for entity {}", entity.getUUID());
+            return new CrowAnimatableWrapper(entity);
+        });
     }
 
     /**
@@ -61,7 +68,7 @@ public class CrowAnimatableWrapper implements GeoAnimatable {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        if (!hasLoggedController && Config.logDebug) {
+        if (!hasLoggedController) {
             LOGGER.info("=== REGISTERING ANIMATION CONTROLLER ===");
             hasLoggedController = true;
         }
@@ -74,12 +81,13 @@ public class CrowAnimatableWrapper implements GeoAnimatable {
         );
 
         controllers.add(controller);
-        
-        LOGGER.info("Animation controller 'crow_controller' registered successfully");
+
+        LOGGER.info("Animation controller 'crow_controller' registered for entity {}", entity.getUUID());
     }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
+        LOGGER.info("getAnimatableInstanceCache() called, cache exists: {}", cache != null);
         return cache;
     }
 

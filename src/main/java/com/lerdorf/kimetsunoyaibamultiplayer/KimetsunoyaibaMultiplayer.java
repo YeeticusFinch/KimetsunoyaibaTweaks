@@ -15,6 +15,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
@@ -55,6 +56,9 @@ public class KimetsunoyaibaMultiplayer
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+
+        // Register entities
+        ModEntities.register(modEventBus);
 
         // Register config event handlers on the mod event bus
         modEventBus.register(Config.class);
@@ -121,11 +125,16 @@ public class KimetsunoyaibaMultiplayer
     public void onServerTick(TickEvent.ServerTickEvent event)
     {
         if (event.phase == TickEvent.Phase.END) {
-            // Update flying crows ONCE per tick (not per dimension)
             if (event.getServer() != null) {
-                // Just pass the overworld level, the handler will search all levels for crows
                 ServerLevel overworld = event.getServer().overworld();
+
+                // Update flying crows ONCE per tick (not per dimension)
                 CrowEnhancementHandler.tick(overworld);
+
+                // Scan for unmirrored crows every second (20 ticks)
+                if (overworld.getGameTime() % 20 == 0) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowMirrorHandler.scanForUnmirroredCrows(overworld);
+                }
             }
         }
     }
@@ -180,6 +189,8 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.client.CrowAnimatableWrapper.clearAll();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.clearAll();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.clearAll();
+                // Don't clear mirrors from client side - they are server-side entities
+                // They will be cleared when the server shuts down or dimension unloads
             }
         }
 

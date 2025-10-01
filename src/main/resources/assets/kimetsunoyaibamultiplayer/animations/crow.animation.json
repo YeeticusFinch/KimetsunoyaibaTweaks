@@ -1,5 +1,5 @@
 {
-	"format_version": "1.8.0",
+	"format_version": "1.12.0",
 	"animations": {
 		"kimetsunoyaibamultiplayer.crow.idle": {
 			"loop": true,
@@ -1186,6 +1186,138 @@
 								"vector": [0, 0.25, 0.75]
 							},
 							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		},
+		"kimetsunoyaibamultiplayer.crow.death": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.25,
+			"bones": {
+				"head": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, -7, 2.5]
+						},
+						"0.25": {
+							"vector": [0, 0, -90]
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, -2, -3.25]
+						},
+						"0.25": {
+							"vector": [-4.25, -6.25, -3.25]
+						}
+					}
+				},
+				"body": {
+					"rotation": {
+						"0.0": {
+							"vector": [90, -35, 90]
+						},
+						"0.25": {
+							"vector": [90, -35, 2.5]
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 1]
+						},
+						"0.25": {
+							"vector": [0, 0, 1]
+						}
+					}
+				},
+				"left-wing": {
+					"rotation": {
+						"0.0": {
+							"vector": [90, -35, 90]
+						},
+						"0.25": {
+							"vector": [90, -35, 0]
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, -1, -2]
+						},
+						"0.25": {
+							"vector": [-7, -3, -2]
+						}
+					}
+				},
+				"right-wing": {
+					"rotation": {
+						"0.0": {
+							"vector": [90, -35, 90]
+						},
+						"0.25": {
+							"vector": [90, -35, 7.5]
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, -1, -2]
+						},
+						"0.25": {
+							"vector": [-3, -7, -2]
+						}
+					}
+				},
+				"left-leg": {
+					"rotation": {
+						"0.0": {
+							"vector": [-12.16801, -2.06529, -17.14141]
+						},
+						"0.25": {
+							"vector": [0, 0, -102.5]
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, -0.25, 0]
+						},
+						"0.25": {
+							"vector": [0, 0.75, 0]
+						}
+					}
+				},
+				"right-leg": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.25": {
+							"vector": [0, 0, -82.5]
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.25": {
+							"vector": [1.25, -0.5, 0]
+						}
+					}
+				},
+				"tail": {
+					"rotation": {
+						"0.0": {
+							"vector": [90, -45, 90]
+						},
+						"0.25": {
+							"vector": [90, -45, -5]
+						}
+					},
+					"position": {
+						"0.0": {
+							"vector": [0, 0.25, 0.75]
+						},
+						"0.25": {
+							"vector": [-1, -0.25, 0.75]
 						}
 					}
 				}

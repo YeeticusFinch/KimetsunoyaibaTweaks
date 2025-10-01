@@ -41,11 +41,9 @@ public class CrowAnimationController {
         AnimationController<CrowAnimatableWrapper> controller = event.getController();
 
         tickCounter++;
-        
-        // Debug log every 60 ticks (3 seconds)
-        boolean shouldLog = !hasLoggedAnimations || (tickCounter % 60 == 0);
-        
-        if (shouldLog && !hasLoggedAnimations) {
+
+        // Log first call always
+        if (!hasLoggedAnimations) {
             LOGGER.info("=== CROW ANIMATION PREDICATE CALLED ===");
             LOGGER.info("Entity: {}", entity.getName().getString());
             LOGGER.info("Controller: {}", controller.getName());
@@ -118,22 +116,13 @@ public class CrowAnimationController {
         // Log state changes
         String lastState = lastAnimationState.get(entityId);
         if (!currentState.equals(lastState)) {
-        	if (Config.logDebug)
-            LOGGER.info("Crow {} animation state changed: {} -> {}", 
-                entityId, lastState != null ? lastState : "NONE", currentState);
-        	if (Config.logDebug)
-            LOGGER.info("  Flying: {}, OnGround: {}, Speed: {}", 
-                isFlying, entity.onGround(), horizontalSpeed);
+            if (Config.logDebug) {
+                LOGGER.info("Crow {} animation state changed: {} -> {}",
+                    entityId, lastState != null ? lastState : "NONE", currentState);
+                LOGGER.info("  Flying: {}, OnGround: {}, Speed: {}",
+                    isFlying, entity.onGround(), horizontalSpeed);
+            }
             lastAnimationState.put(entityId, currentState);
-        }
-        
-        // Debug log animation details periodically
-        if (shouldLog && tickCounter % 60 == 0) {
-        	if (Config.logDebug) {
-	            LOGGER.info("Current animation state: {}", currentState);
-	            LOGGER.info("  Current animation: {}", controller.getCurrentAnimation());
-	            LOGGER.info("  Animation speed: {}", controller.getAnimationSpeed());
-        	}
         }
         
         // Set the animation
