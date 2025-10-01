@@ -73,7 +73,8 @@ public class CrowAnimationHandler {
             for (Object pose : poses) {
                 if (pose.toString().contains("FALL_FLYING") || pose.toString().contains("FLYING")) {
                     tryInvokeMethod(entity, "setPose", pose);
-                    LOGGER.info("Set entity pose to: {}", pose);
+                    if (Config.logDebug)
+                    	LOGGER.info("Set entity pose to: {}", pose);
                     break;
                 }
             }
@@ -110,7 +111,8 @@ public class CrowAnimationHandler {
                 } else {
                     method.invoke(obj, args);
                 }
-                LOGGER.info("Successfully invoked method: {}", methodName);
+                if (Config.logDebug)
+                	LOGGER.info("Successfully invoked method: {}", methodName);
             }
         } catch (Exception e) {
             // Silent fail - this is expected if method doesn't exist
@@ -137,7 +139,8 @@ public class CrowAnimationHandler {
             if (field != null) {
                 field.setAccessible(true);
                 field.set(obj, value);
-                LOGGER.info("Successfully set field: {}", fieldName);
+                if (Config.logDebug)
+                	LOGGER.info("Successfully set field: {}", fieldName);
             }
         } catch (Exception e) {
             // Silent fail - this is expected if field doesn't exist
@@ -170,7 +173,7 @@ public class CrowAnimationHandler {
         if (!Config.logDebug) {
             return;
         }
-
+        
         LOGGER.info("=== CROW ENTITY DEBUG ===");
         LOGGER.info("Entity type: {}", entity.getType());
         LOGGER.info("Entity class: {}", entity.getClass().getName());

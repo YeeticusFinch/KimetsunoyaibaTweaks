@@ -21,17 +21,20 @@ public class CrowGeoRenderer extends GeoEntityRenderer<GeckolibCrowEntity> {
     public CrowGeoRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new CrowGeoModel());
         this.shadowRadius = 0.3f;
-        LOGGER.info("CrowGeoRenderer initialized with GeckoLib model");
+        if (Config.logDebug)
+        	LOGGER.info("CrowGeoRenderer initialized with GeckoLib model");
     }
 
     @Override
     public void render(GeckolibCrowEntity entity, float entityYaw, float partialTick,
                       PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         if (!hasLoggedRender) {
-            LOGGER.info("=== CrowGeoRenderer.render() CALLED ===");
-            LOGGER.info("Entity: {}", entity.getName().getString());
-            LOGGER.info("Entity type: {}", entity.getType());
-            LOGGER.info("Entity position: {}, {}, {}", entity.getX(), entity.getY(), entity.getZ());
+        	if (Config.logDebug) {
+	            LOGGER.info("=== CrowGeoRenderer.render() CALLED ===");
+	            LOGGER.info("Entity: {}", entity.getName().getString());
+	            LOGGER.info("Entity type: {}", entity.getType());
+	            LOGGER.info("Entity position: {}, {}, {}", entity.getX(), entity.getY(), entity.getZ());
+        	}
             hasLoggedRender = true;
         }
 

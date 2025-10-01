@@ -44,9 +44,11 @@ public class CrowAnimationController {
 
         // Log first call always
         if (!hasLoggedAnimations) {
-            LOGGER.info("=== CROW ANIMATION PREDICATE CALLED ===");
-            LOGGER.info("Entity: {}", entity.getName().getString());
-            LOGGER.info("Controller: {}", controller.getName());
+        	if (Config.logDebug) {
+	            LOGGER.info("=== CROW ANIMATION PREDICATE CALLED ===");
+	            LOGGER.info("Entity: {}", entity.getName().getString());
+	            LOGGER.info("Controller: {}", controller.getName());
+        	}
             hasLoggedAnimations = true;
         }
         
@@ -129,7 +131,8 @@ public class CrowAnimationController {
         try {
             controller.setAnimation(animation);
         } catch (Exception e) {
-            LOGGER.error("Failed to set animation for state {}: {}", currentState, e.getMessage());
+        	if (Config.logDebug)
+        		LOGGER.error("Failed to set animation for state {}: {}", currentState, e.getMessage());
             // Try to set a simple idle animation as fallback
             controller.setAnimation(RawAnimation.begin().thenLoop("kimetsunoyaibamultiplayer.crow.idle"));
         }

@@ -49,10 +49,12 @@ public class CrowMirrorHandler {
             // Check if the mirror still exists
             GeckolibCrowEntity existingMirror = CROW_MIRRORS.get(entity.getUUID());
             if (existingMirror != null && existingMirror.isAlive() && !existingMirror.isRemoved()) {
+            	if (Config.logDebug)
                 LOGGER.info("Crow {} already has a valid mirror, skipping", entity.getUUID());
                 return; // Already has a valid mirror
             } else {
                 // Mirror is gone or invalid, remove from map and create new one
+            	if (Config.logDebug)
                 LOGGER.warn("Crow {} had invalid mirror, removing and recreating", entity.getUUID());
                 if (existingMirror != null && !existingMirror.isRemoved()) {
                     existingMirror.discard();
@@ -60,7 +62,7 @@ public class CrowMirrorHandler {
                 CROW_MIRRORS.remove(entity.getUUID());
             }
         }
-
+        if (Config.logDebug)
         LOGGER.info("Kasugai crow spawned! Creating GeckoLib mirror entity...");
 
         // Use the helper method to create the mirror
@@ -101,6 +103,7 @@ public class CrowMirrorHandler {
         if (mirrorCrow != null) {
             // Trigger death animation on mirror
             mirrorCrow.triggerDeath();
+            if (Config.logDebug)
             LOGGER.info("Original crow died - triggered death animation on mirror");
 
             // Schedule removal of mirror after death animation (about 2 seconds)
@@ -150,6 +153,7 @@ public class CrowMirrorHandler {
                 GeckolibCrowEntity mirror = CROW_MIRRORS.get(entity.getUUID());
                 if (mirror == null || mirror.isRemoved() || !mirror.isAlive()) {
                     // Mirror is gone, remove from map and re-create
+                	if (Config.logDebug)
                     LOGGER.warn("Mirror crow was removed, recreating...");
                     CROW_MIRRORS.remove(entity.getUUID());
                 } else {
@@ -160,6 +164,7 @@ public class CrowMirrorHandler {
             }
 
             // No mirror exists - create one
+            if (Config.logDebug)
             LOGGER.info("Found unmirror kasugai crow, creating GeckoLib mirror...");
             createMirrorForCrow(entity, level);
         }
@@ -173,6 +178,7 @@ public class CrowMirrorHandler {
         if (crow instanceof LivingEntity livingCrow) {
             // Check if invisibility effect is present
             if (!livingCrow.hasEffect(MobEffects.INVISIBILITY)) {
+            	if (Config.logDebug)
                 LOGGER.info("Re-applying invisibility to crow {} (was removed)", crow.getUUID());
                 livingCrow.addEffect(new MobEffectInstance(
                     MobEffects.INVISIBILITY,
@@ -189,6 +195,7 @@ public class CrowMirrorHandler {
      * Create a mirror entity for a given kasugai_crow
      */
     private static void createMirrorForCrow(Entity originalCrow, ServerLevel serverLevel) {
+    	if (Config.logDebug)
         LOGGER.info("Creating GeckoLib mirror for crow: {} at {}, {}, {}",
             originalCrow.getName().getString(), originalCrow.getX(), originalCrow.getY(), originalCrow.getZ());
 
@@ -201,6 +208,7 @@ public class CrowMirrorHandler {
                 false,
                 false
             ));
+            if (Config.logDebug)
             LOGGER.info("  Made original crow invisible");
         }
 
@@ -223,7 +231,7 @@ public class CrowMirrorHandler {
 
         // Store in map
         CROW_MIRRORS.put(originalCrow.getUUID(), mirrorCrow);
-
+        if (Config.logDebug)
         LOGGER.info("  Created GeckoLib mirror crow: {}", mirrorCrow.getUUID());
     }
 
@@ -233,6 +241,7 @@ public class CrowMirrorHandler {
      */
     public static void clearAllMirrors() {
         if (!CROW_MIRRORS.isEmpty()) {
+        	if (Config.logDebug)
             LOGGER.info("Clearing {} crow mirrors", CROW_MIRRORS.size());
             // Remove all mirror entities from the world
             for (GeckolibCrowEntity mirror : CROW_MIRRORS.values()) {
@@ -244,6 +253,7 @@ public class CrowMirrorHandler {
                 }
             }
             CROW_MIRRORS.clear();
+            if (Config.logDebug)
             LOGGER.info("Cleared all crow mirrors");
         }
     }

@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.logging.LogUtils;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
@@ -33,23 +34,37 @@ public class ClientCommandHandler {
 
         LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("testanimc")
             .executes(context -> {
+                // Default: use sword_to_left
                 Minecraft mc = Minecraft.getInstance();
                 if (mc.player != null) {
-                    return executeClientTestAnimation(mc.player);
+                    return executeClientTestAnimation(mc.player, "sword_to_left");
                 }
                 return 0;
-            });
+            })
+            .then(Commands.argument("animation", StringArgumentType.string())
+                .executes(context -> {
+                    // Use specified animation
+                    Minecraft mc = Minecraft.getInstance();
+                    if (mc.player != null) {
+                        String animationName = StringArgumentType.getString(context, "animation");
+                        return executeClientTestAnimation(mc.player, animationName);
+                    }
+                    return 0;
+                }));
 
         dispatcher.register(command);
-        LOGGER.info("Registered client-side test animation command: /testanimc");
+        LOGGER.info("Registered client-side test animation command: /testanimc [animation]");
     }
 
-    private static int executeClientTestAnimation(AbstractClientPlayer player) {
+    private static int executeClientTestAnimation(AbstractClientPlayer player, String animationName) {
         try {
-            player.displayClientMessage(Component.literal("§a[Client Test] Attempting to play sword_to_left animation..."), false);
+            player.displayClientMessage(Component.literal("§a[Client Test] Attempting to play '" + animationName + "' animation..."), false);
+
+            // Create ResourceLocation from animation name
+            ResourceLocation animationLocation = parseAnimationName(animationName);
 
             // First, try to find the animation in the registry
-            KeyframeAnimation animation = findTestAnimation();
+            KeyframeAnimation animation = findAnimation(animationLocation);
 
             if (animation != null) {
                 // Play the animation locally on the client player
@@ -58,7 +73,7 @@ public class ClientCommandHandler {
                 // Also send to server for other players to see
                 AnimationSyncPacket packet = new AnimationSyncPacket(
                     player.getUUID(),
-                    TEST_ANIMATION,
+                    animationLocation,
                     0,
                     30,
                     false,
@@ -67,15 +82,15 @@ public class ClientCommandHandler {
                 );
                 ModNetworking.sendToServer(packet);
 
-                player.displayClientMessage(Component.literal("§a[Client Test] Animation started successfully!"), false);
+                player.displayClientMessage(Component.literal("§a[Client Test] Animation '" + animationName + "' started successfully!"), false);
                 return 1;
             } else {
                 // Fallback: just send the packet without animation data
-                player.displayClientMessage(Component.literal("§e[Client Test] Animation not found in registry, sending sync packet anyway..."), false);
+                player.displayClientMessage(Component.literal("§e[Client Test] Animation '" + animationName + "' not found in registry, sending sync packet anyway..."), false);
 
                 AnimationSyncPacket packet = new AnimationSyncPacket(
                     player.getUUID(),
-                    TEST_ANIMATION,
+                    animationLocation,
                     0,
                     30,
                     false,
@@ -93,30 +108,50 @@ public class ClientCommandHandler {
         }
     }
 
-    private static KeyframeAnimation findTestAnimation() {
-        // Try multiple resource locations
-        ResourceLocation[] possibleLocations = {
-            ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sword_to_left"),
-            ResourceLocation.fromNamespaceAndPath("playeranimator", "sword_to_left"),
-            ResourceLocation.fromNamespaceAndPath("minecraft", "sword_to_left"),
-            ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "animations/sword_to_left")
+    private static ResourceLocation parseAnimationName(String animationName) {
+        // If already contains namespace, parse it
+        if (animationName.contains(":")) {
+            String[] parts = animationName.split(":", 2);
+            return ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
+        }
+        // Otherwise, default to kimetsunoyaiba namespace
+        return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", animationName);
+    }
+
+    private static KeyframeAnimation findAnimation(ResourceLocation animationLocation) {
+        // Try the exact location first
+        KeyframeAnimation anim = PlayerAnimationRegistry.getAnimation(animationLocation);
+        if (anim != null) {
+            if (Config.logDebug) {
+                LOGGER.info("Found animation at: {}", animationLocation);
+            }
+            return anim;
+        }
+
+        // Try alternative namespaces
+        String path = animationLocation.getPath();
+        ResourceLocation[] alternativeLocations = {
+            ResourceLocation.fromNamespaceAndPath("playeranimator", path),
+            ResourceLocation.fromNamespaceAndPath("minecraft", path),
+            ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "animations/" + path)
         };
 
-        for (ResourceLocation loc : possibleLocations) {
-            KeyframeAnimation anim = PlayerAnimationRegistry.getAnimation(loc);
+        for (ResourceLocation loc : alternativeLocations) {
+            anim = PlayerAnimationRegistry.getAnimation(loc);
             if (anim != null) {
                 if (Config.logDebug) {
-                    LOGGER.info("Found test animation at: {}", loc);
+                    LOGGER.info("Found animation at alternative location: {}", loc);
                 }
                 return anim;
             }
         }
 
         if (Config.logDebug) {
-            LOGGER.warn("Could not find test animation 'sword_to_left' in registry");
+            LOGGER.warn("Could not find animation '{}' in registry", animationLocation);
         }
         return null;
     }
+
 
     private static void playAnimationOnPlayer(AbstractClientPlayer player, KeyframeAnimation animation) {
         try {

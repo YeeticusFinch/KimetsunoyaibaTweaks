@@ -1,3 +1,11 @@
 {
-  "entity.kimetsunoyaibamultiplayer.geckolib_crow": "Kasugai Crow"
+  "entity.kimetsunoyaibamultiplayer.geckolib_crow": "Kasugai Crow",
+
+  "item.kimetsunoyaibamultiplayer.nichirinsword_frost": "Nichirin Sword (Frost Breathing)",
+  "item.kimetsunoyaibamultiplayer.nichirinsword_ice": "Nichirin Sword (Ice Breathing)",
+  "item.kimetsunoyaibamultiplayer.nichirinsword_hanazawa": "Hanazawa's Nichirin Sword",
+  "item.kimetsunoyaibamultiplayer.nichirinsword_hiori": "Hiori's Nichirin Sword",
+
+  "key.categories.kimetsunoyaibamultiplayer": "Kimetsunoyaiba Multiplayer",
+  "key.kimetsunoyaibamultiplayer.cycle_breathing_form": "Cycle Breathing Form"
 }

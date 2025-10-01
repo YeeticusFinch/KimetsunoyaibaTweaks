@@ -108,7 +108,8 @@ public class GunAnimationHandler {
         GunType previousGun = currentGunType.get(playerId);
         if (previousGun != gunType) {
             currentGunType.put(playerId, gunType);
-            LOGGER.info("Player {} gun type changed: {} -> {}", player.getName().getString(), previousGun, gunType);
+            if (Config.logDebug)
+            	LOGGER.info("Player {} gun type changed: {} -> {}", player.getName().getString(), previousGun, gunType);
         }
 
         if (gunType == GunType.NONE) {
@@ -210,7 +211,8 @@ public class GunAnimationHandler {
         // Try to play the animation
         ResourceLocation animationId = ResourceLocation.tryBuild("kimetsunoyaibamultiplayer", animationName);
         if (animationId == null) {
-            LOGGER.warn("Failed to build ResourceLocation for animation: {}", animationName);
+        	if (Config.logDebug)
+        		LOGGER.warn("Failed to build ResourceLocation for animation: {}", animationName);
             return;
         }
 
@@ -233,7 +235,8 @@ public class GunAnimationHandler {
         }
 
         if (animation == null) {
-            LOGGER.warn("Animation not found in registry: {} (tried {} namespaces)", animationName, possibleLocations.length);
+        	if (Config.logDebug)
+        		LOGGER.warn("Animation not found in registry: {} (tried {} namespaces)", animationName, possibleLocations.length);
             return;
         }
 
@@ -244,7 +247,8 @@ public class GunAnimationHandler {
                 LOGGER.info("Playing gun animation for {}: {}", player.getName().getString(), animationName);
             }
         } else {
-            LOGGER.warn("No animation stack available for player: {}", player.getName().getString());
+        	if (Config.logDebug)
+        		LOGGER.warn("No animation stack available for player: {}", player.getName().getString());
         }
     }
 
@@ -267,7 +271,8 @@ public class GunAnimationHandler {
         // Try to play the animation using PlayerAnimator with mobplayeranimator support
         ResourceLocation animationId = ResourceLocation.tryBuild("kimetsunoyaibamultiplayer", animationName);
         if (animationId == null) {
-            LOGGER.warn("Failed to build ResourceLocation for animation: {}", animationName);
+        	if (Config.logDebug)
+        		LOGGER.warn("Failed to build ResourceLocation for animation: {}", animationName);
             return;
         }
 
@@ -319,7 +324,8 @@ public class GunAnimationHandler {
         ResourceLocation animationId = ResourceLocation.tryBuild("kimetsunoyaibamultiplayer", animationName);
 
         if (animationId == null) {
-            LOGGER.warn("Failed to build ResourceLocation for shoot animation: {}", animationName);
+        	if (Config.logDebug)
+        		LOGGER.warn("Failed to build ResourceLocation for shoot animation: {}", animationName);
             return;
         }
 
@@ -343,7 +349,8 @@ public class GunAnimationHandler {
         ResourceLocation animationId = ResourceLocation.tryBuild("kimetsunoyaibamultiplayer", animationName);
 
         if (animationId == null) {
-            LOGGER.warn("Failed to build ResourceLocation for shoot animation: {}", animationName);
+        	if (Config.logDebug)
+        		LOGGER.warn("Failed to build ResourceLocation for shoot animation: {}", animationName);
             playShootEffectsForEntity(entity, gunType);
             return;
         }
@@ -490,6 +497,7 @@ public class GunAnimationHandler {
     public static void clearAll() {
         currentGunType.clear();
         currentAnimationState.clear();
-        LOGGER.info("Cleared all gun animation data");
+        if (Config.logDebug)
+        	LOGGER.info("Cleared all gun animation data");
     }
 }

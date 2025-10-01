@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.entity.EntityType;
@@ -50,11 +51,12 @@ public class ModEntities {
     public static class EntityAttributeRegistry {
         @SubscribeEvent
         public static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+        	if (Config.logDebug)
             LOGGER.info("Registering entity attributes for GeckolibCrowEntity");
 
             // Register attributes for our GeckoLib crow entity
             event.put(GECKOLIB_CROW.get(), GeckolibCrowEntity.createAttributes().build());
-
+            if (Config.logDebug)
             LOGGER.info("Entity attributes registered successfully");
         }
     }

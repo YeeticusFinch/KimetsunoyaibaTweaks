@@ -23,10 +23,12 @@ public class CrowRendererManager {
 
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        LOGGER.info("Registering GeckoLib crow renderer...");
+    	if (Config.logDebug)
+    		LOGGER.info("Registering GeckoLib crow renderer...");
 
         // Register renderer for our GeckolibCrowEntity
         event.registerEntityRenderer(ModEntities.GECKOLIB_CROW.get(), CrowGeoRenderer::new);
-        LOGGER.info("GeckoLib crow renderer registered successfully");
+        if (Config.logDebug)
+        	LOGGER.info("GeckoLib crow renderer registered successfully");
     }
 }

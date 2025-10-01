@@ -34,9 +34,11 @@ public class Config
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event)
     {
+    	if (Config.logDebug)
         System.out.println("COMMON CONFIG LOADING...");
         logDebug = LOG_DEBUG.get();
         onScreenDebug = ON_SCREEN_DEBUG.get();
+        if (Config.logDebug)
         System.out.println("Common config loaded: logDebug=" + logDebug + ", onScreenDebug=" + onScreenDebug);
     }
 }

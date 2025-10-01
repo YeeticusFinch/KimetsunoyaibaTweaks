@@ -17,6 +17,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
@@ -63,6 +64,9 @@ public class KimetsunoyaibaMultiplayer
 
         // Register sounds
         ModSounds.register(modEventBus);
+
+        // Register items
+        ModItems.register(modEventBus);
 
         // Register config event handlers on the mod event bus
         modEventBus.register(Config.class);
@@ -116,6 +120,7 @@ public class KimetsunoyaibaMultiplayer
             if (event.getSource().getEntity() instanceof Player attacker) {
                 ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
                 if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
+                	if (Config.logDebug)
                     LOGGER.debug("Attack detected with kimetsunoyaiba sword: {} -> {}",
                         attacker.getName().getString(),
                         target.getName().getString());
@@ -150,7 +155,16 @@ public class KimetsunoyaibaMultiplayer
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event)
         {
+        	if (Config.logDebug)
             LOGGER.info("Animation sync system initialized for client");
+        }
+
+        @SubscribeEvent
+        public static void onKeyRegister(net.minecraftforge.client.event.RegisterKeyMappingsEvent event)
+        {
+            event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
+            if (Config.logDebug)
+            LOGGER.info("Registered breathing technique key binding");
         }
     }
 

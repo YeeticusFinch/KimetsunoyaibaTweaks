@@ -51,7 +51,7 @@ public class TestAnimationCommand {
         try {
             UUID playerUUID = player.getUUID();
 
-            player.sendSystemMessage(Component.literal("Playing test animation 'sword_to_left' on all players..."));
+            player.sendSystemMessage(Component.literal("Playing test animation 'sword_to_left' on all players (including you)..."));
 
             if (Config.logDebug) {
                 LOGGER.info("Test animation command executed by player: {}", player.getName().getString());
@@ -68,10 +68,10 @@ public class TestAnimationCommand {
                 null // No animation data (will use registry lookup)
             );
 
-            // Send to all clients including the sender
+            // Send to all clients including the sender (this will show animation on everyone including the command user)
             ModNetworking.sendToAllClients(packet);
 
-            player.sendSystemMessage(Component.literal("Test animation packet sent to all players!"));
+            player.sendSystemMessage(Component.literal("Test animation packet sent to all players (including yourself)!"));
 
             return 1;
         } catch (Exception e) {
