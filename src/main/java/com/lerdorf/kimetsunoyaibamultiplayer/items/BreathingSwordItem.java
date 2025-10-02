@@ -4,13 +4,11 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
-import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.level.Level;
 
@@ -34,41 +32,41 @@ public abstract class BreathingSwordItem extends SwordItem {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        BreathingTechnique technique = getBreathingTechnique();
+        PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player.getUUID());
 
-        if (!level.isClientSide) {
-            BreathingTechnique technique = getBreathingTechnique();
-            PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player.getUUID());
+        int formIndex = data.getCurrentFormIndex();
+        BreathingForm form = technique.getForm(formIndex);
 
-            int formIndex = data.getCurrentFormIndex();
-            BreathingForm form = technique.getForm(formIndex);
+        if (form != null) {
+            // Check item cooldown
+            if (!player.getCooldowns().isOnCooldown(this)) {
+                // Execute the form effect
+                form.getEffect().execute(player, level);
 
-            if (form != null) {
-                long currentTick = level.getGameTime();
-                long ticksSinceLastUse = currentTick - data.getLastUsedTick();
+                // Apply item cooldown
+                player.getCooldowns().addCooldown(this, form.getCooldownSeconds() * 20);
 
-                if (ticksSinceLastUse >= form.getCooldownTicks()) {
-                    // Execute the form effect
-                    form.getEffect().execute(player, level);
+                // Send action bar message
+                player.displayClientMessage(
+                    Component.literal("§b" + form.getName()),
+                    true
+                );
 
-                    // Update last used time
-                    data.setLastUsedTick(currentTick);
-
-                    // Send action bar message
+                return InteractionResultHolder.success(stack);
+            } else {
+                // Still on cooldown
+                if (level.isClientSide) {
                     player.displayClientMessage(
-                        Component.literal("§b" + form.getName()),
-                        true
-                    );
-                } else {
-                    int secondsRemaining = (int) ((form.getCooldownTicks() - ticksSinceLastUse) / 20);
-                    player.displayClientMessage(
-                        Component.literal("§cCooldown: " + secondsRemaining + "s"),
+                        Component.literal("§cAbility on cooldown!"),
                         true
                     );
                 }
+                return InteractionResultHolder.fail(stack);
             }
         }
 
-        return InteractionResultHolder.success(stack);
+        return InteractionResultHolder.pass(stack);
     }
 
     /**
@@ -86,7 +84,7 @@ public abstract class BreathingSwordItem extends SwordItem {
         if (form != null) {
             // Send chat message about the new form
             player.sendSystemMessage(
-                Component.literal("§6Selected: §b" + form.getName())
+                Component.literal("§" + technique.getName() + ": §b" + form.getName())
             );
         }
     }

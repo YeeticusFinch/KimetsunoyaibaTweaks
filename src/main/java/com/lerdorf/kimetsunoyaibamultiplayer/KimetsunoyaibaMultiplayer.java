@@ -24,7 +24,10 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
+import java.util.List;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -113,14 +116,52 @@ public class KimetsunoyaibaMultiplayer
     @SubscribeEvent
     public void onLivingAttack(LivingAttackEvent event)
     {
-        // Handle attack-based particle triggering (for server-side events)
-        if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
-            com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
-            LivingEntity target = event.getEntity();
-            if (event.getSource().getEntity() instanceof Player attacker) {
-                ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
+        LivingEntity target = event.getEntity();
+
+        // Handle AOE attacks for breathing swords
+        if (event.getSource().getEntity() instanceof Player attacker) {
+            ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
+
+            // Check if using a breathing sword (our custom swords)
+            if (weapon.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
+                // Perform AOE attack in a 3x3 cube in front of player
+                Vec3 attackerPos = attacker.position().add(0, attacker.getEyeHeight(), 0);
+                Vec3 lookVec = attacker.getLookAngle();
+                Vec3 frontPos = attackerPos.add(lookVec.scale(2.0)); // 2 blocks in front
+
+                // Create 3x3x3 cube
+                AABB attackBox = new AABB(frontPos.add(-1.5, -1.5, -1.5), frontPos.add(1.5, 1.5, 1.5));
+
+                List<LivingEntity> nearbyEntities = attacker.level().getEntitiesOfClass(
+                    LivingEntity.class, attackBox,
+                    e -> e != attacker && e != target && e.isAlive()
+                );
+
+                // Damage all nearby entities (excluding the primary target which is already being damaged)
+                float damage = 6.0F; // Base AOE damage
+                for (LivingEntity entity : nearbyEntities) {
+                    entity.hurt(attacker.level().damageSources().playerAttack(attacker), damage);
+
+                    // Play sweep attack particles
+                    if (attacker.level() instanceof ServerLevel serverLevel) {
+                        serverLevel.sendParticles(
+                            net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK,
+                            entity.getX(), entity.getY() + entity.getBbHeight() * 0.5, entity.getZ(),
+                            1, 0, 0, 0, 0
+                        );
+                    }
+                }
+
+                if (Config.logDebug && !nearbyEntities.isEmpty()) {
+                    LOGGER.debug("AOE attack hit {} additional entities", nearbyEntities.size());
+                }
+            }
+
+            // Handle attack-based particle triggering (for server-side events)
+            if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
+                com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
                 if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
-                	if (Config.logDebug)
+                    if (Config.logDebug)
                     LOGGER.debug("Attack detected with kimetsunoyaiba sword: {} -> {}",
                         attacker.getName().getString(),
                         target.getName().getString());
@@ -139,6 +180,9 @@ public class KimetsunoyaibaMultiplayer
 
                 // Update flying crows ONCE per tick (not per dimension)
                 CrowEnhancementHandler.tick(overworld);
+
+                // Tick breathing technique ability scheduler
+                com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler.tick(overworld);
 
                 // Scan for unmirrored crows every second (20 ticks)
                 if (overworld.getGameTime() % 20 == 0) {
@@ -258,8 +302,12 @@ public class KimetsunoyaibaMultiplayer
                     return;
                 }
 
-                // Check for sword attacks (existing code, only for local player)
+                // Check for breathing sword attacks
                 if (attacker instanceof AbstractClientPlayer clientAttacker) {
+                    // Play attack animation for breathing swords
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(clientAttacker);
+
+                    // Check for sword particle effects (existing code, only for local player)
                     if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.swordParticlesEnabled &&
                         com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
                         com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
@@ -303,6 +351,11 @@ public class KimetsunoyaibaMultiplayer
             }
 
             ItemStack heldItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
+
+            // Check if holding breathing sword - play attack animation
+            if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
+                com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(mc.player);
+            }
 
             // Check if holding rifle
             if (heldItem.getItem().toString().contains("rifle")) {

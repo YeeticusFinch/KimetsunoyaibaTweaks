@@ -1,17 +1,20 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -21,36 +24,43 @@ public class IceBreathingForms {
 
     /**
      * First Form: Paralyzing Icicle
-     * Speed stab with slowness/mining fatigue
+     * Speed stab with slowness/mining fatigue - INCREASED RANGE
      */
     public static BreathingForm firstForm() {
         return new BreathingForm(
             "First Form: Paralyzing Icicle",
             "Stab forward with incredible speed",
-            100, // 5 second cooldown
+            5, // 5 second cooldown
             (player, level) -> {
-                // TODO: Play animation: kimetsunoyaiba:speed_attack_sword
-                // TODO: Launch player forward
+                // Play animation
+                AnimationHelper.playAnimation(player, "speed_attack_sword");
+                
+                //player.
 
-                // Apply effects to targets in front
+                // Launch player forward a little bit
                 Vec3 lookVec = player.getLookAngle();
-                Vec3 startPos = player.position().add(0, player.getEyeHeight(), 0);
-                Vec3 endPos = startPos.add(lookVec.scale(3.0));
+                player.setDeltaMovement(lookVec.scale(0.8));
 
-                AABB hitBox = new AABB(startPos, endPos).inflate(1.0);
+                // Apply effects to targets in front - INCREASED RANGE to 5 blocks
+                Vec3 startPos = player.position().add(0, player.getEyeHeight(), 0);
+                Vec3 endPos = startPos.add(lookVec.scale(5.0));
+
+                AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
                 List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
                     e -> e != player && e.isAlive());
 
                 for (LivingEntity target : targets) {
                     target.hurt(level.damageSources().playerAttack(player), 8.0F);
-                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4)); // 8 seconds, extreme slowness
-                    target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4)); // 8 seconds, mining fatigue
+                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4));
+                    target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4));
                 }
 
-                // Spawn particles
-                spawnParticleLine(level, startPos, endPos, ParticleTypes.SNOWFLAKE, 20);
+                // Spawn particles - forward thrust straight line
+                if (level instanceof ServerLevel serverLevel) {
+                    spawnForwardThrust(serverLevel, startPos, lookVec, 5.0, ParticleTypes.SNOWFLAKE, 30);
+                }
 
-                // Play sound
+                // Play sounds
                 level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
                     SoundSource.PLAYERS, 1.0F, 1.0F);
                 level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
@@ -61,92 +71,253 @@ public class IceBreathingForms {
 
     /**
      * Second Form: Winter Wrath
-     * Circle target with rotational slashes
+     * Circle target for 5 seconds, 3 attacks/second, always facing center
+     * Uses velocity-based movement with tornado-like particle effects
      */
     public static BreathingForm secondForm() {
         return new BreathingForm(
             "Second Form: Winter Wrath",
             "Circle and deliver rotational slashes",
-            120, // 6 second cooldown
+            6, // 6 second cooldown
             (player, level) -> {
-                // TODO: Implement circling movement and animations
-                // TODO: Play animations: ragnaraku1, sword_to_right, sword_to_left
+                // Play initial animation
+                AnimationHelper.playAnimation(player, "ragnaraku1");
 
-                // Damage entities in a circle around the player
-                AABB area = player.getBoundingBox().inflate(5.0);
-                List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, area,
+                // Find target - check for entity within 6 blocks on crosshair
+                Vec3 lookVec = player.getLookAngle();
+                Vec3 startPos = player.position().add(0, player.getEyeHeight(), 0);
+                Vec3 endPos = startPos.add(lookVec.scale(6.0));
+
+                // Raycast to find entity
+                AABB searchBox = new AABB(startPos, endPos).inflate(1.0);
+                List<LivingEntity> nearbyEntities = level.getEntitiesOfClass(LivingEntity.class, searchBox,
                     e -> e != player && e.isAlive());
 
-                for (LivingEntity target : targets) {
-                    target.hurt(level.damageSources().playerAttack(player), 6.0F);
+                // Determine circle center - either targeted entity or default position
+                Vec3 targetPos;
+                LivingEntity targetEntity = null;
+
+                if (!nearbyEntities.isEmpty()) {
+                    nearbyEntities.sort(Comparator.comparingDouble(e ->
+                        e.position().distanceToSqr(player.position())));
+                    targetEntity = nearbyEntities.get(0);
+                    targetPos = targetEntity.position();
+                } else {
+                    targetPos = player.position().add(lookVec.scale(5.0));
                 }
 
-                // Spawn circle particles
-                spawnCircleParticles(level, player.position().add(0, 1, 0), 5.0, ParticleTypes.SNOWFLAKE, 50);
+                final Vec3 finalTargetPos = targetPos;
+                final LivingEntity finalTargetEntity = targetEntity;
+                final double circleRadius = 4.0;
+                final int totalTicks = 100; // 5 seconds
+                final int attackInterval = 7; // ~3 attacks per second
+                final double angularVelocity = (Math.PI * 2) / totalTicks; // Radians per tick (faster rotation)
 
-                level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                    SoundSource.PLAYERS, 1.0F, 1.0F);
+                // Store player's starting angle
+                Vec3 toPlayer = player.position().subtract(finalTargetPos);
+                final double startAngle = Math.atan2(toPlayer.z, toPlayer.x);
+
+                // Schedule circling movement, attacks, and particles
+                for (int tick = 0; tick < totalTicks; tick++) {
+                    final int currentTick = tick;
+
+                    AbilityScheduler.scheduleOnce(player, () -> {
+                        // Calculate current angle (rotates 3x faster than before)
+                        double angle = startAngle + (currentTick * angularVelocity * 3.0);
+
+                        // Calculate target position on circle
+                        Vec3 currentCenter = finalTargetEntity != null ? finalTargetEntity.position() : finalTargetPos;
+                        double targetX = currentCenter.x + Math.cos(angle) * circleRadius;
+                        double targetZ = currentCenter.z + Math.sin(angle) * circleRadius;
+                        Vec3 targetPosOnCircle = new Vec3(targetX, player.getY(), targetZ);
+
+                        // Calculate velocity to push player toward target position
+                        Vec3 currentPos = player.position();
+                        Vec3 velocity = targetPosOnCircle.subtract(currentPos).scale(0.3); // Velocity factor
+                        player.setDeltaMovement(velocity);
+
+                        // Force player to face center
+                        Vec3 lookDir = currentCenter.subtract(player.position()).normalize();
+                        float yaw = (float) Math.toDegrees(Math.atan2(-lookDir.x, lookDir.z));
+                        float pitch = (float) Math.toDegrees(-Math.asin(lookDir.y));
+                        player.setYRot(yaw);
+                        player.setXRot(pitch);
+                        player.setYHeadRot(yaw);
+
+                        // Spawn tornado-like particles every tick (always, regardless of target)
+                        if (level instanceof ServerLevel serverLevel) {
+                            // Spawn particles in spiral pattern around player
+                            int particleCount = 8;
+                            for (int i = 0; i < particleCount; i++) {
+                                double particleAngle = (currentTick * 0.5 + i * (Math.PI * 2 / particleCount)) % (Math.PI * 2);
+                                double particleRadius = 1.0 + Math.sin(currentTick * 0.3) * 0.5;
+                                double px = player.getX() + Math.cos(particleAngle) * particleRadius;
+                                double pz = player.getZ() + Math.sin(particleAngle) * particleRadius;
+                                double py = player.getY() + 0.5 + (currentTick % 20) * 0.1;
+
+                                serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
+                                    px, py, pz, 1, 0, 0.1, 0, 0.02);
+                            }
+
+                            // Add sweep attack particles for dramatic effect
+                            if (currentTick % 3 == 0) {
+                                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                                    player.getX(), player.getY() + 1, player.getZ(),
+                                    1, 0, 0, 0, 0);
+                            }
+
+                            // Spawn circular path particles
+                            for (int i = 0; i < 12; i++) {
+                                double pathAngle = angle + (i * Math.PI / 6);
+                                double pathX = currentCenter.x + Math.cos(pathAngle) * circleRadius;
+                                double pathZ = currentCenter.z + Math.sin(pathAngle) * circleRadius;
+                                serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
+                                    pathX, currentCenter.y + 0.5, pathZ,
+                                    1, 0, 0.05, 0, 0.01);
+                            }
+                        }
+
+                        // Attack every attackInterval ticks (3 times per second)
+                        if (currentTick % attackInterval == 0) {
+                            // Always play sword animation
+                            AnimationHelper.playAnimation(player,
+                                currentTick % 14 == 0 ? "kimetsunoyaiba:sword_to_left" : "kimetsunoyaiba:sword_to_right");
+
+                            // Damage entities within attack range
+                            AABB attackBox = player.getBoundingBox().inflate(3.0);
+                            List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, attackBox,
+                                e -> e != player && e.isAlive());
+
+                            for (LivingEntity target : targets) {
+                                target.hurt(level.damageSources().playerAttack(player), 6.0F);
+                            }
+
+                            level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                                SoundSource.PLAYERS, 1.0F, 1.2F);
+                        }
+                    }, tick);
+                }
             }
         );
     }
 
     /**
      * Third Form: Merciful Hail Fall
-     * Leap up and deliver multiple downward slashes
+     * Hover and attack for 4 seconds, 3 attacks/second, ragnaraku2 and ragnaraku3
      */
     public static BreathingForm thirdForm() {
         return new BreathingForm(
             "Third Form: Merciful Hail Fall",
             "Leap and deliver powerful downward slashes",
-            140, // 7 second cooldown
+            7, // 7 second cooldown
             (player, level) -> {
-                // TODO: Make player leap upward and hover
-                // TODO: Play animations: ragnaraku2, ragnaraku3 alternating
+                // Initial leap
+                player.setDeltaMovement(player.getDeltaMovement().add(0, 1.2, 0));
 
-                player.setDeltaMovement(player.getDeltaMovement().add(0, 1.0, 0));
+                AnimationHelper.playAnimation(player, "ragnaraku2");
 
-                // Damage entities below
-                AABB area = player.getBoundingBox().inflate(3.0, 0.5, 3.0);
-                List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, area,
-                    e -> e != player && e.isAlive());
+                final int totalTicks = 80; // 4 seconds
+                final int attackInterval = 7; // ~3 attacks per second
+                boolean[] useRagnaraku2 = {true}; // Toggle between animations
 
-                for (LivingEntity target : targets) {
-                    target.hurt(level.damageSources().playerAttack(player), 10.0F);
+                // Keep player hovering and attacking
+                for (int tick = 0; tick < totalTicks; tick++) {
+                    final int currentTick = tick;
+
+                    AbilityScheduler.scheduleOnce(player, () -> {
+                        // Keep player in air by canceling gravity
+                        if (player.getDeltaMovement().y < 0) {
+                            player.setDeltaMovement(player.getDeltaMovement().x, 0.1, player.getDeltaMovement().z);
+                        }
+
+                        // Attack every attackInterval ticks
+                        if (currentTick % attackInterval == 0) {
+                            // Always alternate animations
+                            AnimationHelper.playAnimation(player, useRagnaraku2[0] ? "ragnaraku2" : "ragnaraku3");
+                            useRagnaraku2[0] = !useRagnaraku2[0];
+
+                            // Large downwards AOE slash
+                            AABB area = player.getBoundingBox().inflate(4.0, 8.0, 4.0);
+                            List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, area,
+                                e -> e != player && e.isAlive() && e.getY() < player.getY() + 2);
+
+                            for (LivingEntity target : targets) {
+                                target.hurt(level.damageSources().playerAttack(player), 5.0F);
+                            }
+
+                            if (level instanceof ServerLevel serverLevel) {
+                                for (int i = 0; i < 10; i++) {
+                                    double offsetX = (level.random.nextDouble() - 0.5) * 8;
+                                    double offsetZ = (level.random.nextDouble() - 0.5) * 8;
+                                    serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
+                                        player.getX() + offsetX, player.getY(), player.getZ() + offsetZ,
+                                        1, 0, -0.5, 0, 0.1);
+                                }
+                            }
+
+                            level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                                SoundSource.PLAYERS, 1.0F, 0.8F);
+                        }
+                    }, tick);
                 }
 
-                // Spawn falling particles
-                for (int i = 0; i < 30; i++) {
-                    double offsetX = (level.random.nextDouble() - 0.5) * 6;
-                    double offsetZ = (level.random.nextDouble() - 0.5) * 6;
-                    level.addParticle(ParticleTypes.SNOWFLAKE,
-                        player.getX() + offsetX, player.getY() + 3, player.getZ() + offsetZ,
-                        0, -0.5, 0);
-                }
-
-                level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                    SoundSource.PLAYERS, 1.0F, 0.8F);
+                // Play rain sound at start
+                level.playSound(null, player.blockPosition(), SoundEvents.WEATHER_RAIN,
+                    SoundSource.PLAYERS, 0.5F, 1.0F);
             }
         );
     }
 
     /**
      * Fourth Form: Silent Avalanche
-     * Teleport forward and deliver powerful slash
+     * Teleport forward without going through blocks, increased range
      */
     public static BreathingForm fourthForm() {
         return new BreathingForm(
             "Fourth Form: Silent Avalanche",
             "Dash forward with incredible speed",
-            100, // 5 second cooldown
+            5, // 5 second cooldown
             (player, level) -> {
-                // TODO: Play animations: kamusari3, sword_to_left
+                AnimationHelper.playAnimation(player, "kamusari3");
 
-                // Teleport player forward
+                // Find safe teleport position up to 15 blocks away
                 Vec3 lookVec = player.getLookAngle();
-                Vec3 newPos = player.position().add(lookVec.scale(10.0));
-                player.teleportTo(newPos.x, newPos.y, newPos.z);
+                Vec3 startPos = player.position();
+                Vec3 targetPos = startPos.add(lookVec.scale(15.0));
 
-                // Damage nearby entities
+                // Raycast to find first non-passable block
+                BlockHitResult hitResult = level.clip(new ClipContext(
+                    startPos.add(0, player.getEyeHeight(), 0),
+                    targetPos.add(0, player.getEyeHeight(), 0),
+                    ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE,
+                    player
+                ));
+
+                if (hitResult.getType() == HitResult.Type.BLOCK) {
+                    // Hit a block, teleport just before it
+                    Vec3 hitPos = hitResult.getLocation();
+                    targetPos = startPos.add(hitPos.subtract(startPos).normalize().scale(
+                        Math.max(0, startPos.distanceTo(hitPos) - 1.0)
+                    ));
+                }
+
+                // Check for entity target
+                AABB searchBox = new AABB(startPos, targetPos).inflate(2.0);
+                List<LivingEntity> nearbyEntities = level.getEntitiesOfClass(LivingEntity.class, searchBox,
+                    e -> e != player && e.isAlive());
+
+                if (!nearbyEntities.isEmpty()) {
+                    Vec3 entityPos = nearbyEntities.get(0).position();
+                    if (startPos.distanceTo(entityPos) < startPos.distanceTo(targetPos)) {
+                        targetPos = entityPos;
+                    }
+                }
+
+                // Teleport player
+                player.teleportTo(targetPos.x, targetPos.y, targetPos.z);
+
+                // Damage nearby entities (AOE)
                 AABB area = player.getBoundingBox().inflate(3.0);
                 List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, area,
                     e -> e != player && e.isAlive());
@@ -156,7 +327,10 @@ public class IceBreathingForms {
                 }
 
                 // Spawn particles
-                spawnCircleParticles(level, player.position().add(0, 1, 0), 3.0, ParticleTypes.CLOUD, 30);
+                if (level instanceof ServerLevel serverLevel) {
+                    spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0, ParticleTypes.CLOUD, 30);
+                    spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0, ParticleTypes.SNOWFLAKE, 40);
+                }
 
                 level.playSound(null, player.blockPosition(), SoundEvents.SNOW_BREAK,
                     SoundSource.PLAYERS, 1.0F, 0.8F);
@@ -166,38 +340,57 @@ public class IceBreathingForms {
 
     /**
      * Fifth Form: Cold Blue Assault
-     * Fast ground dash with constant attacks
+     * Fast dash with 3 attacks/second, forced movement
      */
     public static BreathingForm fifthForm() {
         return new BreathingForm(
             "Fifth Form: Cold Blue Assault",
             "Swift dash with continuous slashes",
-            100, // 5 second cooldown
+            5, // 5 second cooldown
             (player, level) -> {
-                // TODO: Implement continuous forward movement
-                // TODO: Play animations: kamusari3, sword_rotate
+                AnimationHelper.playAnimation(player, "kamusari3");
 
                 // Apply speed boost
-                player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 2));
+                player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 3));
 
-                // Damage entities in path
-                Vec3 lookVec = player.getLookAngle();
-                Vec3 startPos = player.position();
-                Vec3 endPos = startPos.add(lookVec.scale(8.0));
+                final Vec3 dashDirection = player.getLookAngle();
+                final int totalTicks = 60; // 3 seconds
+                final int attackInterval = 7; // ~3 attacks per second
 
-                AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
-                List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
-                    e -> e != player && e.isAlive());
+                for (int tick = 0; tick < totalTicks; tick++) {
+                    final int currentTick = tick;
 
-                for (LivingEntity target : targets) {
-                    target.hurt(level.damageSources().playerAttack(player), 5.0F);
+                    AbilityScheduler.scheduleOnce(player, () -> {
+                        // Force player to move forward
+                        player.setDeltaMovement(dashDirection.scale(0.6).add(0, player.getDeltaMovement().y, 0));
+
+                        // Attack every attackInterval ticks
+                        if (currentTick % attackInterval == 0) {
+                            // Always play attack animation
+                            AnimationHelper.playAnimation(player, "sword_rotate");
+
+                            // AOE damage in front
+                            Vec3 attackPos = player.position().add(dashDirection.scale(2.0));
+                            AABB hitBox = new AABB(attackPos, attackPos).inflate(2.0);
+                            List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, hitBox,
+                                e -> e != player && e.isAlive());
+
+                            for (LivingEntity target : targets) {
+                                target.hurt(level.damageSources().playerAttack(player), 5.0F);
+                            }
+
+                            if (level instanceof ServerLevel serverLevel) {
+                                spawnParticleLine(serverLevel, player.position().add(0, 1, 0),
+                                    player.position().add(0, 1, 0).add(dashDirection.scale(3.0)),
+                                    ParticleTypes.SNOWFLAKE, 10);
+                            }
+
+                            level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                                SoundSource.PLAYERS, 1.0F, 1.2F);
+                        }
+                    }, tick);
                 }
 
-                // Spawn particles along path
-                spawnParticleLine(level, startPos.add(0, 1, 0), endPos.add(0, 1, 0), ParticleTypes.SNOWFLAKE, 40);
-
-                level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                    SoundSource.PLAYERS, 1.0F, 1.2F);
                 level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
                     SoundSource.PLAYERS, 0.8F, 1.0F);
             }
@@ -206,54 +399,67 @@ public class IceBreathingForms {
 
     /**
      * Sixth Form: Snowflake Cycle
-     * Jump and spin, then deliver horizontal slash
+     * Two parts: Jump with ragnaraku1, then AOE slash with sword_rotate
      */
     public static BreathingForm sixthForm() {
         return new BreathingForm(
             "Sixth Form: Snowflake Cycle",
             "Spin and deliver a devastating slash",
-            120, // 6 second cooldown
+            6, // 6 second cooldown
             (player, level) -> {
-                // TODO: Play animations: ragnaraku1, sword_rotate
+                // Part 1: Jump up with ragnaraku1
+                AnimationHelper.playAnimation(player, "ragnaraku1");
 
-                // Launch player upward and forward
                 Vec3 lookVec = player.getLookAngle();
                 player.setDeltaMovement(lookVec.scale(0.5).add(0, 0.8, 0));
 
-                // Damage entities around
-                AABB area = player.getBoundingBox().inflate(4.0);
-                List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, area,
-                    e -> e != player && e.isAlive());
-
-                for (LivingEntity target : targets) {
-                    target.hurt(level.damageSources().playerAttack(player), 11.0F);
-                    target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0)); // Nausea
+                // Spawn spinning particles around player
+                if (level instanceof ServerLevel serverLevel) {
+                    spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0, ParticleTypes.SNOWFLAKE, 30);
                 }
 
-                // Spawn spinning particles
-                spawnCircleParticles(level, player.position().add(0, 1, 0), 4.0, ParticleTypes.SNOWFLAKE, 40);
+                // Part 2: After 10 ticks, do the AOE slash with sword_rotate
+                AbilityScheduler.scheduleOnce(player, () -> {
+                    AnimationHelper.playAnimation(player, "sword_rotate");
 
-                level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                    SoundSource.PLAYERS, 1.0F, 1.0F);
-                level.playSound(null, player.blockPosition(), SoundEvents.SNOW_BREAK,
-                    SoundSource.PLAYERS, 1.0F, 1.0F);
+                    // Large AOE damage around player
+                    AABB area = player.getBoundingBox().inflate(5.0);
+                    List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, area,
+                        e -> e != player && e.isAlive());
+
+                    for (LivingEntity target : targets) {
+                        target.hurt(level.damageSources().playerAttack(player), 11.0F);
+                        target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0)); // Nausea
+                    }
+
+                    // Spawn more particles for the slash
+                    if (level instanceof ServerLevel serverLevel) {
+                        spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 5.0, ParticleTypes.SNOWFLAKE, 50);
+                        spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 5.0, ParticleTypes.SWEEP_ATTACK, 30);
+                    }
+
+                    level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                        SoundSource.PLAYERS, 1.0F, 1.0F);
+                    level.playSound(null, player.blockPosition(), SoundEvents.SNOW_BREAK,
+                        SoundSource.PLAYERS, 1.0F, 1.0F);
+                }, 10);
             }
         );
     }
 
     /**
      * Seventh Form: Icicle Claws (Hanazawa's sword only)
-     * Blind enemies, then rapid multi-directional slashes
+     * Two parts: Thrust that blinds, then 5 seconds of 6 attacks/second
      */
     public static BreathingForm seventhForm() {
         return new BreathingForm(
             "Seventh Form: Icicle Claws",
             "Blind and strike from all directions",
-            160, // 8 second cooldown
+            8, // 8 second cooldown
             (player, level) -> {
-                // TODO: Play animations: speed_attack_sword, then alternate between slashing animations
+                // Part 1: Thrust that blinds
+                AnimationHelper.playAnimation(player, "speed_attack_sword");
 
-                // First, blind enemies in front
                 Vec3 lookVec = player.getLookAngle();
                 Vec3 startPos = player.position().add(0, player.getEyeHeight(), 0);
                 Vec3 endPos = startPos.add(lookVec.scale(5.0));
@@ -263,45 +469,83 @@ public class IceBreathingForms {
                     e -> e != player && e.isAlive());
 
                 for (LivingEntity target : targets) {
-                    // Apply blindness
                     target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 300, 0)); // 15 seconds
-
-                    // Multiple rapid hits
-                    target.hurt(level.damageSources().playerAttack(player), 4.0F);
-                    target.hurt(level.damageSources().playerAttack(player), 4.0F);
-                    target.hurt(level.damageSources().playerAttack(player), 4.0F);
-                    target.hurt(level.damageSources().playerAttack(player), 4.0F);
                 }
-
-                // Spawn particles
-                spawnCircleParticles(level, player.position().add(0, 1, 0), 5.0, ParticleTypes.SNOWFLAKE, 60);
 
                 level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
                     SoundSource.PLAYERS, 1.0F, 1.0F);
-                level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
-                    SoundSource.PLAYERS, 1.0F, 1.0F);
-                level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                    SoundSource.PLAYERS, 1.0F, 1.0F);
+
+                // Part 2: 5 seconds of super fast slashing (6 attacks/second)
+                final int totalTicks = 100; // 5 seconds
+                final int attackInterval = 3; // 6.67 attacks per second (20 / 3 = 6.67)
+                final String[] animations = {"sword_to_left", "sword_to_right", "sword_overhead", "sword_to_upper"};
+
+                for (int tick = 0; tick < totalTicks; tick++) {
+                    final int currentTick = tick;
+
+                    AbilityScheduler.scheduleOnce(player, () -> {
+                        if (currentTick % attackInterval == 0) {
+                            // Always cycle through the 4 different sword animations
+                            int animIndex = (currentTick / attackInterval) % 4;
+                            AnimationHelper.playAnimation(player, animations[animIndex]);
+
+                            // AOE damage around player
+                            AABB attackBox = player.getBoundingBox().inflate(4.0);
+                            List<LivingEntity> attackTargets = player.level().getEntitiesOfClass(LivingEntity.class, attackBox,
+                                e -> e != player && e.isAlive());
+
+                            for (LivingEntity target : attackTargets) {
+                                target.hurt(level.damageSources().playerAttack(player), 4.0F);
+                            }
+
+                            if (level instanceof ServerLevel serverLevel && currentTick % 9 == 0) {
+                                spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 4.0, ParticleTypes.SNOWFLAKE, 20);
+                            }
+
+                            if (currentTick % 6 == 0) {
+                                level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                                    SoundSource.PLAYERS, 0.8F, 1.2F);
+                            }
+                        }
+                    }, tick + 10); // Start after initial thrust
+                }
+
+                // Play final sound
+                AbilityScheduler.scheduleOnce(player, () -> {
+                    level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
+                        SoundSource.PLAYERS, 1.0F, 1.0F);
+                }, totalTicks + 10);
             }
         );
     }
 
     // Helper methods for particle effects
-    private static void spawnParticleLine(Level level, Vec3 start, Vec3 end, net.minecraft.core.particles.ParticleOptions particle, int count) {
+    private static void spawnParticleLine(ServerLevel level, Vec3 start, Vec3 end, net.minecraft.core.particles.ParticleOptions particle, int count) {
         Vec3 direction = end.subtract(start);
         for (int i = 0; i < count; i++) {
             double t = i / (double) count;
             Vec3 pos = start.add(direction.scale(t));
-            level.addParticle(particle, pos.x, pos.y, pos.z, 0, 0, 0);
+            level.sendParticles(particle, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
         }
     }
 
-    private static void spawnCircleParticles(Level level, Vec3 center, double radius, net.minecraft.core.particles.ParticleOptions particle, int count) {
+    /**
+     * Spawn particles in a straight line forward (for thrust attacks like speed_attack_sword)
+     */
+    private static void spawnForwardThrust(ServerLevel level, Vec3 start, Vec3 direction, double distance, net.minecraft.core.particles.ParticleOptions particle, int count) {
+        for (int i = 0; i < count; i++) {
+            double t = i / (double) count;
+            Vec3 pos = start.add(direction.scale(distance * t));
+            level.sendParticles(particle, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
+        }
+    }
+
+    private static void spawnCircleParticles(ServerLevel level, Vec3 center, double radius, net.minecraft.core.particles.ParticleOptions particle, int count) {
         for (int i = 0; i < count; i++) {
             double angle = (i / (double) count) * Math.PI * 2;
             double x = center.x + Math.cos(angle) * radius;
             double z = center.z + Math.sin(angle) * radius;
-            level.addParticle(particle, x, center.y, z, 0, 0, 0);
+            level.sendParticles(particle, x, center.y, z, 1, 0, 0, 0, 0);
         }
     }
 

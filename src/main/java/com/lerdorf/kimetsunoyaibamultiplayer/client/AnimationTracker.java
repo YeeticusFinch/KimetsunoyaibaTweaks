@@ -413,6 +413,12 @@ public class AnimationTracker {
             return;
         }
 
+        // Skip particles for animations that don't need them (like speed_attack_sword, ragnaraku animations)
+        if (animationName != null && (animationName.equals("speed_attack_sword") ||
+                                      animationName.startsWith("ragnaraku"))) {
+            return;
+        }
+
         // Check trigger mode configuration
         if (ParticleConfig.particleTriggerMode == ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
             // For attack-only mode, we would need to detect actual attacks

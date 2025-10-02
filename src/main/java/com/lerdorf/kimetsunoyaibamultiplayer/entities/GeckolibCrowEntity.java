@@ -66,8 +66,8 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
 
     // Idle animation system
     private int ticksSinceLastIdleAction = 0;
-    private static final int IDLE_ACTION_COOLDOWN = 200; // 10 seconds
-    private static final double IDLE_ACTION_CHANCE = 0.005; // 0.5% chance per tick when idle (avg 10 seconds between checks)
+    private static final int IDLE_ACTION_COOLDOWN = 400; // 20 seconds
+    private static final double IDLE_ACTION_CHANCE = 0.002; // 0.2% chance per tick when idle (avg 10 seconds between checks)
     private String currentIdleAnimation = null;
 
     public GeckolibCrowEntity(EntityType<? extends PathfinderMob> entityType, Level level) {

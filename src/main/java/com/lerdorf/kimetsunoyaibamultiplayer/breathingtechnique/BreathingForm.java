@@ -6,13 +6,13 @@ package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 public class BreathingForm {
     private final String name;
     private final String description;
-    private final int cooldownTicks;
+    private final int cooldownSeconds;
     private final FormEffect effect;
 
-    public BreathingForm(String name, String description, int cooldownTicks, FormEffect effect) {
+    public BreathingForm(String name, String description, int cooldownSeconds, FormEffect effect) {
         this.name = name;
         this.description = description;
-        this.cooldownTicks = cooldownTicks;
+        this.cooldownSeconds = cooldownSeconds;
         this.effect = effect;
     }
 
@@ -24,8 +24,8 @@ public class BreathingForm {
         return description;
     }
 
-    public int getCooldownTicks() {
-        return cooldownTicks;
+    public int getCooldownSeconds() {
+        return cooldownSeconds;
     }
 
     public FormEffect getEffect() {
