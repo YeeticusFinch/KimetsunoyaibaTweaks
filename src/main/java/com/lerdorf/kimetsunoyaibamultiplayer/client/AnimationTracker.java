@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
@@ -432,6 +433,11 @@ public class AnimationTracker {
         ItemStack mainHandItem = player.getItemInHand(InteractionHand.MAIN_HAND);
         if (!SwordParticleMapping.isKimetsunoyaibaSword(mainHandItem)) {
             return;
+        }
+        
+        if (player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).map(data -> data.cancelAttackSwing()).orElse(false)) {
+        	// We are canceling attack swings and their particles
+        	return;
         }
 
         // Spawn particles with animation tick information

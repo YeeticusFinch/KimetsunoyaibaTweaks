@@ -1,6 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
 import com.mojang.logging.LogUtils;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.ISwordWielderData;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordWielderData;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
@@ -20,7 +22,10 @@ import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -30,6 +35,12 @@ import net.minecraft.server.level.ServerLevel;
 import java.util.List;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.common.capabilities.CapabilityToken;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.TickEvent;
@@ -84,6 +95,8 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig.SPEC, "kimetsunoyaibamultiplayer/sword_display.toml");
     }
 
+    public static final Capability<ISwordWielderData> SWORD_WIELDER_DATA = CapabilityManager.get(new CapabilityToken<>() {});
+    
     private void commonSetup(final FMLCommonSetupEvent event)
     {
         LOGGER.info("Initializing Kimetsunoyaiba Multiplayer animation sync...");
@@ -91,6 +104,23 @@ public class KimetsunoyaibaMultiplayer
         // Register network messages
         ModNetworking.register();
         LOGGER.info("Network messages registered");
+        
+        
+    }
+    
+ // 4. Attach it to entities
+    @SubscribeEvent
+    public void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
+        if (event.getObject() instanceof Player || event.getObject() instanceof LivingEntity) {
+            event.addCapability(new ResourceLocation("mymod", "crow_data"),
+                    new ICapabilityProvider() {
+                        final SwordWielderData backend = new SwordWielderData();
+                        @Override
+                        public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
+                            return cap == SWORD_WIELDER_DATA ? LazyOptional.of(() -> backend).cast() : LazyOptional.empty();
+                        }
+                    });
+        }
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call

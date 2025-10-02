@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+
 /**
  * Implementation of all Ice Breathing forms (6 forms + 7th for Hanazawa)
  */
@@ -35,7 +37,10 @@ public class IceBreathingForms {
                 // Play animation
                 AnimationHelper.playAnimation(player, "speed_attack_sword");
                 
-                //player.
+                // Prevent the attacks from triggering unwanted sword swings and particles (like from the left click attacks)
+                player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
+                	data.setCancelAttackSwing(true);
+                });
 
                 // Launch player forward a little bit
                 Vec3 lookVec = player.getLookAngle();
@@ -65,6 +70,11 @@ public class IceBreathingForms {
                     SoundSource.PLAYERS, 1.0F, 1.0F);
                 level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
                     SoundSource.PLAYERS, 1.0F, 1.2F);
+                
+                // We can swing swords normally again
+            	player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
+                	data.setCancelAttackSwing(false);
+                });
             }
         );
     }
@@ -195,6 +205,12 @@ public class IceBreathingForms {
                             level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                                 SoundSource.PLAYERS, 1.0F, 1.2F);
                         }
+                        
+                        // Last tick
+                        if (currentTick >= totalTicks-1) {
+                        	
+                        }
+                        
                     }, tick);
                 }
             }
@@ -280,10 +296,10 @@ public class IceBreathingForms {
             (player, level) -> {
                 AnimationHelper.playAnimation(player, "kamusari3");
 
-                // Find safe teleport position up to 15 blocks away
+                // Find safe teleport position up to 40 blocks away
                 Vec3 lookVec = player.getLookAngle();
                 Vec3 startPos = player.position();
-                Vec3 targetPos = startPos.add(lookVec.scale(15.0));
+                Vec3 targetPos = startPos.add(lookVec.scale(40.0));
 
                 // Raycast to find first non-passable block
                 BlockHitResult hitResult = level.clip(new ClipContext(

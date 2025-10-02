@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
@@ -23,6 +24,11 @@ public class BreathingSwordAnimationHandler {
         if (mainHand.getItem() instanceof BreathingSwordItem) {
             long currentTime = System.currentTimeMillis();
 
+            if (player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).map(data -> data.cancelAttackSwing()).orElse(false)) {
+            	// We are canceling attack swings
+            	return;
+            }
+            
             // Prevent animation spam
             if (currentTime - lastAttackTime < 100) {
                 return;
@@ -31,7 +37,7 @@ public class BreathingSwordAnimationHandler {
 
             // 5% chance for overhead animation, otherwise alternate left/right
             String animationName;
-            if (RANDOM.nextInt(100) < 5) {
+            if (RANDOM.nextInt(100) < 8) {
                 animationName = "sword_overhead";
             } else {
                 animationName = lastWasLeft ? "sword_to_right" : "sword_to_left";
