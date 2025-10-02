@@ -43,6 +43,22 @@ public class ModNetworking {
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordDisplaySyncPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordDisplaySyncPacket::handle)
                 .add();
+
+        // Register sword wielder capability sync packet (server -> client)
+        int swordWielderPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordWielderSyncPacket.class, swordWielderPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordWielderSyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordWielderSyncPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordWielderSyncPacket::handle)
+                .add();
+
+        // Register player rotation sync packet (server -> client)
+        int rotationPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PlayerRotationSyncPacket.class, rotationPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PlayerRotationSyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PlayerRotationSyncPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PlayerRotationSyncPacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

@@ -58,7 +58,8 @@ public class FrostBreathingForms {
                                 e -> e != player && e.isAlive());
 
                             for (LivingEntity target : targets) {
-                                target.hurt(level.damageSources().playerAttack(player), 7.0F);
+                                float damage = DamageCalculator.calculateScaledDamage(player, 7.0F);
+                                target.hurt(level.damageSources().playerAttack(player), damage);
                             }
 
                             if (level instanceof ServerLevel serverLevel) {
@@ -105,7 +106,8 @@ public class FrostBreathingForms {
                     e -> e != player && e.isAlive());
 
                 for (LivingEntity target : targets) {
-                    target.hurt(level.damageSources().playerAttack(player), 8.0F);
+                    float damage = DamageCalculator.calculateScaledDamage(player, 8.0F);
+                    target.hurt(level.damageSources().playerAttack(player), damage);
                     target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4)); // 8 seconds, extreme slowness
                     target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4)); // 8 seconds, mining fatigue
                 }
@@ -164,7 +166,8 @@ public class FrostBreathingForms {
                                 e -> e != player && e.isAlive());
 
                             for (LivingEntity target : targets) {
-                                target.hurt(level.damageSources().playerAttack(player), 6.0F);
+                                float damage = DamageCalculator.calculateScaledDamage(player, 6.0F);
+                                target.hurt(level.damageSources().playerAttack(player), damage);
                             }
 
                             if (level instanceof ServerLevel serverLevel) {
@@ -207,7 +210,8 @@ public class FrostBreathingForms {
                     e -> e != player && e.isAlive());
 
                 for (LivingEntity target : targets) {
-                    target.hurt(level.damageSources().playerAttack(player), 9.0F);
+                    float damage = DamageCalculator.calculateScaledDamage(player, 9.0F);
+                    target.hurt(level.damageSources().playerAttack(player), damage);
                     target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 2)); // 20 seconds slowness
                     target.setTicksFrozen(target.getTicksFrozen() + 400); // Freeze visual effect
                 }
@@ -292,9 +296,10 @@ public class FrostBreathingForms {
 
         // 3 jabs
         for (LivingEntity target : targets) {
-            target.hurt(level.damageSources().playerAttack(player), 5.0F);
-            target.hurt(level.damageSources().playerAttack(player), 5.0F);
-            target.hurt(level.damageSources().playerAttack(player), 5.0F);
+            float damage = DamageCalculator.calculateScaledDamage(player, 5.0F);
+            target.hurt(level.damageSources().playerAttack(player), damage);
+            target.hurt(level.damageSources().playerAttack(player), damage);
+            target.hurt(level.damageSources().playerAttack(player), damage);
         }
 
         if (level instanceof ServerLevel serverLevel) {
@@ -332,7 +337,8 @@ public class FrostBreathingForms {
 
                 // Hit first target only
                 if (!targets.isEmpty()) {
-                    targets.get(0).hurt(level.damageSources().playerAttack(player), 13.0F);
+                    float damage = DamageCalculator.calculateScaledDamage(player, 13.0F);
+                    targets.get(0).hurt(level.damageSources().playerAttack(player), damage);
                 }
 
                 // Spawn particles along the path

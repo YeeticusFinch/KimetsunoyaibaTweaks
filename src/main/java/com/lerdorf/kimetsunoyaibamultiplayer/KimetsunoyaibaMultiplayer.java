@@ -112,7 +112,7 @@ public class KimetsunoyaibaMultiplayer
     @SubscribeEvent
     public void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof Player || event.getObject() instanceof LivingEntity) {
-            event.addCapability(new ResourceLocation("mymod", "crow_data"),
+            event.addCapability(ResourceLocation.fromNamespaceAndPath(MODID, "sword_wielder_data"),
                     new ICapabilityProvider() {
                         final SwordWielderData backend = new SwordWielderData();
                         @Override

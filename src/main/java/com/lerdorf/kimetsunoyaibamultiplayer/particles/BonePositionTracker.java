@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.particles;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
@@ -90,6 +91,12 @@ public class BonePositionTracker {
 
 	private static void spawnRadialRibbonForAnimation(ClientLevel level, LivingEntity entity, String animationName,
 			float progress, ParticleOptions particleType) {
+		
+		if (entity.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).map(data -> data.cancelAttackSwing()).orElse(false)) {
+        	// We are canceling attack swings and their particles
+        	return;
+        }
+		
 		float yaw = entity.getYRot();
 		double entityHeight = entity.getBbHeight();
 		double yawRad = Math.toRadians(yaw);

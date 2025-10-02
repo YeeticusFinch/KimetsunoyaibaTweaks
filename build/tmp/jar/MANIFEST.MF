@@ -3,7 +3,7 @@ Specification-Title: kimetsunoyaibamultiplayer
 Specification-Vendor: carl_alex
 Specification-Version: 1
 Implementation-Title: Kimetsunoyaiba-Multiplayer
-Implementation-Version: 1.5.05
+Implementation-Version: 1.5.06
 Implementation-Vendor: carl_alex
-Implementation-Timestamp: 2025-10-01T22:38:58-0400
+Implementation-Timestamp: 2025-10-02T09:19:45-0400
 

@@ -18,11 +18,31 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Implementation of all Ice Breathing forms (6 forms + 7th for Hanazawa)
  */
 public class IceBreathingForms {
+
+    /**
+     * Helper method to set cancel attack swing state and sync to client
+     */
+    private static void setCancelAttackSwing(Player player, boolean value) {
+        player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
+            data.setCancelAttackSwing(value);
+        });
+
+        // Sync to client if on server
+        if (player instanceof ServerPlayer serverPlayer) {
+            com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+                new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordWielderSyncPacket(
+                    player.getUUID(), value
+                ),
+                serverPlayer
+            );
+        }
+    }
 
     /**
      * First Form: Paralyzing Icicle
@@ -36,11 +56,9 @@ public class IceBreathingForms {
             (player, level) -> {
                 // Play animation
                 AnimationHelper.playAnimation(player, "speed_attack_sword");
-                
+
                 // Prevent the attacks from triggering unwanted sword swings and particles (like from the left click attacks)
-                player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
-                	data.setCancelAttackSwing(true);
-                });
+                setCancelAttackSwing(player, true);
 
                 // Launch player forward a little bit
                 Vec3 lookVec = player.getLookAngle();
@@ -55,7 +73,8 @@ public class IceBreathingForms {
                     e -> e != player && e.isAlive());
 
                 for (LivingEntity target : targets) {
-                    target.hurt(level.damageSources().playerAttack(player), 8.0F);
+                    float damage = DamageCalculator.calculateScaledDamage(player, 8.0F);
+                    target.hurt(level.damageSources().playerAttack(player), damage);
                     target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4));
                     target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4));
                 }
@@ -70,11 +89,11 @@ public class IceBreathingForms {
                     SoundSource.PLAYERS, 1.0F, 1.0F);
                 level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
                     SoundSource.PLAYERS, 1.0F, 1.2F);
-                
-                // We can swing swords normally again
-            	player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
-                	data.setCancelAttackSwing(false);
-                });
+
+                AbilityScheduler.scheduleOnce(player, () -> {
+	                // We can swing swords normally again
+	                setCancelAttackSwing(player, false);
+                }, 5); // Run this 5 ticks later
             }
         );
     }
@@ -127,32 +146,54 @@ public class IceBreathingForms {
                 Vec3 toPlayer = player.position().subtract(finalTargetPos);
                 final double startAngle = Math.atan2(toPlayer.z, toPlayer.x);
 
+                // Enable automatic step-up for duration (store original value)
+                final float originalStepHeight = player.maxUpStep();
+
                 // Schedule circling movement, attacks, and particles
                 for (int tick = 0; tick < totalTicks; tick++) {
                     final int currentTick = tick;
 
                     AbilityScheduler.scheduleOnce(player, () -> {
-                        // Calculate current angle (rotates 3x faster than before)
+                        // Enable step-up for blocks during ability
+                        player.setMaxUpStep(1.0F);
+                        // Calculate angle
                         double angle = startAngle + (currentTick * angularVelocity * 3.0);
 
-                        // Calculate target position on circle
+                        // Circle position
                         Vec3 currentCenter = finalTargetEntity != null ? finalTargetEntity.position() : finalTargetPos;
                         double targetX = currentCenter.x + Math.cos(angle) * circleRadius;
                         double targetZ = currentCenter.z + Math.sin(angle) * circleRadius;
-                        Vec3 targetPosOnCircle = new Vec3(targetX, player.getY(), targetZ);
+                        Vec3 targetPosOnCircle = new Vec3(targetX, currentCenter.y, targetZ);
 
-                        // Calculate velocity to push player toward target position
+                        // Push player toward target pos
                         Vec3 currentPos = player.position();
-                        Vec3 velocity = targetPosOnCircle.subtract(currentPos).scale(0.3); // Velocity factor
-                        player.setDeltaMovement(velocity);
+                        Vec3 velocity = targetPosOnCircle.subtract(currentPos).scale(0.3);
 
-                        // Force player to face center
+                        player.setDeltaMovement(velocity);
+                        player.hasImpulse = true; // 🔥 forces movement sync
+                        player.hurtMarked = true; // 🔥 for 1.18+ clients to accept velocity
+
+                        // Rotate player toward circle center
                         Vec3 lookDir = currentCenter.subtract(player.position()).normalize();
                         float yaw = (float) Math.toDegrees(Math.atan2(-lookDir.x, lookDir.z));
                         float pitch = (float) Math.toDegrees(-Math.asin(lookDir.y));
+
                         player.setYRot(yaw);
                         player.setXRot(pitch);
                         player.setYHeadRot(yaw);
+                        player.yRotO = yaw; // sync interpolation
+                        player.xRotO = pitch;
+                        player.yHeadRotO = yaw;
+
+                        // Sync rotation to all clients
+                        if (player instanceof ServerPlayer serverPlayer) {
+                            com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClientsExcept(
+                                new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PlayerRotationSyncPacket(
+                                    player.getUUID(), yaw, pitch, yaw
+                                ),
+                                serverPlayer
+                            );
+                        }
 
                         // Spawn tornado-like particles every tick (always, regardless of target)
                         if (level instanceof ServerLevel serverLevel) {
@@ -189,28 +230,32 @@ public class IceBreathingForms {
 
                         // Attack every attackInterval ticks (3 times per second)
                         if (currentTick % attackInterval == 0) {
-                            // Always play sword animation
-                            AnimationHelper.playAnimation(player,
-                                currentTick % 14 == 0 ? "kimetsunoyaiba:sword_to_left" : "kimetsunoyaiba:sword_to_right");
+                            String anim = (currentTick / attackInterval) % 2 == 0
+                                ? "kimetsunoyaiba:sword_to_left"
+                                : "kimetsunoyaiba:sword_to_right";
 
-                            // Damage entities within attack range
+                            AnimationHelper.playAnimation(player, anim);
+
                             AABB attackBox = player.getBoundingBox().inflate(3.0);
-                            List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, attackBox,
-                                e -> e != player && e.isAlive());
+                            List<LivingEntity> targets = player.level().getEntitiesOfClass(
+                                LivingEntity.class, attackBox,
+                                e -> e != player && e.isAlive()
+                            );
 
                             for (LivingEntity target : targets) {
-                                target.hurt(level.damageSources().playerAttack(player), 6.0F);
+                                float damage = DamageCalculator.calculateScaledDamage(player, 6.0F);
+                                target.hurt(level.damageSources().playerAttack(player), damage);
                             }
 
-                            level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                                SoundSource.PLAYERS, 1.0F, 1.2F);
+                            level.playSound(null, player.blockPosition(),
+                                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 1.2F);
                         }
                         
-                        // Last tick
+                        // Last tick - restore step height
                         if (currentTick >= totalTicks-1) {
-                        	
+                            player.setMaxUpStep(originalStepHeight);
                         }
-                        
+
                     }, tick);
                 }
             }
@@ -258,7 +303,8 @@ public class IceBreathingForms {
                                 e -> e != player && e.isAlive() && e.getY() < player.getY() + 2);
 
                             for (LivingEntity target : targets) {
-                                target.hurt(level.damageSources().playerAttack(player), 5.0F);
+                                float damage = DamageCalculator.calculateScaledDamage(player, 5.0F);
+                                target.hurt(level.damageSources().playerAttack(player), damage);
                             }
 
                             if (level instanceof ServerLevel serverLevel) {
@@ -339,7 +385,8 @@ public class IceBreathingForms {
                     e -> e != player && e.isAlive());
 
                 for (LivingEntity target : targets) {
-                    target.hurt(level.damageSources().playerAttack(player), 12.0F);
+                    float damage = DamageCalculator.calculateScaledDamage(player, 12.0F);
+                    target.hurt(level.damageSources().playerAttack(player), damage);
                 }
 
                 // Spawn particles
@@ -392,7 +439,8 @@ public class IceBreathingForms {
                                 e -> e != player && e.isAlive());
 
                             for (LivingEntity target : targets) {
-                                target.hurt(level.damageSources().playerAttack(player), 5.0F);
+                                float damage = DamageCalculator.calculateScaledDamage(player, 5.0F);
+                                target.hurt(level.damageSources().playerAttack(player), damage);
                             }
 
                             if (level instanceof ServerLevel serverLevel) {
@@ -444,7 +492,8 @@ public class IceBreathingForms {
                         e -> e != player && e.isAlive());
 
                     for (LivingEntity target : targets) {
-                        target.hurt(level.damageSources().playerAttack(player), 11.0F);
+                        float damage = DamageCalculator.calculateScaledDamage(player, 11.0F);
+                        target.hurt(level.damageSources().playerAttack(player), damage);
                         target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0)); // Nausea
                     }
 
@@ -511,7 +560,8 @@ public class IceBreathingForms {
                                 e -> e != player && e.isAlive());
 
                             for (LivingEntity target : attackTargets) {
-                                target.hurt(level.damageSources().playerAttack(player), 4.0F);
+                                float damage = DamageCalculator.calculateScaledDamage(player, 4.0F);
+                                target.hurt(level.damageSources().playerAttack(player), damage);
                             }
 
                             if (level instanceof ServerLevel serverLevel && currentTick % 9 == 0) {
