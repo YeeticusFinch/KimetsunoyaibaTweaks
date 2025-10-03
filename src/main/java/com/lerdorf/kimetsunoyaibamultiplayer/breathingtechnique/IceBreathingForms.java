@@ -157,8 +157,8 @@ public class IceBreathingForms {
                     int currentTick = tickCounter[0]++;
                     double circleRadius = Math.min(Math.max(ogCircleRadius - (currentTick/20), 3.5), ogCircleRadius);
 
-                    // Enable step-up for blocks during ability
-                    player.setMaxUpStep(1.8F);
+                    // Enable step-up for blocks during ability (1.8 blocks high)
+                    MovementHelper.setStepHeight(player, 1.8F);
 
                     // Calculate current target angle (3x faster rotation)
                     double currentAngle = startAngle + (currentTick * angularVelocity * 3.0);
@@ -260,7 +260,7 @@ public class IceBreathingForms {
 
                     // Last tick - restore step height
                     if (currentTick >= totalTicks - 1) {
-                        player.setMaxUpStep(originalStepHeight);
+                        MovementHelper.setStepHeight(player, originalStepHeight);
                     }
                 }, 1, totalTicks); // Run every tick for 100 ticks
             }

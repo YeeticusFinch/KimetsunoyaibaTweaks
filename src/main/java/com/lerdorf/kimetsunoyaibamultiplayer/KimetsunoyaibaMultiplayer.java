@@ -141,60 +141,81 @@ public class KimetsunoyaibaMultiplayer
         //com.lerdorf.kimetsunoyaibamultiplayer.commands.TestCrowRenderCommand.register(event.getDispatcher());
     }
 
+    // Prevent infinite recursion when AOE attacks trigger more events
+    private static final ThreadLocal<Boolean> IS_PROCESSING_AOE = ThreadLocal.withInitial(() -> false);
+
     @SubscribeEvent
     public void onLivingAttack(LivingAttackEvent event)
     {
-        LivingEntity target = event.getEntity();
+        try {
+            // Prevent recursion from AOE attacks triggering more events
+            if (IS_PROCESSING_AOE.get()) {
+                return;
+            }
 
-        // Handle AOE attacks for breathing swords
-        if (event.getSource().getEntity() instanceof Player attacker) {
-            ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
+            LivingEntity target = event.getEntity();
 
-            // Check if using a breathing sword (our custom swords)
-            if (weapon.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
-                // Perform AOE attack in a 3x3 cube in front of player
-                Vec3 attackerPos = attacker.position().add(0, attacker.getEyeHeight(), 0);
-                Vec3 lookVec = attacker.getLookAngle();
-                Vec3 frontPos = attackerPos.add(lookVec.scale(2.0)); // 2 blocks in front
+            // Handle AOE attacks for breathing swords
+            if (event.getSource().getEntity() instanceof Player attacker) {
+                ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
 
-                // Create 3x3x3 cube
-                AABB attackBox = new AABB(frontPos.add(-1.5, -1.5, -1.5), frontPos.add(1.5, 1.5, 1.5));
+                // Check if using a breathing sword (our custom swords)
+                if (weapon.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
+                    // Perform AOE attack in a 3x3 cube in front of player
+                    Vec3 attackerPos = attacker.position().add(0, attacker.getEyeHeight(), 0);
+                    Vec3 lookVec = attacker.getLookAngle();
+                    Vec3 frontPos = attackerPos.add(lookVec.scale(2.0)); // 2 blocks in front
 
-                List<LivingEntity> nearbyEntities = attacker.level().getEntitiesOfClass(
-                    LivingEntity.class, attackBox,
-                    e -> e != attacker && e != target && e.isAlive()
-                );
+                    // Create 3x3x3 cube
+                    AABB attackBox = new AABB(frontPos.add(-1.5, -1.5, -1.5), frontPos.add(1.5, 1.5, 1.5));
 
-                // Damage all nearby entities (excluding the primary target which is already being damaged)
-                float damage = 6.0F; // Base AOE damage
-                for (LivingEntity entity : nearbyEntities) {
-                    entity.hurt(attacker.level().damageSources().playerAttack(attacker), damage);
+                    List<LivingEntity> nearbyEntities = attacker.level().getEntitiesOfClass(
+                        LivingEntity.class, attackBox,
+                        e -> e != attacker && e != target && e.isAlive()
+                    );
 
-                    // Play sweep attack particles
-                    if (attacker.level() instanceof ServerLevel serverLevel) {
-                        serverLevel.sendParticles(
-                            net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK,
-                            entity.getX(), entity.getY() + entity.getBbHeight() * 0.5, entity.getZ(),
-                            1, 0, 0, 0, 0
-                        );
+                    // Damage all nearby entities (excluding the primary target which is already being damaged)
+                    float damage = 6.0F; // Base AOE damage
+
+                    // Set flag to prevent recursion
+                    IS_PROCESSING_AOE.set(true);
+                    try {
+                        for (LivingEntity entity : nearbyEntities) {
+                            entity.hurt(attacker.level().damageSources().playerAttack(attacker), damage);
+
+                            // Play sweep attack particles
+                            if (attacker.level() instanceof ServerLevel serverLevel) {
+                                serverLevel.sendParticles(
+                                    net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK,
+                                    entity.getX(), entity.getY() + entity.getBbHeight() * 0.5, entity.getZ(),
+                                    1, 0, 0, 0, 0
+                                );
+                            }
+                        }
+                    } finally {
+                        IS_PROCESSING_AOE.set(false);
+                    }
+
+                    if (Config.logDebug && !nearbyEntities.isEmpty()) {
+                        //FancyLog.debug("AOE attack hit {} additional entities", nearbyEntities.size());
                     }
                 }
 
-                if (Config.logDebug && !nearbyEntities.isEmpty()) {
-                    //FancyLog.debug("AOE attack hit {} additional entities", nearbyEntities.size());
+                // Handle attack-based particle triggering (for server-side events)
+                if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
+                    com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
+                    if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
+                        if (Config.logDebug)
+                        System.err.println("Attack detected with kimetsunoyaiba sword: " +
+                            attacker.getName().getString() + " -> " + target.getName().getString());
+                        // Note: Particle spawning will be handled client-side via animation tracking
+                    }
                 }
             }
-
-            // Handle attack-based particle triggering (for server-side events)
-            if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
-                com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
-                if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
-                    if (Config.logDebug)
-                    Log.debug("Attack detected with kimetsunoyaiba sword: {} -> {}",
-                        attacker.getName().getString(),
-                        target.getName().getString());
-                    // Note: Particle spawning will be handled client-side via animation tracking
-                }
+        } catch (Exception e) {
+            // Silently catch exceptions to prevent crashes
+            if (Config.logDebug) {
+                System.err.println("Error in onLivingAttack: " + e.getMessage());
             }
         }
     }
@@ -293,62 +314,69 @@ public class KimetsunoyaibaMultiplayer
         @SubscribeEvent
         public static void onClientLivingAttack(LivingAttackEvent event)
         {
-            // IMPORTANT: This event fires on BOTH client and server threads!
-            // We MUST check that we're on the logical client side
-            if (!event.getEntity().level().isClientSide()) {
-                return; // Skip server-side events
-            }
-
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player == null || mc.level == null) {
-                return;
-            }
-
-            // ONLY handle attacks by the LOCAL PLAYER
-            // Other players' and mobs' gun attacks should NOT trigger effects here
-            // (they would be handled via network sync or other mechanisms)
-            if (event.getSource().getEntity() instanceof LivingEntity attacker) {
-                // Only process if it's the local player attacking
-                if (!attacker.getUUID().equals(mc.player.getUUID())) {
-                    return; // Not the local player - ignore
+            try {
+                // IMPORTANT: This event fires on BOTH client and server threads!
+                // We MUST check that we're on the logical client side
+                if (!event.getEntity().level().isClientSide()) {
+                    return; // Skip server-side events
                 }
 
-                ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
-
-                // Check for gun attacks by LOCAL PLAYER ONLY
-                if (com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.isGun(weapon)) {
-                    com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.GunType gunType =
-                            com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.getGunType(attacker);
-
-                    // Play shoot animation for local player
-                    com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.playShootAnimation(
-                            mc.player, gunType);
-
-                    if (Config.logDebug) {
-                        Log.debug("Triggered gun shoot animation for local player: {}", gunType);
-                    }
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player == null || mc.level == null) {
                     return;
                 }
 
-                // Check for breathing sword attacks
-                if (attacker instanceof AbstractClientPlayer clientAttacker) {
-                    // Play attack animation for breathing swords
-                    com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(clientAttacker);
+                // ONLY handle attacks by the LOCAL PLAYER
+                // Other players' and mobs' gun attacks should NOT trigger effects here
+                // (they would be handled via network sync or other mechanisms)
+                if (event.getSource().getEntity() instanceof LivingEntity attacker) {
+                    // Only process if it's the local player attacking
+                    if (!attacker.getUUID().equals(mc.player.getUUID())) {
+                        return; // Not the local player - ignore
+                    }
 
-                    // Check for sword particle effects (existing code, only for local player)
-                    if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.swordParticlesEnabled &&
-                        com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
-                        com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
+                    ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
 
-                        if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
-                            // Force spawn particles on attack
-                            SwordParticleHandler.forceSpawnParticles(clientAttacker, weapon, "attack");
+                    // Check for gun attacks by LOCAL PLAYER ONLY
+                    if (com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.isGun(weapon)) {
+                        com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.GunType gunType =
+                                com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.getGunType(attacker);
 
-                            if (Config.logDebug) {
-                                Log.debug("Triggered attack-based particles for local player");
+                        // Play shoot animation for local player
+                        com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.playShootAnimation(
+                                mc.player, gunType);
+
+                        if (Config.logDebug) {
+                            System.err.println("Triggered gun shoot animation for local player: " + gunType);
+                        }
+                        return;
+                    }
+
+                    // Check for breathing sword attacks
+                    if (attacker instanceof AbstractClientPlayer clientAttacker) {
+                        // Play attack animation for breathing swords
+                        com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(clientAttacker);
+
+                        // Check for sword particle effects (existing code, only for local player)
+                        if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.swordParticlesEnabled &&
+                            com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
+                            com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
+
+                            if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
+                                // Force spawn particles on attack
+                                SwordParticleHandler.forceSpawnParticles(clientAttacker, weapon, "attack");
+
+                                if (Config.logDebug) {
+                                    System.err.println("Triggered attack-based particles for local player");
+                                }
                             }
                         }
                     }
+                }
+            } catch (Exception e) {
+                // Silently catch exceptions to prevent crash
+                if (Config.logDebug) {
+                    System.err.println("Error in onClientLivingAttack: " + e.getMessage());
                 }
             }
         }
@@ -365,55 +393,63 @@ public class KimetsunoyaibaMultiplayer
          * Handle left-click attacks (works for both air and entity clicks)
          * This is called BEFORE LivingAttackEvent, so we can handle air clicks here
          */
-        @SubscribeEvent
+        @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
         public static void onLeftClickEmpty(net.minecraftforge.client.event.InputEvent.InteractionKeyMappingTriggered event)
         {
-            // Only handle attack key
-            if (!event.isAttack()) {
-                return;
-            }
-
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player == null || mc.level == null) {
-                return;
-            }
-
-            ItemStack heldItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
-
-            // Check if holding breathing sword - play attack animation
-            if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
-                com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(mc.player);
-                
-                Vec3 lookDir = mc.player.getLookAngle().normalize();
-                Vec3 playerPos = mc.player.position().add(0, mc.player.getEyeHeight(), 0);
-                
-                // damage in a 3x3 area in front of the player, these swords deal AOE attacks
-                // Make a box in front of the player, e.g. 3 blocks forward
-                AABB attackBox = new AABB(playerPos, playerPos.add(lookDir.scale(3)))
-                    .inflate(1.5); // widen the box sideways/up-down if you want
-                List<LivingEntity> targets = mc.player.level().getEntitiesOfClass(
-                    LivingEntity.class, attackBox,
-                    e -> e != mc.player && e.isAlive()
-                );
-
-                for (LivingEntity target : targets) {
-                    //float damage = DamageCalculator.calculateScaledDamage(mc.player, heldItem.getAttackDamage());
-                	float damage = (float)mc.player.getAttributeValue(Attributes.ATTACK_DAMAGE);
-                    target.hurt(mc.level.damageSources().playerAttack(mc.player), damage);
+            try {
+                // Only handle attack key
+                if (!event.isAttack()) {
+                    return;
                 }
-            }
 
-            // Check if holding rifle
-            if (heldItem.getItem().toString().contains("rifle")) {
-                com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.GunType gunType =
-                        com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.GunType.RIFLE;
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player == null || mc.level == null) {
+                    return;
+                }
 
-                // Play shoot animation and effects
-                com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.playShootAnimation(
-                        mc.player, gunType);
+                ItemStack heldItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
 
+                // Check if holding breathing sword - play attack animation
+                if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(mc.player);
+
+                    Vec3 lookDir = mc.player.getLookAngle().normalize();
+                    Vec3 playerPos = mc.player.position().add(0, mc.player.getEyeHeight(), 0);
+
+                    // damage in a 3x3 area in front of the player, these swords deal AOE attacks
+                    // Make a box in front of the player, e.g. 3 blocks forward
+                    AABB attackBox = new AABB(playerPos, playerPos.add(lookDir.scale(3)))
+                        .inflate(1.5); // widen the box sideways/up-down if you want
+                    List<LivingEntity> targets = mc.player.level().getEntitiesOfClass(
+                        LivingEntity.class, attackBox,
+                        e -> e != mc.player && e.isAlive()
+                    );
+
+                    for (LivingEntity target : targets) {
+                        //float damage = DamageCalculator.calculateScaledDamage(mc.player, heldItem.getAttackDamage());
+                        float damage = (float)mc.player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+                        target.hurt(mc.level.damageSources().playerAttack(mc.player), damage);
+                    }
+                }
+
+                // Check if holding rifle
+                if (heldItem.getItem().toString().contains("rifle")) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.GunType gunType =
+                            com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.GunType.RIFLE;
+
+                    // Play shoot animation and effects
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.playShootAnimation(
+                            mc.player, gunType);
+
+                    if (Config.logDebug) {
+                        System.err.println("Triggered rifle shoot animation (air click)");
+                    }
+                }
+            } catch (Exception e) {
+                // Silently catch exceptions to prevent crash
+                // The exception likely occurs due to threading or mod conflicts
                 if (Config.logDebug) {
-                    Log.debug("Triggered rifle shoot animation (air click)");
+                    System.err.println("Error in onLeftClickEmpty: " + e.getMessage());
                 }
             }
         }

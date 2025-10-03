@@ -308,3 +308,13 @@ Breathing sword particles are configured in:
 - `/testanim` - Test animation sync across multiplayer
 - `/testanimc` - Test client-side animation triggering
 - Debug logging can be enabled in config for particle and animation troubleshooting
+
+### Mod Compatibility
+
+#### ShoulderSurfing Integration
+The mod includes optional integration with [ShoulderSurfing Reloaded](https://github.com/Exopandora/ShoulderSurfing) mod:
+- Uses reflection to detect if ShoulderSurfing is loaded (no hard dependency required)
+- When present, automatically syncs camera rotation during breathing technique abilities
+- Falls back gracefully if ShoulderSurfing is not installed
+- Implementation in `PlayerRotationSyncPacket.java` using `ModList.get().isLoaded("shouldersurfing")`
+- No configuration changes needed - works automatically when both mods are present

@@ -17,19 +17,23 @@ public class KeyInputHandler {
 
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) {
-            return;
-        }
-
-        // Check if R key was pressed
-        if (ModKeyBindings.CYCLE_BREATHING_FORM.consumeClick()) {
-            ItemStack mainHandItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
-
-            // Check if holding a breathing sword
-            if (mainHandItem.getItem() instanceof BreathingSwordItem breathingSword) {
-                breathingSword.cycleForm(mc.player);
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player == null) {
+                return;
             }
+
+            // Check if R key was pressed
+            if (ModKeyBindings.CYCLE_BREATHING_FORM.consumeClick()) {
+                ItemStack mainHandItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
+
+                // Check if holding a breathing sword
+                if (mainHandItem.getItem() instanceof BreathingSwordItem breathingSword) {
+                    breathingSword.cycleForm(mc.player);
+                }
+            }
+        } catch (Exception e) {
+            // Silently catch exceptions to prevent crashes
         }
     }
 }

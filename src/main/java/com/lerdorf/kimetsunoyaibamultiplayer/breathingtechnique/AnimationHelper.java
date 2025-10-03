@@ -23,7 +23,7 @@ public class AnimationHelper {
      * Play an animation on a player (both client and server)
      */
     public static void playAnimation(Player player, String animationName) {
-        playAnimation(player, animationName, -1);
+        playAnimation(player, animationName, -1, 1.0f);
     }
 
     /**
@@ -33,32 +33,7 @@ public class AnimationHelper {
      * @param maxDurationTicks Maximum duration in ticks (-1 for full animation)
      */
     public static void playAnimation(Player player, String animationName, int maxDurationTicks) {
-        ResourceLocation animationLocation = parseAnimationName(animationName);
-
-        // If on client, play locally and sync to server
-        if (player.level().isClientSide && player instanceof AbstractClientPlayer clientPlayer) {
-            KeyframeAnimation animation = findAnimation(animationLocation);
-            if (animation != null) {
-                ModifierLayer<IAnimation> layer = playAnimationOnPlayer(clientPlayer, animation, 1);
-
-                // Schedule animation cancellation if maxDurationTicks is specified
-                if (maxDurationTicks > 0 && layer != null) {
-                    scheduleAnimationCancellation(clientPlayer, layer, maxDurationTicks);
-                }
-
-                // Send to server for other players
-                AnimationSyncPacket packet = new AnimationSyncPacket(
-                    player.getUUID(),
-                    animationLocation,
-                    0,
-                    30,
-                    false,
-                    false,
-                    animation
-                );
-                ModNetworking.sendToServer(packet);
-            }
-        }
+        playAnimation(player, animationName, maxDurationTicks, 1.0f);
     }
     
     /**
@@ -70,28 +45,44 @@ public class AnimationHelper {
      */
     public static void playAnimation(Player player, String animationName, int maxDurationTicks, float speed) {
         ResourceLocation animationLocation = parseAnimationName(animationName);
+        KeyframeAnimation animation = findAnimation(animationLocation);
 
+        if (animation == null) {
+            return; // Animation not found
+        }
+
+        // CLIENT SIDE: Play locally
         if (player.level().isClientSide && player instanceof AbstractClientPlayer clientPlayer) {
-            KeyframeAnimation animation = findAnimation(animationLocation);
-            if (animation != null) {
-                ModifierLayer<IAnimation> layer = playAnimationOnPlayer(clientPlayer, animation, speed);
+            ModifierLayer<IAnimation> layer = playAnimationOnPlayer(clientPlayer, animation, speed);
 
-                if (maxDurationTicks > 0 && layer != null) {
-                    scheduleAnimationCancellation(clientPlayer, layer, maxDurationTicks);
-                }
-
-                // Sync animation to server so other clients see it
-                AnimationSyncPacket packet = new AnimationSyncPacket(
-                    player.getUUID(),
-                    animationLocation,
-                    0,
-                    30,
-                    false,
-                    false,
-                    animation
-                );
-                ModNetworking.sendToServer(packet);
+            if (maxDurationTicks > 0 && layer != null) {
+                scheduleAnimationCancellation(clientPlayer, layer, maxDurationTicks);
             }
+
+            // Send to server so other players see it
+            AnimationSyncPacket packet = new AnimationSyncPacket(
+                player.getUUID(),
+                animationLocation,
+                0,
+                30,
+                false,
+                false,
+                animation
+            );
+            ModNetworking.sendToServer(packet);
+        }
+        // SERVER SIDE: Send to all clients (including the player themselves)
+        else if (!player.level().isClientSide) {
+            AnimationSyncPacket packet = new AnimationSyncPacket(
+                player.getUUID(),
+                animationLocation,
+                0,
+                30,
+                false,
+                false,
+                animation
+            );
+            ModNetworking.sendToAllClients(packet);
         }
     }
 

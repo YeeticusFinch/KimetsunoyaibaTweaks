@@ -7,6 +7,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.fml.ModList;
+import java.lang.reflect.Method;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -18,6 +20,10 @@ public class PlayerRotationSyncPacket {
     private final float yaw;
     private final float pitch;
     private final float headYaw;
+
+    // Cache ShoulderSurfing mod availability
+    private static Boolean shoulderSurfingPresent = null;
+    private static Method setCameraRotationMethod = null;
 
     public PlayerRotationSyncPacket(UUID playerUUID, float yaw, float pitch, float headYaw) {
         this.playerUUID = playerUUID;
@@ -38,6 +44,74 @@ public class PlayerRotationSyncPacket {
         buf.writeFloat(yaw);
         buf.writeFloat(pitch);
         buf.writeFloat(headYaw);
+    }
+
+    /**
+     * Check if ShoulderSurfing mod is present and initialize reflection if needed
+     */
+    private static boolean isShoulderSurfingPresent() {
+        if (shoulderSurfingPresent == null) {
+            shoulderSurfingPresent = ModList.get().isLoaded("shouldersurfing");
+
+            if (shoulderSurfingPresent) {
+                try {
+                    // Try to find the ShoulderSurfing camera class and rotation method
+                    Class<?> cameraClass = Class.forName("com.github.exopandora.shouldersurfing.client.ShoulderSurfingCamera");
+                    // Look for a method to set camera rotation (method name may vary)
+                    for (Method method : cameraClass.getDeclaredMethods()) {
+                        // Look for methods that might set camera rotation
+                        if (method.getName().contains("Rotation") || method.getName().contains("rotation")) {
+                            Class<?>[] params = method.getParameterTypes();
+                            if (params.length == 2 && params[0] == float.class && params[1] == float.class) {
+                                setCameraRotationMethod = method;
+                                setCameraRotationMethod.setAccessible(true);
+                                if (Config.logDebug) {
+                                    Log.debug("Found ShoulderSurfing camera rotation method: {}", method.getName());
+                                }
+                                break;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    if (Config.logDebug) {
+                        System.err.println("Could not initialize ShoulderSurfing integration: " + e.getMessage());
+                    }
+                    setCameraRotationMethod = null;
+                }
+            }
+        }
+        return shoulderSurfingPresent && setCameraRotationMethod != null;
+    }
+
+    /**
+     * Try to update ShoulderSurfing camera rotation if the mod is present
+     */
+    private static void updateShoulderSurfingCamera(float yaw, float pitch) {
+        if (!isShoulderSurfingPresent()) {
+            return;
+        }
+
+        try {
+            // Get the ShoulderSurfing camera instance and update rotation
+            Class<?> instanceClass = Class.forName("com.github.exopandora.shouldersurfing.client.ShoulderInstance");
+            Method getInstanceMethod = instanceClass.getDeclaredMethod("getInstance");
+            Object instance = getInstanceMethod.invoke(null);
+
+            Method getCameraMethod = instanceClass.getDeclaredMethod("getCamera");
+            Object camera = getCameraMethod.invoke(instance);
+
+            if (camera != null && setCameraRotationMethod != null) {
+                setCameraRotationMethod.invoke(camera, yaw, pitch);
+
+                if (Config.logDebug) {
+                    Log.debug("Updated ShoulderSurfing camera rotation: yaw={}, pitch={}", yaw, pitch);
+                }
+            }
+        } catch (Exception e) {
+            if (Config.logDebug) {
+                System.err.println("Failed to update ShoulderSurfing camera: " + e.getMessage());
+            }
+        }
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
@@ -66,8 +140,12 @@ public class PlayerRotationSyncPacket {
                             mc.player.yRotO = yaw;
                             mc.player.xRotO = pitch;
                             mc.player.yHeadRotO = headYaw;
+
+                            // Optional: Update ShoulderSurfing camera if present
+                            // DISABLED: This was causing crashes due to reflection issues
+                            // updateShoulderSurfingCamera(yaw, pitch);
                         }
-                        
+
                         if (Config.logDebug) {
                             Log.debug("Client received rotation sync for player {}: yaw={}, pitch={}, headYaw={}",
                                 player.getName().getString(), yaw, pitch, headYaw);

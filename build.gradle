@@ -171,10 +171,18 @@ dependencies {
     //implementation fg.deobf("blank:mobplayeranimatior-forge-${minecraft_version}:1.3.3-all")
 
     //If you don't want to include the library in your jar, remove the include word
-    implementation fg.deobf("dev.kosmx.player-anim:player-animation-lib-forge:${player_anim_version}")
+    implementation(fg.deobf("dev.kosmx.player-anim:player-animation-lib-forge:${player_anim_version}")) {
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-core'
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+    }
 
     // GeckoLib for crow animations
-    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${geckolib_version}")
+    implementation(fg.deobf("software.bernie.geckolib:geckolib-forge-${geckolib_version}")) {
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-core'
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+    }
 
     //Bendy-lib also has a Forge version:
     //runtimeOnly fg.deobf("io.github.kosmx.bendy-lib:bendy-lib-forge:${project.bendylib_version}")
