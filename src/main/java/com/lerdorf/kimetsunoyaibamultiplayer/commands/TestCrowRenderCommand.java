@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.commands;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.logging.LogUtils;
@@ -12,13 +13,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.phys.Vec3;
-import org.slf4j.Logger;
 
 /**
  * Test command to spawn a marker entity at crow positions to debug visibility
  */
 public class TestCrowRenderCommand {
-    private static final Logger LOGGER = LogUtils.getLogger();
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("testcrowrender")
@@ -57,7 +56,7 @@ public class TestCrowRenderCommand {
                 player.sendSystemMessage(Component.literal(
                     "Spawned marker at crow position: " + pos.x + ", " + pos.y + ", " + pos.z));
 
-                LOGGER.info("Spawned marker chicken at crow position: {}, {}, {}", pos.x, pos.y, pos.z);
+                Log.info("Spawned marker chicken at crow position: {}, {}, {}", pos.x, pos.y, pos.z);
             }
         });
 

@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.ISwordWielderData;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordWielderData;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientCommandHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimationCommand;
@@ -27,6 +28,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
@@ -53,17 +55,13 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
-import org.slf4j.Logger;
-
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(KimetsunoyaibaMultiplayer.MODID)
 public class KimetsunoyaibaMultiplayer
 {
     // Define mod id in a common place for everything to reference
     public static final String MODID = "kimetsunoyaibamultiplayer";
-    // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
-
+    
     public KimetsunoyaibaMultiplayer(FMLJavaModLoadingContext context)
     {
         IEventBus modEventBus = context.getModEventBus();
@@ -99,11 +97,11 @@ public class KimetsunoyaibaMultiplayer
     
     private void commonSetup(final FMLCommonSetupEvent event)
     {
-        LOGGER.info("Initializing Kimetsunoyaiba Multiplayer animation sync...");
+        Log.info("Initializing Kimetsunoyaiba Multiplayer animation sync...");
 
         // Register network messages
         ModNetworking.register();
-        LOGGER.info("Network messages registered");
+        Log.info("Network messages registered");
         
         
     }
@@ -127,13 +125,13 @@ public class KimetsunoyaibaMultiplayer
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event)
     {
-        LOGGER.info("Kimetsunoyaiba Multiplayer server starting");
+        Log.info("Kimetsunoyaiba Multiplayer server starting");
     }
 
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event)
     {
-        LOGGER.info("Registering test commands");
+        Log.info("Registering test commands");
         TestAnimationCommand.register(event.getDispatcher());
         TestParticlesCommand.register(event.getDispatcher());
         DebugParticlesCommand.register(event.getDispatcher());
@@ -183,7 +181,7 @@ public class KimetsunoyaibaMultiplayer
                 }
 
                 if (Config.logDebug && !nearbyEntities.isEmpty()) {
-                    LOGGER.debug("AOE attack hit {} additional entities", nearbyEntities.size());
+                    //FancyLog.debug("AOE attack hit {} additional entities", nearbyEntities.size());
                 }
             }
 
@@ -192,7 +190,7 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
                 if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
                     if (Config.logDebug)
-                    LOGGER.debug("Attack detected with kimetsunoyaiba sword: {} -> {}",
+                    Log.debug("Attack detected with kimetsunoyaiba sword: {} -> {}",
                         attacker.getName().getString(),
                         target.getName().getString());
                     // Note: Particle spawning will be handled client-side via animation tracking
@@ -230,7 +228,7 @@ public class KimetsunoyaibaMultiplayer
         public static void onClientSetup(FMLClientSetupEvent event)
         {
         	if (Config.logDebug)
-            LOGGER.info("Animation sync system initialized for client");
+            Log.info("Animation sync system initialized for client");
         }
 
         @SubscribeEvent
@@ -238,7 +236,7 @@ public class KimetsunoyaibaMultiplayer
         {
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
             if (Config.logDebug)
-            LOGGER.info("Registered breathing technique key binding");
+            Log.info("Registered breathing technique key binding");
         }
     }
 
@@ -253,7 +251,7 @@ public class KimetsunoyaibaMultiplayer
             if (event.phase == TickEvent.Phase.END) {
                 debugTickCounter++;
                 if (Config.logDebug && debugTickCounter % 100 == 0) { // Log every 5 seconds
-                    LOGGER.info("Client tick event handler is working, tick: {}", debugTickCounter);
+                    Log.info("Client tick event handler is working, tick: {}", debugTickCounter);
                 }
                 AnimationTracker.tick();
                 CrowQuestMarkerHandler.clientTick();
@@ -327,7 +325,7 @@ public class KimetsunoyaibaMultiplayer
                             mc.player, gunType);
 
                     if (Config.logDebug) {
-                        LOGGER.debug("Triggered gun shoot animation for local player: {}", gunType);
+                        Log.debug("Triggered gun shoot animation for local player: {}", gunType);
                     }
                     return;
                 }
@@ -347,7 +345,7 @@ public class KimetsunoyaibaMultiplayer
                             SwordParticleHandler.forceSpawnParticles(clientAttacker, weapon, "attack");
 
                             if (Config.logDebug) {
-                                LOGGER.debug("Triggered attack-based particles for local player");
+                                Log.debug("Triggered attack-based particles for local player");
                             }
                         }
                     }
@@ -385,6 +383,24 @@ public class KimetsunoyaibaMultiplayer
             // Check if holding breathing sword - play attack animation
             if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
                 com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(mc.player);
+                
+                Vec3 lookDir = mc.player.getLookAngle().normalize();
+                Vec3 playerPos = mc.player.position().add(0, mc.player.getEyeHeight(), 0);
+                
+                // damage in a 3x3 area in front of the player, these swords deal AOE attacks
+                // Make a box in front of the player, e.g. 3 blocks forward
+                AABB attackBox = new AABB(playerPos, playerPos.add(lookDir.scale(3)))
+                    .inflate(1.5); // widen the box sideways/up-down if you want
+                List<LivingEntity> targets = mc.player.level().getEntitiesOfClass(
+                    LivingEntity.class, attackBox,
+                    e -> e != mc.player && e.isAlive()
+                );
+
+                for (LivingEntity target : targets) {
+                    //float damage = DamageCalculator.calculateScaledDamage(mc.player, heldItem.getAttackDamage());
+                	float damage = (float)mc.player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+                    target.hurt(mc.level.damageSources().playerAttack(mc.player), damage);
+                }
             }
 
             // Check if holding rifle
@@ -397,7 +413,7 @@ public class KimetsunoyaibaMultiplayer
                         mc.player, gunType);
 
                 if (Config.logDebug) {
-                    LOGGER.debug("Triggered rifle shoot animation (air click)");
+                    Log.debug("Triggered rifle shoot animation (air click)");
                 }
             }
         }

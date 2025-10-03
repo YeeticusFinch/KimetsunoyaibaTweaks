@@ -4,12 +4,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Schedules delayed and repeated actions for breathing technique abilities
  */
 public class AbilityScheduler {
-    private static final Map<UUID, List<ScheduledTask>> playerTasks = new HashMap<>();
+    private static final Map<UUID, List<ScheduledTask>> playerTasks = new ConcurrentHashMap<>();
 
     public static class ScheduledTask {
         public final Runnable action;
@@ -37,7 +39,7 @@ public class AbilityScheduler {
         UUID playerId = player.getUUID();
 
         ScheduledTask task = new ScheduledTask(action, currentTick + delayTicks, false, 0, 0);
-        playerTasks.computeIfAbsent(playerId, k -> new ArrayList<>()).add(task);
+        playerTasks.computeIfAbsent(playerId, k -> new CopyOnWriteArrayList<>()).add(task);
     }
 
     /**
@@ -50,7 +52,7 @@ public class AbilityScheduler {
         UUID playerId = player.getUUID();
 
         ScheduledTask task = new ScheduledTask(action, currentTick, true, intervalTicks, currentTick + durationTicks);
-        playerTasks.computeIfAbsent(playerId, k -> new ArrayList<>()).add(task);
+        playerTasks.computeIfAbsent(playerId, k -> new CopyOnWriteArrayList<>()).add(task);
     }
 
     /**
@@ -58,26 +60,25 @@ public class AbilityScheduler {
      */
     public static void tick(ServerLevel level) {
         long currentTick = level.getGameTime();
+        List<UUID> emptyPlayers = new ArrayList<>();
 
-        Iterator<Map.Entry<UUID, List<ScheduledTask>>> playerIterator = playerTasks.entrySet().iterator();
-        while (playerIterator.hasNext()) {
-            Map.Entry<UUID, List<ScheduledTask>> entry = playerIterator.next();
+        for (Map.Entry<UUID, List<ScheduledTask>> entry : playerTasks.entrySet()) {
             List<ScheduledTask> tasks = entry.getValue();
+            List<ScheduledTask> tasksToKeep = new ArrayList<>();
 
-            Iterator<ScheduledTask> taskIterator = tasks.iterator();
-            while (taskIterator.hasNext()) {
-                ScheduledTask task = taskIterator.next();
+            for (ScheduledTask task : tasks) {
+                boolean keepTask = true;
 
                 if (task.repeating) {
                     // Repeating task
                     if (currentTick >= task.endAtTick) {
-                        taskIterator.remove();
+                        keepTask = false; // Task expired
                     } else if ((currentTick - task.executeAtTick) % task.repeatInterval == 0) {
                         try {
                             task.action.run();
                         } catch (Exception e) {
                             // Task failed, remove it
-                            taskIterator.remove();
+                            keepTask = false;
                         }
                     }
                 } else {
@@ -88,14 +89,27 @@ public class AbilityScheduler {
                         } catch (Exception e) {
                             // Task failed
                         }
-                        taskIterator.remove();
+                        keepTask = false; // Task executed, remove it
                     }
+                }
+
+                if (keepTask) {
+                    tasksToKeep.add(task);
                 }
             }
 
+            // Replace the task list entirely (thread-safe for CopyOnWriteArrayList)
+            tasks.clear();
+            tasks.addAll(tasksToKeep);
+
             if (tasks.isEmpty()) {
-                playerIterator.remove();
+                emptyPlayers.add(entry.getKey());
             }
+        }
+
+        // Remove players with no tasks
+        for (UUID playerId : emptyPlayers) {
+            playerTasks.remove(playerId);
         }
     }
 

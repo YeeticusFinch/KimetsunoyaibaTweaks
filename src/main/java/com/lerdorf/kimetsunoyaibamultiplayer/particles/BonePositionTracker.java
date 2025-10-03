@@ -3,20 +3,17 @@ package com.lerdorf.kimetsunoyaibamultiplayer.particles;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
-import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.UUID;
 
 public class BonePositionTracker {
-	private static final Logger LOGGER = LogUtils.getLogger();
 	private static int particlesSpawnedThisTick = 0;
 	private static final Map<UUID, Long> lastAnimationTime = new HashMap<>();
 

@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
 import com.mojang.logging.LogUtils;
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
@@ -10,13 +11,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
-import org.slf4j.Logger;
 
 import java.util.UUID;
 import java.util.function.Supplier;
 
 public class AnimationSyncPacket {
-    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final UUID playerUUID;
     private final ResourceLocation animationId;
@@ -95,7 +94,7 @@ public class AnimationSyncPacket {
 
     public void toBytes(FriendlyByteBuf buf) {
         if (Config.logDebug) {
-            LOGGER.debug("Writing packet to buffer: player={}, animation={}, tick={}, stop={}",
+            Log.debug("Writing packet to buffer: player={}, animation={}, tick={}, stop={}",
                 playerUUID, animationId, currentTick, stopAnimation);
         }
         buf.writeUUID(playerUUID);
@@ -127,7 +126,7 @@ public class AnimationSyncPacket {
                 ServerPlayer sender = ctx.getSender();
                 if (sender != null) {
                     if (Config.logDebug) {
-                        LOGGER.info("Server received animation sync from player {}: animation={}, tick={}, stop={}",
+                        Log.info("Server received animation sync from player {}: animation={}, tick={}, stop={}",
                             sender.getName().getString(), animationId, currentTick, stopAnimation);
                     }
 
@@ -137,12 +136,12 @@ public class AnimationSyncPacket {
                     );
 
                     if (Config.logDebug) {
-                        LOGGER.info("Server relayed animation sync to all other clients");
+                        Log.info("Server relayed animation sync to all other clients");
                     }
                 }
             } else {
                 if (Config.logDebug) {
-                    LOGGER.info("Client received animation sync for player {}: animation={}, tick={}, stop={}",
+                    Log.info("Client received animation sync for player {}: animation={}, tick={}, stop={}",
                         playerUUID, animationId, currentTick, stopAnimation);
                 }
                 AnimationSyncHandler.handleAnimationSync(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, swordItem, particleType);

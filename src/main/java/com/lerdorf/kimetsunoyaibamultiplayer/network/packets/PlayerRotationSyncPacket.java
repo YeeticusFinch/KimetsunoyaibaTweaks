@@ -1,13 +1,12 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
-import org.slf4j.Logger;
-
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -15,8 +14,6 @@ import java.util.function.Supplier;
  * Synchronizes player rotation (yaw/pitch/head rotation) from server to client
  */
 public class PlayerRotationSyncPacket {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
     private final UUID playerUUID;
     private final float yaw;
     private final float pitch;
@@ -52,6 +49,7 @@ public class PlayerRotationSyncPacket {
                 if (mc.level != null) {
                     Player player = mc.level.getPlayerByUUID(playerUUID);
                     if (player != null) {
+                    	// Always update the entity rotation
                         player.setYRot(yaw);
                         player.setXRot(pitch);
                         player.setYHeadRot(headYaw);
@@ -59,8 +57,19 @@ public class PlayerRotationSyncPacket {
                         player.xRotO = pitch;
                         player.yHeadRotO = headYaw;
 
+                        // If this is the local client player, update the camera too
+                        if (player == mc.player) {
+                            mc.player.setYRot(yaw);
+                            mc.player.setXRot(pitch);
+                            mc.player.setYHeadRot(headYaw);
+
+                            mc.player.yRotO = yaw;
+                            mc.player.xRotO = pitch;
+                            mc.player.yHeadRotO = headYaw;
+                        }
+                        
                         if (Config.logDebug) {
-                            LOGGER.debug("Client received rotation sync for player {}: yaw={}, pitch={}, headYaw={}",
+                            Log.debug("Client received rotation sync for player {}: yaw={}, pitch={}, headYaw={}",
                                 player.getName().getString(), yaw, pitch, headYaw);
                         }
                     }

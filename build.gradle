@@ -154,18 +154,22 @@ dependencies {
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")
     // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-forge-api:${jei_version}")
     // runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}-forge:${jei_version}")
-    
-    runtimeOnly fg.deobf("lib:mobplayeranimator-forge:${project.mob_player_anim_version}-all")
+
+    runtimeOnly(fg.deobf("lib:mobplayeranimator-forge:${project.mob_player_anim_version}-all")) {
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-core'
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+    }
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
     // The group id is ignored when searching -- in this case, it is "blank"
     // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
-    
+
     // This is for the jar in libs
     //implementation fg.deobf("blank:player-animation-lib-forge-${minecraft_version}:1.0.2-rc1")
     //implementation fg.deobf("blank:mobplayeranimatior-forge-${minecraft_version}:1.3.3-all")
-    
+
     //If you don't want to include the library in your jar, remove the include word
     implementation fg.deobf("dev.kosmx.player-anim:player-animation-lib-forge:${player_anim_version}")
 

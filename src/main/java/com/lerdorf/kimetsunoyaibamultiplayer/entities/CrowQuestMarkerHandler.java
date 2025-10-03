@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import com.mojang.logging.LogUtils;
@@ -12,7 +13,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,8 +25,6 @@ import java.util.regex.Pattern;
  * and spawns waypoint markers at the target locations.
  */
 public class CrowQuestMarkerHandler {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
     // Store quest markers for each player
     private static final Map<UUID, QuestMarker> activeQuests = new HashMap<>();
 
@@ -92,7 +90,7 @@ public class CrowQuestMarkerHandler {
         }
 
         if (Config.logDebug) {
-            LOGGER.info("Set quest marker for player {} to location {}", playerId, targetLocation);
+            Log.info("Set quest marker for player {} to location {}", playerId, targetLocation);
         }
     }
 
@@ -126,7 +124,7 @@ public class CrowQuestMarkerHandler {
         // Check if expired
         if (marker.isExpired(mc.level.getGameTime())) {
             if (Config.logDebug) {
-                LOGGER.info("Quest marker expired");
+                Log.info("Quest marker expired");
             }
             clearQuestMarker(player.getUUID());
             return;
@@ -182,7 +180,7 @@ public class CrowQuestMarkerHandler {
         }
 
         if (Config.logDebug) {
-            LOGGER.info("Player reached waypoint at {}", location);
+            Log.info("Player reached waypoint at {}", location);
         }
     }
 
@@ -201,11 +199,11 @@ public class CrowQuestMarkerHandler {
                 // Use a reasonable Y value (surface level)
                 int y = 64;
                 if (Config.logDebug)
-                	LOGGER.info("Parsed crow quest: '{}' at ({}, {}, {})", locationName, x, y, z);
+                	Log.info("Parsed crow quest: '{}' at ({}, {}, {})", locationName, x, y, z);
                 return new Vec3(x, y, z);
             } catch (NumberFormatException e) {
             	if (Config.logDebug)
-                LOGGER.warn("Failed to parse coordinates from message: {}", message);
+                Log.warn("Failed to parse coordinates from message: {}", message);
             }
         }
         return null;
@@ -229,7 +227,7 @@ public class CrowQuestMarkerHandler {
             long currentTime = mc.level.getGameTime();
             setQuestMarker(mc.player.getUUID(), questLocation, currentTime, EntityConfig.crowWaypointDuration);
             if (Config.logDebug)
-            	LOGGER.info("Auto-detected crow quest, set waypoint at {}", questLocation);
+            	Log.info("Auto-detected crow quest, set waypoint at {}", questLocation);
         }
     }
 
@@ -326,7 +324,7 @@ public class CrowQuestMarkerHandler {
     public static void clearAllMarkers() {
         activeQuests.clear();
         if (Config.logDebug)
-        	LOGGER.info("Cleared all quest markers");
+        	Log.info("Cleared all quest markers");
     }
 
     /**

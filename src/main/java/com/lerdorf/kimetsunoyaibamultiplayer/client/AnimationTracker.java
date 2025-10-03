@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
@@ -21,13 +22,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
 import java.util.*;
 
 public class AnimationTracker {
-    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Map<UUID, AnimationState> activeAnimations = new HashMap<>();
     private static int tickCounter = 0;
 
@@ -47,7 +46,7 @@ public class AnimationTracker {
         tickCounter++;
 
         if (Config.logDebug && tickCounter % 40 == 0) { // Log every 2 seconds to show we're running
-            LOGGER.info("AnimationTracker is running, tick: {}", tickCounter);
+            Log.info("AnimationTracker is running, tick: {}", tickCounter);
         }
 
         if (tickCounter % 2 != 0) {
@@ -57,7 +56,7 @@ public class AnimationTracker {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
             if (Config.logDebug && tickCounter % 100 == 0) { // Log less frequently when no player
-                LOGGER.debug("No player or level available, player: {}, level: {}", mc.player, mc.level);
+                Log.debug("No player or level available, player: {}, level: {}", mc.player, mc.level);
             }
             return;
         }
@@ -68,12 +67,12 @@ public class AnimationTracker {
     private static void checkPlayerAnimation(AbstractClientPlayer player) {
         try {
             if (Config.logDebug) {
-                LOGGER.debug("Checking animation for player: {}", player.getName().getString());
+                Log.debug("Checking animation for player: {}", player.getName().getString());
             }
             AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
             if (animationStack == null) {
                 if (Config.logDebug) {
-                    LOGGER.debug("Animation stack is null for player {}", player.getName().getString());
+                    Log.debug("Animation stack is null for player {}", player.getName().getString());
                 }
                 checkForStoppedAnimation(player.getUUID());
                 return;
@@ -85,7 +84,7 @@ public class AnimationTracker {
             List<Pair<Integer, IAnimation>> layers = (List<Pair<Integer, IAnimation>>) layersField.get(animationStack);
 
             if (Config.logDebug) {
-                LOGGER.debug("Found {} animation layers for player {}", layers.size(), player.getName().getString());
+                Log.debug("Found {} animation layers for player {}", layers.size(), player.getName().getString());
             }
 
             boolean foundActiveAnimation = false;
@@ -94,14 +93,14 @@ public class AnimationTracker {
                 Pair<Integer, IAnimation> pair = layers.get(i);
                 IAnimation anim = pair.getRight();
                 if (Config.logDebug) {
-                    LOGGER.debug("Layer {}: animation={}, active={}, type={}",
+                    Log.debug("Layer {}: animation={}, active={}, type={}",
                         i, anim, (anim != null ? anim.isActive() : "null"),
                         (anim != null ? anim.getClass().getSimpleName() : "null"));
                 }
 
                 if (anim != null && anim.isActive()) {
                     if (Config.logDebug) {
-                        LOGGER.info("Found active animation on layer {}: type={}", i, anim.getClass().getSimpleName());
+                        Log.info("Found active animation on layer {}: type={}", i, anim.getClass().getSimpleName());
                     }
 
                     // Check if it's a ModifierLayer wrapping another animation
@@ -109,7 +108,7 @@ public class AnimationTracker {
                         ModifierLayer<?> modLayer = (ModifierLayer<?>) anim;
                         IAnimation innerAnim = modLayer.getAnimation();
                         if (Config.logDebug) {
-                            LOGGER.info("ModifierLayer contains: {}", innerAnim != null ? innerAnim.getClass().getSimpleName() : "null");
+                            Log.info("ModifierLayer contains: {}", innerAnim != null ? innerAnim.getClass().getSimpleName() : "null");
                         }
 
                         if (innerAnim instanceof KeyframeAnimationPlayer) {
@@ -118,7 +117,7 @@ public class AnimationTracker {
                             if (data != null) {
                                 foundActiveAnimation = true;
                                 if (Config.logDebug) {
-                                    LOGGER.info("Processing wrapped keyframe animation for player {}", player.getName().getString());
+                                    Log.info("Processing wrapped keyframe animation for player {}", player.getName().getString());
                                 }
                                 processActiveAnimation(player, animPlayer, data);
                                 break;
@@ -131,7 +130,7 @@ public class AnimationTracker {
                                 if (data != null) {
                                     foundActiveAnimation = true;
                                     if (Config.logDebug) {
-                                        LOGGER.info("Processing deeply nested keyframe animation for player {}", player.getName().getString());
+                                        Log.info("Processing deeply nested keyframe animation for player {}", player.getName().getString());
                                     }
                                     processActiveAnimation(player, animPlayer, data);
                                     break;
@@ -145,16 +144,16 @@ public class AnimationTracker {
                         if (data != null) {
                             foundActiveAnimation = true;
                             if (Config.logDebug) {
-                                LOGGER.info("Processing direct keyframe animation for player {}", player.getName().getString());
+                                Log.info("Processing direct keyframe animation for player {}", player.getName().getString());
                             }
                             processActiveAnimation(player, animPlayer, data);
                             break;
                         } else {
-                            LOGGER.warn("KeyframeAnimationPlayer has null data for player {}", player.getName().getString());
+                            Log.warn("KeyframeAnimationPlayer has null data for player {}", player.getName().getString());
                         }
                     } else {
                         if (Config.logDebug) {
-                            LOGGER.info("Found active non-keyframe animation: {}", anim.getClass().getSimpleName());
+                            Log.info("Found active non-keyframe animation: {}", anim.getClass().getSimpleName());
                         }
                     }
                 }
@@ -165,7 +164,7 @@ public class AnimationTracker {
             }
 
         } catch (Exception e) {
-            LOGGER.error("Error checking player animation for player {}", player.getName().getString(), e);
+            Log.error("Error checking player animation for player {}", player.getName().getString(), e);
         }
     }
 
@@ -188,13 +187,13 @@ public class AnimationTracker {
                 if (name instanceof String && !((String) name).isEmpty()) {
                     animationName = (String) name;
                     if (Config.logDebug) {
-                        LOGGER.info("Found animation name from extraData: {}", animationName);
+                        Log.info("Found animation name from extraData: {}", animationName);
                     }
                 }
             }
         } catch (Exception ex) {
             if (Config.logDebug) {
-                LOGGER.debug("Could not get extraData: {}", ex.getMessage());
+                Log.debug("Could not get extraData: {}", ex.getMessage());
             }
         }
 
@@ -208,7 +207,7 @@ public class AnimationTracker {
             UUID animUuid = data.getUuid();
             if (animUuid != null) {
                 if (Config.logDebug) {
-                    LOGGER.info("Animation UUID: {}", animUuid);
+                    Log.info("Animation UUID: {}", animUuid);
                 }
                 animationName = mapUuidToAnimationName(animUuid);
             }
@@ -218,7 +217,7 @@ public class AnimationTracker {
         if (animationName == null) {
             animationName = "unknown_" + System.currentTimeMillis();
             if (Config.logDebug) {
-                LOGGER.warn("Could not determine animation name, using fallback: {}", animationName);
+                Log.warn("Could not determine animation name, using fallback: {}", animationName);
             }
         }
 
@@ -235,7 +234,7 @@ public class AnimationTracker {
             Math.abs(currentState.lastTick - currentTick) > 3) {
 
             if (Config.logDebug) {
-                LOGGER.info("Sending animation sync: player={}, animation={}, tick={}, length={}, looping={}",
+                Log.info("Sending animation sync: player={}, animation={}, tick={}, length={}, looping={}",
                     player.getName().getString(), animationId, currentTick, length, isLooping);
             }
 
@@ -282,7 +281,7 @@ public class AnimationTracker {
         AnimationState state = activeAnimations.get(playerUUID);
         if (state != null && state.isActive) {
             if (Config.logDebug) {
-                LOGGER.info("Animation stopped for player {}", playerUUID);
+                Log.info("Animation stopped for player {}", playerUUID);
             }
 
             // Send debug chat message to local player
@@ -323,7 +322,7 @@ public class AnimationTracker {
                 }
             }
         } catch (Exception e) {
-            LOGGER.debug("Failed to extract KeyframeAnimationPlayer via reflection: {}", e.getMessage());
+            Log.debug("Failed to extract KeyframeAnimationPlayer via reflection: {}", e.getMessage());
         }
         return null;
     }
@@ -341,7 +340,7 @@ public class AnimationTracker {
                     // Check if this looks like an animation name from our list
                     if (isKnownAnimationName(strValue)) {
                         if (Config.logDebug) {
-                            LOGGER.info("Found animation name via reflection in field '{}': {}", field.getName(), strValue);
+                            Log.info("Found animation name via reflection in field '{}': {}", field.getName(), strValue);
                         }
                         return strValue;
                     }
@@ -350,7 +349,7 @@ public class AnimationTracker {
                     String path = resLoc.getPath();
                     if (isKnownAnimationName(path)) {
                         if (Config.logDebug) {
-                            LOGGER.info("Found animation name via ResourceLocation in field '{}': {}", field.getName(), path);
+                            Log.info("Found animation name via ResourceLocation in field '{}': {}", field.getName(), path);
                         }
                         return path;
                     }
@@ -358,7 +357,7 @@ public class AnimationTracker {
             }
         } catch (Exception e) {
             if (Config.logDebug) {
-                LOGGER.debug("Failed to extract animation name via reflection: {}", e.getMessage());
+                Log.debug("Failed to extract animation name via reflection: {}", e.getMessage());
             }
         }
         return null;
@@ -398,7 +397,7 @@ public class AnimationTracker {
         // This is a fallback - in practice, we'd need to build a mapping of UUIDs to names
         // For now, we'll just use this for logging and return null
         if (Config.logDebug) {
-            LOGGER.info("No UUID-to-name mapping available for UUID: {}", uuid);
+            Log.info("No UUID-to-name mapping available for UUID: {}", uuid);
         }
         return null;
     }
@@ -444,7 +443,7 @@ public class AnimationTracker {
         SwordParticleHandler.spawnSwordParticles(player, mainHandItem, animationName, animationTick);
 
         if (Config.logDebug) {
-            LOGGER.debug("Triggered sword particles for player {} with sword {} during animation {}",
+            Log.debug("Triggered sword particles for player {} with sword {} during animation {}",
                 player.getName().getString(),
                 SwordParticleMapping.getSwordTypeName(mainHandItem),
                 animationName);

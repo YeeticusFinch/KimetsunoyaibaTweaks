@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
 import com.mojang.logging.LogUtils;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
@@ -18,14 +19,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class AnimationSyncHandler {
-    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Map<UUID, ActiveAnimation> syncedAnimations = new HashMap<>();
 
     private static class ActiveAnimation {
@@ -49,38 +48,38 @@ public class AnimationSyncHandler {
                                           int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData,
                                           ItemStack swordItem, ResourceLocation particleType) {
         if (Config.logDebug) {
-            LOGGER.info("handleAnimationSync called: player={}, animation={}, tick={}, stop={}",
+            Log.info("handleAnimationSync called: player={}, animation={}, tick={}, stop={}",
                 playerUUID, animationId, currentTick, stopAnimation);
         }
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) {
             if (Config.logDebug) {
-                LOGGER.warn("Cannot handle animation sync - no level or player available");
+                Log.warn("Cannot handle animation sync - no level or player available");
             }
             return;
         }
 
         if (mc.player.getUUID().equals(playerUUID)) {
             if (Config.logDebug) {
-                LOGGER.debug("Ignoring animation sync for local player");
+                Log.debug("Ignoring animation sync for local player");
             }
             return;
         }
 
         Player targetPlayer = mc.level.getPlayerByUUID(playerUUID);
         if (targetPlayer == null) {
-            LOGGER.warn("Could not find player with UUID {} in level", playerUUID);
+            Log.warn("Could not find player with UUID {} in level", playerUUID);
             return;
         }
         if (!(targetPlayer instanceof AbstractClientPlayer)) {
-            LOGGER.warn("Player {} is not an AbstractClientPlayer, type: {}",
+            Log.warn("Player {} is not an AbstractClientPlayer, type: {}",
                 targetPlayer.getName().getString(), targetPlayer.getClass().getSimpleName());
             return;
         }
 
         if (Config.logDebug) {
-            LOGGER.info("Found target player: {}", targetPlayer.getName().getString());
+            Log.info("Found target player: {}", targetPlayer.getName().getString());
         }
 
         AbstractClientPlayer clientPlayer = (AbstractClientPlayer) targetPlayer;
@@ -111,7 +110,7 @@ public class AnimationSyncHandler {
                 SwordParticleHandler.spawnSwordParticles(clientPlayer, swordItem, animationName);
 
                 if (Config.logDebug) {
-                    LOGGER.debug("Triggered synchronized sword particles for player {} with animation {}",
+                    Log.debug("Triggered synchronized sword particles for player {} with animation {}",
                         clientPlayer.getName().getString(), animationName);
                 }
             }
@@ -122,7 +121,7 @@ public class AnimationSyncHandler {
                                      int currentTick, int animationLength, boolean isLooping, KeyframeAnimation animationData) {
         try {
             if (Config.logDebug) {
-                LOGGER.info("Attempting to play animation {} for player {} at tick {} (data present: {})",
+                Log.info("Attempting to play animation {} for player {} at tick {} (data present: {})",
                     animationId, player.getName().getString(), currentTick, animationData != null);
             }
 
@@ -140,7 +139,7 @@ public class AnimationSyncHandler {
             // With Mob Player Animator, we can now apply animations to other players!
             if (animationData != null) {
                 if (Config.logDebug) {
-                    LOGGER.info("Using transmitted animation data for {}", animationId);
+                    Log.info("Using transmitted animation data for {}", animationId);
                 }
                 applyAnimationToPlayer(player, animationData, currentTick, playerUUID, animationId);
             } else {
@@ -148,20 +147,20 @@ public class AnimationSyncHandler {
                 KeyframeAnimation foundAnimation = findAnimationAlternative(animationId);
                 if (foundAnimation != null) {
                     if (Config.logDebug) {
-                        LOGGER.info("Found animation {} via registry lookup", animationId);
+                        Log.info("Found animation {} via registry lookup", animationId);
                     }
                     applyAnimationToPlayer(player, foundAnimation, currentTick, playerUUID, animationId);
                 } else {
                     // Create a fallback animation using kimetsunoyaiba animations
                     if (Config.logDebug) {
-                        LOGGER.info("Creating fallback animation for {} on player {}", animationId, player.getName().getString());
+                        Log.info("Creating fallback animation for {} on player {}", animationId, player.getName().getString());
                     }
                     createFallbackAnimation(player, animationId, playerUUID);
                 }
             }
 
         } catch (Exception e) {
-            LOGGER.error("Failed to process animation for player {}", player.getName().getString(), e);
+            Log.error("Failed to process animation for player {}", player.getName().getString(), e);
         }
     }
 
@@ -175,11 +174,11 @@ public class AnimationSyncHandler {
                 }
 
                 if (Config.logDebug) {
-                    LOGGER.info("Successfully stopped animation for player {}", player.getName().getString());
+                    Log.info("Successfully stopped animation for player {}", player.getName().getString());
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to stop animation for player {}", player.getName().getString(), e);
+            Log.error("Failed to stop animation for player {}", player.getName().getString(), e);
         }
     }
 
@@ -188,7 +187,7 @@ public class AnimationSyncHandler {
             AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
             if (animationStack == null) {
                 if (Config.logDebug) {
-                    LOGGER.warn("Animation stack is null for player {}", player.getName().getString());
+                    Log.warn("Animation stack is null for player {}", player.getName().getString());
                 }
                 return;
             }
@@ -213,11 +212,11 @@ public class AnimationSyncHandler {
             syncedAnimations.put(playerUUID, new ActiveAnimation(modifierLayer, animationId));
 
             if (Config.logDebug) {
-                LOGGER.info("Successfully applied animation {} to player {}", animationId, player.getName().getString());
+                Log.info("Successfully applied animation {} to player {}", animationId, player.getName().getString());
             }
 
         } catch (Exception e) {
-            LOGGER.error("Failed to apply animation to player {}", player.getName().getString(), e);
+            Log.error("Failed to apply animation to player {}", player.getName().getString(), e);
         }
     }
 
@@ -226,7 +225,7 @@ public class AnimationSyncHandler {
             String animationName = animationId.getPath();
 
             if (Config.logDebug) {
-                LOGGER.info("Searching for animation with name: '{}'", animationName);
+                Log.info("Searching for animation with name: '{}'", animationName);
             }
 
             // Try multiple namespace combinations
@@ -253,7 +252,7 @@ public class AnimationSyncHandler {
                     KeyframeAnimation anim = PlayerAnimationRegistry.getAnimation(loc);
                     if (anim != null) {
                         if (Config.logDebug) {
-                            LOGGER.info("Found animation '{}' at ResourceLocation: {}", animationName, loc);
+                            Log.info("Found animation '{}' at ResourceLocation: {}", animationName, loc);
                         }
                         return anim;
                     }
@@ -263,13 +262,13 @@ public class AnimationSyncHandler {
             }
 
             if (Config.logDebug) {
-                LOGGER.warn("Could not find animation '{}' in registry with any namespace combination", animationName);
+                Log.warn("Could not find animation '{}' in registry with any namespace combination", animationName);
                 logAvailableAnimations();
             }
 
         } catch (Exception e) {
             if (Config.logDebug) {
-                LOGGER.error("Error searching for animation", e);
+                Log.error("Error searching for animation", e);
             }
         }
         return null;
@@ -279,13 +278,13 @@ public class AnimationSyncHandler {
         try {
             // Try to introspect the PlayerAnimationRegistry to see what's available
             if (Config.logDebug) {
-                LOGGER.info("Attempting to log available animations in registry...");
+                Log.info("Attempting to log available animations in registry...");
                 // This might require additional reflection to access registry contents
                 // For now, just log that we tried
-                LOGGER.info("Registry introspection not implemented yet");
+                Log.info("Registry introspection not implemented yet");
             }
         } catch (Exception e) {
-            LOGGER.debug("Failed to log available animations: {}", e.getMessage());
+            Log.debug("Failed to log available animations: {}", e.getMessage());
         }
     }
 
@@ -301,7 +300,7 @@ public class AnimationSyncHandler {
 
                 if (fallbackAnim != null) {
                     if (Config.logDebug) {
-                        LOGGER.info("Using fallback animation '{}' for {}", fallbackName, animationId);
+                        Log.info("Using fallback animation '{}' for {}", fallbackName, animationId);
                     }
                     applyAnimationToPlayer(player, fallbackAnim, 0, playerUUID,
                         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", fallbackName));
@@ -321,7 +320,7 @@ public class AnimationSyncHandler {
                 animationStack.addAnimLayer(1000, modifierLayer);
 
                 if (Config.logDebug) {
-                    LOGGER.info("Applied fallback empty animation layer for {} to {} (testing Mob Player Animator)", animationId, player.getName().getString());
+                    Log.info("Applied fallback empty animation layer for {} to {} (testing Mob Player Animator)", animationId, player.getName().getString());
                 }
 
                 // Show success message
@@ -344,7 +343,7 @@ public class AnimationSyncHandler {
                             modifierLayer.setAnimation(null);
                             syncedAnimations.remove(playerUUID);
                             if (Config.logDebug) {
-                                LOGGER.info("Removed fallback animation for {}", player.getName().getString());
+                                Log.info("Removed fallback animation for {}", player.getName().getString());
                             }
                         } catch (Exception e) {
                             // Ignore
@@ -355,7 +354,7 @@ public class AnimationSyncHandler {
 
         } catch (Exception e) {
             if (Config.logDebug) {
-                LOGGER.error("Failed to create fallback animation", e);
+                Log.error("Failed to create fallback animation", e);
             }
         }
     }

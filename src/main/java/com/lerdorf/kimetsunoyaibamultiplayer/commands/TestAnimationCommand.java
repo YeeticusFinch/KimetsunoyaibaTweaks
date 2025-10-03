@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.commands;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.mojang.brigadier.CommandDispatcher;
@@ -19,12 +20,9 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import org.slf4j.Logger;
-
 import java.util.UUID;
 
 public class TestAnimationCommand {
-    private static final Logger LOGGER = LogUtils.getLogger();
     private static final ResourceLocation TEST_ANIMATION = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sword_to_left");
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -54,7 +52,7 @@ public class TestAnimationCommand {
             player.sendSystemMessage(Component.literal("Playing test animation 'sword_to_left' on all players (including you)..."));
 
             if (Config.logDebug) {
-                LOGGER.info("Test animation command executed by player: {}", player.getName().getString());
+                Log.info("Test animation command executed by player: {}", player.getName().getString());
             }
 
             // Create the animation sync packet for sword_to_left animation
@@ -75,7 +73,7 @@ public class TestAnimationCommand {
 
             return 1;
         } catch (Exception e) {
-            LOGGER.error("Failed to execute test animation command", e);
+            Log.error("Failed to execute test animation command", e);
             player.sendSystemMessage(Component.literal("Failed to play test animation: " + e.getMessage()));
             return 0;
         }
@@ -106,7 +104,7 @@ public class TestAnimationCommand {
                     animationStack.addAnimLayer(2000, modifierLayer); // High priority
 
                     if (Config.logDebug) {
-                        LOGGER.info("Playing test animation locally for player: {}", clientPlayer.getName().getString());
+                        Log.info("Playing test animation locally for player: {}", clientPlayer.getName().getString());
                     }
 
                     // Show on-screen message
@@ -119,7 +117,7 @@ public class TestAnimationCommand {
                 }
             } else {
                 if (Config.logDebug) {
-                    LOGGER.warn("Could not find test animation 'sword_to_left' in registry");
+                    Log.warn("Could not find test animation 'sword_to_left' in registry");
                 }
 
                 // Show error message
@@ -129,7 +127,7 @@ public class TestAnimationCommand {
                 );
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to play test animation locally", e);
+            Log.error("Failed to play test animation locally", e);
         }
     }
 }

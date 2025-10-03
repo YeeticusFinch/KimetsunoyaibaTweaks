@@ -5,14 +5,13 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.core.animatable.GeoAnimatable;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.object.PlayState;
-import org.slf4j.Logger;
-import com.mojang.logging.LogUtils;
 
 /**
  * Controls animations for kasugai_crow entities using GeckoLib
@@ -21,7 +20,6 @@ import com.mojang.logging.LogUtils;
 public class CrowAnimationController {
 
 	// Track previous state to detect transitions
-	private static final Logger LOGGER = LogUtils.getLogger();
     private static final Map<UUID, Boolean> previousFlyingState = new HashMap<>();
     private static final Map<UUID, String> lastAnimationState = new HashMap<>();
     private static boolean hasLoggedAnimations = false;
@@ -45,9 +43,9 @@ public class CrowAnimationController {
         // Log first call always
         if (!hasLoggedAnimations) {
         	if (Config.logDebug) {
-	            LOGGER.info("=== CROW ANIMATION PREDICATE CALLED ===");
-	            LOGGER.info("Entity: {}", entity.getName().getString());
-	            LOGGER.info("Controller: {}", controller.getName());
+	            Log.info("=== CROW ANIMATION PREDICATE CALLED ===");
+	            Log.info("Entity: {}", entity.getName().getString());
+	            Log.info("Controller: {}", controller.getName());
         	}
             hasLoggedAnimations = true;
         }
@@ -93,14 +91,14 @@ public class CrowAnimationController {
                 .then("kimetsunoyaibamultiplayer.crow.takeoff", Animation.LoopType.PLAY_ONCE)
                 .thenLoop("kimetsunoyaibamultiplayer.crow.flying");
             if (Config.logDebug)
-            	LOGGER.info("Crow {} TAKING OFF", entityId);
+            	Log.info("Crow {} TAKING OFF", entityId);
         } else if (justStoppedFlying) {
             currentState = "LANDING";
             animation = RawAnimation.begin()
                 .then("kimetsunoyaibamultiplayer.crow.landing", Animation.LoopType.PLAY_ONCE)
                 .thenLoop("kimetsunoyaibamultiplayer.crow.idle");
             if (Config.logDebug)
-            	LOGGER.info("Crow {} LANDING", entityId);
+            	Log.info("Crow {} LANDING", entityId);
         } else if (isFlying) {
             currentState = "FLYING";
             animation = RawAnimation.begin()
@@ -119,9 +117,9 @@ public class CrowAnimationController {
         String lastState = lastAnimationState.get(entityId);
         if (!currentState.equals(lastState)) {
             if (Config.logDebug) {
-                LOGGER.info("Crow {} animation state changed: {} -> {}",
+                Log.info("Crow {} animation state changed: {} -> {}",
                     entityId, lastState != null ? lastState : "NONE", currentState);
-                LOGGER.info("  Flying: {}, OnGround: {}, Speed: {}",
+                Log.info("  Flying: {}, OnGround: {}, Speed: {}",
                     isFlying, entity.onGround(), horizontalSpeed);
             }
             lastAnimationState.put(entityId, currentState);
@@ -132,7 +130,7 @@ public class CrowAnimationController {
             controller.setAnimation(animation);
         } catch (Exception e) {
         	if (Config.logDebug)
-        		LOGGER.error("Failed to set animation for state {}: {}", currentState, e.getMessage());
+        		Log.error("Failed to set animation for state {}: {}", currentState, e.getMessage());
             // Try to set a simple idle animation as fallback
             controller.setAnimation(RawAnimation.begin().thenLoop("kimetsunoyaibamultiplayer.crow.idle"));
         }

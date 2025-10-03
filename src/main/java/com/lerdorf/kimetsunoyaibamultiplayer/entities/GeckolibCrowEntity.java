@@ -2,6 +2,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -25,7 +27,6 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
-import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 import java.util.UUID;
@@ -35,7 +36,6 @@ import java.util.UUID;
  * This entity is purely visual and non-interactive - all interactions are forwarded to the original crow.
  */
 public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
-    private static final Logger LOGGER = LogUtils.getLogger();
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     // Data serializers for syncing data across network
@@ -128,7 +128,7 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
 
         if (originalCrowUUID == null) {
             if (ticksAlive % 20 == 0 && Config.logDebug) {
-                LOGGER.error("Mirror crow {} has null originalCrowUUID!", this.getUUID());
+                Log.error("Mirror crow {} has null originalCrowUUID!", this.getUUID());
             }
             return null;
         }
@@ -149,12 +149,12 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
                     Entity entity = serverLevel.getEntity(originalCrowUUID);
                     if (entity != null) {
                         if (ticksAlive % 20 == 0 && Config.logDebug) {
-                            LOGGER.info("Found original crow via ServerLevel.getEntity(): {}", entity.getName().getString());
+                            Log.info("Found original crow via ServerLevel.getEntity(): {}", entity.getName().getString());
                         }
                         originalCrowCache = entity;
                         return entity;
                     } else if (ticksAlive % 20 == 0 && Config.logDebug) {
-                        LOGGER.warn("ServerLevel.getEntity() returned null for UUID: {}", originalCrowUUID);
+                        Log.warn("ServerLevel.getEntity() returned null for UUID: {}", originalCrowUUID);
                     }
                 }
             } else {
@@ -168,7 +168,7 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
                 }
             }
         } else if (ticksAlive % 20 == 0 && Config.logDebug) {
-            LOGGER.warn("Mirror crow level is null!");
+            Log.warn("Mirror crow level is null!");
         }
 
         return null;
@@ -188,14 +188,14 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
             if (ticksAlive < GRACE_PERIOD_TICKS) {
                 // Still in grace period - don't remove yet
                 if (Config.logDebug && ticksAlive % 20 == 0) { // Log every second
-                    LOGGER.warn("Mirror crow {} can't find original crow {} yet (tick {}), waiting...",
+                    Log.warn("Mirror crow {} can't find original crow {} yet (tick {}), waiting...",
                         this.getUUID(), originalCrowUUID, ticksAlive);
                 }
                 return; // Don't do anything else this tick, just wait
             } else {
                 // Grace period expired
             	if (Config.logDebug)
-                LOGGER.warn("Mirror crow {} giving up on finding original crow {} after {} ticks",
+                Log.warn("Mirror crow {} giving up on finding original crow {} after {} ticks",
                     this.getUUID(), originalCrowUUID, ticksAlive);
                 this.discard();
                 return;
@@ -204,7 +204,7 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
 
         // Found the original crow! Log it once
         if (Config.logDebug && (ticksAlive == 1 || (ticksAlive < GRACE_PERIOD_TICKS && ticksAlive % 20 == 0))) {
-            LOGGER.info("Mirror crow {} successfully linked to original crow {} at tick {}",
+            Log.info("Mirror crow {} successfully linked to original crow {} at tick {}",
                 this.getUUID(), originalCrow.getUUID(), ticksAlive);
         }
 
@@ -243,7 +243,7 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
                 this.entityData.set(IS_DEAD, true);
                 deathAnimationTimer = DEATH_ANIMATION_DURATION;
                 if (Config.logDebug)
-                LOGGER.info("Mirror crow starting death animation (will remove in {} ticks)", DEATH_ANIMATION_DURATION);
+                Log.info("Mirror crow starting death animation (will remove in {} ticks)", DEATH_ANIMATION_DURATION);
             }
         }
 
@@ -254,7 +254,7 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
                 if (deathAnimationTimer == 0) {
                     // Death animation finished, remove this mirror
                 	if (Config.logDebug)
-                    LOGGER.info("Mirror crow death animation finished, removing entity");
+                    Log.info("Mirror crow death animation finished, removing entity");
                     this.discard();
                     return;
                 }

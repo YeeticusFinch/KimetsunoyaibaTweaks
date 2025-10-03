@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.SpeedControlledAnimation;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
@@ -38,7 +39,7 @@ public class AnimationHelper {
         if (player.level().isClientSide && player instanceof AbstractClientPlayer clientPlayer) {
             KeyframeAnimation animation = findAnimation(animationLocation);
             if (animation != null) {
-                ModifierLayer<IAnimation> layer = playAnimationOnPlayer(clientPlayer, animation);
+                ModifierLayer<IAnimation> layer = playAnimationOnPlayer(clientPlayer, animation, 1);
 
                 // Schedule animation cancellation if maxDurationTicks is specified
                 if (maxDurationTicks > 0 && layer != null) {
@@ -59,6 +60,41 @@ public class AnimationHelper {
             }
         }
     }
+    
+    /**
+     * Play an animation with optional max duration and playback speed.
+     * @param player The player to animate
+     * @param animationName The animation name or path
+     * @param maxDurationTicks Maximum duration in ticks (-1 for full animation)
+     * @param speed Playback speed multiplier (1.0 = normal, 2.0 = double speed, 0.5 = half speed)
+     */
+    public static void playAnimation(Player player, String animationName, int maxDurationTicks, float speed) {
+        ResourceLocation animationLocation = parseAnimationName(animationName);
+
+        if (player.level().isClientSide && player instanceof AbstractClientPlayer clientPlayer) {
+            KeyframeAnimation animation = findAnimation(animationLocation);
+            if (animation != null) {
+                ModifierLayer<IAnimation> layer = playAnimationOnPlayer(clientPlayer, animation, speed);
+
+                if (maxDurationTicks > 0 && layer != null) {
+                    scheduleAnimationCancellation(clientPlayer, layer, maxDurationTicks);
+                }
+
+                // Sync animation to server so other clients see it
+                AnimationSyncPacket packet = new AnimationSyncPacket(
+                    player.getUUID(),
+                    animationLocation,
+                    0,
+                    30,
+                    false,
+                    false,
+                    animation
+                );
+                ModNetworking.sendToServer(packet);
+            }
+        }
+    }
+
 
     private static ResourceLocation parseAnimationName(String animationName) {
         if (animationName.contains(":")) {
@@ -92,11 +128,15 @@ public class AnimationHelper {
         return null;
     }
 
-    private static ModifierLayer<IAnimation> playAnimationOnPlayer(AbstractClientPlayer player, KeyframeAnimation animation) {
+    private static ModifierLayer<IAnimation> playAnimationOnPlayer(AbstractClientPlayer player, KeyframeAnimation animation, float speed) {
         try {
             AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
             if (animationStack != null) {
-                KeyframeAnimationPlayer animPlayer = new KeyframeAnimationPlayer(animation);
+            	
+            	// Remove old layer first
+                animationStack.removeLayer(3000);
+
+                KeyframeAnimationPlayer animPlayer = Math.abs(speed-1) > 0.01 ? new SpeedControlledAnimation(animation, speed) : new KeyframeAnimationPlayer(animation);
                 ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
                 modifierLayer.setAnimation(animPlayer);
                 animationStack.addAnimLayer(3000, modifierLayer);

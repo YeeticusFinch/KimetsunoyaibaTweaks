@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.mojang.brigadier.CommandDispatcher;
@@ -22,10 +23,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import org.slf4j.Logger;
+
 
 public class ClientCommandHandler {
-    private static final Logger LOGGER = LogUtils.getLogger();
     private static final ResourceLocation TEST_ANIMATION = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sword_to_left");
 
     @SubscribeEvent
@@ -53,7 +53,7 @@ public class ClientCommandHandler {
                 }));
 
         dispatcher.register(command);
-        LOGGER.info("Registered client-side test animation command: /testanimc [animation]");
+        Log.info("Registered client-side test animation command: /testanimc [animation]");
     }
 
     private static int executeClientTestAnimation(AbstractClientPlayer player, String animationName) {
@@ -102,7 +102,7 @@ public class ClientCommandHandler {
                 return 1;
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to execute client test animation", e);
+            Log.error("Failed to execute client test animation", e);
             player.displayClientMessage(Component.literal("§c[Client Test] Error: " + e.getMessage()), false);
             return 0;
         }
@@ -123,7 +123,7 @@ public class ClientCommandHandler {
         KeyframeAnimation anim = PlayerAnimationRegistry.getAnimation(animationLocation);
         if (anim != null) {
             if (Config.logDebug) {
-                LOGGER.info("Found animation at: {}", animationLocation);
+                Log.info("Found animation at: {}", animationLocation);
             }
             return anim;
         }
@@ -140,14 +140,14 @@ public class ClientCommandHandler {
             anim = PlayerAnimationRegistry.getAnimation(loc);
             if (anim != null) {
                 if (Config.logDebug) {
-                    LOGGER.info("Found animation at alternative location: {}", loc);
+                    Log.info("Found animation at alternative location: {}", loc);
                 }
                 return anim;
             }
         }
 
         if (Config.logDebug) {
-            LOGGER.warn("Could not find animation '{}' in registry", animationLocation);
+            Log.warn("Could not find animation '{}' in registry", animationLocation);
         }
         return null;
     }
@@ -168,7 +168,7 @@ public class ClientCommandHandler {
                 animationStack.addAnimLayer(3000, modifierLayer);
 
                 if (Config.logDebug) {
-                    LOGGER.info("Applied test animation to local player");
+                    Log.info("Applied test animation to local player");
                 }
 
                 // Show on-screen debug message
@@ -186,7 +186,7 @@ public class ClientCommandHandler {
                         try {
                             modifierLayer.setAnimation(null);
                             if (Config.logDebug) {
-                                LOGGER.info("Test animation completed");
+                                Log.info("Test animation completed");
                             }
                         } catch (Exception e) {
                             // Ignore
@@ -195,7 +195,7 @@ public class ClientCommandHandler {
                 }, 2000);
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to play animation on player", e);
+            Log.error("Failed to play animation on player", e);
         }
     }
 }

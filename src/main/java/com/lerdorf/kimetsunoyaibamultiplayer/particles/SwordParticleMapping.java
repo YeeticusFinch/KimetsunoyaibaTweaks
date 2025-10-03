@@ -6,9 +6,9 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import org.slf4j.Logger;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.mojang.logging.LogUtils;
 import org.joml.Vector3f;
@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SwordParticleMapping {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    //private static final Log Log = LogUtils.getLog();
 
     private static final Map<String, ResourceLocation> SWORD_TO_PARTICLE_MAP = new HashMap<>();
 
@@ -128,7 +128,7 @@ public class SwordParticleMapping {
 
         // Ultimate fallback: use a generic particle effect
         if (Config.logDebug)
-        	LOGGER.debug("No particle found for sword {}, using fallback particle", itemId);
+        	Log.debug("No particle found for sword {}, using fallback particle", itemId);
         return ParticleTypes.CLOUD;
     }
 
@@ -161,7 +161,7 @@ public class SwordParticleMapping {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to create particle from mapping: {}", mapping.particleType, e);
+            Log.error("Failed to create particle from mapping: {}", mapping.particleType, e);
             e.printStackTrace();
         }
 
@@ -212,6 +212,6 @@ public class SwordParticleMapping {
      */
     public static void registerCustomMapping(String swordType, ResourceLocation particleId) {
         SWORD_TO_PARTICLE_MAP.put(swordType, particleId);
-        LOGGER.info("Registered custom sword particle mapping: {} -> {}", swordType, particleId);
+        Log.info("Registered custom sword particle mapping: {} -> {}", swordType, particleId);
     }
 }

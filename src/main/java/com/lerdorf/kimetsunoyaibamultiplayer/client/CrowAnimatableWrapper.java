@@ -10,9 +10,9 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.slf4j.Logger;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.mojang.logging.LogUtils;
 
 /**
@@ -22,7 +22,6 @@ import com.mojang.logging.LogUtils;
 public class CrowAnimatableWrapper implements GeoAnimatable {
     private static final Map<UUID, CrowAnimatableWrapper> wrappers = new HashMap<>();
     
-    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Map<Entity, CrowAnimatableWrapper> WRAPPER_CACHE = new HashMap<>();
     private static boolean hasLoggedController = false;
 
@@ -31,10 +30,10 @@ public class CrowAnimatableWrapper implements GeoAnimatable {
 
     private CrowAnimatableWrapper(Entity entity) {
         this.entity = entity;
-        LOGGER.info("CrowAnimatableWrapper constructor called for entity {}", entity.getUUID());
-        LOGGER.info("About to create AnimatableInstanceCache...");
+        Log.info("CrowAnimatableWrapper constructor called for entity {}", entity.getUUID());
+        Log.info("About to create AnimatableInstanceCache...");
         this.cache = GeckoLibUtil.createInstanceCache(this);
-        LOGGER.info("AnimatableInstanceCache created");
+        Log.info("AnimatableInstanceCache created");
     }
 
     /**
@@ -42,7 +41,7 @@ public class CrowAnimatableWrapper implements GeoAnimatable {
      */
     public static CrowAnimatableWrapper getOrCreate(Entity entity) {
         return wrappers.computeIfAbsent(entity.getUUID(), uuid -> {
-            LOGGER.info("Creating new CrowAnimatableWrapper for entity {}", entity.getUUID());
+            Log.info("Creating new CrowAnimatableWrapper for entity {}", entity.getUUID());
             return new CrowAnimatableWrapper(entity);
         });
     }
@@ -69,7 +68,7 @@ public class CrowAnimatableWrapper implements GeoAnimatable {
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         if (!hasLoggedController) {
-            LOGGER.info("=== REGISTERING ANIMATION CONTROLLER ===");
+            Log.info("=== REGISTERING ANIMATION CONTROLLER ===");
             hasLoggedController = true;
         }
 
@@ -82,12 +81,12 @@ public class CrowAnimatableWrapper implements GeoAnimatable {
 
         controllers.add(controller);
 
-        LOGGER.info("Animation controller 'crow_controller' registered for entity {}", entity.getUUID());
+        Log.info("Animation controller 'crow_controller' registered for entity {}", entity.getUUID());
     }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
-        LOGGER.info("getAnimatableInstanceCache() called, cache exists: {}", cache != null);
+        Log.info("getAnimatableInstanceCache() called, cache exists: {}", cache != null);
         return cache;
     }
 
@@ -102,7 +101,7 @@ public class CrowAnimatableWrapper implements GeoAnimatable {
     public static void remove(Entity entity) {
         CrowAnimatableWrapper removed = WRAPPER_CACHE.remove(entity);
         if (removed != null && Config.logDebug) {
-            LOGGER.debug("Removed wrapper for entity: {}", entity.getUUID());
+            Log.debug("Removed wrapper for entity: {}", entity.getUUID());
         }
     }
     

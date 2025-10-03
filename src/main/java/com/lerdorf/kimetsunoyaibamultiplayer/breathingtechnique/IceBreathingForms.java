@@ -137,104 +137,107 @@ public class IceBreathingForms {
 
                 final Vec3 finalTargetPos = targetPos;
                 final LivingEntity finalTargetEntity = targetEntity;
-                final double circleRadius = 4.0;
+                final double ogCircleRadius = 6.0;
                 final int totalTicks = 100; // 5 seconds
                 final int attackInterval = 7; // ~3 attacks per second
-                final double angularVelocity = (Math.PI * 2) / totalTicks; // Radians per tick (faster rotation)
+                final double angularVelocity = (Math.PI * 2) / totalTicks; // Radians per tick
 
                 // Store player's starting angle
                 Vec3 toPlayer = player.position().subtract(finalTargetPos);
                 final double startAngle = Math.atan2(toPlayer.z, toPlayer.x);
 
-                // Enable automatic step-up for duration (store original value)
+                // Store original step height
                 final float originalStepHeight = player.maxUpStep();
 
-                // Schedule circling movement, attacks, and particles
-                for (int tick = 0; tick < totalTicks; tick++) {
-                    final int currentTick = tick;
+                // Use a counter array to track current tick
+                final int[] tickCounter = {0};
 
-                    AbilityScheduler.scheduleOnce(player, () -> {
-                        // Enable step-up for blocks during ability
-                        player.setMaxUpStep(1.0F);
-                        // Calculate angle
-                        double angle = startAngle + (currentTick * angularVelocity * 3.0);
+                // Schedule a single repeating task that runs every tick for 100 ticks
+                AbilityScheduler.scheduleRepeating(player, () -> {
+                    int currentTick = tickCounter[0]++;
+                    double circleRadius = Math.min(Math.max(ogCircleRadius - (currentTick/20), 3.5), ogCircleRadius);
 
-                        // Circle position
-                        Vec3 currentCenter = finalTargetEntity != null ? finalTargetEntity.position() : finalTargetPos;
-                        double targetX = currentCenter.x + Math.cos(angle) * circleRadius;
-                        double targetZ = currentCenter.z + Math.sin(angle) * circleRadius;
-                        Vec3 targetPosOnCircle = new Vec3(targetX, currentCenter.y, targetZ);
+                    // Enable step-up for blocks during ability
+                    player.setMaxUpStep(1.8F);
 
-                        // Push player toward target pos
-                        Vec3 currentPos = player.position();
-                        Vec3 velocity = targetPosOnCircle.subtract(currentPos).scale(0.3);
+                    // Calculate current target angle (3x faster rotation)
+                    double currentAngle = startAngle + (currentTick * angularVelocity * 3.0);
 
-                        player.setDeltaMovement(velocity);
-                        player.hasImpulse = true; // 🔥 forces movement sync
-                        player.hurtMarked = true; // 🔥 for 1.18+ clients to accept velocity
+                    // Get current center position (follow target entity if available)
+                    Vec3 currentCenter = finalTargetEntity != null ? finalTargetEntity.position() : finalTargetPos;
 
-                        // Rotate player toward circle center
-                        Vec3 lookDir = currentCenter.subtract(player.position()).normalize();
-                        float yaw = (float) Math.toDegrees(Math.atan2(-lookDir.x, lookDir.z));
-                        float pitch = (float) Math.toDegrees(-Math.asin(lookDir.y));
+                    // Calculate where player SHOULD be on the circle
+                    Vec3 targetPosition = MovementHelper.calculateCirclePosition(currentCenter, circleRadius, currentAngle);
 
-                        player.setYRot(yaw);
-                        player.setXRot(pitch);
-                        player.setYHeadRot(yaw);
-                        player.yRotO = yaw; // sync interpolation
-                        player.xRotO = pitch;
-                        player.yHeadRotO = yaw;
+                    // Calculate next position (slightly ahead for smoother motion)
+                    double nextAngle = currentAngle + (angularVelocity * 3.0);
+                    Vec3 nextPosition = MovementHelper.calculateCirclePosition(currentCenter, circleRadius, nextAngle);
 
-                        // Sync rotation to all clients
-                        if (player instanceof ServerPlayer serverPlayer) {
-                            com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClientsExcept(
-                                new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PlayerRotationSyncPacket(
-                                    player.getUUID(), yaw, pitch, yaw
-                                ),
-                                serverPlayer
-                            );
+                    // Calculate velocity to move from current position towards next position
+                    Vec3 playerPos = player.position();
+                    Vec3 toNextPosition = nextPosition.subtract(playerPos);
+
+                    // Also add correction to pull player towards the circle if they're off-path
+                    Vec3 toTargetPosition = targetPosition.subtract(playerPos);
+
+                    // Weighted combination: 70% forward motion, 30% position correction
+                    Vec3 forwardVelocity = toNextPosition.scale(0.4);  // Move towards next position
+                    Vec3 correctionVelocity = toTargetPosition.scale(0.3);  // Correct towards current position
+                    Vec3 combinedVelocity = forwardVelocity.add(correctionVelocity);
+
+                    // Preserve some Y velocity for terrain following, but dampen falling
+                    double yVelocity = player.getDeltaMovement().y;
+                    if (yVelocity < 0) {
+                        yVelocity = Math.max(yVelocity, -0.2); // Limit falling speed
+                    }
+
+                    // Set velocity with synchronization
+                    MovementHelper.setVelocity(player, combinedVelocity.x, yVelocity, combinedVelocity.z);
+
+                    // Make player look at circle center
+                    MovementHelper.lookAt(player, currentCenter);
+
+                    // Spawn tornado-like particles
+                    if (level instanceof ServerLevel serverLevel) {
+                        // Spiral pattern around player
+                        int particleCount = 8;
+                        for (int i = 0; i < particleCount; i++) {
+                            double particleAngle = (currentTick * 0.5 + i * (Math.PI * 2 / particleCount)) % (Math.PI * 2);
+                            double particleRadius = 1.0 + Math.sin(currentTick * 0.3) * 0.5;
+                            double px = player.getX() + Math.cos(particleAngle) * particleRadius;
+                            double pz = player.getZ() + Math.sin(particleAngle) * particleRadius;
+                            double py = player.getY() + 0.5 + (currentTick % 20) * 0.1;
+
+                            serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
+                                px, py, pz, 1, 0, 0.1, 0, 0.02);
                         }
 
-                        // Spawn tornado-like particles every tick (always, regardless of target)
-                        if (level instanceof ServerLevel serverLevel) {
-                            // Spawn particles in spiral pattern around player
-                            int particleCount = 8;
-                            for (int i = 0; i < particleCount; i++) {
-                                double particleAngle = (currentTick * 0.5 + i * (Math.PI * 2 / particleCount)) % (Math.PI * 2);
-                                double particleRadius = 1.0 + Math.sin(currentTick * 0.3) * 0.5;
-                                double px = player.getX() + Math.cos(particleAngle) * particleRadius;
-                                double pz = player.getZ() + Math.sin(particleAngle) * particleRadius;
-                                double py = player.getY() + 0.5 + (currentTick % 20) * 0.1;
-
-                                serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
-                                    px, py, pz, 1, 0, 0.1, 0, 0.02);
-                            }
-
-                            // Add sweep attack particles for dramatic effect
-                            if (currentTick % 3 == 0) {
-                                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                                    player.getX(), player.getY() + 1, player.getZ(),
-                                    1, 0, 0, 0, 0);
-                            }
-
-                            // Spawn circular path particles
-                            for (int i = 0; i < 12; i++) {
-                                double pathAngle = angle + (i * Math.PI / 6);
-                                double pathX = currentCenter.x + Math.cos(pathAngle) * circleRadius;
-                                double pathZ = currentCenter.z + Math.sin(pathAngle) * circleRadius;
-                                serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
-                                    pathX, currentCenter.y + 0.5, pathZ,
-                                    1, 0, 0.05, 0, 0.01);
-                            }
+                        // Sweep attack particles
+                        if (currentTick % 3 == 0) {
+                            serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                                (player.getX()+currentCenter.x)/2 + 3*(Math.random()-0.5), (player.getY() + currentCenter.y)/2 + 1 + 3*(Math.random()-0.5), (player.getZ() + currentCenter.z)/2 + 3*(Math.random()-0.5),
+                                1, 0, 0, 0, 0);
                         }
 
-                        // Attack every attackInterval ticks (3 times per second)
-                        if (currentTick % attackInterval == 0) {
+                        // Circular path particles
+                        for (int i = 0; i < 12; i++) {
+                            double pathAngle = currentAngle + (i * Math.PI / 6);
+                            double pathX = currentCenter.x + Math.cos(pathAngle) * circleRadius;
+                            double pathZ = currentCenter.z + Math.sin(pathAngle) * circleRadius;
+                            serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
+                                pathX, currentCenter.y + 0.5, pathZ,
+                                1, 0, 0.05, 0, 0.01);
+                        }
+                    }
+
+                    // Attack every attackInterval ticks
+                    if (currentTick % attackInterval == 0) {
+                        try {
                             String anim = (currentTick / attackInterval) % 2 == 0
-                                ? "kimetsunoyaiba:sword_to_left"
-                                : "kimetsunoyaiba:sword_to_right";
+                                ? "sword_to_left"
+                                : "sword_to_right";
 
-                            AnimationHelper.playAnimation(player, anim);
+                            AnimationHelper.playAnimation(player, anim, 2);
 
                             AABB attackBox = player.getBoundingBox().inflate(3.0);
                             List<LivingEntity> targets = player.level().getEntitiesOfClass(
@@ -249,15 +252,17 @@ public class IceBreathingForms {
 
                             level.playSound(null, player.blockPosition(),
                                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 1.2F);
+                        } catch (Exception e) {
+                            System.err.println("Ice Breathing Second Form attack error: " + e.getMessage());
+                            e.printStackTrace();
                         }
-                        
-                        // Last tick - restore step height
-                        if (currentTick >= totalTicks-1) {
-                            player.setMaxUpStep(originalStepHeight);
-                        }
+                    }
 
-                    }, tick);
-                }
+                    // Last tick - restore step height
+                    if (currentTick >= totalTicks - 1) {
+                        player.setMaxUpStep(originalStepHeight);
+                    }
+                }, 1, totalTicks); // Run every tick for 100 ticks
             }
         );
     }
@@ -273,55 +278,52 @@ public class IceBreathingForms {
             7, // 7 second cooldown
             (player, level) -> {
                 // Initial leap
-                player.setDeltaMovement(player.getDeltaMovement().add(0, 1.2, 0));
-
+                MovementHelper.addVelocity(player, 0, 1.2, 0);
                 AnimationHelper.playAnimation(player, "ragnaraku2");
 
                 final int totalTicks = 80; // 4 seconds
                 final int attackInterval = 7; // ~3 attacks per second
-                boolean[] useRagnaraku2 = {true}; // Toggle between animations
+                final boolean[] useRagnaraku2 = {true};
+                final int[] tickCounter = {0};
 
-                // Keep player hovering and attacking
-                for (int tick = 0; tick < totalTicks; tick++) {
-                    final int currentTick = tick;
+                // Single repeating task instead of 80 individual tasks
+                AbilityScheduler.scheduleRepeating(player, () -> {
+                    int currentTick = tickCounter[0]++;
 
-                    AbilityScheduler.scheduleOnce(player, () -> {
-                        // Keep player in air by canceling gravity
-                        if (player.getDeltaMovement().y < 0) {
-                            player.setDeltaMovement(player.getDeltaMovement().x, 0.1, player.getDeltaMovement().z);
+                    // Keep player in air by canceling gravity
+                    if (player.getDeltaMovement().y < 0) {
+                        MovementHelper.setVelocity(player,
+                            player.getDeltaMovement().x, 0.1, player.getDeltaMovement().z);
+                    }
+
+                    // Attack every attackInterval ticks
+                    if (currentTick % attackInterval == 0) {
+                        AnimationHelper.playAnimation(player, useRagnaraku2[0] ? "ragnaraku2" : "ragnaraku3");
+                        useRagnaraku2[0] = !useRagnaraku2[0];
+
+                        AABB area = player.getBoundingBox().inflate(4.0, 8.0, 4.0);
+                        List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, area,
+                            e -> e != player && e.isAlive() && e.getY() < player.getY() + 2);
+
+                        for (LivingEntity target : targets) {
+                            float damage = DamageCalculator.calculateScaledDamage(player, 5.0F);
+                            target.hurt(level.damageSources().playerAttack(player), damage);
                         }
 
-                        // Attack every attackInterval ticks
-                        if (currentTick % attackInterval == 0) {
-                            // Always alternate animations
-                            AnimationHelper.playAnimation(player, useRagnaraku2[0] ? "ragnaraku2" : "ragnaraku3");
-                            useRagnaraku2[0] = !useRagnaraku2[0];
-
-                            // Large downwards AOE slash
-                            AABB area = player.getBoundingBox().inflate(4.0, 8.0, 4.0);
-                            List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, area,
-                                e -> e != player && e.isAlive() && e.getY() < player.getY() + 2);
-
-                            for (LivingEntity target : targets) {
-                                float damage = DamageCalculator.calculateScaledDamage(player, 5.0F);
-                                target.hurt(level.damageSources().playerAttack(player), damage);
+                        if (level instanceof ServerLevel serverLevel) {
+                            for (int i = 0; i < 10; i++) {
+                                double offsetX = (level.random.nextDouble() - 0.5) * 8;
+                                double offsetZ = (level.random.nextDouble() - 0.5) * 8;
+                                serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
+                                    player.getX() + offsetX, player.getY(), player.getZ() + offsetZ,
+                                    1, 0, -0.5, 0, 0.1);
                             }
-
-                            if (level instanceof ServerLevel serverLevel) {
-                                for (int i = 0; i < 10; i++) {
-                                    double offsetX = (level.random.nextDouble() - 0.5) * 8;
-                                    double offsetZ = (level.random.nextDouble() - 0.5) * 8;
-                                    serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
-                                        player.getX() + offsetX, player.getY(), player.getZ() + offsetZ,
-                                        1, 0, -0.5, 0, 0.1);
-                                }
-                            }
-
-                            level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                                SoundSource.PLAYERS, 1.0F, 0.8F);
                         }
-                    }, tick);
-                }
+
+                        level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                            SoundSource.PLAYERS, 1.0F, 0.8F);
+                    }
+                }, 1, totalTicks);
 
                 // Play rain sound at start
                 level.playSound(null, player.blockPosition(), SoundEvents.WEATHER_RAIN,
@@ -412,48 +414,48 @@ public class IceBreathingForms {
             5, // 5 second cooldown
             (player, level) -> {
                 AnimationHelper.playAnimation(player, "kamusari3");
-
-                // Apply speed boost
                 player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 3));
 
                 final Vec3 dashDirection = player.getLookAngle();
                 final int totalTicks = 60; // 3 seconds
-                final int attackInterval = 7; // ~3 attacks per second
+                final int attackInterval = 7;
+                final int[] tickCounter = {0};
 
-                for (int tick = 0; tick < totalTicks; tick++) {
-                    final int currentTick = tick;
+                AbilityScheduler.scheduleRepeating(player, () -> {
+                    int currentTick = tickCounter[0]++;
 
-                    AbilityScheduler.scheduleOnce(player, () -> {
-                        // Force player to move forward
-                        player.setDeltaMovement(dashDirection.scale(0.6).add(0, player.getDeltaMovement().y, 0));
+                    // Force player to move forward (preserve Y velocity for gravity/jumping)
+                    Vec3 horizontalVelocity = dashDirection.scale(0.6);
+                    MovementHelper.setVelocity(player,
+                        horizontalVelocity.x,
+                        player.getDeltaMovement().y,
+                        horizontalVelocity.z
+                    );
 
-                        // Attack every attackInterval ticks
-                        if (currentTick % attackInterval == 0) {
-                            // Always play attack animation
-                            AnimationHelper.playAnimation(player, "sword_rotate");
+                    // Attack every attackInterval ticks
+                    if (currentTick % attackInterval == 0) {
+                        AnimationHelper.playAnimation(player, "sword_rotate");
 
-                            // AOE damage in front
-                            Vec3 attackPos = player.position().add(dashDirection.scale(2.0));
-                            AABB hitBox = new AABB(attackPos, attackPos).inflate(2.0);
-                            List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, hitBox,
-                                e -> e != player && e.isAlive());
+                        Vec3 attackPos = player.position().add(dashDirection.scale(2.0));
+                        AABB hitBox = new AABB(attackPos, attackPos).inflate(2.0);
+                        List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, hitBox,
+                            e -> e != player && e.isAlive());
 
-                            for (LivingEntity target : targets) {
-                                float damage = DamageCalculator.calculateScaledDamage(player, 5.0F);
-                                target.hurt(level.damageSources().playerAttack(player), damage);
-                            }
-
-                            if (level instanceof ServerLevel serverLevel) {
-                                spawnParticleLine(serverLevel, player.position().add(0, 1, 0),
-                                    player.position().add(0, 1, 0).add(dashDirection.scale(3.0)),
-                                    ParticleTypes.SNOWFLAKE, 10);
-                            }
-
-                            level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                                SoundSource.PLAYERS, 1.0F, 1.2F);
+                        for (LivingEntity target : targets) {
+                            float damage = DamageCalculator.calculateScaledDamage(player, 5.0F);
+                            target.hurt(level.damageSources().playerAttack(player), damage);
                         }
-                    }, tick);
-                }
+
+                        if (level instanceof ServerLevel serverLevel) {
+                            spawnParticleLine(serverLevel, player.position().add(0, 1, 0),
+                                player.position().add(0, 1, 0).add(dashDirection.scale(3.0)),
+                                ParticleTypes.SNOWFLAKE, 10);
+                        }
+
+                        level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                            SoundSource.PLAYERS, 1.0F, 1.2F);
+                    }
+                }, 1, totalTicks);
 
                 level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
                     SoundSource.PLAYERS, 0.8F, 1.0F);
@@ -534,27 +536,27 @@ public class IceBreathingForms {
                     e -> e != player && e.isAlive());
 
                 for (LivingEntity target : targets) {
-                    target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 300, 0)); // 15 seconds
+                    target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 300, 0));
                 }
 
                 level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
                     SoundSource.PLAYERS, 1.0F, 1.0F);
 
-                // Part 2: 5 seconds of super fast slashing (6 attacks/second)
-                final int totalTicks = 100; // 5 seconds
-                final int attackInterval = 3; // 6.67 attacks per second (20 / 3 = 6.67)
+                // Part 2: Single repeating task for 5 seconds of attacks
+                final int totalTicks = 100;
+                final int attackInterval = 3;
                 final String[] animations = {"sword_to_left", "sword_to_right", "sword_overhead", "sword_to_upper"};
+                final int[] tickCounter = {0};
 
-                for (int tick = 0; tick < totalTicks; tick++) {
-                    final int currentTick = tick;
+                // Delay start by 10 ticks
+                AbilityScheduler.scheduleOnce(player, () -> {
+                    AbilityScheduler.scheduleRepeating(player, () -> {
+                        int currentTick = tickCounter[0]++;
 
-                    AbilityScheduler.scheduleOnce(player, () -> {
                         if (currentTick % attackInterval == 0) {
-                            // Always cycle through the 4 different sword animations
                             int animIndex = (currentTick / attackInterval) % 4;
                             AnimationHelper.playAnimation(player, animations[animIndex]);
 
-                            // AOE damage around player
                             AABB attackBox = player.getBoundingBox().inflate(4.0);
                             List<LivingEntity> attackTargets = player.level().getEntitiesOfClass(LivingEntity.class, attackBox,
                                 e -> e != player && e.isAlive());
@@ -573,14 +575,14 @@ public class IceBreathingForms {
                                     SoundSource.PLAYERS, 0.8F, 1.2F);
                             }
                         }
-                    }, tick + 10); // Start after initial thrust
-                }
 
-                // Play final sound
-                AbilityScheduler.scheduleOnce(player, () -> {
-                    level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
-                        SoundSource.PLAYERS, 1.0F, 1.0F);
-                }, totalTicks + 10);
+                        // Play final sound on last tick
+                        if (currentTick >= totalTicks - 1) {
+                            level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
+                                SoundSource.PLAYERS, 1.0F, 1.0F);
+                        }
+                    }, 1, totalTicks);
+                }, 10);
             }
         );
     }

@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -15,14 +16,11 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import org.slf4j.Logger;
 
 /**
  * Registry for custom entities in this mod
  */
 public class ModEntities {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
         DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, KimetsunoyaibaMultiplayer.MODID);
 
@@ -52,12 +50,12 @@ public class ModEntities {
         @SubscribeEvent
         public static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
         	if (Config.logDebug)
-            LOGGER.info("Registering entity attributes for GeckolibCrowEntity");
+            Log.info("Registering entity attributes for GeckolibCrowEntity");
 
             // Register attributes for our GeckoLib crow entity
             event.put(GECKOLIB_CROW.get(), GeckolibCrowEntity.createAttributes().build());
             if (Config.logDebug)
-            LOGGER.info("Entity attributes registered successfully");
+            Log.info("Entity attributes registered successfully");
         }
     }
 }

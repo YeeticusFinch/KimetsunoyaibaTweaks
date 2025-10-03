@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.particles;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
@@ -9,12 +10,10 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import org.slf4j.Logger;
 
 import java.util.*;
 
 public class SwordParticleHandler {
-    private static final Logger LOGGER = LogUtils.getLogger();
 
     // Track active particle effects to avoid spam
     private static final Map<UUID, ParticleEffectState> activeEffects = new HashMap<>();
@@ -86,7 +85,7 @@ public class SwordParticleHandler {
         activeEffects.put(entityId, new ParticleEffectState(currentTime, particleType));
 
         if (Config.logDebug) {
-            LOGGER.info("Spawned radial ribbon particles for {} using {}",
+            Log.info("Spawned radial ribbon particles for {} using {}",
                 SwordParticleMapping.getSwordTypeName(swordItem),
                 particleType.getType().toString());
         }

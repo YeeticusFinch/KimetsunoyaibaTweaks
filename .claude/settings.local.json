@@ -7,7 +7,14 @@
       "Bash(timeout:*)",
       "Read(//c/Users/carlf/eclipse-workspace-2/**)",
       "Bash(jar:*)",
-      "Bash(\"./gradlew.bat\" build --no-daemon)"
+      "Bash(\"./gradlew.bat\" build --no-daemon)",
+      "Bash(find:*)",
+      "Bash(git checkout:*)",
+      "Bash(\"./gradlew.bat\" compileJava --no-daemon)",
+      "Bash(\"./gradlew.bat\" build --refresh-dependencies --no-daemon)",
+      "Bash(\"./gradlew.bat\" clean build --no-daemon)",
+      "Bash(\"./gradlew.bat\" dependencies --configuration runtimeClasspath)",
+      "Bash(javap:*)"
     ],
     "deny": [],
     "ask": []

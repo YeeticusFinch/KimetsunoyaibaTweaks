@@ -2,10 +2,10 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.model;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.GeckolibCrowEntity;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
-import org.slf4j.Logger;
 import software.bernie.geckolib.model.GeoModel;
 
 /**
@@ -13,8 +13,6 @@ import software.bernie.geckolib.model.GeoModel;
  * Provides the model, texture, and animation files for rendering
  */
 public class CrowGeoModel extends GeoModel<GeckolibCrowEntity> {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
     private static boolean hasLoggedResources = false;
 
     private static final ResourceLocation MODEL = ResourceLocation.tryBuild(
@@ -36,10 +34,10 @@ public class CrowGeoModel extends GeoModel<GeckolibCrowEntity> {
     public ResourceLocation getModelResource(GeckolibCrowEntity animatable) {
         if (!hasLoggedResources) {
         	if (Config.logDebug) {
-	            LOGGER.info("=== CROW MODEL RESOURCES ===");
-	            LOGGER.info("Model: {}", MODEL);
-	            LOGGER.info("Texture: {}", TEXTURE);
-	            LOGGER.info("Animation: {}", ANIMATION);
+	            Log.info("=== CROW MODEL RESOURCES ===");
+	            Log.info("Model: {}", MODEL);
+	            Log.info("Texture: {}", TEXTURE);
+	            Log.info("Animation: {}", ANIMATION);
         	}
             hasLoggedResources = true;
         }

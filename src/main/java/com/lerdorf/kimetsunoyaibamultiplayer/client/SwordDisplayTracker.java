@@ -1,14 +1,12 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
-import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import org.slf4j.Logger;
-
 import java.util.*;
 
 /**
@@ -16,8 +14,6 @@ import java.util.*;
  * Monitors inventory changes and held item changes
  */
 public class SwordDisplayTracker {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
     // Per-player tracking: UUID -> SwordDisplayState
     private static final Map<UUID, SwordDisplayState> playerStates = new HashMap<>();
 
@@ -79,7 +75,7 @@ public class SwordDisplayTracker {
 
         if (heldChanged) {
             if (Config.logDebug) {
-                LOGGER.debug("Player {} held item changed: {} -> {}",
+                Log.debug("Player {} held item changed: {} -> {}",
                     player.getName().getString(),
                     previousHeld.isEmpty() ? "empty" : previousHeld.getItem().toString(),
                     heldItem.isEmpty() ? "empty" : heldItem.getItem().toString());
@@ -105,12 +101,12 @@ public class SwordDisplayTracker {
                 if (!state.hasLeftSword()) {
                     state.leftHipSword = previousHeld.copy();
                     if (Config.logDebug) {
-                        LOGGER.debug("Adding sword to left hip for player {}", player.getName().getString());
+                        Log.debug("Adding sword to left hip for player {}", player.getName().getString());
                     }
                 } else if (!state.hasRightSword()) {
                     state.rightHipSword = previousHeld.copy();
                     if (Config.logDebug) {
-                        LOGGER.debug("Adding sword to right hip for player {}", player.getName().getString());
+                        Log.debug("Adding sword to right hip for player {}", player.getName().getString());
                     }
                 }
                 sendDisplayUpdateToServer(player, state);
@@ -123,14 +119,14 @@ public class SwordDisplayTracker {
         boolean stateChanged = false;
         if (state.hasLeftSword() && !hasItemInInventory(player, state.leftHipSword)) {
             if (Config.logDebug) {
-                LOGGER.debug("Removing left hip sword for player {} (not in inventory)", player.getName().getString());
+                Log.debug("Removing left hip sword for player {} (not in inventory)", player.getName().getString());
             }
             state.leftHipSword = ItemStack.EMPTY;
             stateChanged = true;
         }
         if (state.hasRightSword() && !hasItemInInventory(player, state.rightHipSword)) {
             if (Config.logDebug) {
-                LOGGER.debug("Removing right hip sword for player {} (not in inventory)", player.getName().getString());
+                Log.debug("Removing right hip sword for player {} (not in inventory)", player.getName().getString());
             }
             state.rightHipSword = ItemStack.EMPTY;
             stateChanged = true;
@@ -175,7 +171,7 @@ public class SwordDisplayTracker {
             );
 
             if (Config.logDebug) {
-                LOGGER.debug("Sent sword display update to server for player {}", player.getName().getString());
+                Log.debug("Sent sword display update to server for player {}", player.getName().getString());
             }
         }
     }
@@ -189,7 +185,7 @@ public class SwordDisplayTracker {
         state.rightHipSword = rightSword.copy();
 
         if (Config.logDebug) {
-            LOGGER.debug("Updated remote player display: UUID={}, left={}, right={}",
+            Log.debug("Updated remote player display: UUID={}, left={}, right={}",
                 playerUUID,
                 leftSword.isEmpty() ? "empty" : leftSword.getItem().toString(),
                 rightSword.isEmpty() ? "empty" : rightSword.getItem().toString());
@@ -209,7 +205,7 @@ public class SwordDisplayTracker {
     public static void clearAll() {
         playerStates.clear();
         previousHeldItems.clear();
-        LOGGER.debug("Cleared all sword display tracking data");
+        Log.debug("Cleared all sword display tracking data");
     }
 
     /**

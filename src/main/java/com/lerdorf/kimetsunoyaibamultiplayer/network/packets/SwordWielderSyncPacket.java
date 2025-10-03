@@ -2,12 +2,12 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
-import org.slf4j.Logger;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -17,8 +17,6 @@ import java.util.function.Supplier;
  * Sends when cancelAttackSwing state changes
  */
 public class SwordWielderSyncPacket {
-    private static final Logger LOGGER = LogUtils.getLogger();
-
     private final UUID playerUUID;
     private final boolean cancelAttackSwing;
 
@@ -50,7 +48,7 @@ public class SwordWielderSyncPacket {
                             data.setCancelAttackSwing(cancelAttackSwing);
 
                             if (Config.logDebug) {
-                                LOGGER.debug("Client received SWORD_WIELDER_DATA sync for player {}: cancelAttackSwing={}",
+                                Log.debug("Client received SWORD_WIELDER_DATA sync for player {}: cancelAttackSwing={}",
                                     player.getName().getString(), cancelAttackSwing);
                             }
                         });

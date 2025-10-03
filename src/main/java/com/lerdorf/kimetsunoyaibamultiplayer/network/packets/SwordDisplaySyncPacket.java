@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.mojang.logging.LogUtils;
@@ -8,7 +9,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
-import org.slf4j.Logger;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -17,7 +17,6 @@ import java.util.function.Supplier;
  * Synchronizes sword display state between clients
  */
 public class SwordDisplaySyncPacket {
-    private static final Logger LOGGER = LogUtils.getLogger();
 
     private final UUID playerUUID;
     private final ItemStack leftHipSword;
@@ -54,7 +53,7 @@ public class SwordDisplaySyncPacket {
                 ServerPlayer sender = ctx.getSender();
                 if (sender != null) {
                     if (Config.logDebug) {
-                        LOGGER.info("Server received sword display sync from player {}: left={}, right={}, position={}",
+                        Log.info("Server received sword display sync from player {}: left={}, right={}, position={}",
                             sender.getName().getString(),
                             leftHipSword.isEmpty() ? "empty" : leftHipSword.getItem().toString(),
                             rightHipSword.isEmpty() ? "empty" : rightHipSword.getItem().toString(),
@@ -68,13 +67,13 @@ public class SwordDisplaySyncPacket {
                     );
 
                     if (Config.logDebug) {
-                        LOGGER.info("Server relayed sword display sync to all other clients");
+                        Log.info("Server relayed sword display sync to all other clients");
                     }
                 }
             } else {
                 // Client received update - update local tracking
                 if (Config.logDebug) {
-                    LOGGER.info("Client received sword display sync for player {}: left={}, right={}, position={}",
+                    Log.info("Client received sword display sync for player {}: left={}, right={}, position={}",
                         playerUUID,
                         leftHipSword.isEmpty() ? "empty" : leftHipSword.getItem().toString(),
                         rightHipSword.isEmpty() ? "empty" : rightHipSword.getItem().toString(),
