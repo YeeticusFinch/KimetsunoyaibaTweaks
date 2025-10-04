@@ -1,7 +1,12 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.compat.ShoulderSurfingCompat;
+
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -58,17 +63,30 @@ public class MovementHelper {
 
     /**
      * Set player rotation (yaw and pitch) with synchronization
+     * Also rotates ShoulderSurfing camera if available
      */
     public static void setRotation(Player player, float yaw, float pitch) {
         // --- Update entity state ---
         player.setYRot(yaw);
         player.setXRot(pitch);
         player.setYHeadRot(yaw);
+        player.setYBodyRot(yaw);
 
         // update "old" values too for smooth interpolation
         player.yRotO = yaw;
         player.xRotO = pitch;
         player.yHeadRotO = yaw;
+        
+        player.yBodyRot = yaw;
+
+        // --- ShoulderSurfing camera integration (client-side only) ---
+        if (player.level().isClientSide) {
+            try {
+            	ShoulderSurfingCompat.setShoulderCameraRotation(yaw, pitch);
+            } catch (Exception e) {
+                // ShoulderSurfing not available or API changed, skip camera rotation
+            }
+        }
 
         // --- Sync to ALL clients (including the player's own client) ---
         if (player instanceof ServerPlayer serverPlayer) {
@@ -161,4 +179,26 @@ public class MovementHelper {
         // Note: Step height changes are not synced to clients by vanilla,
         // but the movement itself is synced, so this should work fine
     }
+
+	public static void stepUp(Player player, double vx, double vy, double vz) {
+		// Calculate the block position in front of the player
+		Vec3 targetPos = player.position().add(new Vec3(vx, vy, vz).normalize());
+
+		BlockPos targetBlockPos = BlockPos.containing(targetPos);
+		BlockPos aboveBlockPos = targetBlockPos.above();
+
+		Level level = player.level();
+		BlockState targetBlock = level.getBlockState(targetBlockPos);
+		BlockState aboveBlock = level.getBlockState(aboveBlockPos);
+
+		// A block is “solid” if it has a collision shape (not air, water, etc.)
+		boolean targetIsSolid = !targetBlock.getCollisionShape(level, targetBlockPos).isEmpty();
+
+		// A block is “passable” if it has no collision shape (air, water, grass, etc.)
+		boolean aboveIsPassable = aboveBlock.getCollisionShape(level, aboveBlockPos).isEmpty();
+
+		if (targetIsSolid && aboveIsPassable) {
+		    player.teleportTo(player.getX(), player.getY() + 1.0, player.getZ());
+		}
+	}
 }

@@ -47,6 +47,12 @@ public class AnimationSyncHandler {
     public static void handleAnimationSync(UUID playerUUID, ResourceLocation animationId, int currentTick,
                                           int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData,
                                           ItemStack swordItem, ResourceLocation particleType) {
+        handleAnimationSync(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, swordItem, particleType, 1.0f, 3000);
+    }
+
+    public static void handleAnimationSync(UUID playerUUID, ResourceLocation animationId, int currentTick,
+                                          int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData,
+                                          ItemStack swordItem, ResourceLocation particleType, float speed, int layerPriority) {
         if (Config.logDebug) {
             Log.info("handleAnimationSync called: player={}, animation={}, tick={}, stop={}",
                 playerUUID, animationId, currentTick, stopAnimation);
@@ -60,13 +66,7 @@ public class AnimationSyncHandler {
             return;
         }
 
-        if (mc.player.getUUID().equals(playerUUID)) {
-            if (Config.logDebug) {
-                Log.debug("Ignoring animation sync for local player");
-            }
-            return;
-        }
-
+        // Don't skip local player - they need to receive animations from breathing forms
         Player targetPlayer = mc.level.getPlayerByUUID(playerUUID);
         if (targetPlayer == null) {
             Log.warn("Could not find player with UUID {} in level", playerUUID);
@@ -102,7 +102,7 @@ public class AnimationSyncHandler {
         if (stopAnimation || animationId == null) {
             stopPlayerAnimation(playerUUID, clientPlayer);
         } else {
-            playAnimation(playerUUID, clientPlayer, animationId, currentTick, animationLength, isLooping, animationData);
+            playAnimation(playerUUID, clientPlayer, animationId, currentTick, animationLength, isLooping, animationData, speed, layerPriority);
 
             // Trigger sword particles for synchronized animations if sword data is available
             if (!swordItem.isEmpty()) {
@@ -118,7 +118,7 @@ public class AnimationSyncHandler {
     }
 
     private static void playAnimation(UUID playerUUID, AbstractClientPlayer player, ResourceLocation animationId,
-                                     int currentTick, int animationLength, boolean isLooping, KeyframeAnimation animationData) {
+                                     int currentTick, int animationLength, boolean isLooping, KeyframeAnimation animationData, float speed, int layerPriority) {
         try {
             if (Config.logDebug) {
                 Log.info("Attempting to play animation {} for player {} at tick {} (data present: {})",
@@ -141,7 +141,7 @@ public class AnimationSyncHandler {
                 if (Config.logDebug) {
                     Log.info("Using transmitted animation data for {}", animationId);
                 }
-                applyAnimationToPlayer(player, animationData, currentTick, playerUUID, animationId);
+                applyAnimationToPlayer(player, animationData, currentTick, playerUUID, animationId, speed, layerPriority);
             } else {
                 // Try to find the animation from the registry
                 KeyframeAnimation foundAnimation = findAnimationAlternative(animationId);
@@ -149,13 +149,13 @@ public class AnimationSyncHandler {
                     if (Config.logDebug) {
                         Log.info("Found animation {} via registry lookup", animationId);
                     }
-                    applyAnimationToPlayer(player, foundAnimation, currentTick, playerUUID, animationId);
+                    applyAnimationToPlayer(player, foundAnimation, currentTick, playerUUID, animationId, speed, layerPriority);
                 } else {
                     // Create a fallback animation using kimetsunoyaiba animations
                     if (Config.logDebug) {
                         Log.info("Creating fallback animation for {} on player {}", animationId, player.getName().getString());
                     }
-                    createFallbackAnimation(player, animationId, playerUUID);
+                    createFallbackAnimation(player, animationId, playerUUID, speed, layerPriority);
                 }
             }
 
@@ -182,7 +182,7 @@ public class AnimationSyncHandler {
         }
     }
 
-    private static void applyAnimationToPlayer(AbstractClientPlayer player, KeyframeAnimation animation, int currentTick, UUID playerUUID, ResourceLocation animationId) {
+    private static void applyAnimationToPlayer(AbstractClientPlayer player, KeyframeAnimation animation, int currentTick, UUID playerUUID, ResourceLocation animationId, float speed, int layerPriority) {
         try {
             AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
             if (animationStack == null) {
@@ -192,27 +192,32 @@ public class AnimationSyncHandler {
                 return;
             }
 
-            // Remove any existing animation for this player
+            // Remove any existing animation for this player on the same layer
             ActiveAnimation activeAnim = syncedAnimations.get(playerUUID);
             if (activeAnim != null && activeAnim.modifierLayer != null) {
                 activeAnim.modifierLayer.setAnimation(null);
             }
 
-            // Create new animation player with the received animation
-            KeyframeAnimationPlayer newAnimation = new KeyframeAnimationPlayer(animation);
+            // Remove old layer
+            animationStack.removeLayer(layerPriority);
+
+            // Create new animation player with the received animation and speed
+            KeyframeAnimationPlayer newAnimation = Math.abs(speed - 1.0f) > 0.01
+                ? new com.lerdorf.kimetsunoyaibamultiplayer.SpeedControlledAnimation(animation, speed)
+                : new KeyframeAnimationPlayer(animation);
 
             // Create modifier layer and set the animation
             ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
             modifierLayer.setAnimation(newAnimation);
 
-            // Add to animation stack
-            animationStack.addAnimLayer(1000, modifierLayer);
+            // Add to animation stack with specified layer priority
+            animationStack.addAnimLayer(layerPriority, modifierLayer);
 
             // Track the animation
             syncedAnimations.put(playerUUID, new ActiveAnimation(modifierLayer, animationId));
 
             if (Config.logDebug) {
-                Log.info("Successfully applied animation {} to player {}", animationId, player.getName().getString());
+                Log.info("Successfully applied animation {} to player {} (speed={}, layer={})", animationId, player.getName().getString(), speed, layerPriority);
             }
 
         } catch (Exception e) {
@@ -288,7 +293,7 @@ public class AnimationSyncHandler {
         }
     }
 
-    private static void createFallbackAnimation(AbstractClientPlayer player, ResourceLocation animationId, UUID playerUUID) {
+    private static void createFallbackAnimation(AbstractClientPlayer player, ResourceLocation animationId, UUID playerUUID, float speed, int layerPriority) {
         try {
             // Try multiple fallback animations
             String[] fallbackNames = {"sword_to_left", "punch_right", "walk", "idle"};
@@ -303,7 +308,7 @@ public class AnimationSyncHandler {
                         Log.info("Using fallback animation '{}' for {}", fallbackName, animationId);
                     }
                     applyAnimationToPlayer(player, fallbackAnim, 0, playerUUID,
-                        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", fallbackName));
+                        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", fallbackName), speed, layerPriority);
                     return;
                 }
             }

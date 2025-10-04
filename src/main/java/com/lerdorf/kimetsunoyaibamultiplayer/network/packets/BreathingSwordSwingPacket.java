@@ -56,11 +56,11 @@ public class BreathingSwordSwingPacket {
             for (LivingEntity target : targets) {
                 target.hurt(player.level().damageSources().playerAttack(player), damage);
 
-                if (player.level() instanceof ServerLevel serverLevel) {
+                /*if (player.level() instanceof ServerLevel serverLevel) {
                     serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
                         target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
                         1, 0, 0, 0, 0);
-                }
+                }*/
             }
             
             if (Config.logDebug && !targets.isEmpty()) {

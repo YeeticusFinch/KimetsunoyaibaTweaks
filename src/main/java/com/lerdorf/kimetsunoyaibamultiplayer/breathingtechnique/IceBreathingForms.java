@@ -17,7 +17,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -58,15 +60,15 @@ public class IceBreathingForms {
                 AnimationHelper.playAnimation(player, "speed_attack_sword");
 
                 // Prevent the attacks from triggering unwanted sword swings and particles (like from the left click attacks)
-                setCancelAttackSwing(player, true);
+               // setCancelAttackSwing(player, true);
 
                 // Launch player forward a little bit
                 Vec3 lookVec = player.getLookAngle();
-                player.setDeltaMovement(lookVec.scale(0.8));
+                player.setDeltaMovement(lookVec.scale(1.2));
 
                 // Apply effects to targets in front - INCREASED RANGE to 5 blocks
                 Vec3 startPos = player.position().add(0, player.getEyeHeight(), 0);
-                Vec3 endPos = startPos.add(lookVec.scale(5.0));
+                Vec3 endPos = startPos.add(lookVec.scale(6.0));
 
                 AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
                 List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
@@ -90,10 +92,11 @@ public class IceBreathingForms {
                 level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
                     SoundSource.PLAYERS, 1.0F, 1.2F);
 
-                AbilityScheduler.scheduleOnce(player, () -> {
+                /*AbilityScheduler.scheduleOnce(player, () -> {
 	                // We can swing swords normally again
 	                setCancelAttackSwing(player, false);
                 }, 5); // Run this 5 ticks later
+                */
             }
         );
     }
@@ -109,7 +112,14 @@ public class IceBreathingForms {
             "Circle and deliver rotational slashes",
             8, // 8 second cooldown
             (player, level) -> {
-                // Play initial animation
+                // Enable attack animations during this ability
+                player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
+                    data.setCancelAttackSwing(false);
+                    if (Config.logDebug) {
+                        Log.debug("Second Form: Enabled attack animations (cancelAttackSwing = false)");
+                    }
+                });
+                
                 AnimationHelper.playAnimation(player, "ragnaraku1");
 
                 // Find target - check for entity within 6 blocks on crosshair
@@ -134,6 +144,8 @@ public class IceBreathingForms {
                 } else {
                     targetPos = player.position().add(lookVec.scale(5.0));
                 }
+                
+                player.setNoGravity(true);
 
                 final Vec3 finalTargetPos = targetPos;
                 final LivingEntity finalTargetEntity = targetEntity;
@@ -233,11 +245,19 @@ public class IceBreathingForms {
                     // Attack every attackInterval ticks
                     if (currentTick % attackInterval == 0) {
                         try {
+
+                        	MovementHelper.stepUp(player, combinedVelocity.x, yVelocity, combinedVelocity.z);
+
                             String anim = (currentTick / attackInterval) % 2 == 0
                                 ? "sword_to_left"
                                 : "sword_to_right";
 
-                            AnimationHelper.playAnimation(player, anim, 2);
+                            if (Config.logDebug) {
+                                Log.debug("Second Form: Playing attack animation '{}' on layer 4000", anim);
+                            }
+
+                            // Use layer 4000 (higher priority) so attack animations overlay on top of ability animation
+                            AnimationHelper.playAnimationOnLayer(player, anim, 10, 2.0f, 4000);
 
                             AABB attackBox = player.getBoundingBox().inflate(3.0);
                             List<LivingEntity> targets = player.level().getEntitiesOfClass(
@@ -253,14 +273,16 @@ public class IceBreathingForms {
                             level.playSound(null, player.blockPosition(),
                                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 1.2F);
                         } catch (Exception e) {
-                            System.err.println("Ice Breathing Second Form attack error: " + e.getMessage());
+                        	Log.error("Ice Breathing Second Form attack error: " + e.getMessage());
                             e.printStackTrace();
                         }
                     }
 
                     // Last tick - restore step height
-                    if (currentTick >= totalTicks - 1) {
+                    if (currentTick >= totalTicks - 2) {
                         MovementHelper.setStepHeight(player, originalStepHeight);
+                        player.setNoGravity(false);
+                        Log.debug("Setting no gravity");
                     }
                 }, 1, totalTicks); // Run every tick for 100 ticks
             }
@@ -277,29 +299,43 @@ public class IceBreathingForms {
             "Leap and deliver powerful downward slashes",
             7, // 7 second cooldown
             (player, level) -> {
+                // Enable attack animations during this ability
+                /*
+            	player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
+                    data.setCancelAttackSwing(false);
+                });*/
+
                 // Initial leap
                 MovementHelper.addVelocity(player, 0, 1.2, 0);
-                AnimationHelper.playAnimation(player, "ragnaraku2");
+
+                player.setNoGravity(true);
 
                 final int totalTicks = 80; // 4 seconds
                 final int attackInterval = 7; // ~3 attacks per second
-                final boolean[] useRagnaraku2 = {true};
                 final int[] tickCounter = {0};
+                final double targetY = player.getY() + 4.0; // Target hover height (4 blocks up)
 
                 // Single repeating task instead of 80 individual tasks
                 AbilityScheduler.scheduleRepeating(player, () -> {
                     int currentTick = tickCounter[0]++;
 
-                    // Keep player in air by canceling gravity
-                    if (player.getDeltaMovement().y < 0) {
+                    // Hover at target height - stop vertical movement
+                    double currentY = player.getY();
+                    if (currentY < targetY && currentTick < 15) {
+                        // Still ascending to target height (first 15 ticks)
                         MovementHelper.setVelocity(player,
-                            player.getDeltaMovement().x, 0.1, player.getDeltaMovement().z);
+                            player.getDeltaMovement().x, 0.3, player.getDeltaMovement().z);
+                    } else {
+                        // At target height - completely stop vertical movement
+                        MovementHelper.setVelocity(player,
+                            player.getDeltaMovement().x, 0, player.getDeltaMovement().z);
                     }
 
                     // Attack every attackInterval ticks
                     if (currentTick % attackInterval == 0) {
-                        AnimationHelper.playAnimation(player, useRagnaraku2[0] ? "ragnaraku2" : "ragnaraku3");
-                        useRagnaraku2[0] = !useRagnaraku2[0];
+                    	String anim = (currentTick / attackInterval) % 2 == 0 ? "sword_to_left" : "sword_to_right";
+                        // Use layer 4000 so attacks show without being overridden
+                        AnimationHelper.playAnimationOnLayer(player, anim, 10, 2.0f, 4000);
 
                         AABB area = player.getBoundingBox().inflate(4.0, 8.0, 4.0);
                         List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, area,
@@ -322,6 +358,10 @@ public class IceBreathingForms {
 
                         level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                             SoundSource.PLAYERS, 1.0F, 0.8F);
+                    }
+                    
+                    if (currentTick >= totalTicks - 2) {
+                    	player.setNoGravity(false);
                     }
                 }, 1, totalTicks);
 

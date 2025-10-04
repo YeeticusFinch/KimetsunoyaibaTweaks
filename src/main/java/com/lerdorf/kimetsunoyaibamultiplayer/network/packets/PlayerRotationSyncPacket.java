@@ -141,9 +141,8 @@ public class PlayerRotationSyncPacket {
                             mc.player.xRotO = pitch;
                             mc.player.yHeadRotO = headYaw;
 
-                            // Optional: Update ShoulderSurfing camera if present
-                            // DISABLED: This was causing crashes due to reflection issues
-                            // updateShoulderSurfingCamera(yaw, pitch);
+                            // Update ShoulderSurfing camera if present
+                            com.lerdorf.kimetsunoyaibamultiplayer.compat.ShoulderSurfingCompat.setShoulderCameraRotation(yaw, pitch);
                         }
 
                         if (Config.logDebug) {

@@ -20,7 +20,7 @@ license="All Rights Reserved"
 # The modid of the mod
 modId="kimetsunoyaibamultiplayer" #mandatory
 # The version number of the mod
-version="1.5.21" #mandatory
+version="1.5.23" #mandatory
 # A display name for the mod
 displayName="Kimetsunoyaiba Tweaks" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/
@@ -89,6 +89,14 @@ description='''Kimetsunoyaiba Tweaks modifies several elements in the Kimetsu No
     versionRange="[4.4,)"
     ordering="AFTER"
     side="BOTH"
+
+# ShoulderSurfing dependency (optional)
+#[[dependencies.kimetsunoyaibamultiplayer]]
+#    modId="shouldersurfing"
+#    mandatory=false
+#    ordering="NONE"
+#    side="CLIENT"
+#    versionRange="[1.0, )"
 
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares
 # that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't

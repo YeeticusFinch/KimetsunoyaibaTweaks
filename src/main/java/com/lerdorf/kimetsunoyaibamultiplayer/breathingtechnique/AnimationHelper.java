@@ -44,6 +44,18 @@ public class AnimationHelper {
      * @param speed Playback speed multiplier (1.0 = normal, 2.0 = double speed, 0.5 = half speed)
      */
     public static void playAnimation(Player player, String animationName, int maxDurationTicks, float speed) {
+        playAnimationOnLayer(player, animationName, maxDurationTicks, speed, 3000);
+    }
+
+    /**
+     * Play an animation on a specific layer with optional max duration and playback speed.
+     * @param player The player to animate
+     * @param animationName The animation name or path
+     * @param maxDurationTicks Maximum duration in ticks (-1 for full animation)
+     * @param speed Playback speed multiplier (1.0 = normal, 2.0 = double speed, 0.5 = half speed)
+     * @param layerPriority The animation layer priority (default 3000, use higher for overlays)
+     */
+    public static void playAnimationOnLayer(Player player, String animationName, int maxDurationTicks, float speed, int layerPriority) {
         ResourceLocation animationLocation = parseAnimationName(animationName);
         KeyframeAnimation animation = findAnimation(animationLocation);
 
@@ -53,7 +65,7 @@ public class AnimationHelper {
 
         // CLIENT SIDE: Play locally
         if (player.level().isClientSide && player instanceof AbstractClientPlayer clientPlayer) {
-            ModifierLayer<IAnimation> layer = playAnimationOnPlayer(clientPlayer, animation, speed);
+            ModifierLayer<IAnimation> layer = playAnimationOnPlayer(clientPlayer, animation, speed, layerPriority);
 
             if (maxDurationTicks > 0 && layer != null) {
                 scheduleAnimationCancellation(clientPlayer, layer, maxDurationTicks);
@@ -80,7 +92,9 @@ public class AnimationHelper {
                 30,
                 false,
                 false,
-                animation
+                animation,
+                speed,
+                layerPriority
             );
             ModNetworking.sendToAllClients(packet);
         }
@@ -119,18 +133,18 @@ public class AnimationHelper {
         return null;
     }
 
-    private static ModifierLayer<IAnimation> playAnimationOnPlayer(AbstractClientPlayer player, KeyframeAnimation animation, float speed) {
+    private static ModifierLayer<IAnimation> playAnimationOnPlayer(AbstractClientPlayer player, KeyframeAnimation animation, float speed, int layerPriority) {
         try {
             AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
             if (animationStack != null) {
-            	
-            	// Remove old layer first
-                animationStack.removeLayer(3000);
+
+            	// Remove old layer first (only for the same priority)
+                animationStack.removeLayer(layerPriority);
 
                 KeyframeAnimationPlayer animPlayer = Math.abs(speed-1) > 0.01 ? new SpeedControlledAnimation(animation, speed) : new KeyframeAnimationPlayer(animation);
                 ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
                 modifierLayer.setAnimation(animPlayer);
-                animationStack.addAnimLayer(3000, modifierLayer);
+                animationStack.addAnimLayer(layerPriority, modifierLayer);
                 return modifierLayer;
             }
         } catch (Exception e) {

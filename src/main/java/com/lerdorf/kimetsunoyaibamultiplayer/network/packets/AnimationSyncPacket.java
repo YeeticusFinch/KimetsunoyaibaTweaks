@@ -24,6 +24,8 @@ public class AnimationSyncPacket {
     private final KeyframeAnimation animationData; // The actual animation
     private final ItemStack swordItem; // The sword being used for particle effects
     private final ResourceLocation particleType; // The particle type to spawn
+    private final float speed; // Animation playback speed
+    private final int layerPriority; // Animation layer priority
 
     public AnimationSyncPacket(UUID playerUUID, ResourceLocation animationId, int currentTick, int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData) {
         this.playerUUID = playerUUID;
@@ -35,6 +37,8 @@ public class AnimationSyncPacket {
         this.animationData = animationData;
         this.swordItem = ItemStack.EMPTY; // Default for backward compatibility
         this.particleType = null; // Default for backward compatibility
+        this.speed = 1.0f; // Default speed
+        this.layerPriority = 3000; // Default layer
     }
 
     public AnimationSyncPacket(UUID playerUUID, ResourceLocation animationId, int currentTick, int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData, ItemStack swordItem, ResourceLocation particleType) {
@@ -47,6 +51,23 @@ public class AnimationSyncPacket {
         this.animationData = animationData;
         this.swordItem = swordItem != null ? swordItem : ItemStack.EMPTY;
         this.particleType = particleType;
+        this.speed = 1.0f; // Default speed
+        this.layerPriority = 3000; // Default layer
+    }
+
+    // Constructor with speed and layer priority
+    public AnimationSyncPacket(UUID playerUUID, ResourceLocation animationId, int currentTick, int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData, float speed, int layerPriority) {
+        this.playerUUID = playerUUID;
+        this.animationId = animationId;
+        this.currentTick = currentTick;
+        this.animationLength = animationLength;
+        this.isLooping = isLooping;
+        this.stopAnimation = stopAnimation;
+        this.animationData = animationData;
+        this.swordItem = ItemStack.EMPTY;
+        this.particleType = null;
+        this.speed = speed;
+        this.layerPriority = layerPriority;
     }
 
     // Constructor for stop packets
@@ -75,6 +96,10 @@ public class AnimationSyncPacket {
                 this.particleType = null;
             }
 
+            // Read speed and layer priority
+            this.speed = buf.readFloat();
+            this.layerPriority = buf.readVarInt();
+
             // For now, we can't easily serialize KeyframeAnimation
             // So we'll just pass null and work with the IDs
             this.animationData = null;
@@ -87,6 +112,8 @@ public class AnimationSyncPacket {
             this.animationData = null;
             this.swordItem = ItemStack.EMPTY;
             this.particleType = null;
+            this.speed = 1.0f;
+            this.layerPriority = 3000;
         }
     }
 
@@ -112,6 +139,10 @@ public class AnimationSyncPacket {
                 buf.writeItem(swordItem);
                 buf.writeResourceLocation(particleType);
             }
+
+            // Write speed and layer priority
+            buf.writeFloat(speed);
+            buf.writeVarInt(layerPriority);
         } else {
             buf.writeBoolean(false);
         }
@@ -128,21 +159,20 @@ public class AnimationSyncPacket {
                             sender.getName().getString(), animationId, currentTick, stopAnimation);
                     }
 
-                    com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClientsExcept(
-                        new AnimationSyncPacket(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, swordItem, particleType),
-                        sender
-                    );
+                    // Relay with speed and layer priority
+                    AnimationSyncPacket relayPacket = new AnimationSyncPacket(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, speed, layerPriority);
+                    com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClientsExcept(relayPacket, sender);
 
                     if (Config.logDebug) {
-                        Log.info("Server relayed animation sync to all other clients");
+                        Log.info("Server relayed animation sync to all other clients (speed={}, layer={})", speed, layerPriority);
                     }
                 }
             } else {
                 if (Config.logDebug) {
-                    Log.info("Client received animation sync for player {}: animation={}, tick={}, stop={}",
-                        playerUUID, animationId, currentTick, stopAnimation);
+                    Log.info("Client received animation sync for player {}: animation={}, tick={}, stop={}, speed={}, layer={}",
+                        playerUUID, animationId, currentTick, stopAnimation, speed, layerPriority);
                 }
-                AnimationSyncHandler.handleAnimationSync(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, swordItem, particleType);
+                AnimationSyncHandler.handleAnimationSync(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, swordItem, particleType, speed, layerPriority);
             }
         });
         ctx.setPacketHandled(true);

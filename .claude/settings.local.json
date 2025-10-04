@@ -15,7 +15,8 @@
       "Bash(\"./gradlew.bat\" clean build --no-daemon)",
       "Bash(\"./gradlew.bat\" dependencies --configuration runtimeClasspath)",
       "Bash(javap:*)",
-      "Bash(\"./gradlew.bat\" clean build --refresh-dependencies --no-daemon)"
+      "Bash(\"./gradlew.bat\" clean build --refresh-dependencies --no-daemon)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []

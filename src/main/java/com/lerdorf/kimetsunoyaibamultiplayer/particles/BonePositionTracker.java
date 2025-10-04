@@ -160,7 +160,7 @@ public class BonePositionTracker {
 				// Calculate arc position (proper circular arc)
 				double localX = radius * Math.cos(arcAngle) * (leftToRight ? -1 : 1);
 				double localZ = radius * Math.sin(arcAngle);
-				double localY = (leftToRight ? -0.5 : 0.5)
+				double localY = (leftToRight ? -0.5 : 1.2)
 						* Math.sin(arcAngle - Math.toRadians(ParticleConfig.particleArcDegrees / 2));
 
 				// Rotate to match player facing direction (centered on player)

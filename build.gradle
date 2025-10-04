@@ -184,6 +184,8 @@ dependencies {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
 
+    // ShoulderSurfing integration uses reflection - no compile-time dependency needed
+
     //Bendy-lib also has a Forge version:
     //runtimeOnly fg.deobf("io.github.kosmx.bendy-lib:bendy-lib-forge:${project.bendylib_version}")
 
