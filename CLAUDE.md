@@ -318,3 +318,266 @@ The mod includes optional integration with [ShoulderSurfing Reloaded](https://gi
 - Falls back gracefully if ShoulderSurfing is not installed
 - Implementation in `PlayerRotationSyncPacket.java` using `ModList.get().isLoaded("shouldersurfing")`
 - No configuration changes needed - works automatically when both mods are present
+
+## Critical Bug Prevention: log4j LinkageError Crashes
+
+### Problem Overview
+
+The mod experienced persistent crashes with the error:
+```
+java.lang.LinkageError: loader constraint violation: loader 'MC-BOOTSTRAP' wants to load interface org.apache.logging.log4j.util.MessageSupplier
+```
+
+This crash occurred specifically when attacking living entities (zombies, etc.) and was caused by a combination of issues related to log4j and event handling.
+
+### Root Causes
+
+1. **Infinite Event Recursion**
+   - The `onLivingAttack` event handler was calling `entity.hurt()` to apply AOE damage
+   - Each `hurt()` call triggered another `LivingAttackEvent`
+   - This created infinite recursion: LivingAttackEvent → hurt() → LivingAttackEvent → hurt() → ...
+   - Eventually an exception would be thrown due to stack overflow or other issues
+
+2. **log4j ClassLoader Conflicts**
+   - When the exception occurred, Forge's EventBus tried to log it using log4j
+   - Multiple mods/dependencies had bundled their own log4j classes
+   - This created a classloader conflict where two versions of log4j's `MessageSupplier` interface existed
+   - The MC-BOOTSTRAP classloader couldn't resolve which version to use, causing LinkageError
+
+3. **Uncaught Exceptions in Event Handlers**
+   - Exceptions in event handlers would bubble up to EventBus.handleException()
+   - EventBus then tried to log these using log4j, triggering the LinkageError
+   - The original exception was masked by the logging error
+
+### Solutions Implemented
+
+#### 1. Prevent Event Recursion (CRITICAL)
+
+Added a `ThreadLocal<Boolean>` flag to prevent recursive event handling:
+
+```java
+// In KimetsunoyaibaMultiplayer.java
+private static final ThreadLocal<Boolean> IS_PROCESSING_AOE = ThreadLocal.withInitial(() -> false);
+
+@SubscribeEvent
+public void onLivingAttack(LivingAttackEvent event) {
+    try {
+        // Prevent recursion from AOE attacks triggering more events
+        if (IS_PROCESSING_AOE.get()) {
+            return;
+        }
+
+        // ... existing code ...
+
+        // Set flag before dealing AOE damage
+        IS_PROCESSING_AOE.set(true);
+        try {
+            for (LivingEntity entity : nearbyEntities) {
+                entity.hurt(attacker.level().damageSources().playerAttack(attacker), damage);
+            }
+        } finally {
+            IS_PROCESSING_AOE.set(false);
+        }
+    } catch (Exception e) {
+        // Always catch exceptions
+    }
+}
+```
+
+**Why ThreadLocal?** Multiple threads may be processing events simultaneously. ThreadLocal ensures each thread has its own flag.
+
+#### 2. Disable log4j in Custom Logging Class
+
+Replaced all log4j logging with System.out.println in `Log.java`:
+
+```java
+public static void debug(String message, Object... args) {
+    if (Config.logDebug)
+        //LOGGER.debug(message, args);  // DISABLED - causes LinkageError
+        System.out.println("[DEBUG] " + format(message, args));
+}
+```
+
+**Why?** Even with try-catch blocks, log4j calls could still trigger LinkageErrors. Using System.out bypasses log4j entirely.
+
+#### 3. Exclude log4j from All Dependencies
+
+Added log4j exclusions to `build.gradle`:
+
+```gradle
+implementation(fg.deobf("dev.kosmx.player-anim:player-animation-lib-forge:${player_anim_version}")) {
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-core'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+}
+
+implementation(fg.deobf("software.bernie.geckolib:geckolib-forge-${geckolib_version}")) {
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-core'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+}
+
+runtimeOnly(fg.deobf("lib:mobplayeranimator-forge:${project.mob_player_anim_version}-all")) {
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-core'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+}
+```
+
+**Why?** Prevents dependencies from bundling their own log4j versions that conflict with Minecraft's log4j.
+
+#### 4. Comprehensive Try-Catch Blocks
+
+Wrapped ALL event handlers in try-catch blocks:
+
+```java
+@SubscribeEvent
+public static void onLeftClickEmpty(InputEvent.InteractionKeyMappingTriggered event) {
+    try {
+        // Event handler logic
+    } catch (Exception e) {
+        // Silently catch to prevent crashes
+        if (Config.logDebug) {
+            System.err.println("Error in onLeftClickEmpty: " + e.getMessage());
+        }
+    }
+}
+```
+
+**Critical**: Use `System.err.println()` in catch blocks, NOT `Log.debug()` or any log4j-based logging.
+
+### Prevention Guidelines
+
+When adding new features, follow these rules to avoid similar crashes:
+
+#### Rule 1: Never Call hurt() Inside LivingAttackEvent Without Recursion Protection
+
+**BAD:**
+```java
+@SubscribeEvent
+public void onLivingAttack(LivingAttackEvent event) {
+    // This will cause infinite recursion!
+    entity.hurt(damageSource, damage);
+}
+```
+
+**GOOD:**
+```java
+@SubscribeEvent
+public void onLivingAttack(LivingAttackEvent event) {
+    if (IS_PROCESSING_FLAG.get()) return;
+
+    IS_PROCESSING_FLAG.set(true);
+    try {
+        entity.hurt(damageSource, damage);
+    } finally {
+        IS_PROCESSING_FLAG.set(false);
+    }
+}
+```
+
+#### Rule 2: Always Wrap Event Handlers in Try-Catch
+
+**BAD:**
+```java
+@SubscribeEvent
+public void onSomeEvent(SomeEvent event) {
+    // Exception can escape to EventBus
+    riskyOperation();
+}
+```
+
+**GOOD:**
+```java
+@SubscribeEvent
+public void onSomeEvent(SomeEvent event) {
+    try {
+        riskyOperation();
+    } catch (Exception e) {
+        System.err.println("Error: " + e.getMessage());
+    }
+}
+```
+
+#### Rule 3: Never Use log4j Logging in Exception Handlers
+
+**BAD:**
+```java
+try {
+    // code
+} catch (Exception e) {
+    Log.error("Error occurred", e);  // Can trigger LinkageError!
+}
+```
+
+**GOOD:**
+```java
+try {
+    // code
+} catch (Exception e) {
+    System.err.println("Error occurred: " + e.getMessage());
+    e.printStackTrace();  // Safe to use
+}
+```
+
+#### Rule 4: Exclude log4j from All External Dependencies
+
+When adding new dependencies to `build.gradle`:
+
+```gradle
+implementation(fg.deobf("some.dependency:artifact:version")) {
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
+    exclude group: 'org.apache.logging.log4j', module: 'log4j-core'
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+}
+```
+
+#### Rule 5: Be Careful with Event Chains
+
+Common event chains that can cause recursion:
+- `LivingAttackEvent` → `hurt()` → `LivingAttackEvent`
+- `LivingHurtEvent` → `hurt()` → `LivingHurtEvent`
+- `PlayerInteractEvent` → `useOn()` → `PlayerInteractEvent`
+- `BlockEvent.BreakEvent` → `destroyBlock()` → `BlockEvent.BreakEvent`
+
+**Always** use flags or early returns to prevent these chains from becoming infinite loops.
+
+### Debugging Similar Crashes
+
+If you encounter a log4j LinkageError in the future:
+
+1. **Check the stack trace** for the actual source of the exception (before the LinkageError)
+   - Look for the deepest call from your mod's code
+   - The crash report shows "Suspected Mod" which helps identify the source
+
+2. **Look for event recursion**
+   - Search for patterns like: Event handler → action → same event → handler → action...
+   - Add debug logging to see if handlers are being called repeatedly
+
+3. **Add recursion protection**
+   - Use ThreadLocal flags to track when you're already processing an event
+   - Always use try-finally to ensure flags are cleared
+
+4. **Replace log4j calls**
+   - In the problematic code path, replace `Log.*()` calls with `System.out.println()`
+   - Especially in exception handlers
+
+5. **Test incrementally**
+   - After each fix, test specifically with the action that was causing crashes
+   - In our case: attacking zombies with breathing swords
+
+### Files Modified for This Fix
+
+- `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/KimetsunoyaibaMultiplayer.java` - Added recursion protection
+- `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/Log.java` - Disabled log4j logging
+- `build.gradle` - Added log4j exclusions to dependencies
+- All event handlers - Added comprehensive try-catch blocks
+
+### Version History
+
+- **v1.5.13** - Initial attempt: Added ShoulderSurfing integration (caused crashes)
+- **v1.5.14** - Added try-catch blocks to event handlers
+- **v1.5.15** - Added more granular try-catch, protected animation handlers
+- **v1.5.16** - Disabled ShoulderSurfing integration
+- **v1.5.17** - Disabled log4j in Log class
+- **v1.5.18** - **FINAL FIX**: Added event recursion protection with ThreadLocal flag
