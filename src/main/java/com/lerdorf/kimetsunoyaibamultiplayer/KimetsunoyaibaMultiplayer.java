@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.ISwordWielderData;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordWielderData;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
@@ -155,61 +156,17 @@ public class KimetsunoyaibaMultiplayer
 
             LivingEntity target = event.getEntity();
 
-            // Handle AOE attacks for breathing swords
+            // NOTE: AOE damage is now handled client-side via BreathingSwordSwingPacket
+            // sent from onLeftClickEmpty and onClientLivingAttack events.
+            // This server-side event is only for logging/debugging purposes.
+
+            // Handle attack-based logging (for debugging)
             if (event.getSource().getEntity() instanceof Player attacker) {
                 ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
 
-                // Check if using a breathing sword (our custom swords)
-                if (weapon.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
-                    // Perform AOE attack in a 3x3 cube in front of player
-                    Vec3 attackerPos = attacker.position().add(0, attacker.getEyeHeight(), 0);
-                    Vec3 lookVec = attacker.getLookAngle();
-                    Vec3 frontPos = attackerPos.add(lookVec.scale(2.0)); // 2 blocks in front
-
-                    // Create 3x3x3 cube
-                    AABB attackBox = new AABB(frontPos.add(-1.5, -1.5, -1.5), frontPos.add(1.5, 1.5, 1.5));
-
-                    List<LivingEntity> nearbyEntities = attacker.level().getEntitiesOfClass(
-                        LivingEntity.class, attackBox,
-                        e -> e != attacker && e != target && e.isAlive()
-                    );
-
-                    // Damage all nearby entities (excluding the primary target which is already being damaged)
-                    float damage = 6.0F; // Base AOE damage
-
-                    // Set flag to prevent recursion
-                    IS_PROCESSING_AOE.set(true);
-                    try {
-                        for (LivingEntity entity : nearbyEntities) {
-                            entity.hurt(attacker.level().damageSources().playerAttack(attacker), damage);
-
-                            // Play sweep attack particles
-                            if (attacker.level() instanceof ServerLevel serverLevel) {
-                                serverLevel.sendParticles(
-                                    net.minecraft.core.particles.ParticleTypes.SWEEP_ATTACK,
-                                    entity.getX(), entity.getY() + entity.getBbHeight() * 0.5, entity.getZ(),
-                                    1, 0, 0, 0, 0
-                                );
-                            }
-                        }
-                    } finally {
-                        IS_PROCESSING_AOE.set(false);
-                    }
-
-                    if (Config.logDebug && !nearbyEntities.isEmpty()) {
-                        //FancyLog.debug("AOE attack hit {} additional entities", nearbyEntities.size());
-                    }
-                }
-
-                // Handle attack-based particle triggering (for server-side events)
-                if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
-                    com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
-                    if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
-                        if (Config.logDebug)
-                        System.err.println("Attack detected with kimetsunoyaiba sword: " +
-                            attacker.getName().getString() + " -> " + target.getName().getString());
-                        // Note: Particle spawning will be handled client-side via animation tracking
-                    }
+                if (Config.logDebug && SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
+                    System.err.println("Server: Attack detected with kimetsunoyaiba sword: " +
+                        attacker.getName().getString() + " -> " + target.getName().getString());
                 }
             }
         } catch (Exception e) {
@@ -347,36 +304,30 @@ public class KimetsunoyaibaMultiplayer
                                 mc.player, gunType);
 
                         if (Config.logDebug) {
-                            System.err.println("Triggered gun shoot animation for local player: " + gunType);
+                            Log.debug("Triggered gun shoot animation for local player: " + gunType);
                         }
                         return;
                     }
 
-                    // Check for breathing sword attacks
+                    // Check for breathing sword attacks (entity hit)
                     if (attacker instanceof AbstractClientPlayer clientAttacker) {
-                        // Play attack animation for breathing swords
-                        com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(clientAttacker);
+                        // Play attack animation for breathing swords (both our mod and kimetsunoyaiba)
+                        String animationName = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(clientAttacker);
 
-                        // Check for sword particle effects (existing code, only for local player)
-                        if (com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.swordParticlesEnabled &&
-                            com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.particleTriggerMode ==
-                            com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
+                        // Set the left-click attack flag (sticky bit) for ATTACK_ONLY mode
+                        if (animationName != null && SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
+                            com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.markLeftClickAttack(clientAttacker.getUUID());
 
-                            if (SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
-                                // Force spawn particles on attack
-                                SwordParticleHandler.forceSpawnParticles(clientAttacker, weapon, "attack");
-
-                                if (Config.logDebug) {
-                                    System.err.println("Triggered attack-based particles for local player");
-                                }
+                            if (Config.logDebug) {
+                                Log.debug("Set left-click attack flag for entity attack: " + animationName);
                             }
                         }
                     }
                 }
             } catch (Exception e) {
                 // Silently catch exceptions to prevent crash
-                if (Config.logDebug) {
-                    System.err.println("Error in onClientLivingAttack: " + e.getMessage());
+                if (Config.logError) {
+                    Log.error("Error in onClientLivingAttack: " + e.getMessage());
                 }
             }
         }
@@ -409,26 +360,45 @@ public class KimetsunoyaibaMultiplayer
 
                 ItemStack heldItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
 
-                // Check if holding breathing sword - play attack animation
+                if (SwordParticleMapping.isKimetsunoyaibaSword(heldItem)) {
+                	// Set the left-click attack flag (sticky bit) so AnimationTracker will spawn particles
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.markLeftClickAttack(mc.player.getUUID());
+
+                    if (Config.logDebug) {
+                        Log.debug("Set left-click attack flag for breathing sword left-click for kimetsynoyaibaSword");
+                    }
+                }
+                
+                // Check if holding breathing sword from our mod - play attack animation and handle AOE
                 if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
-                    com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(mc.player);
+                    String animationName = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(mc.player);
 
-                    Vec3 lookDir = mc.player.getLookAngle().normalize();
-                    Vec3 playerPos = mc.player.position().add(0, mc.player.getEyeHeight(), 0);
+                    // Only send packet and set sticky bit if animation was actually played (cooldown check passed)
+                    if (animationName != null) {
+                        ModNetworking.sendToServer(new BreathingSwordSwingPacket()); // For AOE damage (only our mod's swords)
 
-                    // damage in a 3x3 area in front of the player, these swords deal AOE attacks
-                    // Make a box in front of the player, e.g. 3 blocks forward
-                    AABB attackBox = new AABB(playerPos, playerPos.add(lookDir.scale(3)))
-                        .inflate(1.5); // widen the box sideways/up-down if you want
-                    List<LivingEntity> targets = mc.player.level().getEntitiesOfClass(
-                        LivingEntity.class, attackBox,
-                        e -> e != mc.player && e.isAlive()
-                    );
+                        // Set the left-click attack flag (sticky bit) so AnimationTracker will spawn particles
+                        com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.markLeftClickAttack(mc.player.getUUID());
 
-                    for (LivingEntity target : targets) {
-                        //float damage = DamageCalculator.calculateScaledDamage(mc.player, heldItem.getAttackDamage());
-                        float damage = (float)mc.player.getAttributeValue(Attributes.ATTACK_DAMAGE);
-                        target.hurt(mc.level.damageSources().playerAttack(mc.player), damage);
+                        if (Config.logDebug) {
+                            Log.debug("Set left-click attack flag for breathing sword left-click: " + animationName);
+                        }
+                    }
+                }
+                // Check if holding nichirinsword from kimetsunoyaiba mod - only handle particles, no AOE
+                else if (SwordParticleMapping.isKimetsunoyaibaSword(heldItem) &&
+                         heldItem.getItem().toString().contains("nichirinsword")) {
+
+                    // Play similar attack animation for kimetsunoyaiba swords
+                    String animationName = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(mc.player);
+
+                    // Set the left-click attack flag (sticky bit) so AnimationTracker will spawn particles
+                    if (animationName != null) {
+                        com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.markLeftClickAttack(mc.player.getUUID());
+
+                        if (Config.logDebug) {
+                            Log.debug("Set left-click attack flag for nichirinsword left-click: " + animationName);
+                        }
                     }
                 }
 
@@ -442,14 +412,14 @@ public class KimetsunoyaibaMultiplayer
                             mc.player, gunType);
 
                     if (Config.logDebug) {
-                        System.err.println("Triggered rifle shoot animation (air click)");
+                        Log.debug("Triggered rifle shoot animation (air click)");
                     }
                 }
             } catch (Exception e) {
                 // Silently catch exceptions to prevent crash
                 // The exception likely occurs due to threading or mod conflicts
                 if (Config.logDebug) {
-                    System.err.println("Error in onLeftClickEmpty: " + e.getMessage());
+                    Log.error("Error in onLeftClickEmpty: " + e.getMessage());
                 }
             }
         }

@@ -17,8 +17,9 @@ public class BreathingSwordAnimationHandler {
 
     /**
      * Play attack animation when player attacks with breathing sword
+     * @return The animation name that was played, or null if no animation was played
      */
-    public static void onAttack(AbstractClientPlayer player) {
+    public static String onAttack(AbstractClientPlayer player) {
         try {
             ItemStack mainHand = player.getItemInHand(InteractionHand.MAIN_HAND);
 
@@ -28,7 +29,7 @@ public class BreathingSwordAnimationHandler {
                 try {
                     if (player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).map(data -> data.cancelAttackSwing()).orElse(false)) {
                         // We are canceling attack swings
-                        return;
+                        return null;
                     }
                 } catch (Exception e) {
                     // Capability might not be available, continue with animation
@@ -36,7 +37,7 @@ public class BreathingSwordAnimationHandler {
 
                 // Prevent animation spam
                 if (currentTime - lastAttackTime < 100) {
-                    return;
+                    return null;
                 }
                 lastAttackTime = currentTime;
 
@@ -53,9 +54,12 @@ public class BreathingSwordAnimationHandler {
                 com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper.playAnimation(
                     player, animationName, 10
                 );
+
+                return animationName;
             }
         } catch (Exception e) {
             // Silently catch all exceptions to prevent crashes
         }
+        return null;
     }
 }

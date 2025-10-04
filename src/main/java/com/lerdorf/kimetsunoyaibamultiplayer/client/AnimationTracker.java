@@ -30,6 +30,10 @@ public class AnimationTracker {
     private static final Map<UUID, AnimationState> activeAnimations = new HashMap<>();
     private static int tickCounter = 0;
 
+    // Track which players recently performed a left-click attack (sticky bit)
+    private static final Map<UUID, Long> leftClickAttackTimestamps = new HashMap<>();
+    private static final long ATTACK_FLAG_DURATION_MS = 500; // Flag lasts 500ms
+
     private static class AnimationState {
         ResourceLocation animationId;
         int lastTick;
@@ -421,10 +425,13 @@ public class AnimationTracker {
 
         // Check trigger mode configuration
         if (ParticleConfig.particleTriggerMode == ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
-            // For attack-only mode, we would need to detect actual attacks
-            // For now, we'll only trigger on certain animation names that suggest attacks
-            if (!isAttackAnimation(animationName)) {
+            // In ATTACK_ONLY mode, only spawn particles if the player has the left-click attack flag set
+            if (!hasRecentLeftClickAttack(player.getUUID())) {
                 return;
+            }
+            // Flag is set, so we'll spawn particles and then clear it
+            if (Config.logDebug) {
+                Log.debug("ATTACK_ONLY mode: Spawning particles for player {} with sticky bit set", player.getName().getString());
             }
         }
 
@@ -464,8 +471,42 @@ public class AnimationTracker {
         return animationName.equals("sword_to_right") || animationName.equals("sword_to_left");
     }
 
+    /**
+     * Mark that a player just performed a left-click attack (set sticky bit)
+     */
+    public static void markLeftClickAttack(UUID playerUUID) {
+        leftClickAttackTimestamps.put(playerUUID, System.currentTimeMillis());
+    }
+
+    /**
+     * Check if a player recently performed a left-click attack (check sticky bit)
+     */
+    private static boolean hasRecentLeftClickAttack(UUID playerUUID) {
+        Long timestamp = leftClickAttackTimestamps.get(playerUUID);
+        if (timestamp == null) {
+            return false;
+        }
+
+        long elapsed = System.currentTimeMillis() - timestamp;
+        if (elapsed > ATTACK_FLAG_DURATION_MS) {
+            // Flag expired, remove it
+            leftClickAttackTimestamps.remove(playerUUID);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Clear the left-click attack flag for a player
+     */
+    public static void clearLeftClickAttack(UUID playerUUID) {
+        leftClickAttackTimestamps.remove(playerUUID);
+    }
+
     public static void clearTrackedAnimations() {
         activeAnimations.clear();
+        leftClickAttackTimestamps.clear();
         SwordParticleHandler.clearAllParticleEffectStates();
     }
 }

@@ -52,7 +52,7 @@ public class IceBreathingForms {
         return new BreathingForm(
             "First Form: Paralyzing Icicle",
             "Stab forward with incredible speed",
-            5, // 5 second cooldown
+            3, // 3 second cooldown
             (player, level) -> {
                 // Play animation
                 AnimationHelper.playAnimation(player, "speed_attack_sword");
@@ -107,7 +107,7 @@ public class IceBreathingForms {
         return new BreathingForm(
             "Second Form: Winter Wrath",
             "Circle and deliver rotational slashes",
-            6, // 6 second cooldown
+            8, // 8 second cooldown
             (player, level) -> {
                 // Play initial animation
                 AnimationHelper.playAnimation(player, "ragnaraku1");

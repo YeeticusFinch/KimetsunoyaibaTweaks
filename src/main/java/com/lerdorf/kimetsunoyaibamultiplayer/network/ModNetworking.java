@@ -59,6 +59,14 @@ public class ModNetworking {
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PlayerRotationSyncPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PlayerRotationSyncPacket::handle)
                 .add();
+
+        // Register breathing sword swing packet (client -> server)
+        int breathingSwordSwingPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket.class, breathingSwordSwingPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

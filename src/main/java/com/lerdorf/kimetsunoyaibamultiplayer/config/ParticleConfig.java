@@ -25,7 +25,7 @@ public class ParticleConfig {
 
     private static final ForgeConfigSpec.EnumValue<ParticleTriggerMode> PARTICLE_TRIGGER_MODE = BUILDER
             .comment("When to spawn sword particles: ATTACK_ONLY = only during normal attacks (left click), ALL_ANIMATIONS = during any kimetsunoyaiba animation including special moves")
-            .defineEnum("particle-trigger-mode", ParticleTriggerMode.ALL_ANIMATIONS);
+            .defineEnum("particle-trigger-mode", ParticleTriggerMode.ATTACK_ONLY);
 
     // Animation speed and timing
     static {

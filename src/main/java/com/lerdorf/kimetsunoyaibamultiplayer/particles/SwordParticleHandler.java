@@ -47,34 +47,35 @@ public class SwordParticleHandler {
      * @param animationTick The current tick of the animation (-1 if unknown)
      */
     public static void spawnSwordParticles(LivingEntity entity, ItemStack swordItem, String animationName, int animationTick) {
-        System.out.println("spawnSwordParticles called: entity=" + entity.getName().getString() + ", item=" + swordItem.getItem() + ", anim=" + animationName);
+    	animationName.replace("kimetsunoyaiba:", "");
+        Log.debug("spawnSwordParticles called: entity=" + entity.getName().getString() + ", item=" + swordItem.getItem() + ", anim=" + animationName);
 
         if (!shouldSpawnParticles(entity, swordItem)) {
-            System.out.println("shouldSpawnParticles returned false");
+            Log.debug("shouldSpawnParticles returned false");
             return;
         }
 
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
         if (level == null) {
-            System.out.println("Level is null");
+            Log.debug("Level is null");
             return;
         }
 
         // Check render distance
         if (mc.player != null && !isWithinRenderDistance(entity, mc.player)) {
-            System.out.println("Entity too far from player");
+            Log.debug("Entity too far from player");
             return;
         }
 
         // Get particle type for this sword
         ParticleOptions particleType = SwordParticleMapping.getParticleForSword(swordItem);
         if (particleType == null) {
-            System.out.println("No particle type found for sword");
+            Log.debug("No particle type found for sword");
             return;
         }
 
-        System.out.println("About to spawn particles with type: " + particleType.getType());
+        Log.debug("About to spawn particles with type: " + particleType.getType());
 
         // Spawn radial ribbon particles directly - no more Vec3 arrays!
         BonePositionTracker.spawnRadialRibbonParticles(entity, animationName, animationTick, particleType);
@@ -98,37 +99,37 @@ public class SwordParticleHandler {
      * @return true if particles should be spawned
      */
     private static boolean shouldSpawnParticles(LivingEntity entity, ItemStack swordItem) {
-        System.out.println("shouldSpawnParticles check: particlesEnabled=" + ParticleConfig.swordParticlesEnabled);
+        Log.debug("shouldSpawnParticles check: particlesEnabled=" + ParticleConfig.swordParticlesEnabled);
 
         // Check config settings
         if (!ParticleConfig.swordParticlesEnabled) {
-            System.out.println("Particles disabled in config");
+            Log.debug("Particles disabled in config");
             return false;
         }
 
         // Check if this is the local player or if other entities are allowed
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
-            System.out.println("Player is null");
+            Log.debug("Player is null");
             return false;
         }
 
         boolean isLocalPlayer = entity.getUUID().equals(mc.player.getUUID());
-        System.out.println("Is local player: " + isLocalPlayer + ", allow other entities: " + ParticleConfig.swordParticlesForOtherEntities);
+        Log.debug("Is local player: " + isLocalPlayer + ", allow other entities: " + ParticleConfig.swordParticlesForOtherEntities);
         if (!isLocalPlayer && !ParticleConfig.swordParticlesForOtherEntities) {
-            System.out.println("Not local player and other entities disabled");
+            Log.debug("Not local player and other entities disabled");
             return false;
         }
 
         // Check if this is a valid kimetsunoyaiba sword
         boolean isKimetsunoyaibaSword = SwordParticleMapping.isKimetsunoyaibaSword(swordItem);
-        System.out.println("Is kimetsunoyaiba sword: " + isKimetsunoyaibaSword);
+        Log.debug("Is kimetsunoyaiba sword: " + isKimetsunoyaibaSword);
         if (!isKimetsunoyaibaSword) {
-            System.out.println("Not a kimetsunoyaiba sword");
+            Log.debug("Not a kimetsunoyaiba sword");
             return false;
         }
 
-        System.out.println("All checks passed, should spawn particles");
+        Log.debug("All checks passed, should spawn particles");
         return true;
     }
 
