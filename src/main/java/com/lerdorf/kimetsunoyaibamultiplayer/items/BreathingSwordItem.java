@@ -23,8 +23,13 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
  */
 public abstract class BreathingSwordItem extends SwordItem {
 
+	private static final double CUSTOM_DAMAGE = 4.5; // total damage (shown in tooltip)
+    private static final double ATTACK_SPEED = -2.4F;
+	
     public BreathingSwordItem(Properties properties) {
-        super(Tiers.DIAMOND, 0, -2.4F, properties); // 1 + 3 (base) = 4.5 damage (4 damage visible in game)
+        // Pass (CUSTOM_DAMAGE - 1 - Tiers.DIAMOND.getAttackDamageBonus()) to balance the internal math
+        // so the total equals 4.5 in-game
+        super(Tiers.DIAMOND, (int)(CUSTOM_DAMAGE - 1 - Tiers.DIAMOND.getAttackDamageBonus()), (float) ATTACK_SPEED, properties);
     }
 
     /**
@@ -77,19 +82,17 @@ public abstract class BreathingSwordItem extends SwordItem {
     
     @Override
     public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot slot) {
-        Multimap<Attribute, AttributeModifier> modifiers = super.getDefaultAttributeModifiers(slot);
-
         if (slot == EquipmentSlot.MAINHAND) {
             ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
-            // copy others (like attack speed)
-            builder.putAll(modifiers);
 
-            // Replace attack damage with exactly 4.5
-            builder.put(Attributes.ATTACK_DAMAGE, 
-                new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", 4.5, AttributeModifier.Operation.ADDITION));
+            builder.put(Attributes.ATTACK_DAMAGE,
+                new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", CUSTOM_DAMAGE - 1.0, AttributeModifier.Operation.ADDITION));
+            builder.put(Attributes.ATTACK_SPEED,
+                new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", ATTACK_SPEED, AttributeModifier.Operation.ADDITION));
+
             return builder.build();
         }
-        return modifiers;
+        return super.getDefaultAttributeModifiers(slot);
     }
 
     /**
