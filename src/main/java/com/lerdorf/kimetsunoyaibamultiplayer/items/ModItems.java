@@ -37,7 +37,7 @@ public class ModItems {
     // Creative tab
     public static final RegistryObject<CreativeModeTab> KNY_ADDITIONS_TAB = CREATIVE_MODE_TABS.register("kny_additions",
         () -> CreativeModeTab.builder()
-            .title(Component.translatable("itemGroup.kimetsunoyaibamultiplayer.kny_additions"))
+            .title(Component.translatable("KnY Additions"))
             .icon(() -> new ItemStack(NICHIRINSWORD_ICE.get()))
             .displayItems((parameters, output) -> {
                 output.accept(NICHIRINSWORD_ICE.get());

@@ -23,7 +23,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
  */
 public abstract class BreathingSwordItem extends SwordItem {
 
-	private static final double CUSTOM_DAMAGE = 7.5; // +4.5 attack damage (base punch is 1, +1 from entity base, total shown: +4.5)
+	private static final double CUSTOM_DAMAGE = 6.5; // +4.5 attack damage (base punch is 1, +1 from entity base, total shown: +4.5)
     private static final double ATTACK_SPEED = -2.4F;
 
     public BreathingSwordItem(Properties properties) {
@@ -86,7 +86,7 @@ public abstract class BreathingSwordItem extends SwordItem {
 
             // Attack damage: base entity damage is 1, we add 4.5 to make the tooltip show "+4.5 Attack Damage"
             builder.put(Attributes.ATTACK_DAMAGE,
-                new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", 4.5, AttributeModifier.Operation.ADDITION));
+                new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", 3.5, AttributeModifier.Operation.ADDITION));
             builder.put(Attributes.ATTACK_SPEED,
                 new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", ATTACK_SPEED, AttributeModifier.Operation.ADDITION));
 

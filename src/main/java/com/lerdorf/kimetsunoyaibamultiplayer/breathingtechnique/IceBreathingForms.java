@@ -152,7 +152,7 @@ public class IceBreathingForms {
 						targetPos = player.position().add(lookVec.scale(5.0));
 					}
 
-					player.setNoGravity(true);
+					// player.setNoGravity(true);
 
 					final Vec3 finalTargetPos = targetPos;
 					final LivingEntity finalTargetEntity = targetEntity;
@@ -297,7 +297,7 @@ public class IceBreathingForms {
 						// Last tick - restore step height
 						if (currentTick >= totalTicks - 2) {
 							MovementHelper.setStepHeight(player, originalStepHeight);
-							player.setNoGravity(false);
+							// player.setNoGravity(false);
 							Log.debug("Setting no gravity");
 						}
 					}, 1, totalTicks); // Run every tick for 100 ticks
@@ -381,6 +381,14 @@ public class IceBreathingForms {
 											pos.x + columnPos[0],
 											player.getY() + player.getEyeHeight() - 0.3 * (i + 10),
 											pos.z + columnPos[1], 10, 0, 0, 0, 0.1);
+
+									serverLevel.sendParticles(
+											new DustParticleOptions(new Vector3f(0.5f, 0.8f, 1.0f),
+													(float) (Math.random() + 0.2f)),
+											pos.x + columnPos[0],
+											player.getY() + player.getEyeHeight() - 0.3 * (i + 10),
+											pos.z + columnPos[1], 10, 0, 0, 0, 0.1);
+
 								}
 								serverLevel.sendParticles(ParticleTypes.EXPLOSION, pos.x + columnPos[0],
 										player.getY() + player.getEyeHeight() - 0.3 * 20, pos.z + columnPos[1], 1, 0, 0,
@@ -407,6 +415,12 @@ public class IceBreathingForms {
 									serverLevel.sendParticles(
 											new BlockParticleOption(ParticleTypes.BLOCK,
 													Blocks.PACKED_ICE.defaultBlockState()),
+											pos.x + columnPos[0], player.getY() + player.getEyeHeight() - 0.3 * i,
+											pos.z + columnPos[1], 10, 0, 0, 0, 0.1);
+
+									serverLevel.sendParticles(
+											new DustParticleOptions(new Vector3f(0.5f, 0.8f, 1.0f),
+													(float) (Math.random() + 0.2f)),
 											pos.x + columnPos[0], player.getY() + player.getEyeHeight() - 0.3 * i,
 											pos.z + columnPos[1], 10, 0, 0, 0, 0.1);
 								}
@@ -466,6 +480,17 @@ public class IceBreathingForms {
 					// Teleport player
 					player.teleportTo(targetPos.x, targetPos.y, targetPos.z);
 
+					// Spawn particles
+					if (level instanceof ServerLevel serverLevel) {
+						ParticleHelper.spawnCircleParticles(serverLevel, targetPos.add(0, 1, 0), 3.0,
+								ParticleTypes.CLOUD, 30);
+						ParticleHelper.spawnCircleParticles(serverLevel, targetPos.add(0, 1, 0), 3.0,
+								ParticleTypes.SNOWFLAKE, 40);
+					}
+
+					level.playSound(null, player.blockPosition(), SoundEvents.SNOW_BREAK, SoundSource.PLAYERS, 1.0F,
+							0.8F);
+
 					// Damage nearby entities (AOE)
 					AABB area = player.getBoundingBox().inflate(3.0);
 					List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, area,
@@ -476,16 +501,17 @@ public class IceBreathingForms {
 						target.hurt(level.damageSources().playerAttack(player), damage);
 					}
 
-					// Spawn particles
-					if (level instanceof ServerLevel serverLevel) {
-						ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0,
-								ParticleTypes.CLOUD, 30);
-						ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0,
-								ParticleTypes.SNOWFLAKE, 40);
-					}
+					// After 2 ticks spawn the particles again after the player has been teleported
+					AbilityScheduler.scheduleOnce(player, () -> {
+						// Spawn particles
+						if (level instanceof ServerLevel serverLevel) {
+							ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0,
+									ParticleTypes.CLOUD, 30);
+							ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0,
+									ParticleTypes.SNOWFLAKE, 40);
+						}
+					}, 2);
 
-					level.playSound(null, player.blockPosition(), SoundEvents.SNOW_BREAK, SoundSource.PLAYERS, 1.0F,
-							0.8F);
 				});
 	}
 
@@ -585,6 +611,10 @@ public class IceBreathingForms {
 						if (level instanceof ServerLevel serverLevel) {
 							ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 5.0,
 									ParticleTypes.SNOWFLAKE, 50);
+							ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 5.0,
+									new DustParticleOptions(new Vector3f(200f / 255f, 210f / 255f, 1f),
+											(float) (Math.random() + 0.2f)),
+									40);
 							ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 5.0,
 									ParticleTypes.SWEEP_ATTACK, 30);
 						}
@@ -686,32 +716,45 @@ public class IceBreathingForms {
 							// Spawn particles
 							if (level instanceof ServerLevel serverLevel) {
 
-								double yawRad = Math.toRadians(player.getYRot());
-								double pitchRad = Math.toRadians(40 + Math.random()*20);
+								double yawRad = Math.toRadians(player.getYRot() + (Math.random() - 0.5) * 30);
+								double pitchRad = Math.toRadians(30 + Math.random() * 30);
+
+								Vec3 pos = player.position().add(Math.random() - 0.5, (Math.random() + 0.5) * 2,
+										Math.random() - 0.5);
 
 								int arcLength = (int) (100 + Math.random() * 70);
 								double angle = (Math.random() - 0.5) * 10;
 								boolean particle = false;
 								if (Math.random() > 0.5) {
 									particle = true;
-									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
-											yawRad,pitchRad, 6+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE, 80);
-									
-									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
-											yawRad,pitchRad, 5+Math.random()*3, 0.1, arcLength, 1, angle, new DustParticleOptions(new Vector3f(200f/255f, 210f/255f, 1f), (float)(Math.random()+0.2f)), 30);
+									ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
+											6 + Math.random() * 3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE,
+											80);
 
-									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
-											yawRad,pitchRad, 4+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK, 10);
-								} 
+									ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
+											5 + Math.random() * 3, 0.1, arcLength, 1, angle,
+											new DustParticleOptions(new Vector3f(200f / 255f, 210f / 255f, 1f),
+													(float) (Math.random() + 0.2f)),
+											30);
+
+									ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
+											4 + Math.random() * 3, 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK,
+											5);
+								}
 								if (Math.random() > 0.5 || !particle) {
-									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
-											6+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE, 80);
-									
-									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
-											5+Math.random()*3, 0.1, arcLength, 1, angle, new DustParticleOptions(new Vector3f(200f/255f, 210f/255f, 1f), (float)(Math.random()+0.2f)), 30);
+									ParticleHelper.spawnVerticalArc(serverLevel, pos, yawRad, pitchRad,
+											6 + Math.random() * 3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE,
+											80);
 
-									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
-											4+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK, 10);
+									ParticleHelper.spawnVerticalArc(serverLevel, pos, yawRad, pitchRad,
+											5 + Math.random() * 3, 0.1, arcLength, 1, angle,
+											new DustParticleOptions(new Vector3f(200f / 255f, 210f / 255f, 1f),
+													(float) (Math.random() + 0.2f)),
+											30);
+
+									ParticleHelper.spawnVerticalArc(serverLevel, pos, yawRad, pitchRad,
+											4 + Math.random() * 3, 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK,
+											5);
 								}
 							}
 
@@ -728,7 +771,7 @@ public class IceBreathingForms {
 								// Large final burst of particles
 
 								double yawRad = Math.toRadians(player.getYRot());
-								double pitchRad = Math.toRadians(40 + Math.random()*20);
+								double pitchRad = Math.toRadians(40 + Math.random() * 20);
 
 								int arcLength = (int) (100 + Math.random() * 70);
 								double angle = (Math.random() - 0.5) * 4;
@@ -737,23 +780,33 @@ public class IceBreathingForms {
 								if (Math.random() > 0.5) {
 									particle = true;
 									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
-											yawRad,pitchRad, 6+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE, 80);
-									
-									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
-											yawRad,pitchRad, 5+Math.random()*3, 0.1, arcLength, 1, angle, new DustParticleOptions(new Vector3f(200f/255f, 210f/255f, 1f), (float)(Math.random()+0.2f)), 30);
+											yawRad, pitchRad, 6 + Math.random() * 3, 0.1, arcLength, 1, angle,
+											ParticleTypes.SNOWFLAKE, 80);
 
 									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
-											yawRad,pitchRad, 4+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK, 10);
-								} 
+											yawRad, pitchRad, 5 + Math.random() * 3, 0.1, arcLength, 1, angle,
+											new DustParticleOptions(new Vector3f(0.5f, 0.8f, 1.0f),
+													(float) (Math.random() + 0.2f)),
+											30);
+
+									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
+											yawRad, pitchRad, 4 + Math.random() * 3, 0.1, arcLength, 1, angle,
+											ParticleTypes.SWEEP_ATTACK, 5);
+								}
 								if (Math.random() > 0.5 || !particle) {
-									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
-											6+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE, 80);
-									
-									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
-											5+Math.random()*3, 0.1, arcLength, 1, angle, new DustParticleOptions(new Vector3f(200f/255f, 210f/255f, 1f), (float)(Math.random()+0.2f)), 30);
+									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,
+											pitchRad, 6 + Math.random() * 3, 0.1, arcLength, 1, angle,
+											ParticleTypes.SNOWFLAKE, 80);
 
-									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
-											4+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK, 10);
+									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,
+											pitchRad, 5 + Math.random() * 3, 0.1, arcLength, 1, angle,
+											new DustParticleOptions(new Vector3f(0.5f, 0.8f, 1.0f),
+													(float) (Math.random() + 0.2f)),
+											30);
+
+									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,
+											pitchRad, 4 + Math.random() * 3, 0.1, arcLength, 1, angle,
+											ParticleTypes.SWEEP_ATTACK, 5);
 								}
 							}
 							level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS,

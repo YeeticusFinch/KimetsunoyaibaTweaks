@@ -65,8 +65,8 @@ public class ParticleHelper {
 
 				// ---- Apply pitch rotation FIRST (around X axis, tilts up/down)
 				double xPitch = localX;
-				double yPitch = localY * Math.cos(pitch) - localZ * Math.sin(pitch);
-				double zPitch = localY * Math.sin(pitch) + localZ * Math.cos(pitch);
+				double yPitch = localY * Math.cos(-pitch) - localZ * Math.sin(-pitch);
+				double zPitch = localY * Math.sin(-pitch) + localZ * Math.cos(-pitch);
 
 				// ---- Apply yaw rotation SECOND (around Y axis, spins left/right)
 				double xFinal = xPitch * Math.cos(yaw) - zPitch * Math.sin(yaw);
@@ -113,8 +113,8 @@ public class ParticleHelper {
 
 				// ---- Apply pitch rotation FIRST (around X axis, tilts up/down)
 				double xPitch = localX;
-				double yPitch = localY * Math.cos(pitch) - localZ * Math.sin(pitch);
-				double zPitch = localY * Math.sin(pitch) + localZ * Math.cos(pitch);
+				double yPitch = localY * Math.cos(-pitch) - localZ * Math.sin(-pitch);
+				double zPitch = localY * Math.sin(-pitch) + localZ * Math.cos(-pitch);
 
 				// ---- Apply yaw rotation SECOND (around Y axis, spins left/right)
 				double xFinal = xPitch * Math.cos(yaw) - zPitch * Math.sin(yaw);
