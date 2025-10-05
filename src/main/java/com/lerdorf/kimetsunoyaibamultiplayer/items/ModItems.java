@@ -1,7 +1,11 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.items;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -13,6 +17,9 @@ import net.minecraftforge.registries.RegistryObject;
 public class ModItems {
     public static final DeferredRegister<Item> ITEMS =
         DeferredRegister.create(ForgeRegistries.ITEMS, KimetsunoyaibaMultiplayer.MODID);
+
+    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
+        DeferredRegister.create(Registries.CREATIVE_MODE_TAB, KimetsunoyaibaMultiplayer.MODID);
 
     // Nichirin swords with breathing techniques
     public static final RegistryObject<Item> NICHIRINSWORD_FROST = ITEMS.register("nichirinsword_frost",
@@ -27,7 +34,21 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_HIORI = ITEMS.register("nichirinsword_hiori",
         () -> new NichirinSwordHiori(new Item.Properties().stacksTo(1).durability(2000)));
 
+    // Creative tab
+    public static final RegistryObject<CreativeModeTab> KNY_ADDITIONS_TAB = CREATIVE_MODE_TABS.register("kny_additions",
+        () -> CreativeModeTab.builder()
+            .title(Component.translatable("itemGroup.kimetsunoyaibamultiplayer.kny_additions"))
+            .icon(() -> new ItemStack(NICHIRINSWORD_ICE.get()))
+            .displayItems((parameters, output) -> {
+                output.accept(NICHIRINSWORD_ICE.get());
+                output.accept(NICHIRINSWORD_FROST.get());
+                output.accept(NICHIRINSWORD_HANAZAWA.get());
+                output.accept(NICHIRINSWORD_HIORI.get());
+            })
+            .build());
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
+        CREATIVE_MODE_TABS.register(eventBus);
     }
 }

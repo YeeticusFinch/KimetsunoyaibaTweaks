@@ -3,6 +3,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -21,6 +23,8 @@ import net.minecraft.world.phys.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import org.joml.Vector3f;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
@@ -88,7 +92,8 @@ public class IceBreathingForms {
 
 					// Spawn particles - forward thrust straight line
 					if (level instanceof ServerLevel serverLevel) {
-						spawnForwardThrust(serverLevel, startPos, lookVec, 5.0, ParticleTypes.SNOWFLAKE, 30);
+						ParticleHelper.spawnForwardThrust(serverLevel, startPos, lookVec, 5.0, ParticleTypes.SNOWFLAKE,
+								30);
 					}
 
 					// Play sounds
@@ -122,7 +127,7 @@ public class IceBreathingForms {
 						}
 					});
 
-					AnimationHelper.playAnimation(player, "ragnaraku1");
+					AnimationHelper.playAnimationOnLayer(player, "ragnaraku1", 10, 1.0f, 3000);
 
 					// Find target - check for entity within 6 blocks on crosshair
 					Vec3 lookVec = player.getLookAngle();
@@ -249,7 +254,7 @@ public class IceBreathingForms {
 						}
 
 						// Attack every attackInterval ticks
-						if (currentTick % attackInterval == 0) {
+						if (currentTick % attackInterval == 0 && currentTick > attackInterval) {
 							try {
 
 								MovementHelper.stepUp(player, combinedVelocity.x, yVelocity, combinedVelocity.z);
@@ -265,8 +270,14 @@ public class IceBreathingForms {
 								// ability animation
 								AnimationHelper.playAnimationOnLayer(player, anim, 10, 2.0f, 4000);
 
-								AABB attackBox = AABB.of(BoundingBox.fromCorners(new Vec3i((int)(currentCenter.x-circleRadius), (int)(currentCenter.y-circleRadius), (int)(currentCenter.z-circleRadius)), new Vec3i((int)(currentCenter.x+circleRadius), (int)(currentCenter.y+circleRadius), (int)(currentCenter.z+circleRadius))));
-								//AABB attackBox = player.getBoundingBox().inflate(3.0);
+								AABB attackBox = AABB.of(BoundingBox.fromCorners(
+										new Vec3i((int) (currentCenter.x - circleRadius),
+												(int) (currentCenter.y - circleRadius),
+												(int) (currentCenter.z - circleRadius)),
+										new Vec3i((int) (currentCenter.x + circleRadius),
+												(int) (currentCenter.y + circleRadius),
+												(int) (currentCenter.z + circleRadius))));
+								// AABB attackBox = player.getBoundingBox().inflate(3.0);
 								List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class,
 										attackBox, e -> e != player && e.isAlive());
 
@@ -294,135 +305,138 @@ public class IceBreathingForms {
 	}
 
 	/**
-     * Third Form: Merciful Hail Fall
-     * Hover and attack for 4 seconds, 3 attacks/second, ragnaraku2 and ragnaraku3
-     */
-    public static BreathingForm thirdForm() {
-        return new BreathingForm(
-            "Third Form: Merciful Hail Fall",
-            "Leap and deliver powerful downward slashes",
-            7, // 7 second cooldown
-            (player, level) -> {
-                // Enable attack animations during this ability
-                /*
-            	player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
-                    data.setCancelAttackSwing(false);
-                });*/
+	 * Third Form: Merciful Hail Fall Hover and attack for 4 seconds, 3
+	 * attacks/second, ragnaraku2 and ragnaraku3
+	 */
+	public static BreathingForm thirdForm() {
+		return new BreathingForm("Third Form: Merciful Hail Fall", "Leap and deliver powerful downward slashes", 7, // 7
+																													// second
+																													// cooldown
+				(player, level) -> {
+					// Enable attack animations during this ability
+					/*
+					 * player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(
+					 * data -> { data.setCancelAttackSwing(false); });
+					 */
 
-                // Initial leap
-                MovementHelper.addVelocity(player, 0, 1.2, 0);
-                
-                AnimationHelper.playAnimation(player, "ragnaraku2"); // raise sword
+					// Initial leap
+					MovementHelper.addVelocity(player, 0, 1.2, 0);
 
-                player.setNoGravity(true);
+					AnimationHelper.playAnimation(player, "ragnaraku2"); // raise sword
 
-                final int totalTicks = 60; // 3 seconds
-                final int attackInterval = 4; // ~6 attacks per second
-                final int[] tickCounter = {0};
-                final double targetY = player.getY() + 4.0; // Target hover height (4 blocks up)
-                final double[] columnPos = {0, 0};
-                
-                // Single repeating task instead of 80 individual tasks
-                AbilityScheduler.scheduleRepeating(player, () -> {
-                    int currentTick = tickCounter[0]++;
+					player.setNoGravity(true);
 
-                    // Hover at target height - stop vertical movement
-                    double currentY = player.getY();
-                    if (currentY < targetY && currentTick < 15) {
-                        // Still ascending to target height (first 15 ticks)
-                        MovementHelper.setVelocity(player,
-                            player.getDeltaMovement().x, 0.3, player.getDeltaMovement().z);
-                    } else {
-                        // At target height - completely stop vertical movement
-                        MovementHelper.setVelocity(player,
-                            player.getDeltaMovement().x, 0, player.getDeltaMovement().z);
-                    }
+					final int totalTicks = 60; // 3 seconds
+					final int attackInterval = 5; // ~4 attacks per second
+					final int[] tickCounter = { 0 };
+					final double targetY = player.getY() + 4.0; // Target hover height (4 blocks up)
+					final double[] columnPos = { 0, 0 };
 
-                    // Attack every attackInterval ticks
-                    if (currentTick % attackInterval == 0) {
-                    	//String anim = (currentTick / attackInterval) % 2 == 0 ? "sword_to_left" : "sword_to_right";
-                    	String anim = "sword_overhead";
-                        // Use layer 4000 so attacks show without being overridden
-                        AnimationHelper.playAnimationOnLayer(player, anim, 10, 2.0f, 4000);
+					// Single repeating task instead of 80 individual tasks
+					AbilityScheduler.scheduleRepeating(player, () -> {
+						int currentTick = tickCounter[0]++;
 
-                        Vec3 pos = player.getEyePosition().add(player.getLookAngle().normalize().scale(3));
-                        AABB area = new AABB(
-                            pos.x - 4, player.getY() - 8, pos.z - 4,
-                            pos.x + 4, player.getY(), pos.z + 4
-                        );
-                        List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, area,
-                            e -> e != player && e.isAlive() && e.getY() < player.getY() + 2);
+						// Hover at target height - stop vertical movement
+						double currentY = player.getY();
+						if (currentY < targetY && currentTick < 15) {
+							// Still ascending to target height (first 15 ticks)
+							MovementHelper.setVelocity(player, player.getDeltaMovement().x, 0.3,
+									player.getDeltaMovement().z);
+						} else {
+							// At target height - completely stop vertical movement
+							MovementHelper.setVelocity(player, player.getDeltaMovement().x, 0,
+									player.getDeltaMovement().z);
+						}
 
-                        for (LivingEntity target : targets) {
-                            float damage = DamageCalculator.calculateScaledDamage(player, 5.0F);
-                            target.hurt(level.damageSources().playerAttack(player), damage);
-                        }
+						// Attack every attackInterval ticks
+						if (currentTick % attackInterval == 0 && currentTick > attackInterval) {
+							// String anim = (currentTick / attackInterval) % 2 == 0 ? "sword_to_left" :
+							// "sword_to_right";
+							String anim = "sword_overhead";
+							// Use layer 4000 so attacks show without being overridden
+							AnimationHelper.playAnimationOnLayer(player, anim, 10, 1.0f, 4000);
 
-                        if (level instanceof ServerLevel serverLevel) {
-                        	 
-                            for (int i = 0; i < 10; i++) {
-                                double offsetX = (level.random.nextDouble() - 0.5) * 8;
-                                double offsetZ = (level.random.nextDouble() - 0.5) * 8;
-                                serverLevel.sendParticles(ParticleTypes.SNOWFLAKE,
-                                    player.getX() + offsetX, player.getY(), player.getZ() + offsetZ,
-                                    1, 0, -0.5, 0, 0.1);
-                                
-                                serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.PACKED_ICE.defaultBlockState()),
-                                        pos.x + columnPos[0], player.getY()+player.getEyeHeight()-0.3*(i+10), pos.z + columnPos[1],
-                                        10, 0, 0, 0, 0.1);
-                            }
-                            serverLevel.sendParticles(ParticleTypes.EXPLOSION,
-                                    pos.x + columnPos[0], player.getY()+player.getEyeHeight()-0.3*20, pos.z + columnPos[1],
-                                    1, 0, 0, 0, 0.1);
-                            
-                            SwordParticleHandler.spawnSwordParticles(player, player.getMainHandItem(), "sword_overhead", 10);
-                        }
+							Vec3 pos = player.getEyePosition().add(player.getLookAngle().normalize().scale(3));
+							AABB area = new AABB(pos.x - 4, player.getY() - 8, pos.z - 4, pos.x + 4, player.getY(),
+									pos.z + 4);
+							List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, area,
+									e -> e != player && e.isAlive() && e.getY() < player.getY() + 2);
 
-                        level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                            SoundSource.PLAYERS, 1.0F, 0.8F);
-                    } else if ((currentTick - attackInterval/2) % attackInterval == 0) {
-                    	columnPos[0] = (level.random.nextDouble() - 0.5) * 4;
-                    	columnPos[1] = (level.random.nextDouble() - 0.5) * 4;
-                    	String anim = "ragnaraku2";
-                        // Use layer 4000 so attacks show without being overridden
-                        AnimationHelper.playAnimationOnLayer(player, anim, 10, 2.0f, 4000);
-                        
-                        if (level instanceof ServerLevel serverLevel) {
-                       	 
-                            Vec3 pos = player.getEyePosition().add(player.getLookAngle().normalize().scale(3));
-                           for (int i = 0; i < 10; i++) {
-                        	   serverLevel.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.PACKED_ICE.defaultBlockState()),
-                                       pos.x + columnPos[0], player.getY()+player.getEyeHeight()-0.3*i, pos.z + columnPos[1],
-                                       10, 0, 0, 0, 0.1);
-                           }
-                       }
-                    }
-                    
-                    if (currentTick >= totalTicks - 2) {
-                    	player.setNoGravity(false);
-                    }
-                }, 1, totalTicks);
+							for (LivingEntity target : targets) {
+								float damage = DamageCalculator.calculateScaledDamage(player, 5.0F);
+								target.hurt(level.damageSources().playerAttack(player), damage);
+							}
 
-                // Play rain sound at start
-                level.playSound(null, player.blockPosition(), SoundEvents.WEATHER_RAIN,
-                    SoundSource.PLAYERS, 0.5F, 1.0F);
-            }
-        );
-    }
+							if (level instanceof ServerLevel serverLevel) {
+
+								for (int i = 0; i < 10; i++) {
+									double offsetX = (level.random.nextDouble() - 0.5) * 8;
+									double offsetZ = (level.random.nextDouble() - 0.5) * 8;
+									serverLevel.sendParticles(ParticleTypes.SNOWFLAKE, player.getX() + offsetX,
+											player.getY(), player.getZ() + offsetZ, 1, 0, -0.5, 0, 0.1);
+
+									serverLevel.sendParticles(
+											new BlockParticleOption(ParticleTypes.BLOCK,
+													Blocks.PACKED_ICE.defaultBlockState()),
+											pos.x + columnPos[0],
+											player.getY() + player.getEyeHeight() - 0.3 * (i + 10),
+											pos.z + columnPos[1], 10, 0, 0, 0, 0.1);
+								}
+								serverLevel.sendParticles(ParticleTypes.EXPLOSION, pos.x + columnPos[0],
+										player.getY() + player.getEyeHeight() - 0.3 * 20, pos.z + columnPos[1], 1, 0, 0,
+										0, 0.1);
+
+								SwordParticleHandler.spawnSwordParticles(player, player.getMainHandItem(),
+										"sword_overhead", 10);
+							}
+
+							level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+									SoundSource.PLAYERS, 1.0F, 0.8F);
+						} else if ((currentTick - attackInterval / 2) % attackInterval == 0
+								&& (currentTick - attackInterval / 2) > attackInterval) {
+							columnPos[0] = (level.random.nextDouble() - 0.5) * 4;
+							columnPos[1] = (level.random.nextDouble() - 0.5) * 4;
+							String anim = "sword_to_upper";
+							// Use layer 4000 so attacks show without being overridden
+							AnimationHelper.playAnimationOnLayer(player, anim, 10, 1.5f, 4000);
+
+							if (level instanceof ServerLevel serverLevel) {
+
+								Vec3 pos = player.getEyePosition().add(player.getLookAngle().normalize().scale(3));
+								for (int i = 0; i < 10; i++) {
+									serverLevel.sendParticles(
+											new BlockParticleOption(ParticleTypes.BLOCK,
+													Blocks.PACKED_ICE.defaultBlockState()),
+											pos.x + columnPos[0], player.getY() + player.getEyeHeight() - 0.3 * i,
+											pos.z + columnPos[1], 10, 0, 0, 0, 0.1);
+								}
+							}
+						}
+
+						if (currentTick >= totalTicks - 2) {
+							player.setNoGravity(false);
+						}
+					}, 1, totalTicks);
+
+					// Play rain sound at start
+					level.playSound(null, player.blockPosition(), SoundEvents.WEATHER_RAIN, SoundSource.PLAYERS, 0.5F,
+							1.0F);
+				});
+	}
 
 	/**
 	 * Fourth Form: Silent Avalanche Teleport forward without going through blocks,
 	 * increased range
 	 */
 	public static BreathingForm fourthForm() {
-		return new BreathingForm("Fourth Form: Silent Avalanche", "Dash forward with incredible speed", 5, // 5 second
+		return new BreathingForm("Fourth Form: Silent Avalanche", "Dash forward with incredible speed", 4, // 4 second
 																											// cooldown
 				(player, level) -> {
 					AnimationHelper.playAnimation(player, "kamusari3");
 
 					// Find safe teleport position up to 40 blocks away
 					Vec3 lookVec = player.getLookAngle();
-					Vec3 startPos = player.position();
+					Vec3 startPos = player.getEyePosition();
 					Vec3 targetPos = startPos.add(lookVec.scale(40.0));
 
 					// Raycast to find first non-passable block
@@ -464,9 +478,10 @@ public class IceBreathingForms {
 
 					// Spawn particles
 					if (level instanceof ServerLevel serverLevel) {
-						spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0, ParticleTypes.CLOUD, 30);
-						spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0, ParticleTypes.SNOWFLAKE,
-								40);
+						ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0,
+								ParticleTypes.CLOUD, 30);
+						ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0,
+								ParticleTypes.SNOWFLAKE, 40);
 					}
 
 					level.playSound(null, player.blockPosition(), SoundEvents.SNOW_BREAK, SoundSource.PLAYERS, 1.0F,
@@ -479,24 +494,27 @@ public class IceBreathingForms {
 	 * movement
 	 */
 	public static BreathingForm fifthForm() {
-		return new BreathingForm("Fifth Form: Cold Blue Assault", "Swift dash with continuous slashes", 5, // 5 second
+		return new BreathingForm("Fifth Form: Cold Blue Assault", "Swift dash with continuous slashes", 6, // 5 second
 																											// cooldown
 				(player, level) -> {
 					AnimationHelper.playAnimation(player, "kamusari3");
 					player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 3));
 
 					final Vec3 dashDirection = player.getLookAngle();
-					final int totalTicks = 60; // 3 seconds
-					final int attackInterval = 7;
+					final int totalTicks = 40; // 2 seconds
+					final int attackInterval = 5;
 					final int[] tickCounter = { 0 };
 
 					AbilityScheduler.scheduleRepeating(player, () -> {
 						int currentTick = tickCounter[0]++;
 
 						// Force player to move forward (preserve Y velocity for gravity/jumping)
-						Vec3 horizontalVelocity = dashDirection.scale(0.6);
+						Vec3 horizontalVelocity = dashDirection.scale(0.75);
 						MovementHelper.setVelocity(player, horizontalVelocity.x, player.getDeltaMovement().y,
 								horizontalVelocity.z);
+
+						MovementHelper.stepUp(player, player.getX() + horizontalVelocity.x, player.getY(),
+								player.getZ() + horizontalVelocity.z);
 
 						// Attack every attackInterval ticks
 						if (currentTick % attackInterval == 0) {
@@ -513,7 +531,7 @@ public class IceBreathingForms {
 							}
 
 							if (level instanceof ServerLevel serverLevel) {
-								spawnParticleLine(serverLevel, player.position().add(0, 1, 0),
+								ParticleHelper.spawnParticleLine(serverLevel, player.position().add(0, 1, 0),
 										player.position().add(0, 1, 0).add(dashDirection.scale(3.0)),
 										ParticleTypes.SNOWFLAKE, 10);
 							}
@@ -533,7 +551,7 @@ public class IceBreathingForms {
 	 * with sword_rotate
 	 */
 	public static BreathingForm sixthForm() {
-		return new BreathingForm("Sixth Form: Snowflake Cycle", "Spin and deliver a devastating slash", 6, // 6 second
+		return new BreathingForm("Sixth Form: Snowflake Cycle", "Spin and deliver a devastating slash", 4, // 4 second
 																											// cooldown
 				(player, level) -> {
 					// Part 1: Jump up with ragnaraku1
@@ -544,8 +562,8 @@ public class IceBreathingForms {
 
 					// Spawn spinning particles around player
 					if (level instanceof ServerLevel serverLevel) {
-						spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0, ParticleTypes.SNOWFLAKE,
-								30);
+						ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 3.0,
+								ParticleTypes.SNOWFLAKE, 30);
 					}
 
 					// Part 2: After 10 ticks, do the AOE slash with sword_rotate
@@ -565,9 +583,9 @@ public class IceBreathingForms {
 
 						// Spawn more particles for the slash
 						if (level instanceof ServerLevel serverLevel) {
-							spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 5.0,
+							ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 5.0,
 									ParticleTypes.SNOWFLAKE, 50);
-							spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 5.0,
+							ParticleHelper.spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 5.0,
 									ParticleTypes.SWEEP_ATTACK, 30);
 						}
 
@@ -580,109 +598,169 @@ public class IceBreathingForms {
 	}
 
 	/**
-	 * Seventh Form: Icicle Claws (Hanazawa's sword only) Two parts: Thrust that
-	 * blinds, then 5 seconds of 6 attacks/second
+	 * Seventh Form: Icicle Claws (Hanazawa's sword only) Thrust that blinds, then 5
+	 * seconds of ultra-fast attacks (10 attacks/second)
 	 */
 	public static BreathingForm seventhForm() {
 		return new BreathingForm("Seventh Form: Icicle Claws", "Blind and strike from all directions", 8, // 8 second
 																											// cooldown
 				(player, level) -> {
-					// Part 1: Thrust that blinds
+					// Enable attack animations during this ability
+					setCancelAttackSwing(player, false);
+
+					// Part 1: Initial thrust with blinding effect
 					AnimationHelper.playAnimation(player, "speed_attack_sword");
 
+					// Launch player forward slightly
 					Vec3 lookVec = player.getLookAngle();
+					MovementHelper.setVelocity(player, lookVec.scale(0.8));
+
+					// Apply blindness to targets in front
 					Vec3 startPos = player.position().add(0, player.getEyeHeight(), 0);
-					Vec3 endPos = startPos.add(lookVec.scale(5.0));
+					Vec3 endPos = startPos.add(lookVec.scale(6.0));
 
 					AABB hitBox = new AABB(startPos, endPos).inflate(2.0);
-					List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
+					List<LivingEntity> initialTargets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
 							e -> e != player && e.isAlive());
 
-					for (LivingEntity target : targets) {
-						target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 300, 0));
+					for (LivingEntity target : initialTargets) {
+						float damage = DamageCalculator.calculateScaledDamage(player, 8.0F);
+						target.hurt(level.damageSources().playerAttack(player), damage);
+						target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 300, 0)); // 15 seconds blind
+					}
+
+					// Spawn thrust particles
+					if (level instanceof ServerLevel serverLevel) {
+						ParticleHelper.spawnForwardThrust(serverLevel, startPos, lookVec, 6.0, ParticleTypes.SNOWFLAKE,
+								40);
 					}
 
 					level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS,
 							1.0F, 1.0F);
+					level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 1.0F,
+							1.5F);
 
-					// Part 2: Single repeating task for 5 seconds of attacks
-					final int totalTicks = 100;
-					final int attackInterval = 3;
-					final String[] animations = { "sword_to_left", "sword_to_right", "sword_overhead",
-							"sword_to_upper" };
+					// Part 2: Ultra-fast attack barrage (10 attacks per second = 1 attack per 2
+					// ticks)
+					final int totalTicks = 80; // 4 seconds
+					final int attackInterval = 2; // 10 attacks per second
+					final String[] animations = { "sword_to_left", "sword_to_right", "sword_overhead", "sword_to_upper",
+							"sword_to_left_reverse", "sword_to_right_reverse" };
 					final int[] tickCounter = { 0 };
 
-					// Delay start by 10 ticks
-					AbilityScheduler.scheduleOnce(player, () -> {
-						AbilityScheduler.scheduleRepeating(player, () -> {
-							int currentTick = tickCounter[0]++;
+					// Delay barrage start by 10 ticks
+					AbilityScheduler.scheduleRepeating(player, () -> {
+						int currentTick = tickCounter[0]++;
 
-							if (currentTick % attackInterval == 0) {
-								int animIndex = (currentTick / attackInterval) % 4;
-								AnimationHelper.playAnimation(player, animations[animIndex]);
+						// Attack every attackInterval ticks
+						if (currentTick % attackInterval == 0 && currentTick > 12) {
+							int animIndex = (currentTick / attackInterval) % 4;
 
-								AABB attackBox = player.getBoundingBox().inflate(4.0);
-								List<LivingEntity> attackTargets = player.level().getEntitiesOfClass(LivingEntity.class,
-										attackBox, e -> e != player && e.isAlive());
+							if (Config.logDebug) {
+								Log.debug("Seventh Form: Playing attack animation '{}' on layer 4000",
+										animations[animIndex]);
+							}
 
-								for (LivingEntity target : attackTargets) {
-									float damage = DamageCalculator.calculateScaledDamage(player, 4.0F);
-									target.hurt(level.damageSources().playerAttack(player), damage);
-								}
+							// Use layer 4000 with 3x speed for ultra-fast attacks
+							AnimationHelper.playAnimationOnLayer(player, animations[animIndex], 10, 3.0f, 4000);
 
-								if (level instanceof ServerLevel serverLevel && currentTick % 9 == 0) {
-									spawnCircleParticles(serverLevel, player.position().add(0, 1, 0), 4.0,
-											ParticleTypes.SNOWFLAKE, 20);
-								}
+							// Large AOE in front of player
 
-								if (currentTick % 6 == 0) {
-									level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-											SoundSource.PLAYERS, 0.8F, 1.2F);
+							float boxSize = 10;
+							Vec3 attackerPos = player.position().add(0, player.getEyeHeight(), 0);
+							// Vec3 lookVec = player.getLookAngle().normalize();
+							Vec3 frontPos = attackerPos.add(lookVec.scale(boxSize / 2f));
+
+							AABB attackBox = new AABB(frontPos.add(-boxSize / 2f, -boxSize / 2f, -boxSize / 2f),
+									frontPos.add(boxSize / 2f, boxSize / 2f, boxSize / 2f));
+
+							// AABB attackBox = player.getBoundingBox().inflate(4.5);
+							List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class,
+									attackBox, e -> e != player && e.isAlive());
+
+							for (LivingEntity target : targets) {
+								float damage = DamageCalculator.calculateScaledDamage(player, 5F);
+								target.hurt(level.damageSources().playerAttack(player), damage);
+							}
+
+							// Spawn particles
+							if (level instanceof ServerLevel serverLevel) {
+
+								double yawRad = Math.toRadians(player.getYRot());
+								double pitchRad = Math.toRadians(40 + Math.random()*20);
+
+								int arcLength = (int) (100 + Math.random() * 70);
+								double angle = (Math.random() - 0.5) * 10;
+								boolean particle = false;
+								if (Math.random() > 0.5) {
+									particle = true;
+									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
+											yawRad,pitchRad, 6+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE, 80);
+									
+									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
+											yawRad,pitchRad, 5+Math.random()*3, 0.1, arcLength, 1, angle, new DustParticleOptions(new Vector3f(200f/255f, 210f/255f, 1f), (float)(Math.random()+0.2f)), 30);
+
+									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
+											yawRad,pitchRad, 4+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK, 10);
+								} 
+								if (Math.random() > 0.5 || !particle) {
+									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
+											6+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE, 80);
+									
+									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
+											5+Math.random()*3, 0.1, arcLength, 1, angle, new DustParticleOptions(new Vector3f(200f/255f, 210f/255f, 1f), (float)(Math.random()+0.2f)), 30);
+
+									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
+											4+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK, 10);
 								}
 							}
 
-							// Play final sound on last tick
-							if (currentTick >= totalTicks - 1) {
-								level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
-										SoundSource.PLAYERS, 1.0F, 1.0F);
+							// Sound every 3rd attack to avoid spam
+							// if (currentTick % (attackInterval * 3) == 0) {
+							level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+									SoundSource.PLAYERS, 0.7F, 1.4F);
+							// }
+						}
+
+						// Final tick - play ending sound and effects
+						if (currentTick >= totalTicks - 1) {
+							if (level instanceof ServerLevel serverLevel) {
+								// Large final burst of particles
+
+								double yawRad = Math.toRadians(player.getYRot());
+								double pitchRad = Math.toRadians(40 + Math.random()*20);
+
+								int arcLength = (int) (100 + Math.random() * 70);
+								double angle = (Math.random() - 0.5) * 4;
+
+								boolean particle = false;
+								if (Math.random() > 0.5) {
+									particle = true;
+									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
+											yawRad,pitchRad, 6+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE, 80);
+									
+									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
+											yawRad,pitchRad, 5+Math.random()*3, 0.1, arcLength, 1, angle, new DustParticleOptions(new Vector3f(200f/255f, 210f/255f, 1f), (float)(Math.random()+0.2f)), 30);
+
+									ParticleHelper.spawnHorizontalArc(serverLevel, player.position().add(0, 2, 0),
+											yawRad,pitchRad, 4+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK, 10);
+								} 
+								if (Math.random() > 0.5 || !particle) {
+									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
+											6+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE, 80);
+									
+									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
+											5+Math.random()*3, 0.1, arcLength, 1, angle, new DustParticleOptions(new Vector3f(200f/255f, 210f/255f, 1f), (float)(Math.random()+0.2f)), 30);
+
+									ParticleHelper.spawnVerticalArc(serverLevel, player.position().add(0, 2, 0), yawRad,pitchRad,
+											4+Math.random()*3, 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK, 10);
+								}
 							}
-						}, 1, totalTicks);
-					}, 10);
+							level.playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS,
+									1.0F, 1.0F);
+						}
+					}, 1, totalTicks);
 				});
-	}
-
-	// Helper methods for particle effects
-	private static void spawnParticleLine(ServerLevel level, Vec3 start, Vec3 end,
-			net.minecraft.core.particles.ParticleOptions particle, int count) {
-		Vec3 direction = end.subtract(start);
-		for (int i = 0; i < count; i++) {
-			double t = i / (double) count;
-			Vec3 pos = start.add(direction.scale(t));
-			level.sendParticles(particle, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
-		}
-	}
-
-	/**
-	 * Spawn particles in a straight line forward (for thrust attacks like
-	 * speed_attack_sword)
-	 */
-	private static void spawnForwardThrust(ServerLevel level, Vec3 start, Vec3 direction, double distance,
-			net.minecraft.core.particles.ParticleOptions particle, int count) {
-		for (int i = 0; i < count; i++) {
-			double t = i / (double) count;
-			Vec3 pos = start.add(direction.scale(distance * t));
-			level.sendParticles(particle, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
-		}
-	}
-
-	private static void spawnCircleParticles(ServerLevel level, Vec3 center, double radius,
-			net.minecraft.core.particles.ParticleOptions particle, int count) {
-		for (int i = 0; i < count; i++) {
-			double angle = (i / (double) count) * Math.PI * 2;
-			double x = center.x + Math.cos(angle) * radius;
-			double z = center.z + Math.sin(angle) * radius;
-			level.sendParticles(particle, x, center.y, z, 1, 0, 0, 0, 0);
-		}
 	}
 
 	/**

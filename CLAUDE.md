@@ -265,44 +265,174 @@ Breathing sword particles are configured in:
            "Description",
            cooldownSeconds,
            (player, level) -> {
-               // Play animation
+               // CRITICAL: Enable attack animations for forms with attack sequences
+               setCancelAttackSwing(player, false);
+
+               // Play initial animation
                AnimationHelper.playAnimation(player, "animation_name");
 
-               // Schedule delayed/repeated actions
-               AbilityScheduler.scheduleOnce(player, () -> {
-                   // Delayed action
-               }, delayTicks);
+               // Use AbilityScheduler for multi-phase abilities
+               final int[] tickCounter = {0};
+               AbilityScheduler.scheduleRepeating(player, () -> {
+                   int currentTick = tickCounter[0]++;
 
-               // Spawn particles on server
+                   // Attack animations with speed and layer control
+                   if (currentTick % attackInterval == 0) {
+                       String anim = "sword_to_left"; // or cycle animations
+                       // Layer 4000 = high priority overlay, speed 2.0f = double speed
+                       AnimationHelper.playAnimationOnLayer(player, anim, 10, 2.0f, 4000);
+
+                       // Apply damage
+                       AABB hitbox = player.getBoundingBox().inflate(range);
+                       List<LivingEntity> targets = level.getEntitiesOfClass(
+                           LivingEntity.class, hitbox, e -> e != player && e.isAlive()
+                       );
+                       for (LivingEntity target : targets) {
+                           float damage = DamageCalculator.calculateScaledDamage(player, baseDamage);
+                           target.hurt(level.damageSources().playerAttack(player), damage);
+                       }
+                   }
+
+                   // Cleanup on last tick
+                   if (currentTick >= totalTicks - 1) {
+                       player.setNoGravity(false);
+                       MovementHelper.setStepHeight(player, originalStepHeight);
+                   }
+               }, 1, totalTicks); // interval=1 tick, duration=totalTicks
+
+               // Spawn particles on server only
                if (level instanceof ServerLevel serverLevel) {
-                   serverLevel.sendParticles(/*...*/);
+                   serverLevel.sendParticles(ParticleTypes.SNOWFLAKE, x, y, z, count, 0, 0, 0, 0);
                }
-
-               // Apply damage/effects to entities
-               AABB hitbox = player.getBoundingBox().inflate(range);
-               List<LivingEntity> targets = level.getEntitiesOfClass(/*...*/);
            }
        );
    }
    ```
 
-2. **Particle Spawning Patterns**:
-   - **Forward thrust**: Use `spawnForwardThrust()` helper for straight-line particles
-   - **Circular patterns**: Calculate angles and use trigonometry for positioning
-   - **Tornado/spiral**: Combine time-based angle changes with vertical offsets
-   - **Always spawn on server**: Check `level instanceof ServerLevel` before spawning
+2. **Animation System - CRITICAL LEARNINGS**:
 
-3. **Animation Guidelines**:
-   - Use full animation names with namespace: `"kimetsunoyaiba:animation_name"`
-   - For timed animations: `AnimationHelper.playAnimation(player, name, 10)`
-   - Avoid animations during `speed_attack_sword` or `ragnaraku` to prevent particle conflicts
-   - Always play attack animations even when ability misses (for visual consistency)
+   **Multi-Layer Animation System**:
+   - **Default layer (3000)**: Used for base ability animations (e.g., `ragnaraku1` for form startup)
+   - **Overlay layer (4000)**: Used for attack animations during abilities (prevents overwriting base animation)
+   - Use `AnimationHelper.playAnimationOnLayer(player, animName, maxTicks, speed, layer)` for full control
 
-4. **Movement & Physics**:
-   - **Velocity-based movement**: Use `player.setDeltaMovement(velocity)` for smooth motion
-   - **Teleportation**: Use `player.teleportTo(x, y, z)` for instant movement
-   - **Rotation**: Set `player.setYRot()`, `player.setXRot()`, and `player.setYHeadRot()`
-   - **Anti-gravity**: Set Y velocity to positive value each tick during hover abilities
+   **Animation Speed Control**:
+   - Speed parameter: `1.0f` = normal, `2.0f` = double speed, `3.0f` = triple speed, `0.5f` = half speed
+   - Implemented via `SpeedControlledAnimation` wrapper class
+   - Example: `AnimationHelper.playAnimationOnLayer(player, "sword_to_left", 10, 2.0f, 4000)`
+
+   **Attack Animation Suppression**:
+   - Breathing forms set `cancelAttackSwing` flag via capability system
+   - MUST call `setCancelAttackSwing(player, false)` at start of forms with attack sequences
+   - This enables `BreathingSwordAnimationHandler.onAttack()` to play animations
+   - See `IceBreathingForms.java` Second Form and Seventh Form for examples
+
+   **Network Synchronization**:
+   - Breathing forms run SERVER-SIDE (abilities execute on server)
+   - `AnimationHelper` automatically sends `AnimationSyncPacket` to ALL clients
+   - Packet now includes speed and layer priority (added in v1.5.20+)
+   - `AnimationSyncHandler` receives packets and plays animations on other players
+   - Local player receives their own packets to see animations during abilities
+
+   **Common Animation Names**:
+   - Attack animations: `sword_to_left`, `sword_to_right`, `sword_overhead`, `sword_to_upper`
+   - Special animations: `speed_attack_sword`, `ragnaraku1`, `ragnaraku2`, `ragnaraku3`, `kamusari3`, `sword_rotate`
+   - Attack animations should be limited to 10 ticks duration for responsiveness
+
+3. **Particle Spawning Patterns**:
+   - **Forward thrust**: Use `spawnForwardThrust(serverLevel, startPos, direction, distance, particleType, count)`
+   - **Circular patterns**: Use `spawnCircleParticles(serverLevel, center, radius, particleType, count)`
+   - **Tornado/spiral**: Combine time-based angle changes with vertical offsets in repeating task
+   - **ALWAYS spawn on server**: Check `if (level instanceof ServerLevel serverLevel)` before spawning
+   - Particle spam prevention: Only spawn particles every N ticks (e.g., `if (currentTick % 3 == 0)`)
+
+4. **Movement & Physics - Advanced Techniques**:
+
+   **MovementHelper Utilities**:
+   - `MovementHelper.setVelocity(player, x, y, z)` - Sets velocity with server sync
+   - `MovementHelper.addVelocity(player, dx, dy, dz)` - Adds to current velocity
+   - `MovementHelper.setRotation(player, yaw, pitch)` - Sets rotation with ShoulderSurfing camera sync
+   - `MovementHelper.lookAt(player, targetPos)` - Makes player face a position
+   - `MovementHelper.setStepHeight(player, height)` - Allows climbing blocks (default 0.6, set to 1.8+ for abilities)
+   - `MovementHelper.stepUp(player, vx, vy, vz)` - Automatically climb blocks in movement direction
+
+   **Circular Movement Pattern** (Ice Breathing Second Form):
+   - Calculate angle: `double currentAngle = startAngle + (currentTick * angularVelocity * speedMultiplier)`
+   - Position on circle: `MovementHelper.calculateCirclePosition(center, radius, angle)`
+   - Velocity correction: Combine forward motion (70%) + position correction (30%) for smooth circular path
+   - Always face center: `MovementHelper.lookAt(player, centerPosition)`
+   - Decreasing radius: `radius = Math.min(Math.max(baseRadius - (tick/20), minRadius), baseRadius)`
+
+   **Hovering** (Ice Breathing Third Form):
+   - Set target height: `double targetY = player.getY() + 4.0`
+   - Ascent phase: `if (currentY < targetY) { setVelocity(player, vx, 0.3, vz) }`
+   - Hover phase: `else { setVelocity(player, vx, 0, vz) }` (Y velocity = 0)
+   - Enable anti-gravity: `player.setNoGravity(true)` at start, `false` at end
+
+   **Fast Dash with Auto-Climb** (Ice Breathing Fifth Form):
+   - Force horizontal movement: `setVelocity(player, dashDir.x * speed, player.getDeltaMovement().y, dashDir.z * speed)`
+   - Auto-climb obstacles: `MovementHelper.stepUp(player, targetX, targetY, targetZ)` each tick
+   - Preserve jump/gravity: Keep original Y velocity component
+
+5. **Damage Calculation**:
+   - **Always use DamageCalculator**: `float damage = DamageCalculator.calculateScaledDamage(player, baseDamage)`
+   - This scales damage with player's attack damage attribute (including strength effects)
+   - Base damage values: Light attacks (3-5), Medium (6-8), Heavy (10-12), Ultimate (15+)
+   - Apply damage: `target.hurt(level.damageSources().playerAttack(player), damage)`
+
+6. **Task Scheduling Patterns**:
+
+   **One-time Delayed Action**:
+   ```java
+   AbilityScheduler.scheduleOnce(player, () -> {
+       // Execute after delay
+   }, delayTicks);
+   ```
+
+   **Repeating Action Pattern** (RECOMMENDED):
+   ```java
+   final int[] tickCounter = {0};
+   AbilityScheduler.scheduleRepeating(player, () -> {
+       int currentTick = tickCounter[0]++;
+
+       // Per-tick logic
+       if (currentTick % interval == 0) {
+           // Periodic action
+       }
+
+       // Cleanup on last tick
+       if (currentTick >= totalTicks - 1) {
+           // Restore player state
+       }
+   }, 1, totalTicks); // Run every tick for totalTicks duration
+   ```
+
+   **Multi-Phase Ability** (initial action + delayed barrage):
+   ```java
+   // Phase 1: Immediate effect
+   AnimationHelper.playAnimation(player, "thrust_anim");
+   // ... initial damage/effects
+
+   // Phase 2: Delayed barrage
+   AbilityScheduler.scheduleOnce(player, () -> {
+       AbilityScheduler.scheduleRepeating(player, () -> {
+           // Rapid attacks
+       }, 1, durationTicks);
+   }, delayTicks);
+   ```
+
+7. **Sound Design**:
+   - Use `level.playSound(null, player.blockPosition(), SoundEvent, SoundSource.PLAYERS, volume, pitch)`
+   - Common sounds: `SoundEvents.PLAYER_ATTACK_SWEEP`, `SoundEvents.GLASS_BREAK`, `SoundEvents.SNOW_BREAK`
+   - Sound spam prevention: Play only every N attacks (e.g., `if (attackCount % 3 == 0)`)
+   - Volume: 0.5-1.0 for most effects, Pitch: 0.8-1.5 for variation
+
+8. **Debugging Forms**:
+   - Enable debug logging: Set `logDebug = true` in config
+   - Check server logs for: "Second Form: Playing attack animation 'sword_to_left' on layer 4000"
+   - Check client logs for: "Successfully applied animation kimetsunoyaiba:sword_to_left to player {name} (speed=2.0, layer=4000)"
+   - Test in multiplayer to verify animations sync to other players
+   - Use `/testanim` command to verify animation sync system is working
 
 ### Testing Commands
 - `/testanim` - Test animation sync across multiplayer
