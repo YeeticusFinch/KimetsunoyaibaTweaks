@@ -63,19 +63,20 @@ public class ParticleHelper {
 				double localZ = radius * Math.sin(arcAngle);
 				double localY = vert * Math.sin(arcAngle - Math.toRadians(ParticleConfig.particleArcDegrees / 2));
 
-				// ---- Apply yaw rotation (around Y axis)
-				double xYaw = localX * Math.cos(yaw) - localZ * Math.sin(yaw);
-				double zYaw = localX * Math.sin(yaw) + localZ * Math.cos(yaw);
-				double yYaw = localY;
+				// ---- Apply pitch rotation FIRST (around X axis, tilts up/down)
+				double xPitch = localX;
+				double yPitch = localY * Math.cos(pitch) - localZ * Math.sin(pitch);
+				double zPitch = localY * Math.sin(pitch) + localZ * Math.cos(pitch);
 
-				// ---- Apply pitch rotation (around X axis)
-				double yPitch = yYaw * Math.cos(pitch) - zYaw * Math.sin(pitch);
-				double zPitch = yYaw * Math.sin(pitch) + zYaw * Math.cos(pitch);
+				// ---- Apply yaw rotation SECOND (around Y axis, spins left/right)
+				double xFinal = xPitch * Math.cos(yaw) - zPitch * Math.sin(yaw);
+				double yFinal = yPitch;
+				double zFinal = xPitch * Math.sin(yaw) + zPitch * Math.cos(yaw);
 
 				// ---- Translate to world coordinates
-				double worldX = center.x + xYaw;
-				double worldY = center.y + yPitch;
-				double worldZ = center.z + zPitch;
+				double worldX = center.x + xFinal;
+				double worldY = center.y + yFinal;
+				double worldZ = center.z + zFinal;
 
 				// Spawn particles directly
 				if (true) {
@@ -105,24 +106,25 @@ public class ParticleHelper {
 			for (int radiusIdx = 0; radiusIdx < ParticleConfig.radialLayers; radiusIdx++) {
 				double radius = ParticleConfig.baseRadius + (radiusIdx * ParticleConfig.radiusIncrement);
 
-				// Vertical arc calculation
+				// Vertical arc calculation - local coordinates
 				double localX = hori * Math.cos(arcAngle);
-				double localZ = hori * Math.sin(arcAngle);
 				double localY = radius * Math.cos(arcAngle);
-				double localForward = radius * Math.sin(arcAngle);
+				double localZ = radius * Math.sin(arcAngle);
 
-				// ---- Apply pitch rotation (around X axis)
-				double yPitch = localY * Math.cos(pitch) - localForward * Math.sin(pitch);
-				double forwardPitch = localY * Math.sin(pitch) + localForward * Math.cos(pitch);
+				// ---- Apply pitch rotation FIRST (around X axis, tilts up/down)
+				double xPitch = localX;
+				double yPitch = localY * Math.cos(pitch) - localZ * Math.sin(pitch);
+				double zPitch = localY * Math.sin(pitch) + localZ * Math.cos(pitch);
 
-				// ---- Apply yaw rotation (around Y axis)
-				double xYaw = localX * Math.cos(yaw) - localZ * Math.sin(yaw);
-				double zYaw = localX * Math.sin(yaw) + localZ * Math.cos(yaw);
+				// ---- Apply yaw rotation SECOND (around Y axis, spins left/right)
+				double xFinal = xPitch * Math.cos(yaw) - zPitch * Math.sin(yaw);
+				double yFinal = yPitch;
+				double zFinal = xPitch * Math.sin(yaw) + zPitch * Math.cos(yaw);
 
-				// ---- Combine forward motion (player look direction)
-				double worldX = center.x + forwardPitch * Math.cos(yaw + Math.PI / 2) + xYaw;
-				double worldY = center.y + yPitch;
-				double worldZ = center.z + forwardPitch * Math.sin(yaw + Math.PI / 2) + zYaw;
+				// ---- Translate to world coordinates
+				double worldX = center.x + xFinal;
+				double worldY = center.y + yFinal;
+				double worldZ = center.z + zFinal;
 
 				// Spawn particles directly
 				if (true) {
