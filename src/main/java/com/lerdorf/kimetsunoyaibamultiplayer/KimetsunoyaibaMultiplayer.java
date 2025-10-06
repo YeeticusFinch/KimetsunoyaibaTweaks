@@ -22,6 +22,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
+import com.lerdorf.kimetsunoyaibamultiplayer.proxy.IClientProxy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.Direction;
@@ -62,7 +63,13 @@ public class KimetsunoyaibaMultiplayer
 {
     // Define mod id in a common place for everything to reference
     public static final String MODID = "kimetsunoyaibamultiplayer";
-    
+
+    // Client proxy - loads ClientProxy on client, ServerProxy on server
+    public static final IClientProxy CLIENT_PROXY = net.minecraftforge.fml.DistExecutor.safeRunForDist(
+        () -> () -> new com.lerdorf.kimetsunoyaibamultiplayer.client.ClientProxy(),
+        () -> () -> new com.lerdorf.kimetsunoyaibamultiplayer.proxy.ServerProxy()
+    );
+
     public KimetsunoyaibaMultiplayer(FMLJavaModLoadingContext context)
     {
         IEventBus modEventBus = context.getModEventBus();
@@ -215,6 +222,22 @@ public class KimetsunoyaibaMultiplayer
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
             if (Config.logDebug)
             Log.info("Registered breathing technique key binding");
+        }
+
+        @SubscribeEvent
+        public static void registerRenderers(net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers event)
+        {
+            // Register GeckoLib entity renderers
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.ICE_SLAYER.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.IceSlayerRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.FROST_SLAYER.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.FrostSlayerRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.HIORI.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.HioriRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.HANAZAWA.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.HanazawaRenderer::new);
+            if (Config.logDebug)
+            Log.info("Registered breathing slayer entity renderers");
         }
     }
 

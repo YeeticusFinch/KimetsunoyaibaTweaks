@@ -4,83 +4,85 @@ import com.lerdorf.kimetsunoyaibamultiplayer.compat.ShoulderSurfingCompat;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Helper methods for setting player velocity and rotation with proper synchronization
+ * Helper methods for setting entity velocity and rotation with proper synchronization
+ * Works with any LivingEntity (players, mobs, custom entities)
  */
 public class MovementHelper {
 
     /**
-     * Set player velocity with server synchronization
-     * @param player The player to move
+     * Set entity velocity with server synchronization
+     * @param entity The entity to move
      * @param velocity The velocity vector
      */
-    public static void setVelocity(Player player, Vec3 velocity) {
-        player.setDeltaMovement(velocity);
-        player.hasImpulse = true;
-        player.hurtMarked = true; // Force velocity sync to clients
+    public static void setVelocity(LivingEntity entity, Vec3 velocity) {
+        entity.setDeltaMovement(velocity);
+        entity.hasImpulse = true;
+        entity.hurtMarked = true; // Force velocity sync to clients
 
         // Additional sync for server players
-        if (player instanceof ServerPlayer serverPlayer) {
+        if (entity instanceof ServerPlayer serverPlayer) {
             serverPlayer.connection.send(new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(serverPlayer));
         }
     }
 
     /**
-     * Set player velocity (shorthand for common cases)
-     * @param player The player to move
+     * Set entity velocity (shorthand for common cases)
+     * @param entity The entity to move
      * @param x X velocity
      * @param y Y velocity
      * @param z Z velocity
      */
-    public static void setVelocity(Player player, double x, double y, double z) {
-        setVelocity(player, new Vec3(x, y, z));
+    public static void setVelocity(LivingEntity entity, double x, double y, double z) {
+        setVelocity(entity, new Vec3(x, y, z));
     }
 
     /**
-     * Add to player velocity with server synchronization
-     * @param player The player to move
+     * Add to entity velocity with server synchronization
+     * @param entity The entity to move
      * @param deltaVelocity The velocity to add
      */
-    public static void addVelocity(Player player, Vec3 deltaVelocity) {
-        setVelocity(player, player.getDeltaMovement().add(deltaVelocity));
+    public static void addVelocity(LivingEntity entity, Vec3 deltaVelocity) {
+        setVelocity(entity, entity.getDeltaMovement().add(deltaVelocity));
     }
 
     /**
-     * Add to player velocity (shorthand)
-     * @param player The player to move
+     * Add to entity velocity (shorthand)
+     * @param entity The entity to move
      * @param dx X velocity to add
      * @param dy Y velocity to add
      * @param dz Z velocity to add
      */
-    public static void addVelocity(Player player, double dx, double dy, double dz) {
-        addVelocity(player, new Vec3(dx, dy, dz));
+    public static void addVelocity(LivingEntity entity, double dx, double dy, double dz) {
+        addVelocity(entity, new Vec3(dx, dy, dz));
     }
 
     /**
-     * Set player rotation (yaw and pitch) with synchronization
-     * Also rotates ShoulderSurfing camera if available
+     * Set entity rotation (yaw and pitch) with synchronization
+     * Also rotates ShoulderSurfing camera if entity is a player
      */
-    public static void setRotation(Player player, float yaw, float pitch) {
+    public static void setRotation(LivingEntity entity, float yaw, float pitch) {
         // --- Update entity state ---
-        player.setYRot(yaw);
-        player.setXRot(pitch);
-        player.setYHeadRot(yaw);
-        player.setYBodyRot(yaw);
+        entity.setYRot(yaw);
+        entity.setXRot(pitch);
+        entity.setYHeadRot(yaw);
+        entity.setYBodyRot(yaw);
 
         // update "old" values too for smooth interpolation
-        player.yRotO = yaw;
-        player.xRotO = pitch;
-        player.yHeadRotO = yaw;
-        
-        player.yBodyRot = yaw;
+        entity.yRotO = yaw;
+        entity.xRotO = pitch;
+        entity.yHeadRotO = yaw;
 
-        // --- ShoulderSurfing camera integration (client-side only) ---
-        if (player.level().isClientSide) {
+        entity.yBodyRot = yaw;
+
+        // --- ShoulderSurfing camera integration (client-side only, players only) ---
+        if (entity instanceof Player player && entity.level().isClientSide) {
             try {
             	ShoulderSurfingCompat.setShoulderCameraRotation(yaw, pitch);
             } catch (Exception e) {
@@ -89,50 +91,50 @@ public class MovementHelper {
         }
 
         // --- Sync to ALL clients (including the player's own client) ---
-        if (player instanceof ServerPlayer serverPlayer) {
+        if (entity instanceof ServerPlayer serverPlayer) {
             // Send to ALL clients so the player's own client receives it
             com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
                 new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PlayerRotationSyncPacket(
-                    player.getUUID(), yaw, pitch, yaw
+                    entity.getUUID(), yaw, pitch, yaw
                 )
             );
         }
     }
 
     /**
-     * Make player look at a specific position
-     * @param player The player to rotate
+     * Make entity look at a specific position
+     * @param entity The entity to rotate
      * @param target The position to look at
      */
-    public static void lookAt(Player player, Vec3 target) {
-        Vec3 lookDir = target.subtract(player.position()).normalize();
+    public static void lookAt(LivingEntity entity, Vec3 target) {
+        Vec3 lookDir = target.subtract(entity.position()).normalize();
         float yaw = (float) Math.toDegrees(Math.atan2(-lookDir.x, lookDir.z));
         float pitch = (float) Math.toDegrees(-Math.asin(lookDir.y));
-        setRotation(player, yaw, pitch);
+        setRotation(entity, yaw, pitch);
     }
 
     /**
-     * Make player look in a specific direction
-     * @param player The player to rotate
+     * Make entity look in a specific direction
+     * @param entity The entity to rotate
      * @param direction The direction vector to look towards
      */
-    public static void lookInDirection(Player player, Vec3 direction) {
+    public static void lookInDirection(LivingEntity entity, Vec3 direction) {
         Vec3 normalized = direction.normalize();
         float yaw = (float) Math.toDegrees(Math.atan2(-normalized.x, normalized.z));
         float pitch = (float) Math.toDegrees(-Math.asin(normalized.y));
-        setRotation(player, yaw, pitch);
+        setRotation(entity, yaw, pitch);
     }
 
     /**
-     * Move player towards a target position with specified speed
-     * @param player The player to move
+     * Move entity towards a target position with specified speed
+     * @param entity The entity to move
      * @param target Target position
      * @param speed Movement speed multiplier
      */
-    public static void moveTowards(Player player, Vec3 target, double speed) {
-        Vec3 direction = target.subtract(player.position());
+    public static void moveTowards(LivingEntity entity, Vec3 target, double speed) {
+        Vec3 direction = target.subtract(entity.position());
         Vec3 velocity = direction.normalize().scale(speed);
-        setVelocity(player, velocity);
+        setVelocity(entity, velocity);
     }
 
     /**
@@ -170,35 +172,35 @@ public class MovementHelper {
     }
 
     /**
-     * Set player's step-up height (ability to climb blocks)
-     * @param player The player
+     * Set entity's step-up height (ability to climb blocks)
+     * @param entity The entity
      * @param stepHeight Maximum step height in blocks (default is 0.6)
      */
-    public static void setStepHeight(Player player, float stepHeight) {
-        player.setMaxUpStep(stepHeight);
+    public static void setStepHeight(LivingEntity entity, float stepHeight) {
+        entity.setMaxUpStep(stepHeight);
         // Note: Step height changes are not synced to clients by vanilla,
         // but the movement itself is synced, so this should work fine
     }
 
-	public static void stepUp(Player player, double vx, double vy, double vz) {
-		// Calculate the block position in front of the player
-		Vec3 targetPos = player.position().add(new Vec3(vx, vy, vz).normalize());
+	public static void stepUp(LivingEntity entity, double vx, double vy, double vz) {
+		// Calculate the block position in front of the entity
+		Vec3 targetPos = entity.position().add(new Vec3(vx, vy, vz).normalize());
 
 		BlockPos targetBlockPos = BlockPos.containing(targetPos);
 		BlockPos aboveBlockPos = targetBlockPos.above();
 
-		Level level = player.level();
+		Level level = entity.level();
 		BlockState targetBlock = level.getBlockState(targetBlockPos);
 		BlockState aboveBlock = level.getBlockState(aboveBlockPos);
 
-		// A block is “solid” if it has a collision shape (not air, water, etc.)
+		// A block is "solid" if it has a collision shape (not air, water, etc.)
 		boolean targetIsSolid = !targetBlock.getCollisionShape(level, targetBlockPos).isEmpty();
 
-		// A block is “passable” if it has no collision shape (air, water, grass, etc.)
+		// A block is "passable" if it has no collision shape (air, water, grass, etc.)
 		boolean aboveIsPassable = aboveBlock.getCollisionShape(level, aboveBlockPos).isEmpty();
 
 		if (targetIsSolid && aboveIsPassable) {
-		    player.teleportTo(player.getX(), player.getY() + 1.0, player.getZ());
+		    entity.teleportTo(entity.getX(), entity.getY() + 1.0, entity.getZ());
 		}
 	}
 }

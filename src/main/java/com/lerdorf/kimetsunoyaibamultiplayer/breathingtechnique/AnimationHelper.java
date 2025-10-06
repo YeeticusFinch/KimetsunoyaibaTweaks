@@ -12,12 +12,45 @@ import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * Helper class for playing animations on players
+ * Helper class for playing animations on players and entities
+ * For players: Uses PlayerAnimator library
+ * For entities: Currently no animation support (entities use GeckoLib separately)
  */
 public class AnimationHelper {
+
+    /**
+     * Play an animation on any LivingEntity
+     * Only works for Player instances (uses PlayerAnimator)
+     * Non-player entities are silently ignored
+     */
+    public static void playAnimation(LivingEntity entity, String animationName) {
+        if (entity instanceof Player player) {
+            playAnimation(player, animationName, -1, 1.0f);
+        }
+        // Entities use GeckoLib animations which are handled separately
+    }
+
+    /**
+     * Play an animation on any LivingEntity with max duration
+     */
+    public static void playAnimation(LivingEntity entity, String animationName, int maxDurationTicks) {
+        if (entity instanceof Player player) {
+            playAnimation(player, animationName, maxDurationTicks, 1.0f);
+        }
+    }
+
+    /**
+     * Play an animation on any LivingEntity with max duration, speed, and layer
+     */
+    public static void playAnimationOnLayer(LivingEntity entity, String animationName, int maxDurationTicks, float speed, int layerPriority) {
+        if (entity instanceof Player player) {
+            playAnimationOnLayer(player, animationName, maxDurationTicks, speed, layerPriority);
+        }
+    }
 
     /**
      * Play an animation on a player (both client and server)

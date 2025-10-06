@@ -1,8 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
-import com.lerdorf.kimetsunoyaibamultiplayer.Log;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -164,15 +163,15 @@ public class AnimationSyncPacket {
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClientsExcept(relayPacket, sender);
 
                     if (Config.logDebug) {
-                        Log.info("Server relayed animation sync to all other clients (speed={}, layer={})", speed, layerPriority);
+                        System.out.println("[DEBUG] Server relayed animation sync to all other clients (speed=" + speed + ", layer=" + layerPriority + ")");
                     }
                 }
             } else {
-                if (Config.logDebug) {
-                    Log.info("Client received animation sync for player {}: animation={}, tick={}, stop={}, speed={}, layer={}",
-                        playerUUID, animationId, currentTick, stopAnimation, speed, layerPriority);
-                }
-                AnimationSyncHandler.handleAnimationSync(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, swordItem, particleType, speed, layerPriority);
+                // Client received update - use proxy to handle
+                KimetsunoyaibaMultiplayer.CLIENT_PROXY.handleAnimationSync(
+                    playerUUID, animationId, currentTick, animationLength,
+                    isLooping, stopAnimation, swordItem, particleType, speed, layerPriority
+                );
             }
         });
         ctx.setPacketHandled(true);

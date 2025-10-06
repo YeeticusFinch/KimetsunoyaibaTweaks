@@ -1,10 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
-import com.lerdorf.kimetsunoyaibamultiplayer.Log;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
-import com.mojang.logging.LogUtils;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -71,16 +69,10 @@ public class SwordDisplaySyncPacket {
                     }
                 }
             } else {
-                // Client received update - update local tracking
-                if (Config.logDebug) {
-                    Log.info("Client received sword display sync for player {}: left={}, right={}, position={}",
-                        playerUUID,
-                        leftHipSword.isEmpty() ? "empty" : leftHipSword.getItem().toString(),
-                        rightHipSword.isEmpty() ? "empty" : rightHipSword.getItem().toString(),
-                        displayPosition);
-                }
-
-                SwordDisplayTracker.updateRemotePlayerDisplay(playerUUID, leftHipSword, rightHipSword);
+                // Client received update - use proxy to handle
+                KimetsunoyaibaMultiplayer.CLIENT_PROXY.handleSwordDisplaySync(
+                    playerUUID, leftHipSword, rightHipSword
+                );
             }
         });
         ctx.setPacketHandled(true);

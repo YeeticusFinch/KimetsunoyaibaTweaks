@@ -34,8 +34,9 @@ public class BreathingForm {
 
     /**
      * Interface for form effect execution
+     * Works with any LivingEntity (players, mobs, custom entities)
      */
     public interface FormEffect {
-        void execute(net.minecraft.world.entity.player.Player player, net.minecraft.world.level.Level level);
+        void execute(net.minecraft.world.entity.LivingEntity entity, net.minecraft.world.level.Level level);
     }
 }

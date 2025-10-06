@@ -36,6 +36,54 @@ public class ModEntities {
                 .build("geckolib_crow"));
 
     /**
+     * Ice Slayer - Wields nichirinsword_ice, uses Ice Breathing (forms 1-6)
+     * Neutral entity that targets hostile mobs
+     */
+    public static final RegistryObject<EntityType<IceSlayerEntity>> ICE_SLAYER =
+        ENTITY_TYPES.register("ice_slayer",
+            () -> EntityType.Builder.of(IceSlayerEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F) // Player-sized
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("ice_slayer"));
+
+    /**
+     * Frost Slayer - Wields nichirinsword_frost, uses Frost Breathing (forms 1-6)
+     * Neutral entity that targets hostile mobs
+     */
+    public static final RegistryObject<EntityType<FrostSlayerEntity>> FROST_SLAYER =
+        ENTITY_TYPES.register("frost_slayer",
+            () -> EntityType.Builder.of(FrostSlayerEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F) // Player-sized
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("frost_slayer"));
+
+    /**
+     * Kakushima Hiori - Wields nichirinsword_hiori, uses Frost Breathing (all 7 forms)
+     * Neutral entity that targets hostile mobs
+     */
+    public static final RegistryObject<EntityType<HioriEntity>> HIORI =
+        ENTITY_TYPES.register("hiori",
+            () -> EntityType.Builder.of(HioriEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F) // Player-sized
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("hiori"));
+
+    /**
+     * Yukire Hanazawa - Wields nichirinsword_hanazawa, uses Ice Breathing (all 7 forms)
+     * Neutral entity that targets hostile mobs
+     */
+    public static final RegistryObject<EntityType<HanazawaEntity>> HANAZAWA =
+        ENTITY_TYPES.register("hanazawa",
+            () -> EntityType.Builder.of(HanazawaEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F) // Player-sized
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("hanazawa"));
+
+    /**
      * Register entity types to the mod event bus
      */
     public static void register(IEventBus eventBus) {
@@ -50,10 +98,17 @@ public class ModEntities {
         @SubscribeEvent
         public static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
         	if (Config.logDebug)
-            Log.info("Registering entity attributes for GeckolibCrowEntity");
+            Log.info("Registering entity attributes");
 
             // Register attributes for our GeckoLib crow entity
             event.put(GECKOLIB_CROW.get(), GeckolibCrowEntity.createAttributes().build());
+
+            // Register attributes for breathing slayer entities
+            event.put(ICE_SLAYER.get(), BreathingSlayerEntity.createAttributes().build());
+            event.put(FROST_SLAYER.get(), BreathingSlayerEntity.createAttributes().build());
+            event.put(HIORI.get(), BreathingSlayerEntity.createAttributes().build());
+            event.put(HANAZAWA.get(), BreathingSlayerEntity.createAttributes().build());
+
             if (Config.logDebug)
             Log.info("Entity attributes registered successfully");
         }
