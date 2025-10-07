@@ -177,6 +177,9 @@ public class IceBreathingForms {
 
 					// Use a counter array to track current tick
 					final int[] tickCounter = { 0 };
+					
+					level.playSound(null, entity.blockPosition(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 1.2F,
+							0.8F);
 
 					// Schedule a single repeating task that runs every tick for 100 ticks
 					AbilityScheduler.scheduleRepeating(entity, () -> {
@@ -259,6 +262,11 @@ public class IceBreathingForms {
 										1, 0, 0.05, 0, 0.01);
 							}
 						}
+						
+						if (currentTick % 3 == 0) {
+							level.playSound(null, entity.blockPosition(), SoundEvents.POWDER_SNOW_STEP, SoundSource.PLAYERS, 1.0F,
+									0.8F);
+						}
 
 						// Attack every attackInterval ticks
 						if (currentTick % attackInterval == 0 && currentTick > attackInterval) {
@@ -294,7 +302,7 @@ public class IceBreathingForms {
 								}
 
 								level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-										SoundSource.PLAYERS, 1.0F, 1.2F);
+										SoundSource.PLAYERS, 1.1F, 1.2F);
 							} catch (Exception e) {
 								Log.error("Ice Breathing Second Form attack error: " + e.getMessage());
 								e.printStackTrace();
@@ -354,6 +362,9 @@ public class IceBreathingForms {
 							MovementHelper.setVelocity(entity, entity.getDeltaMovement().x, 0,
 									entity.getDeltaMovement().z);
 						}
+						
+						level.playSound(null, entity.blockPosition(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 1.2F,
+								0.8F);
 
 						// Attack every attackInterval ticks
 						if (currentTick % attackInterval == 0 && currentTick > attackInterval) {
@@ -403,6 +414,9 @@ public class IceBreathingForms {
 
 								SwordParticleHandler.spawnSwordParticles(entity, entity.getMainHandItem(),
 										"sword_overhead", 10);
+								
+								level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2F,
+										1.1F);
 							}
 
 							level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
@@ -516,6 +530,8 @@ public class IceBreathingForms {
 									ParticleTypes.CLOUD, 30);
 							ParticleHelper.spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 3.0,
 									ParticleTypes.SNOWFLAKE, 40);
+							level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK, SoundSource.PLAYERS, 1.0F,
+									0.8F);
 						}
 					}, 2);
 
@@ -533,27 +549,39 @@ public class IceBreathingForms {
 					AnimationHelper.playAnimation(entity, "kamusari3");
 					entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 3));
 
-					final Vec3 dashDirection = entity.getLookAngle();
+					//final Vec3 dashDirection = entity.getLookAngle();
 					final int totalTicks = 40; // 2 seconds
 					final int attackInterval = 5;
 					final int[] tickCounter = { 0 };
+					// Store original step height
+					final float originalStepHeight = entity.maxUpStep();
+					
+					MovementHelper.setStepHeight(entity, 1.8F);
 
 					AbilityScheduler.scheduleRepeating(entity, () -> {
 						int currentTick = tickCounter[0]++;
 
 						// Force entity to move forward (preserve Y velocity for gravity/jumping)
-						Vec3 horizontalVelocity = dashDirection.scale(0.75);
+						Vec3 horizontalVelocity = entity.getLookAngle().scale(0.75);
 						MovementHelper.setVelocity(entity, horizontalVelocity.x, entity.getDeltaMovement().y,
 								horizontalVelocity.z);
 
 						MovementHelper.stepUp(entity, entity.getX() + horizontalVelocity.x, entity.getY(),
 								entity.getZ() + horizontalVelocity.z);
+						
+						MovementHelper.stepUp(entity, entity.getX() + entity.getLookAngle().x, entity.getY(),
+								entity.getZ() + entity.getLookAngle().z);
+						
+						if (currentTick % 3 == 0) {
+							level.playSound(null, entity.blockPosition(), SoundEvents.GLASS_STEP, SoundSource.PLAYERS, 1.0F,
+									1.0F);
+						}
 
 						// Attack every attackInterval ticks
 						if (currentTick % attackInterval == 0) {
 							AnimationHelper.playAnimation(entity, "sword_rotate");
 
-							Vec3 attackPos = entity.position().add(dashDirection.scale(2.0));
+							Vec3 attackPos = entity.position().add(entity.getLookAngle().scale(2.0));
 							AABB hitBox = new AABB(attackPos, attackPos).inflate(2.0);
 							List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
 									e -> e != entity && e.isAlive());
@@ -565,12 +593,16 @@ public class IceBreathingForms {
 
 							if (level instanceof ServerLevel serverLevel) {
 								ParticleHelper.spawnParticleLine(serverLevel, entity.position().add(0, 1, 0),
-										entity.position().add(0, 1, 0).add(dashDirection.scale(3.0)),
+										entity.position().add(0, 1, 0).add(entity.getLookAngle().scale(3.0)),
 										ParticleTypes.SNOWFLAKE, 10);
 							}
 
 							level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-									SoundSource.PLAYERS, 1.0F, 1.2F);
+									SoundSource.PLAYERS, 1.4F, 1.3F);
+						}
+						
+						if (currentTick >= totalTicks - 2) {
+							MovementHelper.setStepHeight(entity, originalStepHeight);
 						}
 					}, 1, totalTicks);
 
@@ -598,6 +630,9 @@ public class IceBreathingForms {
 						ParticleHelper.spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 3.0,
 								ParticleTypes.SNOWFLAKE, 30);
 					}
+					
+					level.playSound(null, entity.blockPosition(), SoundEvents.TRIDENT_RIPTIDE_1, SoundSource.PLAYERS, 1.5F,
+							0.9F);
 
 					// Part 2: After 10 ticks, do the AOE slash with sword_rotate
 					AbilityScheduler.scheduleOnce(entity, () -> {
@@ -613,6 +648,7 @@ public class IceBreathingForms {
 							target.hurt(DamageCalculator.getDamageSource(entity), damage);
 							target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0)); // Nausea
 						}
+						
 
 						// Spawn more particles for the slash
 						if (level instanceof ServerLevel serverLevel) {
@@ -629,6 +665,10 @@ public class IceBreathingForms {
 						level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
 								SoundSource.PLAYERS, 1.0F, 1.0F);
 						level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK, SoundSource.PLAYERS, 1.0F,
+								1.3F);
+						level.playSound(null, entity.blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 1.0F,
+								1.0F);
+						level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0F,
 								1.0F);
 					}, 10);
 				});
@@ -769,6 +809,8 @@ public class IceBreathingForms {
 							// if (currentTick % (attackInterval * 3) == 0) {
 							level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
 									SoundSource.PLAYERS, 0.7F, 1.4F);
+							level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK, SoundSource.PLAYERS, 1.0F,
+									1.3F);
 							// }
 						}
 
