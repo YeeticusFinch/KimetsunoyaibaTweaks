@@ -28,11 +28,13 @@ public class KomorebiRenderer extends GeoEntityRenderer<KomorebiEntity> {
                 return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "animations/biped.animation.json");
             }
         });
+        
+
+        // Add armor rendering layer - renders armor textures on armor bones
+        this.addRenderLayer(new GeoArmorLayer<>(this));
 
         // Add equipment rendering layer
         this.addRenderLayer(new GeoEquipmentLayer<>(this));
 
-        // Add armor rendering layer - renders armor textures on armor bones
-        this.addRenderLayer(new GeoArmorLayer<>(this));
     }
 }
