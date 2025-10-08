@@ -201,8 +201,8 @@ public class IceBreathingForms {
 					// Use a counter array to track current tick
 					final int[] tickCounter = { 0 };
 					
-					level.playSound(null, entity.blockPosition(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 2.0F,
-							0.8F);
+					level.playSound(null, entity.blockPosition(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.8F,
+							2.0F);
 
 					// Schedule a single repeating task that runs every tick for 100 ticks
 					AbilityScheduler.scheduleRepeating(entity, () -> {
@@ -371,8 +371,8 @@ public class IceBreathingForms {
 					final double[] columnPos = { 0, 0 };
 
 
-					level.playSound(null, entity.blockPosition(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 2F,
-							0.8F);
+					level.playSound(null, entity.blockPosition(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.8F,
+							2.0F);
 					
 					// Single repeating task instead of 80 individual tasks
 					AbilityScheduler.scheduleRepeating(entity, () -> {

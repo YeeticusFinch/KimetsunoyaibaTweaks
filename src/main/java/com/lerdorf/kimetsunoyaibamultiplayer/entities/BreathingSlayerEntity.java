@@ -2,12 +2,19 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
@@ -26,6 +33,7 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nullable;
+import java.util.UUID;
 
 /**
  * Base class for breathing technique slayer entities
@@ -46,8 +54,22 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     private static final EntityDataAccessor<Integer> ANIMATION_TICKS =
         SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
 
+    // Synced data for power level (1-4)
+    private static final EntityDataAccessor<Integer> POWER_LEVEL =
+        SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
+
     // Cooldown tracking for breathing forms (in ticks)
     private int breathingFormCooldown = 0;
+
+    // Entity tags for targeting demons
+    private static final TagKey<EntityType<?>> DEMON_TAG = TagKey.create(Registries.ENTITY_TYPE,
+        ResourceLocation.tryBuild("kimetsunoyaiba", "demon"));
+    private static final TagKey<EntityType<?>> TWELVE_KIZUKI_TAG = TagKey.create(Registries.ENTITY_TYPE,
+        ResourceLocation.tryBuild("kimetsunoyaiba", "twelve_kizuki"));
+
+    // UUID for attribute modifiers (must be unique per attribute)
+    private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("7f3e5c6d-1a2b-4f9e-8d7c-6b5a4e3d2c1b");
+    private static final UUID ATTACK_SPEED_MODIFIER_UUID = UUID.fromString("9a8b7c6d-5e4f-3d2c-1b0a-9f8e7d6c5b4a");
 
     public BreathingSlayerEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
@@ -86,6 +108,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         this.entityData.define(CURRENT_FORM_INDEX, 0);
         this.entityData.define(CURRENT_ANIMATION, "idle");
         this.entityData.define(ANIMATION_TICKS, 0);
+        this.entityData.define(POWER_LEVEL, 1); // Default to power level 1
     }
 
     public int getCurrentFormIndex() {
@@ -101,6 +124,16 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         int currentIndex = getCurrentFormIndex();
         int newIndex = (currentIndex + 1) % technique.getFormCount();
         setCurrentFormIndex(newIndex);
+    }
+
+    public int getPowerLevel() {
+        return this.entityData.get(POWER_LEVEL);
+    }
+
+    public void setPowerLevel(int level) {
+        if (level < 1) level = 1;
+        if (level > 4) level = 4;
+        this.entityData.set(POWER_LEVEL, level);
     }
 
     @Override
@@ -125,12 +158,19 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
 
         // Target goals
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        // Target hostile mobs from kimetsunoyaiba mod
-        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Monster.class, 10, true, false,
+
+        // Target demons from kimetsunoyaiba mod (using entity tags)
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
             (entity) -> {
-                // Only target monsters from the kimetsunoyaiba mod
-                String entityId = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()).toString();
-                return entityId.startsWith("kimetsunoyaiba:");
+                // Target entities with demon or twelve_kizuki tags
+                return entity.getType().is(DEMON_TAG) || entity.getType().is(TWELVE_KIZUKI_TAG);
+            }));
+
+        // Target players who are demons (check NBT data)
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+            (player) -> {
+                // Check if player has "oni" (demon) NBT tag
+                return player.getPersistentData().getBoolean("oni");
             }));
     }
 
@@ -175,6 +215,16 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
                                        @Nullable CompoundTag dataTag) {
         spawnData = super.finalizeSpawn(level, difficulty, reason, spawnData, dataTag);
 
+        // Randomly assign power level (1-4)
+        int powerLevel = this.random.nextInt(4) + 1;
+        setPowerLevel(powerLevel);
+
+        // Apply power level bonuses
+        applyPowerLevelBonuses(powerLevel);
+
+        // Apply 2x attack speed to all entities
+        apply2xAttackSpeed();
+
         // Equip sword in main hand
         this.setItemSlot(EquipmentSlot.MAINHAND, getEquippedSword());
 
@@ -193,6 +243,70 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         return spawnData;
     }
 
+    /**
+     * Apply bonuses based on power level
+     * Level 1: Speed 2, Resistance 1, 40 HP
+     * Level 2: Speed 3, Resistance 2, Strength 1, 60 HP
+     * Level 3: Speed 4, Resistance 3, Strength 1, 70 HP
+     * Level 4: Speed 6, Resistance 4, Strength 2, 80 HP
+     */
+    private void applyPowerLevelBonuses(int powerLevel) {
+        // Set max health based on power level
+        AttributeInstance maxHealth = this.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth != null) {
+            double health = switch (powerLevel) {
+                case 1 -> 40.0;
+                case 2 -> 60.0;
+                case 3 -> 70.0;
+                case 4 -> 80.0;
+                default -> 40.0;
+            };
+            maxHealth.setBaseValue(health);
+            this.setHealth((float) health);
+        }
+
+        // Apply speed effect based on power level
+        int speedLevel = switch (powerLevel) {
+            case 1 -> 1; // Speed 2 (1 + 1)
+            case 2 -> 2; // Speed 3
+            case 3 -> 3; // Speed 4
+            case 4 -> 5; // Speed 6 (5 + 1)
+            default -> 1;
+        };
+        // ambient=true (no particles), showParticles=false
+        this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, speedLevel, true, false));
+
+        // Apply resistance effect based on power level
+        int resistanceLevel = powerLevel - 1; // Level 1 = Resistance 1, etc.
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, resistanceLevel, true, false));
+
+        // Apply strength effect for power levels 2-4
+        if (powerLevel >= 2) {
+            int strengthLevel = (powerLevel >= 4) ? 1 : 0; // Level 4 = Strength 2, Level 2-3 = Strength 1
+            this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, strengthLevel, true, false));
+        }
+    }
+
+    /**
+     * Apply 2x attack speed to all entities
+     */
+    private void apply2xAttackSpeed() {
+        AttributeInstance attackSpeed = this.getAttribute(Attributes.ATTACK_SPEED);
+        if (attackSpeed != null) {
+            // Remove existing modifier if present
+            attackSpeed.removeModifier(ATTACK_SPEED_MODIFIER_UUID);
+
+            // Add 100% attack speed (2x speed)
+            AttributeModifier speedModifier = new AttributeModifier(
+                ATTACK_SPEED_MODIFIER_UUID,
+                "Power level attack speed bonus",
+                1.0, // 100% increase = 2x speed
+                AttributeModifier.Operation.MULTIPLY_TOTAL
+            );
+            attackSpeed.addPermanentModifier(speedModifier);
+        }
+    }
+
     @Override
     protected void populateDefaultEquipmentSlots(net.minecraft.util.RandomSource random, DifficultyInstance difficulty) {
         // Override to prevent default equipment from replacing ours
@@ -204,6 +318,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         super.addAdditionalSaveData(tag);
         tag.putInt("CurrentFormIndex", getCurrentFormIndex());
         tag.putInt("BreathingFormCooldown", this.breathingFormCooldown);
+        tag.putInt("PowerLevel", getPowerLevel());
     }
 
     @Override
@@ -211,6 +326,14 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         super.readAdditionalSaveData(tag);
         setCurrentFormIndex(tag.getInt("CurrentFormIndex"));
         this.breathingFormCooldown = tag.getInt("BreathingFormCooldown");
+
+        // Restore power level and apply bonuses
+        int powerLevel = tag.getInt("PowerLevel");
+        if (powerLevel > 0) {
+            setPowerLevel(powerLevel);
+            applyPowerLevelBonuses(powerLevel);
+            apply2xAttackSpeed();
+        }
     }
 
     /**

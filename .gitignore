@@ -1,1 +1,5 @@
 /.gradle/
+
+# Ignore files containing "aika" or "hanamura" (case insensitive)
+*[Aa][Ii][Kk][Aa]*
+*[Hh][Aa][Nn][Aa][Mm][Uu][Rr][Aa]*
