@@ -8,7 +8,7 @@ import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 /**
- * Renderer for Frost Slayer entity using mob_slayer.png texture
+ * Renderer for Frost Slayer entity using GeckoLib
  */
 public class FrostSlayerRenderer extends GeoEntityRenderer<FrostSlayerEntity> {
     public FrostSlayerRenderer(EntityRendererProvider.Context context) {
@@ -28,5 +28,11 @@ public class FrostSlayerRenderer extends GeoEntityRenderer<FrostSlayerEntity> {
                 return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "animations/biped.animation.json");
             }
         });
+
+        // Add equipment rendering layer
+        this.addRenderLayer(new GeoEquipmentLayer<>(this));
+
+        // Add armor rendering layer - renders armor textures on armor bones
+        this.addRenderLayer(new GeoArmorLayer<>(this));
     }
 }

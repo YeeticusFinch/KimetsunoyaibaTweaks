@@ -71,6 +71,7 @@ INSTANCES=(
     'C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite(2)/minecraft/mods/'
     'C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite(1)/minecraft/mods/'
     'C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite/minecraft/mods/'
+    'C:/Users/carlf/Downloads/Test KnY Server/mods/'
 )
 
 for i in "${INSTANCES[@]}"; do

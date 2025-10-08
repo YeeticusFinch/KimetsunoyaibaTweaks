@@ -1,0 +1,54 @@
+[07Oct2025 22:18:57.537] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeserver, --fml.forgeVersion, 47.4.0, --fml.mcVersion, 1.20.1, --fml.forgeGroup, net.minecraftforge, --fml.mcpVersion, 20230612.114412]
+[07Oct2025 22:18:57.545] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.0.9+10.0.9+main.dcd20f30 starting: java version 23.0.1 by Oracle Corporation; OS Windows 11 arch amd64 version 10.0
+[07Oct2025 22:18:57.999] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgeserver
+[07Oct2025 22:18:58.012] [main/INFO] [mixin-transmog/]: Mixin Transmogrifier is definitely up to no good...
+[07Oct2025 22:18:58.055] [main/INFO] [mixin-transmog/]: crimes against java were committed
+[07Oct2025 22:18:58.098] [main/INFO] [mixin-transmog/]: Original mixin transformation service successfully crobbed by mixin-transmogrifier!
+[07Oct2025 22:18:58.162] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.5 Source=union:/C:/Users/carlf/Downloads/Test%20KnY%20Server/mods/Connector-1.0.0-beta.46+1.20.1.jar%23122%23125!/ Service=ModLauncher Env=SERVER
+[07Oct2025 22:18:58.419] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Locator {mods folder locator at C:\Users\carlf\Downloads\Test KnY Server\mods} returned 1 files which are client-side-only mods, but we're on a dedicated server. They will be skipped!
+[07Oct2025 22:18:58.538] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\carlf\Downloads\Test KnY Server\libraries\net\minecraftforge\fmlcore\1.20.1-47.4.0\fmlcore-1.20.1-47.4.0.jar is missing mods.toml file
+[07Oct2025 22:18:58.542] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\carlf\Downloads\Test KnY Server\libraries\net\minecraftforge\javafmllanguage\1.20.1-47.4.0\javafmllanguage-1.20.1-47.4.0.jar is missing mods.toml file
+[07Oct2025 22:18:58.548] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\carlf\Downloads\Test KnY Server\libraries\net\minecraftforge\lowcodelanguage\1.20.1-47.4.0\lowcodelanguage-1.20.1-47.4.0.jar is missing mods.toml file
+[07Oct2025 22:18:58.553] [main/WARN] [net.minecraftforge.fml.loading.moddiscovery.ModFileParser/LOADING]: Mod file C:\Users\carlf\Downloads\Test KnY Server\libraries\net\minecraftforge\mclanguage\1.20.1-47.4.0\mclanguage-1.20.1-47.4.0.jar is missing mods.toml file
+[07Oct2025 22:18:59.008] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: Found 49 dependencies adding them to mods collection
+[07Oct2025 22:18:59.484] [main/INFO] [org.sinytra.connector.locator.DependencyResolver/]: Dependency resolution found 25 candidates to load
+[07Oct2025 22:19:00.783] [main/INFO] [org.sinytra.connector.service.hacks.ModuleLayerMigrator/]: Successfully made module authlib transformable
+[07Oct2025 22:19:01.963] [main/INFO] [mixin/]: Compatibility level set to JAVA_17
+[07Oct2025 22:19:02.150] [main/INFO] [cpw.mods.modlauncher.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeserver' with arguments []
+[07Oct2025 22:19:02.377] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.fixes.worldgen.threading_issues.mixin
+[07Oct2025 22:19:02.412] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.threading.lighting.mixin
+[07Oct2025 22:19:02.420] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.rewrites.chunk_serializer.mixin
+[07Oct2025 22:19:02.421] [main/INFO] [C2ME Config System/]: Disabling config ioSystem.gcFreeChunkSerializer: Incompatible with architectury@9.2.14 (*) (defined in c2me)
+[07Oct2025 22:19:02.422] [main/INFO] [C2ME Modules Manager/]: Disabling com.ishland.c2me.rewrites.chunk_serializer.mixin
+[07Oct2025 22:19:02.429] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.fixes.general.threading_issues.mixin
+[07Oct2025 22:19:02.431] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.threading.chunkio.mixin
+[07Oct2025 22:19:02.440] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.opts.math.mixin
+[07Oct2025 22:19:02.447] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.base.mixin
+[07Oct2025 22:19:02.531] [main/INFO] [C2ME Config System/]: Global Executor Parallelism: 8 configured, 8 evaluated, 8 default evaluated
+[07Oct2025 22:19:02.534] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.opts.chunk_access.mixin
+[07Oct2025 22:19:02.543] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.fixes.worldgen.vanilla_bugs.mixin
+[07Oct2025 22:19:02.547] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.opts.worldgen.vanilla.mixin
+[07Oct2025 22:19:02.550] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.opts.scheduling.mixin
+[07Oct2025 22:19:02.570] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.fixes.chunkio.threading_issues.mixin
+[07Oct2025 22:19:02.576] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.server.utils.mixin
+[07Oct2025 22:19:02.584] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.notickvd.mixin
+[07Oct2025 22:19:02.618] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.opts.worldgen.general.mixin
+[07Oct2025 22:19:02.621] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.opts.chunkio.mixin
+[07Oct2025 22:19:02.624] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.threading.worldgen.mixin
+[07Oct2025 22:19:02.632] [main/WARN] [mixin/]: Reference map 'mixins.kimetsunoyaiba.refmap.json' for mixins.kimetsunoyaiba.json could not be read. If this is a development environment you can ignore this message
+[07Oct2025 22:19:02.633] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.rewrites.chunkio.mixin
+[07Oct2025 22:19:02.639] [main/INFO] [C2ME Modules Manager/]: Initializing com.ishland.c2me.opts.allocs.mixin
+[07Oct2025 22:19:02.648] [main/WARN] [mixin/]: Reference map '' for adapter.init.mixins.json could not be read. If this is a development environment you can ignore this message
+[07Oct2025 22:19:03.099] [main/WARN] [mixin/]: Error loading class: ca/spottedleaf/starlight/common/thread/SchedulingUtil (java.lang.ClassNotFoundException: ca.spottedleaf.starlight.common.thread.SchedulingUtil)
+[07Oct2025 22:19:03.239] [main/ERROR] [net.minecraftforge.fml.loading.RuntimeDistCleaner/DISTXFORM]: Attempted to load class net/minecraft/client/MouseHandler for invalid dist DEDICATED_SERVER
+[07Oct2025 22:19:03.239] [main/WARN] [mixin/]: Error loading class: net/minecraft/client/MouseHandler (java.lang.RuntimeException: Attempted to load class net/minecraft/client/MouseHandler for invalid dist DEDICATED_SERVER)
+[07Oct2025 22:19:03.239] [main/WARN] [mixin/]: @Mixin target net.minecraft.client.MouseHandler was not found fabric-screen-api-v1.mixins.json:MouseMixin from mod fabric_screen_api_v1
+[07Oct2025 22:19:03.240] [main/ERROR] [net.minecraftforge.fml.loading.RuntimeDistCleaner/DISTXFORM]: Attempted to load class net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER
+[07Oct2025 22:19:03.241] [main/WARN] [mixin/]: Error loading class: net/minecraft/client/gui/screens/Screen (java.lang.RuntimeException: Attempted to load class net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER)
+[07Oct2025 22:19:03.241] [main/WARN] [mixin/]: @Mixin target net.minecraft.client.gui.screens.Screen was not found fabric-screen-api-v1.mixins.json:ScreenAccessor from mod fabric_screen_api_v1
+[07Oct2025 22:19:03.289] [main/WARN] [mixin/]: Error loading class: noppes/npcs/client/model/animation/AnimationHandler (java.lang.ClassNotFoundException: noppes.npcs.client.model.animation.AnimationHandler)
+[07Oct2025 22:19:03.408] [main/WARN] [mixin/]: Error loading class: net/raphimc/immediatelyfast/feature/core/BatchableBufferSource (java.lang.ClassNotFoundException: net.raphimc.immediatelyfast.feature.core.BatchableBufferSource)
+[07Oct2025 22:19:03.409] [main/WARN] [mixin/]: Error loading class: dev/tr7zw/skinlayers/render/CustomizableModelPart (java.lang.ClassNotFoundException: dev.tr7zw.skinlayers.render.CustomizableModelPart)
+[07Oct2025 22:19:03.410] [main/WARN] [mixin/]: Error loading class: me/jellysquid/mods/sodium/client/render/vertex/buffer/SodiumBufferBuilder (java.lang.ClassNotFoundException: me.jellysquid.mods.sodium.client.render.vertex.buffer.SodiumBufferBuilder)
+[07Oct2025 22:19:03.979] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.4.1).
+[07Oct2025 22:19:04.892] [main/ERROR] [net.minecraftforge.fml.loading.RuntimeDistCleaner/DISTXFORM]: Attempted to load class net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER

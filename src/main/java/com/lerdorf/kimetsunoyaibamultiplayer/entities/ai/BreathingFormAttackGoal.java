@@ -13,8 +13,8 @@ import java.util.EnumSet;
  */
 public class BreathingFormAttackGoal extends Goal {
     private final BreathingSlayerEntity entity;
-    private final double attackRange = 6.0D;
-    private final int minCooldownTicks = 100; // 5 seconds minimum between forms
+    private final double attackRange = 24.0D;
+    private final int minCooldownTicks = 40; // 2 seconds minimum between forms
     private final double formUseChance = 0.15; // 15% chance per second to use form
 
     public BreathingFormAttackGoal(BreathingSlayerEntity entity) {

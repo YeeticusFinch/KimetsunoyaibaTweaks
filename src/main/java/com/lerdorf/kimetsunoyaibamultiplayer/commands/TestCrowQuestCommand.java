@@ -56,27 +56,26 @@ public class TestCrowQuestCommand {
     private static int executeCrowQuest(CommandSourceStack source, Vec3 location, int durationTicks) {
         try {
             Player player = source.getPlayerOrException();
-            long currentTime = player.level().getGameTime();
 
-            CrowQuestMarkerHandler.setQuestMarker(
-                    player.getUUID(),
-                    location,
-                    currentTime,
-                    durationTicks
-            );
+            // NOTE: Quest markers are client-side only. This command just demonstrates the format.
+            // Actual quest markers are set via chat messages detected by CrowQuestMarkerHandlerClient.
+            // Send a simulated crow quest message that will be detected by the client handler
+            String locationName = "Test Location";
+            int x = (int) location.x;
+            int z = (int) location.z;
 
             int durationSeconds = durationTicks / 20;
             source.sendSuccess(
                     () -> Component.literal(String.format(
-                            "Set crow quest marker at (%.1f, %.1f, %.1f) for %d seconds",
-                            location.x, location.y, location.z, durationSeconds
+                            "%s is at %d ~ %d (Quest markers are client-side, this is a test message)",
+                            locationName, x, z
                     )),
                     true
             );
 
             return 1;
         } catch (Exception e) {
-            source.sendFailure(Component.literal("Failed to set crow quest marker: " + e.getMessage()));
+            source.sendFailure(Component.literal("Failed to create crow quest message: " + e.getMessage()));
             return 0;
         }
     }

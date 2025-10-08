@@ -60,28 +60,28 @@ public class ModEntities {
                 .build("frost_slayer"));
 
     /**
-     * Kakushima Hiori - Wields nichirinsword_hiori, uses Frost Breathing (all 7 forms)
+     * Setsu Komorebi - Wields nichirinsword_komorebi, uses Frost Breathing (all 7 forms)
      * Neutral entity that targets hostile mobs
      */
-    public static final RegistryObject<EntityType<HioriEntity>> HIORI =
-        ENTITY_TYPES.register("hiori",
-            () -> EntityType.Builder.of(HioriEntity::new, MobCategory.MISC)
+    public static final RegistryObject<EntityType<KomorebiEntity>> KOMOREBI =
+        ENTITY_TYPES.register("komorebi",
+            () -> EntityType.Builder.of(KomorebiEntity::new, MobCategory.MISC)
                 .sized(0.6F, 1.8F) // Player-sized
                 .clientTrackingRange(10)
                 .updateInterval(3)
-                .build("hiori"));
+                .build("komorebi"));
 
     /**
-     * Yukire Hanazawa - Wields nichirinsword_hanazawa, uses Ice Breathing (all 7 forms)
+     * Akira Shimizu - Wields nichirinsword_shimizu, uses Ice Breathing (all 7 forms)
      * Neutral entity that targets hostile mobs
      */
-    public static final RegistryObject<EntityType<HanazawaEntity>> HANAZAWA =
-        ENTITY_TYPES.register("hanazawa",
-            () -> EntityType.Builder.of(HanazawaEntity::new, MobCategory.MISC)
+    public static final RegistryObject<EntityType<ShimizuEntity>> SHIMIZU =
+        ENTITY_TYPES.register("shimizu",
+            () -> EntityType.Builder.of(ShimizuEntity::new, MobCategory.MISC)
                 .sized(0.6F, 1.8F) // Player-sized
                 .clientTrackingRange(10)
                 .updateInterval(3)
-                .build("hanazawa"));
+                .build("shimizu"));
 
     /**
      * Register entity types to the mod event bus
@@ -106,8 +106,8 @@ public class ModEntities {
             // Register attributes for breathing slayer entities
             event.put(ICE_SLAYER.get(), BreathingSlayerEntity.createAttributes().build());
             event.put(FROST_SLAYER.get(), BreathingSlayerEntity.createAttributes().build());
-            event.put(HIORI.get(), BreathingSlayerEntity.createAttributes().build());
-            event.put(HANAZAWA.get(), BreathingSlayerEntity.createAttributes().build());
+            event.put(KOMOREBI.get(), BreathingSlayerEntity.createAttributes().build());
+            event.put(SHIMIZU.get(), BreathingSlayerEntity.createAttributes().build());
 
             if (Config.logDebug)
             Log.info("Entity attributes registered successfully");

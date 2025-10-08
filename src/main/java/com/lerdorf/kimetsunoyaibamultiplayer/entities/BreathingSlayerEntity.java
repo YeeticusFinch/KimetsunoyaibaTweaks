@@ -39,6 +39,13 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     private static final EntityDataAccessor<Integer> CURRENT_FORM_INDEX =
         SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
 
+    // Synced data for current animation state
+    private static final EntityDataAccessor<String> CURRENT_ANIMATION =
+        SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.STRING);
+
+    private static final EntityDataAccessor<Integer> ANIMATION_TICKS =
+        SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
+
     // Cooldown tracking for breathing forms (in ticks)
     private int breathingFormCooldown = 0;
 
@@ -77,6 +84,8 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(CURRENT_FORM_INDEX, 0);
+        this.entityData.define(CURRENT_ANIMATION, "idle");
+        this.entityData.define(ANIMATION_TICKS, 0);
     }
 
     public int getCurrentFormIndex() {
@@ -102,8 +111,8 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         // Priority 1: Float in water
         this.goalSelector.addGoal(1, new FloatGoal(this));
 
-        // Priority 2: Melee attack
-        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.0D, false));
+        // Priority 2: Animated melee attack (plays attack animations)
+        this.goalSelector.addGoal(2, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.AnimatedMeleeAttackGoal(this, 1.0D, false));
 
         // Priority 3: Random stroll
         this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 0.8D));
@@ -204,11 +213,71 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         this.breathingFormCooldown = tag.getInt("BreathingFormCooldown");
     }
 
+    /**
+     * Trigger a GeckoLib animation (for attacks and abilities)
+     * @param animationName Animation name from biped.animation.json
+     * @param durationTicks How long to play the animation (in ticks)
+     */
+    public void playGeckoAnimation(String animationName, int durationTicks) {
+        // Sync to client via entity data
+        this.entityData.set(CURRENT_ANIMATION, animationName);
+        this.entityData.set(ANIMATION_TICKS, durationTicks);
+
+        // Debug logging
+        if (!this.level().isClientSide) {
+            System.out.println("[BreathingSlayerEntity] Playing animation: " + animationName + " for " + durationTicks + " ticks");
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        // Get synced animation data
+        int animTicks = this.entityData.get(ANIMATION_TICKS);
+
+        // Tick down animation timer
+        if (animTicks > 0) {
+            animTicks--;
+            this.entityData.set(ANIMATION_TICKS, animTicks);
+
+            if (animTicks == 0) {
+                // Animation finished, return to idle/walk
+                String newAnim = this.getDeltaMovement().horizontalDistanceSqr() > 0.0001 ? "walk" : "idle";
+                this.entityData.set(CURRENT_ANIMATION, newAnim);
+            }
+        } else {
+            // No special animation playing, update based on movement
+            String newAnim = this.getDeltaMovement().horizontalDistanceSqr() > 0.0001 ? "walk" : "idle";
+            String currentAnim = this.entityData.get(CURRENT_ANIMATION);
+            if (!currentAnim.equals(newAnim)) {
+                this.entityData.set(CURRENT_ANIMATION, newAnim);
+            }
+        }
+    }
+
+    public String getCurrentAnimation() {
+        return this.entityData.get(CURRENT_ANIMATION);
+    }
+
+    public int getAnimationTicks() {
+        return this.entityData.get(ANIMATION_TICKS);
+    }
+
     // GeckoLib animation methods
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "movement", 0, state -> {
-            // Simple walk/idle logic based on entity velocity
+        // Main controller - handles ALL animations (walk, idle, attacks, abilities)
+        controllers.add(new AnimationController<>(this, "controller", 2, state -> {
+            String anim = getCurrentAnimation();
+            int animTicks = getAnimationTicks();
+
+            // Attack and ability animations (play once)
+            if (animTicks > 0 && !anim.equals("idle") && !anim.equals("walk")) {
+                return state.setAndContinue(RawAnimation.begin().thenPlay(anim));
+            }
+
+            // Movement animations (loop)
             if (state.isMoving()) {
                 return state.setAndContinue(RawAnimation.begin().thenLoop("walk"));
             } else {

@@ -18,7 +18,9 @@
       "Bash(\"./gradlew.bat\" clean build --refresh-dependencies --no-daemon)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:mclo.gs)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(bash:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

@@ -6,7 +6,6 @@ Launch the player forwards a little bit, the target(s) hit by this ability will 
 Particles: minecraft:snowflake, kimetsunoyaiba:particle_frozen
 Sounds: minecraft:entity.player.attack.strong, block.glass.break
 
-
 ## Second Form: Winter Wrath
 
 The swordsman maneuvers themselves and circles the enemy. They would slowly close in the gap between them and the enemy, delivering rotational slashes at the same time.
@@ -16,7 +15,6 @@ There will be many attacks against all living entities within that circle
 Particles: minecraft:snowflake, kimetsunoyaiba:particle_frozen, minecraft:sweep_attack
 Sounds: minecraft:entity.player.attack.sweep
 
-
 ## Third Form: Merciful Hail Fall
 
 The swordsman leaps up and delivers multiple gentle yet powerful slashes downwards. With this, the enemy would not feel any pain and can die peacefully.
@@ -24,7 +22,6 @@ Animations: kimetsunoyaiba:ragnaraku2 (this raises the sword above the head), ki
 The player leaps upwards and hovers in the air for a few seconds while they deliver multiple downwards slashes (go back and forth between the two animations, canceling the previous one before starting the next, and be sure to restart the animation each time)
 Particles: minecraft:block (make it packed ice), minecraft:explosion (in large vertical arcs)
 Sounds: minecraft:entity.player.attack.sweep, minecraft:weather.rain
-
 
 ## Fourth Form: Silent Avalanche
 
@@ -34,7 +31,6 @@ Teleports the player 10 blocks forwards (or to the nearest living entity target 
 Particles: minecraft:cloud, minecraft:snowflake
 Sounds: minecraft:block.snow.break
 
-
 ## Fifth Form: Cold Blue Assault
 
 The swordsman simply dashes to the enemy and swiftly slashes them. This is the easiest form to master, but the weakest (depending on the user's strength).
@@ -42,7 +38,6 @@ Animations: kimetsunoyaiba:kamusari3, kimetsunoyaiba:sword_rotate
 The player runs forwards pretty fast on the ground while constantly attacking all around with the sword
 Particles: minecraft:block (blue ice), kimetsunoyaiba:particle_frozen
 Sounds: minecraft:entity.player.attack.sweep, block.glass.break
-
 
 ## Sixth Form: Snowflake Cycle
 
@@ -52,9 +47,9 @@ The player jumps upwards and forwards, spinning the sword above their head and t
 Particles: minecraft:snowflake
 Sounds: minecraft:entity.player.attack.sweep, minecraft:block.snow.break
 
-
 ## Seventh Form: Icicle Claws
-(7th form only available for Hanazawa's sword)
+
+(7th form only available for Shimizu's sword)
 
 The swordsman starts by thrusting their sword into the enemy's eyes, blinding them. The swordsman thrusts their sword into the enemy in all directions, with full power. The swordsman then finishes them off with a final slash to the neck.
 Animations: kimetsunoyaiba:speed_attack_sword (this is a stab to the eyes, which gives the enemy blindness), kimetsunoyaiba:sword_to_left, kimetsunoyaiba:sword_to_right, kimetsunoyaiba:sword_overhead, kimetsunoyaiba:sword_to_upper

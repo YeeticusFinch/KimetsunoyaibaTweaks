@@ -1,8 +1,0 @@
-{
-  "parent": "kimetsunoyaibamultiplayer:custom/nitirintou_hanazawa",
-  "textures": {
-    "0": "kimetsunoyaibamultiplayer:block/nitirintou_hanazawa",
-    "2": "kimetsunoyaibamultiplayer:block/akkimessatsu_white",
-    "particle": "kimetsunoyaibamultiplayer:item/icon_sword"
-  }
-}

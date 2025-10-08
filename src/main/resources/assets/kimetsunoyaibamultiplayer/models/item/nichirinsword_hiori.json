@@ -1,8 +1,0 @@
-{
-  "parent": "kimetsunoyaibamultiplayer:custom/nitirintou_hiori",
-  "textures": {
-    "0": "kimetsunoyaibamultiplayer:block/nitirintou_hiori",
-    "2": "kimetsunoyaibamultiplayer:block/akkimessatsu_white",
-    "particle": "kimetsunoyaibamultiplayer:item/icon_sword"
-  }
-}

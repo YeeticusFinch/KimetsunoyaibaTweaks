@@ -15,10 +15,23 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+
 /**
- * Implementation of all Frost Breathing forms (6 forms + 7th for Hiori)
+ * Implementation of all Frost Breathing forms (6 forms + 7th for Komorebi)
  */
 public class FrostBreathingForms {
+
+    /**
+     * Unified animation helper that works with both players and GeckoLib entities
+     */
+    private static void playEntityAnimation(LivingEntity entity, String animationName) {
+        if (entity instanceof Player player) {
+            AnimationHelper.playAnimation(player, animationName);
+        } else if (entity instanceof BreathingSlayerEntity slayer) {
+            slayer.playGeckoAnimation(animationName, 20);
+        }
+    }
 
     /**
      * First Form: Lavish Tundra
@@ -30,7 +43,7 @@ public class FrostBreathingForms {
             "Dash forward with flowing horizontal strikes",
             5, // 5 second cooldown
             (entity, level) -> {
-                AnimationHelper.playAnimation(entity, "sword_to_left");
+                playEntityAnimation(entity, "sword_to_left");
 
                 // Apply speed and dash forward
                 Vec3 lookVec = entity.getLookAngle();
@@ -49,7 +62,7 @@ public class FrostBreathingForms {
                         // Alternate between left and right swing animations and attacks
                         if (currentTick % attackInterval == 0) {
                             // Always play attack animation
-                            AnimationHelper.playAnimation(entity, currentTick % 20 == 0 ? "sword_to_left" : "sword_to_right");
+                            playEntityAnimation(entity, currentTick % 20 == 0 ? "sword_to_left" : "sword_to_right");
 
                             // AOE damage
                             Vec3 attackPos = entity.position().add(lookVec.scale(2.0));
@@ -91,7 +104,7 @@ public class FrostBreathingForms {
             "Impactful jab that immobilizes",
             5, // 5 second cooldown
             (entity, level) -> {
-                AnimationHelper.playAnimation(entity, "speed_attack_sword");
+                playEntityAnimation(entity, "speed_attack_sword");
 
                 // Launch entity forward slightly
                 Vec3 lookVec = entity.getLookAngle();
@@ -135,7 +148,7 @@ public class FrostBreathingForms {
             "Move in a wave with spinning blade",
             6, // 6 second cooldown
             (entity, level) -> {
-                AnimationHelper.playAnimation(entity, "sword_rotate");
+                playEntityAnimation(entity, "sword_rotate");
 
                 // Apply speed boost
                 entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 80, 2));
@@ -158,7 +171,7 @@ public class FrostBreathingForms {
                         // Multiple attacks during dash
                         if (currentTick % attackInterval == 0) {
                             // Always play attack animation
-                            AnimationHelper.playAnimation(entity, "sword_rotate");
+                            playEntityAnimation(entity, "sword_rotate");
 
                             // AOE damage in path
                             AABB hitBox = entity.getBoundingBox().inflate(2.5);
@@ -197,7 +210,7 @@ public class FrostBreathingForms {
             "Send a blast of freezing air",
             7, // 7 second cooldown
             (entity, level) -> {
-                AnimationHelper.playAnimation(entity, "sword_overhead");
+                playEntityAnimation(entity, "sword_overhead");
 
                 // Send blast forward
                 Vec3 lookVec = entity.getLookAngle();
@@ -284,7 +297,7 @@ public class FrostBreathingForms {
      * Helper method for Fifth Form: Execute 3 jabs
      */
     private static void executeThreeJabs(LivingEntity entity, Level level) {
-        AnimationHelper.playAnimation(entity, "speed_attack_sword");
+        playEntityAnimation(entity, "speed_attack_sword");
 
         Vec3 lookVec = entity.getLookAngle();
         Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
@@ -323,7 +336,7 @@ public class FrostBreathingForms {
             "Throw your sword forward",
             9, // 9 second cooldown
             (entity, level) -> {
-                AnimationHelper.playAnimation(entity, "sword_overhead");
+                playEntityAnimation(entity, "sword_overhead");
 
                 // TODO: Create item_display entity that flies forward as projectile
                 // For now, damage in a line
@@ -359,7 +372,7 @@ public class FrostBreathingForms {
     }
 
     /**
-     * Seventh Form: Golden Senses (Hiori's sword only)
+     * Seventh Form: Golden Senses (Komorebi's sword only)
      * Temporarily switch sword to golden model and enhance stats
      * TODO: Implement model switching
      */
@@ -371,7 +384,7 @@ public class FrostBreathingForms {
             (entity, level) -> {
                 // TODO: Play kaishin3 animation
                 // TODO: Change sword model to nichirinsword_golden
-                AnimationHelper.playAnimation(entity, "sword_overhead"); // Placeholder
+                playEntityAnimation(entity, "sword_overhead"); // Placeholder
 
                 // Get current effect levels and add 1
                 int hasteLevel = entity.hasEffect(MobEffects.DIG_SPEED) ?
@@ -468,7 +481,7 @@ public class FrostBreathingForms {
     }
 
     /**
-     * Create Frost Breathing with 7th form for Hiori's sword
+     * Create Frost Breathing with 7th form for Komorebi's sword
      */
     public static BreathingTechnique createFrostBreathingWithSeventh() {
         List<BreathingForm> forms = new ArrayList<>();

@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "kimetsunoyaiba:item/icon_shimizu_mant"
+  }
+}

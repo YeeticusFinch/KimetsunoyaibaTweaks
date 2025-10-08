@@ -1,0 +1,7 @@
+{
+  "parent": "kimetsunoyaiba:custom/shimizu_hair",
+  "textures": {
+    "0": "kimetsunoyaiba:block/shimizu_hair",
+    "particle": "kimetsunoyaiba:item/icon_helmet"
+  }
+}

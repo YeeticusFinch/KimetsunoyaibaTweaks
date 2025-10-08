@@ -1,0 +1,284 @@
+package com.lerdorf.kimetsunoyaibamultiplayer.entities;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.*;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
+
+import javax.annotation.Nullable;
+
+/**
+ * Base class for breathing technique slayer entities
+ * Uses GeckoLib for animations (biped.geo.json)
+ * Uses PlayerAnimator/MobPlayerAnimator for breathing technique animations
+ */
+public abstract class BreathingSlayerEntity extends PathfinderMob implements GeoEntity {
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+
+    // Synced data for current breathing form index
+    private static final EntityDataAccessor<Integer> CURRENT_FORM_INDEX =
+        SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
+
+    // Cooldown tracking for breathing forms (in ticks)
+    private int breathingFormCooldown = 0;
+
+    public BreathingSlayerEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
+        super(entityType, level);
+        this.xpReward = 10; // Same as zombie
+        this.setPersistenceRequired(); // Prevent despawning
+
+        // Set equipment immediately (will be re-set in finalizeSpawn)
+        if (!level.isClientSide) {
+            this.setItemSlot(EquipmentSlot.MAINHAND, getEquippedSword());
+            ItemStack[] armor = getArmorEquipment();
+            this.setItemSlot(EquipmentSlot.HEAD, armor[0]);
+            this.setItemSlot(EquipmentSlot.CHEST, armor[1]);
+            this.setItemSlot(EquipmentSlot.LEGS, armor[2]);
+            this.setItemSlot(EquipmentSlot.FEET, armor[3]);
+        }
+    }
+
+    /**
+     * Get the breathing technique for this slayer
+     */
+    public abstract BreathingTechnique getBreathingTechnique();
+
+    /**
+     * Get the equipped sword for this slayer
+     */
+    public abstract ItemStack getEquippedSword();
+
+    /**
+     * Get armor equipment for this slayer [head, chest, legs, feet]
+     */
+    public abstract ItemStack[] getArmorEquipment();
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(CURRENT_FORM_INDEX, 0);
+    }
+
+    public int getCurrentFormIndex() {
+        return this.entityData.get(CURRENT_FORM_INDEX);
+    }
+
+    public void setCurrentFormIndex(int index) {
+        this.entityData.set(CURRENT_FORM_INDEX, index);
+    }
+
+    public void cycleForm() {
+        BreathingTechnique technique = getBreathingTechnique();
+        int currentIndex = getCurrentFormIndex();
+        int newIndex = (currentIndex + 1) % technique.getFormCount();
+        setCurrentFormIndex(newIndex);
+    }
+
+    @Override
+    protected void registerGoals() {
+        // Priority 0: Breathing form attacks (highest priority)
+        this.goalSelector.addGoal(0, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.BreathingFormAttackGoal(this));
+
+        // Priority 1: Float in water
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+
+        // Priority 2: Animated melee attack (plays attack animations)
+        this.goalSelector.addGoal(2, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.AnimatedMeleeAttackGoal(this, 1.0D, false));
+
+        // Priority 3: Random stroll
+        this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 0.8D));
+
+        // Priority 4: Look at player
+        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 8.0F));
+
+        // Priority 5: Random look around
+        this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
+
+        // Target goals
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        // Target hostile mobs from kimetsunoyaiba mod
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Monster.class, 10, true, false,
+            (entity) -> {
+                // Only target monsters from the kimetsunoyaiba mod
+                String entityId = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()).toString();
+                return entityId.startsWith("kimetsunoyaiba:");
+            }));
+    }
+
+    /**
+     * Create default attributes for breathing slayers
+     */
+    public static AttributeSupplier.Builder createAttributes() {
+        return PathfinderMob.createMobAttributes()
+            .add(Attributes.MAX_HEALTH, 40.0D) // 2x player health
+            .add(Attributes.ATTACK_DAMAGE, 7.5D) // Matches sword damage
+            .add(Attributes.MOVEMENT_SPEED, 0.3D) // Slightly slower than player
+            .add(Attributes.ARMOR, 10.0D) // Some natural protection
+            .add(Attributes.FOLLOW_RANGE, 32.0D); // Aggressive pursuit
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+
+        // Tick down breathing form cooldown
+        if (this.breathingFormCooldown > 0) {
+            this.breathingFormCooldown--;
+        }
+    }
+
+    public boolean isBreathingFormOnCooldown() {
+        return this.breathingFormCooldown > 0;
+    }
+
+    public void setBreathingFormCooldown(int ticks) {
+        this.breathingFormCooldown = ticks;
+    }
+
+    public int getBreathingFormCooldown() {
+        return this.breathingFormCooldown;
+    }
+
+    @Override
+    @Nullable
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
+                                       MobSpawnType reason, @Nullable SpawnGroupData spawnData,
+                                       @Nullable CompoundTag dataTag) {
+        spawnData = super.finalizeSpawn(level, difficulty, reason, spawnData, dataTag);
+
+        // Equip sword in main hand
+        this.setItemSlot(EquipmentSlot.MAINHAND, getEquippedSword());
+
+        // Equip armor
+        ItemStack[] armor = getArmorEquipment();
+        this.setItemSlot(EquipmentSlot.HEAD, armor[0]);
+        this.setItemSlot(EquipmentSlot.CHEST, armor[1]);
+        this.setItemSlot(EquipmentSlot.LEGS, armor[2]);
+        this.setItemSlot(EquipmentSlot.FEET, armor[3]);
+
+        // Prevent equipment from dropping and make it permanent
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            this.setDropChance(slot, 0.0F);
+        }
+
+        return spawnData;
+    }
+
+    @Override
+    protected void populateDefaultEquipmentSlots(net.minecraft.util.RandomSource random, DifficultyInstance difficulty) {
+        // Override to prevent default equipment from replacing ours
+        // Equipment is set in finalizeSpawn instead
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("CurrentFormIndex", getCurrentFormIndex());
+        tag.putInt("BreathingFormCooldown", this.breathingFormCooldown);
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        setCurrentFormIndex(tag.getInt("CurrentFormIndex"));
+        this.breathingFormCooldown = tag.getInt("BreathingFormCooldown");
+    }
+
+    // Track current animation state
+    private String currentAnimation = "idle";
+    private int animationTicks = 0;
+
+    /**
+     * Trigger a GeckoLib animation (for attacks and abilities)
+     * @param animationName Animation name from biped.animation.json
+     * @param durationTicks How long to play the animation (in ticks)
+     */
+    public void playGeckoAnimation(String animationName, int durationTicks) {
+        this.currentAnimation = animationName;
+        this.animationTicks = durationTicks;
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        // Tick down animation timer
+        if (this.animationTicks > 0) {
+            this.animationTicks--;
+            if (this.animationTicks == 0) {
+                // Animation finished, return to idle/walk
+                this.currentAnimation = this.getDeltaMovement().horizontalDistanceSqr() > 0.0001 ? "walk" : "idle";
+            }
+        }
+    }
+
+    public String getCurrentAnimation() {
+        return currentAnimation;
+    }
+
+    // GeckoLib animation methods
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        // Movement controller - handles walk/idle when not attacking
+        controllers.add(new AnimationController<>(this, "movement", 5, state -> {
+            String anim = getCurrentAnimation();
+
+            // If a special animation is playing, use it
+            if (animationTicks > 0 && !anim.equals("idle") && !anim.equals("walk")) {
+                return state.setAndContinue(RawAnimation.begin().thenPlay(anim));
+            }
+
+            // Otherwise use movement-based animations
+            if (state.isMoving()) {
+                return state.setAndContinue(RawAnimation.begin().thenLoop("walk"));
+            } else {
+                return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
+            }
+        }));
+
+        // Attack controller - handles attack animations
+        controllers.add(new AnimationController<>(this, "attacks", 0, state -> {
+            String anim = getCurrentAnimation();
+
+            // Play attack animations
+            if (anim.equals("sword_to_left") || anim.equals("sword_to_right") ||
+                anim.equals("sword_overhead") || anim.equals("sword_to_upper")) {
+                return state.setAndContinue(RawAnimation.begin().thenPlay(anim));
+            }
+
+            // Play ability animations
+            if (anim.equals("speed_attack_sword") || anim.equals("ragnaraku1") ||
+                anim.equals("ragnaraku2") || anim.equals("ragnaraku3") ||
+                anim.equals("kamusari3") || anim.equals("sword_rotate")) {
+                return state.setAndContinue(RawAnimation.begin().thenPlay(anim));
+            }
+
+            return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
+        }));
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
+    }
+}

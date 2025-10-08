@@ -11,6 +11,8 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+// All item classes are in the same package, no imports needed
+
 /**
  * Registry for all mod items
  */
@@ -28,28 +30,28 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_ICE = ITEMS.register("nichirinsword_ice",
         () -> new NichirinSwordIce(new Item.Properties().stacksTo(1).durability(2000)));
 
-    public static final RegistryObject<Item> NICHIRINSWORD_HANAZAWA = ITEMS.register("nichirinsword_hanazawa",
-        () -> new NichirinSwordHanazawa(new Item.Properties().stacksTo(1).durability(2000)));
+    public static final RegistryObject<Item> NICHIRINSWORD_SHIMIZU = ITEMS.register("nichirinsword_shimizu",
+        () -> new NichirinSwordShimizu(new Item.Properties().stacksTo(1).durability(2000)));
 
-    public static final RegistryObject<Item> NICHIRINSWORD_HIORI = ITEMS.register("nichirinsword_hiori",
-        () -> new NichirinSwordHiori(new Item.Properties().stacksTo(1).durability(2000)));
+    public static final RegistryObject<Item> NICHIRINSWORD_KOMOREBI = ITEMS.register("nichirinsword_komorebi",
+        () -> new NichirinSwordKomorebi(new Item.Properties().stacksTo(1).durability(2000)));
 
-    // Hiori's cosmetic armor
-    public static final RegistryObject<Item> HIORI_HAIR = ITEMS.register("hiori_hair",
-        () -> new HioriHairItem());
+    // Komorebi's cosmetic armor
+    public static final RegistryObject<Item> KOMOREBI_HAIR = ITEMS.register("komorebi_hair",
+        () -> new KomorebiHairItem());
 
-    public static final RegistryObject<Item> HIORI_HAORI = ITEMS.register("hiori_haori",
-        () -> new HioriHaoriItem());
+    public static final RegistryObject<Item> KOMOREBI_HAORI = ITEMS.register("komorebi_haori",
+        () -> new KomorebiHaoriItem());
 
-    public static final RegistryObject<Item> HIORI_HAKAMA = ITEMS.register("hiori_hakama",
-        () -> new HioriHakamaItem());
+    public static final RegistryObject<Item> KOMOREBI_HAKAMA = ITEMS.register("komorebi_hakama",
+        () -> new KomorebiHakamaItem());
 
-    // Hanazawa's cosmetic armor
-    public static final RegistryObject<Item> HANAZAWA_HAIR = ITEMS.register("hanazawa_hair",
-        () -> new HanazawaHairItem());
+    // Shimizu's cosmetic armor
+    public static final RegistryObject<Item> SHIMIZU_HAIR = ITEMS.register("shimizu_hair",
+        () -> new ShimizuHairItem());
 
-    public static final RegistryObject<Item> HANAZAWA_HAORI = ITEMS.register("hanazawa_haori",
-        () -> new HanazawaHaoriItem());
+    public static final RegistryObject<Item> SHIMIZU_HAORI = ITEMS.register("shimizu_haori",
+        () -> new ShimizuHaoriItem());
 
     // Spawn eggs for breathing slayer entities
     public static final RegistryObject<Item> ICE_SLAYER_SPAWN_EGG = ITEMS.register("ice_slayer_spawn_egg",
@@ -64,15 +66,15 @@ public class ModItems {
             0xB0E0E6, 0xF0F8FF, // Powder blue body, alice blue spots
             new Item.Properties().stacksTo(64)));
 
-    public static final RegistryObject<Item> HIORI_SPAWN_EGG = ITEMS.register("hiori_spawn_egg",
+    public static final RegistryObject<Item> KOMOREBI_SPAWN_EGG = ITEMS.register("komorebi_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
-            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.HIORI,
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KOMOREBI,
             0x8B4513, 0xFFD700, // Saddle brown body, gold spots
             new Item.Properties().stacksTo(64)));
 
-    public static final RegistryObject<Item> HANAZAWA_SPAWN_EGG = ITEMS.register("hanazawa_spawn_egg",
+    public static final RegistryObject<Item> SHIMIZU_SPAWN_EGG = ITEMS.register("shimizu_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
-            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.HANAZAWA,
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SHIMIZU,
             0xE6E6FA, 0x9370DB, // Lavender body, medium purple spots
             new Item.Properties().stacksTo(64)));
 
@@ -84,17 +86,17 @@ public class ModItems {
             .displayItems((parameters, output) -> {
                 output.accept(NICHIRINSWORD_ICE.get());
                 output.accept(NICHIRINSWORD_FROST.get());
-                output.accept(NICHIRINSWORD_HANAZAWA.get());
-                output.accept(NICHIRINSWORD_HIORI.get());
-                output.accept(HIORI_HAIR.get());
-                output.accept(HIORI_HAORI.get());
-                output.accept(HIORI_HAKAMA.get());
-                output.accept(HANAZAWA_HAIR.get());
-                output.accept(HANAZAWA_HAORI.get());
+                output.accept(NICHIRINSWORD_SHIMIZU.get());
+                output.accept(NICHIRINSWORD_KOMOREBI.get());
+                output.accept(KOMOREBI_HAIR.get());
+                output.accept(KOMOREBI_HAORI.get());
+                output.accept(KOMOREBI_HAKAMA.get());
+                output.accept(SHIMIZU_HAIR.get());
+                output.accept(SHIMIZU_HAORI.get());
                 output.accept(ICE_SLAYER_SPAWN_EGG.get());
                 output.accept(FROST_SLAYER_SPAWN_EGG.get());
-                output.accept(HIORI_SPAWN_EGG.get());
-                output.accept(HANAZAWA_SPAWN_EGG.get());
+                output.accept(KOMOREBI_SPAWN_EGG.get());
+                output.accept(SHIMIZU_SPAWN_EGG.get());
             })
             .build());
 

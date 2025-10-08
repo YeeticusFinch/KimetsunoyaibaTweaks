@@ -14,6 +14,7 @@ This is a Minecraft Forge 1.20.1 mod called "Kimetsunoyaiba Multiplayer" that en
 ## Build and Development Commands
 
 ### Basic Build Commands
+
 ```bash
 # Build the mod
 ./gradlew build
@@ -41,13 +42,16 @@ This is a Minecraft Forge 1.20.1 mod called "Kimetsunoyaiba Multiplayer" that en
 ```
 
 ### IDE Setup
+
 - **Eclipse**: Run `./gradlew genEclipseRuns` then import as existing Gradle project
 - **IntelliJ**: Import `build.gradle` file, then run `./gradlew genIntellijRuns`
 
 ## Architecture Overview
 
 ### Core Structure
+
 - **Main Mod Class**: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/KimetsunoyaibaMultiplayer.java`
+
   - Handles mod initialization, event registration, and lifecycle management
   - Registers blocks, items, and creative tabs using DeferredRegister
   - Contains client-side event handling in nested `ClientModEvents` class
@@ -58,17 +62,21 @@ This is a Minecraft Forge 1.20.1 mod called "Kimetsunoyaiba Multiplayer" that en
   - Automatically validates and converts config values on load
 
 ### Event System
+
 The mod uses Forge's event bus system:
+
 - **Mod Event Bus**: For mod lifecycle events (setup, config loading)
 - **Forge Event Bus**: For game events (server starting, etc.)
 - **Client-only Events**: Handled in `ClientModEvents` nested class with `@Mod.EventBusSubscriber`
 
 ### Dependencies
+
 - **External Library**: `player-animation-lib-forge-1.20.1-1.0.2-rc1.jar` in `libs/` directory
 - **Forge Dependency**: Declared in `build.gradle` as deobfuscated dependency
 - **Config**: Uses ForgeConfigSpec for configuration management
 
 ### Resource Structure
+
 - **Mod Metadata**: `src/main/resources/META-INF/mods.toml` - Contains mod information and dependencies
 - **Pack Metadata**: `src/main/resources/pack.mcmeta` - Resource pack version info
 - **Generated Resources**: `src/generated/resources/` - Output from data generators
@@ -78,12 +86,14 @@ The mod uses Forge's event bus system:
 The mod includes test commands to verify the animation sync system is working:
 
 ### Server-side Command: `/testanim`
+
 - Available on servers and LAN worlds
 - Plays the "sword_to_left" animation on all connected players
 - Sends animation packets to all clients
 - Useful for testing multiplayer animation synchronization
 
 ### Client-side Command: `/testanimc`
+
 - Available in single-player and on clients
 - Plays the animation locally and sends sync packet to server
 - Useful for testing client-to-server animation transmission
@@ -93,30 +103,38 @@ Both commands will show debug messages if debug mode is enabled in the config.
 ## Key Development Notes
 
 ### Mod Registration Pattern
+
 The mod uses DeferredRegister pattern for all registrations:
+
 - Create DeferredRegister instances for each registry type
 - Register objects as RegistryObject fields
 - Register the DeferredRegister to the mod event bus in constructor
 
 ### Configuration System
+
 Config values are defined as ForgeConfigSpec values and cached as static fields. The `Config.onLoad()` method handles updating cached values when config changes.
 
 ### Client/Server Separation
+
 Client-only code is properly separated using `@Mod.EventBusSubscriber(value = Dist.CLIENT)` and the `ClientModEvents` nested class pattern.
 
 ### Animation Library Integration
+
 The mod depends on both `player-animation-lib-forge` and `mobplayeranimator` for multiplayer animation synchronization:
+
 - **PlayerAnimator**: Provides the base animation framework for detecting and creating animations
 - **Mob Player Animator**: Extends PlayerAnimator to enable animations on other players/mobs (critical for multiplayer sync)
 - Both libraries are declared as dependencies in `build.gradle` and `mods.toml`
 
 ### Animation System Architecture
+
 1. **Animation Detection** (`AnimationTracker.java`): Uses reflection to detect active KeyframeAnimationPlayer instances in the local player's AnimationStack
 2. **Network Synchronization** (`AnimationSyncPacket.java`, `ModNetworking.java`): Transmits animation events between client and server
 3. **Animation Application** (`AnimationSyncHandler.java`): Receives animation sync packets and applies animations to other players using Mob Player Animator
 4. **Fallback System**: If original animation cannot be found, tries kimetsunoyaiba animations like "sword_to_left" as fallbacks
 
 ### Key Lessons Learned
+
 - **PlayerAnimator Limitation**: The base PlayerAnimator library can only apply animations to the local player, not to other players
 - **Mob Player Animator Solution**: This extension enables animations on other players, solving the core multiplayer sync requirement
 - **Animation Registry**: Finding animations by ResourceLocation can be challenging; fallback strategies are essential
@@ -125,7 +143,9 @@ The mod depends on both `player-animation-lib-forge` and `mobplayeranimator` for
 - **Multiple Registry Lookup**: Animations may be registered under different namespaces ("kimetsunoyaiba", "playeranimator", etc.)
 
 ### Animation Identification Strategy
+
 The mod uses a multi-step approach to extract animation names:
+
 1. **extraData Field**: First tries to extract name from KeyframeAnimation.extraData
 2. **Reflection Scan**: Searches all fields for strings matching known animation names
 3. **Known Names List**: Validates against the complete list of kimetsunoyaiba animation names
@@ -140,6 +160,7 @@ The mod implements a comprehensive breathing technique system for custom nichiri
 #### Core Components
 
 1. **BreathingSwordItem** (`items/BreathingSwordItem.java`)
+
    - Abstract base class for all breathing swords
    - Extends `SwordItem` with Diamond tier stats (3 attack damage, -2.4 attack speed)
    - Handles right-click activation of breathing forms
@@ -147,16 +168,19 @@ The mod implements a comprehensive breathing technique system for custom nichiri
    - Displays form names with color codes (§6 for technique, §b for form name)
 
 2. **BreathingForm** (`breathingtechnique/BreathingForm.java`)
+
    - Data class representing a single breathing technique form
    - Contains: name, description, cooldown, and effect executor
    - Effect is a BiConsumer<Player, Level> lambda for maximum flexibility
 
 3. **BreathingTechnique** (`breathingtechnique/BreathingTechnique.java`)
+
    - Container for a complete set of breathing forms
    - Manages form indexing and retrieval
    - Each technique has a unique name and list of forms
 
 4. **AnimationHelper** (`breathingtechnique/AnimationHelper.java`)
+
    - Centralized animation playback system
    - Supports timed animations with automatic cancellation
    - `playAnimation(player, name)` - plays full animation
@@ -165,6 +189,7 @@ The mod implements a comprehensive breathing technique system for custom nichiri
    - Uses threaded scheduling for animation cancellation
 
 5. **AbilityScheduler** (`breathingtechnique/AbilityScheduler.java`)
+
    - Server-side task scheduler for delayed/repeated actions
    - `scheduleOnce(player, action, delayTicks)` - one-time delayed execution
    - `scheduleRepeating(player, action, intervalTicks, durationTicks)` - repeated execution
@@ -179,7 +204,8 @@ The mod implements a comprehensive breathing technique system for custom nichiri
 
 ### Implemented Breathing Techniques
 
-#### Ice Breathing (nichirinsword_ice, nichirinsword_hanazawa)
+#### Ice Breathing (nichirinsword_ice, nichirinsword_shimizu)
+
 - **Particle Effects**: Light blue dust particles (RGB: 0.5, 0.8, 1.0)
 - **7 Forms Total**:
   1. **Paralyzing Icicle**: Speed thrust attack with slowness/mining fatigue debuffs (5 block range)
@@ -188,9 +214,10 @@ The mod implements a comprehensive breathing technique system for custom nichiri
   4. **Flash Freeze Path**: Ice block path creation with teleportation
   5. **Frozen Barrage**: High-speed multi-directional attacks
   6. **Arctic Devastation**: Ground slam with freeze effect
-  7. **Absolute Zero** (Hanazawa exclusive): Ultimate freezing technique
+  7. **Absolute Zero** (Shimizu exclusive): Ultimate freezing technique
 
-#### Frost Breathing (nichirinsword_frost, nichirinsword_hiori)
+#### Frost Breathing (nichirinsword_frost, nichirinsword_komorebi)
+
 - **Particle Effects**: Snowflake particles
 - **7 Forms Total**:
   1. **Frost Blade Rush**: Triple forward thrust
@@ -199,11 +226,12 @@ The mod implements a comprehensive breathing technique system for custom nichiri
   4. **Glacial Prison**: Ice wall creation
   5. **Diamond Dust Barrage**: Rapid multi-hit combo
   6. **Permafrost Domain**: Area freeze effect
-  7. **Eternal Winter** (Hiori exclusive): Ultimate frost technique
+  7. **Eternal Winter** (Komorebi exclusive): Ultimate frost technique
 
 ### Key Implementation Details
 
 #### Attack Animations
+
 - **Left-click attacks** trigger animations for all breathing swords via `BreathingSwordAnimationHandler`
 - Animations play on air clicks, block clicks, and entity hits
 - **10-tick animation limit** for basic attacks (sword_to_left, sword_to_right, sword_overhead) to prevent animation lock
@@ -211,6 +239,7 @@ The mod implements a comprehensive breathing technique system for custom nichiri
 - Animations are synchronized across multiplayer using `AnimationSyncPacket`
 
 #### AOE Attack System
+
 - All breathing swords have **automatic AoE attacks** (3x3x3 cube in front of player)
 - Triggered on any left-click attack via `LivingAttackEvent`
 - Damage is applied to all entities in range except primary target and attacker
@@ -218,13 +247,16 @@ The mod implements a comprehensive breathing technique system for custom nichiri
 - Range: 2 blocks forward from player's eye position
 
 #### Particle System Integration
+
 - **Particle filtering**: `speed_attack_sword` and `ragnaraku` animations skip automatic sword particles
 - Breathing forms control their own particle effects
 - Particles configured per-sword in `SwordParticleMapping.java`
 - Config-based particle customization supported via `particles.toml`
 
 #### Ice Breathing Second Form - Advanced Implementation
+
 Special velocity-based circular attack pattern:
+
 - **Target Detection**: Raycasts 6 blocks to find entity on crosshair
 - **Movement System**: Uses `setDeltaMovement()` for smooth circular motion (no teleportation)
 - **Rotation Control**: Player always faces circle center with calculated yaw/pitch
@@ -237,19 +269,23 @@ Special velocity-based circular attack pattern:
 - **Duration**: 5 seconds (100 ticks)
 
 ### Form Cycling System
+
 - Press **R key** to cycle through forms (configured via `ModKeyBindings`)
 - Current form index stored per-player in `PlayerBreathingData`
 - Selected form displayed in chat with color-coded message
 - Form selection persists until changed or player disconnects
 
 ### Cooldown System
+
 - Each form has individual cooldown in seconds
 - Cooldowns displayed on hotbar as item cooldown overlay
 - Cooldown message shown when attempting to use ability on cooldown
 - Cooldowns are per-item (all swords of same type share cooldown)
 
 ### Particle Configuration
+
 Breathing sword particles are configured in:
+
 - `SwordParticleMapping.java` - hardcoded fallback mappings
 - `config/kimetsunoyaibamultiplayer/particles.toml` - runtime particle customization
 - Ice swords return `DustParticleOptions` with light blue color
@@ -258,6 +294,7 @@ Breathing sword particles are configured in:
 ### Best Practices
 
 1. **Adding New Breathing Forms**:
+
    ```java
    public static BreathingForm newForm() {
        return new BreathingForm(
@@ -312,22 +349,26 @@ Breathing sword particles are configured in:
 2. **Animation System - CRITICAL LEARNINGS**:
 
    **Multi-Layer Animation System**:
+
    - **Default layer (3000)**: Used for base ability animations (e.g., `ragnaraku1` for form startup)
    - **Overlay layer (4000)**: Used for attack animations during abilities (prevents overwriting base animation)
    - Use `AnimationHelper.playAnimationOnLayer(player, animName, maxTicks, speed, layer)` for full control
 
    **Animation Speed Control**:
+
    - Speed parameter: `1.0f` = normal, `2.0f` = double speed, `3.0f` = triple speed, `0.5f` = half speed
    - Implemented via `SpeedControlledAnimation` wrapper class
    - Example: `AnimationHelper.playAnimationOnLayer(player, "sword_to_left", 10, 2.0f, 4000)`
 
    **Attack Animation Suppression**:
+
    - Breathing forms set `cancelAttackSwing` flag via capability system
    - MUST call `setCancelAttackSwing(player, false)` at start of forms with attack sequences
    - This enables `BreathingSwordAnimationHandler.onAttack()` to play animations
    - See `IceBreathingForms.java` Second Form and Seventh Form for examples
 
    **Network Synchronization**:
+
    - Breathing forms run SERVER-SIDE (abilities execute on server)
    - `AnimationHelper` automatically sends `AnimationSyncPacket` to ALL clients
    - Packet now includes speed and layer priority (added in v1.5.20+)
@@ -335,11 +376,13 @@ Breathing sword particles are configured in:
    - Local player receives their own packets to see animations during abilities
 
    **Common Animation Names**:
+
    - Attack animations: `sword_to_left`, `sword_to_right`, `sword_overhead`, `sword_to_upper`
    - Special animations: `speed_attack_sword`, `ragnaraku1`, `ragnaraku2`, `ragnaraku3`, `kamusari3`, `sword_rotate`
    - Attack animations should be limited to 10 ticks duration for responsiveness
 
 3. **Particle Spawning Patterns**:
+
    - **Forward thrust**: Use `spawnForwardThrust(serverLevel, startPos, direction, distance, particleType, count)`
    - **Circular patterns**: Use `spawnCircleParticles(serverLevel, center, radius, particleType, count)`
    - **Tornado/spiral**: Combine time-based angle changes with vertical offsets in repeating task
@@ -349,6 +392,7 @@ Breathing sword particles are configured in:
 4. **Movement & Physics - Advanced Techniques**:
 
    **MovementHelper Utilities**:
+
    - `MovementHelper.setVelocity(player, x, y, z)` - Sets velocity with server sync
    - `MovementHelper.addVelocity(player, dx, dy, dz)` - Adds to current velocity
    - `MovementHelper.setRotation(player, yaw, pitch)` - Sets rotation with ShoulderSurfing camera sync
@@ -357,6 +401,7 @@ Breathing sword particles are configured in:
    - `MovementHelper.stepUp(player, vx, vy, vz)` - Automatically climb blocks in movement direction
 
    **Circular Movement Pattern** (Ice Breathing Second Form):
+
    - Calculate angle: `double currentAngle = startAngle + (currentTick * angularVelocity * speedMultiplier)`
    - Position on circle: `MovementHelper.calculateCirclePosition(center, radius, angle)`
    - Velocity correction: Combine forward motion (70%) + position correction (30%) for smooth circular path
@@ -364,17 +409,20 @@ Breathing sword particles are configured in:
    - Decreasing radius: `radius = Math.min(Math.max(baseRadius - (tick/20), minRadius), baseRadius)`
 
    **Hovering** (Ice Breathing Third Form):
+
    - Set target height: `double targetY = player.getY() + 4.0`
    - Ascent phase: `if (currentY < targetY) { setVelocity(player, vx, 0.3, vz) }`
    - Hover phase: `else { setVelocity(player, vx, 0, vz) }` (Y velocity = 0)
    - Enable anti-gravity: `player.setNoGravity(true)` at start, `false` at end
 
    **Fast Dash with Auto-Climb** (Ice Breathing Fifth Form):
+
    - Force horizontal movement: `setVelocity(player, dashDir.x * speed, player.getDeltaMovement().y, dashDir.z * speed)`
    - Auto-climb obstacles: `MovementHelper.stepUp(player, targetX, targetY, targetZ)` each tick
    - Preserve jump/gravity: Keep original Y velocity component
 
 5. **Damage Calculation**:
+
    - **Always use DamageCalculator**: `float damage = DamageCalculator.calculateScaledDamage(player, baseDamage)`
    - This scales damage with player's attack damage attribute (including strength effects)
    - Base damage values: Light attacks (3-5), Medium (6-8), Heavy (10-12), Ultimate (15+)
@@ -383,6 +431,7 @@ Breathing sword particles are configured in:
 6. **Task Scheduling Patterns**:
 
    **One-time Delayed Action**:
+
    ```java
    AbilityScheduler.scheduleOnce(player, () -> {
        // Execute after delay
@@ -390,6 +439,7 @@ Breathing sword particles are configured in:
    ```
 
    **Repeating Action Pattern** (RECOMMENDED):
+
    ```java
    final int[] tickCounter = {0};
    AbilityScheduler.scheduleRepeating(player, () -> {
@@ -408,6 +458,7 @@ Breathing sword particles are configured in:
    ```
 
    **Multi-Phase Ability** (initial action + delayed barrage):
+
    ```java
    // Phase 1: Immediate effect
    AnimationHelper.playAnimation(player, "thrust_anim");
@@ -422,6 +473,7 @@ Breathing sword particles are configured in:
    ```
 
 7. **Sound Design**:
+
    - Use `level.playSound(null, player.blockPosition(), SoundEvent, SoundSource.PLAYERS, volume, pitch)`
    - Common sounds: `SoundEvents.PLAYER_ATTACK_SWEEP`, `SoundEvents.GLASS_BREAK`, `SoundEvents.SNOW_BREAK`
    - Sound spam prevention: Play only every N attacks (e.g., `if (attackCount % 3 == 0)`)
@@ -435,6 +487,7 @@ Breathing sword particles are configured in:
    - Use `/testanim` command to verify animation sync system is working
 
 ### Testing Commands
+
 - `/testanim` - Test animation sync across multiplayer
 - `/testanimc` - Test client-side animation triggering
 - Debug logging can be enabled in config for particle and animation troubleshooting
@@ -442,7 +495,9 @@ Breathing sword particles are configured in:
 ### Mod Compatibility
 
 #### ShoulderSurfing Integration
+
 The mod includes optional integration with [ShoulderSurfing Reloaded](https://github.com/Exopandora/ShoulderSurfing) mod:
+
 - Uses reflection to detect if ShoulderSurfing is loaded (no hard dependency required)
 - When present, automatically syncs camera rotation during breathing technique abilities
 - Falls back gracefully if ShoulderSurfing is not installed
@@ -454,6 +509,7 @@ The mod includes optional integration with [ShoulderSurfing Reloaded](https://gi
 ### Problem Overview
 
 The mod experienced persistent crashes with the error:
+
 ```
 java.lang.LinkageError: loader constraint violation: loader 'MC-BOOTSTRAP' wants to load interface org.apache.logging.log4j.util.MessageSupplier
 ```
@@ -463,12 +519,14 @@ This crash occurred specifically when attacking living entities (zombies, etc.) 
 ### Root Causes
 
 1. **Infinite Event Recursion**
+
    - The `onLivingAttack` event handler was calling `entity.hurt()` to apply AOE damage
    - Each `hurt()` call triggered another `LivingAttackEvent`
    - This created infinite recursion: LivingAttackEvent → hurt() → LivingAttackEvent → hurt() → ...
    - Eventually an exception would be thrown due to stack overflow or other issues
 
 2. **log4j ClassLoader Conflicts**
+
    - When the exception occurred, Forge's EventBus tried to log it using log4j
    - Multiple mods/dependencies had bundled their own log4j classes
    - This created a classloader conflict where two versions of log4j's `MessageSupplier` interface existed
@@ -583,6 +641,7 @@ When adding new features, follow these rules to avoid similar crashes:
 #### Rule 1: Never Call hurt() Inside LivingAttackEvent Without Recursion Protection
 
 **BAD:**
+
 ```java
 @SubscribeEvent
 public void onLivingAttack(LivingAttackEvent event) {
@@ -592,6 +651,7 @@ public void onLivingAttack(LivingAttackEvent event) {
 ```
 
 **GOOD:**
+
 ```java
 @SubscribeEvent
 public void onLivingAttack(LivingAttackEvent event) {
@@ -609,6 +669,7 @@ public void onLivingAttack(LivingAttackEvent event) {
 #### Rule 2: Always Wrap Event Handlers in Try-Catch
 
 **BAD:**
+
 ```java
 @SubscribeEvent
 public void onSomeEvent(SomeEvent event) {
@@ -618,6 +679,7 @@ public void onSomeEvent(SomeEvent event) {
 ```
 
 **GOOD:**
+
 ```java
 @SubscribeEvent
 public void onSomeEvent(SomeEvent event) {
@@ -632,6 +694,7 @@ public void onSomeEvent(SomeEvent event) {
 #### Rule 3: Never Use log4j Logging in Exception Handlers
 
 **BAD:**
+
 ```java
 try {
     // code
@@ -641,6 +704,7 @@ try {
 ```
 
 **GOOD:**
+
 ```java
 try {
     // code
@@ -665,6 +729,7 @@ implementation(fg.deobf("some.dependency:artifact:version")) {
 #### Rule 5: Be Careful with Event Chains
 
 Common event chains that can cause recursion:
+
 - `LivingAttackEvent` → `hurt()` → `LivingAttackEvent`
 - `LivingHurtEvent` → `hurt()` → `LivingHurtEvent`
 - `PlayerInteractEvent` → `useOn()` → `PlayerInteractEvent`
@@ -677,18 +742,22 @@ Common event chains that can cause recursion:
 If you encounter a log4j LinkageError in the future:
 
 1. **Check the stack trace** for the actual source of the exception (before the LinkageError)
+
    - Look for the deepest call from your mod's code
    - The crash report shows "Suspected Mod" which helps identify the source
 
 2. **Look for event recursion**
+
    - Search for patterns like: Event handler → action → same event → handler → action...
    - Add debug logging to see if handlers are being called repeatedly
 
 3. **Add recursion protection**
+
    - Use ThreadLocal flags to track when you're already processing an event
    - Always use try-finally to ensure flags are cleared
 
 4. **Replace log4j calls**
+
    - In the problematic code path, replace `Log.*()` calls with `System.out.println()`
    - Especially in exception handlers
 

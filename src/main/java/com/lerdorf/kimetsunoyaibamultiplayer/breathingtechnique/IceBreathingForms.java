@@ -31,13 +31,36 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Implementation of all Ice Breathing forms (6 forms + 7th for Hanazawa)
+ * Implementation of all Ice Breathing forms (6 forms + 7th for Shimizu)
  */
 public class IceBreathingForms {
+
+	/**
+	 * Unified animation helper that works with both players and GeckoLib entities
+	 */
+	private static void playEntityAnimation(LivingEntity entity, String animationName) {
+		if (entity instanceof Player player) {
+			AnimationHelper.playAnimation(player, animationName);
+		} else if (entity instanceof BreathingSlayerEntity slayer) {
+			slayer.playGeckoAnimation(animationName, 20);
+		}
+	}
+
+	/**
+	 * Unified animation helper with layer and speed control
+	 */
+	private static void playEntityAnimationOnLayer(LivingEntity entity, String animationName, int maxTicks, float speed, int layer) {
+		if (entity instanceof Player player) {
+			AnimationHelper.playAnimationOnLayer(player, animationName, maxTicks, speed, layer);
+		} else if (entity instanceof BreathingSlayerEntity slayer) {
+			slayer.playGeckoAnimation(animationName, maxTicks);
+		}
+	}
 
 	/**
 	 * Helper method to set cancel attack swing state and sync to client
@@ -70,7 +93,7 @@ public class IceBreathingForms {
 																											// cooldown
 				(entity, level) -> {
 					// Play animation
-					AnimationHelper.playAnimation(entity, "speed_attack_sword");
+					playEntityAnimation(entity, "speed_attack_sword");
 
 					// Prevent the attacks from triggering unwanted sword swings and particles (like
 					// from the left click attacks)
@@ -134,7 +157,7 @@ public class IceBreathingForms {
 						});
 					}
 
-					AnimationHelper.playAnimationOnLayer(entity, "ragnaraku1", 10, 1.0f, 3000);
+					playEntityAnimationOnLayer(entity, "ragnaraku1", 10, 1.0f, 3000);
 
 					// Find target - check for entity within 6 blocks on crosshair
 					Vec3 lookVec = entity.getLookAngle();
@@ -283,7 +306,7 @@ public class IceBreathingForms {
 
 								// Use layer 4000 (higher priority) so attack animations overlay on top of
 								// ability animation
-								AnimationHelper.playAnimationOnLayer(entity, anim, 10, 2.0f, 4000);
+								playEntityAnimationOnLayer(entity, anim, 10, 2.0f, 4000);
 
 								AABB attackBox = AABB.of(BoundingBox.fromCorners(
 										new Vec3i((int) (currentCenter.x - circleRadius),
@@ -337,7 +360,7 @@ public class IceBreathingForms {
 					// Initial leap
 					MovementHelper.addVelocity(entity, 0, 1.2, 0);
 
-					AnimationHelper.playAnimation(entity, "ragnaraku2"); // raise sword
+					playEntityAnimation(entity, "ragnaraku2"); // raise sword
 
 					entity.setNoGravity(true);
 
@@ -372,7 +395,7 @@ public class IceBreathingForms {
 							// "sword_to_right";
 							String anim = "sword_overhead";
 							// Use layer 4000 so attacks show without being overridden
-							AnimationHelper.playAnimationOnLayer(entity, anim, 10, 1.0f, 4000);
+							playEntityAnimationOnLayer(entity, anim, 10, 1.0f, 4000);
 
 							Vec3 pos = entity.getEyePosition().add(entity.getLookAngle().normalize().scale(3));
 							AABB area = new AABB(pos.x - 4, entity.getY() - 8, pos.z - 4, pos.x + 4, entity.getY(),
@@ -427,7 +450,7 @@ public class IceBreathingForms {
 							columnPos[1] = (level.random.nextDouble() - 0.5) * 4;
 							String anim = "sword_to_upper";
 							// Use layer 4000 so attacks show without being overridden
-							AnimationHelper.playAnimationOnLayer(entity, anim, 10, 1.5f, 4000);
+							playEntityAnimationOnLayer(entity, anim, 10, 1.5f, 4000);
 
 							if (level instanceof ServerLevel serverLevel) {
 
@@ -467,7 +490,7 @@ public class IceBreathingForms {
 		return new BreathingForm("Fourth Form: Silent Avalanche", "Dash forward with incredible speed", 4, // 4 second
 																											// cooldown
 				(entity, level) -> {
-					AnimationHelper.playAnimation(entity, "kamusari3");
+					playEntityAnimation(entity, "kamusari3");
 
 					// Find safe teleport position up to 40 blocks away
 					Vec3 lookVec = entity.getLookAngle();
@@ -546,7 +569,7 @@ public class IceBreathingForms {
 		return new BreathingForm("Fifth Form: Cold Blue Assault", "Swift dash with continuous slashes", 6, // 5 second
 																											// cooldown
 				(entity, level) -> {
-					AnimationHelper.playAnimation(entity, "kamusari3");
+					playEntityAnimation(entity, "kamusari3");
 					entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 3));
 
 					//final Vec3 dashDirection = entity.getLookAngle();
@@ -579,7 +602,7 @@ public class IceBreathingForms {
 
 						// Attack every attackInterval ticks
 						if (currentTick % attackInterval == 0) {
-							AnimationHelper.playAnimation(entity, "sword_rotate");
+							playEntityAnimation(entity, "sword_rotate");
 
 							Vec3 attackPos = entity.position().add(entity.getLookAngle().scale(2.0));
 							AABB hitBox = new AABB(attackPos, attackPos).inflate(2.0);
@@ -620,7 +643,7 @@ public class IceBreathingForms {
 																											// cooldown
 				(entity, level) -> {
 					// Part 1: Jump up with ragnaraku1
-					AnimationHelper.playAnimation(entity, "ragnaraku1");
+					playEntityAnimation(entity, "ragnaraku1");
 
 					Vec3 lookVec = entity.getLookAngle();
 					entity.setDeltaMovement(lookVec.scale(0.5).add(0, 0.8, 0));
@@ -636,7 +659,7 @@ public class IceBreathingForms {
 
 					// Part 2: After 10 ticks, do the AOE slash with sword_rotate
 					AbilityScheduler.scheduleOnce(entity, () -> {
-						AnimationHelper.playAnimation(entity, "sword_rotate");
+						playEntityAnimation(entity, "sword_rotate");
 
 						// Large AOE damage around entity
 						AABB area = entity.getBoundingBox().inflate(5.0);
@@ -675,7 +698,7 @@ public class IceBreathingForms {
 	}
 
 	/**
-	 * Seventh Form: Icicle Claws (Hanazawa's sword only) Thrust that blinds, then 5
+	 * Seventh Form: Icicle Claws (Shimizu's sword only) Thrust that blinds, then 5
 	 * seconds of ultra-fast attacks (10 attacks/second)
 	 */
 	public static BreathingForm seventhForm() {
@@ -686,7 +709,7 @@ public class IceBreathingForms {
 					setCancelAttackSwing(entity, false);
 
 					// Part 1: Initial thrust with blinding effect
-					AnimationHelper.playAnimation(entity, "speed_attack_sword");
+					playEntityAnimation(entity, "speed_attack_sword");
 
 					// Launch entity forward slightly
 					Vec3 lookVec = entity.getLookAngle();
@@ -739,7 +762,7 @@ public class IceBreathingForms {
 							}
 
 							// Use layer 4000 with 3x speed for ultra-fast attacks
-							AnimationHelper.playAnimationOnLayer(entity, animations[animIndex], 10, 3.0f, 4000);
+							playEntityAnimationOnLayer(entity, animations[animIndex], 10, 3.0f, 4000);
 
 							// Large AOE in front of entity
 
@@ -880,7 +903,7 @@ public class IceBreathingForms {
 	}
 
 	/**
-	 * Create Ice Breathing with 7th form for Hanazawa's sword
+	 * Create Ice Breathing with 7th form for Shimizu's sword
 	 */
 	public static BreathingTechnique createIceBreathingWithSeventh() {
 		List<BreathingForm> forms = new ArrayList<>();

@@ -1,30 +1,22 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
 import com.mojang.logging.LogUtils;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.ISwordWielderData;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordWielderData;
+import com.lerdorf.kimetsunoyaibamultiplayer.capability.ISwordWielderData;
+import com.lerdorf.kimetsunoyaibamultiplayer.capability.SwordWielderData;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientCommandHandler;
-import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimationCommand;
 import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestParticlesCommand;
 import com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugParticlesCommand;
 import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimCommand;
 import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestCrowQuestCommand;
-import com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugCrowCommand;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
-import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.proxy.IClientProxy;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -140,13 +132,13 @@ public class KimetsunoyaibaMultiplayer
     public void onRegisterCommands(RegisterCommandsEvent event)
     {
         Log.info("Registering test commands");
-        TestAnimationCommand.register(event.getDispatcher());
+        // Only register client-safe commands on the server
+        // TestAnimationCommand and DebugCrowCommand have client-only imports
+        // and should only be registered client-side via ClientCommandHandler
         TestParticlesCommand.register(event.getDispatcher());
         DebugParticlesCommand.register(event.getDispatcher());
         TestAnimCommand.register(event.getDispatcher());
         TestCrowQuestCommand.register(event.getDispatcher());
-        DebugCrowCommand.register(event.getDispatcher());
-        //com.lerdorf.kimetsunoyaibamultiplayer.commands.TestCrowRenderCommand.register(event.getDispatcher());
     }
 
     // Prevent infinite recursion when AOE attacks trigger more events
@@ -232,10 +224,10 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.client.IceSlayerRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.FROST_SLAYER.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.client.FrostSlayerRenderer::new);
-            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.HIORI.get(),
-                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.HioriRenderer::new);
-            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.HANAZAWA.get(),
-                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.HanazawaRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KOMOREBI.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KomorebiRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SHIMIZU.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.ShimizuRenderer::new);
             if (Config.logDebug)
             Log.info("Registered breathing slayer entity renderers");
         }
@@ -244,6 +236,9 @@ public class KimetsunoyaibaMultiplayer
     @Mod.EventBusSubscriber(modid = MODID, value = Dist.CLIENT)
     public static class ClientForgeEvents
     {
+        // Client-only imports (safe inside Dist.CLIENT annotated class)
+        // These are imported here to avoid loading client classes on dedicated server
+
         private static int debugTickCounter = 0;
 
         @SubscribeEvent
@@ -254,14 +249,14 @@ public class KimetsunoyaibaMultiplayer
                 if (Config.logDebug && debugTickCounter % 100 == 0) { // Log every 5 seconds
                     Log.info("Client tick event handler is working, tick: {}", debugTickCounter);
                 }
-                AnimationTracker.tick();
-                CrowQuestMarkerHandler.clientTick();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.tick();
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandlerClient.clientTick();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.tick();
 
                 // Update gun animations for local player
-                if (Minecraft.getInstance().player != null) {
+                if (net.minecraft.client.Minecraft.getInstance().player != null) {
                     com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.updatePlayerGunAnimation(
-                            Minecraft.getInstance().player);
+                            net.minecraft.client.Minecraft.getInstance().player);
                 }
 
                 // Update gun animations for all nearby entities (including mobs)
@@ -272,10 +267,10 @@ public class KimetsunoyaibaMultiplayer
         @SubscribeEvent
         public static void onPlayerLoggedOut(TickEvent.ClientTickEvent event)
         {
-            if (Minecraft.getInstance().level == null && event.phase == TickEvent.Phase.END) {
-                AnimationTracker.clearTrackedAnimations();
-                AnimationSyncHandler.clearAllAnimations();
-                CrowQuestMarkerHandler.clearAllMarkers();
+            if (net.minecraft.client.Minecraft.getInstance().level == null && event.phase == TickEvent.Phase.END) {
+                com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.clearTrackedAnimations();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler.clearAllAnimations();
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandlerClient.clearAllMarkers();
                 CrowEnhancementHandler.clearFlyingCrows();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.CrowAnimatableWrapper.clearAll();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.clearAll();
@@ -288,7 +283,7 @@ public class KimetsunoyaibaMultiplayer
         @SubscribeEvent
         public static void onRegisterClientCommands(net.minecraftforge.client.event.RegisterClientCommandsEvent event)
         {
-            ClientCommandHandler.onRegisterClientCommands(event);
+            com.lerdorf.kimetsunoyaibamultiplayer.client.ClientCommandHandler.onRegisterClientCommands(event);
         }
 
         @SubscribeEvent
@@ -301,7 +296,7 @@ public class KimetsunoyaibaMultiplayer
                     return; // Skip server-side events
                 }
 
-                Minecraft mc = Minecraft.getInstance();
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
                 if (mc.player == null || mc.level == null) {
                     return;
                 }
@@ -333,7 +328,7 @@ public class KimetsunoyaibaMultiplayer
                     }
 
                     // Check for breathing sword attacks (entity hit)
-                    if (attacker instanceof AbstractClientPlayer clientAttacker) {
+                    if (attacker instanceof net.minecraft.client.player.AbstractClientPlayer clientAttacker) {
                         // Play attack animation for breathing swords (both our mod and kimetsunoyaiba)
                         String animationName = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(clientAttacker);
 
@@ -360,7 +355,7 @@ public class KimetsunoyaibaMultiplayer
         {
             // Monitor chat for crow quest messages
             String message = event.getMessage().getString();
-            CrowQuestMarkerHandler.onChatMessage(message);
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandlerClient.onChatMessage(message);
         }
 
         /**
@@ -376,7 +371,7 @@ public class KimetsunoyaibaMultiplayer
                     return;
                 }
 
-                Minecraft mc = Minecraft.getInstance();
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
                 if (mc.player == null || mc.level == null) {
                     return;
                 }

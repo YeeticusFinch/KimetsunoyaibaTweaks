@@ -8,12 +8,11 @@ import dev.kosmx.playerAnim.api.layered.IAnimation;
 import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
 import dev.kosmx.playerAnim.api.layered.ModifierLayer;
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
-import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.fml.DistExecutor;
 
 /**
  * Helper class for playing animations on players and entities
@@ -97,12 +96,14 @@ public class AnimationHelper {
         }
 
         // CLIENT SIDE: Play locally
-        if (player.level().isClientSide && player instanceof AbstractClientPlayer clientPlayer) {
-            ModifierLayer<IAnimation> layer = playAnimationOnPlayer(clientPlayer, animation, speed, layerPriority);
+        if (player.level().isClientSide) {
+            DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
+                ModifierLayer<IAnimation> layer = com.lerdorf.kimetsunoyaibamultiplayer.client.ClientAnimationHelper.playAnimationOnPlayer(player, animation, speed, layerPriority);
 
-            if (maxDurationTicks > 0 && layer != null) {
-                scheduleAnimationCancellation(clientPlayer, layer, maxDurationTicks);
-            }
+                if (maxDurationTicks > 0 && layer != null) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.ClientAnimationHelper.scheduleAnimationCancellation(layer, maxDurationTicks);
+                }
+            });
 
             // Send to server so other players see it
             AnimationSyncPacket packet = new AnimationSyncPacket(
@@ -166,41 +167,4 @@ public class AnimationHelper {
         return null;
     }
 
-    private static ModifierLayer<IAnimation> playAnimationOnPlayer(AbstractClientPlayer player, KeyframeAnimation animation, float speed, int layerPriority) {
-        try {
-            AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
-            if (animationStack != null) {
-
-            	// Remove old layer first (only for the same priority)
-                animationStack.removeLayer(layerPriority);
-
-                KeyframeAnimationPlayer animPlayer = Math.abs(speed-1) > 0.01 ? new SpeedControlledAnimation(animation, speed) : new KeyframeAnimationPlayer(animation);
-                ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
-                modifierLayer.setAnimation(animPlayer);
-                animationStack.addAnimLayer(layerPriority, modifierLayer);
-                return modifierLayer;
-            }
-        } catch (Exception e) {
-            // Animation failed, continue without it
-        }
-        return null;
-    }
-
-    /**
-     * Schedule animation cancellation after a delay
-     * @param player The player
-     * @param layer The animation layer to cancel
-     * @param delayTicks Delay in ticks before cancellation
-     */
-    private static void scheduleAnimationCancellation(AbstractClientPlayer player, ModifierLayer<IAnimation> layer, int delayTicks) {
-        new Thread(() -> {
-            try {
-                Thread.sleep(delayTicks * 50); // 50ms per tick
-                // Stop the animation by setting it to null
-                layer.setAnimation(null);
-            } catch (InterruptedException e) {
-                // Cancellation interrupted
-            }
-        }).start();
-    }
 }

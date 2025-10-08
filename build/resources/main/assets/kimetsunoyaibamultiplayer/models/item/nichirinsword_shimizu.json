@@ -1,0 +1,8 @@
+{
+  "parent": "kimetsunoyaibamultiplayer:custom/nitirintou_shimizu",
+  "textures": {
+    "0": "kimetsunoyaibamultiplayer:block/nitirintou_shimizu",
+    "2": "kimetsunoyaibamultiplayer:block/akkimessatsu_white",
+    "particle": "kimetsunoyaibamultiplayer:item/icon_sword"
+  }
+}

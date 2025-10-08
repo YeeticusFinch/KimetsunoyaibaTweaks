@@ -46,8 +46,8 @@ public class SwordParticleMapping {
         // Our mod's breathing swords - will use custom logic in getParticleForSword
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_frost", ResourceLocation.fromNamespaceAndPath("minecraft", "snowflake"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_ice", ResourceLocation.fromNamespaceAndPath("minecraft", "dust")); // Light blue dust
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_hanazawa", ResourceLocation.fromNamespaceAndPath("minecraft", "dust")); // Light blue dust
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_hiori", ResourceLocation.fromNamespaceAndPath("minecraft", "snowflake"));
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_shimizu", ResourceLocation.fromNamespaceAndPath("minecraft", "dust")); // Light blue dust
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_komorebi", ResourceLocation.fromNamespaceAndPath("minecraft", "snowflake"));
     }
 
     /**
@@ -98,11 +98,11 @@ public class SwordParticleMapping {
 
         // Special handling for our mod's ice breathing swords - return light blue dust
         if (itemId.getNamespace().equals("kimetsunoyaibamultiplayer")) {
-            if (swordType.equals("nichirinsword_ice") || swordType.equals("nichirinsword_hanazawa")) {
+            if (swordType.equals("nichirinsword_ice") || swordType.equals("nichirinsword_shimizu")) {
                 // Light blue color (RGB: 0.5, 0.8, 1.0)
                 Vector3f lightBlue = new Vector3f(0.5f, 0.8f, 1.0f);
                 return new DustParticleOptions(lightBlue, 1.0f);
-            } else if (swordType.equals("nichirinsword_frost") || swordType.equals("nichirinsword_hiori")) {
+            } else if (swordType.equals("nichirinsword_frost") || swordType.equals("nichirinsword_komorebi")) {
                 return ParticleTypes.SNOWFLAKE;
             }
         }
