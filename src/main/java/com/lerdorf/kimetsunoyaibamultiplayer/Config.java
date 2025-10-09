@@ -34,6 +34,31 @@ public class Config
             .comment("Enable on-screen debug information display")
             .define("on-screen-debug", false);
 
+    // Breathing form display settings
+    private static final ForgeConfigSpec.BooleanValue SHOW_BREATHING_DISPLAY = BUILDER
+            .comment("Show on-screen breathing form display when holding a nichirin sword")
+            .define("show-breathing-display", true);
+
+    private static final ForgeConfigSpec.EnumValue<DisplayPosition> BREATHING_DISPLAY_POSITION = BUILDER
+            .comment("Position of the breathing form display on screen: TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CENTER_BELOW_CROSSHAIR")
+            .defineEnum("breathing-display-position", DisplayPosition.TOP_LEFT);
+
+    private static final ForgeConfigSpec.DoubleValue BREATHING_DISPLAY_SCALE = BUILDER
+            .comment("Scale/size of the breathing form display text (0.5 = half size, 1.0 = normal, 2.0 = double size)")
+            .defineInRange("breathing-display-scale", 0.75, 0.1, 5.0);
+
+    private static final ForgeConfigSpec.BooleanValue SUPPRESS_FORM_CYCLE_CHAT = BUILDER
+            .comment("Suppress chat messages when cycling breathing forms with R key")
+            .define("suppress-form-cycle-chat", false);
+
+    public enum DisplayPosition {
+        TOP_LEFT,
+        TOP_RIGHT,
+        BOTTOM_LEFT,
+        BOTTOM_RIGHT,
+        CENTER_BELOW_CROSSHAIR
+    }
+
     static {
         BUILDER.pop(); // common
     }
@@ -45,6 +70,10 @@ public class Config
     public static boolean logInfo;
     public static boolean logError;
     public static boolean onScreenDebug;
+    public static boolean showBreathingDisplay;
+    public static DisplayPosition breathingDisplayPosition;
+    public static double breathingDisplayScale;
+    public static boolean suppressFormCycleChat;
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event)
@@ -56,7 +85,13 @@ public class Config
         logInfo = LOG_INFO.get();
         logError = LOG_ERROR.get();
         onScreenDebug = ON_SCREEN_DEBUG.get();
+        showBreathingDisplay = SHOW_BREATHING_DISPLAY.get();
+        breathingDisplayPosition = BREATHING_DISPLAY_POSITION.get();
+        breathingDisplayScale = BREATHING_DISPLAY_SCALE.get();
+        suppressFormCycleChat = SUPPRESS_FORM_CYCLE_CHAT.get();
         if (Config.logDebug)
-        System.out.println("Common config loaded: logDebug=" + logDebug + ", onScreenDebug=" + onScreenDebug);
+        System.out.println("Common config loaded: logDebug=" + logDebug + ", onScreenDebug=" + onScreenDebug +
+                ", showBreathingDisplay=" + showBreathingDisplay + ", breathingDisplayPosition=" + breathingDisplayPosition +
+                ", breathingDisplayScale=" + breathingDisplayScale + ", suppressFormCycleChat=" + suppressFormCycleChat);
     }
 }

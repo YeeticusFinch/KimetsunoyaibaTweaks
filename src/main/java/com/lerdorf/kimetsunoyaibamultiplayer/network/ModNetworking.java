@@ -67,6 +67,14 @@ public class ModNetworking {
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket::handle)
                 .add();
+
+        // Register breathing form cycle packet (client -> server)
+        int cycleBreathingFormPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBreathingFormPacket.class, cycleBreathingFormPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBreathingFormPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBreathingFormPacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBreathingFormPacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

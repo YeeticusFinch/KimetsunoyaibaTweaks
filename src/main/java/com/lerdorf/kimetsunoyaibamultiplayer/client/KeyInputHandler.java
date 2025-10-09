@@ -29,7 +29,9 @@ public class KeyInputHandler {
 
                 // Check if holding a breathing sword
                 if (mainHandItem.getItem() instanceof BreathingSwordItem breathingSword) {
-                    breathingSword.cycleForm(mc.player);
+                    // Check if shift is held for backward cycling
+                    boolean shiftHeld = mc.options.keyShift.isDown();
+                    breathingSword.cycleForm(mc.player, shiftHeld);
                 }
             }
         } catch (Exception e) {

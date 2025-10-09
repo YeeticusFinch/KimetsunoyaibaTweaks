@@ -241,6 +241,11 @@ public class KimetsunoyaibaMultiplayer
 
         private static int debugTickCounter = 0;
 
+        // Register breathing form cycle handler
+        static {
+            MinecraftForge.EVENT_BUS.register(com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormCycleHandler.class);
+        }
+
         @SubscribeEvent
         public static void onClientTick(TickEvent.ClientTickEvent event)
         {
@@ -275,6 +280,7 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.client.CrowAnimatableWrapper.clearAll();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.clearAll();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.clearAll();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.clearAll();
                 // Don't clear mirrors from client side - they are server-side entities
                 // They will be cleared when the server shuts down or dimension unloads
             }
@@ -356,6 +362,24 @@ public class KimetsunoyaibaMultiplayer
             // Monitor chat for crow quest messages
             String message = event.getMessage().getString();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandlerClient.onChatMessage(message);
+
+            // Suppress breathing form cycle chat messages if config is enabled
+            if (Config.suppressFormCycleChat) {
+                // Check if this is a breathing form cycle message
+                // These messages typically contain form names and are sent when pressing R
+                if (com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormChatFilter.shouldSuppressMessage(message)) {
+                    event.setCanceled(true);
+                    if (Config.logDebug) {
+                        Log.debug("Suppressed breathing form cycle chat message: " + message);
+                    }
+                }
+            }
+        }
+
+        @SubscribeEvent
+        public static void onRenderGuiOverlay(net.minecraftforge.client.event.RenderGuiOverlayEvent.Post event)
+        {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingDisplayOverlay.onRenderGuiOverlay(event);
         }
 
         /**

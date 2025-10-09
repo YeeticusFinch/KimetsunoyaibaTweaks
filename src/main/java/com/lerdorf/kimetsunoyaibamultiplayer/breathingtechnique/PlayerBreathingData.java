@@ -33,6 +33,10 @@ public class PlayerBreathingData {
         public void cycleForm(int maxForms) {
             currentFormIndex = (currentFormIndex + 1) % maxForms;
         }
+
+        public void cycleFormBackward(int maxForms) {
+            currentFormIndex = (currentFormIndex - 1 + maxForms) % maxForms;
+        }
     }
 
     public static PlayerData getOrCreate(UUID playerId) {

@@ -99,19 +99,34 @@ public abstract class BreathingSwordItem extends SwordItem {
      * Cycle to the next form (called when R key is pressed)
      */
     public void cycleForm(Player player) {
+        cycleForm(player, false);
+    }
+
+    /**
+     * Cycle to the next or previous form
+     * @param player The player cycling forms
+     * @param backward If true, cycle backward; if false, cycle forward
+     */
+    public void cycleForm(Player player, boolean backward) {
         BreathingTechnique technique = getBreathingTechnique();
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player.getUUID());
 
-        data.cycleForm(technique.getFormCount());
+        if (backward) {
+            data.cycleFormBackward(technique.getFormCount());
+        } else {
+            data.cycleForm(technique.getFormCount());
+        }
 
         int newIndex = data.getCurrentFormIndex();
         BreathingForm form = technique.getForm(newIndex);
 
         if (form != null) {
-            // Send chat message about the new form
-            player.sendSystemMessage(
-                Component.literal("§ " + technique.getName() + ": §b" + form.getName())
-            );
+            // Send chat message about the new form (unless suppressed by config)
+            if (!com.lerdorf.kimetsunoyaibamultiplayer.Config.suppressFormCycleChat) {
+                player.sendSystemMessage(
+                    Component.literal("§6" + technique.getName() + " §7- §b" + form.getName())
+                );
+            }
         }
     }
 }
