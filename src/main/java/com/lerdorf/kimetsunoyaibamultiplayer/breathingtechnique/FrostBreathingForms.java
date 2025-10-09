@@ -183,13 +183,13 @@ public class FrostBreathingForms {
     }
 
     /**
-     * Third Form: Hoarfrost Drift
-     * Swerving forward movement with spinning blade, multiple attacks
+     * Third Form: Icicle through Snowfall
+     * Leap up, hover for a bit with lots of snowfall, then shoot forward with a powerful stab
      */
     public static BreathingForm thirdForm() {
         return new BreathingForm(
-            "Third Form: Hoarfrost Drift",
-            "Move in a wave with spinning blade",
+            "Third Form: Icicle through Snowfall",
+            "Gentle snowfall followed by a quick and painless stab",
             6, // 6 second cooldown
             (entity, level) -> {
                 playEntityAnimation(entity, "sword_rotate");
@@ -355,8 +355,8 @@ public class FrostBreathingForms {
         for (LivingEntity target : targets) {
             float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
             Damager.hurt(entity, target, damage);
-            Damager.hurt(entity, target, damage);
-            Damager.hurt(entity, target, damage);
+            ///Damager.hurt(entity, target, damage);
+            ///Damager.hurt(entity, target, damage);
         }
 
         if (level instanceof ServerLevel serverLevel) {
