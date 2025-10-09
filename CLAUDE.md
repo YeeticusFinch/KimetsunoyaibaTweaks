@@ -780,3 +780,362 @@ If you encounter a log4j LinkageError in the future:
 - **v1.5.16** - Disabled ShoulderSurfing integration
 - **v1.5.17** - Disabled log4j in Log class
 - **v1.5.18** - **FINAL FIX**: Added event recursion protection with ThreadLocal flag
+
+## Critical: Dedicated Server Compatibility
+
+### Problem Overview
+
+Minecraft Forge mods must be compatible with both **physical clients** and **dedicated servers**. The dedicated server does NOT have access to client-only classes like `Minecraft`, `ClientLevel`, `LocalPlayer`, `Screen`, etc. If any server-side code tries to load these classes, the server will crash during startup with:
+
+```
+java.lang.RuntimeException: Attempted to load class net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER
+```
+
+This is enforced by Forge's **RuntimeDistCleaner** which prevents loading client classes on servers.
+
+### Root Causes
+
+The mod experienced multiple server crashes that were fixed through systematic elimination of client-only code from server-accessible paths:
+
+1. **Static Field Initialization Loading Client Classes**
+   - Using `DistExecutor.safeRunForDist()` in static fields loads classes at compile time
+   - This loads the client proxy class even on dedicated servers
+
+2. **Import Statements Load Classes**
+   - ANY import of a client-only class causes the JVM to load that class
+   - Even if the imported class is never used in the code
+   - Example: `import net.minecraft.client.Minecraft;` will crash the server
+
+3. **Client-Only Classes in Non-Client Packages**
+   - Classes outside the `client` package are not protected by RuntimeDistCleaner
+   - Particle handlers, animation helpers, etc. must be in `client` package if they use client classes
+
+4. **Command Registration on Wrong Side**
+   - Commands using client-only code must be registered via `RegisterClientCommandsEvent`
+   - Server-side command registration will load the command class on the server
+
+5. **Network Packet Handlers**
+   - Packet handlers must use `DistExecutor.unsafeRunWhenOn()` to conditionally execute client code
+   - Client imports in packet classes will crash the server
+
+### Solutions Implemented
+
+#### 1. Remove Static CLIENT_PROXY Field
+
+**BAD** (KimetsunoyaibaMultiplayer.java):
+```java
+// This loads ClientProxy class on server!
+public static final IClientProxy CLIENT_PROXY = DistExecutor.safeRunForDist(
+    () -> ClientProxy::new,
+    () -> ServerProxy::new
+);
+```
+
+**GOOD**:
+```java
+// Remove static proxy field entirely
+// Use DistExecutor.unsafeRunWhenOn() at call sites instead
+```
+
+#### 2. Remove All Client Imports from Server-Accessible Classes
+
+**BAD** (Any non-client class):
+```java
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.multiplayer.ClientLevel;
+```
+
+**GOOD**:
+```java
+// No client imports in server-accessible classes
+// Use fully qualified names inside DistExecutor blocks if needed
+```
+
+**Files Fixed:**
+- `SwordWielderSyncPacket.java` - Removed `import net.minecraft.client.Minecraft`
+- `BreathingSwordSwingPacket.java` - Removed unused client imports
+- `TestAnimationCommand.java` - Removed client imports and client-only method
+- `IceBreathingForms.java` - Removed `SwordParticleHandler` import
+- `FrostBreathingForms.java` - Removed `SwordParticleHandler` import
+
+#### 3. Move Client-Only Classes to Client Package
+
+**CRITICAL**: Any class that imports or uses client-only classes MUST be in the `client` package:
+
+**BAD** (Package structure):
+```
+src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/
+├── particles/
+│   ├── BonePositionTracker.java         # Uses Minecraft client classes - WRONG PACKAGE!
+│   ├── SwordParticleHandler.java        # Uses Minecraft client classes - WRONG PACKAGE!
+│   └── SwordParticleMapping.java        # Server-safe, OK here
+```
+
+**GOOD**:
+```
+src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/
+├── client/
+│   └── particles/
+│       ├── BonePositionTracker.java     # Client-only, in client package ✓
+│       └── SwordParticleHandler.java    # Client-only, in client package ✓
+├── particles/
+│   └── SwordParticleMapping.java        # Server-safe, no client imports ✓
+```
+
+Classes moved to `client/particles/`:
+- `BonePositionTracker.java` - Uses `Minecraft`, `ClientLevel`, `LocalPlayer`
+- `SwordParticleHandler.java` - Uses `Minecraft`, `ClientLevel`
+
+#### 4. Proper Network Packet Handling
+
+Network packets must handle client-side code carefully:
+
+**BAD**:
+```java
+public boolean handle(Supplier<NetworkEvent.Context> supplier) {
+    NetworkEvent.Context ctx = supplier.get();
+    ctx.enqueueWork(() -> {
+        // Direct client code access - crashes server!
+        Minecraft mc = Minecraft.getInstance();
+        Player player = mc.level.getPlayerByUUID(playerUUID);
+    });
+}
+```
+
+**GOOD**:
+```java
+public boolean handle(Supplier<NetworkEvent.Context> supplier) {
+    NetworkEvent.Context ctx = supplier.get();
+    ctx.enqueueWork(() -> {
+        if (ctx.getDirection().getReceptionSide().isClient()) {
+            // Use DistExecutor to safely run client code
+            net.minecraftforge.api.distmarker.Dist clientDist =
+                net.minecraftforge.api.distmarker.Dist.CLIENT;
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(clientDist, () -> () -> {
+                // Client code here with fully qualified names
+                net.minecraft.client.Minecraft mc =
+                    net.minecraft.client.Minecraft.getInstance();
+                // ... client logic
+            });
+        }
+    });
+    ctx.setPacketHandled(true);
+    return true;
+}
+```
+
+**Files Fixed:**
+- `AnimationSyncPacket.java`
+- `PlayerRotationSyncPacket.java`
+- `SwordDisplaySyncPacket.java`
+- `SwordWielderSyncPacket.java`
+
+#### 5. Separate Client and Server Command Registration
+
+Commands using client-only code must be registered on client only:
+
+**BAD** (KimetsunoyaibaMultiplayer.java):
+```java
+@SubscribeEvent
+public void onRegisterCommands(RegisterCommandsEvent event) {
+    // These commands use SwordParticleHandler - crashes server!
+    TestParticlesCommand.register(event.getDispatcher());
+    DebugParticlesCommand.register(event.getDispatcher());
+}
+```
+
+**GOOD** (ClientCommandHandler.java):
+```java
+@Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MOD_ID,
+                        value = Dist.CLIENT,
+                        bus = Mod.EventBusSubscriber.Bus.FORGE)
+public class ClientCommandHandler {
+    @SubscribeEvent
+    public static void onRegisterClientCommands(RegisterClientCommandsEvent event) {
+        // Client-only commands registered here
+        TestAnimCommand.register(event.getDispatcher());
+        TestParticlesCommand.register(event.getDispatcher());
+        DebugParticlesCommand.register(event.getDispatcher());
+    }
+}
+```
+
+Commands moved to client-only registration:
+- `TestAnimCommand` - Uses animations on client
+- `TestParticlesCommand` - Uses `SwordParticleHandler`
+- `DebugParticlesCommand` - Uses `BonePositionTracker`
+
+#### 6. Client-Only Classes Must Be in Client Package
+
+Classes that MUST be in the `client` package (not accessible to server):
+
+- **Particle Handlers**: `BonePositionTracker`, `SwordParticleHandler`
+- **Animation Handlers**: `AnimationSyncHandler`, `GunAnimationHandler`, `AnimationTracker`
+- **Render Handlers**: `SwordDisplayRenderer`, `BreathingDisplayOverlay`
+- **Client Proxies**: `ClientProxy`, `ClientCommandHandler`
+- **Input Handlers**: `ModKeyBindings`, `BreathingFormCycleHandler`
+- **Any class importing**: `Minecraft`, `ClientLevel`, `LocalPlayer`, `Screen`, etc.
+
+Server-safe classes that CAN be outside `client` package:
+
+- **Items**: `BreathingSwordItem`, `NichirinSwordIceItem`, etc.
+- **Network Packets**: All packet classes (must use DistExecutor for client code)
+- **Breathing Techniques**: `BreathingForm`, `IceBreathingForms`, etc.
+- **Server Logic**: `AbilityScheduler`, `MovementHelper`, `DamageCalculator`
+- **Particle Mappings**: `SwordParticleMapping` (uses only vanilla particle types)
+
+### Prevention Guidelines
+
+#### Rule 1: Never Import Client Classes Outside Client Package
+
+**Check every non-client class for these imports:**
+```java
+import net.minecraft.client.*;              // ANY client import
+import net.minecraftforge.client.*;         // ANY client import
+```
+
+If you need client functionality, either:
+1. Move the entire class to `client` package
+2. Use `DistExecutor.unsafeRunWhenOn()` with fully qualified names
+
+#### Rule 2: Test on Dedicated Server Early and Often
+
+Don't wait until release to test on dedicated server:
+
+```bash
+# Start a test dedicated server
+./gradlew runServer
+
+# Or copy mod to actual server directory
+cp build/libs/kimetsunoyaibamultiplayer-*.jar /path/to/server/mods/
+```
+
+If the server crashes with "Attempted to load class ... for invalid dist DEDICATED_SERVER":
+1. Find the class name in the error
+2. Search your codebase for imports or references to that class
+3. Move the offending code to client package or wrap with DistExecutor
+
+#### Rule 3: Package Structure Is Critical
+
+Follow this package structure religiously:
+
+```
+src/main/java/com/yourmod/
+├── client/                    # Client-only code
+│   ├── particles/            # Client particle handlers
+│   ├── renderer/             # Renderers
+│   ├── gui/                  # GUI screens
+│   └── ClientProxy.java      # Client proxy
+├── network/                   # Network packets (server-safe with DistExecutor)
+│   └── packets/
+├── items/                     # Items (server-safe)
+├── blocks/                    # Blocks (server-safe)
+├── entities/                  # Entities (server-safe)
+└── YourMod.java              # Main mod class (server-safe)
+```
+
+#### Rule 4: Use DistExecutor Correctly
+
+**For static fields - DON'T USE safeRunForDist:**
+```java
+// BAD - loads class at compile time
+public static final IProxy PROXY = DistExecutor.safeRunForDist(
+    () -> ClientProxy::new,
+    () -> ServerProxy::new
+);
+```
+
+**For method calls - USE unsafeRunWhenOn:**
+```java
+// GOOD - only loads class on correct dist
+if (level.isClientSide) {
+    DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        // Use fully qualified names here
+        net.minecraft.client.Minecraft.getInstance().doSomething();
+    });
+}
+```
+
+#### Rule 5: Check Compiled JAR Structure
+
+After building, verify class locations:
+
+```bash
+# Extract JAR
+cd build/libs
+jar xf yourmod-*.jar
+
+# Check for client classes outside client package
+find . -name "*.class" ! -path "*/client/*" -exec javap -v {} \; | grep "minecraft/client"
+```
+
+If any non-client classes reference client classes, you have a problem.
+
+### Testing Checklist
+
+Before releasing, verify:
+
+- [ ] Build completes: `./gradlew clean build`
+- [ ] Client starts: `./gradlew runClient`
+- [ ] **Server starts**: `./gradlew runServer` (CRITICAL TEST)
+- [ ] No client imports in non-client packages
+- [ ] All particle handlers in `client/particles/`
+- [ ] All GUI code in `client/gui/`
+- [ ] Commands using client code registered via `RegisterClientCommandsEvent`
+- [ ] Network packets use `DistExecutor.unsafeRunWhenOn()` for client code
+- [ ] Test multiplayer: Run both server and client, verify sync works
+
+### Debugging Server Crashes
+
+If server crashes with client class loading error:
+
+1. **Read the error carefully** - it tells you which class it tried to load
+2. **Find ALL references** to that class in your codebase:
+   ```bash
+   grep -r "ClassName" src/main/java/
+   ```
+3. **Check imports** - even unused imports load classes
+4. **Check static fields** - these run at class load time
+5. **Move offending class** to `client` package if it needs client code
+6. **Use DistExecutor** if you need conditional client code
+7. **Rebuild and test**: `./gradlew clean build && ./gradlew runServer`
+
+### Files Modified for Dedicated Server Compatibility
+
+**Main Mod Class:**
+- `KimetsunoyaibaMultiplayer.java` - Removed CLIENT_PROXY, removed client command registration
+
+**Network Packets:**
+- `AnimationSyncPacket.java` - Added DistExecutor for client code
+- `PlayerRotationSyncPacket.java` - Added DistExecutor for client code
+- `SwordDisplaySyncPacket.java` - Added DistExecutor for client code
+- `SwordWielderSyncPacket.java` - Removed client import, added DistExecutor
+
+**Breathing Techniques:**
+- `IceBreathingForms.java` - Removed SwordParticleHandler import
+- `FrostBreathingForms.java` - Removed SwordParticleHandler import
+
+**Commands:**
+- `TestAnimationCommand.java` - Removed client imports and methods
+- Moved `TestAnimCommand`, `TestParticlesCommand`, `DebugParticlesCommand` to client-only registration
+
+**Client Package Reorganization:**
+- Moved `particles/BonePositionTracker.java` → `client/particles/BonePositionTracker.java`
+- Moved `particles/SwordParticleHandler.java` → `client/particles/SwordParticleHandler.java`
+- Updated all imports throughout codebase
+
+**Client Command Registration:**
+- `ClientCommandHandler.java` - Created to register client-only commands
+
+### Success Criteria
+
+After all fixes, the server should:
+- ✅ Start without crashes
+- ✅ Load the mod successfully
+- ✅ Accept client connections
+- ✅ Sync animations to clients
+- ✅ Handle breathing techniques server-side
+- ✅ Not attempt to load any client-only classes
+
+The key insight: **Client-only code must be in the `client` package and accessed only via DistExecutor**. Any violation of this rule will crash dedicated servers.

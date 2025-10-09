@@ -20,7 +20,11 @@
       "WebFetch(domain:mclo.gs)",
       "Bash(cat:*)",
       "Bash(bash:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(awk:*)",
+      "Bash(./gradlew.bat clean:*)",
+      "Bash(./gradlew.bat build:*)",
+      "Read(//c/Users/carlf/Downloads/Test KnY Server/**)"
     ],
     "deny": [],
     "ask": []

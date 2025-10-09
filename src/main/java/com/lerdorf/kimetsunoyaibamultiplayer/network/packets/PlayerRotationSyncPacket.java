@@ -1,6 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 import java.util.UUID;
@@ -41,10 +40,13 @@ public class PlayerRotationSyncPacket {
         ctx.enqueueWork(() -> {
             // This packet only goes from server -> client
             if (ctx.getDirection().getReceptionSide().isClient()) {
-                // Use proxy to handle client-side rotation
-                KimetsunoyaibaMultiplayer.CLIENT_PROXY.handleRotationSync(
-                    playerUUID, yaw, pitch, headYaw
-                );
+                // Use DistExecutor to safely call client-only code
+                net.minecraftforge.api.distmarker.Dist clientDist = net.minecraftforge.api.distmarker.Dist.CLIENT;
+                net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(clientDist, () -> () -> {
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.ClientProxy clientProxy =
+                        new com.lerdorf.kimetsunoyaibamultiplayer.client.ClientProxy();
+                    clientProxy.handleRotationSync(playerUUID, yaw, pitch, headYaw);
+                });
             }
         });
         ctx.setPacketHandled(true);

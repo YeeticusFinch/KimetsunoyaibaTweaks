@@ -38,6 +38,7 @@ public class GunAnimationHandler {
 
     public enum GunType {
         RIFLE("rifle"),
+        PISTOL("pistol"),
         MINIGUN("minigun"),
         NONE("none");
 
@@ -56,16 +57,26 @@ public class GunAnimationHandler {
 
     /**
      * Detect what type of gun the entity is holding
-     * NOTE: Pistol is NOT included here - pistol is handled separately
      */
     public static GunType getGunType(LivingEntity entity) {
         ItemStack mainHand = entity.getItemInHand(InteractionHand.MAIN_HAND);
-        String itemId = mainHand.getItem().toString();
+        ItemStack offHand = entity.getItemInHand(InteractionHand.OFF_HAND);
 
-        if (itemId.contains("rifle")) {
+        String mainItemId = mainHand.getItem().toString();
+        String offItemId = offHand.getItem().toString();
+
+        // Check main hand first
+        if (mainItemId.contains("rifle")) {
             return GunType.RIFLE;
-        } else if (itemId.contains("minigun")) {
+        } else if (mainItemId.contains("minigun")) {
             return GunType.MINIGUN;
+        } else if (mainItemId.contains("pistol")) {
+            return GunType.PISTOL;
+        }
+
+        // Check off hand for pistol
+        if (offItemId.contains("pistol")) {
+            return GunType.PISTOL;
         }
 
         return GunType.NONE;
@@ -109,6 +120,13 @@ public class GunAnimationHandler {
             currentGunType.put(playerId, gunType);
             if (Config.logDebug)
             	Log.info("Player {} gun type changed: {} -> {}", player.getName().getString(), previousGun, gunType);
+
+            // If gun was unequipped, stop the gun animations
+            if (gunType == GunType.NONE && previousGun != null) {
+                stopGunAnimation(player);
+                currentAnimationState.remove(playerId);
+                return;
+            }
         }
 
         if (gunType == GunType.NONE) {
@@ -165,6 +183,13 @@ public class GunAnimationHandler {
                 if (Config.logDebug) {
                     Log.info("Entity {} gun type changed: {} -> {}",
                             entity.getName().getString(), previousGun, gunType);
+                }
+
+                // If gun was unequipped, stop the gun animations
+                if (gunType == GunType.NONE && previousGun != null) {
+                    stopEntityGunAnimation(entity);
+                    currentAnimationState.remove(entityId);
+                    continue;
                 }
             }
 
@@ -241,7 +266,9 @@ public class GunAnimationHandler {
 
         var animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
         if (animationStack != null) {
-            animationStack.addAnimLayer(1000, new KeyframeAnimationPlayer(animation));
+            // Use layer 3000 for idle/walk animations (base layer for guns)
+            // Layer 1000 is reserved for normal animations
+            animationStack.addAnimLayer(3000, new KeyframeAnimationPlayer(animation));
             if (Config.logDebug) {
                 Log.info("Playing gun animation for {}: {}", player.getName().getString(), animationName);
             }
@@ -317,6 +344,7 @@ public class GunAnimationHandler {
 
     /**
      * Play shoot animation and effects when player attacks with gun
+     * Uses layer 4000 so it plays ON TOP of idle/walk animations
      */
     public static void playShootAnimation(Player player, GunType gunType) {
         String animationName = "shoot_" + gunType.name;
@@ -328,11 +356,31 @@ public class GunAnimationHandler {
             return;
         }
 
-        KeyframeAnimation animation = PlayerAnimationRegistry.getAnimation(animationId);
+        // Try multiple namespaces
+        KeyframeAnimation animation = null;
+        ResourceLocation[] possibleLocations = {
+            animationId,
+            ResourceLocation.tryBuild("kimetsunoyaiba", animationName),
+            ResourceLocation.tryBuild("playeranimator", animationName)
+        };
+
+        for (ResourceLocation loc : possibleLocations) {
+            animation = PlayerAnimationRegistry.getAnimation(loc);
+            if (animation != null) {
+                break;
+            }
+        }
+
         if (animation != null && player instanceof AbstractClientPlayer clientPlayer) {
             var animationStack = PlayerAnimationAccess.getPlayerAnimLayer(clientPlayer);
             if (animationStack != null) {
-                animationStack.addAnimLayer(1000, new KeyframeAnimationPlayer(animation));
+                // Layer 4000 = HIGH PRIORITY - plays ON TOP of idle/walk (layer 3000)
+                // This allows the upper body to shoot while legs continue walking
+                animationStack.addAnimLayer(4000, new KeyframeAnimationPlayer(animation));
+                if (Config.logDebug) {
+                    Log.info("Playing shoot animation for {}: {} (layer 4000)",
+                            player.getName().getString(), animationName);
+                }
             }
         }
 
@@ -480,6 +528,53 @@ public class GunAnimationHandler {
         mc.level.addParticle(ParticleTypes.FLASH,
                 particlePos.x, particlePos.y, particlePos.z,
                 0, 0, 0);
+    }
+
+    /**
+     * Stop gun animations for a player
+     * Clears animation layer 3000 (gun idle/walk) and layer 4000 (gun shoot)
+     */
+    private static void stopGunAnimation(AbstractClientPlayer player) {
+        var animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
+        if (animationStack != null) {
+            // Remove gun animation layers
+            animationStack.removeLayer(3000);  // Idle/walk layer
+            animationStack.removeLayer(4000);  // Shoot layer
+            if (Config.logDebug) {
+                Log.info("Stopped gun animations for player: {}", player.getName().getString());
+            }
+        }
+    }
+
+    /**
+     * Stop gun animations for any living entity (using reflection for mob support)
+     */
+    private static void stopEntityGunAnimation(LivingEntity entity) {
+        if (entity instanceof AbstractClientPlayer clientPlayer) {
+            stopGunAnimation(clientPlayer);
+            return;
+        }
+
+        // Try to stop animations for mobs using reflection
+        try {
+            java.lang.reflect.Method method = PlayerAnimationAccess.class.getMethod("getPlayerAnimLayer", LivingEntity.class);
+            Object animationStackObj = method.invoke(null, entity);
+
+            if (animationStackObj != null && animationStackObj instanceof AnimationStack) {
+                AnimationStack animationStack = (AnimationStack) animationStackObj;
+                animationStack.removeLayer(3000);  // Idle/walk layer
+                animationStack.removeLayer(4000);  // Shoot layer
+
+                if (Config.logDebug) {
+                    Log.info("Stopped gun animations for entity: {}", entity.getName().getString());
+                }
+            }
+        } catch (Exception e) {
+            if (Config.logDebug) {
+                Log.debug("Could not stop gun animations for entity {}: {}",
+                        entity.getName().getString(), e.getMessage());
+            }
+        }
     }
 
     /**

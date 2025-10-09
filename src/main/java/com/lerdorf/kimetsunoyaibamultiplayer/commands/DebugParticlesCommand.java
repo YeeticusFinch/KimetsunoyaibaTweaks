@@ -2,8 +2,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.commands;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
-import com.lerdorf.kimetsunoyaibamultiplayer.particles.BonePositionTracker;
-import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.SwordParticleHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;

@@ -1,7 +1,10 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -9,17 +12,22 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.joml.Vector3f;
+
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.FancyMath;
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+// import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.SwordParticleHandler; // REMOVED: Client-only class, causes server crash
 
 /**
  * Implementation of all Frost Breathing forms (6 forms + 7th for Komorebi)
@@ -45,6 +53,28 @@ public class FrostBreathingForms {
 			AnimationHelper.playAnimationOnLayer(player, animationName, maxTicks, speed, layer);
 		} else if (entity instanceof BreathingSlayerEntity slayer) {
 			slayer.playGeckoAnimation(animationName, maxTicks);
+		}
+	}
+	
+	/**
+	 * Helper method to set cancel attack swing state and sync to client
+	 * Only works for Player entities
+	 */
+	private static void setCancelAttackSwing(LivingEntity entity, boolean value) {
+		if (!(entity instanceof Player player)) {
+			return; // Skip for non-player entities
+		}
+
+		player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
+			data.setCancelAttackSwing(value);
+		});
+
+		// Sync to client if on server
+		if (player instanceof ServerPlayer serverPlayer) {
+			com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+					new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordWielderSyncPacket(player.getUUID(),
+							value),
+					serverPlayer);
 		}
 	}
 
@@ -152,7 +182,7 @@ public class FrostBreathingForms {
 
                 // Launch entity forward slightly
                 Vec3 lookVec = entity.getLookAngle();
-                entity.setDeltaMovement(lookVec.scale(0.5));
+                MovementHelper.setVelocity(entity, lookVec.scale(0.5));
 
                 // Apply effects to targets in front
                 Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
@@ -192,91 +222,132 @@ public class FrostBreathingForms {
             "Gentle snowfall followed by a quick and painless stab",
             6, // 6 second cooldown
             (entity, level) -> {
-                playEntityAnimation(entity, "sword_rotate");
+				// Enable attack animations during this ability
+				/*
+				 * entity.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(
+				 * data -> { data.setCancelAttackSwing(false); });
+				 */
 
-                // Apply speed boost
-                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 80, 2));
+				// Initial leap
+				MovementHelper.addVelocity(entity, 0, 1.2, 0);
 
-                final Vec3 initialLook = entity.getLookAngle();
-                final int totalTicks = 80; // 4 seconds
-                final int attackInterval = 8; // Attack every 0.4 seconds
+				playEntityAnimation(entity, "kimetsunoyaibamultiplayer:sword_spin"); // spin the sword
 
-                for (int tick = 0; tick < totalTicks; tick++) {
-                    final int currentTick = tick;
+				entity.setNoGravity(true);
 
-                    AbilityScheduler.scheduleOnce(entity, () -> {
-                        // Swerve left and right in a wave pattern
-                        double waveOffset = Math.sin((currentTick / (double) totalTicks) * Math.PI * 4) * 0.3;
-                        Vec3 rightVec = initialLook.cross(new Vec3(0, 1, 0)).normalize();
-                        Vec3 movement = initialLook.scale(0.6).add(rightVec.scale(waveOffset));
+				final int totalTicks = 30; // 1.5 seconds
+				final int[] tickCounter = { 0 };
+				final double targetY = entity.getY() + 4.0; // Target hover height (4 blocks up)
+				final double[] columnPos = { 0, 0 };
 
-                        entity.setDeltaMovement(movement.add(0, entity.getDeltaMovement().y, 0));
 
-                        // Multiple attacks during dash
-                        if (currentTick % attackInterval == 0) {
-                            // Always play attack animation
-                            playEntityAnimation(entity, "sword_rotate");
+				level.playSound(null, entity.blockPosition(), SoundEvents.SNOWBALL_THROW, SoundSource.PLAYERS, 2.0F, 0.6F);
+				
+				// Single repeating task instead of 80 individual tasks
+				AbilityScheduler.scheduleRepeating(entity, () -> {
+					int currentTick = tickCounter[0]++;
 
-                            // AOE damage in path
-                            AABB hitBox = entity.getBoundingBox().inflate(2.5);
-                            List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
-                                e -> e != entity && e.isAlive());
+					// Hover at target height - stop vertical movement
+					double currentY = entity.getY();
+					if (currentY < targetY && currentTick < 15) {
+						// Still ascending to target height (first 15 ticks)
+						MovementHelper.setVelocity(entity, entity.getDeltaMovement().x, 0.3,
+								entity.getDeltaMovement().z);
+					} else {
+						// At target height - completely stop vertical movement
+						MovementHelper.setVelocity(entity, entity.getDeltaMovement().x, 0,
+								entity.getDeltaMovement().z);
+					}
+					
+					// Spawn particles - cloud with snowfall
+	                if (level instanceof ServerLevel serverLevel) {
+	                	serverLevel.sendParticles(ParticleTypes.CLOUD, entity.getX() + 10*(Math.random()-0.5),
+								entity.getY() + entity.getEyeHeight() + 2*(Math.random()-0.5), entity.getZ() + 10*(Math.random()-0.5), 50, 0.5, 0.0,
+								0.5, 0.01);
+	                	
+	                	serverLevel.sendParticles(new DustParticleOptions(new Vector3f(1.0f, 1.0f, 1.0f),
+								(float) (Math.random() + 1.5f)), entity.getX() + 10*(Math.random()-0.5),
+								entity.getY() + entity.getEyeHeight() + 2*(Math.random()-0.5), entity.getZ() + 10*(Math.random()-0.5), 50, 0.5, 0.0,
+								0.5, 0.01);
+	                	
+	                	serverLevel.sendParticles(ParticleTypes.SNOWFLAKE, entity.getX() + 10*(Math.random()-0.5),
+								entity.getY() + entity.getEyeHeight() - 3*(Math.random()), entity.getZ() + 10*(Math.random()-0.5), 100, 0.6, 0.2,
+								0.6, 0.5);
+	                }
 
-                            for (LivingEntity target : targets) {
-                                float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
-                                Damager.hurt(entity, target, damage);
-                            }
+					if (currentTick >= totalTicks - 2) {
+						entity.setNoGravity(false);
+					}
+				}, 1, totalTicks);
+				
+				AbilityScheduler.scheduleOnce(entity, () -> {
+					 playEntityAnimation(entity, "speed_attack_sword");
 
-                            if (level instanceof ServerLevel serverLevel) {
-                                spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 2.0, ParticleTypes.SNOWFLAKE, 12);
-                                spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 2.0, ParticleTypes.CLOUD, 6);
-                            }
+		                // Launch entity forward slightly
+		                Vec3 lookVec = entity.getLookAngle();
+		                MovementHelper.setVelocity(entity, lookVec.scale(1.8));
 
-                            level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                                SoundSource.PLAYERS, 0.8F, 1.0F);
-                        }
-                    }, tick);
-                }
+		                // Apply effects to targets in front
+		                Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
+		                Vec3 endPos = startPos.add(lookVec.scale(9.0));
 
-                level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
-                    SoundSource.PLAYERS, 1.0F, 1.2F);
-            }
-        );
+		                AABB hitBox = new AABB(startPos, endPos).inflate(2.0);
+		                List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
+		                    e -> e != entity && e.isAlive());
+
+		                for (LivingEntity target : targets) {
+		                    float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
+		                    Damager.hurt(entity, target, damage);
+		                    target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 4)); // 5 seconds, blindness
+		                    target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 100, 4)); // 5 seconds, mining fatigue
+		                }
+
+		                // Spawn particles - forward thrust straight line
+		                if (level instanceof ServerLevel serverLevel) {
+		                    spawnForwardThrust(serverLevel, startPos, lookVec, 18.0, ParticleTypes.SNOWFLAKE, 300);
+		                    spawnForwardThrust(serverLevel, startPos, lookVec, 18.0, new DustParticleOptions(new Vector3f(0.5f, 0.8f, 1.0f),
+									(float) (Math.random() + 0.2f)), 150);
+		                }
+
+		                level.playSound(null, entity.blockPosition(), SoundEvents.GLASS_BREAK,
+		                    SoundSource.PLAYERS, 1.0F, 1.0F);
+		                level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+			                    SoundSource.PLAYERS, 2.0F, 2.0F);
+		                level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
+		                    SoundSource.PLAYERS, 1.0F, 1.2F);
+				}, totalTicks+1);
+
+				// Play rain sound at start
+				level.playSound(null, entity.blockPosition(), SoundEvents.WEATHER_RAIN_ABOVE, SoundSource.PLAYERS, 0.5F,
+						1.0F);
+			});
     }
 
     /**
      * Fourth Form: Freezing Cold
-     * Vertical slash sending cold air blast 20 blocks forward
+     * Vertical slash sending cold air blast 30 blocks forward
      */
     public static BreathingForm fourthForm() {
         return new BreathingForm(
-            "Fourth Form: Freezing Cold",
+            "Fourth Form: Frostbite Gale",
             "Send a blast of freezing air",
             7, // 7 second cooldown
             (entity, level) -> {
                 playEntityAnimation(entity, "sword_overhead");
-
+                float range = 30;
+                float width = 2;
                 // Send blast forward
                 Vec3 lookVec = entity.getLookAngle();
                 Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
-                Vec3 endPos = startPos.add(lookVec.scale(20.0));
-
-                // Create wave of cold air
-                AABB hitBox = new AABB(startPos, endPos).inflate(2.0);
-                List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
-                    e -> e != entity && e.isAlive());
-
-                for (LivingEntity target : targets) {
-                    float damage = DamageCalculator.calculateScaledDamage(entity, 9.0F);
-                    Damager.hurt(entity, target, damage);
-                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 2)); // 20 seconds slowness
-                    target.setTicksFrozen(target.getTicksFrozen() + 400); // Freeze visual effect
-                }
+                Vec3 endPos = startPos.add(lookVec.scale(range));
+                
+                setCancelAttackSwing(entity, true);
+                
 
                 // Spawn particles
                 if (level instanceof ServerLevel serverLevel) {
-                    spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 60);
-                    spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.CLOUD, 40);
+                    //spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 60);
+                    //spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.CLOUD, 40);
 
                     // Extra particles for the blast wave
                     for (int i = 0; i < 30; i++) {
@@ -290,13 +361,51 @@ public class FrostBreathingForms {
                             1, 0, 0, 0, 0);
                     }
                 }
+                
+                final int totalTicks = 40;
+                final int[] tickCounter = {0};
 
+                AbilityScheduler.scheduleRepeating(entity, () -> {
+					int currentTick = tickCounter[0]++;
+
+					
+					
+					// Spawn particles - cloud with snowfall
+	                if (level instanceof ServerLevel serverLevel) {
+	                	
+	                	ParticleHelper.spawnVerticalArc(serverLevel, startPos, Math.toRadians(entity.getYRot()), Math.toRadians(entity.getXRot()),
+								6 + Math.random() * 3, 0.1, 160, 1, 1, ParticleTypes.SNOWFLAKE,
+								100);
+						
+	                }
+	                
+	                List<LivingEntity> targets = new ArrayList<LivingEntity>();
+	                
+	                Vec3 pos = startPos.add(lookVec.scale(currentTick*3/4));
+                	AABB hitBox = new AABB(pos.add(0, -1, 0), pos.add(0, 1, 0)).inflate(width);
+                	targets.addAll(level.getEntitiesOfClass(LivingEntity.class, hitBox,
+                    e -> e != entity && e.isAlive()));
+	                
+	                for (LivingEntity target : targets) {
+	                    float damage = DamageCalculator.calculateScaledDamage(entity, 7.0F);
+	                    Damager.hurt(entity, target, damage);
+	                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 2)); // 20 seconds slowness
+	                    target.setTicksFrozen(target.getTicksFrozen() + 400); // Freeze visual effect
+	                }
+
+				}, 1, totalTicks);
+                
                 level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                     SoundSource.PLAYERS, 1.0F, 0.8F);
                 level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
                     SoundSource.PLAYERS, 1.0F, 1.0F);
                 level.playSound(null, entity.blockPosition(), SoundEvents.SHULKER_SHOOT,
                     SoundSource.PLAYERS, 0.8F, 0.8F);
+                
+                AbilityScheduler.scheduleOnce(entity, () -> {
+					// We can swing swords normally again
+					setCancelAttackSwing(entity, false);
+				}, 5); // Run this 5 ticks later
             }
         );
     }

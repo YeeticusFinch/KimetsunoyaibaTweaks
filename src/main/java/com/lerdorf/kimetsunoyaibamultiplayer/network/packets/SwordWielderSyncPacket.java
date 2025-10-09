@@ -4,7 +4,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.mojang.logging.LogUtils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
@@ -40,20 +39,24 @@ public class SwordWielderSyncPacket {
         ctx.enqueueWork(() -> {
             // This packet only goes from server -> client
             if (ctx.getDirection().getReceptionSide().isClient()) {
-                Minecraft mc = Minecraft.getInstance();
-                if (mc.level != null) {
-                    Player player = mc.level.getPlayerByUUID(playerUUID);
-                    if (player != null) {
-                        player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
-                            data.setCancelAttackSwing(cancelAttackSwing);
+                // Use DistExecutor to safely call client-only code
+                net.minecraftforge.api.distmarker.Dist clientDist = net.minecraftforge.api.distmarker.Dist.CLIENT;
+                net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(clientDist, () -> () -> {
+                    net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                    if (mc.level != null) {
+                        Player player = mc.level.getPlayerByUUID(playerUUID);
+                        if (player != null) {
+                            player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
+                                data.setCancelAttackSwing(cancelAttackSwing);
 
-                            if (Config.logDebug) {
-                                Log.debug("Client received SWORD_WIELDER_DATA sync for player {}: cancelAttackSwing={}",
-                                    player.getName().getString(), cancelAttackSwing);
-                            }
-                        });
+                                if (Config.logDebug) {
+                                    Log.debug("Client received SWORD_WIELDER_DATA sync for player {}: cancelAttackSwing={}",
+                                        player.getName().getString(), cancelAttackSwing);
+                                }
+                            });
+                        }
                     }
-                }
+                });
             }
         });
         ctx.setPacketHandled(true);

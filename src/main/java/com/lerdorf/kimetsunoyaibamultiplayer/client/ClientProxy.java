@@ -87,7 +87,7 @@ public class ClientProxy implements IClientProxy {
         if (mc.level != null) {
             LivingEntity entity = (LivingEntity) mc.level.getEntity(entityUUID.hashCode());
             if (entity != null && particleType != null) {
-                com.lerdorf.kimetsunoyaibamultiplayer.particles.BonePositionTracker.spawnRadialRibbonParticles(
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker.spawnRadialRibbonParticles(
                     entity, animationName, animationTick, particleType);
             }
         }

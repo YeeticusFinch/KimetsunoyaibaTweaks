@@ -16,13 +16,13 @@ Particles: minecraft:snowflake, miniecraft:block (snow)
 Sounds: minecraft:entity.player.attack.strong, minecraft:block.snow.break
 
 
-## Third Form: Hoarfrost Drift
+## Third Form: Icicle through Snowfall
 
-The user moves forward, one leg at a time in a back and forth motion. Spinning their blade around them in a dancing motion.
-Animations: kimetsunoyaiba:sword_rotate
-Player moves forward in a wave, swerving left and right, doing multiple attacks during this dash
-Particles: minecraft:snowflake, minecraft:cloud, minecraft:sweep_attack
-Sounds: minecraft:entity.player.attack.sweep, minecraft:block.snow.break
+The user jumps in the air and spins their sword, changing their grip, and then lunges forward with a quick and painless jab
+Animations: kimetsunoyaibamultiplayer:sword_spin, kimetsunoyaiba:speed_attack_sword (this is a stab)
+Player jumps up and hovers for a couple seconds, generating snowfall particles in the area, and then launches forward with a quick jab
+Particles: minecraft:snowflake, minecraft:cloud, minecraft:block (packed ice)
+Sounds: minecraft:entity.player.attack.sweep, minecraft:block.snow.break, minecraft:block.ice.break
 
 
 ## Fourth Form: Freezing Cold

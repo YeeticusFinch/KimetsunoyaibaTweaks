@@ -22,8 +22,11 @@ public class GunAnimationLoader {
             Log.info("Gun animation system initialized");
             Log.info("Animations will be auto-loaded from biped.animation.json:");
             Log.info("  - Rifle: idle_rifle, walk_rifle, shoot_rifle");
+            Log.info("  - Pistol: idle_pistol, walk_pistol, shoot_pistol");
             Log.info("  - Minigun: idle_minigun, walk_minigun, shoot_minigun");
-            Log.info("Note: Pistol animations removed - pistol uses bow-style mechanics");
+            Log.info("Animation layers:");
+            Log.info("  - Layer 3000: Idle/Walk animations (base gun animations)");
+            Log.info("  - Layer 4000: Shoot animations (plays on top, allows walking while shooting)");
         });
     }
 }

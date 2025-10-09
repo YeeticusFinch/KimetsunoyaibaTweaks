@@ -169,11 +169,14 @@ public class AnimationSyncPacket {
                     }
                 }
             } else {
-                // Client received update - use proxy to handle
-                KimetsunoyaibaMultiplayer.CLIENT_PROXY.handleAnimationSync(
-                    playerUUID, animationId, currentTick, animationLength,
-                    isLooping, stopAnimation, swordItem, particleType, speed, layerPriority
-                );
+                // Client received update - use DistExecutor to safely call client-only code
+                net.minecraftforge.api.distmarker.Dist clientDist = net.minecraftforge.api.distmarker.Dist.CLIENT;
+                net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(clientDist, () -> () -> {
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler.handleAnimationSync(
+                        playerUUID, animationId, currentTick, animationLength,
+                        isLooping, stopAnimation, null, swordItem, particleType, speed, layerPriority
+                    );
+                });
             }
         });
         ctx.setPacketHandled(true);

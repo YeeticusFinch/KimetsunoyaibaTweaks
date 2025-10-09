@@ -6,11 +6,11 @@ import com.lerdorf.kimetsunoyaibamultiplayer.capability.SwordWielderData;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
-import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestParticlesCommand;
-import com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugParticlesCommand;
-import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimCommand;
+// import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestParticlesCommand; // REMOVED: Uses client-only SwordParticleHandler
+// import com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugParticlesCommand; // REMOVED: Uses client-only SwordParticleHandler and BonePositionTracker
+// import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimCommand; // REMOVED: Uses client-only SwordParticleHandler, registered client-side only
 import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestCrowQuestCommand;
-import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
+// import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.SwordParticleHandler; // REMOVED: Client-only class, causes server crash
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
@@ -56,11 +56,9 @@ public class KimetsunoyaibaMultiplayer
     // Define mod id in a common place for everything to reference
     public static final String MODID = "kimetsunoyaibamultiplayer";
 
-    // Client proxy - loads ClientProxy on client, ServerProxy on server
-    public static final IClientProxy CLIENT_PROXY = net.minecraftforge.fml.DistExecutor.safeRunForDist(
-        () -> () -> new com.lerdorf.kimetsunoyaibamultiplayer.client.ClientProxy(),
-        () -> () -> new com.lerdorf.kimetsunoyaibamultiplayer.proxy.ServerProxy()
-    );
+    // NOTE: CLIENT_PROXY removed to prevent server crashes
+    // The proxy pattern was causing client-only classes to be loaded on dedicated servers
+    // Instead, packet handlers now use DistExecutor.unsafeRunWhenOn() directly
 
     public KimetsunoyaibaMultiplayer(FMLJavaModLoadingContext context)
     {
@@ -131,13 +129,14 @@ public class KimetsunoyaibaMultiplayer
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event)
     {
-        Log.info("Registering test commands");
-        // Only register client-safe commands on the server
-        // TestAnimationCommand and DebugCrowCommand have client-only imports
-        // and should only be registered client-side via ClientCommandHandler
-        TestParticlesCommand.register(event.getDispatcher());
-        DebugParticlesCommand.register(event.getDispatcher());
-        TestAnimCommand.register(event.getDispatcher());
+        Log.info("Registering server commands");
+        // Only register server-safe commands
+        // TestAnimationCommand, TestAnimCommand, TestParticlesCommand, and DebugParticlesCommand
+        // all use client-only particle handlers (SwordParticleHandler, BonePositionTracker)
+        // and are registered client-side only via ClientCommandHandler
+        // TestParticlesCommand.register(event.getDispatcher()); // REMOVED: Uses client-only SwordParticleHandler
+        // DebugParticlesCommand.register(event.getDispatcher()); // REMOVED: Uses client-only SwordParticleHandler and BonePositionTracker
+        // TestAnimCommand.register(event.getDispatcher()); // REMOVED: Uses client-only SwordParticleHandler
         TestCrowQuestCommand.register(event.getDispatcher());
     }
 

@@ -1,7 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
-import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import net.minecraft.network.FriendlyByteBuf;
@@ -70,10 +69,13 @@ public class SwordDisplaySyncPacket {
                     }
                 }
             } else {
-                // Client received update - use proxy to handle
-                KimetsunoyaibaMultiplayer.CLIENT_PROXY.handleSwordDisplaySync(
-                    playerUUID, leftHipSword, rightHipSword
-                );
+                // Client received update - use DistExecutor to safely call client-only code
+                net.minecraftforge.api.distmarker.Dist clientDist = net.minecraftforge.api.distmarker.Dist.CLIENT;
+                net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(clientDist, () -> () -> {
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.updateRemotePlayerDisplay(
+                        playerUUID, leftHipSword, rightHipSword
+                    );
+                });
             }
         });
         ctx.setPacketHandled(true);

@@ -30,8 +30,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
-import com.lerdorf.kimetsunoyaibamultiplayer.particles.BonePositionTracker;
-import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleHandler;
+// import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker; // REMOVED: Client-only class, unused
+// import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.SwordParticleHandler; // REMOVED: Client-only class, causes server crash
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -440,9 +440,9 @@ public class IceBreathingForms {
 										entity.getY() + entity.getEyeHeight() - 0.3 * 20, pos.z + columnPos[1], 1, 0, 0,
 										0, 0.1);
 
-								SwordParticleHandler.spawnSwordParticles(entity, entity.getMainHandItem(),
-										"sword_overhead", 10);
-								
+								// SwordParticleHandler.spawnSwordParticles(entity, entity.getMainHandItem(),
+								//		"sword_overhead", 10); // REMOVED: Client-only, causes server crash
+
 								level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.2F,
 										1.1F);
 							}
@@ -496,11 +496,11 @@ public class IceBreathingForms {
 																											// cooldown
 				(entity, level) -> {
 					playEntityAnimation(entity, "kamusari3");
-
+					float range = 40;
 					// Find safe teleport position up to 40 blocks away
 					Vec3 lookVec = entity.getLookAngle();
 					Vec3 startPos = entity.getEyePosition();
-					Vec3 targetPos = startPos.add(lookVec.scale(40.0));
+					Vec3 targetPos = startPos.add(lookVec.scale(range));
 
 					// Raycast to find first non-passable block
 					BlockHitResult hitResult = level.clip(new ClipContext(startPos.add(0, entity.getEyeHeight(), 0),
@@ -514,10 +514,15 @@ public class IceBreathingForms {
 								.scale(Math.max(0, startPos.distanceTo(hitPos) - 1.0)));
 					}
 
-					// Check for entity target
-					AABB searchBox = new AABB(startPos, targetPos).inflate(2.0);
-					List<LivingEntity> nearbyEntities = level.getEntitiesOfClass(LivingEntity.class, searchBox,
-							e -> e != entity && e.isAlive());
+					List<LivingEntity> nearbyEntities = new ArrayList<LivingEntity>();
+					float width = 2.5f;
+	                // Create wave of cold air
+	                for (float i = 0; i < range; i+=width*1.8f) {
+	                	Vec3 pos = startPos.add(lookVec.scale(i));
+	                	AABB hitBox = new AABB(pos, pos).inflate(width);
+	                	nearbyEntities.addAll(level.getEntitiesOfClass(LivingEntity.class, hitBox,
+	                    e -> e != entity && e.isAlive()));
+	                }
 
 					if (!nearbyEntities.isEmpty()) {
 						Vec3 entityPos = nearbyEntities.get(0).position();

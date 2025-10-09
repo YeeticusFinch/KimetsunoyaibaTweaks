@@ -1,6 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
-import net.minecraft.client.player.LocalPlayer;
+// import net.minecraft.client.player.LocalPlayer; // REMOVED: Client-only, unused
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -10,13 +10,17 @@ import java.util.function.Supplier;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
+// import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler; // REMOVED: Client-only, unused
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordFrost;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordIce;
 
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -52,6 +56,18 @@ public class BreathingSwordSwingPacket {
                 LivingEntity.class, attackBox,
                 e -> e != player && e.isAlive()
             );
+            
+            player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                    SoundSource.PLAYERS, 1.0F, 1.0F);
+            
+            if (heldItem.getItem() instanceof NichirinSwordFrost) {
+            	player.level().playSound(null, player.blockPosition(), SoundEvents.POWDER_SNOW_BREAK,
+                        SoundSource.PLAYERS, 1.0F, 1.0F);
+            } 
+            else if (heldItem.getItem() instanceof NichirinSwordIce) {
+            	player.level().playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
+                        SoundSource.PLAYERS, 1.0F, 1.0F);
+            }
 
             float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
             for (LivingEntity target : targets) {

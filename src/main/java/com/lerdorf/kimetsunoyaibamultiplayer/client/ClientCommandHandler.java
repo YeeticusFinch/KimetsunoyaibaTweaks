@@ -32,6 +32,11 @@ public class ClientCommandHandler {
     public static void onRegisterClientCommands(RegisterClientCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
 
+        // Register client-only debug commands (all use SwordParticleHandler/BonePositionTracker which are client-only)
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimCommand.register(dispatcher);
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.TestParticlesCommand.register(dispatcher);
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugParticlesCommand.register(dispatcher);
+
         LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("testanimc")
             .executes(context -> {
                 // Default: use sword_to_left
