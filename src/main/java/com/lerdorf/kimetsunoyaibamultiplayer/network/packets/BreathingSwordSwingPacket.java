@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
@@ -54,8 +55,8 @@ public class BreathingSwordSwingPacket {
 
             float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
             for (LivingEntity target : targets) {
-                target.hurt(player.level().damageSources().playerAttack(player), damage);
-
+                //target.hurt(player.level().damageSources().playerAttack(player), damage);
+                Damager.hurt(player, target, damage);
                 /*if (player.level() instanceof ServerLevel serverLevel) {
                     serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
                         target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),

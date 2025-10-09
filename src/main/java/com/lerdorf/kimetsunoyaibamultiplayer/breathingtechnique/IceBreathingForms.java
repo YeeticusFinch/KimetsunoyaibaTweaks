@@ -27,6 +27,7 @@ import java.util.List;
 import org.joml.Vector3f;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.BonePositionTracker;
@@ -113,7 +114,7 @@ public class IceBreathingForms {
 
 					for (LivingEntity target : targets) {
 						float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
-						target.hurt(DamageCalculator.getDamageSource(entity), damage);
+						Damager.hurt(entity, target, damage);
 						target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4));
 						target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4));
 					}
@@ -196,11 +197,15 @@ public class IceBreathingForms {
 					final double startAngle = Math.atan2(toPlayer.z, toPlayer.x);
 
 					// Store original step height
-					final float originalStepHeight = entity.maxUpStep();
+					//final float originalStepHeight = entity.maxUpStep();
+					final float originalStepHeight = 0.6f;
+					
+					// Enable step-up for blocks during ability (1.8 blocks high)
+					MovementHelper.setStepHeight(entity, 1.8F);
 
 					// Use a counter array to track current tick
 					final int[] tickCounter = { 0 };
-					
+
 					level.playSound(null, entity.blockPosition(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.8F,
 							2.0F);
 
@@ -209,9 +214,6 @@ public class IceBreathingForms {
 						int currentTick = tickCounter[0]++;
 						double circleRadius = Math.min(Math.max(ogCircleRadius - (currentTick / 20), 3.5),
 								ogCircleRadius);
-
-						// Enable step-up for blocks during ability (1.8 blocks high)
-						MovementHelper.setStepHeight(entity, 1.8F);
 
 						// Calculate current target angle (3x faster rotation)
 						double currentAngle = startAngle + (currentTick * angularVelocity * 3.0);
@@ -285,7 +287,7 @@ public class IceBreathingForms {
 										1, 0, 0.05, 0, 0.01);
 							}
 						}
-						
+
 						if (currentTick % 3 == 0) {
 							level.playSound(null, entity.blockPosition(), SoundEvents.POWDER_SNOW_STEP, SoundSource.PLAYERS, 1.0F,
 									0.8F);
@@ -321,7 +323,7 @@ public class IceBreathingForms {
 
 								for (LivingEntity target : targets) {
 									float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
-									target.hurt(DamageCalculator.getDamageSource(entity), damage);
+									Damager.hurt(entity, target, damage);
 								}
 
 								level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
@@ -331,14 +333,15 @@ public class IceBreathingForms {
 								e.printStackTrace();
 							}
 						}
-
-						// Last tick - restore step height
-						if (currentTick >= totalTicks - 2) {
-							MovementHelper.setStepHeight(entity, originalStepHeight);
-							// entity.setNoGravity(false);
-							Log.debug("Setting no gravity");
-						}
 					}, 1, totalTicks); // Run every tick for 100 ticks
+
+					// Schedule step height reset AFTER the repeating task completes
+					AbilityScheduler.scheduleOnce(entity, () -> {
+						MovementHelper.setStepHeight(entity, originalStepHeight);
+						if (Config.logDebug) {
+							Log.debug("Second Form: Resetting step height to {}", originalStepHeight);
+						}
+					}, totalTicks + 1);
 				});
 	}
 
@@ -407,7 +410,7 @@ public class IceBreathingForms {
 
 							for (LivingEntity target : targets) {
 								float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
-								target.hurt(DamageCalculator.getDamageSource(entity), damage);
+								Damager.hurt(entity, target, damage);
 							}
 
 							if (level instanceof ServerLevel serverLevel) {
@@ -544,7 +547,7 @@ public class IceBreathingForms {
 
 					for (LivingEntity target : targets) {
 						float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
-						target.hurt(DamageCalculator.getDamageSource(entity), damage);
+						Damager.hurt(entity, target, damage);
 					}
 
 					// After 2 ticks spawn the particles again after the entity has been teleported
@@ -579,8 +582,8 @@ public class IceBreathingForms {
 					final int attackInterval = 5;
 					final int[] tickCounter = { 0 };
 					// Store original step height
-					final float originalStepHeight = entity.maxUpStep();
-					
+					final float originalStepHeight = 0.6F;
+
 					MovementHelper.setStepHeight(entity, 1.8F);
 
 					AbilityScheduler.scheduleRepeating(entity, () -> {
@@ -593,10 +596,10 @@ public class IceBreathingForms {
 
 						MovementHelper.stepUp(entity, entity.getX() + horizontalVelocity.x, entity.getY(),
 								entity.getZ() + horizontalVelocity.z);
-						
+
 						MovementHelper.stepUp(entity, entity.getX() + entity.getLookAngle().x, entity.getY(),
 								entity.getZ() + entity.getLookAngle().z);
-						
+
 						if (currentTick % 3 == 0) {
 							level.playSound(null, entity.blockPosition(), SoundEvents.GLASS_STEP, SoundSource.PLAYERS, 1.0F,
 									1.0F);
@@ -613,7 +616,7 @@ public class IceBreathingForms {
 
 							for (LivingEntity target : targets) {
 								float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
-								target.hurt(DamageCalculator.getDamageSource(entity), damage);
+								Damager.hurt(entity, target, damage);
 							}
 
 							if (level instanceof ServerLevel serverLevel) {
@@ -625,11 +628,15 @@ public class IceBreathingForms {
 							level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
 									SoundSource.PLAYERS, 1.4F, 1.3F);
 						}
-						
-						if (currentTick >= totalTicks - 2) {
-							MovementHelper.setStepHeight(entity, originalStepHeight);
-						}
 					}, 1, totalTicks);
+
+					// Schedule step height reset AFTER the repeating task completes
+					AbilityScheduler.scheduleOnce(entity, () -> {
+						MovementHelper.setStepHeight(entity, originalStepHeight);
+						if (Config.logDebug) {
+							Log.debug("Fifth Form: Resetting step height to {}", originalStepHeight);
+						}
+					}, totalTicks + 1);
 
 					level.playSound(null, entity.blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 0.8F,
 							1.0F);
@@ -670,7 +677,7 @@ public class IceBreathingForms {
 
 						for (LivingEntity target : targets) {
 							float damage = DamageCalculator.calculateScaledDamage(entity, 11.0F);
-							target.hurt(DamageCalculator.getDamageSource(entity), damage);
+							Damager.hurt(entity, target, damage);
 							target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0)); // Nausea
 						}
 						
@@ -727,7 +734,7 @@ public class IceBreathingForms {
 
 					for (LivingEntity target : initialTargets) {
 						float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
-						target.hurt(DamageCalculator.getDamageSource(entity), damage);
+						Damager.hurt(entity, target, damage);
 						target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 300, 0)); // 15 seconds blind
 					}
 
@@ -782,7 +789,7 @@ public class IceBreathingForms {
 
 							for (LivingEntity target : targets) {
 								float damage = DamageCalculator.calculateScaledDamage(entity, 5F);
-								target.hurt(DamageCalculator.getDamageSource(entity), damage);
+								Damager.hurt(entity, target, damage);
 							}
 
 							// Spawn particles

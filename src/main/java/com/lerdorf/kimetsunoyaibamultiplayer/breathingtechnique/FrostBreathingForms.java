@@ -15,6 +15,10 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.FancyMath;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 
 /**
@@ -32,6 +36,17 @@ public class FrostBreathingForms {
             slayer.playGeckoAnimation(animationName, 20);
         }
     }
+    
+    /**
+	 * Unified animation helper with layer and speed control
+	 */
+	private static void playEntityAnimationOnLayer(LivingEntity entity, String animationName, int maxTicks, float speed, int layer) {
+		if (entity instanceof Player player) {
+			AnimationHelper.playAnimationOnLayer(player, animationName, maxTicks, speed, layer);
+		} else if (entity instanceof BreathingSlayerEntity slayer) {
+			slayer.playGeckoAnimation(animationName, maxTicks);
+		}
+	}
 
     /**
      * First Form: Lavish Tundra
@@ -52,34 +67,55 @@ public class FrostBreathingForms {
                 final int totalTicks = 60; // 3 seconds
                 final int attackInterval = 10; // Attack every 0.5 seconds
 
+                MovementHelper.setStepHeight(entity, 1.8F);
+                final float originalStepHeight = 0.6F;
+
                 for (int tick = 0; tick < totalTicks; tick++) {
                     final int currentTick = tick;
 
                     AbilityScheduler.scheduleOnce(entity, () -> {
+                    	boolean left = (currentTick/attackInterval) % 2 == 0;
                         // Force entity to sprint forward
-                        entity.setDeltaMovement(lookVec.scale(0.8).add(0, entity.getDeltaMovement().y, 0));
+                    	Vec3 horizontalVelocity = FancyMath.rotateYaw(entity.getLookAngle(), left ? 30 : -30).scale(1F - ((float)(currentTick % attackInterval))/((float)attackInterval));
+						MovementHelper.setVelocity(entity, horizontalVelocity.x, entity.getDeltaMovement().y,
+								horizontalVelocity.z);
+
+						MovementHelper.stepUp(entity, entity.getX() + horizontalVelocity.x, entity.getY(),
+								entity.getZ() + horizontalVelocity.z);
 
                         // Alternate between left and right swing animations and attacks
                         if (currentTick % attackInterval == 0) {
                             // Always play attack animation
-                            playEntityAnimation(entity, currentTick % 20 == 0 ? "sword_to_left" : "sword_to_right");
+                            playEntityAnimation(entity, left ? "sword_to_left" : "sword_to_right");
 
                             // AOE damage
                             Vec3 attackPos = entity.position().add(lookVec.scale(2.0));
-                            AABB hitBox = new AABB(attackPos, attackPos).inflate(2.0);
+                            AABB hitBox = new AABB(attackPos, attackPos).inflate(4.0);
                             List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
                                 e -> e != entity && e.isAlive());
 
                             for (LivingEntity target : targets) {
                                 float damage = DamageCalculator.calculateScaledDamage(entity, 7.0F);
-                                target.hurt(DamageCalculator.getDamageSource(entity), damage);
+                                Damager.hurt(entity, target, damage);
                             }
 
                             if (level instanceof ServerLevel serverLevel) {
                                 spawnParticleLine(serverLevel, entity.position().add(0, 1, 0),
                                     entity.position().add(0, 1, 0).add(lookVec.scale(3.0)),
                                     ParticleTypes.SNOWFLAKE, 15);
-                                spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 2.0, ParticleTypes.CLOUD, 8);
+                                //spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 2.0, ParticleTypes.CLOUD, 8);
+
+                                double yawRad = Math.toRadians(entity.getYRot() + (Math.random() - 0.5) * 20);
+								double pitchRad = Math.toRadians(10 + Math.random() * 10);
+
+								Vec3 pos = entity.position().add(Math.random() - 0.5, (Math.random() + 0.5) * 2,
+										Math.random() - 0.5);
+
+								int arcLength = (int) (90 + Math.random() * 60);
+								double angle = (Math.random() - 0.5) * 10;
+                                ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
+    									3 + Math.random() * 1.5, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE,
+    									80);
                             }
 
                             level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
@@ -87,6 +123,14 @@ public class FrostBreathingForms {
                         }
                     }, tick);
                 }
+
+                // Schedule step height reset AFTER all scheduled tasks complete
+                AbilityScheduler.scheduleOnce(entity, () -> {
+                    MovementHelper.setStepHeight(entity, originalStepHeight);
+                    if (Config.logDebug) {
+                        Log.debug("First Form: Resetting step height to {}", originalStepHeight);
+                    }
+                }, totalTicks + 1);
 
                 level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
                     SoundSource.PLAYERS, 1.0F, 1.2F);
@@ -120,7 +164,7 @@ public class FrostBreathingForms {
 
                 for (LivingEntity target : targets) {
                     float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
-                    target.hurt(DamageCalculator.getDamageSource(entity), damage);
+                    Damager.hurt(entity, target, damage);
                     target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4)); // 8 seconds, extreme slowness
                     target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4)); // 8 seconds, mining fatigue
                 }
@@ -180,7 +224,7 @@ public class FrostBreathingForms {
 
                             for (LivingEntity target : targets) {
                                 float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
-                                target.hurt(DamageCalculator.getDamageSource(entity), damage);
+                                Damager.hurt(entity, target, damage);
                             }
 
                             if (level instanceof ServerLevel serverLevel) {
@@ -224,7 +268,7 @@ public class FrostBreathingForms {
 
                 for (LivingEntity target : targets) {
                     float damage = DamageCalculator.calculateScaledDamage(entity, 9.0F);
-                    target.hurt(DamageCalculator.getDamageSource(entity), damage);
+                    Damager.hurt(entity, target, damage);
                     target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 2)); // 20 seconds slowness
                     target.setTicksFrozen(target.getTicksFrozen() + 400); // Freeze visual effect
                 }
@@ -310,9 +354,9 @@ public class FrostBreathingForms {
         // 3 jabs
         for (LivingEntity target : targets) {
             float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
-            target.hurt(DamageCalculator.getDamageSource(entity), damage);
-            target.hurt(DamageCalculator.getDamageSource(entity), damage);
-            target.hurt(DamageCalculator.getDamageSource(entity), damage);
+            Damager.hurt(entity, target, damage);
+            Damager.hurt(entity, target, damage);
+            Damager.hurt(entity, target, damage);
         }
 
         if (level instanceof ServerLevel serverLevel) {

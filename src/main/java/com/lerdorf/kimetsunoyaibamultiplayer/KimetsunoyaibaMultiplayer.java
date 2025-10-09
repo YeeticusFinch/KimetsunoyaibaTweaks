@@ -363,11 +363,28 @@ public class KimetsunoyaibaMultiplayer
             String message = event.getMessage().getString();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandlerClient.onChatMessage(message);
 
-            // Suppress breathing form cycle chat messages if config is enabled
-            if (Config.suppressFormCycleChat) {
-                // Check if this is a breathing form cycle message
-                // These messages typically contain form names and are sent when pressing R
-                if (com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormChatFilter.shouldSuppressMessage(message)) {
+            // Check if this is a breathing form cycle message from kimetsunoyaiba mod
+            boolean isFormCycleMessage = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormChatFilter.shouldSuppressMessage(message);
+
+            if (isFormCycleMessage) {
+                // FIRST: Store the display text in cache for on-screen display
+                net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+                if (mc.player != null) {
+                    ItemStack heldSword = mc.player.getMainHandItem();
+                    if (com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.isNichirinSword(heldSword)) {
+                        // Cache the formatted display text from chat message (with colors preserved)
+                        // Store per-sword so switching between swords remembers each sword's form
+                        com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.updateDisplayTextFromChat(
+                            mc.player.getUUID(), heldSword, message);
+
+                        if (Config.logDebug) {
+                            Log.debug("Cached breathing form display text for " + heldSword.getItem() + ": " + message);
+                        }
+                    }
+                }
+
+                // THEN: Suppress the chat message if config says so
+                if (Config.suppressFormCycleChat) {
                     event.setCanceled(true);
                     if (Config.logDebug) {
                         Log.debug("Suppressed breathing form cycle chat message: " + message);
