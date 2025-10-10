@@ -24,7 +24,9 @@
       "Bash(awk:*)",
       "Bash(./gradlew.bat clean:*)",
       "Bash(./gradlew.bat build:*)",
-      "Read(//c/Users/carlf/Downloads/Test KnY Server/**)"
+      "Read(//c/Users/carlf/Downloads/Test KnY Server/**)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

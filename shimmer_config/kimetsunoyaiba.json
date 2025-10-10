@@ -1,0 +1,500 @@
+{
+  "Enable": true,
+  "ColorReference": {
+    "ds_flame": {
+      "r": 255,
+      "g": 217,
+      "b": 71,
+      "a": 255
+    },
+    "ds_thunder": {
+      "r": 255,
+      "g": 255,
+      "b": 71,
+      "a": 255
+    },
+    "ds_thunder_2": {
+      "r": 71,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "ds_white": {
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "ds_pink": {
+      "r": 255,
+      "g": 200,
+      "b": 200,
+      "a": 255
+    },
+    "ds_blue": {
+      "r": 155,
+      "g": 200,
+      "b": 255,
+      "a": 255
+    },
+    "ds_red": {
+      "r": 255,
+      "g": 70,
+      "b": 70,
+      "a": 255
+    },
+    "lantern_2_weight_average_color": {
+      "r": 243,
+      "g": 243,
+      "b": 237,
+      "a": 170
+    },
+    "lantern_2red_weight_average_color": {
+      "r": 255,
+      "g": 89,
+      "b": 85,
+      "a": 170
+    },
+    "cherry_blossoms_weight_average_color": {
+      "r": 255,
+      "g": 203,
+      "b": 209,
+      "a": 170
+    },
+    "fuji_flower_weight_average_color": {
+      "r": 172,
+      "g": 141,
+      "b": 243,
+      "a": 170
+    },
+    "lantern_3_weight_average_color": {
+      "r": 219,
+      "g": 208,
+      "b": 195,
+      "a": 170
+    },
+    "kaede_leaves_weight_average_color": {
+      "r": 254,
+      "g": 118,
+      "b": 58,
+      "a": 170
+    },
+    "brazier_weight_average_color": {
+      "r": 187,
+      "g": 188,
+      "b": 193,
+      "a": 170
+    },
+    "cooker_weight_average_color": {
+      "r": 213,
+      "g": 160,
+      "b": 89,
+      "a": 170
+    },
+    "lantern_1_weight_average_color": {
+      "r": 223,
+      "g": 215,
+      "b": 205,
+      "a": 170
+    }
+  },
+  "LightBlock": [
+    {
+      "block": "kimetsunoyaiba:lantern_2",
+      "color": "#lantern_2_weight_average_color",
+      "radius": 11
+    },
+    {
+      "block": "kimetsunoyaiba:lantern_2red",
+      "color": "#lantern_2red_weight_average_color",
+      "radius": 12
+    },
+    {
+      "block": "kimetsunoyaiba:cherry_blossoms",
+      "color": "#cherry_blossoms_weight_average_color",
+      "radius": 0
+    },
+    {
+      "block": "kimetsunoyaiba:fuji_flower",
+      "color": "#fuji_flower_weight_average_color",
+      "radius": 0
+    },
+    {
+      "block": "kimetsunoyaiba:lantern_3",
+      "color": "#lantern_3_weight_average_color",
+      "radius": 14
+    },
+    {
+      "block": "kimetsunoyaiba:kaede_leaves",
+      "color": "#kaede_leaves_weight_average_color",
+      "radius": 1
+    },
+    {
+      "block": "kimetsunoyaiba:brazier",
+      "color": "#brazier_weight_average_color",
+      "radius": 1
+    },
+    {
+      "block": "kimetsunoyaiba:cooker",
+      "color": "#cooker_weight_average_color",
+      "radius": 8
+    },
+    {
+      "block": "kimetsunoyaiba:lantern_1",
+      "color": "#lantern_1_weight_average_color",
+      "radius": 14
+    }
+  ],
+  "Bloom": [
+    {
+      "block": "kimetsunoyaiba:lantern_2"
+    },
+    {
+      "block": "kimetsunoyaiba:lantern_2red"
+    },
+    {
+      "block": "kimetsunoyaiba:cherry_blossoms"
+    },
+    {
+      "block": "kimetsunoyaiba:fuji_flower"
+    },
+    {
+      "block": "kimetsunoyaiba:lantern_3"
+    },
+    {
+      "block": "kimetsunoyaiba:kaede_leaves"
+    },
+    {
+      "block": "kimetsunoyaiba:brazier"
+    },
+    {
+      "block": "kimetsunoyaiba:cooker"
+    },
+    {
+      "block": "kimetsunoyaiba:lantern_1"
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_flame",
+      "color": "#ds_flame",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_thunder",
+      "color": "#ds_thunder",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_thunder_2",
+      "color": "#ds_thunder_2",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_thunder_hantengu",
+      "color": "#ds_thunder_2",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:water",
+      "color": "#ds_blue",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_thunder_3",
+      "color": "#ds_white",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_wind",
+      "color": "#ds_thunder",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_purple_smoke",
+      "color": "#ds_pink",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_cherry_blossom",
+      "color": "#ds_pink",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_blue_smoke",
+      "color": "#ds_blue",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_flash_blue",
+      "color": "#ds_blue",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_flash_red",
+      "color": "#ds_red",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_flower",
+      "color": "#ds_pink",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_frozen",
+      "color": "#ds_white",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_lightning",
+      "color": "#ds_white",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_punch_1",
+      "color": "#ds_white",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_spark_fire",
+      "color": "#ds_flame",
+      "radius": 15
+    },
+    {
+      "particle": "minecraft:dust",
+      "color": "#ds_white",
+      "radius": 15
+    },
+    {
+      "particle": "minecraft:dust_color_transition",
+      "color": "#ds_white",
+      "radius": 15
+    },
+    {
+      "particle": "minecraft:falling_dust",
+      "color": "#ds_white",
+      "radius": 15
+    },
+    {
+      "particle": "minecraft:cloud",
+      "color": "#ds_white",
+      "radius": 15
+    }
+  ],
+  "Particle": [
+    {
+      "particle": "kimetsunoyaiba:particle_flame",
+      "color": "#ds_flame",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_thunder",
+      "color": "#ds_thunder",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_thunder_2",
+      "color": "#ds_thunder_2",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_thunder_hantengu",
+      "color": "#ds_thunder_2",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_thunder_3",
+      "color": "#ds_white",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_wind",
+      "color": "#ds_white",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_purple_smoke",
+      "color": "#ds_pink",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_cherry_blossom",
+      "color": "#ds_pink",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_blue_smoke",
+      "color": "#ds_blue",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_flash_blue",
+      "color": "#ds_blue",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_flash_red",
+      "color": "#ds_red",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_flower",
+      "color": "#ds_pink",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_frozen",
+      "color": "#ds_white",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_lightning",
+      "color": "#ds_white",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_punch_1",
+      "color": "#ds_white",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_spark_flame",
+      "color": "#ds_flame",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:water",
+      "color": "#ds_blue",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "minecraft:dust",
+      "color": "#ds_white",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "minecraft:falling_dust",
+      "color": "#ds_white",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "minecraft:dust_color_transition",
+      "color": "#ds_white",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "minecraft:cloud",
+      "color": "#ds_white",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    }
+  ],
+  "LightItem": [
+    {
+      "item_id": "kimetsunoyaiba:lantern_2",
+      "color": "#lantern_2_weight_average_color",
+      "radius": 11
+    },
+    {
+      "item_id": "kimetsunoyaiba:lantern_2red",
+      "color": "#lantern_2red_weight_average_color",
+      "radius": 12
+    },
+    {
+      "item_id": "kimetsunoyaiba:cherry_blossoms",
+      "color": "#cherry_blossoms_weight_average_color",
+      "radius": 0
+    },
+    {
+      "item_id": "kimetsunoyaiba:fuji_flower",
+      "color": "#fuji_flower_weight_average_color",
+      "radius": 0
+    },
+    {
+      "item_id": "kimetsunoyaiba:lantern_3",
+      "color": "#lantern_3_weight_average_color",
+      "radius": 14
+    },
+    {
+      "item_id": "kimetsunoyaiba:kaede_leaves",
+      "color": "#kaede_leaves_weight_average_color",
+      "radius": 1
+    },
+    {
+      "item_id": "kimetsunoyaiba:brazier",
+      "color": "#brazier_weight_average_color",
+      "radius": 1
+    },
+    {
+      "item_id": "kimetsunoyaiba:cooker",
+      "color": "#cooker_weight_average_color",
+      "radius": 8
+    },
+    {
+      "item_id": "kimetsunoyaiba:lantern_1",
+      "color": "#lantern_1_weight_average_color",
+      "radius": 14
+    }
+  ],
+  "BuildIn": false
+}
