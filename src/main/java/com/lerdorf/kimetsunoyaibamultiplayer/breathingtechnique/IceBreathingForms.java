@@ -93,6 +93,9 @@ public class IceBreathingForms {
 		return new BreathingForm("First Form: Paralyzing Icicle", "Stab forward with incredible speed", 3, // 3 second
 																											// cooldown
 				(entity, level) -> {
+					// Set guard state - defensive power 8.0 to match offensive damage
+					GuardStateHelper.setGuardState(entity, 8.0, 100.0); // ID 100 for Ice Breathing
+
 					// Play animation
 					playEntityAnimation(entity, "speed_attack_sword");
 
@@ -103,6 +106,9 @@ public class IceBreathingForms {
 					// Launch player forward a little bit
 					Vec3 lookVec = entity.getLookAngle();
 					entity.setDeltaMovement(lookVec.scale(1.2));
+
+					// Set attack state for damage dealing
+					GuardStateHelper.setAttackState(entity, 8.0);
 
 					// Apply effects to targets in front - INCREASED RANGE to 5 blocks
 					Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
@@ -134,6 +140,8 @@ public class IceBreathingForms {
 					AbilityScheduler.scheduleOnce(entity, () -> {
 						// We can swing swords normally again
 						setCancelAttackSwing(entity, false);
+						// Clear guard state when ability ends
+						GuardStateHelper.clearGuardState(entity);
 					}, 5); // Run this 5 ticks later
 
 				});
@@ -148,6 +156,9 @@ public class IceBreathingForms {
 		return new BreathingForm("Second Form: Winter Wrath", "Circle and deliver rotational slashes", 8, // 8 second
 																											// cooldown
 				(entity, level) -> {
+					// Set guard state for the entire ability duration - defensive power 12.0
+					GuardStateHelper.setGuardState(entity, 12.0, 100.0); // ID 100 for Ice Breathing
+
 					// Enable attack animations during this ability (only for players)
 					if (entity instanceof Player player) {
 						player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
@@ -296,6 +307,8 @@ public class IceBreathingForms {
 						// Attack every attackInterval ticks
 						if (currentTick % attackInterval == 0 && currentTick > attackInterval) {
 							try {
+								// Set attack state for this specific attack
+								GuardStateHelper.setAttackState(entity, 6.0);
 
 								MovementHelper.stepUp(entity, combinedVelocity.x, yVelocity, combinedVelocity.z);
 
@@ -328,6 +341,10 @@ public class IceBreathingForms {
 
 								level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
 										SoundSource.PLAYERS, 1.1F, 1.2F);
+
+								// Clear attack flag after attack completes, but keep defense active
+								GuardStateHelper.clearAttackFlag(entity);
+								GuardStateHelper.enableContinuousDefense(entity);
 							} catch (Exception e) {
 								Log.error("Ice Breathing Second Form attack error: " + e.getMessage());
 								e.printStackTrace();
@@ -338,8 +355,10 @@ public class IceBreathingForms {
 					// Schedule step height reset AFTER the repeating task completes
 					AbilityScheduler.scheduleOnce(entity, () -> {
 						MovementHelper.setStepHeight(entity, originalStepHeight);
+						// Clear guard state when ability ends
+						GuardStateHelper.clearGuardState(entity);
 						if (Config.logDebug) {
-							Log.debug("Second Form: Resetting step height to {}", originalStepHeight);
+							Log.debug("Second Form: Resetting step height to {} and clearing guard state", originalStepHeight);
 						}
 					}, totalTicks + 1);
 				});

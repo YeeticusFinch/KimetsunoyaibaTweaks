@@ -14,6 +14,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordFrost;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordIce;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import net.minecraft.resources.ResourceLocation;
@@ -44,6 +45,18 @@ public class BreathingSwordSwingPacket {
 
             ItemStack heldItem = player.getItemInHand(InteractionHand.MAIN_HAND);
             if (!(heldItem.getItem() instanceof BreathingSwordItem)) return;
+
+            // Set weak defensive power for basic sword swing (lasts 10 ticks)
+            // This allows basic swings to clash with and mitigate enemy attacks
+            double weakDefense = 3.0; // Weak defensive power (3 damage reduction)
+            GuardStateHelper.setWeakAttackState(player, weakDefense);
+
+            // Schedule clearing the weak attack state after 10 ticks (0.5 seconds)
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler.scheduleOnce(
+                player,
+                () -> GuardStateHelper.clearGuardState(player),
+                10
+            );
 
             // Perform AOE
             Vec3 attackerPos = player.position().add(0, player.getEyeHeight(), 0);
