@@ -327,7 +327,7 @@ public class FrostBreathingForms {
     }
 
     /**
-     * Fourth Form: Freezing Cold
+     * Fourth Form: Frostbite Gale
      * Vertical slash sending cold air blast 30 blocks forward
      */
     public static BreathingForm fourthForm() {
@@ -367,15 +367,13 @@ public class FrostBreathingForms {
                 
                 final int totalTicks = 40;
                 final int[] tickCounter = {0};
+                
+                final double yaw = Math.toRadians(entity.getYRot());
+                final double pitch = Math.toRadians(entity.getXRot());
 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
 					int currentTick = tickCounter[0]++;				
 					// Spawn particles - cloud with snowfall
-	                if (level instanceof ServerLevel serverLevel) {
-	                	ParticleHelper.spawnVerticalArc(serverLevel, startPos, Math.toRadians(entity.getYRot()), Math.toRadians(entity.getXRot()),
-								6 + Math.random() * 3, 0.1, 160, 1, 1, ParticleTypes.SNOWFLAKE,
-								100);
-	                }
 	                
 	                List<LivingEntity> targets = new ArrayList<LivingEntity>();
 	                
@@ -383,6 +381,13 @@ public class FrostBreathingForms {
                 	AABB hitBox = new AABB(pos.add(0, -1, 0), pos.add(0, 1, 0)).inflate(width);
                 	targets.addAll(level.getEntitiesOfClass(LivingEntity.class, hitBox,
                     e -> e != entity && e.isAlive()));
+                	
+                	if (level instanceof ServerLevel serverLevel) {
+	                	ParticleHelper.spawnVerticalArc(serverLevel, pos, yaw, pitch,
+								6 + Math.random() * 3, 0.1, 160, 1, -1, ParticleTypes.SNOWFLAKE,
+								100);
+	                }
+	                
 	                
 	                for (LivingEntity target : targets) {
 	                    float damage = DamageCalculator.calculateScaledDamage(entity, 7.0F);
@@ -434,11 +439,17 @@ public class FrostBreathingForms {
                 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
 					
-                	if (!hasAttacked[0] && entity.getTags().contains("DidAttack")) {
-                		playEntityAnimationOnLayer(entity, "invisibility", 0, 1.0f, 2000);
-                		entity.removeTag("DidAttack");
-                		hasAttacked[0] = true;
-                		executeThreeJabs(entity, level);
+                	if (!hasAttacked[0]) {
+                		
+                		 playEntityAnimationOnLayer(entity, "invisibility", duration, 1.0f, 2000);
+                	
+	                	if (entity.getTags().contains("DidAttack")) {
+	                		entity.removeEffect(MobEffects.INVISIBILITY);
+	                		playEntityAnimationOnLayer(entity, "invisibility", 0, 1.0f, 2000);
+	                		entity.removeTag("DidAttack");
+	                		hasAttacked[0] = true;
+	                		executeThreeJabs(entity, level);
+	                	}
                 	}
                 	
 				}, 5, duration);
@@ -465,113 +476,75 @@ public class FrostBreathingForms {
      * Helper method for Fifth Form: Execute 3 jabs
      */
     private static void executeThreeJabs(LivingEntity entity, Level level) {
-    	
-    	{
-            
-    		playEntityAnimation(entity, "sword_to_left");
-
-            Vec3 lookVec = entity.getLookAngle();
-            Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
-            Vec3 endPos = startPos.add(lookVec.scale(3.0));
-
-            MovementHelper.setVelocity(entity, lookVec.scale(0.5));
-
-            AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
-            List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
-                e -> e != entity && e.isAlive());
-
-            for (LivingEntity target : targets) {
-                float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
-                Damager.hurt(entity, target, damage);
-            }
-
-            if (level instanceof ServerLevel serverLevel) {
-                //spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 20);
-            	double yawRad = Math.toRadians(entity.getYRot());
-				double pitchRad = 0;
-
-				Vec3 pos = entity.getEyePosition();
-
-				int arcLength = 120;
-				double angle = 10;
-                ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
-						3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE,
-						80);
-            }
-
-            level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                SoundSource.PLAYERS, 1.0F, 1.0F);
-            level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
-                SoundSource.PLAYERS, 1.0F, 1.0F);
+    	if (Config.logDebug) {
+    		Log.debug("Fifth Form: Executing three jabs for {}", entity.getName().getString());
     	}
-    	
+
+    	// First jab - left slash
+    	performJab(entity, level, "sword_to_left", 10, 1);
+
+    	// Second jab - right slash (delayed 12 ticks)
     	AbilityScheduler.scheduleOnce(entity, () -> {
-    		playEntityAnimation(entity, "sword_to_right");
+    		if (Config.logDebug) {
+    			Log.debug("Fifth Form: Second jab for {}", entity.getName().getString());
+    		}
+    		performJab(entity, level, "sword_to_right", 16, 2);
+    	}, 12);
 
-            Vec3 lookVec = entity.getLookAngle();
-            Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
-            Vec3 endPos = startPos.add(lookVec.scale(3.0));
+    	// Third jab - speed attack (delayed 24 ticks)
+    	AbilityScheduler.scheduleOnce(entity, () -> {
+    		if (Config.logDebug) {
+    			Log.debug("Fifth Form: Third jab for {}", entity.getName().getString());
+    		}
+    		performJab(entity, level, "speed_attack_sword", 0, 3);
+    	}, 24);
+    }
 
-            MovementHelper.setVelocity(entity, lookVec.scale(0.5));
+    /**
+     * Helper to perform a single jab attack
+     */
+    private static void performJab(LivingEntity entity, Level level, String animation, double particleAngle, int jabNumber) {
+    	playEntityAnimation(entity, animation);
 
-            AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
-            List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
-                e -> e != entity && e.isAlive());
+        Vec3 lookVec = entity.getLookAngle();
+        Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
+        Vec3 endPos = startPos.add(lookVec.scale(3.0));
 
-            for (LivingEntity target : targets) {
-                float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
-                Damager.hurt(entity, target, damage);
+        // Smaller forward momentum so player doesn't move too far from targets
+        MovementHelper.setVelocity(entity, lookVec.scale(0.3));
+
+        AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
+        List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
+            e -> e != entity && e.isAlive());
+
+        for (LivingEntity target : targets) {
+            float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
+            Damager.hurt(entity, target, damage);
+            if (Config.logDebug) {
+            	Log.debug("Fifth Form: Jab {} hit {} for {} damage", jabNumber, target.getName().getString(), damage);
             }
+        }
 
-            if (level instanceof ServerLevel serverLevel) {
-                //spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 20);
-            	double yawRad = Math.toRadians(entity.getYRot());
+        if (level instanceof ServerLevel serverLevel) {
+        	if (particleAngle == 0) {
+        		// Final jab - straight line particles
+        		spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 20);
+        	} else {
+        		// Arc particles for side slashes
+	        	double yawRad = Math.toRadians(entity.getYRot());
 				double pitchRad = 0;
-
 				Vec3 pos = entity.getEyePosition();
-
 				int arcLength = 120;
-				double angle = 16;
-                ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
-						3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE,
-						80);
-            }
+	            ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
+					3, 0.1, arcLength, 1, particleAngle, ParticleTypes.SNOWFLAKE, 80);
+        	}
+        }
 
-            level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                SoundSource.PLAYERS, 1.0F, 1.0F);
-            level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
-                SoundSource.PLAYERS, 1.0F, 1.0F);
-    	}, 8);
-    	
-    	AbilityScheduler.scheduleOnce(entity, () -> {
-    		playEntityAnimation(entity, "speed_attack_sword");
-
-            Vec3 lookVec = entity.getLookAngle();
-            Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
-            Vec3 endPos = startPos.add(lookVec.scale(3.0));
-
-            MovementHelper.setVelocity(entity, lookVec.scale(0.5));
-            
-            AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
-            List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
-                e -> e != entity && e.isAlive());
-
-            for (LivingEntity target : targets) {
-                float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
-                Damager.hurt(entity, target, damage);
-            }
-
-            if (level instanceof ServerLevel serverLevel) {
-                spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 20);
-            }
-
-            level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
-                SoundSource.PLAYERS, 1.0F, 1.0F);
-            level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
-                SoundSource.PLAYERS, 1.0F, 1.0F);
-        }, 16);
-    	
-        
+        level.playSound(null, entity.blockPosition(),
+        	jabNumber == 3 ? SoundEvents.PLAYER_ATTACK_STRONG : SoundEvents.PLAYER_ATTACK_SWEEP,
+            SoundSource.PLAYERS, 1.0F, 1.0F + (jabNumber * 0.1F));
+        level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
+            SoundSource.PLAYERS, 1.0F, 1.0F);
     }
 
     /**
@@ -582,7 +555,7 @@ public class FrostBreathingForms {
         return new BreathingForm(
             "Sixth Form: Polar Mark",
             "Throw your sword forward",
-            9, // 9 second cooldown
+            2, // 2 second cooldown
             (entity, level) -> {
                 playEntityAnimation(entity, "sword_overhead");
 
@@ -644,7 +617,7 @@ public class FrostBreathingForms {
         return new BreathingForm(
             "Seventh Form: Golden Senses",
             "Sword glows golden, empowering you",
-            40, // 40 second cooldown
+            30, // 30 second cooldown
             (entity, level) -> {
                 // Play kaishin3 animation if available, otherwise sword_overhead
                 playEntityAnimation(entity, "kaishin3");

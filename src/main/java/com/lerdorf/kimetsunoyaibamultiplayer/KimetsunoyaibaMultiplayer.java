@@ -227,6 +227,11 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KomorebiRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SHIMIZU.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.client.ShimizuRenderer::new);
+
+            // Register projectile renderers
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.THROWN_SWORD.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.ThrownSwordRenderer::new);
+
             if (Config.logDebug)
             Log.info("Registered breathing slayer entity renderers");
         }
@@ -422,6 +427,14 @@ public class KimetsunoyaibaMultiplayer
                 }
 
                 ItemStack heldItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
+
+                // Check for Fifth Form attack detection (CheckForAttack tag)
+                if (mc.player.getTags().contains("CheckForAttack")) {
+                	mc.player.addTag("DidAttack");
+                	if (Config.logDebug) {
+                		Log.debug("Fifth Form: Player attacked while invisible (air click)");
+                	}
+                }
 
                 if (SwordParticleMapping.isKimetsunoyaibaSword(heldItem)) {
                 	// Set the left-click attack flag (sticky bit) so AnimationTracker will spawn particles
