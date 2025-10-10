@@ -15,7 +15,7 @@ There will be many attacks against all living entities within that circle
 Particles: minecraft:snowflake, kimetsunoyaiba:particle_frozen, minecraft:sweep_attack
 Sounds: minecraft:entity.player.attack.sweep
 
-## Third Form: Merciful Hail Fall
+## Third Form: Icicle Bombardment
 
 The swordsman leaps up and delivers multiple gentle yet powerful slashes downwards. With this, the enemy would not feel any pain and can die peacefully.
 Animations: kimetsunoyaiba:ragnaraku2 (this raises the sword above the head), kimetsunoyaiba:ragnaraku3 (this slashes the sword downwards)
