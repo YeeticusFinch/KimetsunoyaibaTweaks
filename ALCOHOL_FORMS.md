@@ -22,4 +22,11 @@ The user steadies themselves and their breathing in such a way to minimize energ
 
 A series of blows are made to the abdomen of the demon, each followed by a blisteringly fast jab from the blade(s) of the weapon, as the impacts and wounds saturate, damage to old incisions break apart the flesh. The instant the innards are visible, they are to quickly and precisely obliterate all major and most minor organs faster than pain can register. Much like the death of yeast leaving sediment at the bottom of fermentation jugs, so too do the minced flesh of a demon fall away as their death approaches
 
+## Act 6: Loose Lipped Drunkard
+
+With a single blade extended, the opposite handle is used to whip around the blade at such a pace that attacks made to the side being parried against will be instead shredded to paste, dropping and falling like a dark secret falling from the lips of a drunk
+
+## Act 7: Last Call
+
+Combining the first 6 acts in careful measurements like a carefully made cocktail for the last customer of the bar, The user starts with minimizing movements and creating space to breathe before emerging from cover with steadied breath and high speed, strenuous on the body but required to create the full force required. as the user gets in close physical combat with the demon and with both blades out exerts themself specifically to concentrate momentum. Lastly, the user maneuvers just offcenter to the demon in order to create the rotational force needed as they carve the body to ribbons. As one blade slips out, the other gets stabbed deep to continue until all momentum is lost or the demon is dead.
 
