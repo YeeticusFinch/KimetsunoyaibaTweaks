@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -11,6 +12,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
@@ -28,6 +30,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 // import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.SwordParticleHandler; // REMOVED: Client-only class, causes server crash
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.FlyingSwordEntity;
 
 /**
  * Implementation of all Frost Breathing forms (6 forms + 7th for Komorebi)
@@ -176,7 +179,7 @@ public class FrostBreathingForms {
         return new BreathingForm(
             "Second Form: Snowing Point",
             "Impactful jab that immobilizes",
-            5, // 5 second cooldown
+            2, // 2 second cooldown
             (entity, level) -> {
                 playEntityAnimation(entity, "speed_attack_sword");
 
@@ -331,7 +334,7 @@ public class FrostBreathingForms {
         return new BreathingForm(
             "Fourth Form: Frostbite Gale",
             "Send a blast of freezing air",
-            7, // 7 second cooldown
+            4, // 4 second cooldown
             (entity, level) -> {
                 playEntityAnimation(entity, "sword_overhead");
                 float range = 30;
@@ -366,17 +369,12 @@ public class FrostBreathingForms {
                 final int[] tickCounter = {0};
 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
-					int currentTick = tickCounter[0]++;
-
-					
-					
+					int currentTick = tickCounter[0]++;				
 					// Spawn particles - cloud with snowfall
 	                if (level instanceof ServerLevel serverLevel) {
-	                	
 	                	ParticleHelper.spawnVerticalArc(serverLevel, startPos, Math.toRadians(entity.getYRot()), Math.toRadians(entity.getXRot()),
 								6 + Math.random() * 3, 0.1, 160, 1, 1, ParticleTypes.SNOWFLAKE,
 								100);
-						
 	                }
 	                
 	                List<LivingEntity> targets = new ArrayList<LivingEntity>();
@@ -418,22 +416,39 @@ public class FrostBreathingForms {
         return new BreathingForm(
             "Fifth Form: Numbing Arctic Dance",
             "Flicker in and out, then strike",
-            8, // 8 second cooldown
+            7, // 7 second cooldown
             (entity, level) -> {
+
+                int duration = 120;
+                
+                playEntityAnimationOnLayer(entity, "invisibility", duration, 1.0f, 2000);
+                
                 // Apply speed and invisibility
-                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 120, 3)); // 6 seconds
-                entity.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 120, 0)); // 6 seconds
+                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, duration, 3)); // 6 seconds
+                entity.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, duration, 0)); // 6 seconds
 
                 // Schedule automatic attack at end if player doesn't attack
                 final boolean[] hasAttacked = {false};
-
-                // TODO: Detect when player attacks to trigger early
-                // For now, just schedule the 3 jabs after 6 seconds
+                
+                entity.addTag("CheckForAttack");
+                
+                AbilityScheduler.scheduleRepeating(entity, () -> {
+					
+                	if (!hasAttacked[0] && entity.getTags().contains("DidAttack")) {
+                		playEntityAnimationOnLayer(entity, "invisibility", 0, 1.0f, 2000);
+                		entity.removeTag("DidAttack");
+                		hasAttacked[0] = true;
+                		executeThreeJabs(entity, level);
+                	}
+                	
+				}, 5, duration);
+                
                 AbilityScheduler.scheduleOnce(entity, () -> {
                     if (!hasAttacked[0]) {
+                    	entity.removeTag("CheckForAttack");
                         executeThreeJabs(entity, level);
                     }
-                }, 120);
+                }, duration+1);
 
                 if (level instanceof ServerLevel serverLevel) {
                     spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 3.0, ParticleTypes.SNOWFLAKE, 30);
@@ -450,38 +465,118 @@ public class FrostBreathingForms {
      * Helper method for Fifth Form: Execute 3 jabs
      */
     private static void executeThreeJabs(LivingEntity entity, Level level) {
-        playEntityAnimation(entity, "speed_attack_sword");
+    	
+    	{
+            
+    		playEntityAnimation(entity, "sword_to_left");
 
-        Vec3 lookVec = entity.getLookAngle();
-        Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
-        Vec3 endPos = startPos.add(lookVec.scale(3.0));
+            Vec3 lookVec = entity.getLookAngle();
+            Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
+            Vec3 endPos = startPos.add(lookVec.scale(3.0));
 
-        AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
-        List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
-            e -> e != entity && e.isAlive());
+            MovementHelper.setVelocity(entity, lookVec.scale(0.5));
 
-        // 3 jabs
-        for (LivingEntity target : targets) {
-            float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
-            Damager.hurt(entity, target, damage);
-            ///Damager.hurt(entity, target, damage);
-            ///Damager.hurt(entity, target, damage);
-        }
+            AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
+            List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
+                e -> e != entity && e.isAlive());
 
-        if (level instanceof ServerLevel serverLevel) {
-            spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 20);
-        }
+            for (LivingEntity target : targets) {
+                float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
+                Damager.hurt(entity, target, damage);
+            }
 
-        level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
-            SoundSource.PLAYERS, 1.0F, 1.0F);
-        level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
-            SoundSource.PLAYERS, 1.0F, 1.0F);
+            if (level instanceof ServerLevel serverLevel) {
+                //spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 20);
+            	double yawRad = Math.toRadians(entity.getYRot());
+				double pitchRad = 0;
+
+				Vec3 pos = entity.getEyePosition();
+
+				int arcLength = 120;
+				double angle = 10;
+                ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
+						3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE,
+						80);
+            }
+
+            level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                SoundSource.PLAYERS, 1.0F, 1.0F);
+            level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
+                SoundSource.PLAYERS, 1.0F, 1.0F);
+    	}
+    	
+    	AbilityScheduler.scheduleOnce(entity, () -> {
+    		playEntityAnimation(entity, "sword_to_right");
+
+            Vec3 lookVec = entity.getLookAngle();
+            Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
+            Vec3 endPos = startPos.add(lookVec.scale(3.0));
+
+            MovementHelper.setVelocity(entity, lookVec.scale(0.5));
+
+            AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
+            List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
+                e -> e != entity && e.isAlive());
+
+            for (LivingEntity target : targets) {
+                float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
+                Damager.hurt(entity, target, damage);
+            }
+
+            if (level instanceof ServerLevel serverLevel) {
+                //spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 20);
+            	double yawRad = Math.toRadians(entity.getYRot());
+				double pitchRad = 0;
+
+				Vec3 pos = entity.getEyePosition();
+
+				int arcLength = 120;
+				double angle = 16;
+                ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
+						3, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE,
+						80);
+            }
+
+            level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                SoundSource.PLAYERS, 1.0F, 1.0F);
+            level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
+                SoundSource.PLAYERS, 1.0F, 1.0F);
+    	}, 8);
+    	
+    	AbilityScheduler.scheduleOnce(entity, () -> {
+    		playEntityAnimation(entity, "speed_attack_sword");
+
+            Vec3 lookVec = entity.getLookAngle();
+            Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
+            Vec3 endPos = startPos.add(lookVec.scale(3.0));
+
+            MovementHelper.setVelocity(entity, lookVec.scale(0.5));
+            
+            AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
+            List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, hitBox,
+                e -> e != entity && e.isAlive());
+
+            for (LivingEntity target : targets) {
+                float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
+                Damager.hurt(entity, target, damage);
+            }
+
+            if (level instanceof ServerLevel serverLevel) {
+                spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 20);
+            }
+
+            level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
+                SoundSource.PLAYERS, 1.0F, 1.0F);
+            level.playSound(null, entity.blockPosition(), SoundEvents.SNOW_BREAK,
+                SoundSource.PLAYERS, 1.0F, 1.0F);
+        }, 16);
+    	
+        
     }
 
     /**
      * Sixth Form: Polar Mark
-     * Throw sword as projectile (simplified - uses raycast for now)
-     * TODO: Implement actual item_display entity projectile
+     * Throw sword as projectile using FlyingSwordEntity
      */
     public static BreathingForm sixthForm() {
         return new BreathingForm(
@@ -491,43 +586,42 @@ public class FrostBreathingForms {
             (entity, level) -> {
                 playEntityAnimation(entity, "sword_overhead");
 
-                // TODO: Create item_display entity that flies forward as projectile
-                // For now, damage in a line
-                Vec3 lookVec = entity.getLookAngle();
-                Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
-                Vec3 endPos = startPos.add(lookVec.scale(15.0));
-
-                AABB hitBox = new AABB(startPos, endPos).inflate(1.0);
-                List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
-                    e -> e != entity && e.isAlive());
-
-                // Hit first target only
-                if (!targets.isEmpty()) {
-                    float damage = DamageCalculator.calculateScaledDamage(entity, 13.0F);
-                    targets.get(0).hurt(DamageCalculator.getDamageSource(entity), damage);
+                // Only players can throw swords (need inventory)
+                if (!(entity instanceof Player player)) {
+                    if (Config.logDebug) {
+                        Log.debug("Sixth Form: Entity is not a player, cannot throw sword");
+                    }
+                    return;
                 }
 
-                // Spawn particles along the path
-                if (level instanceof ServerLevel serverLevel) {
-                    spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 50);
+                // Get the held sword item
+                ItemStack heldSword = player.getMainHandItem();
+                if (heldSword.isEmpty()) {
+                    if (Config.logDebug) {
+                        Log.debug("Sixth Form: No sword in hand");
+                    }
+                    return;
                 }
+
+                // Create flying sword ItemDisplay (it will return the sword automatically)
+                FlyingSwordEntity.create(level, player, heldSword);
+
+                // Remove sword from player's hand temporarily (FlyingSwordEntity will return it)
+                player.getMainHandItem().shrink(1);
 
                 level.playSound(null, entity.blockPosition(), SoundEvents.TRIDENT_THROW,
                     SoundSource.PLAYERS, 1.0F, 1.0F);
 
-                // Sound for sword returning
-                AbilityScheduler.scheduleOnce(entity, () -> {
-                    level.playSound(null, entity.blockPosition(), SoundEvents.TRIDENT_RETURN,
-                        SoundSource.PLAYERS, 1.0F, 1.0F);
-                }, 20);
+                if (Config.logDebug) {
+                    Log.debug("Sixth Form: Spawned flying sword entity");
+                }
             }
         );
     }
 
     /**
      * Seventh Form: Golden Senses (Komorebi's sword only)
-     * Temporarily switch sword to golden model and enhance stats
-     * TODO: Implement model switching
+     * Temporarily switch sword to golden model and enhance stats with golden slashing particles
      */
     public static BreathingForm seventhForm() {
         return new BreathingForm(
@@ -535,9 +629,39 @@ public class FrostBreathingForms {
             "Sword glows golden, empowering you",
             40, // 40 second cooldown
             (entity, level) -> {
-                // TODO: Play kaishin3 animation
-                // TODO: Change sword model to nichirinsword_golden
-                playEntityAnimation(entity, "sword_overhead"); // Placeholder
+                // Play kaishin3 animation if available, otherwise sword_overhead
+                playEntityAnimation(entity, "kaishin3");
+
+                // Only works for players (needs capability system)
+                if (!(entity instanceof Player player)) {
+                    if (Config.logDebug) {
+                        Log.debug("Seventh Form: Entity is not a player, skipping model override");
+                    }
+                }
+
+                final int duration = 400; // 20 seconds
+                final ResourceLocation goldenModel = ResourceLocation.fromNamespaceAndPath(
+                    KimetsunoyaibaMultiplayer.MODID, "item/nichirinsword_golden");
+
+                // Change sword model to golden
+                if (entity instanceof Player player) {
+                    player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA)
+                        .ifPresent(data -> {
+                            data.setSwordModelOverride(goldenModel);
+
+                            // Sync to all clients if on server
+                            if (player instanceof ServerPlayer serverPlayer) {
+                                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
+                                    new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket(
+                                        player.getUUID(), goldenModel));
+                            }
+
+                            if (Config.logDebug) {
+                                Log.debug("Seventh Form: Set golden sword model for player {}",
+                                    player.getName().getString());
+                            }
+                        });
+                }
 
                 // Get current effect levels and add 1
                 int hasteLevel = entity.hasEffect(MobEffects.DIG_SPEED) ?
@@ -547,44 +671,82 @@ public class FrostBreathingForms {
                 int strengthLevel = entity.hasEffect(MobEffects.DAMAGE_BOOST) ?
                     entity.getEffect(MobEffects.DAMAGE_BOOST).getAmplifier() + 1 : 0;
 
-                // Apply enhanced effects for 20 seconds
-                entity.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, 400, hasteLevel));
-                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 400, speedLevel));
-                entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 400, strengthLevel));
-                entity.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 400, 0));
+                // Apply enhanced effects
+                entity.addEffect(new MobEffectInstance(MobEffects.DIG_SPEED, duration, hasteLevel));
+                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, duration, speedLevel));
+                entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, duration, strengthLevel));
+                entity.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, duration, 0));
 
-                // Spawn golden particles
+                // Spawn initial golden particle burst
                 if (level instanceof ServerLevel serverLevel) {
                     for (int i = 0; i < 50; i++) {
                         double offsetX = (level.random.nextDouble() - 0.5) * 3;
                         double offsetY = level.random.nextDouble() * 2;
                         double offsetZ = (level.random.nextDouble() - 0.5) * 3;
-                        // TODO: Use yellow dust particle
-                        serverLevel.sendParticles(ParticleTypes.CLOUD,
+
+                        // Golden yellow dust particles
+                        serverLevel.sendParticles(
+                            new DustParticleOptions(new Vector3f(1.0f, 0.85f, 0.0f), 1.5f),
                             entity.getX() + offsetX, entity.getY() + offsetY, entity.getZ() + offsetZ,
                             1, 0, 0.1, 0, 0.05);
                     }
 
-                    // Continue spawning golden particles during the effect
-                    for (int tick = 0; tick < 400; tick += 10) {
+                    // Continue spawning golden ambient particles
+                    for (int tick = 0; tick < duration; tick += 10) {
                         AbilityScheduler.scheduleOnce(entity, () -> {
                             for (int i = 0; i < 3; i++) {
                                 double offsetX = (level.random.nextDouble() - 0.5) * 2;
                                 double offsetY = level.random.nextDouble() * 2;
                                 double offsetZ = (level.random.nextDouble() - 0.5) * 2;
-                                serverLevel.sendParticles(ParticleTypes.CLOUD,
+                                serverLevel.sendParticles(
+                                    new DustParticleOptions(new Vector3f(1.0f, 0.85f, 0.0f), 1.0f),
                                     entity.getX() + offsetX, entity.getY() + offsetY, entity.getZ() + offsetZ,
                                     1, 0, 0.05, 0, 0.02);
                             }
                         }, tick);
                     }
+
+                    // Enable golden slashing particles during attacks
+                    if (entity instanceof Player player) {
+                        player.addTag("GoldenSlashParticles");
+                        if (Config.logDebug) {
+                            Log.debug("Seventh Form: Enabled golden slash particles for player {}",
+                                player.getName().getString());
+                        }
+                    }
                 }
 
-                // TODO: Play kimetsunoyaiba:awakening sound
                 level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_LEVELUP,
                     SoundSource.PLAYERS, 1.0F, 0.8F);
 
-                // TODO: After 20 seconds, change sword model back
+                // After duration, change sword model back and disable golden particles
+                AbilityScheduler.scheduleOnce(entity, () -> {
+                    if (entity instanceof Player player) {
+                        player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA)
+                            .ifPresent(data -> {
+                                data.setSwordModelOverride(null);
+
+                                // Sync model clear to all clients
+                                if (player instanceof ServerPlayer serverPlayer) {
+                                    com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
+                                        new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket(
+                                            player.getUUID(), null));
+                                }
+
+                                if (Config.logDebug) {
+                                    Log.debug("Seventh Form: Cleared golden sword model for player {}",
+                                        player.getName().getString());
+                                }
+                            });
+
+                        // Disable golden slashing particles
+                        player.removeTag("GoldenSlashParticles");
+                        if (Config.logDebug) {
+                            Log.debug("Seventh Form: Disabled golden slash particles for player {}",
+                                player.getName().getString());
+                        }
+                    }
+                }, duration);
             }
         );
     }

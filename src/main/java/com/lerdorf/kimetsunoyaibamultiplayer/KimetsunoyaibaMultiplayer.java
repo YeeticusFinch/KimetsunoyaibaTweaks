@@ -305,6 +305,11 @@ public class KimetsunoyaibaMultiplayer
                 if (mc.player == null || mc.level == null) {
                     return;
                 }
+                
+                if (event.getEntity().getTags().contains("CheckForAttack")) {
+                	event.getEntity().removeTag("CheckForAttack");
+                	event.getEntity().addTag("DidAttack");
+                }
 
                 // ONLY handle attacks by the LOCAL PLAYER
                 // Other players' and mobs' gun attacks should NOT trigger effects here

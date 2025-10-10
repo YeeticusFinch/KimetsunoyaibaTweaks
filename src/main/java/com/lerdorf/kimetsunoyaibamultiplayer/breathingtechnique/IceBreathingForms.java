@@ -350,7 +350,7 @@ public class IceBreathingForms {
 	 * attacks/second, ragnaraku2 and ragnaraku3
 	 */
 	public static BreathingForm thirdForm() {
-		return new BreathingForm("Third Form: Merciful Hail Fall", "Leap and deliver powerful downward slashes", 7, // 7
+		return new BreathingForm("Third Form: Icicle Bombardment", "Leap and deliver powerful downward slashes", 7, // 7
 																													// second
 																													// cooldown
 				(entity, level) -> {
@@ -373,7 +373,8 @@ public class IceBreathingForms {
 					final double targetY = entity.getY() + 4.0; // Target hover height (4 blocks up)
 					final double[] columnPos = { 0, 0 };
 
-
+					Vec3 pos = entity.getEyePosition().add(entity.getLookAngle().normalize().scale(3));
+					
 					level.playSound(null, entity.blockPosition(), SoundEvents.ELYTRA_FLYING, SoundSource.PLAYERS, 0.8F,
 							2.0F);
 					
@@ -393,6 +394,22 @@ public class IceBreathingForms {
 									entity.getDeltaMovement().z);
 						}
 						
+						// Spawn particles - cloud with snowfall
+		                if (level instanceof ServerLevel serverLevel) {
+		                	serverLevel.sendParticles(ParticleTypes.CLOUD, pos.x + 10*(Math.random()-0.5),
+									pos.y + entity.getEyeHeight() + 2*(Math.random()), pos.z + 10*(Math.random()-0.5), 20, 0.5, 0.0,
+									0.5, 0.01);
+		                	
+		                	serverLevel.sendParticles(new DustParticleOptions(new Vector3f(1.0f, 1.0f, 1.0f),
+									(float) (Math.random() + 1.5f)), entity.getX() + 10*(Math.random()-0.5),
+									entity.getY() + entity.getEyeHeight() + 2*(Math.random()), entity.getZ() + 10*(Math.random()-0.5), 20, 0.5, 0.0,
+									0.5, 0.01);
+		                	
+		                	serverLevel.sendParticles(ParticleTypes.SNOWFLAKE, pos.x + 10*(Math.random()-0.5),
+									pos.y + entity.getEyeHeight() - 3*(Math.random()), pos.z + 10*(Math.random()-0.5), 40, 0.6, 0.2,
+									0.6, 0.5);
+		                }
+						
 
 						// Attack every attackInterval ticks
 						if (currentTick % attackInterval == 0 && currentTick > attackInterval) {
@@ -402,7 +419,6 @@ public class IceBreathingForms {
 							// Use layer 4000 so attacks show without being overridden
 							playEntityAnimationOnLayer(entity, anim, 10, 1.0f, 4000);
 
-							Vec3 pos = entity.getEyePosition().add(entity.getLookAngle().normalize().scale(3));
 							AABB area = new AABB(pos.x - 4, entity.getY() - 8, pos.z - 4, pos.x + 4, entity.getY(),
 									pos.z + 4);
 							List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, area,
@@ -459,7 +475,7 @@ public class IceBreathingForms {
 
 							if (level instanceof ServerLevel serverLevel) {
 
-								Vec3 pos = entity.getEyePosition().add(entity.getLookAngle().normalize().scale(3));
+								//Vec3 pos = entity.getEyePosition().add(entity.getLookAngle().normalize().scale(3));
 								for (int i = 0; i < 10; i++) {
 									serverLevel.sendParticles(
 											new BlockParticleOption(ParticleTypes.BLOCK,

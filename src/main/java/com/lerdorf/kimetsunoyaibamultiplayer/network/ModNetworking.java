@@ -75,6 +75,14 @@ public class ModNetworking {
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBreathingFormPacket::encode)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBreathingFormPacket::handle)
                 .add();
+
+        // Register sword model override packet (server -> client)
+        int swordModelOverridePacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket.class, swordModelOverridePacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

@@ -14,7 +14,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 /**
- * Manages renderer registration for our GeckoLib crow entity
+ * Manages renderer registration for custom entities
  */
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class CrowRendererManager {
@@ -22,11 +22,12 @@ public class CrowRendererManager {
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
     	if (Config.logDebug)
-    		Log.info("Registering GeckoLib crow renderer...");
+    		Log.info("Registering entity renderers...");
 
         // Register renderer for our GeckolibCrowEntity
         event.registerEntityRenderer(ModEntities.GECKOLIB_CROW.get(), CrowGeoRenderer::new);
+
         if (Config.logDebug)
-        	Log.info("GeckoLib crow renderer registered successfully");
+        	Log.info("Entity renderers registered successfully");
     }
 }
