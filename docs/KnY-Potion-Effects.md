@@ -192,12 +192,14 @@ Dream/sleep effect, likely inspired by Enmu's Blood Demon Art. Applies dream sta
 **Visibility:** Visible in GUI
 
 **Description:**
-Mystery effect with minimal implementation. No custom procedures, suggesting it may be a marker effect checked by other systems.
+Gyokko's Blood Demon Art - Final Form ability. Any entity with this effect will transform their attack targets into fish. This is a devastating ability from Upper Moon Five (Gyokko) that turns victims into helpless fish entities.
 
 **Key Features:**
-- Simplest implementation of all effects
-- No active tick behavior or procedures
-- Likely used as a flag/marker for external checks
+- Transforms entities hit by the effect holder into fish
+- Minimal potion effect implementation (logic handled elsewhere)
+- No visual effect (invisible color)
+- Checked by attack/damage systems to trigger fish transformation
+- Referenced from Gyokko's ultimate Blood Demon Art technique
 
 ---
 
@@ -394,7 +396,7 @@ Wisteria flower poison - deadly to demons. Fujinohana is Japanese for wisteria f
 - `cooltime_2` - Backwards jump/dodge cooldown
 - `demon` (oni) - Demon transformation
 - `dream` - Dream state
-- `god_hand` - Marker effect
+- `god_hand` - Gyokko's ability: transforms attack targets into fish
 - `immvable` - Movement lockdown
 - `potion_demon_slayer_mark` - Slayer mark activation
 - `potion_transparent_world` - Enhanced perception
