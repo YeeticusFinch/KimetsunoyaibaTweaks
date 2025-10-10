@@ -25,7 +25,7 @@ Particles: minecraft:snowflake, minecraft:cloud, minecraft:block (packed ice)
 Sounds: minecraft:entity.player.attack.sweep, minecraft:block.snow.break, minecraft:block.ice.break
 
 
-## Fourth Form: Freezing Cold
+## Fourth Form: Frostbite Gale
 
 The user does a vertical slash in front of them, sending a blast of cool air toward the opponent. Stunning them in place.
 Animations: kimetsunoyaiba:sword_overhead
