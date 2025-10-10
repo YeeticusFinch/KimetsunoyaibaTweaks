@@ -126,8 +126,13 @@ public class ParticleConfig {
                     "kimetsunoyaiba:nichirinsword_iguro:minecraft:dust:1.0:1.0:1.0:1.0",
                     "kimetsunoyaiba:nichirinsword_shinazugawa:minecraft:dust:0.8:0.1:1.0:0.1",
                     "kimetsunoyaiba:nichirinsword_kanae:minecraft:dust:0.7:1.0:0.9:0.9",
-                    "kimetsunoyaiba:nichirinsword_yoriichi:minecraft:flame"
-                    
+                    "kimetsunoyaiba:nichirinsword_yoriichi:minecraft:flame",
+                    // Breathing swords from Kimetsunoyaiba Multiplayer mod
+                    "kimetsunoyaibamultiplayer:nichirinsword_komorebi:minecraft:snowflake",
+                    "kimetsunoyaibamultiplayer:nichirinsword_frost:minecraft:snowflake",
+                    "kimetsunoyaibamultiplayer:nichirinsword_ice:minecraft:dust:1.5:0.5:0.8:1.0",
+                    "kimetsunoyaibamultiplayer:nichirinsword_shimizu:minecraft:dust:1.5:0.5:0.8:1.0"
+
                 );
             }, obj -> obj instanceof String);
 
@@ -249,6 +254,53 @@ public class ParticleConfig {
         } else {
             // Regular particle
             return new ParticleMapping(itemId, particleType);
+        }
+    }
+
+    /**
+     * Adds a new particle mapping to the config file at runtime.
+     * This is called when a sword doesn't have a particle mapping yet.
+     *
+     * @param itemId The full item ID (e.g., "kimetsunoyaibamultiplayer:nichirinsword_komorebi")
+     * @param particleType The particle type (e.g., "minecraft:snowflake")
+     * @param size Particle size (only for dust particles)
+     * @param red Red component (0.0-1.0, only for dust particles)
+     * @param green Green component (0.0-1.0, only for dust particles)
+     * @param blue Blue component (0.0-1.0, only for dust particles)
+     */
+    public static void addParticleMappingToConfig(String itemId, String particleType, float size, float red, float green, float blue) {
+        try {
+            // Get current mappings list
+            List<? extends String> currentMappings = PARTICLE_MAPPINGS.get();
+            java.util.List<String> newMappings = new java.util.ArrayList<>(currentMappings);
+
+            // Create the new mapping string
+            String newMapping;
+            if (particleType.equals("minecraft:dust")) {
+                newMapping = String.format("%s:%s:%.1f:%.1f:%.1f:%.1f", itemId, particleType, size, red, green, blue);
+            } else {
+                newMapping = String.format("%s:%s", itemId, particleType);
+            }
+
+            // Add to list if not already present
+            if (!newMappings.contains(newMapping)) {
+                newMappings.add(newMapping);
+                System.out.println("Auto-added particle mapping to config: " + newMapping);
+
+                // Update the config value
+                PARTICLE_MAPPINGS.set(newMappings);
+
+                // Also add to cached map immediately
+                ParticleMapping parsed = parseParticleMapping(newMapping);
+                if (parsed != null) {
+                    particleMappings.put(parsed.itemId, parsed);
+                }
+
+                // Save the config file
+                SPEC.save();
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to auto-add particle mapping for " + itemId + ": " + e.getMessage());
         }
     }
 }

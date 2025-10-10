@@ -641,7 +641,7 @@ public class FrostBreathingForms {
 
                 final int duration = 400; // 20 seconds
                 final ResourceLocation goldenModel = ResourceLocation.fromNamespaceAndPath(
-                    KimetsunoyaibaMultiplayer.MODID, "item/nichirinsword_golden");
+                    KimetsunoyaibaMultiplayer.MODID, "nichirinsword_golden");
 
                 // Change sword model to golden
                 if (entity instanceof Player player) {

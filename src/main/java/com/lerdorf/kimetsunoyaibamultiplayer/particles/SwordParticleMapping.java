@@ -64,25 +64,22 @@ public class SwordParticleMapping {
         String itemIdString = itemId.toString();
 
         // First, check config-based particle mappings
-        System.out.println("Looking for particle mapping for item: " + itemIdString);
+        Log.debug("Looking for particle mapping for item: " + itemIdString);
         if (ParticleConfig.particleMappings != null) {
-            System.out.println("Config mappings available: " + ParticleConfig.particleMappings.size());
+            Log.debug("Config mappings available: " + ParticleConfig.particleMappings.size());
             if (ParticleConfig.particleMappings.containsKey(itemIdString)) {
                 ParticleConfig.ParticleMapping mapping = ParticleConfig.particleMappings.get(itemIdString);
                 System.out.println("Found config mapping: " + mapping.particleType);
                 ParticleOptions result = createParticleFromMapping(mapping);
                 if (result != null) {
-                    System.out.println("Successfully created particle from config mapping");
+                    Log.debug("Successfully created particle from config mapping");
                     return result;
                 } else {
-                    System.err.println("Failed to create particle from config mapping");
+                    Log.warn("Failed to create particle from config mapping");
                 }
-            } else {
-                System.out.println("No config mapping found for: " + itemIdString);
-                System.out.println("Available mappings: " + ParticleConfig.particleMappings.keySet());
             }
         } else {
-            System.err.println("ParticleConfig.particleMappings is null!");
+            Log.warn("ParticleConfig.particleMappings is null!");
         }
 
         // Check if this is a nichirin sword (fallback to legacy logic)
@@ -101,8 +98,19 @@ public class SwordParticleMapping {
             if (swordType.equals("nichirinsword_ice") || swordType.equals("nichirinsword_shimizu")) {
                 // Light blue color (RGB: 0.5, 0.8, 1.0)
                 Vector3f lightBlue = new Vector3f(0.5f, 0.8f, 1.0f);
-                return new DustParticleOptions(lightBlue, 1.0f);
+
+                // Auto-add to config if missing
+                if (ParticleConfig.particleMappings != null && !ParticleConfig.particleMappings.containsKey(itemIdString)) {
+                    ParticleConfig.addParticleMappingToConfig(itemIdString, "minecraft:dust", 1.5f, 0.5f, 0.8f, 1.0f);
+                }
+
+                return new DustParticleOptions(lightBlue, 1.5f);
             } else if (swordType.equals("nichirinsword_frost") || swordType.equals("nichirinsword_komorebi")) {
+                // Auto-add to config if missing
+                if (ParticleConfig.particleMappings != null && !ParticleConfig.particleMappings.containsKey(itemIdString)) {
+                    ParticleConfig.addParticleMappingToConfig(itemIdString, "minecraft:snowflake", 1.0f, 1.0f, 1.0f, 1.0f);
+                }
+
                 return ParticleTypes.SNOWFLAKE;
             }
         }
@@ -139,25 +147,25 @@ public class SwordParticleMapping {
      */
     private static ParticleOptions createParticleFromMapping(ParticleConfig.ParticleMapping mapping) {
         try {
-            System.out.println("Creating particle from mapping: " + mapping.particleType + " (isDust: " + mapping.isDust + ")");
+            Log.debug("Creating particle from mapping: " + mapping.particleType + " (isDust: " + mapping.isDust + ")");
             ResourceLocation particleId = ResourceLocation.parse(mapping.particleType);
 
             if (mapping.isDust) {
                 // Create dust particle with custom size and color
                 Vector3f color = new Vector3f(mapping.red, mapping.green, mapping.blue);
-                System.out.println("Creating dust particle with color (" + mapping.red + ", " + mapping.green + ", " + mapping.blue + ") size " + mapping.size);
+                Log.debug("Creating dust particle with color (" + mapping.red + ", " + mapping.green + ", " + mapping.blue + ") size " + mapping.size);
                 DustParticleOptions dustOptions = new DustParticleOptions(color, mapping.size);
-                System.out.println("Successfully created dust particle options");
+                Log.debug("Successfully created dust particle options");
                 return dustOptions;
             } else {
                 // Try to get the particle from the registry
                 System.out.println("Looking for particle in registry: " + particleId);
                 if (BuiltInRegistries.PARTICLE_TYPE.containsKey(particleId)) {
                     var particleType = BuiltInRegistries.PARTICLE_TYPE.get(particleId);
-                    System.out.println("Found particle type in registry: " + particleType);
+                    Log.debug("Found particle type in registry: " + particleType);
                     return (ParticleOptions) particleType;
                 } else {
-                    System.err.println("Particle not found in registry: " + particleId);
+                    Log.warn("Particle not found in registry: " + particleId);
                 }
             }
         } catch (Exception e) {

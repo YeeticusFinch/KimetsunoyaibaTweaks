@@ -41,13 +41,43 @@ public class BreathingSwordAnimationHandler {
                 }
                 lastAttackTime = currentTime;
 
-                // 5% chance for overhead animation, otherwise alternate left/right
+                // Check if golden sword model is equipped
+                boolean goldenMode = false;
+                try {
+                    goldenMode = player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA)
+                        .map(data -> {
+                            net.minecraft.resources.ResourceLocation modelOverride = data.getSwordModelOverride();
+                            return modelOverride != null &&
+                                   modelOverride.getPath().contains("golden");
+                        })
+                        .orElse(false);
+                } catch (Exception e) {
+                    // Capability might not be available, use normal animations
+                }
+
                 String animationName;
-                if (RANDOM.nextInt(100) < 8) {
-                    animationName = "sword_overhead";
+                if (goldenMode) {
+                    // Golden mode: cycle through all attack animations
+                    String[] goldenAnimations = {
+                        "sword_to_left",
+                        "sword_to_right",
+                        "sword_rotate",
+                        "sword_to_upper",
+                        "sword_overhead",
+                        "speed_attack_sword"
+                    };
+
+                    // Use time-based cycling for variety
+                    int index = (int)((currentTime / 300) % goldenAnimations.length);
+                    animationName = goldenAnimations[index];
                 } else {
-                    animationName = lastWasLeft ? "sword_to_right" : "sword_to_left";
-                    lastWasLeft = !lastWasLeft;
+                    // Normal mode: 5% chance for overhead animation, otherwise alternate left/right
+                    if (RANDOM.nextInt(100) < 8) {
+                        animationName = "sword_overhead";
+                    } else {
+                        animationName = lastWasLeft ? "sword_to_right" : "sword_to_left";
+                        lastWasLeft = !lastWasLeft;
+                    }
                 }
 
                 // Play the animation with 10 tick max duration (cancel after 10 ticks)

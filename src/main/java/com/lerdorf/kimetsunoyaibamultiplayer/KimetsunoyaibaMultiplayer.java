@@ -163,14 +163,14 @@ public class KimetsunoyaibaMultiplayer
                 ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
 
                 if (Config.logDebug && SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
-                    System.err.println("Server: Attack detected with kimetsunoyaiba sword: " +
+                    Log.debug("Server: Attack detected with kimetsunoyaiba sword: " +
                         attacker.getName().getString() + " -> " + target.getName().getString());
                 }
             }
         } catch (Exception e) {
             // Silently catch exceptions to prevent crashes
             if (Config.logDebug) {
-                System.err.println("Error in onLivingAttack: " + e.getMessage());
+                Log.debug("Error in onLivingAttack: " + e.getMessage());
             }
         }
     }
