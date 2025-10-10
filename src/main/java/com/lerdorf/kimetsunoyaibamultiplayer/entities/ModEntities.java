@@ -84,6 +84,17 @@ public class ModEntities {
                 .build("shimizu"));
 
     /**
+     * Thrown Sword - Projectile for Frost Breathing Sixth Form
+     */
+    public static final RegistryObject<EntityType<ThrownSwordEntity>> THROWN_SWORD =
+        ENTITY_TYPES.register("thrown_sword",
+            () -> EntityType.Builder.<ThrownSwordEntity>of(ThrownSwordEntity::new, MobCategory.MISC)
+                .sized(0.5F, 0.5F)
+                .clientTrackingRange(4)
+                .updateInterval(20)
+                .build("thrown_sword"));
+
+    /**
      * Register entity types to the mod event bus
      */
     public static void register(IEventBus eventBus) {

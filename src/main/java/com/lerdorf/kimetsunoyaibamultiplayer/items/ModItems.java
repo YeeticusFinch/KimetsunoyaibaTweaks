@@ -36,6 +36,10 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_KOMOREBI = ITEMS.register("nichirinsword_komorebi",
         () -> new NichirinSwordKomorebi(new Item.Properties().stacksTo(1).durability(2000)));
 
+    // Golden sword - used for Seventh Form: Golden Senses (not in creative menu)
+    public static final RegistryObject<Item> NICHIRINSWORD_GOLDEN = ITEMS.register("nichirinsword_golden",
+        () -> new NichirinSwordGolden(new Item.Properties().stacksTo(1).durability(2000)));
+
     // Komorebi's cosmetic armor
     public static final RegistryObject<Item> KOMOREBI_HAIR = ITEMS.register("komorebi_hair",
         () -> new KomorebiHairItem());

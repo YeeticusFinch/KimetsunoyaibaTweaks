@@ -41,19 +41,9 @@ public class BreathingSwordAnimationHandler {
                 }
                 lastAttackTime = currentTime;
 
-                // Check if golden sword model is equipped
-                boolean goldenMode = false;
-                try {
-                    goldenMode = player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA)
-                        .map(data -> {
-                            net.minecraft.resources.ResourceLocation modelOverride = data.getSwordModelOverride();
-                            return modelOverride != null &&
-                                   modelOverride.getPath().contains("golden");
-                        })
-                        .orElse(false);
-                } catch (Exception e) {
-                    // Capability might not be available, use normal animations
-                }
+                // Check if golden sword is equipped
+                boolean goldenMode = mainHand.getItem() instanceof
+                    com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordGolden;
 
                 String animationName;
                 if (goldenMode) {

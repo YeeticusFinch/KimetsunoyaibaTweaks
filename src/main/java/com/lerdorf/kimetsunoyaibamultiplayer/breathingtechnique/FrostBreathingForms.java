@@ -576,7 +576,7 @@ public class FrostBreathingForms {
 
     /**
      * Sixth Form: Polar Mark
-     * Throw sword as projectile using FlyingSwordEntity
+     * Throw sword as projectile using ThrownSwordEntity
      */
     public static BreathingForm sixthForm() {
         return new BreathingForm(
@@ -603,17 +603,34 @@ public class FrostBreathingForms {
                     return;
                 }
 
-                // Create flying sword ItemDisplay (it will return the sword automatically)
-                FlyingSwordEntity.create(level, player, heldSword);
+                // Only spawn on server side
+                if (level.isClientSide) {
+                    return;
+                }
 
-                // Remove sword from player's hand temporarily (FlyingSwordEntity will return it)
+                // Create thrown sword entity
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.ThrownSwordEntity thrownSword =
+                    new com.lerdorf.kimetsunoyaibamultiplayer.entities.ThrownSwordEntity(
+                        level, player, heldSword.copy());
+
+                // Set velocity based on player's look direction
+                Vec3 lookVec = player.getLookAngle();
+                thrownSword.shoot(lookVec.x, lookVec.y, lookVec.z, 1.5F, 1.0F);
+
+                // Position at player's eye level
+                thrownSword.setPos(player.getX(), player.getEyeY() - 0.1, player.getZ());
+
+                // Spawn the entity
+                level.addFreshEntity(thrownSword);
+
+                // Remove sword from player's hand temporarily (entity will return it)
                 player.getMainHandItem().shrink(1);
 
                 level.playSound(null, entity.blockPosition(), SoundEvents.TRIDENT_THROW,
                     SoundSource.PLAYERS, 1.0F, 1.0F);
 
                 if (Config.logDebug) {
-                    Log.debug("Sixth Form: Spawned flying sword entity");
+                    Log.debug("Sixth Form: Spawned thrown sword entity");
                 }
             }
         );
@@ -632,35 +649,50 @@ public class FrostBreathingForms {
                 // Play kaishin3 animation if available, otherwise sword_overhead
                 playEntityAnimation(entity, "kaishin3");
 
-                // Only works for players (needs capability system)
+                // Only works for players (needs inventory)
                 if (!(entity instanceof Player player)) {
                     if (Config.logDebug) {
-                        Log.debug("Seventh Form: Entity is not a player, skipping model override");
+                        Log.debug("Seventh Form: Entity is not a player, skipping");
                     }
+                    return;
                 }
 
                 final int duration = 400; // 20 seconds
-                final ResourceLocation goldenModel = ResourceLocation.fromNamespaceAndPath(
-                    KimetsunoyaibaMultiplayer.MODID, "nichirinsword_golden");
 
-                // Change sword model to golden
-                if (entity instanceof Player player) {
-                    player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA)
-                        .ifPresent(data -> {
-                            data.setSwordModelOverride(goldenModel);
+                // Store original sword and swap to golden sword
+                ItemStack originalSword = player.getMainHandItem().copy();
+                if (originalSword.isEmpty()) {
+                    if (Config.logDebug) {
+                        Log.debug("Seventh Form: No sword in hand");
+                    }
+                    return;
+                }
 
-                            // Sync to all clients if on server
-                            if (player instanceof ServerPlayer serverPlayer) {
-                                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
-                                    new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket(
-                                        player.getUUID(), goldenModel));
-                            }
+                // Create golden sword with same durability and enchantments
+                ItemStack goldenSword = new ItemStack(
+                    com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems.NICHIRINSWORD_GOLDEN.get());
 
-                            if (Config.logDebug) {
-                                Log.debug("Seventh Form: Set golden sword model for player {}",
-                                    player.getName().getString());
-                            }
-                        });
+                // Copy damage (durability)
+                if (originalSword.isDamageableItem()) {
+                    goldenSword.setDamageValue(originalSword.getDamageValue());
+                }
+
+                // Copy all enchantments
+                originalSword.getAllEnchantments().forEach((enchantment, enchLevel) -> {
+                    goldenSword.enchant(enchantment, enchLevel);
+                });
+
+                // Copy custom name if present
+                if (originalSword.hasCustomHoverName()) {
+                    goldenSword.setHoverName(originalSword.getHoverName());
+                }
+
+                // Swap to golden sword
+                player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, goldenSword);
+
+                if (Config.logDebug) {
+                    Log.debug("Seventh Form: Swapped to golden sword for player {}",
+                        player.getName().getString());
                 }
 
                 // Get current effect levels and add 1
@@ -707,11 +739,11 @@ public class FrostBreathingForms {
                     }
 
                     // Enable golden slashing particles during attacks
-                    if (entity instanceof Player player) {
-                        player.addTag("GoldenSlashParticles");
+                    if (entity instanceof Player p) {
+                        p.addTag("GoldenSlashParticles");
                         if (Config.logDebug) {
                             Log.debug("Seventh Form: Enabled golden slash particles for player {}",
-                                player.getName().getString());
+                                p.getName().getString());
                         }
                     }
                 }
@@ -719,32 +751,29 @@ public class FrostBreathingForms {
                 level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_LEVELUP,
                     SoundSource.PLAYERS, 1.0F, 0.8F);
 
-                // After duration, change sword model back and disable golden particles
+                // After duration, swap back to original sword
                 AbilityScheduler.scheduleOnce(entity, () -> {
-                    if (entity instanceof Player player) {
-                        player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA)
-                            .ifPresent(data -> {
-                                data.setSwordModelOverride(null);
+                    if (entity instanceof Player p) {
+                        // Get current golden sword to preserve any new damage
+                        ItemStack currentSword = p.getMainHandItem();
 
-                                // Sync model clear to all clients
-                                if (player instanceof ServerPlayer serverPlayer) {
-                                    com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
-                                        new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket(
-                                            player.getUUID(), null));
-                                }
+                        // Restore original sword with updated damage
+                        ItemStack restoredSword = originalSword.copy();
+                        if (currentSword.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordGolden) {
+                            if (currentSword.isDamageableItem()) {
+                                restoredSword.setDamageValue(currentSword.getDamageValue());
+                            }
+                        }
 
-                                if (Config.logDebug) {
-                                    Log.debug("Seventh Form: Cleared golden sword model for player {}",
-                                        player.getName().getString());
-                                }
-                            });
+                        p.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, restoredSword);
+
+                        if (Config.logDebug) {
+                            Log.debug("Seventh Form: Restored original sword for player {}",
+                                p.getName().getString());
+                        }
 
                         // Disable golden slashing particles
-                        player.removeTag("GoldenSlashParticles");
-                        if (Config.logDebug) {
-                            Log.debug("Seventh Form: Disabled golden slash particles for player {}",
-                                player.getName().getString());
-                        }
+                        p.removeTag("GoldenSlashParticles");
                     }
                 }, duration);
             }
