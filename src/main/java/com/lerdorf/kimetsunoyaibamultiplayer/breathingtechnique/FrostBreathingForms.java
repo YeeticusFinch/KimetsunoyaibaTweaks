@@ -200,6 +200,12 @@ public class FrostBreathingForms {
                     Damager.hurt(entity, target, damage);
                     target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4)); // 8 seconds, extreme slowness
                     target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4)); // 8 seconds, mining fatigue
+
+                    // Apply cold effect from KnY mod
+                    net.minecraft.world.effect.MobEffect coldEffect = KnYEffects.getColdEffect();
+                    if (coldEffect != null) {
+                        target.addEffect(new MobEffectInstance(coldEffect, 160, 0));
+                    }
                 }
 
                 // Spawn particles - forward thrust straight line
@@ -394,6 +400,12 @@ public class FrostBreathingForms {
 	                    Damager.hurt(entity, target, damage);
 	                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 2)); // 20 seconds slowness
 	                    target.setTicksFrozen(target.getTicksFrozen() + 400); // Freeze visual effect
+
+	                    // Apply cold effect from KnY mod
+	                    net.minecraft.world.effect.MobEffect coldEffect = KnYEffects.getColdEffect();
+	                    if (coldEffect != null) {
+	                        target.addEffect(new MobEffectInstance(coldEffect, 400, 0));
+	                    }
 	                }
 
 				}, 1, totalTicks);

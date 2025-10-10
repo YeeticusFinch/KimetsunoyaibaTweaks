@@ -123,6 +123,12 @@ public class IceBreathingForms {
 						Damager.hurt(entity, target, damage);
 						target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4));
 						target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4));
+
+						// Apply cold effect from KnY mod
+						net.minecraft.world.effect.MobEffect coldEffect = KnYEffects.getColdEffect();
+						if (coldEffect != null) {
+							target.addEffect(new MobEffectInstance(coldEffect, 160, 0));
+						}
 					}
 
 					// Spawn particles - forward thrust straight line
@@ -365,7 +371,7 @@ public class IceBreathingForms {
 	}
 
 	/**
-	 * Third Form: Merciful Hail Fall Hover and attack for 4 seconds, 3
+	 * Third Form: Icicle Bombardment Hover and attack for 4 seconds, 3
 	 * attacks/second, ragnaraku2 and ragnaraku3
 	 */
 	public static BreathingForm thirdForm() {
@@ -719,6 +725,12 @@ public class IceBreathingForms {
 							float damage = DamageCalculator.calculateScaledDamage(entity, 11.0F);
 							Damager.hurt(entity, target, damage);
 							target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0)); // Nausea
+
+							// Apply cold effect from KnY mod
+							net.minecraft.world.effect.MobEffect coldEffect = KnYEffects.getColdEffect();
+							if (coldEffect != null) {
+								target.addEffect(new MobEffectInstance(coldEffect, 200, 0));
+							}
 						}
 						
 

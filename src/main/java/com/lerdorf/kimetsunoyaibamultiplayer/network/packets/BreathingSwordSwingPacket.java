@@ -46,6 +46,14 @@ public class BreathingSwordSwingPacket {
             ItemStack heldItem = player.getItemInHand(InteractionHand.MAIN_HAND);
             if (!(heldItem.getItem() instanceof BreathingSwordItem)) return;
 
+            // Check if player has cool_time effect from KnY mod (prevents attacks)
+            if (com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects.hasCoolTime(player)) {
+                if (Config.logDebug) {
+                    Log.debug("Sword swing blocked by cool_time effect for player {}", player.getName().getString());
+                }
+                return;
+            }
+
             // Set weak defensive power for basic sword swing (lasts 10 ticks)
             // This allows basic swings to clash with and mitigate enemy attacks
             double weakDefense = 3.0; // Weak defensive power (3 damage reduction)

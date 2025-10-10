@@ -49,6 +49,17 @@ public abstract class BreathingSwordItem extends SwordItem {
         BreathingForm form = technique.getForm(formIndex);
 
         if (form != null) {
+            // Check if player has cool_time effect from KnY mod (prevents ability usage)
+            if (com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects.hasCoolTime(player)) {
+                if (level.isClientSide) {
+                    player.displayClientMessage(
+                        Component.literal("§cAbility on cooldown!"),
+                        true
+                    );
+                }
+                return InteractionResultHolder.fail(stack);
+            }
+
             // Check item cooldown
             if (!player.getCooldowns().isOnCooldown(this)) {
                 // Execute the form effect
