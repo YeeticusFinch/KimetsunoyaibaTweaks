@@ -75,8 +75,14 @@ public class KimetsunoyaibaMultiplayer
         // Register sounds
         ModSounds.register(modEventBus);
 
+        // Register blocks
+        com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.register(modEventBus);
+
         // Register items
         ModItems.register(modEventBus);
+
+        // Register tree decorators
+        com.lerdorf.kimetsunoyaibamultiplayer.worldgen.ModTreeDecorators.register(modEventBus);
 
         // Register config event handlers on the mod event bus
         modEventBus.register(Config.class);

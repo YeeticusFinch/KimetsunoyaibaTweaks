@@ -22,6 +22,16 @@
   "item.kimetsunoyaibamultiplayer.komorebi_spawn_egg": "Setsu Komorebi Spawn Egg",
   "item.kimetsunoyaibamultiplayer.shimizu_spawn_egg": "Akira Shimizu Spawn Egg",
 
+  "block.kimetsunoyaibamultiplayer.wisteria_log": "Wisteria Log",
+  "block.kimetsunoyaibamultiplayer.stripped_wisteria_log": "Stripped Wisteria Log",
+  "block.kimetsunoyaibamultiplayer.wisteria_wood": "Wisteria Wood",
+  "block.kimetsunoyaibamultiplayer.stripped_wisteria_wood": "Stripped Wisteria Wood",
+  "block.kimetsunoyaibamultiplayer.wisteria_planks": "Wisteria Planks",
+  "block.kimetsunoyaibamultiplayer.wisteria_leaves": "Wisteria Leaves",
+  "block.kimetsunoyaibamultiplayer.wisteria_petals": "Wisteria Petals",
+
+  "biome.kimetsunoyaibamultiplayer.wisteria_forest": "Wisteria Forest",
+
   "key.categories.kimetsunoyaibamultiplayer": "Kimetsunoyaiba Multiplayer",
   "key.kimetsunoyaibamultiplayer.cycle_breathing_form": "Cycle Breathing Form"
 }
