@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -85,11 +86,11 @@ public class FrostBreathingForms {
      * First Form: Lavish Tundra
      * Fast horizontal dash with left-right swings, multiple attacks
      */
-    public static BreathingForm firstForm() {
+    public static BreathingForm firstForm(boolean golden) {
         return new BreathingForm(
             "First Form: Lavish Tundra",
             "Dash forward with flowing horizontal strikes",
-            5, // 5 second cooldown
+            golden ? 3 : 5, // 5 second cooldown
             (entity, level) -> {
                 playEntityAnimation(entity, "sword_to_left");
 
@@ -128,7 +129,7 @@ public class FrostBreathingForms {
                                 e -> e != entity && e.isAlive());
 
                             for (LivingEntity target : targets) {
-                                float damage = DamageCalculator.calculateScaledDamage(entity, 7.0F);
+                                float damage = DamageCalculator.calculateScaledDamage(entity, golden ? 9 : 7.0F);
                                 Damager.hurt(entity, target, damage);
                             }
 
@@ -136,6 +137,10 @@ public class FrostBreathingForms {
                                 spawnParticleLine(serverLevel, entity.position().add(0, 1, 0),
                                     entity.position().add(0, 1, 0).add(lookVec.scale(3.0)),
                                     ParticleTypes.SNOWFLAKE, 15);
+                                if (golden)
+                                spawnParticleLine(serverLevel, entity.position().add(0, 1, 0),
+                                        entity.position().add(0, 1, 0).add(lookVec.scale(3.0)),
+                                        new DustParticleOptions(new Vector3f(1f, 179f/255f, 57f/255f), 1f), 15);
                                 //spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 2.0, ParticleTypes.CLOUD, 8);
 
                                 double yawRad = Math.toRadians(entity.getYRot() + (Math.random() - 0.5) * 20);
@@ -149,6 +154,10 @@ public class FrostBreathingForms {
                                 ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
     									3 + Math.random() * 1.5, 0.1, arcLength, 1, angle, ParticleTypes.SNOWFLAKE,
     									80);
+                                if (golden)
+                                	ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
+        									3 + Math.random() * 1.5, 0.1, arcLength, 1, angle, new DustParticleOptions(new Vector3f(1f, 179f/255f, 57f/255f), 1f),
+        									80);
                             }
 
                             level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
@@ -175,11 +184,11 @@ public class FrostBreathingForms {
      * Second Form: Snowing Point
      * Quick jab that immobilizes opponent
      */
-    public static BreathingForm secondForm() {
+    public static BreathingForm secondForm(boolean golden) {
         return new BreathingForm(
             "Second Form: Snowing Point",
             "Impactful jab that immobilizes",
-            2, // 2 second cooldown
+            golden ? 1 : 2, // 2 second cooldown
             (entity, level) -> {
                 playEntityAnimation(entity, "speed_attack_sword");
 
@@ -196,10 +205,10 @@ public class FrostBreathingForms {
                     e -> e != entity && e.isAlive());
 
                 for (LivingEntity target : targets) {
-                    float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
+                    float damage = DamageCalculator.calculateScaledDamage(entity, golden ? 10 : 8.0F);
                     Damager.hurt(entity, target, damage);
-                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4)); // 8 seconds, extreme slowness
-                    target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4)); // 8 seconds, mining fatigue
+                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, golden ? 6 : 4)); // 8 seconds, extreme slowness
+                    target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, golden ? 6 : 4)); // 8 seconds, mining fatigue
 
                     // Apply cold effect from KnY mod
                     net.minecraft.world.effect.MobEffect coldEffect = KnYEffects.getColdEffect();
@@ -211,6 +220,8 @@ public class FrostBreathingForms {
                 // Spawn particles - forward thrust straight line
                 if (level instanceof ServerLevel serverLevel) {
                     spawnForwardThrust(serverLevel, startPos, lookVec, 3.0, ParticleTypes.SNOWFLAKE, 20);
+                    if (golden)
+                    	spawnForwardThrust(serverLevel, startPos, lookVec, 3.0, new DustParticleOptions(new Vector3f(1f, 179f/255f, 57f/255f), 1f), 20);
                 }
 
                 level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
@@ -225,11 +236,11 @@ public class FrostBreathingForms {
      * Third Form: Icicle through Snowfall
      * Leap up, hover for a bit with lots of snowfall, then shoot forward with a powerful stab
      */
-    public static BreathingForm thirdForm() {
+    public static BreathingForm thirdForm(boolean golden) {
         return new BreathingForm(
             "Third Form: Icicle through Snowfall",
             "Gentle snowfall followed by a quick and painless stab",
-            6, // 6 second cooldown
+            golden ? 4 : 6, // 6 second cooldown
             (entity, level) -> {
 				// Enable attack animations during this ability
 				/*
@@ -274,7 +285,7 @@ public class FrostBreathingForms {
 								entity.getY() + entity.getEyeHeight() + 2*(Math.random()-0.5), entity.getZ() + 10*(Math.random()-0.5), 50, 0.5, 0.0,
 								0.5, 0.01);
 	                	
-	                	serverLevel.sendParticles(new DustParticleOptions(new Vector3f(1.0f, 1.0f, 1.0f),
+	                	serverLevel.sendParticles(new DustParticleOptions(golden ? new Vector3f(1f, 179f/255f, 57f/255f) : new Vector3f(1.0f, 1.0f, 1.0f),
 								(float) (Math.random() + 1.5f)), entity.getX() + 10*(Math.random()-0.5),
 								entity.getY() + entity.getEyeHeight() + 2*(Math.random()-0.5), entity.getZ() + 10*(Math.random()-0.5), 50, 0.5, 0.0,
 								0.5, 0.01);
@@ -294,27 +305,27 @@ public class FrostBreathingForms {
 
 		                // Launch entity forward slightly
 		                Vec3 lookVec = entity.getLookAngle();
-		                MovementHelper.setVelocity(entity, lookVec.scale(1.8));
+		                MovementHelper.setVelocity(entity, lookVec.scale(golden ? 2.5 : 1.8));
 
 		                // Apply effects to targets in front
 		                Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
-		                Vec3 endPos = startPos.add(lookVec.scale(9.0));
+		                Vec3 endPos = startPos.add(lookVec.scale(golden ? 12 : 9.0));
 
-		                AABB hitBox = new AABB(startPos, endPos).inflate(2.0);
+		                AABB hitBox = new AABB(startPos, endPos).inflate(golden ? 3 : 2.0);
 		                List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
 		                    e -> e != entity && e.isAlive());
 
 		                for (LivingEntity target : targets) {
-		                    float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
+		                    float damage = DamageCalculator.calculateScaledDamage(entity, golden ? 14 : 12.0F);
 		                    Damager.hurt(entity, target, damage);
-		                    target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 4)); // 5 seconds, blindness
-		                    target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 100, 4)); // 5 seconds, mining fatigue
+		                    target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, golden ? 6 : 4)); // 5 seconds, blindness
+		                    target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 100, golden ? 6 : 4)); // 5 seconds, mining fatigue
 		                }
 
 		                // Spawn particles - forward thrust straight line
 		                if (level instanceof ServerLevel serverLevel) {
-		                    spawnForwardThrust(serverLevel, startPos, lookVec, 18.0, ParticleTypes.SNOWFLAKE, 300);
-		                    spawnForwardThrust(serverLevel, startPos, lookVec, 18.0, new DustParticleOptions(new Vector3f(0.5f, 0.8f, 1.0f),
+		                    spawnForwardThrust(serverLevel, startPos, lookVec, golden ? 22 : 18.0, ParticleTypes.SNOWFLAKE, 300);
+		                    spawnForwardThrust(serverLevel, startPos, lookVec, golden ? 22 : 18.0, new DustParticleOptions(golden ? new Vector3f(1f, 179f/255f, 57f/255f) : new Vector3f(0.5f, 0.8f, 1.0f),
 									(float) (Math.random() + 0.2f)), 150);
 		                }
 
@@ -336,14 +347,14 @@ public class FrostBreathingForms {
      * Fourth Form: Frostbite Gale
      * Vertical slash sending cold air blast 30 blocks forward
      */
-    public static BreathingForm fourthForm() {
+    public static BreathingForm fourthForm(boolean golden) {
         return new BreathingForm(
             "Fourth Form: Frostbite Gale",
             "Send a blast of freezing air",
-            4, // 4 second cooldown
+            golden ? 3 : 4, // 4 second cooldown
             (entity, level) -> {
                 playEntityAnimation(entity, "sword_overhead");
-                float range = 30;
+                float range = golden ? 40 : 30;
                 float width = 2;
                 // Send blast forward
                 Vec3 lookVec = entity.getLookAngle();
@@ -376,6 +387,7 @@ public class FrostBreathingForms {
                 
                 final double yaw = Math.toRadians(entity.getYRot());
                 final double pitch = Math.toRadians(entity.getXRot());
+                final boolean[] hitBlock = {false};
 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
 					int currentTick = tickCounter[0]++;				
@@ -387,24 +399,31 @@ public class FrostBreathingForms {
                 	AABB hitBox = new AABB(pos.add(0, -1, 0), pos.add(0, 1, 0)).inflate(width);
                 	targets.addAll(level.getEntitiesOfClass(LivingEntity.class, hitBox,
                     e -> e != entity && e.isAlive()));
+
+                	if (level.getBlockState(BlockPos.containing(pos)).getCollisionShape(level, BlockPos.containing(pos)).isEmpty() || level.getBlockState(BlockPos.containing(pos)).canBeReplaced() || level.getBlockState(BlockPos.containing(pos)).isAir()) {
+                		hitBlock[0] = true;
+                	}
                 	
                 	if (level instanceof ServerLevel serverLevel) {
 	                	ParticleHelper.spawnVerticalArc(serverLevel, pos, yaw, pitch,
 								6 + Math.random() * 3, 0.1, 160, 1, -1, ParticleTypes.SNOWFLAKE,
 								100);
+	                	if (golden)
+	                		ParticleHelper.spawnVerticalArc(serverLevel, pos, yaw, pitch,
+									6 + Math.random() * 3, 0.1, 160, 1, -1, new DustParticleOptions(new Vector3f(1f, 179f/255f, 57f/255f), 1f),
+									100);
 	                }
 	                
-	                
 	                for (LivingEntity target : targets) {
-	                    float damage = DamageCalculator.calculateScaledDamage(entity, 7.0F);
+	                    float damage = DamageCalculator.calculateScaledDamage(entity, golden ? 9 : 7.0F);
 	                    Damager.hurt(entity, target, damage);
-	                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 2)); // 20 seconds slowness
-	                    target.setTicksFrozen(target.getTicksFrozen() + 400); // Freeze visual effect
+	                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, golden ? 4 : 2)); // 20 seconds slowness
+	                    target.setTicksFrozen(target.getTicksFrozen() + (golden ? 800 : 400)); // Freeze visual effect
 
 	                    // Apply cold effect from KnY mod
 	                    net.minecraft.world.effect.MobEffect coldEffect = KnYEffects.getColdEffect();
 	                    if (coldEffect != null) {
-	                        target.addEffect(new MobEffectInstance(coldEffect, 400, 0));
+	                        target.addEffect(new MobEffectInstance(coldEffect, 400, golden ? 1 : 0));
 	                    }
 	                }
 
@@ -429,11 +448,11 @@ public class FrostBreathingForms {
      * Fifth Form: Numbing Arctic Dance
      * Speed + invisibility for up to 6 seconds, ends on attack, then 3 jabs
      */
-    public static BreathingForm fifthForm() {
+    public static BreathingForm fifthForm(boolean golden) {
         return new BreathingForm(
             "Fifth Form: Numbing Arctic Dance",
             "Flicker in and out, then strike",
-            7, // 7 second cooldown
+            golden ? 6 : 7, // 7 second cooldown
             (entity, level) -> {
 
                 int duration = 120;
@@ -441,7 +460,7 @@ public class FrostBreathingForms {
                 playEntityAnimationOnLayer(entity, "invisibility", duration, 1.0f, 2000);
                 
                 // Apply speed and invisibility
-                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, duration, 3)); // 6 seconds
+                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, duration, golden ? 5 : 3)); // 6 seconds
                 entity.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, duration, 0)); // 6 seconds
 
                 // Schedule automatic attack at end if player doesn't attack
@@ -460,7 +479,7 @@ public class FrostBreathingForms {
 	                		playEntityAnimationOnLayer(entity, "invisibility", 0, 1.0f, 2000);
 	                		entity.removeTag("DidAttack");
 	                		hasAttacked[0] = true;
-	                		executeThreeJabs(entity, level);
+	                		executeThreeJabs(entity, level, golden);
 	                	}
                 	}
                 	
@@ -469,7 +488,7 @@ public class FrostBreathingForms {
                 AbilityScheduler.scheduleOnce(entity, () -> {
                     if (!hasAttacked[0]) {
                     	entity.removeTag("CheckForAttack");
-                        executeThreeJabs(entity, level);
+                        executeThreeJabs(entity, level, golden);
                     }
                 }, duration+1);
 
@@ -487,35 +506,46 @@ public class FrostBreathingForms {
     /**
      * Helper method for Fifth Form: Execute 3 jabs
      */
-    private static void executeThreeJabs(LivingEntity entity, Level level) {
+    private static void executeThreeJabs(LivingEntity entity, Level level, boolean golden) {
     	if (Config.logDebug) {
     		Log.debug("Fifth Form: Executing three jabs for {}", entity.getName().getString());
     	}
 
-    	// First jab - left slash
-    	performJab(entity, level, "sword_to_left", 10, 1);
+    	final int[] tickCounter = {0};
+    	final int jabInterval = 12; // 12 ticks between each jab
+    	final int totalTicks = jabInterval * 3; // 3 jabs total
+    	final int[] currentJab = {0};
 
-    	// Second jab - right slash (delayed 12 ticks)
-    	AbilityScheduler.scheduleOnce(entity, () -> {
-    		if (Config.logDebug) {
-    			Log.debug("Fifth Form: Second jab for {}", entity.getName().getString());
-    		}
-    		performJab(entity, level, "sword_to_right", 16, 2);
-    	}, 12);
+    	AbilityScheduler.scheduleRepeating(entity, () -> {
+    		int currentTick = tickCounter[0]++;
 
-    	// Third jab - speed attack (delayed 24 ticks)
-    	AbilityScheduler.scheduleOnce(entity, () -> {
-    		if (Config.logDebug) {
-    			Log.debug("Fifth Form: Third jab for {}", entity.getName().getString());
+    		// Perform a jab every jabInterval ticks
+    		if (currentTick % jabInterval == 0) {
+    			currentJab[0]++;
+
+    			if (Config.logDebug) {
+    				Log.debug("Fifth Form: Jab {} for {}", currentJab[0], entity.getName().getString());
+    			}
+
+    			// Execute the appropriate jab based on currentJab
+    			if (currentJab[0] == 1) {
+    				// First jab - left slash
+    				performJab(entity, level, "sword_to_left", 10, 1, golden);
+    			} else if (currentJab[0] == 2) {
+    				// Second jab - right slash
+    				performJab(entity, level, "sword_to_right", 16, 2, golden);
+    			} else if (currentJab[0] == 3) {
+    				// Third jab - speed attack
+    				performJab(entity, level, "speed_attack_sword", 0, 3, golden);
+    			}
     		}
-    		performJab(entity, level, "speed_attack_sword", 0, 3);
-    	}, 24);
+    	}, 1, totalTicks);
     }
 
     /**
      * Helper to perform a single jab attack
      */
-    private static void performJab(LivingEntity entity, Level level, String animation, double particleAngle, int jabNumber) {
+    private static void performJab(LivingEntity entity, Level level, String animation, double particleAngle, int jabNumber, boolean golden) {
     	playEntityAnimation(entity, animation);
 
         Vec3 lookVec = entity.getLookAngle();
@@ -530,7 +560,7 @@ public class FrostBreathingForms {
             e -> e != entity && e.isAlive());
 
         for (LivingEntity target : targets) {
-            float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
+            float damage = DamageCalculator.calculateScaledDamage(entity, golden ? 8 : 6.0F);
             Damager.hurt(entity, target, damage);
             if (Config.logDebug) {
             	Log.debug("Fifth Form: Jab {} hit {} for {} damage", jabNumber, target.getName().getString(), damage);
@@ -541,6 +571,9 @@ public class FrostBreathingForms {
         	if (particleAngle == 0) {
         		// Final jab - straight line particles
         		spawnParticleLine(serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 20);
+        		if (golden)
+        			spawnParticleLine(serverLevel, startPos, endPos, new DustParticleOptions(new Vector3f(1f, 179f/255f, 57f/255f), 1f), 20);
+        			
         	} else {
         		// Arc particles for side slashes
 	        	double yawRad = Math.toRadians(entity.getYRot());
@@ -549,6 +582,11 @@ public class FrostBreathingForms {
 				int arcLength = 120;
 	            ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
 					3, 0.1, arcLength, 1, particleAngle, ParticleTypes.SNOWFLAKE, 80);
+	            
+	            if (golden)
+	            	ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
+	    					3, 0.1, arcLength, 1, particleAngle,new DustParticleOptions(new Vector3f(1f, 179f/255f, 57f/255f), 1f), 80);
+	            
         	}
         }
 
@@ -563,7 +601,7 @@ public class FrostBreathingForms {
      * Sixth Form: Polar Mark
      * Throw sword as projectile using ThrownSwordEntity
      */
-    public static BreathingForm sixthForm() {
+    public static BreathingForm sixthForm(boolean golden) {
         return new BreathingForm(
             "Sixth Form: Polar Mark",
             "Throw your sword forward",
@@ -596,11 +634,11 @@ public class FrostBreathingForms {
                 // Create thrown sword entity
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.ThrownSwordEntity thrownSword =
                     new com.lerdorf.kimetsunoyaibamultiplayer.entities.ThrownSwordEntity(
-                        level, player, heldSword.copy());
+                        level, player, heldSword.copy(), golden);
 
-                // Set velocity based on player's look direction
+                // Set velocity based on player's look direction (much faster than before)
                 Vec3 lookVec = player.getLookAngle();
-                thrownSword.shoot(lookVec.x, lookVec.y, lookVec.z, 1.5F, 1.0F);
+                thrownSword.shoot(lookVec.x, lookVec.y, lookVec.z, 3.5F, 0.5F);
 
                 // Position at player's eye level
                 thrownSword.setPos(player.getX(), player.getEyeY() - 0.1, player.getZ());
@@ -620,12 +658,12 @@ public class FrostBreathingForms {
             }
         );
     }
-
+    
     /**
      * Seventh Form: Golden Senses (Komorebi's sword only)
      * Temporarily switch sword to golden model and enhance stats with golden slashing particles
      */
-    public static BreathingForm seventhForm() {
+    public static BreathingForm seventhForm(boolean golden) {
         return new BreathingForm(
             "Seventh Form: Golden Senses",
             "Sword glows golden, empowering you",
@@ -800,12 +838,12 @@ public class FrostBreathingForms {
      */
     public static BreathingTechnique createFrostBreathing() {
         List<BreathingForm> forms = new ArrayList<>();
-        forms.add(firstForm());
-        forms.add(secondForm());
-        forms.add(thirdForm());
-        forms.add(fourthForm());
-        forms.add(fifthForm());
-        forms.add(sixthForm());
+        forms.add(firstForm(false));
+        forms.add(secondForm(false));
+        forms.add(thirdForm(false));
+        forms.add(fourthForm(false));
+        forms.add(fifthForm(false));
+        forms.add(sixthForm(false));
         return new BreathingTechnique("Frost Breathing", forms);
     }
 
@@ -814,13 +852,24 @@ public class FrostBreathingForms {
      */
     public static BreathingTechnique createFrostBreathingWithSeventh() {
         List<BreathingForm> forms = new ArrayList<>();
-        forms.add(firstForm());
-        forms.add(secondForm());
-        forms.add(thirdForm());
-        forms.add(fourthForm());
-        forms.add(fifthForm());
-        forms.add(sixthForm());
-        forms.add(seventhForm());
+        forms.add(firstForm(false));
+        forms.add(secondForm(false));
+        forms.add(thirdForm(false));
+        forms.add(fourthForm(false));
+        forms.add(fifthForm(false));
+        forms.add(sixthForm(false));
+        forms.add(seventhForm(false));
+        return new BreathingTechnique("Frost Breathing", forms);
+    }
+    
+    public static BreathingTechnique createGoldenFrostBreathing() {
+        List<BreathingForm> forms = new ArrayList<>();
+        forms.add(firstForm(true));
+        forms.add(secondForm(true));
+        forms.add(thirdForm(true));
+        forms.add(fourthForm(true));
+        forms.add(fifthForm(true));
+        forms.add(sixthForm(true));
         return new BreathingTechnique("Frost Breathing", forms);
     }
 }
