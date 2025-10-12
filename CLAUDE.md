@@ -14,6 +14,8 @@ Minecraft Forge 1.20.1 mod that enables synchronized player animations in multip
 - **Build Commands**: See [docs/build-commands.md](docs/build-commands.md)
 - **Architecture**: See [docs/architecture.md](docs/architecture.md)
 - **Breathing Techniques**: See [docs/breathing-system.md](docs/breathing-system.md)
+- **API Usage Guide**: See [docs/api-usage-guide.md](docs/api-usage-guide.md) - For using this mod as a library
+- **Migration Guide**: See [docs/migration-guide.md](docs/migration-guide.md) - For refactoring existing swords
 - **Critical Bugs**: See [docs/bug-prevention.md](docs/bug-prevention.md)
 - **Server Compatibility**: See [docs/server-compatibility.md](docs/server-compatibility.md)
 
@@ -62,6 +64,11 @@ Uses DeferredRegister for all registrations:
 
 ```
 src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/
+├── api/                       # Public API for other mods
+│   ├── KnYAPI.java           # Main API entry point
+│   ├── BreathingStyleRegistry.java
+│   ├── SwordRegistry.java
+│   └── NichirinSwordBuilder.java
 ├── client/                    # Client-only code (particles, renderers, GUI)
 ├── network/packets/           # Network packets (server-safe with DistExecutor)
 ├── items/                     # Items (server-safe)
@@ -81,9 +88,45 @@ src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/
 - Particle config: `config/kimetsunoyaibamultiplayer/particles.toml`
 - Debug mode: Set `logDebug = true` in config
 
+## API for Other Mods
+
+This mod can be used as a library/dependency by other mods to add custom breathing styles and swords.
+
+### Quick Start for API Users
+
+```java
+// In your mod's ModItems class:
+public static final RegistryObject<Item> MY_SWORD =
+    KnYAPI.createSword("nichirinsword_mysword")
+        .breathingStyle("my_breathing", MyBreathingForms.createMyBreathing())
+        .styleRange(1900)  // Choose unique range >= 1900
+        .defaultParticle(ParticleTypes.SNOWFLAKE)
+        .category(SwordRegistry.SwordCategory.NICHIRIN)
+        .durability(2000)
+        .build(ITEMS);
+```
+
+**See [docs/api-usage-guide.md](docs/api-usage-guide.md) for complete API documentation.**
+
+### Key API Classes
+
+- **KnYAPI**: Main entry point - register styles, create swords, access helpers
+- **BreathingStyleRegistry**: Manages registered breathing styles
+- **SwordRegistry**: Tracks nichirin swords and special swords
+- **NichirinSwordBuilder**: Fluent builder for creating swords
+
+### Benefits
+
+1. **No boilerplate**: Single API call replaces multiple registration steps
+2. **Automatic integration**: Particles, cycling, and animations work automatically
+3. **Category management**: Separate nichirin swords from special swords
+4. **Helper access**: Use AnimationHelper, MovementHelper, ParticleHelper, etc.
+
 ## Additional Documentation
 
 For detailed guides on specific topics, see the `docs/` directory:
+- **API Usage Guide**: Complete guide for using this mod as a library
+- **Migration Guide**: Refactoring existing swords to use the new API
 - Build and development commands
 - Architecture deep-dive
 - Breathing technique implementation guide

@@ -63,7 +63,18 @@ public class SwordParticleMapping {
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(swordItem.getItem());
         String itemIdString = itemId.toString();
 
-        // First, check config-based particle mappings
+        // First, check if this sword is registered in the SwordRegistry
+        var registeredSword = com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry
+            .getSword(swordItem.getItem());
+        if (registeredSword != null) {
+            ParticleOptions effectiveParticle = registeredSword.getEffectiveParticle();
+            if (effectiveParticle != null) {
+                Log.debug("Using registered particle for sword: " + itemIdString);
+                return effectiveParticle;
+            }
+        }
+
+        // Second, check config-based particle mappings
         Log.debug("Looking for particle mapping for item: " + itemIdString);
         if (ParticleConfig.particleMappings != null) {
             Log.debug("Config mappings available: " + ParticleConfig.particleMappings.size());
@@ -186,10 +197,15 @@ public class SwordParticleMapping {
             return false;
         }
 
+        // First check if this is a registered sword
+        if (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.isRegistered(item.getItem())) {
+            return true;
+        }
+
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item.getItem());
         String itemIdString = itemId.toString();
 
-        // First check config-based mappings
+        // Check config-based mappings
         if (ParticleConfig.particleMappings != null && ParticleConfig.particleMappings.containsKey(itemIdString)) {
             return true;
         }
