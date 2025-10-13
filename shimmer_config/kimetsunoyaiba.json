@@ -1,6 +1,30 @@
 {
   "Enable": true,
   "ColorReference": {
+    "wisteria_pink": {
+      "r": 231,
+      "g": 162,
+      "b": 242,
+      "a": 170
+    },
+    "wisteria_cyan": {
+      "r": 162,
+      "g": 210,
+      "b": 242,
+      "a": 170
+    },
+    "wisteria_lavender": {
+      "r": 185,
+      "g": 163,
+      "b": 242,
+      "a": 170
+    },
+    "wisteria_cream": {
+      "r": 242,
+      "g": 240,
+      "b": 162,
+      "a": 170
+    },
     "ds_flame": {
       "r": 255,
       "g": 217,
@@ -143,6 +167,26 @@
       "block": "kimetsunoyaiba:lantern_1",
       "color": "#lantern_1_weight_average_color",
       "radius": 14
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_lavender",
+      "color": "#wisteria_lavender",
+      "radius": 1
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cyan",
+      "color": "#wisteria_cyan",
+      "radius": 1
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cream",
+      "color": "#wisteria_cream",
+      "radius": 1
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_pink",
+      "color": "#wisteria_pink",
+      "radius": 1
     }
   ],
   "Bloom": [
@@ -163,6 +207,30 @@
     },
     {
       "block": "kimetsunoyaiba:kaede_leaves"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cyan"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cream"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_lavender"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_pink"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_petals_cyan"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_petals_cream"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_petals_lavender"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_petals_pink"
     },
     {
       "block": "kimetsunoyaiba:brazier"
