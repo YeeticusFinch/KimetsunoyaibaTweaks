@@ -28,6 +28,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+
 import java.util.List;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -118,6 +121,7 @@ public class KimetsunoyaibaMultiplayer
                 "ice_breathing",
                 com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
                 net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                SoundEvents.GLASS_BREAK,
                 null
             );
 
@@ -128,6 +132,7 @@ public class KimetsunoyaibaMultiplayer
                 "frost_breathing",
                 com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
                 net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                SoundEvents.POWDER_SNOW_BREAK,
                 null
             );
 
@@ -138,6 +143,7 @@ public class KimetsunoyaibaMultiplayer
                 "frost_breathing",
                 com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
                 net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                SoundEvents.POWDER_SNOW_BREAK,
                 null
             );
 
@@ -148,6 +154,7 @@ public class KimetsunoyaibaMultiplayer
                 "ice_breathing",
                 com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
                 net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                SoundEvents.GLASS_BREAK,
                 null
             );
 
@@ -158,7 +165,8 @@ public class KimetsunoyaibaMultiplayer
                     "Ice Breathing",
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.IceBreathingForms.createIceBreathing(),
                     1000,
-                    net.minecraft.core.particles.ParticleTypes.SNOWFLAKE
+                    net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                    null
                 );
             }
 
@@ -168,7 +176,8 @@ public class KimetsunoyaibaMultiplayer
                     "Frost Breathing",
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.FrostBreathingForms.createFrostBreathing(),
                     1600,
-                    net.minecraft.core.particles.ParticleTypes.SNOWFLAKE
+                    net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                    null
                 );
             }
 

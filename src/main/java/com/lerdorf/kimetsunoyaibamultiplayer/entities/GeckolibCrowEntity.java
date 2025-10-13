@@ -298,6 +298,10 @@ public class GeckolibCrowEntity extends PathfinderMob implements GeoEntity {
     @Override
     public InteractionResult interactAt(Player player, Vec3 hitPos, InteractionHand hand) {
     	 Entity originalCrow = getOriginalCrow();
+    	 if (originalCrow == null) {
+    		 this.entityData.set(IS_DEAD, true);
+    		 return player.interact(player, hand);
+    	 }
          if (originalCrow instanceof PathfinderMob mob) {
              return mob.interact(player, hand);
          }

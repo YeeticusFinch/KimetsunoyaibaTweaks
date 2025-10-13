@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.SpeedControlledAnimation;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
@@ -27,6 +28,7 @@ public class AnimationHelper {
      * Non-player entities are silently ignored
      */
     public static void playAnimation(LivingEntity entity, String animationName) {
+    	animationName = SwordRegistry.getSword(entity.getMainHandItem().getItem()).getAnim(animationName);
         if (entity instanceof Player player) {
             playAnimation(player, animationName, -1, 1.0f);
         }
@@ -37,6 +39,7 @@ public class AnimationHelper {
      * Play an animation on any LivingEntity with max duration
      */
     public static void playAnimation(LivingEntity entity, String animationName, int maxDurationTicks) {
+    	animationName = SwordRegistry.getSword(entity.getMainHandItem().getItem()).getAnim(animationName);
         if (entity instanceof Player player) {
             playAnimation(player, animationName, maxDurationTicks, 1.0f);
         }
