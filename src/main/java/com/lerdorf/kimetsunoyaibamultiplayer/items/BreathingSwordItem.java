@@ -137,11 +137,15 @@ public abstract class BreathingSwordItem extends SwordItem {
 
         if (form != null) {
             // Send chat message about the new form (unless suppressed by config)
-            // Using plain text to match kimetsunoyaiba mod's display format
+            // Using bold text and technique-specific colors
             if (!com.lerdorf.kimetsunoyaibamultiplayer.Config.suppressFormCycleChat) {
-                player.sendSystemMessage(
-                    Component.literal(technique.getName() + " - " + form.getName())
-                );
+                String techniqueColor = technique.getTechniqueColor();
+                String formColor = technique.getFormColor();
+
+                // Format: §l§<color>Technique Name§r - §l§<color>Form Name
+                String message = "§l" + techniqueColor + technique.getName() + "§r - §l" + formColor + form.getName();
+
+                player.sendSystemMessage(Component.literal(message));
             }
         }
     }

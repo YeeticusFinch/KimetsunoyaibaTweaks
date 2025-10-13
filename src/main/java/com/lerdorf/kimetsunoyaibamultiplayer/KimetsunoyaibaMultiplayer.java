@@ -108,6 +108,72 @@ public class KimetsunoyaibaMultiplayer
         // Register network messages
         ModNetworking.register();
         Log.info("Network messages registered");
+
+        // Register our built-in swords in the SwordRegistry (must be done after items are registered)
+        event.enqueueWork(() -> {
+            // Register Ice Breathing sword
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                "nichirinsword_ice",
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_ICE.get(),
+                "ice_breathing",
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+                net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                null
+            );
+
+            // Register Frost Breathing sword
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                "nichirinsword_frost",
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_FROST.get(),
+                "frost_breathing",
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+                net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                null
+            );
+
+            // Register Komorebi special sword
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                "nichirinsword_komorebi",
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KOMOREBI.get(),
+                "frost_breathing",
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
+                net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                null
+            );
+
+            // Register Shimizu special sword
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                "nichirinsword_shimizu",
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_SHIMIZU.get(),
+                "ice_breathing",
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
+                net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                null
+            );
+
+            // Register breathing styles if not already registered
+            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("ice_breathing")) {
+                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
+                    "ice_breathing",
+                    "Ice Breathing",
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.IceBreathingForms.createIceBreathing(),
+                    1000,
+                    net.minecraft.core.particles.ParticleTypes.SNOWFLAKE
+                );
+            }
+
+            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("frost_breathing")) {
+                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
+                    "frost_breathing",
+                    "Frost Breathing",
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.FrostBreathingForms.createFrostBreathing(),
+                    1600,
+                    net.minecraft.core.particles.ParticleTypes.SNOWFLAKE
+                );
+            }
+
+            Log.info("Registered built-in swords in SwordRegistry");
+        });
     }
     
  // 4. Attach it to entities
