@@ -88,15 +88,21 @@ public class ModItems {
             .title(Component.translatable("KnY Additions"))
             .icon(() -> new ItemStack(NICHIRINSWORD_ICE.get()))
             .displayItems((parameters, output) -> {
-                output.accept(NICHIRINSWORD_ICE.get());
-                output.accept(NICHIRINSWORD_FROST.get());
-                output.accept(NICHIRINSWORD_SHIMIZU.get());
-                output.accept(NICHIRINSWORD_KOMOREBI.get());
+                // Automatically add all swords registered via the API
+                // This allows other mods to have their swords appear in this tab
+                for (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.RegisteredSword sword :
+                        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getAllSwords()) {
+                    output.accept(sword.getSwordItem());
+                }
+
+                // Cosmetic armor
                 output.accept(KOMOREBI_HAIR.get());
                 output.accept(KOMOREBI_HAORI.get());
                 output.accept(KOMOREBI_HAKAMA.get());
                 output.accept(SHIMIZU_HAIR.get());
                 output.accept(SHIMIZU_HAORI.get());
+
+                // Spawn eggs
                 output.accept(ICE_SLAYER_SPAWN_EGG.get());
                 output.accept(FROST_SLAYER_SPAWN_EGG.get());
                 output.accept(KOMOREBI_SPAWN_EGG.get());

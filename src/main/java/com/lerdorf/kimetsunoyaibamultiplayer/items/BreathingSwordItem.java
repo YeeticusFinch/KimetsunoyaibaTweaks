@@ -1,12 +1,16 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.items;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
@@ -133,11 +137,37 @@ public abstract class BreathingSwordItem extends SwordItem {
 
         if (form != null) {
             // Send chat message about the new form (unless suppressed by config)
+            // Using plain text to match kimetsunoyaiba mod's display format
             if (!com.lerdorf.kimetsunoyaibamultiplayer.Config.suppressFormCycleChat) {
                 player.sendSystemMessage(
-                    Component.literal("§6" + technique.getName() + " §7- §b" + form.getName())
+                    Component.literal(technique.getName() + " - " + form.getName())
                 );
             }
         }
+    }
+
+    /**
+     * Called when this sword successfully hits a living entity.
+     * Plays the sweep attack sound for all nichirin swords, plus any custom swing sound
+     * that was registered via the API.
+     */
+    @Override
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        boolean result = super.hurtEnemy(stack, target, attacker);
+
+        if (!attacker.level().isClientSide) {
+            // Play sweep attack sound (default for all nichirin swords)
+            attacker.level().playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
+                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 1.0F);
+
+            // Play custom swing sound if registered
+            SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(this);
+            if (registeredSword != null && registeredSword.getSwingSound() != null) {
+                attacker.level().playSound(null, attacker.getX(), attacker.getY(), attacker.getZ(),
+                    registeredSword.getSwingSound(), SoundSource.PLAYERS, 1.0F, 1.0F);
+            }
+        }
+
+        return result;
     }
 }

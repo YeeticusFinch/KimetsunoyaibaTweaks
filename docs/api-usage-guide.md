@@ -330,7 +330,11 @@ public class ModItems {
 }
 ```
 
-### Step 3: Add to Creative Tab (Optional)
+### Step 3: Automatic Creative Tab Integration
+
+Swords created via the API are **automatically added** to the "KnY Additions" creative tab. No additional configuration is needed!
+
+If you still want to add your swords to your own creative tab:
 
 ```java
 public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS =
@@ -420,6 +424,42 @@ public class YourMod {
 ---
 
 ## Advanced Topics
+
+### Custom Sound Effects
+
+Each sword can have a custom swing sound effect that plays when hitting enemies. The sweep attack sound is played automatically for all nichirin swords, and your custom sound plays **in addition** to it.
+
+```java
+// First, register your sound events in your mod
+public class ModSounds {
+    public static final DeferredRegister<SoundEvent> SOUNDS =
+        DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, "yourmodid");
+
+    public static final RegistryObject<SoundEvent> FROST_SWING = SOUNDS.register("frost_swing",
+        () -> SoundEvent.createVariableRangeEvent(
+            new ResourceLocation("yourmodid", "frost_swing")
+        ));
+
+    public static void register(IEventBus eventBus) {
+        SOUNDS.register(eventBus);
+    }
+}
+
+// Then use it in your sword builder
+KnYAPI.createSword("nichirinsword_mysword")
+    .breathingStyle("my_breathing", MyBreathingForms.createMyBreathing())
+    .styleRange(1900)
+    .defaultParticle(ParticleTypes.SNOWFLAKE)
+    .swingSound(ModSounds.FROST_SWING.get())  // Add custom swing sound
+    .build(ITEMS);
+```
+
+You can also use vanilla sound events:
+```java
+.swingSound(SoundEvents.PLAYER_ATTACK_CRIT)  // Critical hit sound
+.swingSound(SoundEvents.PLAYER_ATTACK_KNOCKBACK)  // Knockback sound
+.swingSound(SoundEvents.TRIDENT_THROW)  // Trident throw sound
+```
 
 ### Custom Particles
 
@@ -644,11 +684,24 @@ NichirinSwordBuilder.create(swordId)
     .styleRange(range)
     .defaultParticle(particle)       // For the style
     .swordParticle(particle)         // For this sword only
+    .swingSound(soundEvent)          // Custom sound when hitting enemies
     .category(SwordCategory.NICHIRIN | SPECIAL)
     .durability(durability)
     .registerToCreativeTab(boolean)
     .build(itemRegistry)
 ```
+
+#### Builder Methods
+
+- **breathingStyle(styleId, technique)**: Set the breathing style (required)
+- **styleRange(range)**: Set the style range number, must be multiple of 100 (required)
+- **defaultParticle(particle)**: Set particle for the entire breathing style (required unless swordParticle is set)
+- **swordParticle(particle)**: Override style particle for this specific sword (optional)
+- **swingSound(soundEvent)**: Add custom sound effect when sword hits enemies (optional)
+- **category(category)**: Set sword category - NICHIRIN or SPECIAL (default: NICHIRIN)
+- **durability(durability)**: Set sword durability (default: 2000)
+- **registerToCreativeTab(boolean)**: Whether to add to creative tab (default: true, automatically added to KnY Additions tab)
+- **build(itemRegistry)**: Build and register the sword (returns RegistryObject<Item>)
 
 ### SwordRegistry.SwordCategory
 

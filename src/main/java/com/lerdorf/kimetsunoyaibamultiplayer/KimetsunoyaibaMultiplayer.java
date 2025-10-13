@@ -108,8 +108,6 @@ public class KimetsunoyaibaMultiplayer
         // Register network messages
         ModNetworking.register();
         Log.info("Network messages registered");
-        
-        
     }
     
  // 4. Attach it to entities
@@ -132,6 +130,36 @@ public class KimetsunoyaibaMultiplayer
     public void onServerStarting(ServerStartingEvent event)
     {
         Log.info("Kimetsunoyaiba Multiplayer server starting");
+    }
+
+    /**
+     * Handle axe stripping for wisteria logs
+     */
+    @SubscribeEvent
+    public void onBlockToolModification(net.minecraftforge.event.level.BlockEvent.BlockToolModificationEvent event) {
+        // Check if using an axe and right-clicking
+        if (event.getToolAction() == net.minecraftforge.common.ToolActions.AXE_STRIP) {
+            net.minecraft.world.level.block.Block block = event.getState().getBlock();
+
+            // Wisteria log -> Stripped wisteria log
+            if (block == com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LOG.get()) {
+                event.setFinalState(
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_WISTERIA_LOG.get()
+                        .defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS,
+                                 event.getState().getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS))
+                );
+            }
+            // Wisteria wood -> Stripped wisteria wood
+            else if (block == com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_WOOD.get()) {
+                event.setFinalState(
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_WISTERIA_WOOD.get()
+                        .defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS,
+                                 event.getState().getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS))
+                );
+            }
+        }
     }
 
     @SubscribeEvent
