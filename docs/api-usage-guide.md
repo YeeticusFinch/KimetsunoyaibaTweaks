@@ -45,12 +45,12 @@ With this API, you can:
 ```gradle
 repositories {
     maven {
-        url "https://your-repository-url/maven"
+       	url = "https://api.modrinth.com/maven"
     }
 }
 
 dependencies {
-    implementation fg.deobf("com.lerdorf:kimetsunoyaibamultiplayer:1.0.0")
+    implementation fg.deobf("maven.modrinth:kimetsunoyaiba-tweaks:${kny_tweaks_version}")
 }
 ```
 
