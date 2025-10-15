@@ -51,6 +51,10 @@ public class Config
             .comment("Suppress chat messages when cycling breathing forms with R key")
             .define("suppress-form-cycle-chat", false);
 
+    private static final ForgeConfigSpec.BooleanValue ENABLE_SWORD_CLASHING = BUILDER
+            .comment("Enable sword clashing system where attacks can be deflected or mitigated")
+            .define("enable-sword-clashing", true);
+
     public enum DisplayPosition {
         TOP_LEFT,
         TOP_RIGHT,
@@ -74,6 +78,7 @@ public class Config
     public static DisplayPosition breathingDisplayPosition;
     public static double breathingDisplayScale;
     public static boolean suppressFormCycleChat;
+    public static boolean enableSwordClashing;
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event)
@@ -89,9 +94,11 @@ public class Config
         breathingDisplayPosition = BREATHING_DISPLAY_POSITION.get();
         breathingDisplayScale = BREATHING_DISPLAY_SCALE.get();
         suppressFormCycleChat = SUPPRESS_FORM_CYCLE_CHAT.get();
+        enableSwordClashing = ENABLE_SWORD_CLASHING.get();
         if (Config.logDebug)
         System.out.println("Common config loaded: logDebug=" + logDebug + ", onScreenDebug=" + onScreenDebug +
                 ", showBreathingDisplay=" + showBreathingDisplay + ", breathingDisplayPosition=" + breathingDisplayPosition +
-                ", breathingDisplayScale=" + breathingDisplayScale + ", suppressFormCycleChat=" + suppressFormCycleChat);
+                ", breathingDisplayScale=" + breathingDisplayScale + ", suppressFormCycleChat=" + suppressFormCycleChat +
+                ", enableSwordClashing=" + enableSwordClashing);
     }
 }

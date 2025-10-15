@@ -209,28 +209,16 @@
       "block": "kimetsunoyaiba:kaede_leaves"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cyan"
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_cyan"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cream"
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_cream"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_lavender"
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_lavender"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_pink"
-    },
-    {
-      "block": "kimetsunoyaibamultiplayer:wisteria_petals_cyan"
-    },
-    {
-      "block": "kimetsunoyaibamultiplayer:wisteria_petals_cream"
-    },
-    {
-      "block": "kimetsunoyaibamultiplayer:wisteria_petals_lavender"
-    },
-    {
-      "block": "kimetsunoyaibamultiplayer:wisteria_petals_pink"
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_pink"
     },
     {
       "block": "kimetsunoyaiba:brazier"

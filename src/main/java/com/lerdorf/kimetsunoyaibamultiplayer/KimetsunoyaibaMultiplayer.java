@@ -14,6 +14,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.commands.TestCrowQuestCommand;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.SpawnRateHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.proxy.IClientProxy;
@@ -71,6 +72,7 @@ public class KimetsunoyaibaMultiplayer
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(SpawnRateHandler.class);
 
         // Register entities
         ModEntities.register(modEventBus);
@@ -93,6 +95,7 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.class);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "kimetsunoyaibamultiplayer/common.toml");
@@ -100,6 +103,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig.SPEC, "kimetsunoyaibamultiplayer/entities.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig.SPEC, "kimetsunoyaibamultiplayer/sword_display.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.SPEC, "kimetsunoyaibamultiplayer/biomes.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.SPEC, "kimetsunoyaibamultiplayer/spawn_rates.toml");
     }
 
     public static final Capability<ISwordWielderData> SWORD_WIELDER_DATA = CapabilityManager.get(new CapabilityToken<>() {});
@@ -370,6 +374,7 @@ public class KimetsunoyaibaMultiplayer
                     Log.info("Client tick event handler is working, tick: {}", debugTickCounter);
                 }
                 com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.tick();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.IdleWalkAnimationHandler.tick();
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandlerClient.clientTick();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.tick();
 
@@ -389,6 +394,7 @@ public class KimetsunoyaibaMultiplayer
         {
             if (net.minecraft.client.Minecraft.getInstance().level == null && event.phase == TickEvent.Phase.END) {
                 com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.clearTrackedAnimations();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.IdleWalkAnimationHandler.clear();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler.clearAllAnimations();
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandlerClient.clearAllMarkers();
                 CrowEnhancementHandler.clearFlyingCrows();
