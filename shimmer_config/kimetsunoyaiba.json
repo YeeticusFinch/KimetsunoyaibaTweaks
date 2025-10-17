@@ -5,25 +5,25 @@
       "r": 231,
       "g": 162,
       "b": 242,
-      "a": 170
+      "a": 80
     },
     "wisteria_cyan": {
       "r": 162,
       "g": 210,
       "b": 242,
-      "a": 170
+      "a": 80
     },
     "wisteria_lavender": {
       "r": 185,
       "g": 163,
       "b": 242,
-      "a": 170
+      "a": 80
     },
     "wisteria_cream": {
       "r": 242,
       "g": 240,
       "b": 162,
-      "a": 170
+      "a": 80
     },
     "ds_flame": {
       "r": 255,
@@ -169,22 +169,22 @@
       "radius": 14
     },
     {
-      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_lavender",
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_lavender",
       "color": "#wisteria_lavender",
       "radius": 1
     },
     {
-      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cyan",
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_cyan",
       "color": "#wisteria_cyan",
       "radius": 1
     },
     {
-      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cream",
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_cream",
       "color": "#wisteria_cream",
       "radius": 1
     },
     {
-      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_pink",
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_pink",
       "color": "#wisteria_pink",
       "radius": 1
     }

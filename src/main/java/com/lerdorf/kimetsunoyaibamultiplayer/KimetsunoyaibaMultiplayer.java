@@ -17,6 +17,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.SpawnRateHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.proxy.IClientProxy;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -85,6 +86,9 @@ public class KimetsunoyaibaMultiplayer
 
         // Register items
         ModItems.register(modEventBus);
+
+        // Register effects
+        ModEffects.register(modEventBus);
 
         // Register tree decorators
         com.lerdorf.kimetsunoyaibamultiplayer.worldgen.ModTreeDecorators.register(modEventBus);
