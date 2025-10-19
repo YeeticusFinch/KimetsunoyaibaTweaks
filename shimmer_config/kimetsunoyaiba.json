@@ -187,6 +187,26 @@
       "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_pink",
       "color": "#wisteria_pink",
       "radius": 1
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_lavender",
+      "color": "#wisteria_lavender",
+      "radius": 1
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_cyan",
+      "color": "#wisteria_cyan",
+      "radius": 1
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_cream",
+      "color": "#wisteria_cream",
+      "radius": 1
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_pink",
+      "color": "#wisteria_pink",
+      "radius": 1
     }
   ],
   "Bloom": [
@@ -219,6 +239,18 @@
     },
     {
       "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_pink"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_cyan"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_cream"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_lavender"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_pink"
     },
     {
       "block": "kimetsunoyaiba:brazier"
