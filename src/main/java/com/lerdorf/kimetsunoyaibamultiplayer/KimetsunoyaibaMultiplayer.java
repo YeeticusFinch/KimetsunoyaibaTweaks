@@ -93,6 +93,9 @@ public class KimetsunoyaibaMultiplayer
         // Register tree decorators
         com.lerdorf.kimetsunoyaibamultiplayer.worldgen.ModTreeDecorators.register(modEventBus);
 
+        // Register particles
+        com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.register(modEventBus);
+
         // Register config event handlers on the mod event bus
         modEventBus.register(Config.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.class);
@@ -324,6 +327,15 @@ public class KimetsunoyaibaMultiplayer
         {
         	if (Config.logDebug)
             Log.info("Animation sync system initialized for client");
+        }
+        
+        @SubscribeEvent
+        public static void registerParticleProviders(net.minecraftforge.client.event.RegisterParticleProvidersEvent event)
+        {
+            event.registerSpriteSet(
+                com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.MIST_PARTICLE.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.MistParticle.Provider::new
+            );
         }
 
         @SubscribeEvent

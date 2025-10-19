@@ -83,6 +83,14 @@ public class ModNetworking {
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket::encode)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket::handle)
                 .add();
+
+        // Register Mist Breathing 7th Form particle effect packet (server -> client)
+        int mistBreathing7thFormPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MistBreathing7thFormPacket.class, mistBreathing7thFormPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MistBreathing7thFormPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MistBreathing7thFormPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MistBreathing7thFormPacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

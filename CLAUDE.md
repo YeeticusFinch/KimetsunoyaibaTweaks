@@ -18,6 +18,9 @@ Minecraft Forge 1.20.1 mod that enables synchronized player animations in multip
 - **Migration Guide**: See [docs/migration-guide.md](docs/migration-guide.md) - For refactoring existing swords
 - **Critical Bugs**: See [docs/bug-prevention.md](docs/bug-prevention.md)
 - **Server Compatibility**: See [docs/server-compatibility.md](docs/server-compatibility.md)
+- **Mt Fujikasane Dimension**: See [docs/mt-fujikasane-dimension.md](docs/mt-fujikasane-dimension.md) - Custom dimension with WorldPainter integration
+- **Biomes**: See [docs/KnY-Biomes.md](docs/KnY-Biomes.md) - Custom biome information
+- **Mist Particles**: See [docs/MIST_PARTICLES.md](docs/MIST_PARTICLES.md) - Custom mist particle system implementation
 
 ## Core Concepts
 
@@ -37,6 +40,14 @@ Uses DeferredRegister for all registrations:
 2. **Network**: `AnimationSyncPacket.java` transmits animation events
 3. **Application**: `AnimationSyncHandler.java` applies animations to other players
 4. **Dependencies**: Requires `player-animation-lib-forge` + `mobplayeranimator`
+
+### Custom Dimensions
+- **Mt Fujikasane**: Separate dimension with WorldPainter world integration
+  - 1000×1000 block world with overworld-like environment
+  - Automatic region file download from GitHub
+  - Vanilla world border enforcement (1000×1000 blocks)
+  - Dimension files: `dimension_type/mt_fujikasane.json` and `dimension/mt_fujikasane.json`
+  - See [docs/mt-fujikasane-dimension.md](docs/mt-fujikasane-dimension.md) for details
 
 ## Test Commands
 
@@ -127,8 +138,10 @@ public static final RegistryObject<Item> MY_SWORD =
 For detailed guides on specific topics, see the `docs/` directory:
 - **API Usage Guide**: Complete guide for using this mod as a library
 - **Migration Guide**: Refactoring existing swords to use the new API
-- Build and development commands
-- Architecture deep-dive
-- Breathing technique implementation guide
-- Bug prevention (log4j crashes, event recursion)
-- Dedicated server compatibility rules
+- **Mt Fujikasane Dimension**: WorldPainter integration and dimension setup
+- **Biomes**: Custom biome information (Wisteria Forest, Mt Fujikasane)
+- **Build Commands**: Gradle commands and development workflow
+- **Architecture**: Deep-dive into mod structure and design patterns
+- **Breathing System**: Implementation guide for breathing techniques
+- **Bug Prevention**: Critical bugs (log4j crashes, event recursion)
+- **Server Compatibility**: Rules for dedicated server compatibility
