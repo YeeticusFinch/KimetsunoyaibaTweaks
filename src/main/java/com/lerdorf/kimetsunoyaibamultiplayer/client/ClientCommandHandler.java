@@ -36,6 +36,7 @@ public class ClientCommandHandler {
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAnimCommand.register(dispatcher);
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TestParticlesCommand.register(dispatcher);
         com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugParticlesCommand.register(dispatcher);
+        com.lerdorf.kimetsunoyaibamultiplayer.client.commands.SmallMistParticleCommand.register(dispatcher);
 
         LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("testanimc")
             .executes(context -> {
