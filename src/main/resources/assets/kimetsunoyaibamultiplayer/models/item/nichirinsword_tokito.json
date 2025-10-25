@@ -1,0 +1,8 @@
+{
+  "parent": "kimetsunoyaiba:custom/nitirintou_tokitou",
+  "textures": {
+    "0": "kimetsunoyaiba:block/nitirintou_tokito",
+    "2": "kimetsunoyaiba:block/akkimessatsu_white",
+    "particle": "kimetsunoyaiba:item/icon_sword"
+  }
+}

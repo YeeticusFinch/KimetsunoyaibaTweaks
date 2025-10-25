@@ -184,6 +184,10 @@ dependencies {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
 
+    // Kimetsunoyaiba base mod (for mixin targets)
+    compileOnly fg.deobf(files("libs/KimetsunoYaiba-ver2-forge-1.20.1.jar"))
+    runtimeOnly fg.deobf(files("libs/KimetsunoYaiba-ver2-forge-1.20.1.jar"))
+
     // ShoulderSurfing integration uses reflection - no compile-time dependency needed
 
     //Bendy-lib also has a Forge version:

@@ -31,7 +31,7 @@ public class ModEntities {
         ENTITY_TYPES.register("geckolib_crow",
             () -> EntityType.Builder.of(GeckolibCrowEntity::new, MobCategory.CREATURE)
                 .sized(0.4F, 0.5F) // Same size as typical crow
-                .clientTrackingRange(8)
+                .clientTrackingRange(64) // FIXED: Increased from 8 to track clones at 5-15 blocks
                 .updateInterval(3)
                 .build("geckolib_crow"));
 
@@ -95,6 +95,20 @@ public class ModEntities {
                 .build("thrown_sword"));
 
     /**
+     * Ghostly Clone - Visual effect for Mist Breathing 7th Form: Obscuring Clouds
+     * Cannot be attacked or damaged, purely decorative
+     */
+    public static final RegistryObject<EntityType<GhostlyCloneEntity>> GHOSTLY_CLONE =
+        ENTITY_TYPES.register("ghostly_clone",
+            () -> EntityType.Builder.<GhostlyCloneEntity>of(GhostlyCloneEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F) // Player-sized
+                .clientTrackingRange(64) // FIXED: Increased from 8 to track clones at 5-15 blocks
+                .updateInterval(1) // FIXED: Update every tick for smooth fade/movement
+                .noSave() // Don't save to world (temporary entity)
+                .fireImmune()
+                .build("ghostly_clone"));
+
+    /**
      * Register entity types to the mod event bus
      */
     public static void register(IEventBus eventBus) {
@@ -119,6 +133,9 @@ public class ModEntities {
             event.put(FROST_SLAYER.get(), BreathingSlayerEntity.createAttributes().build());
             event.put(KOMOREBI.get(), BreathingSlayerEntity.createAttributes().build());
             event.put(SHIMIZU.get(), BreathingSlayerEntity.createAttributes().build());
+
+            // Register attributes for ghostly clone (visual-only entity)
+            event.put(GHOSTLY_CLONE.get(), GhostlyCloneEntity.createAttributes().build());
 
             if (Config.logDebug)
             Log.info("Entity attributes registered successfully");

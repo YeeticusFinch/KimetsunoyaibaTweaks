@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CrowGeoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.GhostlyCloneRenderer;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.entity.EntityType;
@@ -26,6 +27,9 @@ public class CrowRendererManager {
 
         // Register renderer for our GeckolibCrowEntity
         event.registerEntityRenderer(ModEntities.GECKOLIB_CROW.get(), CrowGeoRenderer::new);
+
+        // Register renderer for ghostly clone entity (Mist Breathing 7th Form effect)
+        event.registerEntityRenderer(ModEntities.GHOSTLY_CLONE.get(), GhostlyCloneRenderer::new);
 
         if (Config.logDebug)
         	Log.info("Entity renderers registered successfully");

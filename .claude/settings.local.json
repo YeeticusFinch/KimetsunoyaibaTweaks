@@ -30,7 +30,14 @@
       "WebSearch",
       "Bash(del \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\src\\main\\java\\com\\lerdorf\\kimetsunoyaibamultiplayer\\events\\MistBreathing7thFormHandler.java\")",
       "Bash(del \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\src\\main\\java\\com\\lerdorf\\kimetsunoyaibamultiplayer\\network\\packets\\MistBreathing7thFormPacket.java\")",
-      "Bash(del \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\MIST_BREATHING_7TH_FORM.md\")"
+      "Bash(del \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\MIST_BREATHING_7TH_FORM.md\")",
+      "Read(//c/Users/carlf/**)",
+      "Bash(\"./gradlew.bat\" --refresh-dependencies compileJava --no-daemon)",
+      "Bash(unzip -p build/reobfJar/output.jar META-INF/MANIFEST.MF)",
+      "Bash(cp:*)",
+      "Bash(del \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\src\\main\\java\\com\\lerdorf\\kimetsunoyaibamultiplayer\\procedures\\EnhancedMistDispatcher.java\")",
+      "Bash(unzip:*)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

@@ -28,7 +28,10 @@ public class AnimationHelper {
      * Non-player entities are silently ignored
      */
     public static void playAnimation(LivingEntity entity, String animationName) {
-    	animationName = SwordRegistry.getSword(entity.getMainHandItem().getItem()).getAnim(animationName);
+    	SwordRegistry.RegisteredSword sword = SwordRegistry.getSword(entity.getMainHandItem().getItem());
+    	if (sword != null) {
+    		animationName = sword.getAnim(animationName);
+    	}
         if (entity instanceof Player player) {
             playAnimation(player, animationName, -1, 1.0f);
         }
@@ -39,7 +42,10 @@ public class AnimationHelper {
      * Play an animation on any LivingEntity with max duration
      */
     public static void playAnimation(LivingEntity entity, String animationName, int maxDurationTicks) {
-    	animationName = SwordRegistry.getSword(entity.getMainHandItem().getItem()).getAnim(animationName);
+    	SwordRegistry.RegisteredSword sword = SwordRegistry.getSword(entity.getMainHandItem().getItem());
+    	if (sword != null) {
+    		animationName = sword.getAnim(animationName);
+    	}
         if (entity instanceof Player player) {
             playAnimation(player, animationName, maxDurationTicks, 1.0f);
         }
@@ -49,7 +55,10 @@ public class AnimationHelper {
      * Play an animation on any LivingEntity with max duration, speed, and layer
      */
     public static void playAnimationOnLayer(LivingEntity entity, String animationName, int maxDurationTicks, float speed, int layerPriority) {
-    	animationName = SwordRegistry.getSword(entity.getMainHandItem().getItem()).getAnim(animationName);
+    	SwordRegistry.RegisteredSword sword = SwordRegistry.getSword(entity.getMainHandItem().getItem());
+    	if (sword != null) {
+    		animationName = sword.getAnim(animationName);
+    	}
         if (entity instanceof Player player) {
             playAnimationOnLayer(player, animationName, maxDurationTicks, speed, layerPriority);
         }
@@ -59,7 +68,10 @@ public class AnimationHelper {
      * Play an animation on a player (both client and server)
      */
     public static void playAnimation(Player player, String animationName) {
-    	animationName = SwordRegistry.getSword(player.getMainHandItem().getItem()).getAnim(animationName);
+    	SwordRegistry.RegisteredSword sword = SwordRegistry.getSword(player.getMainHandItem().getItem());
+    	if (sword != null) {
+    		animationName = sword.getAnim(animationName);
+    	}
         playAnimation(player, animationName, -1, 1.0f);
     }
 
@@ -70,7 +82,10 @@ public class AnimationHelper {
      * @param maxDurationTicks Maximum duration in ticks (-1 for full animation)
      */
     public static void playAnimation(Player player, String animationName, int maxDurationTicks) {
-    	animationName = SwordRegistry.getSword(player.getMainHandItem().getItem()).getAnim(animationName);
+    	SwordRegistry.RegisteredSword sword = SwordRegistry.getSword(player.getMainHandItem().getItem());
+    	if (sword != null) {
+    		animationName = sword.getAnim(animationName);
+    	}
         playAnimation(player, animationName, maxDurationTicks, 1.0f);
     }
     
@@ -82,7 +97,10 @@ public class AnimationHelper {
      * @param speed Playback speed multiplier (1.0 = normal, 2.0 = double speed, 0.5 = half speed)
      */
     public static void playAnimation(Player player, String animationName, int maxDurationTicks, float speed) {
-    	animationName = SwordRegistry.getSword(player.getMainHandItem().getItem()).getAnim(animationName);
+    	SwordRegistry.RegisteredSword sword = SwordRegistry.getSword(player.getMainHandItem().getItem());
+    	if (sword != null) {
+    		animationName = sword.getAnim(animationName);
+    	}
         playAnimationOnLayer(player, animationName, maxDurationTicks, speed, 3000);
     }
 

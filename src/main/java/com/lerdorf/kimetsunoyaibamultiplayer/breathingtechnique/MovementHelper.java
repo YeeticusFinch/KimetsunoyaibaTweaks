@@ -5,10 +5,15 @@ import com.lerdorf.kimetsunoyaibamultiplayer.compat.ShoulderSurfingCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.ForgeMod;
+
+import java.util.UUID;
 
 /**
  * Helper methods for setting entity velocity and rotation with proper synchronization
@@ -171,15 +176,55 @@ public class MovementHelper {
         return new Vec3(x, center.y, z);
     }
 
+    // UUID for step height attribute modifier (consistent across all breathing forms)
+    private static final UUID STEP_HEIGHT_MODIFIER_UUID = UUID.fromString("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+
     /**
-     * Set entity's step-up height (ability to climb blocks)
+     * Set entity's step-up height using Forge's attribute system (ability to climb blocks)
+     * Uses attributes which properly sync and reset, unlike setMaxUpStep() which doesn't decrease properly.
      * @param entity The entity
-     * @param stepHeight Maximum step height in blocks (default is 0.6)
+     * @param stepHeight Maximum step height in blocks (default is 0.6, this adds to that base value)
      */
     public static void setStepHeight(LivingEntity entity, float stepHeight) {
-        entity.setMaxUpStep(stepHeight);
-        // Note: Step height changes are not synced to clients by vanilla,
-        // but the movement itself is synced, so this should work fine
+        AttributeInstance attribute = entity.getAttribute(ForgeMod.STEP_HEIGHT_ADDITION.get());
+        if (attribute == null) {
+            System.err.println("Warning: Entity " + entity.getName().getString() + " does not have STEP_HEIGHT_ADDITION attribute");
+            return;
+        }
+
+        // Remove existing modifier if present
+        attribute.removeModifier(STEP_HEIGHT_MODIFIER_UUID);
+
+        // Calculate the addition needed (stepHeight is total desired, base is 0.6)
+        // For example: if stepHeight=3, we want to add 2.4 to the base 0.6
+        double addition = stepHeight - 0.6;
+
+        if (addition > 0.1) {
+            // Add new modifier with the calculated addition
+            AttributeModifier modifier = new AttributeModifier(
+                STEP_HEIGHT_MODIFIER_UUID,
+                "Breathing form step height",
+                addition,
+                AttributeModifier.Operation.ADDITION
+            );
+            attribute.addTransientModifier(modifier);
+            System.out.println("Set step height to " + stepHeight + " (added " + addition + " to base)");
+        } else {
+            // If addition is 0 or negative, just remove the modifier (reset to default 0.6)
+            System.out.println("Reset step height to default (0.6)");
+        }
+    }
+
+    /**
+     * Reset entity's step height to default (0.6 blocks)
+     * @param entity The entity
+     */
+    public static void resetStepHeight(LivingEntity entity) {
+        AttributeInstance attribute = entity.getAttribute(ForgeMod.STEP_HEIGHT_ADDITION.get());
+        if (attribute != null) {
+            attribute.removeModifier(STEP_HEIGHT_MODIFIER_UUID);
+            System.out.println("Reset step height to default");
+        }
     }
 
 	public static void stepUp(LivingEntity entity, double vx, double vy, double vz) {

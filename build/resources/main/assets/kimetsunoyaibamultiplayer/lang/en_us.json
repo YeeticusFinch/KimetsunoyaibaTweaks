@@ -4,9 +4,12 @@
   "entity.kimetsunoyaibamultiplayer.frost_slayer": "Frost Demon Slayer",
   "entity.kimetsunoyaibamultiplayer.komorebi": "Setsu Komorebi",
   "entity.kimetsunoyaibamultiplayer.shimizu": "Akira Shimizu",
+  "entity.kimetsunoyaibamultiplayer.ghostly_clone": "Mist Apparition",
 
   "item.kimetsunoyaibamultiplayer.nichirinsword_frost": "Nichirin Sword (Frost)",
   "item.kimetsunoyaibamultiplayer.nichirinsword_ice": "Nichirin Sword (Ice)",
+  "item.kimetsunoyaibamultiplayer.nichirinsword_mist": "Nichirin Sword (Mist)",
+  "item.kimetsunoyaibamultiplayer.nichirinsword_muichiro": "Muichiro's Nichirin Sword",
   "item.kimetsunoyaibamultiplayer.nichirinsword_shimizu": "Shimizu's Nichirin Sword",
   "item.kimetsunoyaibamultiplayer.nichirinsword_komorebi": "Komorebi's Nichirin Sword",
   "item.kimetsunoyaibamultiplayer.nichirinsword_golden": "Sword of the Rising Sun",
@@ -50,6 +53,11 @@
   "block.kimetsunoyaibamultiplayer.wisteria_petals_cream": "Cream Wisteria Petals",
   "block.kimetsunoyaibamultiplayer.glowing_wisteria_petals_cream": "Glowing Cream Wisteria Petals",
   "block.kimetsunoyaibamultiplayer.wisteria_sapling_cream": "Cream Wisteria Sapling",
+  
+  "effect.kimetsunoyaibamultiplayer.favor_of_ubuyashiki": "Ubuyashiki's Favor ",
+  "effect.kimetsunoyaibamultiplayer.omen_of_ubuyashiki": "Ubuyashiki's Omen",
+  "effect.kimetsunoyaibamultiplayer.favor_of_muzan": "Muzan's Favor",
+  "effect.kimetsunoyaibamultiplayer.omen_of_muzan": "Muzan's Omen",
 
   "biome.kimetsunoyaibamultiplayer.wisteria_forest": "Wisteria Forest",
 

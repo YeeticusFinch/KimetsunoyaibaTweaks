@@ -40,15 +40,19 @@ fi
 
 print_status "Detected mod: $MOD_ID version $MOD_VERSION"
 
-# Build the expected jar filename
-JAR_FILE="build/libs/${MOD_ID}-${MOD_VERSION}.jar"
+# Build the expected jar filename (for checking if build is needed)
+CHECK_JAR_FILE="build/libs/${MOD_ID}-${MOD_VERSION}.jar"
+REOBF_JAR_FILE="build/reobfJar/output.jar"
+FINAL_JAR_NAME="${MOD_ID}-${MOD_VERSION}.jar"
 
-# Check if the jar file exists
-if [ ! -f "$JAR_FILE" ]; then
-    print_warning "Built jar not found: $JAR_FILE"
+# Check if the build/libs jar exists (to determine if we need to build)
+if [ ! -f "$CHECK_JAR_FILE" ]; then
+    print_warning "Built jar not found: $CHECK_JAR_FILE"
     print_status "Running gradle build..."
 
-    if command -v ./gradlew &> /dev/null; then
+    if command -v ./gradlew.bat &> /dev/null; then
+        ./gradlew.bat build --no-daemon
+    elif command -v ./gradlew &> /dev/null; then
         ./gradlew build
     elif command -v gradle &> /dev/null; then
         gradle build
@@ -58,13 +62,30 @@ if [ ! -f "$JAR_FILE" ]; then
     fi
 
     # Check again after build
-    if [ ! -f "$JAR_FILE" ]; then
-        print_error "Build failed or jar not found after build: $JAR_FILE"
+    if [ ! -f "$CHECK_JAR_FILE" ]; then
+        print_error "Build failed or jar not found after build: $CHECK_JAR_FILE"
         exit 1
     fi
 fi
 
-print_status "Found jar file: $JAR_FILE"
+print_status "Found jar file in build/libs: $CHECK_JAR_FILE"
+
+# Check if reobfuscated jar exists
+if [ ! -f "$REOBF_JAR_FILE" ]; then
+    print_error "Reobfuscated jar not found: $REOBF_JAR_FILE"
+    print_error "This should have been created by the build process."
+    exit 1
+fi
+
+print_status "Found reobfuscated jar: $REOBF_JAR_FILE"
+
+# Create a properly named copy of the reobfuscated jar in build/libs
+NAMED_REOBF_JAR="build/libs/reobf-${FINAL_JAR_NAME}"
+cp "$REOBF_JAR_FILE" "$NAMED_REOBF_JAR"
+print_status "Created named copy: $NAMED_REOBF_JAR"
+
+# Use the named reobfuscated jar for distribution
+JAR_FILE="$NAMED_REOBF_JAR"
 
 # Define Minecraft instance paths
 INSTANCES=(
@@ -90,9 +111,9 @@ update_instance() {
 	
 	    print_status "Updating instance: $instance_name"
 	
-	    # Remove old versions of the mod
+	    # Remove old versions of the mod (including reobf- prefixed ones)
 	    shopt -s nullglob
-		old_files=("$instance_path"${MOD_ID}-*.jar)
+		old_files=("$instance_path"${MOD_ID}-*.jar "$instance_path"reobf-${MOD_ID}-*.jar)
 		old_files_count=${#old_files[@]}
 		if [ "$old_files_count" -gt 0 ]; then
 		    print_status "Removing $old_files_count old mod file(s)"

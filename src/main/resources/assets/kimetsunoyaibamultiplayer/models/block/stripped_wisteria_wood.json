@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "kimetsunoyaibamultiplayer:block/stripped_wisteria_log",
+    "side": "kimetsunoyaibamultiplayer:block/stripped_wisteria_log"
+  }
+}

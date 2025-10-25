@@ -30,6 +30,12 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_ICE = ITEMS.register("nichirinsword_ice",
         () -> new NichirinSwordIce(new Item.Properties().stacksTo(1).durability(2000)));
 
+    public static final RegistryObject<Item> NICHIRINSWORD_MIST = ITEMS.register("nichirinsword_mist",
+        () -> new NichirinSwordMist(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_MUICHIRO = ITEMS.register("nichirinsword_muichiro",
+        () -> new NichirinSwordMuichiro(new Item.Properties().stacksTo(1).durability(2000)));
+
     public static final RegistryObject<Item> NICHIRINSWORD_SHIMIZU = ITEMS.register("nichirinsword_shimizu",
         () -> new NichirinSwordShimizu(new Item.Properties().stacksTo(1).durability(2000)));
 

@@ -32,6 +32,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.core.particles.DustParticleOptions;
+import org.joml.Vector3f;
 
 import java.util.List;
 import net.minecraftforge.api.distmarker.Dist;
@@ -155,6 +157,34 @@ public class KimetsunoyaibaMultiplayer
                 null
             );
 
+            // Cyan mist particle for mist breathing swords (RGB: 138, 195, 194)
+            DustParticleOptions mistParticle = new DustParticleOptions(
+                new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
+                0.5f
+            );
+
+            // Register Mist Breathing sword (generic, 6 forms)
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                "nichirinsword_mist",
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_MIST.get(),
+                "mist_breathing",
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+                mistParticle,
+                SoundEvents.AMBIENT_CAVE.value(),
+                null
+            );
+
+            // Register Muichiro's Mist Breathing sword (special, 7 forms including Obscuring Clouds)
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                "nichirinsword_muichiro",
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_MUICHIRO.get(),
+                "muichiro_mist_breathing",
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
+                mistParticle,
+                SoundEvents.AMBIENT_CAVE.value(),
+                null
+            );
+
             // Register Komorebi special sword
             com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
                 "nichirinsword_komorebi",
@@ -196,6 +226,28 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.FrostBreathingForms.createFrostBreathing(),
                     1600,
                     net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
+                    null
+                );
+            }
+
+            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("mist_breathing")) {
+                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
+                    "mist_breathing",
+                    "Mist Breathing",
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedMistForms.createGenericMistBreathing(),
+                    20000,
+                    mistParticle,
+                    null
+                );
+            }
+
+            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("muichiro_mist_breathing")) {
+                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
+                    "muichiro_mist_breathing",
+                    "Mist Breathing",
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedMistForms.createMuichiroMistBreathing(),
+                    20000,
+                    mistParticle,
                     null
                 );
             }
@@ -370,7 +422,9 @@ public class KimetsunoyaibaMultiplayer
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KOMOREBI.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KomorebiRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SHIMIZU.get(),
-                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.ShimizuRenderer::new);
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.ShimizuRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.GHOSTLY_CLONE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.GhostlyCloneRenderer::new);
 
             // Register projectile renderers
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.THROWN_SWORD.get(),
