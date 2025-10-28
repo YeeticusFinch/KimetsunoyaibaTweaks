@@ -87,8 +87,10 @@ public class ClientProxy implements IClientProxy {
         if (mc.level != null) {
             LivingEntity entity = (LivingEntity) mc.level.getEntity(entityUUID.hashCode());
             if (entity != null && particleType != null) {
+                // Get the sword item from the entity's main hand
+                net.minecraft.world.item.ItemStack swordItem = entity.getMainHandItem();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker.spawnRadialRibbonParticles(
-                    entity, animationName, animationTick, particleType);
+                    entity, swordItem, animationName, animationTick, particleType);
             }
         }
     }

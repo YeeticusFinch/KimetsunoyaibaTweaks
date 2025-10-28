@@ -10,6 +10,7 @@ import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -22,6 +23,12 @@ import java.util.zip.ZipInputStream;
 /**
  * Automatically downloads and deploys Mt Fujikasane region files from GitHub
  * Also sets up the vanilla world border for the dimension
+ *
+ * CACHING SYSTEM:
+ * - Downloads region files ONCE during mod initialization (not per-world)
+ * - Caches files in .minecraft/kimetsunoyaibamultiplayer/mt_fujikasane_cache/
+ * - Copies cached files to new worlds on creation
+ * - Never re-downloads unless cache is deleted
  *
  * SETUP INSTRUCTIONS:
  * 1. Create a repository on GitHub (e.g., YourUsername/mt-fujikasane-world)
@@ -51,10 +58,13 @@ public class MtFujikasaneDimensionDataHandler {
     // Set to false to disable automatic downloading (useful for testing)
     private static final boolean ENABLE_AUTO_DOWNLOAD = true;
 
+    // Cache directory in .minecraft folder
+    private static Path CACHE_DIR = null;
+    private static boolean cacheInitialized = false;
+
     /**
-     * Called when server has started - downloads region files if dimension is empty
-     * Uses ServerStartedEvent instead of ServerAboutToStartEvent because we need
-     * the overworld level to be fully loaded to access the world save directory
+     * Initialize cache directory on first server start
+     * Downloads region files ONCE and caches them for all future worlds
      */
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
@@ -65,6 +75,11 @@ public class MtFujikasaneDimensionDataHandler {
         MinecraftServer server = event.getServer();
 
         try {
+            // Initialize cache directory once
+            if (!cacheInitialized) {
+                initializeCache();
+            }
+
             // Get the overworld to access the save directory
             ServerLevel overworld = server.getLevel(net.minecraft.world.level.Level.OVERWORLD);
             if (overworld == null) {
@@ -80,36 +95,93 @@ public class MtFujikasaneDimensionDataHandler {
             Path regionDir = dimensionDir.resolve("region");
 
             // Check if region directory exists and has files
-            boolean needsDownload = !Files.exists(regionDir) || isDirectoryEmpty(regionDir);
+            boolean needsCopy = !Files.exists(regionDir) || isDirectoryEmpty(regionDir);
 
-            if (!needsDownload) {
-                System.out.println("[Mt Fujikasane] Region files already exist, skipping download");
+            if (!needsCopy) {
+                System.out.println("[Mt Fujikasane] Region files already exist in this world");
                 return;
             }
 
             // Create directories if they don't exist
             Files.createDirectories(regionDir);
 
-            // Download and extract region files from GitHub
-            System.out.println("[Mt Fujikasane] Downloading region files from GitHub...");
+            // Copy cached region files to world
+            System.out.println("[Mt Fujikasane] Copying cached region files to world...");
+            copyCachedRegionFiles(regionDir);
+            System.out.println("[Mt Fujikasane] Mt Fujikasane dimension is ready to explore!");
+
+        } catch (Exception e) {
+            System.err.println("[Mt Fujikasane] Error setting up dimension data:");
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Initialize cache directory and download region files if not cached
+     */
+    private static void initializeCache() {
+        try {
+            // Get game directory (.minecraft)
+            Path gameDir = FMLPaths.GAMEDIR.get();
+            CACHE_DIR = gameDir.resolve("kimetsunoyaibamultiplayer").resolve("mt_fujikasane_cache");
+
+            // Check if cache already has files
+            if (Files.exists(CACHE_DIR) && !isDirectoryEmpty(CACHE_DIR)) {
+                System.out.println("[Mt Fujikasane] Cache found at: " + CACHE_DIR);
+                System.out.println("[Mt Fujikasane] Using cached region files");
+                cacheInitialized = true;
+                return;
+            }
+
+            // Cache doesn't exist or is empty - download
+            System.out.println("[Mt Fujikasane] Cache not found, downloading region files...");
+            System.out.println("[Mt Fujikasane] Cache location: " + CACHE_DIR);
             System.out.println("[Mt Fujikasane] URL: " + GITHUB_DOWNLOAD_URL);
             System.out.println("[Mt Fujikasane] This may take a minute depending on your connection...");
 
-            boolean success = downloadAndExtractRegionFiles(regionDir);
+            // Create cache directory
+            Files.createDirectories(CACHE_DIR);
+
+            // Download and extract region files to cache
+            boolean success = downloadAndExtractRegionFiles(CACHE_DIR);
 
             if (success) {
-                System.out.println("[Mt Fujikasane] Successfully downloaded and installed region files!");
-                System.out.println("[Mt Fujikasane] Mt Fujikasane dimension is ready to explore!");
+                System.out.println("[Mt Fujikasane] Successfully downloaded and cached region files!");
+                System.out.println("[Mt Fujikasane] Cache will be reused for all future worlds");
+                cacheInitialized = true;
             } else {
                 System.err.println("[Mt Fujikasane] Failed to download region files");
                 System.err.println("[Mt Fujikasane] Please check the GitHub URL in MtFujikasaneDimensionDataHandler.java");
-                System.err.println("[Mt Fujikasane] Dimension will use default terrain generation");
+                System.err.println("[Mt Fujikasane] Dimensions will use default terrain generation");
             }
 
         } catch (Exception e) {
-            System.err.println("[Mt Fujikasane] Error downloading dimension data:");
+            System.err.println("[Mt Fujikasane] Error initializing cache:");
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Copy cached region files to a world's dimension directory
+     */
+    private static void copyCachedRegionFiles(Path targetDir) throws IOException {
+        if (CACHE_DIR == null || !Files.exists(CACHE_DIR)) {
+            throw new IOException("Cache directory not initialized or doesn't exist");
+        }
+
+        int filesCopied = 0;
+
+        try (Stream<Path> files = Files.list(CACHE_DIR)) {
+            for (Path cachedFile : files.toList()) {
+                if (cachedFile.toString().endsWith(".mca")) {
+                    Path targetFile = targetDir.resolve(cachedFile.getFileName());
+                    Files.copy(cachedFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                    filesCopied++;
+                }
+            }
+        }
+
+        System.out.println("[Mt Fujikasane] Copied " + filesCopied + " region files from cache");
     }
 
     /**

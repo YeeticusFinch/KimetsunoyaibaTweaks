@@ -185,28 +185,28 @@ public class EnhancedSpawnConfig {
 
     public static final ForgeConfigSpec SPEC = BUILDER.build();
 
-    // Runtime cache
-    public static boolean enhancedSpawningRules;
-    public static double genericDemonSpawnRate;
-    public static double genericDemonSlayerSpawnRate;
-    public static int maxEntityCheckRadius;
-    public static boolean enableProtectiveSpawning;
-    public static double hashiraSpawnChance;
-    public static double kamabokoSpawnChance;
-    public static double demonSlayerSpawnChance;
-    public static int demonSlayerGroupSizeMin;
-    public static int demonSlayerGroupSizeMax;
-    public static boolean enableKimetsuReplacer;
-    public static boolean enableKimetsuMovieReplacer;
+    // Runtime cache - Initialize with default values before config loads
+    public static boolean enhancedSpawningRules = true;  // Default to true
+    public static double genericDemonSpawnRate = 0.4;
+    public static double genericDemonSlayerSpawnRate = 0.1;
+    public static int maxEntityCheckRadius = 500;
+    public static boolean enableProtectiveSpawning = true;
+    public static double hashiraSpawnChance = 0.05;
+    public static double kamabokoSpawnChance = 0.05;
+    public static double demonSlayerSpawnChance = 0.15;
+    public static int demonSlayerGroupSizeMin = 2;
+    public static int demonSlayerGroupSizeMax = 4;
+    public static boolean enableKimetsuReplacer = true;
+    public static boolean enableKimetsuMovieReplacer = false;
     public static final Map<String, Boolean> entityReplacerToggles = new HashMap<>();
-    public static int mtFujikasaneDemonCenterX;
-    public static int mtFujikasaneDemonCenterY;
-    public static int mtFujikasaneDemonCenterZ;
-    public static int mtFujikasaneDemonRadius;
-    public static int mtFujikasaneKamabokoX;
-    public static int mtFujikasaneKamabokoY;
-    public static int mtFujikasaneKamabokoZ;
-    public static int mtFujikasaneKamabokoRadius;
+    public static int mtFujikasaneDemonCenterX = 227;
+    public static int mtFujikasaneDemonCenterY = 319;
+    public static int mtFujikasaneDemonCenterZ = 70;
+    public static int mtFujikasaneDemonRadius = 400;
+    public static int mtFujikasaneKamabokoX = 311;
+    public static int mtFujikasaneKamabokoY = 76;
+    public static int mtFujikasaneKamabokoZ = 736;
+    public static int mtFujikasaneKamabokoRadius = 20;
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {

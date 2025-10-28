@@ -3,6 +3,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.particles;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordSwingConfig;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.ParticleOptions;
@@ -17,16 +19,74 @@ public class BonePositionTracker {
 	private static int particlesSpawnedThisTick = 0;
 	private static final Map<UUID, Long> lastAnimationTime = new HashMap<>();
 
+	// =====================
+	// Sword Slash Render Queue
+	// =====================
+	private static final List<SlashRenderRequest> renderQueue = new ArrayList<>();
+	private static final Map<String, Float> lastProgressByAnimation = new HashMap<>(); // Track progress per entity+animation
+
+	public static List<SlashRenderRequest> getRenderQueue() {
+	    return renderQueue;
+	}
+
+	public static void clearRenderQueue() {
+	    renderQueue.clear();
+	    lastProgressByAnimation.clear();
+	}
+
+	public static class SlashRenderRequest {
+	    public final String modelKey;
+	    public final UUID entityId;
+	    public final String animationName;
+	    public final long startTime;
+	    public final long animationDuration = 350; // 350ms = 7 ticks for full swing
+	    public final LivingEntity entity;
+	    public final boolean isHorizontal;
+	    public final boolean isVertical;
+	    public final boolean isSpin;
+	    public final boolean leftToRight;
+	    public final boolean upward;
+
+	    public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
+	                             boolean isHorizontal, boolean isVertical, boolean isSpin,
+	                             boolean leftToRight, boolean upward) {
+	        this.modelKey = modelKey;
+	        this.entityId = entityId;
+	        this.animationName = animationName;
+	        this.entity = entity;
+	        this.isHorizontal = isHorizontal;
+	        this.isVertical = isVertical;
+	        this.isSpin = isSpin;
+	        this.leftToRight = leftToRight;
+	        this.upward = upward;
+	        this.startTime = System.currentTimeMillis();
+	    }
+
+	    public float getCurrentProgress() {
+	        long elapsed = System.currentTimeMillis() - startTime;
+	        return Math.min(1.0f, elapsed / (float) animationDuration);
+	    }
+
+	    public boolean shouldRemove() {
+	        return getCurrentProgress() >= 1.0f;
+	    }
+
+	    public boolean matches(UUID entityId, String animationName) {
+	        return this.entityId.equals(entityId) && this.animationName.equals(animationName);
+	    }
+	}
+	
 	/**
-	 * Spawns radial ribbon particles directly for a given entity and animation
-	 * 
+	 * Spawns radial ribbon particles or 3D slash models for a given entity and animation
+	 *
 	 * @param entity        The entity performing the animation
+	 * @param swordItem     The sword item being used
 	 * @param animationName The name of the animation being performed
 	 * @param animationTick The current animation tick (-1 if unknown)
 	 * @param particleType  The type of particles to spawn
 	 */
-	public static void spawnRadialRibbonParticles(LivingEntity entity, String animationName, int animationTick,
-			ParticleOptions particleType) {
+	public static void spawnRadialRibbonParticles(LivingEntity entity, net.minecraft.world.item.ItemStack swordItem,
+			String animationName, int animationTick, ParticleOptions particleType) {
 		System.out.println("spawnRadialRibbonParticles called: entity=" + entity + ", anim=" + animationName + ", tick="
 				+ animationTick);
 
@@ -61,6 +121,14 @@ public class BonePositionTracker {
 		if (level == null) {
 			System.out.println("Early return: null level");
 			return;
+		}
+
+		// Check if 3D sword slash models should be used instead of particles
+		if (SwordSwingConfig.useSwordSwingModel) {
+			System.out.println("Using 3D sword slash model rendering");
+			float progress = getAnimationProgress(entity, animationTick);
+			spawnModelForAnimation(level, entity, swordItem, animationName, progress);
+			return; // Skip particle rendering
 		}
 
 		float progress = getAnimationProgress(entity, animationTick);
@@ -265,6 +333,212 @@ public class BonePositionTracker {
 				}
 			}
 		}
+	}
+
+	private static void spawnModelForAnimation(ClientLevel level, LivingEntity entity,
+			net.minecraft.world.item.ItemStack swordItem, String animationName, float progress) {
+
+		// Check for cancellation
+		if (entity.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA)
+				.map(data -> data.cancelAttackSwing()).orElse(false)) {
+			return;
+		}
+
+		// Get model key for this sword
+		String modelKey = com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry
+				.getModelKeyForSword(swordItem);
+
+		UUID entityId = entity.getUUID();
+		String progressKey = entityId.toString() + ":" + animationName;
+
+		// Check if this is a new swing by detecting progress reset
+		Float lastProgress = lastProgressByAnimation.get(progressKey);
+		boolean isNewSwing = lastProgress == null || progress < lastProgress || progress < 0.1f;
+
+		// Update progress tracker
+		lastProgressByAnimation.put(progressKey, progress);
+
+		// Only create model on new swing
+		if (!isNewSwing) {
+			return; // Not a new swing, don't create another model
+		}
+
+		System.out.println("New swing detected! Progress: " + progress + ", modelKey: " + modelKey);
+
+		// Get entity position and rotation
+		float yaw = entity.getYRot();
+		double entityHeight = entity.getBbHeight();
+		double yawRad = Math.toRadians(yaw);
+		Vec3 entityPos = entity.position();
+
+		// Create model once - it will self-animate based on animation type
+		switch (animationName) {
+		case "sword_to_right":
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, entityId, animationName, entity);
+			break;
+		case "sword_to_left":
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, entityId, animationName, entity);
+			break;
+		case "sword_overhead":
+			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, entityId, animationName, entity);
+			break;
+		case "sword_to_upper":
+			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, entityId, animationName, entity);
+			break;
+		case "sword_rotate":
+			renderSpinSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, entityId, animationName, entity);
+			break;
+		case "speed_attack_sword":
+			// Keep using particles for forward thrust
+			break;
+		default:
+			// Unknown animation - could render generic slash or skip
+			break;
+		}
+	}
+
+	private static void renderHorizontalSlashModel(ClientLevel level, Vec3 entityPos, double yawRad,
+			double entityHeight, float progress, String modelKey, boolean leftToRight,
+			UUID entityId, String animationName, LivingEntity entity) {
+
+		// Create slash model (calculation will be done during rendering)
+		createSlashModel(modelKey, entityId, animationName, entity, true, false, false, leftToRight, false);
+	}
+
+	private static void renderVerticalSlashModel(ClientLevel level, Vec3 entityPos, double yawRad,
+			double entityHeight, float progress, String modelKey, boolean upward,
+			UUID entityId, String animationName, LivingEntity entity) {
+
+		// Create slash model (calculation will be done during rendering)
+		createSlashModel(modelKey, entityId, animationName, entity, false, true, false, false, upward);
+	}
+
+	private static void renderSpinSlashModel(ClientLevel level, Vec3 entityPos, double yawRad,
+			double entityHeight, float progress, String modelKey, UUID entityId, String animationName,
+			LivingEntity entity) {
+
+		// Create slash model (calculation will be done during rendering)
+		createSlashModel(modelKey, entityId, animationName, entity, false, false, true, false, false);
+	}
+
+	private static void createSlashModel(String modelKey, UUID entityId, String animationName,
+			LivingEntity entity, boolean isHorizontal, boolean isVertical, boolean isSpin,
+			boolean leftToRight, boolean upward) {
+
+		// Check if we already have a model for this entity+animation
+		for (SlashRenderRequest req : renderQueue) {
+			if (req.matches(entityId, animationName)) {
+				return; // Model already exists, don't create another
+			}
+		}
+
+		// Create new model - it will self-animate based on elapsed time
+		renderQueue.add(new SlashRenderRequest(modelKey, entityId, animationName, entity,
+				isHorizontal, isVertical, isSpin, leftToRight, upward));
+	}
+
+	// Helper methods to calculate position based on animation type and progress
+	public static Vec3 calculateHorizontalPosition(LivingEntity entity, float progress, boolean leftToRight) {
+		Vec3 entityPos = entity.position();
+		float yaw = entity.getYRot();
+		double entityHeight = entity.getBbHeight();
+		double yawRad = Math.toRadians(yaw);
+		double centerY = entityHeight * 0.75;
+
+		double totalArcDegrees = ParticleConfig.particleArcDegrees;
+		double arcAngle = progress * totalArcDegrees;
+
+		double radius = ParticleConfig.baseRadius;
+		double localX = radius * Math.cos(Math.toRadians(arcAngle)) * (leftToRight ? -1 : 1);
+		double localZ = radius * Math.sin(Math.toRadians(arcAngle));
+		double localY = (leftToRight ? -0.5 : 1.2) * Math.sin(Math.toRadians(arcAngle - totalArcDegrees / 2));
+
+		double worldX = entityPos.x + (localX * Math.cos(yawRad) - localZ * Math.sin(yawRad));
+		double worldY = entityPos.y + centerY + localY;
+		double worldZ = entityPos.z + (localX * Math.sin(yawRad) + localZ * Math.cos(yawRad));
+
+		return new Vec3(worldX, worldY, worldZ);
+	}
+
+	public static float[] calculateHorizontalRotation(LivingEntity entity, float progress, boolean leftToRight) {
+		float yaw = entity.getYRot();
+		double totalArcDegrees = ParticleConfig.particleArcDegrees;
+		double arcAngle = progress * totalArcDegrees;
+
+		// Model should rotate around the player as it sweeps
+		// Yaw rotates the model around the vertical axis to follow the arc
+		float modelYaw = yaw + (float) arcAngle * (leftToRight ? -1 : 1);
+
+		// Pitch tilts the slash plane slightly for visual effect
+		float modelPitch = 0f;
+
+		// Roll rotates the slash around its own forward axis
+		float modelRoll = 0f;
+
+		return new float[]{modelYaw, modelPitch, modelRoll};
+	}
+
+	public static Vec3 calculateVerticalPosition(LivingEntity entity, float progress, boolean upward) {
+		Vec3 entityPos = entity.position();
+		float yaw = entity.getYRot();
+		double entityHeight = entity.getBbHeight();
+		double yawRad = Math.toRadians(yaw);
+		double centerY = entityHeight * 0.9;
+
+		double totalArcDegrees = ParticleConfig.particleArcDegrees;
+		double arcAngle = progress * totalArcDegrees;
+
+		double radius = ParticleConfig.baseRadius;
+		double localY = radius * Math.cos(Math.toRadians(arcAngle));
+		double localForward = radius * Math.sin(Math.toRadians(arcAngle));
+
+		double worldX = entityPos.x + localForward * Math.cos(yawRad + Math.PI / 2);
+		double worldY = entityPos.y + centerY + localY * (upward ? -1 : 1);
+		double worldZ = entityPos.z + localForward * Math.sin(yawRad + Math.PI / 2);
+
+		return new Vec3(worldX, worldY, worldZ);
+	}
+
+	public static float[] calculateVerticalRotation(LivingEntity entity, float progress, boolean upward) {
+		float yaw = entity.getYRot();
+		double totalArcDegrees = ParticleConfig.particleArcDegrees;
+		double arcAngle = progress * totalArcDegrees;
+
+		// Model rotates around player in vertical plane
+		float modelYaw = yaw + 90f; // Face perpendicular to player's facing direction
+		float modelPitch = (float) arcAngle * (upward ? -1 : 1);
+		float modelRoll = 0f;
+
+		return new float[]{modelYaw, modelPitch, modelRoll};
+	}
+
+	public static Vec3 calculateSpinPosition(LivingEntity entity, float progress) {
+		Vec3 entityPos = entity.position();
+		float yaw = entity.getYRot();
+		double entityHeight = entity.getBbHeight();
+		double yawRad = Math.toRadians(yaw);
+		double centerY = entityHeight * 0.8;
+
+		double rotateAngle = yawRad + (progress * 2 * Math.PI);
+		double radius = ParticleConfig.baseRadius;
+
+		double worldX = entityPos.x + radius * Math.cos(rotateAngle);
+		double worldY = entityPos.y + centerY;
+		double worldZ = entityPos.z + radius * Math.sin(rotateAngle);
+
+		return new Vec3(worldX, worldY, worldZ);
+	}
+
+	public static float[] calculateSpinRotation(LivingEntity entity, float progress) {
+		float yaw = entity.getYRot();
+		double yawRad = Math.toRadians(yaw);
+		double rotateAngle = yawRad + (progress * 2 * Math.PI);
+
+		float modelYaw = (float) Math.toDegrees(rotateAngle);
+		float modelPitch = 0f;
+		float modelRoll = 0f;
+
+		return new float[]{modelYaw, modelPitch, modelRoll};
 	}
 
 	// Legacy compatibility methods (deprecated)

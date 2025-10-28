@@ -55,6 +55,7 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import software.bernie.geckolib.GeckoLib;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(KimetsunoyaibaMultiplayer.MODID)
@@ -132,6 +133,8 @@ public class KimetsunoyaibaMultiplayer
         // Register network messages
         ModNetworking.register();
         Log.info("Network messages registered");
+        
+        GeckoLib.initialize();
 
         // Register our built-in swords in the SwordRegistry (must be done after items are registered)
         event.enqueueWork(() -> {

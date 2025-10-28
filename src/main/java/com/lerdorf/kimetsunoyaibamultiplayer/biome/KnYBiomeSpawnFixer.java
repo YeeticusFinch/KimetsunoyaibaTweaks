@@ -23,13 +23,11 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Fixes the biome spawning issue in KimetsunoYaiba mod where mt_natagumo and mt_yoko don't spawn.
+ * Adds custom biomes to the overworld and optionally replaces vanilla biome occurrences.
  *
- * The problem: All three biomes (mt_sagiri, mt_yoko, mt_natagumo) have identical climate parameters,
- * so they compete for the same locations and only mt_sagiri spawns.
- *
- * The solution: We inject biomes with unique climate parameters after the KnY mod has registered them,
- * and optionally replace some vanilla biome occurrences with KnY biomes based on seed-deterministic logic.
+ * NOTE: As of KimetsunoYaiba ver3, mt_yoko and mt_natagumo are now properly spawned by the base mod,
+ * so we no longer need to fix their spawning. This handler now focuses on adding our custom biomes
+ * (wisteria_forest) and optionally replacing vanilla biome occurrences with KnY biomes.
  */
 @Mod.EventBusSubscriber(modid = com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer.MODID)
 public class KnYBiomeSpawnFixer {
@@ -61,47 +59,14 @@ public class KnYBiomeSpawnFixer {
                         List<Pair<Climate.ParameterPoint, Holder<Biome>>> parameters =
                             new ArrayList<>(noiseSource.parameters().values());
 
-                        // Get biome holders
-                        Holder<Biome> mtYoko = getBiomeHolder(biomeRegistry, "kimetsunoyaiba", "mt_yoko");
-                        Holder<Biome> mtNatagumo = getBiomeHolder(biomeRegistry, "kimetsunoyaiba", "mt_natagumo");
-                        Holder<Biome> mtSagiri = getBiomeHolder(biomeRegistry, "kimetsunoyaiba", "mt_sagiri");
-                        Holder<Biome> mugen = getBiomeHolder(biomeRegistry, "kimetsunoyaiba", "mugen_biome");
+                        // Get biome holder for wisteria forest (our custom biome)
                         Holder<Biome> wisteriaForest = getBiomeHolder(biomeRegistry, "kimetsunoyaibamultiplayer", "wisteria_forest");
-
-                        if (mtYoko == null || mtNatagumo == null) {
-                            com.lerdorf.kimetsunoyaibamultiplayer.Log.info("KnY biomes not found - skipping biome spawn fix");
-                            return;
-                        }
-
-                        // Remove existing conflicting entries (the ones added by KnY mod with identical parameters)
-                        removeConflictingBiomeEntries(parameters, mtYoko, mtNatagumo, mtSagiri);
-
-                        // Add mt_yoko with configurable parameters
-                        addConfigurableBiome(parameters, mtYoko, "mt_yoko",
-                            com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtYokoSpawnFrequency,
-                            com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtYokoSizeMultiplier);
-
-                        // Add mt_natagumo with configurable parameters
-                        addConfigurableBiome(parameters, mtNatagumo, "mt_natagumo",
-                            com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtNatagumoSpawnFrequency,
-                            com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtNatagumoSizeMultiplier);
-                        
-                        // Add mugen_biome with configurable parameters
-                        addConfigurableBiome(parameters, mugen, "mugen_biome",
-                                com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtNatagumoSpawnFrequency,
-                                com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtNatagumoSizeMultiplier);
 
                         // Add wisteria_forest with configurable parameters
                         if (wisteriaForest != null) {
                             addConfigurableBiome(parameters, wisteriaForest, "wisteria_forest",
                                 com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestSpawnFrequency,
                                 com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestSizeMultiplier);
-                        }
-
-                        // Optionally replace some vanilla biomes with mt_yoko and mt_natagumo
-                        // This is deterministic based on climate parameter hashcodes
-                        if (com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.enableVanillaReplacement) {
-                            addDeterministicBiomeReplacements(parameters, biomeRegistry, mtYoko, mtNatagumo, mugen);
                         }
 
                         // Update the biome source with our fixed parameters
@@ -111,7 +76,7 @@ public class KnYBiomeSpawnFixer {
                         // We don't need to manually refresh it
 
                         if (com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.logBiomeChanges) {
-                            com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Successfully fixed KnY biome spawning for mt_yoko and mt_natagumo");
+                            com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Successfully added custom biomes to overworld");
                         }
 
                     } catch (Exception e) {
@@ -123,22 +88,6 @@ public class KnYBiomeSpawnFixer {
         }
     }
 
-    /**
-     * Remove the conflicting biome entries that were added by the KnY mod
-     */
-    private static void removeConflictingBiomeEntries(
-            List<Pair<Climate.ParameterPoint, Holder<Biome>>> parameters,
-            Holder<Biome> mtYoko,
-            Holder<Biome> mtNatagumo,
-            Holder<Biome> mtSagiri) {
-
-        parameters.removeIf(pair -> {
-            Holder<Biome> biome = pair.getSecond();
-            // Remove ALL instances of mt_yoko and mt_natagumo (we'll add them back with fixed parameters)
-            // Keep mt_sagiri as-is since it works fine
-            return biome.equals(mtYoko) || biome.equals(mtNatagumo);
-        });
-    }
 
     /**
      * Add a biome with configurable parameters (size, frequency, climate)
@@ -184,37 +133,7 @@ public class KnYBiomeSpawnFixer {
      * Get base climate parameters for a biome (from config or defaults)
      */
     private static BiomeClimateParams getBaseClimateParams(String biomeName) {
-        boolean useCustom = com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.useCustomClimateParams;
-
-        if (biomeName.equals("mt_yoko")) {
-            float tempMin = useCustom ? (float) com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtYokoTempMin : -0.5f;
-            float tempMax = useCustom ? (float) com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtYokoTempMax : 0.3f;
-            float humidMin = useCustom ? (float) com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtYokoHumidityMin : 0.0f;
-            float humidMax = useCustom ? (float) com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtYokoHumidityMax : 1.0f;
-
-            return new BiomeClimateParams(
-                tempMin, tempMax,      // Temperature: Cool to Cold
-                humidMin, humidMax,    // Humidity: Moderate to High
-                0.2f, 0.8f,            // Continentalness: Inland/mountainous
-                -0.5f, 0.2f,           // Erosion: Low (high mountains)
-                0.0f, 0.0f,            // Depth: Surface
-                -0.3f, 0.5f            // Weirdness: Slightly weird
-            );
-        } else if (biomeName.equals("mt_natagumo")) {
-            float tempMin = useCustom ? (float) com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtNatagumoTempMin : -0.8f;
-            float tempMax = useCustom ? (float) com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtNatagumoTempMax : 0.0f;
-            float humidMin = useCustom ? (float) com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtNatagumoHumidityMin : -0.3f;
-            float humidMax = useCustom ? (float) com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtNatagumoHumidityMax : 0.3f;
-
-            return new BiomeClimateParams(
-                tempMin, tempMax,      // Temperature: Cold to Very Cold
-                humidMin, humidMax,    // Humidity: Dry to Moderate
-                0.0f, 0.6f,            // Continentalness: Inland/forest mountains
-                -0.2f, 0.5f,           // Erosion: Moderate (lower mountains)
-                0.0f, 0.0f,            // Depth: Surface
-                0.3f, 1.0f             // Weirdness: Very weird (spooky)
-            );
-        } else if (biomeName.equals("wisteria_forest")) {
+        if (biomeName.equals("wisteria_forest")) {
             return new BiomeClimateParams(
                 0.0f, 0.9f,            // Temperature: Cool to warm (avoiding frozen and hot areas)
                 0.2f, 1.2f,            // Humidity: Moderate to high (forests need moisture)
@@ -222,15 +141,6 @@ public class KnYBiomeSpawnFixer {
                 -0.3f, 0.5f,           // Erosion: Low to moderate (varied terrain)
                 0.0f, 0.0f,            // Depth: Surface
                 -0.4f, 0.4f            // Weirdness: Relatively normal terrain
-            );
-        } else if (biomeName.equals("mugen_biome")) {
-            return new BiomeClimateParams(
-                0.5f, 1.5f,            // Temperature: Warm to hot (desert-like for infinity castle)
-                -0.5f, 0.2f,           // Humidity: Dry to moderate
-                0.3f, 0.9f,            // Continentalness: Inland
-                0.2f, 0.8f,            // Erosion: Moderate to high (flatter terrain)
-                0.0f, 0.0f,            // Depth: Surface
-                0.5f, 1.2f             // Weirdness: Weird to very weird (otherworldly)
             );
         }
 
@@ -344,83 +254,6 @@ public class KnYBiomeSpawnFixer {
         }
     }
 
-    /**
-     * Replace some vanilla biome occurrences with KnY biomes based on deterministic logic.
-     * Uses climate parameter hashcodes for determinism - same world setup = same result.
-     */
-    private static void addDeterministicBiomeReplacements(
-            List<Pair<Climate.ParameterPoint, Holder<Biome>>> parameters,
-            Registry<Biome> biomeRegistry,
-            Holder<Biome> mtYoko,
-            Holder<Biome> mtNatagumo,
-            Holder<Biome> mugen) {
-
-        // Get vanilla biomes to partially replace
-        Holder<Biome> taiga = getBiomeHolder(biomeRegistry, "minecraft", "taiga");
-        Holder<Biome> darkForest = getBiomeHolder(biomeRegistry, "minecraft", "dark_forest");
-        Holder<Biome> oldGrowthSpruceTaiga = getBiomeHolder(biomeRegistry, "minecraft", "old_growth_spruce_taiga");
-        Holder<Biome> savanna = getBiomeHolder(biomeRegistry, "minecraft", "savanna");
-
-        // Get replacement chances from config
-        double mtYokoChance = com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtYokoReplacementChance;
-        double mtNatagumoChance = com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mtNatagumoReplacementChance;
-        double mugenChance = com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.mugenReplacementChance;
-
-        // Find taiga-like biomes and replace some with mt_yoko
-        if (taiga != null) {
-            replaceSomeBiomeOccurrences(parameters, taiga, mtYoko, mtYokoChance, "taiga -> mt_yoko");
-        }
-        if (oldGrowthSpruceTaiga != null) {
-            replaceSomeBiomeOccurrences(parameters, oldGrowthSpruceTaiga, mtYoko, mtYokoChance * 0.7, "old_growth_spruce_taiga -> mt_yoko");
-        }
-
-        // Find dark forest biomes and replace some with mt_natagumo
-        if (darkForest != null) {
-            replaceSomeBiomeOccurrences(parameters, darkForest, mtNatagumo, mtNatagumoChance, "dark_forest -> mt_natagumo");
-        }
-        
-        if (savanna != null) {
-            replaceSomeBiomeOccurrences(parameters, savanna, mtNatagumo, mugenChance, "dark_forest -> mugen_biome");
-        }
-    }
-
-    /**
-     * Replace a percentage of occurrences of a vanilla biome with a modded biome.
-     * Uses climate parameter hashcode for deterministic selection.
-     */
-    private static void replaceSomeBiomeOccurrences(
-            List<Pair<Climate.ParameterPoint, Holder<Biome>>> parameters,
-            Holder<Biome> vanillaBiome,
-            Holder<Biome> moddedBiome,
-            double replacementChance,
-            String logMessage) {
-
-        int replaced = 0;
-        int total = 0;
-
-        for (int i = 0; i < parameters.size(); i++) {
-            Pair<Climate.ParameterPoint, Holder<Biome>> pair = parameters.get(i);
-
-            if (pair.getSecond().equals(vanillaBiome)) {
-                total++;
-
-                // Use deterministic random based on parameter hashcode
-                // Same climate parameters = same decision every time
-                Random paramRandom = new Random(pair.getFirst().hashCode());
-
-                if (paramRandom.nextDouble() < replacementChance) {
-                    // Replace this occurrence
-                    parameters.set(i, new Pair<>(pair.getFirst(), moddedBiome));
-                    replaced++;
-                }
-            }
-        }
-
-        if (replaced > 0 && com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.logBiomeChanges) {
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.info(
-                "Replaced " + replaced + "/" + total + " occurrences: " + logMessage);
-        }
-    }
 
     /**
      * Get a biome holder from the registry

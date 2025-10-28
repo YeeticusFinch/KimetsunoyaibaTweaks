@@ -37,7 +37,9 @@
       "Bash(cp:*)",
       "Bash(del \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\src\\main\\java\\com\\lerdorf\\kimetsunoyaibamultiplayer\\procedures\\EnhancedMistDispatcher.java\")",
       "Bash(unzip:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(xargs:*)",
+      "Bash(ls -la \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\run\\config\\kimetsunoyaibamultiplayer\"\" 2>nul || echo \"Directory not found \")"
     ],
     "deny": [],
     "ask": []

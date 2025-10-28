@@ -1,0 +1,90 @@
+package com.lerdorf.kimetsunoyaibamultiplayer.client.events;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSlashRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
+import com.mojang.blaze3d.vertex.PoseStack;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource.BufferSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
+
+@Mod.EventBusSubscriber(
+	    modid = "kimetsunoyaibamultiplayer",
+	    bus = Mod.EventBusSubscriber.Bus.FORGE,
+	    value = Dist.CLIENT
+	)
+public class ClientRenderEvents {
+
+    @SubscribeEvent
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES)
+            return;
+
+        var queue = BonePositionTracker.getRenderQueue();
+        if (queue.isEmpty())
+            return;
+
+        Minecraft mc = Minecraft.getInstance();
+        PoseStack poseStack = event.getPoseStack();
+        BufferSource bufferSource = mc.renderBuffers().bufferSource();
+        Vec3 camera = event.getCamera().getPosition();
+        int packedLight = 0xF000F0;
+
+        // Render all active slash models
+        for (BonePositionTracker.SlashRenderRequest req : queue) {
+            // Calculate current progress based on elapsed time (smooth animation)
+            float progress = req.getCurrentProgress();
+
+            // Calculate position and rotation dynamically based on animation type
+            Vec3 worldPos;
+            float[] rotation;
+
+            if (req.isHorizontal) {
+                worldPos = BonePositionTracker.calculateHorizontalPosition(req.entity, progress, req.leftToRight);
+                rotation = BonePositionTracker.calculateHorizontalRotation(req.entity, progress, req.leftToRight);
+            } else if (req.isVertical) {
+                worldPos = BonePositionTracker.calculateVerticalPosition(req.entity, progress, req.upward);
+                rotation = BonePositionTracker.calculateVerticalRotation(req.entity, progress, req.upward);
+            } else if (req.isSpin) {
+                worldPos = BonePositionTracker.calculateSpinPosition(req.entity, progress);
+                rotation = BonePositionTracker.calculateSpinRotation(req.entity, progress);
+            } else {
+                continue; // Unknown animation type
+            }
+
+            // Convert world coordinates to camera-relative coordinates
+            Vec3 cameraRelative = worldPos.subtract(camera);
+
+            // Render model at calculated position with calculated rotation
+            SwordSlashRenderer.render(
+                poseStack,
+                bufferSource,
+                cameraRelative,
+                rotation[0],  // yaw
+                rotation[1],  // pitch
+                rotation[2],  // roll
+                2.5f,         // Scale
+                progress,
+                req.modelKey,
+                packedLight
+            );
+        }
+
+        // flush draw calls
+        bufferSource.endBatch();
+
+        // Remove old models (instead of clearing everything)
+        queue.removeIf(req -> req.shouldRemove());
+    }
+    
+}

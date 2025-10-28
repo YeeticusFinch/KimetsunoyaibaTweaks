@@ -65,50 +65,6 @@ public class Config
 
     static {
         BUILDER.pop(); // common
-
-        // Breathing Replacers section
-        BUILDER.comment("Breathing Replacers - DEPRECATED: These configs are no longer used",
-                        "Mist Breathing is now implemented as a custom nichirin sword item",
-                        "The nichirinsword_mist item provides all 7 enhanced Mist Breathing forms")
-                .push("breathing_replacers_deprecated");
-    }
-
-    // DEPRECATED: These configs were used for the old mixin-based approach
-    // They are kept here to avoid breaking existing configs, but have no effect
-    private static final ForgeConfigSpec.BooleanValue ENHANCED_MIST_BREATHING = BUILDER
-            .comment("DEPRECATED: No longer used - Mist Breathing is now a custom sword item")
-            .define("enhanced-mist-breathing", true);
-
-    private static final ForgeConfigSpec.BooleanValue ENHANCED_MIST_FORM_1 = BUILDER
-            .comment("DEPRECATED: No longer used")
-            .define("enhanced-mist-form-1", true);
-
-    private static final ForgeConfigSpec.BooleanValue ENHANCED_MIST_FORM_2 = BUILDER
-            .comment("DEPRECATED: No longer used")
-            .define("enhanced-mist-form-2", true);
-
-    private static final ForgeConfigSpec.BooleanValue ENHANCED_MIST_FORM_3 = BUILDER
-            .comment("DEPRECATED: No longer used")
-            .define("enhanced-mist-form-3", true);
-
-    private static final ForgeConfigSpec.BooleanValue ENHANCED_MIST_FORM_4 = BUILDER
-            .comment("DEPRECATED: No longer used")
-            .define("enhanced-mist-form-4", true);
-
-    private static final ForgeConfigSpec.BooleanValue ENHANCED_MIST_FORM_5 = BUILDER
-            .comment("DEPRECATED: No longer used")
-            .define("enhanced-mist-form-5", true);
-
-    private static final ForgeConfigSpec.BooleanValue ENHANCED_MIST_FORM_6 = BUILDER
-            .comment("DEPRECATED: No longer used")
-            .define("enhanced-mist-form-6", true);
-
-    private static final ForgeConfigSpec.BooleanValue ENHANCED_MIST_FORM_7 = BUILDER
-            .comment("DEPRECATED: No longer used")
-            .define("enhanced-mist-form-7", true);
-
-    static {
-        BUILDER.pop(); // breathing_replacers_deprecated
     }
 
     public static final ForgeConfigSpec SPEC = BUILDER.build();
@@ -126,13 +82,6 @@ public class Config
 
     // Breathing Replacers
     public static boolean enhancedMistBreathing;
-    public static boolean enhancedMistForm1;
-    public static boolean enhancedMistForm2;
-    public static boolean enhancedMistForm3;
-    public static boolean enhancedMistForm4;
-    public static boolean enhancedMistForm5;
-    public static boolean enhancedMistForm6;
-    public static boolean enhancedMistForm7;
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event)
@@ -149,22 +98,10 @@ public class Config
         breathingDisplayScale = BREATHING_DISPLAY_SCALE.get();
         suppressFormCycleChat = SUPPRESS_FORM_CYCLE_CHAT.get();
         enableSwordClashing = ENABLE_SWORD_CLASHING.get();
-        enhancedMistBreathing = ENHANCED_MIST_BREATHING.get();
-        enhancedMistForm1 = ENHANCED_MIST_FORM_1.get();
-        enhancedMistForm2 = ENHANCED_MIST_FORM_2.get();
-        enhancedMistForm3 = ENHANCED_MIST_FORM_3.get();
-        enhancedMistForm4 = ENHANCED_MIST_FORM_4.get();
-        enhancedMistForm5 = ENHANCED_MIST_FORM_5.get();
-        enhancedMistForm6 = ENHANCED_MIST_FORM_6.get();
-        enhancedMistForm7 = ENHANCED_MIST_FORM_7.get();
         if (Config.logDebug)
         System.out.println("Common config loaded: logDebug=" + logDebug + ", onScreenDebug=" + onScreenDebug +
                 ", showBreathingDisplay=" + showBreathingDisplay + ", breathingDisplayPosition=" + breathingDisplayPosition +
                 ", breathingDisplayScale=" + breathingDisplayScale + ", suppressFormCycleChat=" + suppressFormCycleChat +
-                ", enableSwordClashing=" + enableSwordClashing + ", enhancedMistBreathing=" + enhancedMistBreathing +
-                ", enhancedMistForm1=" + enhancedMistForm1 + ", enhancedMistForm2=" + enhancedMistForm2 + 
-                ", enhancedMistForm3=" + enhancedMistForm3 + ", enhancedMistForm4=" + enhancedMistForm4 +
-                ", enhancedMistForm5=" + enhancedMistForm5 + ", enhancedMistForm6=" + enhancedMistForm6 + 
-                ", enhancedMistForm7=" + enhancedMistForm7);
+                ", enableSwordClashing=" + enableSwordClashing);
     }
 }

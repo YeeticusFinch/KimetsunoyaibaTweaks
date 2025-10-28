@@ -36,7 +36,7 @@ public class GuardStateHelper {
         entity.getPersistentData().putDouble(NBT_SKILL, 1.0);
         entity.getPersistentData().putDouble(NBT_BREATHES, breathingId);
     }
-
+    
     /**
      * Set entity to guard/defensive state with specified defensive power.
      * Simplified version without breathing ID (defaults to 0).

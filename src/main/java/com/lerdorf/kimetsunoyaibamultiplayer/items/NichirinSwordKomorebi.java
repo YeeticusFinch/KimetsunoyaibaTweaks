@@ -34,7 +34,7 @@ public class NichirinSwordKomorebi extends BreathingSwordItem {
 
             // Attack damage: base entity damage is 1, we add 4.5 to make the tooltip show "+4.5 Attack Damage"
             builder.put(Attributes.ATTACK_DAMAGE,
-                new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", 4.5, AttributeModifier.Operation.ADDITION));
+                new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", 4, AttributeModifier.Operation.ADDITION));
             builder.put(Attributes.ATTACK_SPEED,
                 new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", ATTACK_SPEED, AttributeModifier.Operation.ADDITION));
 

@@ -92,7 +92,8 @@ public class SwordParticleHandler {
         Log.debug("About to spawn particles with type: " + particleType.getType());
 
         // Spawn radial ribbon particles directly - no more Vec3 arrays!
-        BonePositionTracker.spawnRadialRibbonParticles(entity, animationName, animationTick, particleType);
+        // Pass sword item for model selection when using 3D models
+        BonePositionTracker.spawnRadialRibbonParticles(entity, swordItem, animationName, animationTick, particleType);
 
         // Simple state tracking
         UUID entityId = entity.getUUID();
