@@ -367,6 +367,14 @@
       "radius": 15
     }
   ],
+  "Entity": [
+    {
+      "entity": "kimetsunoyaibamultiplayer:sword_slash",
+      "emissive": true,
+      "blendMode": "additive",
+      "bloom": true
+    }
+  ],
   "Particle": [
     {
       "particle": "kimetsunoyaiba:particle_flame",

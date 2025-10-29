@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.mojang.brigadier.CommandDispatcher;
@@ -19,8 +20,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
@@ -76,6 +80,13 @@ public class ClientCommandHandler {
                 // Play the animation locally on the client player
                 playAnimationOnPlayer(player, animation);
 
+                // Check if this is a sword slash animation
+                if (isSwordSlashAnimation(animationName)) {
+                    // Spawn sword slash model
+                    spawnSwordSlashModel(player, animationName);
+                    player.displayClientMessage(Component.literal("§a[Client Test] Spawning sword slash model for '" + animationName + "'"), false);
+                }
+
                 // Also send to server for other players to see
                 AnimationSyncPacket packet = new AnimationSyncPacket(
                     player.getUUID(),
@@ -111,6 +122,47 @@ public class ClientCommandHandler {
             Log.error("Failed to execute client test animation", e);
             player.displayClientMessage(Component.literal("§c[Client Test] Error: " + e.getMessage()), false);
             return 0;
+        }
+    }
+
+    /**
+     * Check if animation name is a sword slash animation
+     */
+    private static boolean isSwordSlashAnimation(String animationName) {
+        String name = animationName.toLowerCase();
+        return name.equals("sword_to_left") ||
+               name.equals("sword_to_right") ||
+               name.equals("sword_to_upper") ||
+               name.equals("sword_overhead") ||
+               name.equals("sword_rotate");
+    }
+
+    /**
+     * Spawn sword slash 3D model for test animation
+     */
+    private static void spawnSwordSlashModel(AbstractClientPlayer player, String animationName) {
+        try {
+            // Use player's held item or default to diamond sword for testing
+            ItemStack heldItem = player.getMainHandItem();
+            if (heldItem.isEmpty()) {
+                heldItem = new ItemStack(Items.DIAMOND_SWORD);
+            }
+
+            // Spawn slash model using BonePositionTracker
+            // Use tick 0 to trigger initial spawn
+            BonePositionTracker.spawnRadialRibbonParticles(
+                player,
+                heldItem,
+                animationName,
+                0, // animationTick 0 triggers model spawn
+                ParticleTypes.CLOUD // Default particle type
+            );
+
+            if (Config.logDebug) {
+                Log.info("Spawned sword slash model for animation: {}", animationName);
+            }
+        } catch (Exception e) {
+            Log.error("Failed to spawn sword slash model", e);
         }
     }
 

@@ -64,12 +64,12 @@ public class SwordSlashRenderer {
             poseStack.translate(position.x, position.y, position.z);
 
             // Apply rotations (order: yaw -> pitch -> roll)
-            poseStack.mulPose(Axis.YP.rotationDegrees(-yaw)); // Yaw (around Y axis)
-            poseStack.mulPose(Axis.XP.rotationDegrees(pitch)); // Pitch (around X axis)
-            poseStack.mulPose(Axis.ZP.rotationDegrees(roll)); // Roll (around Z axis)
+            poseStack.mulPose(Axis.YP.rotationDegrees(-yaw+SwordSwingConfig.globalYawOffset)); // Yaw (around Y axis)
+            poseStack.mulPose(Axis.XP.rotationDegrees(pitch+SwordSwingConfig.globalPitchOffset)); // Pitch (around X axis)
+            poseStack.mulPose(Axis.ZP.rotationDegrees(roll+SwordSwingConfig.globalRollOffset)); // Roll (around Z axis)
 
             // Apply scale
-            poseStack.scale(scale, scale, scale);
+            poseStack.scale(scale*SwordSwingConfig.modelScale, scale*SwordSwingConfig.modelScale, scale*SwordSwingConfig.modelScale);
 
             // Calculate alpha based on progress for fade in/out
             float alpha = calculateAlpha(progress);

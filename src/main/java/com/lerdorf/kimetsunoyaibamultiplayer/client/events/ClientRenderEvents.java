@@ -1,8 +1,11 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client.events;
 
+import java.util.List;
+
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker.SlashRenderRequest;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
@@ -30,7 +33,7 @@ public class ClientRenderEvents {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES)
             return;
 
-        var queue = BonePositionTracker.getRenderQueue();
+        List<SlashRenderRequest> queue = BonePositionTracker.getRenderQueue();
         if (queue.isEmpty())
             return;
 
@@ -41,7 +44,7 @@ public class ClientRenderEvents {
         int packedLight = 0xF000F0;
 
         // Render all active slash models
-        for (BonePositionTracker.SlashRenderRequest req : queue) {
+        for (SlashRenderRequest req : queue) {
             // Calculate current progress based on elapsed time (smooth animation)
             float progress = req.getCurrentProgress();
 

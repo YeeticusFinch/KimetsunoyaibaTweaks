@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.particles;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordSwingConfig;
 
@@ -39,7 +40,6 @@ public class BonePositionTracker {
 	    public final UUID entityId;
 	    public final String animationName;
 	    public final long startTime;
-	    public final long animationDuration = 350; // 350ms = 7 ticks for full swing
 	    public final LivingEntity entity;
 	    public final boolean isHorizontal;
 	    public final boolean isVertical;
@@ -64,7 +64,8 @@ public class BonePositionTracker {
 
 	    public float getCurrentProgress() {
 	        long elapsed = System.currentTimeMillis() - startTime;
-	        return Math.min(1.0f, elapsed / (float) animationDuration);
+	        // Use config value for animation duration
+	        return Math.min(1.0f, elapsed / (float) SwordSwingConfig.animationDurationMs);
 	    }
 
 	    public boolean shouldRemove() {
@@ -363,7 +364,7 @@ public class BonePositionTracker {
 			return; // Not a new swing, don't create another model
 		}
 
-		System.out.println("New swing detected! Progress: " + progress + ", modelKey: " + modelKey);
+		Log.debug("New swing detected! Progress: " + progress + ", modelKey: " + modelKey);
 
 		// Get entity position and rotation
 		float yaw = entity.getYRot();
@@ -446,9 +447,9 @@ public class BonePositionTracker {
 		double centerY = entityHeight * 0.75;
 
 		double totalArcDegrees = ParticleConfig.particleArcDegrees;
-		double arcAngle = progress * totalArcDegrees;
+		double arcAngle = progress * totalArcDegrees + (leftToRight ? SwordSwingConfig.rightArcOffset : SwordSwingConfig.leftArcOffset);
 
-		double radius = ParticleConfig.baseRadius;
+		double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * (leftToRight ? SwordSwingConfig.rightRadiusMult : SwordSwingConfig.leftRadiusMult);
 		double localX = radius * Math.cos(Math.toRadians(arcAngle)) * (leftToRight ? -1 : 1);
 		double localZ = radius * Math.sin(Math.toRadians(arcAngle));
 		double localY = (leftToRight ? -0.5 : 1.2) * Math.sin(Math.toRadians(arcAngle - totalArcDegrees / 2));
@@ -463,17 +464,17 @@ public class BonePositionTracker {
 	public static float[] calculateHorizontalRotation(LivingEntity entity, float progress, boolean leftToRight) {
 		float yaw = entity.getYRot();
 		double totalArcDegrees = ParticleConfig.particleArcDegrees;
-		double arcAngle = progress * totalArcDegrees;
+		double arcAngle = progress * totalArcDegrees + (leftToRight ? SwordSwingConfig.rightArcOffset : SwordSwingConfig.leftArcOffset);
 
 		// Model should rotate around the player as it sweeps
 		// Yaw rotates the model around the vertical axis to follow the arc
-		float modelYaw = yaw + (float) arcAngle * (leftToRight ? -1 : 1);
+		float modelYaw = yaw + (float) arcAngle * (leftToRight ? -1 : 1) + (float)(leftToRight ? SwordSwingConfig.rightYawOffset : SwordSwingConfig.leftYawOffset);
 
 		// Pitch tilts the slash plane slightly for visual effect
-		float modelPitch = 0f;
+		float modelPitch = leftToRight ? SwordSwingConfig.rightPitch : SwordSwingConfig.leftPitch;
 
 		// Roll rotates the slash around its own forward axis
-		float modelRoll = 0f;
+		float modelRoll = leftToRight ? SwordSwingConfig.rightRoll : SwordSwingConfig.leftRoll;
 
 		return new float[]{modelYaw, modelPitch, modelRoll};
 	}
@@ -486,9 +487,9 @@ public class BonePositionTracker {
 		double centerY = entityHeight * 0.9;
 
 		double totalArcDegrees = ParticleConfig.particleArcDegrees;
-		double arcAngle = progress * totalArcDegrees;
+		double arcAngle = progress * totalArcDegrees + (float)(upward ? SwordSwingConfig.upperArcOffset : SwordSwingConfig.overheadArcOffset);
 
-		double radius = ParticleConfig.baseRadius;
+		double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * (upward ? SwordSwingConfig.upperRadiusMult : SwordSwingConfig.overheadRadiusMult);
 		double localY = radius * Math.cos(Math.toRadians(arcAngle));
 		double localForward = radius * Math.sin(Math.toRadians(arcAngle));
 
@@ -502,12 +503,12 @@ public class BonePositionTracker {
 	public static float[] calculateVerticalRotation(LivingEntity entity, float progress, boolean upward) {
 		float yaw = entity.getYRot();
 		double totalArcDegrees = ParticleConfig.particleArcDegrees;
-		double arcAngle = progress * totalArcDegrees;
+		double arcAngle = progress * totalArcDegrees + (float)(upward ? SwordSwingConfig.upperArcOffset : SwordSwingConfig.overheadArcOffset);
 
 		// Model rotates around player in vertical plane
-		float modelYaw = yaw + 90f; // Face perpendicular to player's facing direction
-		float modelPitch = (float) arcAngle * (upward ? -1 : 1);
-		float modelRoll = 0f;
+		float modelYaw = yaw + (float)(upward ? SwordSwingConfig.upperYawOffset : SwordSwingConfig.overheadYawOffset);
+		float modelPitch = (float) arcAngle * (upward ? -1 : 1) + (float)(upward ? SwordSwingConfig.upperPitch : SwordSwingConfig.overheadPitch);
+		float modelRoll = (float)(upward ? SwordSwingConfig.upperRoll : SwordSwingConfig.overheadRoll);;
 
 		return new float[]{modelYaw, modelPitch, modelRoll};
 	}
@@ -519,8 +520,8 @@ public class BonePositionTracker {
 		double yawRad = Math.toRadians(yaw);
 		double centerY = entityHeight * 0.8;
 
-		double rotateAngle = yawRad + (progress * 2 * Math.PI);
-		double radius = ParticleConfig.baseRadius;
+		double rotateAngle = yawRad + (progress * 2 * Math.PI) + Math.toRadians(SwordSwingConfig.rotateArcOffset);
+		double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * SwordSwingConfig.rotateRadiusMult;
 
 		double worldX = entityPos.x + radius * Math.cos(rotateAngle);
 		double worldY = entityPos.y + centerY;
@@ -532,11 +533,11 @@ public class BonePositionTracker {
 	public static float[] calculateSpinRotation(LivingEntity entity, float progress) {
 		float yaw = entity.getYRot();
 		double yawRad = Math.toRadians(yaw);
-		double rotateAngle = yawRad + (progress * 2 * Math.PI);
+		double rotateAngle = yawRad + (progress * 2 * Math.PI) + Math.toRadians(SwordSwingConfig.rotateArcOffset);
 
-		float modelYaw = (float) Math.toDegrees(rotateAngle);
-		float modelPitch = 0f;
-		float modelRoll = 0f;
+		float modelYaw = (float) Math.toDegrees(rotateAngle) + (float) SwordSwingConfig.rotateYawOffset;
+		float modelPitch = 0f + (float)SwordSwingConfig.rotatePitch;
+		float modelRoll = 0f + (float)SwordSwingConfig.rotateRoll;
 
 		return new float[]{modelYaw, modelPitch, modelRoll};
 	}

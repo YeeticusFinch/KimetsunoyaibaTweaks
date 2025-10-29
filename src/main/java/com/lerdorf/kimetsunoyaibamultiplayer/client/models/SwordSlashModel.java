@@ -4,6 +4,7 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordSwingConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
@@ -138,17 +139,18 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 				float v = vertex.texV();
 
 				// Boost brightness significantly for glowing effect
-				// Use 3.0x multiplier for super bright glow
-				float boostedRed = Math.min(1.0f, red * 3.0f);
-				float boostedGreen = Math.min(1.0f, green * 3.0f);
-				float boostedBlue = Math.min(1.0f, blue * 3.0f);
+				// Remove cap to allow HDR-like bloom with shader mods (Shimmer/Iris)
+				// Values > 1.0 will create bloom effects
+				float boostedRed = red * SwordSwingConfig.brightnessMultiplier;
+				float boostedGreen = green * SwordSwingConfig.brightnessMultiplier;
+				float boostedBlue = blue * SwordSwingConfig.brightnessMultiplier;
 
-				// Use full bright lighting + max overlay for maximum glow
+				// Use full bright lighting for maximum glow (no shading)
 				buffer.vertex(matrix, pos.x(), pos.y(), pos.z())
 						.color(boostedRed, boostedGreen, boostedBlue, alpha)
 						.uv(u, v)
 						.overlayCoords(overlay)
-						.uv2(0xF000F0) // Force full bright lighting
+						.uv2(0xF000F0) // Force full bright lighting (max brightness, no shadows)
 						.normal(normalMatrix, 0f, 0f, 1f)
 						.endVertex();
 			}
