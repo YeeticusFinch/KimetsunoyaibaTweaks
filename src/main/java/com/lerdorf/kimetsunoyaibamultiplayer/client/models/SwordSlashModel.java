@@ -138,20 +138,18 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 				float u = vertex.texU();
 				float v = vertex.texV();
 
-				// Boost brightness significantly for glowing effect
-				// Remove cap to allow HDR-like bloom with shader mods (Shimmer/Iris)
-				// Values > 1.0 will create bloom effects
-				float boostedRed = red * SwordSwingConfig.brightnessMultiplier;
-				float boostedGreen = green * SwordSwingConfig.brightnessMultiplier;
-				float boostedBlue = blue * SwordSwingConfig.brightnessMultiplier;
+				// Use original colors from texture for colored glow effect
+				// The emissive render type will make Shimmer/shaders apply bloom
+				// No brightness multiplication - preserve original texture colors and transparency
 
-				// Use full bright lighting for maximum glow (no shading)
+				// FIXED: Use NEW_ENTITY format with all required vertex elements
+				// This matches what DualLayerSlashRenderer expects
 				buffer.vertex(matrix, pos.x(), pos.y(), pos.z())
-						.color(boostedRed, boostedGreen, boostedBlue, alpha)
+						.color(red, green, blue, alpha)  // Use original colors from texture
 						.uv(u, v)
-						.overlayCoords(overlay)
-						.uv2(0xF000F0) // Force full bright lighting (max brightness, no shadows)
-						.normal(normalMatrix, 0f, 0f, 1f)
+						.overlayCoords(overlay)  // RESTORED - required for NEW_ENTITY format
+						.uv2(0xF000F0) // Force full bright lighting (no shadows, always bright)
+						.normal(normalMatrix, 0f, 1f, 0f)  // RESTORED - required for NEW_ENTITY format
 						.endVertex();
 			}
 		}

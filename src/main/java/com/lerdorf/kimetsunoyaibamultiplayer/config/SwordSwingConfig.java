@@ -31,9 +31,9 @@ public class SwordSwingConfig {
             .comment(
                     "Scale/size of the sword slash models",
                     "Higher values = larger slashes",
-                    "Range: 0.1 to 5.0, Default: 0.7"
+                    "Range: 0.1 to 5.0, Default: 0.5"
             )
-            .defineInRange("model_scale", 0.7, 0.1, 5.0);
+            .defineInRange("model_scale", 0.5, 0.01, 5.0);
 
     private static final ForgeConfigSpec.IntValue ANIMATION_DURATION_MS = BUILDER
             .comment(
@@ -91,8 +91,8 @@ public class SwordSwingConfig {
             .defineInRange("roll_offset", 0.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue GLOBAL_RADIUS_MULT = BUILDER
-            .comment("Global radius multiplier", "Default: 1")
-            .defineInRange("radius_mult", 1.0, -5.0, 5.0);
+            .comment("Global radius multiplier", "Default: 0.7")
+            .defineInRange("radius_mult", 0.7, -5.0, 5.0);
 
     static {
         BUILDER.pop(); // global
@@ -120,8 +120,8 @@ public class SwordSwingConfig {
             .defineInRange("roll", -20.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue RIGHT_ARC_OFFSET = BUILDER
-            .comment("Arc angle offset for right slash (degrees)", "Default: 0")
-            .defineInRange("arc_offset", 0.0, -180.0, 180.0);
+            .comment("Arc angle offset for right slash (degrees)", "Default: -50")
+            .defineInRange("arc_offset", -50.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue RIGHT_RADIUS_MULT = BUILDER
             .comment("Radius multiplier for right slash", "Default: 1")
@@ -153,8 +153,8 @@ public class SwordSwingConfig {
             .defineInRange("roll", -20.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue LEFT_ARC_OFFSET = BUILDER
-            .comment("Arc angle offset for left slash (degrees)", "Default: 0")
-            .defineInRange("arc_offset", 0.0, -180.0, 180.0);
+            .comment("Arc angle offset for left slash (degrees)", "Default: -50")
+            .defineInRange("arc_offset", -50.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue LEFT_RADIUS_MULT = BUILDER
             .comment("Radius multiplier for left slash", "Default: 1")
@@ -178,16 +178,16 @@ public class SwordSwingConfig {
             .defineInRange("yaw_offset", 0.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue OVERHEAD_PITCH = BUILDER
-            .comment("Pitch angle for overhead slash (degrees)", "Default: 0")
-            .defineInRange("pitch", 0.0, -180.0, 180.0);
+            .comment("Pitch angle for overhead slash (degrees)", "Default: -90")
+            .defineInRange("pitch", -90.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue OVERHEAD_ROLL = BUILDER
-            .comment("Roll angle for overhead slash (degrees)", "Default: 0")
-            .defineInRange("roll", 0.0, -180.0, 180.0);
+            .comment("Roll angle for overhead slash (degrees)", "Default: 110")
+            .defineInRange("roll", 110.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue OVERHEAD_ARC_OFFSET = BUILDER
-            .comment("Arc angle offset for overhead slash (degrees)", "Default: 0")
-            .defineInRange("arc_offset", 0.0, -180.0, 180.0);
+            .comment("Arc angle offset for overhead slash (degrees)", "Default: -20")
+            .defineInRange("arc_offset", -20.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue OVERHEAD_RADIUS_MULT = BUILDER
             .comment("Radius multiplier for overhead slash", "Default: 1")
@@ -211,12 +211,12 @@ public class SwordSwingConfig {
             .defineInRange("yaw_offset", 0.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue UPPER_PITCH = BUILDER
-            .comment("Pitch angle for upward slash (degrees)", "Default: 0")
-            .defineInRange("pitch", 0.0, -180.0, 180.0);
+            .comment("Pitch angle for upward slash (degrees)", "Default: 90")
+            .defineInRange("pitch", 90.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue UPPER_ROLL = BUILDER
-            .comment("Roll angle for upward slash (degrees)", "Default: 0")
-            .defineInRange("roll", 0.0, -180.0, 180.0);
+            .comment("Roll angle for upward slash (degrees)", "Default: 90")
+            .defineInRange("roll", 90.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue UPPER_ARC_OFFSET = BUILDER
             .comment("Arc angle offset for upward slash (degrees)", "Default: 0")
@@ -240,8 +240,8 @@ public class SwordSwingConfig {
     }
 
     private static final ForgeConfigSpec.DoubleValue ROTATE_YAW_OFFSET = BUILDER
-            .comment("Yaw offset for spin attack (degrees)", "Default: 0")
-            .defineInRange("yaw_offset", 0.0, -180.0, 180.0);
+            .comment("Yaw offset for spin attack (degrees)", "Default: -90")
+            .defineInRange("yaw_offset", -90.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue ROTATE_PITCH = BUILDER
             .comment("Pitch angle for spin attack (degrees)", "Default: 0")
@@ -252,8 +252,8 @@ public class SwordSwingConfig {
             .defineInRange("roll", 0.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue ROTATE_ARC_OFFSET = BUILDER
-            .comment("Arc angle offset for spin attack (degrees)", "Default: 0")
-            .defineInRange("arc_offset", 0.0, -180.0, 180.0);
+            .comment("Arc angle offset for spin attack (degrees)", "Default: 50")
+            .defineInRange("arc_offset", 50.0, -180.0, 180.0);
 
     private static final ForgeConfigSpec.DoubleValue ROTATE_RADIUS_MULT = BUILDER
             .comment("Radius multiplier for spin attack", "Default: 1")

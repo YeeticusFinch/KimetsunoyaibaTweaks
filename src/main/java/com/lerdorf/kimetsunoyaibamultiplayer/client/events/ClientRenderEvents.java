@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.events;
 import java.util.List;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.DualLayerSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker.SlashRenderRequest;
@@ -68,8 +69,8 @@ public class ClientRenderEvents {
             // Convert world coordinates to camera-relative coordinates
             Vec3 cameraRelative = worldPos.subtract(camera);
 
-            // Render model at calculated position with calculated rotation
-            SwordSlashRenderer.render(
+            // Render model with dual-layer system (base + emissive)
+            DualLayerSlashRenderer.renderDualLayer(
                 poseStack,
                 bufferSource,
                 cameraRelative,

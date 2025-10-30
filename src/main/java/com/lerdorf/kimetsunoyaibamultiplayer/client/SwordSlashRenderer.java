@@ -96,9 +96,9 @@ public class SwordSlashRenderer {
     private static void renderModel(PoseStack poseStack, MultiBufferSource bufferSource,
                                    SwordSlashModel model, ResourceLocation texture,
                                    float alpha, int packedLight) {
-        // Get the render type with transparency
-        //RenderType renderType = RenderType.entityTranslucent(texture);
-        RenderType renderType = RenderType.entityTranslucentEmissive(texture);
+        // Use custom additive render type for maximum brightness and bloom
+        // Additive blending makes overlapping areas MUCH brighter (perfect for glow)
+        RenderType renderType = CustomRenderTypes.swordSlashAdditive(texture);
         VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
 
         // Note: This is a simplified rendering approach
@@ -116,19 +116,20 @@ public class SwordSlashRenderer {
         // or creating a temporary entity to render through
         
         // Use GeckoLib or your own model render
+        // Pass maximum white color values - brightness multiplier will boost these further
         model.renderToBuffer(
             poseStack,
             vertexConsumer,
-            0xF000F0,                   // full bright light
+            0xF000F0,                   // full bright light (max brightness, no shadows)
             OverlayTexture.NO_OVERLAY,
-            1f, 1f, 1f, alpha           // color + transparency
+            1f, 1f, 1f, alpha           // base white color (multiplied by brightnessMultiplier in model)
         );
     }
 
     /**
      * Gets or creates a cached model
      */
-    private static SwordSlashModel getModel(String modelKey) {
+    public static SwordSlashModel getModel(String modelKey) {
         return MODEL_CACHE.computeIfAbsent(modelKey, key -> {
             try {
                 return new SwordSlashModel(key);
