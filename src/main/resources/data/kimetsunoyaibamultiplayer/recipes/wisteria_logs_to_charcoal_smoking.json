@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smoking",
+  "ingredient": {
+    "tag": "kimetsunoyaibamultiplayer:wisteria_logs"
+  },
+  "result": "minecraft:charcoal",
+  "experience": 0.15,
+  "cookingtime": 100,
+  "group": "charcoal"
+}

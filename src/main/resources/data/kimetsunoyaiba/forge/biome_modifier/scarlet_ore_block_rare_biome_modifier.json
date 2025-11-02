@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "kimetsunoyaiba:mt_yoko",
+  "features": "kimetsunoyaiba:scarlet_ore_block_rare",
+  "step": "underground_ores"
+}
