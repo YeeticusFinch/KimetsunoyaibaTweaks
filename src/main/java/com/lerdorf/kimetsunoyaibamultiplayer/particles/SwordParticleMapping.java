@@ -43,11 +43,6 @@ public class SwordParticleMapping {
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_basic", ResourceLocation.fromNamespaceAndPath("minecraft", "crit"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_generic", ResourceLocation.fromNamespaceAndPath("minecraft", "cloud"));
 
-        // Our mod's breathing swords - will use custom logic in getParticleForSword
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_frost", ResourceLocation.fromNamespaceAndPath("minecraft", "snowflake"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_ice", ResourceLocation.fromNamespaceAndPath("minecraft", "dust")); // Light blue dust
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_shimizu", ResourceLocation.fromNamespaceAndPath("minecraft", "dust")); // Light blue dust
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_komorebi", ResourceLocation.fromNamespaceAndPath("minecraft", "snowflake"));
     }
 
     /**
@@ -103,28 +98,6 @@ public class SwordParticleMapping {
 
         // Extract the sword type (part after "nichirinsword_")
         String swordType = itemId.getPath();
-
-        // Special handling for our mod's ice breathing swords - return light blue dust
-        if (itemId.getNamespace().equals("kimetsunoyaibamultiplayer")) {
-            if (swordType.equals("nichirinsword_ice") || swordType.equals("nichirinsword_shimizu")) {
-                // Light blue color (RGB: 0.5, 0.8, 1.0)
-                Vector3f lightBlue = new Vector3f(0.5f, 0.8f, 1.0f);
-
-                // Auto-add to config if missing
-                if (ParticleConfig.particleMappings != null && !ParticleConfig.particleMappings.containsKey(itemIdString)) {
-                    ParticleConfig.addParticleMappingToConfig(itemIdString, "minecraft:dust", 1.5f, 0.5f, 0.8f, 1.0f);
-                }
-
-                return new DustParticleOptions(lightBlue, 1.5f);
-            } else if (swordType.equals("nichirinsword_frost") || swordType.equals("nichirinsword_komorebi")) {
-                // Auto-add to config if missing
-                if (ParticleConfig.particleMappings != null && !ParticleConfig.particleMappings.containsKey(itemIdString)) {
-                    ParticleConfig.addParticleMappingToConfig(itemIdString, "minecraft:snowflake", 1.0f, 1.0f, 1.0f, 1.0f);
-                }
-
-                return ParticleTypes.SNOWFLAKE;
-            }
-        }
 
         // Legacy fallback: Look up the particle mapping
         ResourceLocation particleId = SWORD_TO_PARTICLE_MAP.get(swordType);

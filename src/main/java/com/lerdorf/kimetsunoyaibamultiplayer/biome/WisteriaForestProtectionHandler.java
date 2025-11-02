@@ -28,8 +28,22 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class WisteriaForestProtectionHandler {
 
-    private static final ResourceLocation WISTERIA_FOREST_BIOME =
-        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "wisteria_forest");
+    // All 3 wisteria forest biome types provide protection
+    private static final ResourceLocation WISTERIA_FOREST_CYAN =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "wisteria_forest_cyan");
+    private static final ResourceLocation WISTERIA_FOREST_CREAM =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "wisteria_forest_cream");
+    private static final ResourceLocation WISTERIA_FOREST =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "wisteria_forest");  // Default lavender+pink
+
+    /**
+     * Check if entity is in any wisteria forest biome
+     */
+    private static boolean isInWisteriaForest(net.minecraft.world.entity.Entity entity) {
+        return EntityTagHelper.isInBiome(entity, WISTERIA_FOREST_CYAN) ||
+               EntityTagHelper.isInBiome(entity, WISTERIA_FOREST_CREAM) ||
+               EntityTagHelper.isInBiome(entity, WISTERIA_FOREST);
+    }
 
     /**
      * Prevent demons from spawning in wisteria forests
@@ -56,8 +70,8 @@ public class WisteriaForestProtectionHandler {
             return;
         }
 
-        // Check if spawn location is in wisteria forest
-        if (EntityTagHelper.isInBiome(mob, WISTERIA_FOREST_BIOME)) {
+        // Check if spawn location is in any wisteria forest
+        if (isInWisteriaForest(mob)) {
             // Deny spawn
             event.setResult(Event.Result.DENY);
 
@@ -91,8 +105,8 @@ public class WisteriaForestProtectionHandler {
             return;
         }
 
-        // Check if the target is in a wisteria forest
-        if (EntityTagHelper.isInBiome(newTarget, WISTERIA_FOREST_BIOME)) {
+        // Check if the target is in any wisteria forest
+        if (isInWisteriaForest(newTarget)) {
             // Cancel targeting - demons can't pursue targets into wisteria forests
             event.setCanceled(true);
 
@@ -127,8 +141,8 @@ public class WisteriaForestProtectionHandler {
             return;
         }
 
-        // Check if in wisteria forest
-        if (EntityTagHelper.isInBiome(mob, WISTERIA_FOREST_BIOME)) {
+        // Check if in any wisteria forest
+        if (isInWisteriaForest(mob)) {
             // Despawn immediately
             mob.discard();
 
@@ -166,8 +180,8 @@ public class WisteriaForestProtectionHandler {
 
         // Check if this is a twelve kizuki demon
         if (!EntityTagHelper.isTwelveKizuki(mob)) {
-            // For regular demons, just check if they're in wisteria forest and clear their target
-            if (EntityTagHelper.isDemon(mob) && EntityTagHelper.isInBiome(mob, WISTERIA_FOREST_BIOME)) {
+            // For regular demons, just check if they're in any wisteria forest and clear their target
+            if (EntityTagHelper.isDemon(mob) && isInWisteriaForest(mob)) {
                 // Clear target and make them flee
                 if (mob.getTarget() != null) {
                     mob.setTarget(null);
@@ -176,8 +190,8 @@ public class WisteriaForestProtectionHandler {
             return;
         }
 
-        // Check if in wisteria forest
-        if (EntityTagHelper.isInBiome(mob, WISTERIA_FOREST_BIOME)) {
+        // Check if in any wisteria forest
+        if (isInWisteriaForest(mob)) {
             // Despawn immediately
             mob.discard();
 

@@ -1,9 +1,10 @@
 {
   "type": "minecraft:smelting",
   "ingredient": {
-    "item": "kimetsunoyaibamultiplayer:wisteria_log"
+    "tag": "kimetsunoyaibamultiplayer:wisteria_logs"
   },
   "result": "minecraft:charcoal",
   "experience": 0.15,
-  "cookingtime": 200
+  "cookingtime": 200,
+  "group": "charcoal"
 }

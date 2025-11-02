@@ -183,18 +183,15 @@
       "minecraft:spring_lava"
     ],
     [
-      "kimetsunoyaibamultiplayer:wisteria_tree_pink_placed",
-      "kimetsunoyaibamultiplayer:wisteria_tree_cyan_placed",
       "kimetsunoyaibamultiplayer:wisteria_tree_lavender_placed",
-      "kimetsunoyaibamultiplayer:wisteria_tree_cream_placed",
-	  "kimetsunoyaibamultiplayer:trees_birch_and_oak_custom",
-      "minecraft:trees_cherry",
+      "kimetsunoyaibamultiplayer:wisteria_tree_pink_placed",
+      "kimetsunoyaibamultiplayer:trees_birch_and_oak_wisteria",
       "minecraft:brown_mushroom_normal",
       "minecraft:red_mushroom_normal",
       "minecraft:patch_sugar_cane",
       "minecraft:patch_pumpkin",
-	  "kimetsunoyaibamultiplayer:flower_forest_flowers_custom",
-      "kimetsunoyaibamultiplayer:wisteria_forest_grass_placed"
+      "kimetsunoyaibamultiplayer:flower_forest_flowers_wisteria",
+      "kimetsunoyaibamultiplayer:wisteria_forest_grass_placed_wisteria"
     ],
     [
       "minecraft:freeze_top_layer"

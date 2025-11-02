@@ -10,7 +10,8 @@
     }
   },
   "result": {
-    "id": "minecraft:stick",
+    "item": "minecraft:stick",
     "count": 4
-  }
+  },
+  "group": "sticks"
 }

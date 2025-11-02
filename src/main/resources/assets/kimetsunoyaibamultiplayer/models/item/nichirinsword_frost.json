@@ -1,8 +1,0 @@
-{
-  "parent": "kimetsunoyaibamultiplayer:custom/nichirinsword",
-  "textures": {
-    "0": "kimetsunoyaibamultiplayer:block/nichirinsword_withoutblade",
-    "1": "kimetsunoyaibamultiplayer:block/blade_frost",
-    "particle": "kimetsunoyaibamultiplayer:item/icon_sword"
-  }
-}

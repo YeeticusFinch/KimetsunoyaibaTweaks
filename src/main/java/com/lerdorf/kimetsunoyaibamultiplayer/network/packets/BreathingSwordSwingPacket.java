@@ -12,9 +12,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 // import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler; // REMOVED: Client-only, unused
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
-import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordFrost;
-import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordIce;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import net.minecraft.resources.ResourceLocation;
@@ -80,15 +79,6 @@ public class BreathingSwordSwingPacket {
             
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                     SoundSource.PLAYERS, 1.0F, 1.0F);
-            
-            if (heldItem.getItem() instanceof NichirinSwordFrost) {
-            	player.level().playSound(null, player.blockPosition(), SoundEvents.POWDER_SNOW_BREAK,
-                        SoundSource.PLAYERS, 1.0F, 1.0F);
-            } 
-            else if (heldItem.getItem() instanceof NichirinSwordIce) {
-            	player.level().playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
-                        SoundSource.PLAYERS, 1.0F, 1.0F);
-            }
 
             float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
             for (LivingEntity target : targets) {

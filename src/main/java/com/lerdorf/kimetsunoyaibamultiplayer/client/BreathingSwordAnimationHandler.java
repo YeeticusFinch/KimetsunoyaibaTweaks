@@ -41,33 +41,13 @@ public class BreathingSwordAnimationHandler {
                 }
                 lastAttackTime = currentTime;
 
-                // Check if golden sword is equipped
-                boolean goldenMode = mainHand.getItem() instanceof
-                    com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordGolden;
-
                 String animationName;
-                if (goldenMode) {
-                    // Golden mode: cycle through all attack animations
-                    String[] goldenAnimations = {
-                        "sword_to_left",
-                        "sword_to_right",
-                        "sword_rotate",
-                        "sword_to_upper",
-                        "sword_overhead",
-                        "speed_attack_sword"
-                    };
-
-                    // Use time-based cycling for variety
-                    int index = (int)((currentTime / 300) % goldenAnimations.length);
-                    animationName = goldenAnimations[index];
+                // 8% chance for overhead animation, otherwise alternate left/right
+                if (RANDOM.nextInt(100) < 8) {
+                    animationName = "sword_overhead";
                 } else {
-                    // Normal mode: 5% chance for overhead animation, otherwise alternate left/right
-                    if (RANDOM.nextInt(100) < 8) {
-                        animationName = "sword_overhead";
-                    } else {
-                        animationName = lastWasLeft ? "sword_to_right" : "sword_to_left";
-                        lastWasLeft = !lastWasLeft;
-                    }
+                    animationName = lastWasLeft ? "sword_to_right" : "sword_to_left";
+                    lastWasLeft = !lastWasLeft;
                 }
 
                 // Play the animation with 10 tick max duration (cancel after 10 ticks)

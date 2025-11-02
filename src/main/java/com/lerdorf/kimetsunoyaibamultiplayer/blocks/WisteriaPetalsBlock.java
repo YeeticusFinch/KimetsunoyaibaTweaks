@@ -183,7 +183,6 @@ public class WisteriaPetalsBlock extends Block implements BonemealableBlock {
             // Apply fear effects (8 seconds)
             living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 160, 1, false, false));
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 1, false, false));
-            living.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 160, 0, false, false));
             if (wisteriaPoison != null) {
                 living.addEffect(new MobEffectInstance(wisteriaPoison, 160, 1, false, false));
             }

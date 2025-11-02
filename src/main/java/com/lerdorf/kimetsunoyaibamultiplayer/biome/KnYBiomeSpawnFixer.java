@@ -59,24 +59,96 @@ public class KnYBiomeSpawnFixer {
                         List<Pair<Climate.ParameterPoint, Holder<Biome>>> parameters =
                             new ArrayList<>(noiseSource.parameters().values());
 
-                        // Get biome holder for wisteria forest (our custom biome)
-                        Holder<Biome> wisteriaForest = getBiomeHolder(biomeRegistry, "kimetsunoyaibamultiplayer", "wisteria_forest");
+                        // Get biome holders for all 3 wisteria forest biomes
+                        Holder<Biome> wisteriaForestCyan = getBiomeHolder(biomeRegistry, "kimetsunoyaibamultiplayer", "wisteria_forest_cyan");
+                        Holder<Biome> wisteriaForestCream = getBiomeHolder(biomeRegistry, "kimetsunoyaibamultiplayer", "wisteria_forest_cream");
+                        Holder<Biome> wisteriaForest = getBiomeHolder(biomeRegistry, "kimetsunoyaibamultiplayer", "wisteria_forest");  // Default lavender+pink
 
-                        // Add wisteria_forest with configurable parameters
-                        if (wisteriaForest != null) {
-                            addConfigurableBiome(parameters, wisteriaForest, "wisteria_forest",
-                                com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestSpawnFrequency,
-                                com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestSizeMultiplier);
+                        // Use biome replacement approach with cluster expansion
+                        // This creates rare but large, continuous wisteria forests
+                        int replacedMain = 0;
+                        int replacedCyan = 0;
+                        int replacedCream = 0;
+                        int clusterSize = com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestClusterSize;
+
+                        for (int i = 0; i < parameters.size(); i++) {
+                            Pair<Climate.ParameterPoint, Holder<Biome>> pair = parameters.get(i);
+                            Holder<Biome> originalBiome = pair.getSecond();
+
+                            // Get the biome's resource location
+                            ResourceKey<Biome> biomeKey = originalBiome.unwrapKey().orElse(null);
+                            if (biomeKey == null) continue;
+
+                            ResourceLocation biomeLoc = biomeKey.location();
+                            Climate.ParameterPoint point = pair.getFirst();
+
+                            // Check if this is a vanilla biome we want to replace
+                            // We target forests, plains, and birch forests for replacement
+                            boolean isTargetBiome = isTargetBiomeForReplacement(biomeLoc);
+
+                            if (isTargetBiome) {
+                                // Use deterministic replacement based on climate parameter hashcode
+                                // This ensures same seed = same biome distribution (multiplayer compatible)
+                                int hash = parameterPointHash(point);
+                                double random = ((hash & 0x7FFFFFFF) % 10000) / 10000.0; // 0.0 to 1.0
+
+                                // Determine which wisteria forest variant to use (if any)
+                                Holder<Biome> replacementBiome = null;
+
+                                if (wisteriaForest != null && random < com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestReplacementChance) {
+                                    replacementBiome = wisteriaForest;
+                                } else if (wisteriaForestCyan != null && random >= 0.5 && random < (0.5 + com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestCyanReplacementChance)) {
+                                    replacementBiome = wisteriaForestCyan;
+                                } else if (wisteriaForestCream != null && random >= 0.75 && random < (0.75 + com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestCreamReplacementChance)) {
+                                    replacementBiome = wisteriaForestCream;
+                                }
+
+                                // If we decided to replace, create a CLUSTER of replacements for larger forests
+                                if (replacementBiome != null) {
+                                    // Replace this point
+                                    parameters.set(i, new Pair<>(point, replacementBiome));
+
+                                    // Count the replacement
+                                    if (replacementBiome == wisteriaForest) replacedMain++;
+                                    else if (replacementBiome == wisteriaForestCyan) replacedCyan++;
+                                    else if (replacementBiome == wisteriaForestCream) replacedCream++;
+
+                                    // CLUSTER EXPANSION: Also replace the next clusterSize-1 adjacent target biomes
+                                    // This creates larger, continuous wisteria forests
+                                    int clustered = 0;
+                                    for (int j = i + 1; j < parameters.size() && clustered < clusterSize - 1; j++) {
+                                        Pair<Climate.ParameterPoint, Holder<Biome>> nextPair = parameters.get(j);
+                                        Holder<Biome> nextBiome = nextPair.getSecond();
+                                        ResourceKey<Biome> nextBiomeKey = nextBiome.unwrapKey().orElse(null);
+
+                                        if (nextBiomeKey != null && isTargetBiomeForReplacement(nextBiomeKey.location())) {
+                                            // Replace this adjacent target biome with the same wisteria variant
+                                            Climate.ParameterPoint nextPoint = nextPair.getFirst();
+                                            parameters.set(j, new Pair<>(nextPoint, replacementBiome));
+
+                                            // Count the replacement
+                                            if (replacementBiome == wisteriaForest) replacedMain++;
+                                            else if (replacementBiome == wisteriaForestCyan) replacedCyan++;
+                                            else if (replacementBiome == wisteriaForestCream) replacedCream++;
+
+                                            clustered++;
+                                        }
+                                    }
+
+                                    // Skip ahead past the cluster we just created
+                                    i += clustered;
+                                }
+                            }
                         }
 
-                        // Update the biome source with our fixed parameters
+                        // Update the biome source with replaced biomes
                         chunkGenerator.biomeSource = MultiNoiseBiomeSource.createFromList(new Climate.ParameterList<>(parameters));
 
-                        // Note: featuresPerStep will be automatically lazy-initialized when needed by Minecraft
-                        // We don't need to manually refresh it
-
                         if (com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.logBiomeChanges) {
-                            com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Successfully added custom biomes to overworld");
+                            com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Successfully replaced vanilla biomes with wisteria forests:");
+                            com.lerdorf.kimetsunoyaibamultiplayer.Log.info("  Main wisteria forest: " + replacedMain + " locations");
+                            com.lerdorf.kimetsunoyaibamultiplayer.Log.info("  Cyan wisteria forest: " + replacedCyan + " locations");
+                            com.lerdorf.kimetsunoyaibamultiplayer.Log.info("  Cream wisteria forest: " + replacedCream + " locations");
                         }
 
                     } catch (Exception e) {
@@ -90,57 +162,70 @@ public class KnYBiomeSpawnFixer {
 
 
     /**
-     * Add a biome with configurable parameters (size, frequency, climate)
+     * Check if a biome is a target biome for wisteria forest replacement
      */
-    private static void addConfigurableBiome(
-            List<Pair<Climate.ParameterPoint, Holder<Biome>>> parameters,
-            Holder<Biome> biome,
-            String biomeName,
-            int spawnFrequency,
-            double sizeMultiplier) {
+    private static boolean isTargetBiomeForReplacement(ResourceLocation biomeLoc) {
+        return biomeLoc.equals(ResourceLocation.fromNamespaceAndPath("minecraft", "forest")) ||
+               biomeLoc.equals(ResourceLocation.fromNamespaceAndPath("minecraft", "plains")) ||
+               biomeLoc.equals(ResourceLocation.fromNamespaceAndPath("minecraft", "birch_forest")) ||
+               biomeLoc.equals(ResourceLocation.fromNamespaceAndPath("minecraft", "flower_forest"));
+    }
 
-        // Get base climate parameters (from config or defaults)
-        BiomeClimateParams baseParams = getBaseClimateParams(biomeName);
+    /**
+     * Create a deterministic hash from a climate parameter point
+     * Used for deterministic biome replacement (same params = same replacement decision)
+     */
+    private static int parameterPointHash(Climate.ParameterPoint point) {
+        // Combine all climate parameters into a single hash
+        long temp = Double.doubleToLongBits(point.temperature().min());
+        long humid = Double.doubleToLongBits(point.humidity().min());
+        long cont = Double.doubleToLongBits(point.continentalness().min());
+        long erosion = Double.doubleToLongBits(point.erosion().min());
+        long weird = Double.doubleToLongBits(point.weirdness().min());
 
-        // Apply size multiplier to parameter ranges
-        BiomeClimateParams scaledParams = scaleParams(baseParams, sizeMultiplier);
+        // Simple but effective hash combination
+        long hash = temp;
+        hash = hash * 31 + humid;
+        hash = hash * 31 + cont;
+        hash = hash * 31 + erosion;
+        hash = hash * 31 + weird;
 
-        // Add multiple parameter points based on spawn frequency
-        for (int i = 0; i < spawnFrequency; i++) {
-            // Create variations for each frequency level
-            BiomeClimateParams variedParams = createParamVariation(scaledParams, i, spawnFrequency);
-
-            Climate.ParameterPoint point = new Climate.ParameterPoint(
-                variedParams.temperature,
-                variedParams.humidity,
-                variedParams.continentalness,
-                variedParams.erosion,
-                variedParams.depth,
-                variedParams.weirdness,
-                0L
-            );
-
-            parameters.add(new Pair<>(point, biome));
-        }
-
-        if (com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.logBiomeChanges) {
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Added biome " + biomeName +
-                " with " + spawnFrequency + " spawn point(s) and " + sizeMultiplier + "x size");
-        }
+        return (int) (hash ^ (hash >>> 32));
     }
 
     /**
      * Get base climate parameters for a biome (from config or defaults)
      */
     private static BiomeClimateParams getBaseClimateParams(String biomeName) {
-        if (biomeName.equals("wisteria_forest")) {
+        // All 3 wisteria forest biomes need NARROW, SPECIFIC parameters to spawn as discrete biomes
+        // Wide ranges cause overlap with vanilla biomes and feature leakage
+        // NOTE: Continentalness >= 0.0 to prevent ocean spawning (oceans are < -0.19)
+        if (biomeName.equals("wisteria_forest_cyan")) {
             return new BiomeClimateParams(
-                0.0f, 0.9f,            // Temperature: Cool to warm (avoiding frozen and hot areas)
-                0.2f, 1.2f,            // Humidity: Moderate to high (forests need moisture)
-                -0.2f, 0.7f,           // Continentalness: Coastal to inland (not deep ocean/extreme inland)
-                -0.3f, 0.5f,           // Erosion: Low to moderate (varied terrain)
-                0.0f, 0.0f,            // Depth: Surface
-                -0.4f, 0.4f            // Weirdness: Relatively normal terrain
+                0.25f, 0.45f,          // Temperature: narrow cool-temperate band
+                0.60f, 0.85f,          // Humidity: narrow humid band
+                0.05f, 0.30f,          // Continentalness: near coast but not ocean
+                -0.15f, 0.20f,         // Erosion: narrow mid-range
+                0.0f, 1.0f,            // Depth: surface only (no underground)
+                0.35f, 0.65f           // Weirdness: narrow positive band
+            );
+        } else if (biomeName.equals("wisteria_forest_cream")) {
+            return new BiomeClimateParams(
+                0.50f, 0.75f,          // Temperature: narrow warm-temperate band
+                0.65f, 0.90f,          // Humidity: narrow humid band
+                0.25f, 0.55f,          // Continentalness: mid-inland
+                -0.10f, 0.25f,         // Erosion: narrow mid-range
+                0.0f, 1.0f,            // Depth: surface only
+                0.05f, 0.25f           // Weirdness: narrow low-positive band
+            );
+        } else if (biomeName.equals("wisteria_forest")) {  // Default lavender+pink variant
+            return new BiomeClimateParams(
+                0.35f, 0.60f,          // Temperature: narrow temperate band (distinct from others)
+                0.70f, 0.95f,          // Humidity: narrow high-humid band
+                0.15f, 0.45f,          // Continentalness: inland (avoid ocean < 0)
+                -0.20f, 0.15f,         // Erosion: narrow mid-range
+                0.0f, 1.0f,            // Depth: surface only
+                -0.80f, -0.50f         // Weirdness: narrow negative band (very distinct)
             );
         }
 
@@ -185,6 +270,11 @@ public class KnYBiomeSpawnFixer {
 
     /**
      * Create a variation of climate parameters for multiple spawn points
+     *
+     * Uses DISCRETE, NON-OVERLAPPING weirdness bands for each frequency point.
+     * This allows multiple spawn locations without causing biome overlap or feature leakage.
+     *
+     * Each frequency point gets its own weirdness band, creating separate discrete biomes.
      */
     private static BiomeClimateParams createParamVariation(BiomeClimateParams base, int index, int totalFrequency) {
         if (totalFrequency == 1 || index == 0) {
@@ -192,22 +282,63 @@ public class KnYBiomeSpawnFixer {
             return base;
         }
 
-        // Create variations by shifting multiple climate dimensions for better distribution
-        // Different frequencies shift different parameters
-        float tempShift = (index == 1 || index == 4) ? ((index / (float) totalFrequency) * 0.6f - 0.3f) : 0f;
-        float humidShift = (index == 2 || index == 4) ? ((index / (float) totalFrequency) * 0.6f - 0.3f) : 0f;
-        float contShift = (index == 3) ? ((index / (float) totalFrequency) * 0.4f - 0.2f) : 0f;
+        // Create DISCRETE variations using non-overlapping weirdness bands
+        // Each index gets a completely separate weirdness range (no overlap!)
+        // This creates multiple discrete biomes at different locations
 
+        float weirdnessWidth = base.weirdMax - base.weirdMin;
+        float weirdnessCenter = (base.weirdMin + base.weirdMax) / 2f;
+
+        // Define discrete, non-overlapping weirdness bands for each frequency
+        // We spread them across the available weirdness space without overlap
+        float newWeirdMin, newWeirdMax;
+
+        switch (index) {
+            case 1:
+                // Second spawn point: shift weirdness to adjacent band
+                newWeirdMin = clamp(base.weirdMax + 0.05f, -2f, 2f);
+                newWeirdMax = clamp(newWeirdMin + weirdnessWidth, -2f, 2f);
+                break;
+            case 2:
+                // Third spawn point: shift further
+                newWeirdMin = clamp(base.weirdMax + weirdnessWidth + 0.10f, -2f, 2f);
+                newWeirdMax = clamp(newWeirdMin + weirdnessWidth, -2f, 2f);
+                break;
+            case 3:
+                // Fourth spawn point: use negative weirdness if base was positive
+                if (weirdnessCenter > 0) {
+                    newWeirdMax = clamp(base.weirdMin - 0.05f, -2f, 2f);
+                    newWeirdMin = clamp(newWeirdMax - weirdnessWidth, -2f, 2f);
+                } else {
+                    newWeirdMin = clamp(base.weirdMax + weirdnessWidth * 2 + 0.15f, -2f, 2f);
+                    newWeirdMax = clamp(newWeirdMin + weirdnessWidth, -2f, 2f);
+                }
+                break;
+            case 4:
+                // Fifth spawn point: another discrete band
+                if (weirdnessCenter > 0) {
+                    newWeirdMax = clamp(base.weirdMin - weirdnessWidth - 0.10f, -2f, 2f);
+                    newWeirdMin = clamp(newWeirdMax - weirdnessWidth, -2f, 2f);
+                } else {
+                    newWeirdMin = clamp(base.weirdMax + weirdnessWidth * 3 + 0.20f, -2f, 2f);
+                    newWeirdMax = clamp(newWeirdMin + weirdnessWidth, -2f, 2f);
+                }
+                break;
+            default:
+                // Shouldn't happen, but fallback to base
+                newWeirdMin = base.weirdMin;
+                newWeirdMax = base.weirdMax;
+        }
+
+        // Keep temperature, humidity, continentalness, and erosion THE SAME
+        // Only change weirdness to create discrete, separate spawn locations
         return new BiomeClimateParams(
-            clamp(base.tempMin + tempShift, -2f, 2f),
-            clamp(base.tempMax + tempShift, -2f, 2f),
-            clamp(base.humidMin + humidShift, -2f, 2f),
-            clamp(base.humidMax + humidShift, -2f, 2f),
-            clamp(base.contMin + contShift, -2f, 2f),
-            clamp(base.contMax + contShift, -2f, 2f),
-            base.erosionMin, base.erosionMax,  // Keep erosion constant
+            base.tempMin, base.tempMax,
+            base.humidMin, base.humidMax,
+            base.contMin, base.contMax,
+            base.erosionMin, base.erosionMax,
             base.depthMin, base.depthMax,
-            base.weirdMin, base.weirdMax
+            newWeirdMin, newWeirdMax
         );
     }
 

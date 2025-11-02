@@ -46,6 +46,8 @@ public class BonePositionTracker {
 	    public final boolean isSpin;
 	    public final boolean leftToRight;
 	    public final boolean upward;
+	    public final float angle;
+	    public final boolean isRawSlash;
 
 	    public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
 	                             boolean isHorizontal, boolean isVertical, boolean isSpin,
@@ -60,7 +62,26 @@ public class BonePositionTracker {
 	        this.leftToRight = leftToRight;
 	        this.upward = upward;
 	        this.startTime = System.currentTimeMillis();
+	        this.angle = 0;
+	        isRawSlash = false;
 	    }
+	    
+	    public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
+                boolean isHorizontal, boolean isVertical, boolean isSpin,
+                float angle, boolean upward) {
+			this.modelKey = modelKey;
+			this.entityId = entityId;
+			this.animationName = animationName;
+			this.entity = entity;
+			this.isHorizontal = isHorizontal;
+			this.isVertical = isVertical;
+			this.isSpin = isSpin;
+			this.angle = angle;
+			this.upward = upward;
+			this.leftToRight = false;
+			this.startTime = System.currentTimeMillis();
+			isRawSlash = true;
+		}
 
 	    public float getCurrentProgress() {
 	        long elapsed = System.currentTimeMillis() - startTime;
@@ -397,6 +418,14 @@ public class BonePositionTracker {
 			break;
 		}
 	}
+	
+	public static void renderHorizontalSlashModel(ClientLevel level, Vec3 entityPos, double yawRad,
+			double entityHeight, float progress, String modelKey, float angle,
+			UUID entityId, String animationName, LivingEntity entity) {
+
+		// Create slash model (calculation will be done during rendering)
+		createSlashModel(modelKey, entityId, animationName, entity, true, false, false, angle, false);
+	}
 
 	private static void renderHorizontalSlashModel(ClientLevel level, Vec3 entityPos, double yawRad,
 			double entityHeight, float progress, String modelKey, boolean leftToRight,
@@ -422,6 +451,21 @@ public class BonePositionTracker {
 		createSlashModel(modelKey, entityId, animationName, entity, false, false, true, false, false);
 	}
 
+	private static void createSlashModel(String modelKey, UUID entityId, String animationName,
+			LivingEntity entity, boolean isHorizontal, boolean isVertical, boolean isSpin,
+			float angle, boolean upward) {
+		// Check if we already have a model for this entity+animation
+				for (SlashRenderRequest req : renderQueue) {
+					if (req.matches(entityId, animationName)) {
+						return; // Model already exists, don't create another
+					}
+				}
+
+				// Create new model - it will self-animate based on elapsed time
+				renderQueue.add(new SlashRenderRequest(modelKey, entityId, animationName, entity,
+						isHorizontal, isVertical, isSpin, angle, upward));
+	}
+	
 	private static void createSlashModel(String modelKey, UUID entityId, String animationName,
 			LivingEntity entity, boolean isHorizontal, boolean isVertical, boolean isSpin,
 			boolean leftToRight, boolean upward) {

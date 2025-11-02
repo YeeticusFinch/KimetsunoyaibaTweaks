@@ -41,6 +41,43 @@ public class SwordRegistry {
      * @param category Whether this is a NICHIRIN or SPECIAL sword
      * @param particle Default particle for sword swings (can be null to use style default)
      * @param swingSound Custom sound effect for sword swings (can be null for no custom sound)
+     * @param registerToCreativeTab Whether to add this sword to the creative tab
+     * @return The registered sword object
+     * @throws IllegalArgumentException if swordId is already registered
+     */
+    public static RegisteredSword register(
+            String swordId,
+            BreathingSwordItem swordItem,
+            String styleId,
+            SwordCategory category,
+            ParticleOptions particle,
+            SoundEvent swingSound,
+            Map<String, String> replaceAnimations,
+            boolean registerToCreativeTab) {
+
+        if (ALL_SWORDS.containsKey(swordId)) {
+            throw new IllegalArgumentException("Sword already registered: " + swordId);
+        }
+
+        RegisteredSword sword = new RegisteredSword(swordId, swordItem, styleId, category, particle, swingSound, replaceAnimations, registerToCreativeTab);
+
+        ALL_SWORDS.put(swordId, sword);
+        CATEGORY_SWORDS.get(category).add(swordId);
+        ITEM_TO_SWORD.put(swordItem, sword);
+
+        return sword;
+    }
+
+    /**
+     * Register a breathing sword with the system (default behavior: add to creative tab).
+     * Backwards compatible method that defaults registerToCreativeTab to true.
+     *
+     * @param swordId Unique identifier for this sword (e.g., "nichirinsword_frost")
+     * @param swordItem The sword item instance
+     * @param styleId The breathing style ID this sword uses
+     * @param category Whether this is a NICHIRIN or SPECIAL sword
+     * @param particle Default particle for sword swings (can be null to use style default)
+     * @param swingSound Custom sound effect for sword swings (can be null for no custom sound)
      * @return The registered sword object
      * @throws IllegalArgumentException if swordId is already registered
      */
@@ -52,18 +89,7 @@ public class SwordRegistry {
             ParticleOptions particle,
             SoundEvent swingSound,
             Map<String, String> replaceAnimations) {
-
-        if (ALL_SWORDS.containsKey(swordId)) {
-            throw new IllegalArgumentException("Sword already registered: " + swordId);
-        }
-
-        RegisteredSword sword = new RegisteredSword(swordId, swordItem, styleId, category, particle, swingSound, replaceAnimations);
-
-        ALL_SWORDS.put(swordId, sword);
-        CATEGORY_SWORDS.get(category).add(swordId);
-        ITEM_TO_SWORD.put(swordItem, sword);
-
-        return sword;
+        return register(swordId, swordItem, styleId, category, particle, swingSound, replaceAnimations, true);
     }
 
     /**
@@ -194,6 +220,7 @@ public class SwordRegistry {
         private final ParticleOptions particle;
         private final SoundEvent swingSound;
         private final Map<String, String> replaceAnimations;
+        private final boolean registerToCreativeTab;
 
         private RegisteredSword(
                 String swordId,
@@ -202,7 +229,8 @@ public class SwordRegistry {
                 SwordCategory category,
                 ParticleOptions particle,
                 SoundEvent swingSound,
-                Map<String, String> replaceAnimations) {
+                Map<String, String> replaceAnimations,
+                boolean registerToCreativeTab) {
             this.swordId = swordId;
             this.swordItem = swordItem;
             this.styleId = styleId;
@@ -210,6 +238,7 @@ public class SwordRegistry {
             this.particle = particle;
             this.swingSound = swingSound;
             this.replaceAnimations = replaceAnimations;
+            this.registerToCreativeTab = registerToCreativeTab;
         }
 
         public String getSwordId() {
@@ -234,6 +263,10 @@ public class SwordRegistry {
 
         public ParticleOptions getParticle() {
             return particle;
+        }
+
+        public boolean shouldRegisterToCreativeTab() {
+            return registerToCreativeTab;
         }
         
         public String getAnim(String ogAnim) {

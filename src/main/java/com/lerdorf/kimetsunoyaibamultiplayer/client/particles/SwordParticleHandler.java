@@ -69,24 +69,11 @@ public class SwordParticleHandler {
             return;
         }
 
-        // Check if golden sword is equipped and use golden dust particles
-        ParticleOptions particleType;
-        boolean isGoldenSword = swordItem.getItem() instanceof
-            com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordGolden;
-
-        if (isGoldenSword) {
-            // Use golden dust particles for golden sword
-            particleType = new net.minecraft.core.particles.DustParticleOptions(
-                new org.joml.Vector3f(1.0f, 0.85f, 0.0f), 1.2f
-            );
-            Log.debug("Using golden dust particles for golden sword");
-        } else {
-            // Get regular particle type for this sword
-            particleType = SwordParticleMapping.getParticleForSword(swordItem);
-            if (particleType == null) {
-                Log.debug("No particle type found for sword");
-                return;
-            }
+        // Get particle type for this sword
+        ParticleOptions particleType = SwordParticleMapping.getParticleForSword(swordItem);
+        if (particleType == null) {
+            Log.debug("No particle type found for sword");
+            return;
         }
 
         Log.debug("About to spawn particles with type: " + particleType.getType());

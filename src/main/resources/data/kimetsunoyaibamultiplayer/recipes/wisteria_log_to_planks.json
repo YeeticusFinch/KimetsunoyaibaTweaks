@@ -2,11 +2,12 @@
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
     {
-      "item": "kimetsunoyaibamultiplayer:wisteria_log"
+      "tag": "kimetsunoyaibamultiplayer:wisteria_logs"
     }
   ],
   "result": {
-    "id": "kimetsunoyaibamultiplayer:wisteria_planks",
+    "item": "kimetsunoyaibamultiplayer:wisteria_planks",
     "count": 4
-  }
+  },
+  "group": "planks"
 }

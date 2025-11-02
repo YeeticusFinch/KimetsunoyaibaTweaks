@@ -18,11 +18,16 @@ import net.minecraftforge.registries.ForgeRegistries;
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID)
 public class WisteriaBiomeHandler {
 
-    private static final ResourceLocation WISTERIA_FOREST_ID =
-        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "wisteria_forest");
+    // All 3 wisteria forest biome IDs
+    private static final ResourceLocation WISTERIA_FOREST_CYAN =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "wisteria_forest_cyan");
+    private static final ResourceLocation WISTERIA_FOREST_CREAM =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "wisteria_forest_cream");
+    private static final ResourceLocation WISTERIA_FOREST =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "wisteria_forest");  // Default lavender+pink
 
     /**
-     * Check if the entity is in a wisteria forest biome
+     * Check if the entity is in any wisteria forest biome
      */
     private static boolean isInWisteriaForest(LivingEntity entity) {
         Holder<Biome> biome = entity.level().getBiome(entity.blockPosition());
@@ -32,7 +37,10 @@ public class WisteriaBiomeHandler {
             return false;
         }
 
-        return biomeKey.location().equals(WISTERIA_FOREST_ID);
+        ResourceLocation biomeLoc = biomeKey.location();
+        return biomeLoc.equals(WISTERIA_FOREST_CYAN) ||
+               biomeLoc.equals(WISTERIA_FOREST_CREAM) ||
+               biomeLoc.equals(WISTERIA_FOREST);
     }
 
     /**
@@ -72,7 +80,6 @@ public class WisteriaBiomeHandler {
         // Apply strong debuffs
         entity.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 3, false, false));
         entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 3, false, false));
-        entity.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 2, false, false));
         entity.addEffect(new MobEffectInstance(MobEffects.WITHER, 100, 1, false, false));
 
         if (wisteriaPoison != null) {
@@ -94,11 +101,17 @@ public class WisteriaBiomeHandler {
                 Holder<Biome> checkBiome = entity.level().getBiome(checkPos);
                 ResourceKey<Biome> checkBiomeKey = checkBiome.unwrapKey().orElse(null);
 
-                if (checkBiomeKey != null && !checkBiomeKey.location().equals(WISTERIA_FOREST_ID)) {
-                    // Found non-wisteria biome, push towards it
-                    pushX += dx;
-                    pushZ += dz;
-                    samples++;
+                if (checkBiomeKey != null) {
+                    ResourceLocation checkBiomeLoc = checkBiomeKey.location();
+                    // Check if it's NOT any wisteria forest variant
+                    if (!checkBiomeLoc.equals(WISTERIA_FOREST_CYAN) &&
+                        !checkBiomeLoc.equals(WISTERIA_FOREST_CREAM) &&
+                        !checkBiomeLoc.equals(WISTERIA_FOREST)) {
+                        // Found non-wisteria biome, push towards it
+                        pushX += dx;
+                        pushZ += dz;
+                        samples++;
+                    }
                 }
             }
         }

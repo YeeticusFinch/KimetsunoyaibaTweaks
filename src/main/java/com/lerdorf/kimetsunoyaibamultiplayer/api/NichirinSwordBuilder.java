@@ -220,7 +220,8 @@ public class NichirinSwordBuilder {
                     finalCategory,
                     finalSwordParticle,
                     finalSwingSound,
-                    finalReplaceAnimations
+                    finalReplaceAnimations,
+                    registerToCreativeTab
                 );
 
                 // Register particle mapping

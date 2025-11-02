@@ -36,65 +36,6 @@ public class ModEntities {
                 .build("geckolib_crow"));
 
     /**
-     * Ice Slayer - Wields nichirinsword_ice, uses Ice Breathing (forms 1-6)
-     * Neutral entity that targets hostile mobs
-     */
-    public static final RegistryObject<EntityType<IceSlayerEntity>> ICE_SLAYER =
-        ENTITY_TYPES.register("ice_slayer",
-            () -> EntityType.Builder.of(IceSlayerEntity::new, MobCategory.MISC)
-                .sized(0.6F, 1.8F) // Player-sized
-                .clientTrackingRange(10)
-                .updateInterval(3)
-                .build("ice_slayer"));
-
-    /**
-     * Frost Slayer - Wields nichirinsword_frost, uses Frost Breathing (forms 1-6)
-     * Neutral entity that targets hostile mobs
-     */
-    public static final RegistryObject<EntityType<FrostSlayerEntity>> FROST_SLAYER =
-        ENTITY_TYPES.register("frost_slayer",
-            () -> EntityType.Builder.of(FrostSlayerEntity::new, MobCategory.MISC)
-                .sized(0.6F, 1.8F) // Player-sized
-                .clientTrackingRange(10)
-                .updateInterval(3)
-                .build("frost_slayer"));
-
-    /**
-     * Setsu Komorebi - Wields nichirinsword_komorebi, uses Frost Breathing (all 7 forms)
-     * Neutral entity that targets hostile mobs
-     */
-    public static final RegistryObject<EntityType<KomorebiEntity>> KOMOREBI =
-        ENTITY_TYPES.register("komorebi",
-            () -> EntityType.Builder.of(KomorebiEntity::new, MobCategory.MISC)
-                .sized(0.6F, 1.8F) // Player-sized
-                .clientTrackingRange(10)
-                .updateInterval(3)
-                .build("komorebi"));
-
-    /**
-     * Akira Shimizu - Wields nichirinsword_shimizu, uses Ice Breathing (all 7 forms)
-     * Neutral entity that targets hostile mobs
-     */
-    public static final RegistryObject<EntityType<ShimizuEntity>> SHIMIZU =
-        ENTITY_TYPES.register("shimizu",
-            () -> EntityType.Builder.of(ShimizuEntity::new, MobCategory.MISC)
-                .sized(0.6F, 1.8F) // Player-sized
-                .clientTrackingRange(10)
-                .updateInterval(3)
-                .build("shimizu"));
-
-    /**
-     * Thrown Sword - Projectile for Frost Breathing Sixth Form
-     */
-    public static final RegistryObject<EntityType<ThrownSwordEntity>> THROWN_SWORD =
-        ENTITY_TYPES.register("thrown_sword",
-            () -> EntityType.Builder.<ThrownSwordEntity>of(ThrownSwordEntity::new, MobCategory.MISC)
-                .sized(0.5F, 0.5F)
-                .clientTrackingRange(4)
-                .updateInterval(20)
-                .build("thrown_sword"));
-
-    /**
      * Ghostly Clone - Visual effect for Mist Breathing 7th Form: Obscuring Clouds
      * Cannot be attacked or damaged, purely decorative
      */
@@ -127,12 +68,6 @@ public class ModEntities {
 
             // Register attributes for our GeckoLib crow entity
             event.put(GECKOLIB_CROW.get(), GeckolibCrowEntity.createAttributes().build());
-
-            // Register attributes for breathing slayer entities
-            event.put(ICE_SLAYER.get(), BreathingSlayerEntity.createAttributes().build());
-            event.put(FROST_SLAYER.get(), BreathingSlayerEntity.createAttributes().build());
-            event.put(KOMOREBI.get(), BreathingSlayerEntity.createAttributes().build());
-            event.put(SHIMIZU.get(), BreathingSlayerEntity.createAttributes().build());
 
             // Register attributes for ghostly clone (visual-only entity)
             event.put(GHOSTLY_CLONE.get(), GhostlyCloneEntity.createAttributes().build());

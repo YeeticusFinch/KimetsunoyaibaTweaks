@@ -33,6 +33,26 @@ public class SwordSlashModelRegistry {
 
         // Other swords will automatically fall back to generic model
     }
+    
+    public static String getModelKeyByName(String name) {
+    	// Check config overrides first
+        if (MODEL_OVERRIDES.containsKey(name)) {
+            String override = MODEL_OVERRIDES.get(name);
+            Log.debug("Using override model for " + name + ": " + override);
+            return override;
+        }
+
+        // Check registered models
+        if (SWORD_TO_MODEL_MAP.containsKey(name)) {
+            String modelKey = SWORD_TO_MODEL_MAP.get(name);
+            Log.debug("Found registered model for " + name + ": " + modelKey);
+            return modelKey;
+        }
+
+        // Fall back to generic
+        Log.debug("Using generic model for " + name);
+        return GENERIC_MODEL;
+    }
 
     /**
      * Gets the model key for a given sword item

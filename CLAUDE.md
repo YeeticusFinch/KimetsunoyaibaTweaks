@@ -91,6 +91,9 @@ src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/
 
 - `player-animation-lib-forge-1.20.1-1.0.2-rc1.jar` (in `libs/`)
 - `mobplayeranimator` (enables animations on other players)
+- `KimetsunoYaiba-ver3-forge-1.20.1.jar` (in `libs/`) - Base mod dependency
+  - **IMPORTANT**: Decompiled source is available at `../decompiled-KimetsunoYaiba-ver3-forge-1.20.1/`
+  - **Never** attempt to unzip the JAR file - always use the decompiled source instead
 - All dependencies exclude log4j (see `build.gradle`)
 
 ## Configuration
@@ -140,6 +143,7 @@ For detailed guides on specific topics, see the `docs/` directory:
 - **Migration Guide**: Refactoring existing swords to use the new API
 - **Mt Fujikasane Dimension**: WorldPainter integration and dimension setup
 - **Biomes**: Custom biome information (Wisteria Forest, Mt Fujikasane)
+- **Biome Cycles Best Practices**: Avoiding FeatureSorter cycles when authoring biomes/features (docs/biome-cycles-best-practices.md)
 - **Build Commands**: Gradle commands and development workflow
 - **Architecture**: Deep-dive into mod structure and design patterns
 - **Breathing System**: Implementation guide for breathing techniques

@@ -140,28 +140,6 @@ public class KimetsunoyaibaMultiplayer
 
         // Register our built-in swords in the SwordRegistry (must be done after items are registered)
         event.enqueueWork(() -> {
-            // Register Ice Breathing sword
-            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
-                "nichirinsword_ice",
-                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_ICE.get(),
-                "ice_breathing",
-                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
-                net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
-                SoundEvents.GLASS_BREAK,
-                null
-            );
-
-            // Register Frost Breathing sword
-            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
-                "nichirinsword_frost",
-                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_FROST.get(),
-                "frost_breathing",
-                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
-                net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
-                SoundEvents.POWDER_SNOW_BREAK,
-                null
-            );
-
             // Cyan mist particle for mist breathing swords (RGB: 138, 195, 194)
             DustParticleOptions mistParticle = new DustParticleOptions(
                 new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
@@ -190,51 +168,7 @@ public class KimetsunoyaibaMultiplayer
                 null
             );
 
-            // Register Komorebi special sword
-            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
-                "nichirinsword_komorebi",
-                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KOMOREBI.get(),
-                "frost_breathing",
-                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
-                net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
-                SoundEvents.POWDER_SNOW_BREAK,
-                null
-            );
-
-            // Register Shimizu special sword
-            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
-                "nichirinsword_shimizu",
-                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_SHIMIZU.get(),
-                "ice_breathing",
-                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
-                net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
-                SoundEvents.GLASS_BREAK,
-                null
-            );
-
             // Register breathing styles if not already registered
-            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("ice_breathing")) {
-                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
-                    "ice_breathing",
-                    "Ice Breathing",
-                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.IceBreathingForms.createIceBreathing(),
-                    1000,
-                    net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
-                    null
-                );
-            }
-
-            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("frost_breathing")) {
-                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
-                    "frost_breathing",
-                    "Frost Breathing",
-                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.FrostBreathingForms.createFrostBreathing(),
-                    1600,
-                    net.minecraft.core.particles.ParticleTypes.SNOWFLAKE,
-                    null
-                );
-            }
-
             if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("mist_breathing")) {
                 com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
                     "mist_breathing",
@@ -420,23 +354,11 @@ public class KimetsunoyaibaMultiplayer
         public static void registerRenderers(net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers event)
         {
             // Register GeckoLib entity renderers
-            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.ICE_SLAYER.get(),
-                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.IceSlayerRenderer::new);
-            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.FROST_SLAYER.get(),
-                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.FrostSlayerRenderer::new);
-            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KOMOREBI.get(),
-                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KomorebiRenderer::new);
-            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SHIMIZU.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.ShimizuRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.GHOSTLY_CLONE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.GhostlyCloneRenderer::new);
 
-            // Register projectile renderers
-            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.THROWN_SWORD.get(),
-                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.ThrownSwordRenderer::new);
-
             if (Config.logDebug)
-            Log.info("Registered breathing slayer entity renderers");
+            Log.info("Registered entity renderers");
         }
     }
 

@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -29,6 +30,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.FancyMath;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 
@@ -204,7 +206,8 @@ public class EnhancedMistForms {
         );
     }
     
-
+    static String modelKey = "mist";
+    
     /**
      * Second Form: Eight-Layered Mist
      * The user performs eight slashes in super quick succession.
@@ -224,7 +227,8 @@ public class EnhancedMistForms {
                 final int slashInterval = 2; // 2 ticks between slashes
                 final int totalTicks = slashCount*slashInterval+1;
                 
-                final String[] animations = { "sword_to_left", "sword_to_right", "sword_overhead", "sword_spin" };
+                //final String[] animations = { "sword_to_left", "sword_to_right", "sword_overhead", "sword_spin" };
+                final String[] animations = { "sword_to_left", "sword_to_right" };
 
                 final int[] tickCounter = { 0 };
                 final int[] slashCounter = { 0 };
@@ -269,13 +273,18 @@ public class EnhancedMistForms {
 						for (LivingEntity target : targets) {
 							Damager.hurt(entity, target, damage);
 						}
-
+						
+						double yawRad = Math.toRadians(entity.getYRot()+20);
+						double pitchRad = Math.toRadians(Math.random()-0.5 * 20);
+						
+						// Render sword slash models
+						if (level instanceof ClientLevel clientLevel) {
+							BonePositionTracker.renderHorizontalSlashModel(clientLevel, entity.position(), Math.toRadians(entity.getYRot()), (double)entity.getBbHeight(), 0f, modelKey, (float)pitchRad + (animIndex == 0 ? 0 : 180), entity.getUUID(), animations[animIndex], entity);
+						}
+							
 						// Spawn particles
 						if (level instanceof ServerLevel serverLevel) {
-
-							double yawRad = Math.toRadians(entity.getYRot()+20);
-							double pitchRad = Math.toRadians(Math.random()-0.5 * 20);
-
+							
 							Vec3 pos = entity.position().add(Math.random() - 0.5, (Math.random() + 0.3) * 2 + pitchRad/Math.PI,
 									Math.random() - 0.5);
 
