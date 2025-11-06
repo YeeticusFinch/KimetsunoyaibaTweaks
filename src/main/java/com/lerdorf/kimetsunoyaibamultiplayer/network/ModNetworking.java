@@ -83,6 +83,38 @@ public class ModNetworking {
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket::encode)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket::handle)
                 .add();
+
+        // Register raw slash render packet (server -> client)
+        int rawSlashRenderPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawSlashRenderPacket.class, rawSlashRenderPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawSlashRenderPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawSlashRenderPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawSlashRenderPacket::handle)
+                .add();
+
+        // Register raw horizontal slash render packet (server -> client)
+        int rawHorizontalSlashRenderPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawHorizontalSlashRenderPacket.class, rawHorizontalSlashRenderPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawHorizontalSlashRenderPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawHorizontalSlashRenderPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawHorizontalSlashRenderPacket::handle)
+                .add();
+
+        // Register raw vertical slash render packet (server -> client)
+        int rawVerticalSlashRenderPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawVerticalSlashRenderPacket.class, rawVerticalSlashRenderPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawVerticalSlashRenderPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawVerticalSlashRenderPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawVerticalSlashRenderPacket::handle)
+                .add();
+
+        // Register mob animation sync packet (server -> client)
+        int mobAnimationSyncPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobAnimationSyncPacket.class, mobAnimationSyncPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobAnimationSyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobAnimationSyncPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobAnimationSyncPacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

@@ -80,9 +80,6 @@ public class Config
     public static boolean suppressFormCycleChat;
     public static boolean enableSwordClashing;
 
-    // Breathing Replacers
-    public static boolean enhancedMistBreathing;
-
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event)
     {

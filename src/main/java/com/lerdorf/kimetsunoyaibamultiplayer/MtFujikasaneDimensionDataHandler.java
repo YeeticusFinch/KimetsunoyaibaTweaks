@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -15,7 +16,11 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -55,12 +60,31 @@ public class MtFujikasaneDimensionDataHandler {
     private static final String GITHUB_DOWNLOAD_URL =
         "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/archive/refs/heads/main.zip";
 
+    // Version tracking: a small text file hosted alongside the region files in the repo
+    // This allows overwriting local cache when upstream updates
+    private static final String VERSION_FILE_NAME = "mt_fujikasane.version";
+    // Raw URL to fetch the version text quickly without downloading the whole zip
+    // If you change repositories/branches, update this accordingly.
+    private static final String GITHUB_VERSION_URL =
+        "https://raw.githubusercontent.com/YeeticusFinch/KimetsunoyaibaTweaks/main/region/" + VERSION_FILE_NAME;
+
     // Set to false to disable automatic downloading (useful for testing)
     private static final boolean ENABLE_AUTO_DOWNLOAD = true;
 
     // Cache directory in .minecraft folder
     private static Path CACHE_DIR = null;
-    private static boolean cacheInitialized = false;
+    private static volatile boolean cacheInitialized = false;
+
+    // Async executor for network and IO so we never block the main thread
+    private static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "MtFujikasane-IO");
+        t.setDaemon(true);
+        return t;
+    });
+
+    // Prevent duplicate concurrent tasks
+    private static final AtomicBoolean cacheInitInProgress = new AtomicBoolean(false);
+    private static final AtomicBoolean worldCopyInProgress = new AtomicBoolean(false);
 
     /**
      * Initialize cache directory on first server start
@@ -72,92 +96,71 @@ public class MtFujikasaneDimensionDataHandler {
             return;
         }
 
-        MinecraftServer server = event.getServer();
+        final MinecraftServer server = event.getServer();
 
-        try {
-            // Initialize cache directory once
-            if (!cacheInitialized) {
-                initializeCache();
+        // Run cache init and world preparation asynchronously to avoid blocking startup
+        IO_EXECUTOR.execute(() -> {
+            try {
+                ensureCacheUpToDate();
+                ensureWorldPrepared(server, false);
+            } catch (Exception e) {
+                System.err.println("[Mt Fujikasane] Error scheduling startup tasks:");
+                e.printStackTrace();
             }
-
-            // Get the overworld to access the save directory
-            ServerLevel overworld = server.getLevel(net.minecraft.world.level.Level.OVERWORLD);
-            if (overworld == null) {
-                System.err.println("[Mt Fujikasane] Could not access overworld level");
-                return;
-            }
-
-            // Build path to Mt Fujikasane dimension folder
-            Path worldSaveDir = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT);
-            Path dimensionDir = worldSaveDir.resolve("dimensions")
-                .resolve("kimetsunoyaibamultiplayer")
-                .resolve("mt_fujikasane");
-            Path regionDir = dimensionDir.resolve("region");
-
-            // Check if region directory exists and has files
-            boolean needsCopy = !Files.exists(regionDir) || isDirectoryEmpty(regionDir);
-
-            if (!needsCopy) {
-                System.out.println("[Mt Fujikasane] Region files already exist in this world");
-                return;
-            }
-
-            // Create directories if they don't exist
-            Files.createDirectories(regionDir);
-
-            // Copy cached region files to world
-            System.out.println("[Mt Fujikasane] Copying cached region files to world...");
-            copyCachedRegionFiles(regionDir);
-            System.out.println("[Mt Fujikasane] Mt Fujikasane dimension is ready to explore!");
-
-        } catch (Exception e) {
-            System.err.println("[Mt Fujikasane] Error setting up dimension data:");
-            e.printStackTrace();
-        }
+        });
     }
 
     /**
      * Initialize cache directory and download region files if not cached
      */
-    private static void initializeCache() {
+    private static void ensureCacheUpToDate() {
+        if (cacheInitialized) return;
+        if (!cacheInitInProgress.compareAndSet(false, true)) {
+            return; // another thread is already doing this
+        }
+
         try {
             // Get game directory (.minecraft)
             Path gameDir = FMLPaths.GAMEDIR.get();
             CACHE_DIR = gameDir.resolve("kimetsunoyaibamultiplayer").resolve("mt_fujikasane_cache");
-
-            // Check if cache already has files
-            if (Files.exists(CACHE_DIR) && !isDirectoryEmpty(CACHE_DIR)) {
-                System.out.println("[Mt Fujikasane] Cache found at: " + CACHE_DIR);
-                System.out.println("[Mt Fujikasane] Using cached region files");
-                cacheInitialized = true;
-                return;
-            }
-
-            // Cache doesn't exist or is empty - download
-            System.out.println("[Mt Fujikasane] Cache not found, downloading region files...");
-            System.out.println("[Mt Fujikasane] Cache location: " + CACHE_DIR);
-            System.out.println("[Mt Fujikasane] URL: " + GITHUB_DOWNLOAD_URL);
-            System.out.println("[Mt Fujikasane] This may take a minute depending on your connection...");
-
-            // Create cache directory
             Files.createDirectories(CACHE_DIR);
 
-            // Download and extract region files to cache
-            boolean success = downloadAndExtractRegionFiles(CACHE_DIR);
+            boolean cacheHasMca = cacheHasAnyMca();
+            String localVersion = readLocalCacheVersion();
+            String remoteVersion = fetchRemoteVersion();
 
-            if (success) {
-                System.out.println("[Mt Fujikasane] Successfully downloaded and cached region files!");
-                System.out.println("[Mt Fujikasane] Cache will be reused for all future worlds");
-                cacheInitialized = true;
+            if (!cacheHasMca) {
+                System.out.println("[Mt Fujikasane] Cache empty, downloading region files...");
+                System.out.println("[Mt Fujikasane] Cache location: " + CACHE_DIR);
+                System.out.println("[Mt Fujikasane] URL: " + GITHUB_DOWNLOAD_URL);
+                downloadFreshCache();
+            } else if (remoteVersion != null && (localVersion == null || !remoteVersion.trim().equals(localVersion.trim()))) {
+                System.out.println("[Mt Fujikasane] Remote region version differs (local: " + (localVersion == null ? "none" : localVersion) + ", remote: " + remoteVersion + ") — updating cache...");
+                clearDirectory(CACHE_DIR);
+                downloadFreshCache();
             } else {
-                System.err.println("[Mt Fujikasane] Failed to download region files");
-                System.err.println("[Mt Fujikasane] Please check the GitHub URL in MtFujikasaneDimensionDataHandler.java");
-                System.err.println("[Mt Fujikasane] Dimensions will use default terrain generation");
+                System.out.println("[Mt Fujikasane] Cache found at: " + CACHE_DIR);
+                System.out.println("[Mt Fujikasane] Using cached region files" + (localVersion != null ? (" (version " + localVersion + ")") : ""));
             }
 
+            cacheInitialized = true;
         } catch (Exception e) {
-            System.err.println("[Mt Fujikasane] Error initializing cache:");
+            System.err.println("[Mt Fujikasane] Error ensuring cache is up to date:");
             e.printStackTrace();
+        } finally {
+            cacheInitInProgress.set(false);
+        }
+    }
+
+    private static void downloadFreshCache() throws IOException {
+        boolean success = downloadAndExtractRegionFiles(CACHE_DIR);
+        if (success) {
+            System.out.println("[Mt Fujikasane] Successfully downloaded and cached region files!");
+            System.out.println("[Mt Fujikasane] Cache will be reused for all future worlds");
+        } else {
+            System.err.println("[Mt Fujikasane] Failed to download region files");
+            System.err.println("[Mt Fujikasane] Please check the GitHub URL in MtFujikasaneDimensionDataHandler.java");
+            System.err.println("[Mt Fujikasane] Dimensions will use default terrain generation");
         }
     }
 
@@ -173,10 +176,11 @@ public class MtFujikasaneDimensionDataHandler {
 
         try (Stream<Path> files = Files.list(CACHE_DIR)) {
             for (Path cachedFile : files.toList()) {
-                if (cachedFile.toString().endsWith(".mca")) {
-                    Path targetFile = targetDir.resolve(cachedFile.getFileName());
+                String name = cachedFile.getFileName().toString();
+                if (name.endsWith(".mca") || name.equals(VERSION_FILE_NAME)) {
+                    Path targetFile = targetDir.resolve(name);
                     Files.copy(cachedFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
-                    filesCopied++;
+                    if (name.endsWith(".mca")) filesCopied++;
                 }
             }
         }
@@ -219,6 +223,18 @@ public class MtFujikasaneDimensionDataHandler {
         System.out.println("[Mt Fujikasane] World border configured: " +
             (int)WORLD_BORDER_SIZE + "x" + (int)WORLD_BORDER_SIZE +
             " blocks centered at (" + (int)WORLD_BORDER_CENTER_X + ", " + (int)WORLD_BORDER_CENTER_Z + ")");
+
+        // Ensure region files exist for this world in the background
+        IO_EXECUTOR.execute(() -> {
+            try {
+                // If cache not ready or missing, attempt to prepare it (non-blocking safety)
+                ensureCacheUpToDate();
+                ensureWorldPrepared(serverLevel.getServer(), true);
+            } catch (Exception e) {
+                System.err.println("[Mt Fujikasane] Error ensuring world is prepared:");
+                e.printStackTrace();
+            }
+        });
     }
 
     /**
@@ -322,13 +338,11 @@ public class MtFujikasaneDimensionDataHandler {
             while ((entry = zis.getNextEntry()) != null) {
                 String fileName = entry.getName();
 
-                // Only extract .mca files
-                if (fileName.endsWith(".mca")) {
-                    // Get just the filename (remove any directory structure from the zip)
-                    String mcaFileName = Paths.get(fileName).getFileName().toString();
-                    Path targetFile = targetDir.resolve(mcaFileName);
+                // Only extract .mca files and the version file
+                if (fileName.endsWith(".mca") || fileName.endsWith("/" + VERSION_FILE_NAME) || fileName.endsWith("\\" + VERSION_FILE_NAME) || fileName.equals(VERSION_FILE_NAME)) {
+                    String simpleName = Paths.get(fileName).getFileName().toString();
+                    Path targetFile = targetDir.resolve(simpleName);
 
-                    // Extract file
                     try (FileOutputStream fos = new FileOutputStream(targetFile.toFile())) {
                         byte[] buffer = new byte[8192];
                         int len;
@@ -337,8 +351,12 @@ public class MtFujikasaneDimensionDataHandler {
                         }
                     }
 
-                    filesExtracted++;
-                    System.out.println("[Mt Fujikasane] Extracted: " + mcaFileName);
+                    if (simpleName.endsWith(".mca")) {
+                        filesExtracted++;
+                        System.out.println("[Mt Fujikasane] Extracted: " + simpleName);
+                    } else if (simpleName.equals(VERSION_FILE_NAME)) {
+                        System.out.println("[Mt Fujikasane] Extracted version file: " + simpleName);
+                    }
                 }
 
                 zis.closeEntry();
@@ -346,5 +364,110 @@ public class MtFujikasaneDimensionDataHandler {
         }
 
         return filesExtracted;
+    }
+
+    // ===== Helper methods for versioning and world prep =====
+
+    private static boolean cacheHasAnyMca() throws IOException {
+        if (CACHE_DIR == null || !Files.exists(CACHE_DIR)) return false;
+        try (Stream<Path> s = Files.list(CACHE_DIR)) {
+            return s.anyMatch(p -> p.getFileName().toString().endsWith(".mca"));
+        }
+    }
+
+    private static String readLocalCacheVersion() {
+        if (CACHE_DIR == null) return null;
+        Path v = CACHE_DIR.resolve(VERSION_FILE_NAME);
+        if (!Files.exists(v)) return null;
+        try {
+            return Files.readString(v, StandardCharsets.UTF_8).trim();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private static String fetchRemoteVersion() {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(GITHUB_VERSION_URL);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(15000);
+            connection.setReadTimeout(15000);
+            int code = connection.getResponseCode();
+            if (code == HttpURLConnection.HTTP_OK) {
+                try (InputStream in = new BufferedInputStream(connection.getInputStream())) {
+                    return new String(in.readAllBytes(), StandardCharsets.UTF_8).trim();
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+        return null;
+    }
+
+    private static void clearDirectory(Path dir) throws IOException {
+        if (!Files.exists(dir)) return;
+        try (Stream<Path> walk = Files.walk(dir)) {
+            walk.sorted((a, b) -> b.getNameCount() - a.getNameCount())
+                .forEach(p -> {
+                    try { if (!p.equals(dir)) Files.deleteIfExists(p); } catch (IOException ignored) {}
+                });
+        }
+    }
+
+    private static boolean worldHasVersionFile(Path regionDir) {
+        Path versionInRegion = regionDir.resolve(VERSION_FILE_NAME);
+        return Files.exists(versionInRegion);
+    }
+
+    private static void ensureWorldPrepared(MinecraftServer server, boolean logNotReady) throws IOException {
+        ServerLevel overworld = server.getLevel(Level.OVERWORLD);
+        if (overworld == null) return;
+
+        Path worldSaveDir = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT);
+        Path dimensionDir = worldSaveDir.resolve("dimensions")
+            .resolve("kimetsunoyaibamultiplayer")
+            .resolve("mt_fujikasane");
+        Path regionDir = dimensionDir.resolve("region");
+
+        boolean needsCopy = !Files.exists(regionDir) || isDirectoryEmpty(regionDir) || !worldHasVersionFile(regionDir);
+
+        if (!needsCopy) {
+            return;
+        }
+
+        if (logNotReady) {
+            System.out.println("[Mt Fujikasane] Dimension not ready yet; preparing files in background...");
+        }
+
+        if (!worldCopyInProgress.compareAndSet(false, true)) {
+            return; // already copying
+        }
+
+        try {
+            Files.createDirectories(regionDir);
+
+            // If cache is missing MCA files, try to download them first
+            if (!cacheHasAnyMca()) {
+                System.out.println("[Mt Fujikasane] Cache missing MCA files; downloading before copy...");
+                ensureCacheUpToDate();
+            }
+
+            copyCachedRegionFiles(regionDir);
+
+            // Notify players on main thread
+            server.execute(() -> {
+                try {
+                    server.getPlayerList().broadcastSystemMessage(
+                        Component.literal("§a[Mt Fujikasane] Dimension is ready."), false);
+                } catch (Throwable t) {
+                    System.out.println("[Mt Fujikasane] Dimension is ready.");
+                }
+            });
+        } finally {
+            worldCopyInProgress.set(false);
+        }
     }
 }

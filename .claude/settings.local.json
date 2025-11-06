@@ -5,7 +5,15 @@
       "WebFetch(domain:github.com)",
       "Bash(./gradlew:*)",
       "Bash(unzip:*)",
-      "Bash(timeout 60 ./gradlew runClient:*)"
+      "Bash(timeout 60 ./gradlew runClient:*)",
+      "WebFetch(domain:www.kodevelopment.nl)",
+      "WebFetch(domain:modrinth.com)",
+      "WebSearch",
+      "Bash(if [ -f \"C:/Users/carlf/eclipse-workspace-2/Kimetsunoyaiba-Multiplayer/config/kimetsunoyaibamultiplayer/customnpcs.toml\" ])",
+      "Bash(then echo \"File exists\")",
+      "Bash(else echo \"File does NOT exist\")",
+      "Bash(fi)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

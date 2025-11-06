@@ -114,6 +114,7 @@ public class EnhancedMistForms {
             "Dash forward through a veil of mist with a singular stab",
             2, // 2 second cooldown
             (entity, level) -> {
+            	
                 // Set guard state - defensive power 9.0 to match offensive damage
 				GuardStateHelper.setGuardState(entity, 9.0, 20001); // ID 20001 for Mist Breathing
 
@@ -253,8 +254,8 @@ public class EnhancedMistForms {
 									slashNumber + 1, slashCount, animations[animIndex]);
 						}
 
-						// Use layer 4000 with 3x speed for ultra-fast attacks
-						playEntityAnimationOnLayer(entity, animations[animIndex], 2, 3.0f, 4000);
+						// Use layer 4000 with 1.5x speed for ultra-fast attacks
+						playEntityAnimationOnLayer(entity, animations[animIndex], 2, 1.5f, 4000);
 
 						// Large AOE in front of entity
 
@@ -274,32 +275,69 @@ public class EnhancedMistForms {
 							Damager.hurt(entity, target, damage);
 						}
 						
-						double yawRad = Math.toRadians(entity.getYRot()+20);
-						double pitchRad = Math.toRadians(Math.random()-0.5 * 20);
 						
-						// Render sword slash models
-						if (level instanceof ClientLevel clientLevel) {
-							BonePositionTracker.renderHorizontalSlashModel(clientLevel, entity.position(), Math.toRadians(entity.getYRot()), (double)entity.getBbHeight(), 0f, modelKey, (float)pitchRad + (animIndex == 0 ? 0 : 180), entity.getUUID(), animations[animIndex], entity);
-						}
-							
-						// Spawn particles
+						// Spawn particles and slash models (server-side only)
 						if (level instanceof ServerLevel serverLevel) {
-							
-							Vec3 pos = entity.position().add(Math.random() - 0.5, (Math.random() + 0.3) * 2 + pitchRad/Math.PI,
-									Math.random() - 0.5);
 
+							double yawRad = Math.toRadians(entity.getYRot()+20);
+							float pitchDeg = (float)((Math.random()-0.5) * 20);
+							double pitchRad = Math.toRadians(pitchDeg);
+							
+							float heightRand = (float)( (Math.random() + 0.3) * 2 + pitchRad/Math.PI);
+							
+							Vec3 pos = entity.position().add(Math.random() - 0.5, heightRand,
+									Math.random() - 0.5);
+							
+							// Send raw slash render request to all clients
+							float slashAngle = (float)pitchRad;
+							boolean directionFlag = animIndex == 0;
 							int arcLength = (int) (100 + Math.random() * 40);
+							/*
+							BonePositionTracker.sendRawSlashToClients(
+									level, // level
+									new Vec3(0, heightRand, 0),
+									modelKey, // model key
+									slashAngle, // angle
+									directionFlag, // reverse
+									arcLength, // arc range
+									(int)(arcLength/1.4f), // duration
+									-90, // yaw offset
+									(float)pitchDeg, // pitch offset
+									0, // roll offset 
+									1.2f, // radius scalar
+									1.1f, // size scalar
+									directionFlag ? -15 : 15, // angle offset
+									entity.getUUID(), // entity id
+									animations[animIndex]); // animation name
+									*/
+							BonePositionTracker.sendRawHorizontalSlashToClients(
+									level, // level
+									new Vec3(3, heightRand-1, 0),
+									modelKey, // model key
+									(float)0, // hor
+									directionFlag, // reverse
+									arcLength, // arc range
+									(int)(arcLength/1.4f), // duration
+									0, // yaw offset
+									(float)pitchDeg, // pitch offset
+									0, // roll offset 
+									1.2f, // radius scalar
+									1.1f, // size scalar
+									directionFlag ? -15 : 15, // angle offset
+									entity.getUUID(), // entity id
+									animations[animIndex]); // animation name
+
 							double angle = 0;
 							{
-								for (int i = 0; i < 4; i++) {
+								for (int i = 0; i < 2; i++) {
 									ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
-											2+i*0.3f, 0.1, arcLength, 1, angle, ModParticles.SMALL_MIST_PARTICLE.get(),
-											50);
+											2+i*0.3f, 0.2, arcLength, Math.random()*10+10, angle, ModParticles.SMALL_MIST_PARTICLE.get(),
+											1);
 
 									ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
-											2+i*0.3f, 0.1, arcLength, 1, angle, new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
-													(float) (Math.random()*0.9f + 0.2f)),
-											20);
+											2+i*0.3f, 0.2, arcLength, Math.random()*15+15, angle, new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
+													(float) (Math.random()*0.9f + 0.2f)), 1
+												);
 								}
 							}
 						}
@@ -349,6 +387,41 @@ public class EnhancedMistForms {
 
                 final int totalTicks = 30; // 1.5 seconds
                 final double[] currentAngle = {0};
+                
+                if (level instanceof ServerLevel serverLevel) {
+                	BonePositionTracker.sendRawSlashToClients(
+							level, // level
+							Vec3.ZERO, // position offset
+							modelKey, // model key
+							0, // angle
+							false, // reverse
+							360, // arc range
+							(int)(360/1.4f), // duration
+							-90, // yaw offset
+							0, // pitch offset
+							0, // roll offset 
+							1.6f, // radius scalar
+							1.4f, // size scalar
+							0, // angle offset
+							entity.getUUID(), // entity id
+							"sword_rotate"); // animation name
+                	BonePositionTracker.sendRawSlashToClients(
+							level, // level
+							Vec3.ZERO, // position offset
+							modelKey, // model key
+							0, // angle
+							false, // reverse
+							360, // arc range
+							(int)(360/1.4f), // duration
+							-90, // yaw offset
+							0, // pitch offset
+							0, // roll offset 
+							1.6f, // radius scalar
+							1.4f, // size scalar
+							180, // angle offset
+							entity.getUUID(), // entity id
+							"sword_rotate"); // animation name
+                }
 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
                     currentAngle[0] += 24; // Rotate 24 degrees per tick
@@ -463,9 +536,10 @@ public class EnhancedMistForms {
 			}
 		}
 		
-		if (level instanceof ServerLevel serverLevel)
+		if (level instanceof ServerLevel serverLevel) {
 			ParticleHelper.spawnParticleLine(serverLevel, startPos, targetPos, ModParticles.MIST_PARTICLE.get(), 40);
-
+		}
+			
 		// Teleport entity
 		entity.teleportTo(targetPos.x, targetPos.y, targetPos.z);
 
@@ -507,6 +581,23 @@ public class EnhancedMistForms {
 						0.8F);
 				level.playSound(null, entity.blockPosition(), SoundEvents.CANDLE_EXTINGUISH, SoundSource.PLAYERS, 1.0F,
 						1.5F);
+				
+				BonePositionTracker.sendRawSlashToClients(
+						level, // level
+						Vec3.ZERO,
+						modelKey, // model key
+						0, // angle
+						false, // reverse
+						240, // arc range
+						150, // duration
+						-90, // yaw offset
+						0, // pitch offset
+						0, // roll offset 
+						1.3f, // radius scalar
+						1.2f, // size scalar
+						15, // angle offset
+						entity.getUUID(), // entity id
+						"sword_rotate"); // animation name
 			}
 		}, 2);
     }
@@ -600,26 +691,60 @@ public class EnhancedMistForms {
 							if (Math.random() > 0.5) {
 								particle = true;
 								ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
-										3 + Math.random() * 2, 0.1, arcLength, 1, angle, ModParticles.SMALL_MIST_PARTICLE.get(),
-										40);
+										3 + Math.random() * 2, 0.2, arcLength, 10, angle, ModParticles.SMALL_MIST_PARTICLE.get(),
+										4);
 
 								ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
-										3 + Math.random() * 2, 0.1, arcLength, 1, angle,
+										3 + Math.random() * 2, 0.2, arcLength, 10, angle,
 										new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
 												(float) (Math.random()*0.7f + 0.2f)),
-										20);
+										2);
+								
+								BonePositionTracker.sendRawHorizontalSlashToClients(
+										level, // level
+										Vec3.ZERO,
+										modelKey, // model key
+										(float)angle/10, // vert
+										Math.random() > 0.5, // reverse
+										120, // arc range
+										100, // duration
+										0, // yaw offset
+										0, // pitch offset
+										(float)angle, // roll offset 
+										1.5f, // radius scalar
+										2.1f, // size scalar
+										15, // angle offset
+										entity.getUUID(), // entity id
+										"sword_to_left"); // animation name
 							}
 							if (Math.random() > 0.5 || !particle) {
 								ParticleHelper.spawnVerticalArc(serverLevel, pos, yawRad, pitchRad,
-										4 + Math.random() * 2, 0.1, arcLength, 1, angle, ModParticles.SMALL_MIST_PARTICLE.get(),
-										80);
+										4 + Math.random() * 2, 0.2, arcLength, 10, angle, ModParticles.SMALL_MIST_PARTICLE.get(),
+										4);
 
 								ParticleHelper.spawnVerticalArc(serverLevel, pos, yawRad, pitchRad,
-										3 + Math.random() * 2, 0.1, arcLength, 1, angle,
+										3 + Math.random() * 2, 0.2, arcLength, 10, angle,
 										new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
 												(float) (Math.random()*0.7f + 0.2f)),
-										30);
+										2);
 
+								BonePositionTracker.sendRawVerticalSlashToClients(
+										level, // level
+										Vec3.ZERO,
+										modelKey, // model key
+										(float)angle/10, // angle
+										false, // reverse
+										120, // arc range
+										100, // duration
+										0, // yaw offset
+										0, // pitch offset
+										(float)angle, // roll offset 
+										1.5f, // radius scalar
+										2.1f, // size scalar
+										0, // angle offset
+										entity.getUUID(), // entity id
+										"sword_overhead"); // animation name
+								
 							}
 						}
 

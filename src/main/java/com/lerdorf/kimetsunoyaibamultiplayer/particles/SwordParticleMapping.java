@@ -23,25 +23,85 @@ public class SwordParticleMapping {
 
     static {
         // Initialize hardcoded mappings for specific sword types
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_thunder", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_thunder"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_water", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_blue_smoke"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_flame", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_flame"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_stone", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_stone"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_wind", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_wind"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_sun", ResourceLocation.fromNamespaceAndPath("minecraft", "flame"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinswordmoon", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_blue_smoke")); // moon is missing an underscore, not a typo!!!
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_flower", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_flower"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_insect", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_insect"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_sound", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_sound"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_love", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_love"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_mist", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_mist"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_serpent", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_serpent"));
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_beast", ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_beast"));
 
-        // Special cases with vanilla particles
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_inosuke", ResourceLocation.fromNamespaceAndPath("minecraft", "crit"));
+        // Thunder Breathing
+        ResourceLocation thunderParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_thunder");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_thunder", thunderParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_zenitsu", thunderParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_kaigaku", thunderParticle);
+
+        // Water Breathing
+        ResourceLocation waterParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_blue_smoke");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_water", waterParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_tomioka", waterParticle);
+
+        // Flame Breathing
+        ResourceLocation flameParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_flame");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_flame", flameParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_rengoku", flameParticle);
+
+        // Mist Breathing
+        ResourceLocation mistParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_mist");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_mist", mistParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_tokito", mistParticle);
+        SWORD_TO_PARTICLE_MAP.put("nitirintou_tokitou", mistParticle); // Alternative spelling
+
+        // Wind Breathing
+        ResourceLocation windParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_wind");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_wind", windParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_shinazugawa", windParticle);
+
+        // Stone Breathing
+        ResourceLocation stoneParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_stone");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_stone", stoneParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_himejima_1", stoneParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_himejima_2", stoneParticle);
+
+        // Insect Breathing
+        ResourceLocation insectParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_insect");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_insect", insectParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_kocho", insectParticle);
+
+        // Serpent Breathing
+        ResourceLocation serpentParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_serpent");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_serpent", serpentParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_iguro", serpentParticle);
+
+        // Sound Breathing
+        ResourceLocation soundParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_sound");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_sound", soundParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_uzui", soundParticle);
+
+        // Love Breathing
+        ResourceLocation loveParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_love");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_love", loveParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_kanroji", loveParticle);
+
+        // Flower Breathing
+        ResourceLocation flowerParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_flower");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_flower", flowerParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_kanae", flowerParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_kanawo", flowerParticle);
+
+        // Beast Breathing
+        ResourceLocation beastParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_beast");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_beast", beastParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_inosuke", beastParticle);
+
+        // Sun Breathing / Hinokami Kagura
+        ResourceLocation sunParticle = ResourceLocation.fromNamespaceAndPath("minecraft", "flame");
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_sun", sunParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_yoriichi", sunParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_tanjiro_2", sunParticle);
+
+        // Moon Breathing (moon is missing an underscore, not a typo!!!)
+        ResourceLocation moonParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_blue_smoke");
+        SWORD_TO_PARTICLE_MAP.put("nichirinswordmoon", moonParticle);
+
+        // Generic/Basic swords
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_basic", ResourceLocation.fromNamespaceAndPath("minecraft", "crit"));
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_generic", ResourceLocation.fromNamespaceAndPath("minecraft", "cloud"));
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_black", ResourceLocation.fromNamespaceAndPath("minecraft", "cloud"));
 
     }
 

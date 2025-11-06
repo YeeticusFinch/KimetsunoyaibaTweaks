@@ -53,7 +53,19 @@ public class ClientRenderEvents {
             Vec3 worldPos;
             float[] rotation;
 
-            if (req.isHorizontal) {
+            if (req.isRawSlash) {
+                // Raw slash with custom angle control
+                worldPos = BonePositionTracker.calculateRawSlashPosition(req.entity, progress, req);
+                rotation = BonePositionTracker.calculateRawSlashRotation(req.entity, progress, req);
+            } else if (req.isRawHorizontal) {
+                // Raw horizontal slash with custom vert parameter
+                worldPos = BonePositionTracker.calculateRawHorizontalPosition(req.entity, progress, req);
+                rotation = BonePositionTracker.calculateRawHorizontalRotation(req.entity, progress, req);
+            } else if (req.isRawVertical) {
+                // Raw vertical slash with custom hor parameter
+                worldPos = BonePositionTracker.calculateRawVerticalPosition(req.entity, progress, req);
+                rotation = BonePositionTracker.calculateRawVerticalRotation(req.entity, progress, req);
+            } else if (req.isHorizontal) {
                 worldPos = BonePositionTracker.calculateHorizontalPosition(req.entity, progress, req.leftToRight);
                 rotation = BonePositionTracker.calculateHorizontalRotation(req.entity, progress, req.leftToRight);
             } else if (req.isVertical) {
@@ -69,6 +81,9 @@ public class ClientRenderEvents {
             // Convert world coordinates to camera-relative coordinates
             Vec3 cameraRelative = worldPos.subtract(camera);
 
+            // Calculate scale (use sizeScaler for raw slashes, default 2.5f for standard slashes)
+            float scale = (req.isRawSlash || req.isRawHorizontal || req.isRawVertical) ? (2.5f * req.sizeScaler) : 2.5f;
+
             // Render model with dual-layer system (base + emissive)
             DualLayerSlashRenderer.renderDualLayer(
                 poseStack,
@@ -77,7 +92,7 @@ public class ClientRenderEvents {
                 rotation[0],  // yaw
                 rotation[1],  // pitch
                 rotation[2],  // roll
-                2.5f,         // Scale
+                scale,        // Scale (adjusted by sizeScaler for raw slashes)
                 progress,
                 req.modelKey,
                 packedLight

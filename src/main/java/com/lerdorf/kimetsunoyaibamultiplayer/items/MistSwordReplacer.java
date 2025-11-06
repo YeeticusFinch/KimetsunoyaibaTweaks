@@ -1,6 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.items;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -11,7 +11,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * Replaces base mod mist breathing swords with enhanced versions
- * when Config.enhancedMistBreathing is enabled.
+ * when EnhancedBreathingConfig.enhancedMistBreathing is enabled.
  *
  * Replacements:
  * - kimetsunoyaiba:nichirinsword_mist -> kimetsunoyaibamultiplayer:nichirinsword_mist
@@ -34,7 +34,7 @@ public class MistSwordReplacer {
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         // Only replace if enhanced mist breathing is enabled
-        if (!Config.enhancedMistBreathing) {
+        if (!EnhancedBreathingConfig.enhancedMistBreathing) {
             return;
         }
 

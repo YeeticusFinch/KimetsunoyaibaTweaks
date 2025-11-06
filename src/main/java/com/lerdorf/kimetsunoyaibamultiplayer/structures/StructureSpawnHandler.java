@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.structures;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.MaxEntityTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
@@ -66,7 +67,7 @@ public class StructureSpawnHandler {
         // Debug logging
         ResourceLocation entityId = EntityTagHelper.getEntityTypeId(entity);
         if (entityId != null) {
-            System.out.println("[Structure Spawn] Checking spawn for: " + entityId + " at " + pos);
+            Log.debug("[Structure Spawn] Checking spawn for: " + entityId + " at " + pos);
         }
 
         try {
@@ -88,21 +89,21 @@ public class StructureSpawnHandler {
                     continue;
                 }
 
-                System.out.println("[Structure Spawn] Found structure: " + structureId);
+                Log.debug("[Structure Spawn] Found structure: " + structureId);
 
                 // Apply structure-specific rules
                 if (shouldDenySpawnInStructure(entity, serverLevel, pos, structureId)) {
-                    System.out.println("[Structure Spawn] DENIED spawn for: " + entityId + " in structure: " + structureId);
+                    Log.debug("[Structure Spawn] DENIED spawn for: " + entityId + " in structure: " + structureId);
                     event.setSpawnCancelled(true);
                     event.setCanceled(true);
                     return;
                 } else {
-                    System.out.println("[Structure Spawn] ALLOWED spawn for: " + entityId + " in structure: " + structureId);
+                    Log.debug("[Structure Spawn] ALLOWED spawn for: " + entityId + " in structure: " + structureId);
                 }
             }
 
         } catch (Exception e) {
-            System.err.println("[Structure Spawn Handler] Error processing structure spawn: " + e.getMessage());
+            Log.error("[Structure Spawn Handler] Error processing structure spawn: " + e.getMessage());
             e.printStackTrace();
         }
     }

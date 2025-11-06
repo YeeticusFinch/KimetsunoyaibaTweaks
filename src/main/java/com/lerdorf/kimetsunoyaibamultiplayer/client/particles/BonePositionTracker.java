@@ -48,6 +48,20 @@ public class BonePositionTracker {
 	    public final boolean upward;
 	    public final float angle;
 	    public final boolean isRawSlash;
+	    public final float arcRange;
+	    public final int duration;
+	    public final float yawOffset;
+	    public final float pitchOffset;
+	    public final float rollOffset;
+	    public final float radiusScaler;
+	    public final float sizeScaler;
+	    public final float angleOffset;
+	    public final boolean reverse;
+		public final Vec3 posOffset;
+		public final boolean isRawHorizontal;
+		public final boolean isRawVertical;
+		public final float vert;
+		public final float hor;
 
 	    public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
 	                             boolean isHorizontal, boolean isVertical, boolean isSpin,
@@ -63,7 +77,21 @@ public class BonePositionTracker {
 	        this.upward = upward;
 	        this.startTime = System.currentTimeMillis();
 	        this.angle = 0;
-	        isRawSlash = false;
+	        this.isRawSlash = false;
+	        this.arcRange = 180f;
+	        this.duration = SwordSwingConfig.animationDurationMs;
+	        this.yawOffset = 0;
+	        this.pitchOffset = 0;
+	        this.rollOffset = 0;
+	        this.radiusScaler = 1.0f;
+	        this.sizeScaler = 1.0f;
+	        this.angleOffset = 0;
+	        this.reverse = false;
+	        this.posOffset = Vec3.ZERO;
+	        this.isRawHorizontal = false;
+	        this.isRawVertical = false;
+	        this.vert = 0;
+	        this.hor = 0;
 	    }
 	    
 	    public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
@@ -80,13 +108,126 @@ public class BonePositionTracker {
 			this.upward = upward;
 			this.leftToRight = false;
 			this.startTime = System.currentTimeMillis();
-			isRawSlash = true;
+			this.isRawSlash = true;
+			this.arcRange = 180f;
+			this.duration = SwordSwingConfig.animationDurationMs;
+			this.yawOffset = 0;
+			this.pitchOffset = 0;
+			this.rollOffset = 0;
+			this.radiusScaler = 1.0f;
+			this.sizeScaler = 1.0f;
+			this.angleOffset = 0;
+			this.reverse = false;
+		this.isRawHorizontal = false;
+		this.isRawVertical = false;
+		this.vert = 0;
+		this.hor = 0;
+			this.posOffset = Vec3.ZERO;
 		}
+
+		// Full constructor with all raw slash parameters
+		public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
+				float angle, float arcRange, int duration,
+				float yawOffset, float pitchOffset, float rollOffset,
+				float radiusScaler, float sizeScaler, float angleOffset, boolean reverse) {
+			this.modelKey = modelKey;
+			this.entityId = entityId;
+			this.animationName = animationName;
+			this.entity = entity;
+			this.isHorizontal = false;
+			this.isVertical = false;
+			this.isSpin = false;
+			this.angle = angle;
+			this.upward = false;
+			this.leftToRight = false;
+			this.startTime = System.currentTimeMillis();
+			this.isRawSlash = true;
+			this.arcRange = arcRange;
+			this.duration = duration;
+			this.yawOffset = yawOffset;
+			this.pitchOffset = pitchOffset;
+			this.rollOffset = rollOffset;
+			this.radiusScaler = radiusScaler;
+		this.isRawHorizontal = false;
+		this.isRawVertical = false;
+		this.vert = 0;
+		this.hor = 0;
+			this.sizeScaler = sizeScaler;
+			this.angleOffset = angleOffset;
+			this.reverse = reverse;
+			this.posOffset = Vec3.ZERO;
+		}
+
+	// Raw horizontal slash constructor
+	public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
+			float vert, float arcRange, int duration,
+			float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse, Vec3 posOffset) {
+		this.modelKey = modelKey;
+		this.entityId = entityId;
+		this.animationName = animationName;
+		this.entity = entity;
+		this.isHorizontal = false;
+		this.isVertical = false;
+		this.isSpin = false;
+		this.angle = 0;
+		this.upward = false;
+		this.leftToRight = false;
+		this.startTime = System.currentTimeMillis();
+		this.isRawSlash = false;
+		this.arcRange = arcRange;
+		this.duration = duration;
+		this.yawOffset = yawOffset;
+		this.pitchOffset = pitchOffset;
+		this.rollOffset = rollOffset;
+		this.radiusScaler = radiusScaler;
+		this.sizeScaler = sizeScaler;
+		this.angleOffset = angleOffset;
+		this.reverse = reverse;
+		this.posOffset = posOffset;
+		this.isRawHorizontal = true;
+		this.isRawVertical = false;
+		this.vert = vert;
+		this.hor = 0;
+	}
+
+	// Raw vertical slash constructor
+	public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
+			float hor, boolean isVertical, float arcRange, int duration,
+			float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse, Vec3 posOffset, float vert) {
+		this.modelKey = modelKey;
+		this.entityId = entityId;
+		this.animationName = animationName;
+		this.entity = entity;
+		this.isHorizontal = false;
+		this.isVertical = isVertical;  // Marker to distinguish from raw horizontal
+		this.isSpin = false;
+		this.angle = 0;
+		this.upward = false;
+		this.leftToRight = false;
+		this.startTime = System.currentTimeMillis();
+		this.isRawSlash = false;
+		this.arcRange = arcRange;
+		this.duration = duration;
+		this.yawOffset = yawOffset;
+		this.pitchOffset = pitchOffset;
+		this.rollOffset = rollOffset;
+		this.radiusScaler = radiusScaler;
+		this.sizeScaler = sizeScaler;
+		this.angleOffset = angleOffset;
+		this.reverse = reverse;
+		this.posOffset = posOffset;
+		this.isRawHorizontal = false;
+		this.isRawVertical = true;
+		this.vert = vert;
+		this.hor = hor;
+	}
 
 	    public float getCurrentProgress() {
 	        long elapsed = System.currentTimeMillis() - startTime;
-	        // Use config value for animation duration
-	        return Math.min(1.0f, elapsed / (float) SwordSwingConfig.animationDurationMs);
+	        // Use instance duration for animation
+	        return Math.min(1.0f, elapsed / (float) duration);
 	    }
 
 	    public boolean shouldRemove() {
@@ -427,6 +568,145 @@ public class BonePositionTracker {
 		createSlashModel(modelKey, entityId, animationName, entity, true, false, false, angle, false);
 	}
 
+	/**
+	 * Render a raw slash with full parameter control
+	 * @param modelKey The model to render
+	 * @param angle The angle of the slash axis (0=horizontal, 90=vertical, 180=flipped horizontal)
+	 * @param arcRange The arc range in degrees (default 180)
+	 * @param duration The animation duration in milliseconds (default 150)
+	 * @param yawOffset Additional yaw offset in degrees
+	 * @param pitchOffset Additional pitch offset in degrees
+	 * @param rollOffset Additional roll offset in degrees
+	 * @param radiusScaler Scales the distance from player to slash (default 1.0)
+	 * @param sizeScaler Scales the size of the slash model (default 1.0)
+	 * @param angleOffset Offset angle in degrees for positioning/spinning the slash (default 0)
+	 * @param entityId The entity UUID
+	 * @param animationName The animation name for tracking
+	 * @param entity The living entity
+	 */
+	public static void renderRawSlash(String modelKey, float angle, float arcRange, int duration,
+			float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse,
+			UUID entityId, String animationName, LivingEntity entity, Vec3 posOffset) {
+		// Create raw slash with full parameter control
+		createRawSlashModel(modelKey, entityId, animationName, entity,
+				angle, arcRange, duration, yawOffset, pitchOffset, rollOffset,
+				radiusScaler, sizeScaler, angleOffset, reverse, posOffset);
+	}
+
+	/**
+	 * Render a raw slash with default parameters
+	 * @param modelKey The model to render
+	 * @param angle The angle of the slash axis (0=horizontal, 90=vertical, 180=flipped horizontal)
+	 * @param entityId The entity UUID
+	 * @param animationName The animation name for tracking
+	 * @param entity The living entity
+	 */
+	public static void renderRawSlash(String modelKey, float angle,
+			UUID entityId, String animationName, LivingEntity entity, Vec3 posOffset) {
+		renderRawSlash(modelKey, angle, 180f, SwordSwingConfig.animationDurationMs,
+				0f, 0f, 0f, 1.0f, 1.0f, 0f, false, entityId, animationName, entity, posOffset);
+	}
+
+	/**
+	 * SERVER-SIDE ONLY: Send a raw slash render request to nearby clients
+	 * This is the simple method that breathing forms should call
+	 *
+	 * @param level The server level
+	 * @param modelKey The model to render
+	 * @param angle The angle of the slash axis (0=horizontal, 90=vertical, 180=flipped horizontal)
+	 * @param entityId The entity UUID
+	 * @param animationName The animation name for tracking
+	 */
+	public static void sendRawSlashToClients(net.minecraft.world.level.Level level, String modelKey, float angle, boolean reverse,
+			UUID entityId, String animationName, Vec3 posOffset) {
+		sendRawSlashToClients(level, posOffset, modelKey, angle, reverse, 180f, SwordSwingConfig.animationDurationMs,
+				0f, 0f, 0f, 1.0f, 1.0f, 0f, entityId, animationName);
+	}
+
+	/**
+	 * SERVER-SIDE ONLY: Send a raw slash render request to nearby clients (full parameters)
+	 */
+	public static void sendRawSlashToClients(net.minecraft.world.level.Level level, Vec3 pos, String modelKey, float angle, boolean reverse,
+			float arcRange, int duration, float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset,
+			UUID entityId, String animationName) {
+		if (level.isClientSide) return; // Only run on server
+
+		// Create and send packet to all nearby players
+		com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawSlashRenderPacket packet =
+			new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawSlashRenderPacket(
+				modelKey, angle, arcRange, duration, yawOffset, pitchOffset, rollOffset,
+				radiusScaler, sizeScaler, angleOffset, reverse, entityId, animationName, pos
+			);
+
+		com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(packet);
+	}
+
+	/**
+	 * SERVER-SIDE ONLY: Send a raw horizontal slash render request to nearby clients
+	 */
+	public static void sendRawHorizontalSlashToClients(net.minecraft.world.level.Level level, Vec3 posOffset, String modelKey, float vert, boolean reverse,
+			float arcRange, int duration, float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset,
+			UUID entityId, String animationName) {
+		if (level.isClientSide) return; // Only run on server
+
+		// Create and send packet to all nearby players
+		com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawHorizontalSlashRenderPacket packet =
+			new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawHorizontalSlashRenderPacket(
+				modelKey, vert, arcRange, duration, yawOffset, pitchOffset, rollOffset,
+				radiusScaler, sizeScaler, angleOffset, reverse, entityId, animationName, posOffset
+			);
+
+		com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(packet);
+	}
+
+	/**
+	 * SERVER-SIDE ONLY: Send a raw vertical slash render request to nearby clients
+	 */
+	public static void sendRawVerticalSlashToClients(net.minecraft.world.level.Level level, Vec3 posOffset, String modelKey, float vert, boolean reverse,
+			float arcRange, int duration, float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset,
+			UUID entityId, String animationName) {
+		if (level.isClientSide) return; // Only run on server
+
+		// Create and send packet to all nearby players
+		com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawVerticalSlashRenderPacket packet =
+			new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RawVerticalSlashRenderPacket(
+				modelKey, vert, arcRange, duration, yawOffset, pitchOffset, rollOffset,
+				radiusScaler, sizeScaler, angleOffset, reverse, entityId, animationName, posOffset
+			);
+
+		com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(packet);
+	}
+
+	/**
+	 * CLIENT-SIDE ONLY: Render a raw horizontal slash with full parameter control
+	 */
+	public static void renderRawHorizontalSlash(String modelKey, float vert, float arcRange, int duration,
+			float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse,
+			UUID entityId, String animationName, LivingEntity entity, Vec3 posOffset) {
+		// Create raw horizontal slash with full parameter control
+		createRawHorizontalSlashModel(modelKey, entityId, animationName, entity,
+				vert, arcRange, duration, yawOffset, pitchOffset, rollOffset,
+				radiusScaler, sizeScaler, angleOffset, reverse, posOffset);
+	}
+
+	/**
+	 * CLIENT-SIDE ONLY: Render a raw vertical slash with full parameter control
+	 */
+	public static void renderRawVerticalSlash(String modelKey, float vert, float arcRange, int duration,
+			float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse,
+			UUID entityId, String animationName, LivingEntity entity, Vec3 posOffset) {
+		// Create raw vertical slash with full parameter control
+		createRawVerticalSlashModel(modelKey, entityId, animationName, entity,
+				vert, arcRange, duration, yawOffset, pitchOffset, rollOffset,
+				radiusScaler, sizeScaler, angleOffset, reverse, posOffset);
+	}
+
 	private static void renderHorizontalSlashModel(ClientLevel level, Vec3 entityPos, double yawRad,
 			double entityHeight, float progress, String modelKey, boolean leftToRight,
 			UUID entityId, String animationName, LivingEntity entity) {
@@ -480,6 +760,60 @@ public class BonePositionTracker {
 		// Create new model - it will self-animate based on elapsed time
 		renderQueue.add(new SlashRenderRequest(modelKey, entityId, animationName, entity,
 				isHorizontal, isVertical, isSpin, leftToRight, upward));
+	}
+
+	private static void createRawSlashModel(String modelKey, UUID entityId, String animationName,
+			LivingEntity entity, float angle, float arcRange, int duration,
+			float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse, Vec3 posOffset) {
+
+		// Check if we already have a model for this entity+animation
+		for (SlashRenderRequest req : renderQueue) {
+			if (req.matches(entityId, animationName)) {
+				return; // Model already exists, don't create another
+			}
+		}
+
+		// Create new raw slash model with full parameter control
+		renderQueue.add(new SlashRenderRequest(modelKey, entityId, animationName, entity,
+				angle, arcRange, duration, yawOffset, pitchOffset, rollOffset,
+				radiusScaler, sizeScaler, angleOffset, reverse));
+	}
+
+	private static void createRawHorizontalSlashModel(String modelKey, UUID entityId, String animationName,
+			LivingEntity entity, float vert, float arcRange, int duration,
+			float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse, Vec3 posOffset) {
+
+		// Check if we already have a model for this entity+animation
+		for (SlashRenderRequest req : renderQueue) {
+			if (req.matches(entityId, animationName)) {
+				return; // Model already exists, don't create another
+			}
+		}
+
+		// Create new raw horizontal slash model with full parameter control
+		renderQueue.add(new SlashRenderRequest(modelKey, entityId, animationName, entity,
+				vert, arcRange, duration, yawOffset, pitchOffset, rollOffset,
+				radiusScaler, sizeScaler, angleOffset, reverse, posOffset));
+	}
+
+	private static void createRawVerticalSlashModel(String modelKey, UUID entityId, String animationName,
+			LivingEntity entity, float vert, float arcRange, int duration,
+			float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse, Vec3 posOffset) {
+
+		// Check if we already have a model for this entity+animation
+		for (SlashRenderRequest req : renderQueue) {
+			if (req.matches(entityId, animationName)) {
+				return; // Model already exists, don't create another
+			}
+		}
+
+		// Create new raw vertical slash model with full parameter control
+		renderQueue.add(new SlashRenderRequest(modelKey, entityId, animationName, entity,
+				0, true, arcRange, duration, yawOffset, pitchOffset, rollOffset,
+				radiusScaler, sizeScaler, angleOffset, reverse, posOffset, vert));
 	}
 
 	// Helper methods to calculate position based on animation type and progress
@@ -582,6 +916,189 @@ public class BonePositionTracker {
 		float modelYaw = (float) Math.toDegrees(rotateAngle) + (float) SwordSwingConfig.rotateYawOffset;
 		float modelPitch = 0f + (float)SwordSwingConfig.rotatePitch;
 		float modelRoll = 0f + (float)SwordSwingConfig.rotateRoll;
+
+		return new float[]{modelYaw, modelPitch, modelRoll};
+	}
+
+	public static Vec3 calculateRawSlashPosition(LivingEntity entity, float progress, SlashRenderRequest req) {
+		Vec3 entityPos = entity.position().add( req.posOffset);
+		float yaw = entity.getYRot();
+		double entityHeight = entity.getBbHeight();
+		double yawRad = Math.toRadians(yaw);
+
+		// Center height varies based on angle
+		// For horizontal slashes (angle~0), use 0.75
+		// For vertical slashes (angle~90), use 0.9
+		double angleRad = Math.toRadians(req.angle);
+		double centerY = entityHeight * (0.75 + 0.15 * Math.abs(Math.sin(angleRad)));
+
+		// Calculate arc progress using custom arc range
+		// Apply angleOffset to rotate the slash around the player
+		// Reverse flag flips the sweep direction (like leftToRight vs rightToLeft)
+		double effectiveProgress = req.reverse ? (1.0 - progress) : progress;
+		double arcAngle = effectiveProgress * req.arcRange + req.angleOffset;
+
+		// Base radius from config, scaled by radiusScaler
+		double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * req.radiusScaler;
+
+		// The angle parameter controls the tilt of the rotation axis
+		// angle=0: horizontal slash (rotating around vertical axis)
+		// angle=90: vertical slash (rotating around horizontal axis)
+		// angle=180: horizontal slash but flipped
+
+		// Calculate position in local space
+		// We rotate the arc position by the angle to tilt the slash plane
+		double arcRad = Math.toRadians(arcAngle);
+
+		// Base arc in horizontal plane
+		double baseX = radius * Math.cos(arcRad);
+		double baseZ = radius * Math.sin(arcRad);
+		double baseY = 0;
+
+		// Apply the angle tilt (rotate around the forward axis)
+		// This transforms horizontal slash → vertical slash as angle goes 0→90
+		double tiltedX = baseX;
+		double tiltedY = baseZ * Math.sin(angleRad);
+		double tiltedZ = baseZ * Math.cos(angleRad);
+
+		// Rotate to match player facing direction
+		double worldX = entityPos.x + (tiltedX * Math.cos(yawRad) - tiltedZ * Math.sin(yawRad));
+		double worldY = entityPos.y + centerY + tiltedY;
+		double worldZ = entityPos.z + (tiltedX * Math.sin(yawRad) + tiltedZ * Math.cos(yawRad));
+		
+		return new Vec3(worldX, worldY, worldZ);
+		
+		/*if (Math.abs(req.angle) < 45) {
+			double localX = radius * Math.cos(Math.toRadians(arcAngle)) * (req.reverse ? -1 : 1);
+			double localZ = radius * Math.sin(Math.toRadians(arcAngle));
+			double localY = (req.angle/45) * Math.sin(Math.toRadians(arcAngle - req.arcRange / 2));
+	
+			double worldX = entityPos.x + (localX * Math.cos(yawRad) - localZ * Math.sin(yawRad));
+			double worldY = entityPos.y + centerY + localY;
+			double worldZ = entityPos.z + (localX * Math.sin(yawRad) + localZ * Math.cos(yawRad));
+	
+			return new Vec3(worldX, worldY, worldZ);
+		}
+		else
+		{
+			//double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * (upward ? SwordSwingConfig.upperRadiusMult : SwordSwingConfig.overheadRadiusMult);
+			double localY = radius * Math.cos(Math.toRadians(arcAngle));
+			double localForward = radius * Math.sin(Math.toRadians(arcAngle));
+			double localRight = radius * ((90-req.angle%90)/45);
+
+			double worldX = entityPos.x + localForward * Math.cos(yawRad + Math.PI / 2) + localRight * Math.cos(yawRad);
+			double worldY = entityPos.y + centerY + localY * (req.reverse ? -1 : 1);
+			double worldZ = entityPos.z + localForward * Math.sin(yawRad + Math.PI / 2) + localRight * Math.sin(yawRad);
+			
+			return new Vec3(worldX, worldY, worldZ);
+		}*/
+	}
+
+	public static float[] calculateRawSlashRotation(LivingEntity entity, float progress, SlashRenderRequest req) {
+		float yaw = entity.getYRot();
+
+		// Calculate base rotation based on arc progress
+		// Reverse flag flips the sweep direction (like leftToRight vs rightToLeft)
+		double effectiveProgress = req.reverse ? (1.0 - progress) : progress;
+		double arcAngle = effectiveProgress * req.arcRange + req.angleOffset;
+
+		// The angle parameter controls the tilt of the slash plane
+		// angle=0: horizontal slash (yaw rotates, pitch=0)
+		// angle=90: vertical slash (yaw fixed, pitch rotates)
+		// angle=45: diagonal slash (both yaw and pitch rotate)
+
+		double angleRad = Math.toRadians(req.angle);
+		double arcRad = Math.toRadians(arcAngle);
+
+		// Decompose the arc rotation into yaw and pitch based on the angle
+		// For horizontal slashes (angle=0), arc affects yaw
+		// For vertical slashes (angle=90), arc affects pitch
+		float arcYawContribution = (float) (arcAngle * Math.cos(angleRad));
+		float arcPitchContribution = (float) (arcAngle * Math.sin(angleRad));
+
+		// Calculate final rotations
+		float modelYaw = yaw + arcYawContribution + req.yawOffset;
+		float modelPitch = arcPitchContribution + req.pitchOffset;
+		// angleOffset spins the slash around its own axis (added to roll)
+		float modelRoll = req.angle + req.rollOffset;
+
+		return new float[]{modelYaw, modelPitch, modelRoll};
+
+}
+	public static Vec3 calculateRawHorizontalPosition(LivingEntity entity, float progress, SlashRenderRequest req) {
+
+		Vec3 entityPos = entity.position().add(req.posOffset);
+		float yaw = entity.getYRot();
+		double entityHeight = entity.getBbHeight();
+		double yawRad = Math.toRadians(yaw);
+		double centerY = entityHeight * 0.75;
+
+		double totalArcDegrees = req.arcRange;
+		double arcAngle = progress * totalArcDegrees + (req.angleOffset);
+
+		double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * (req.radiusScaler);
+		double localX = radius * Math.cos(Math.toRadians(arcAngle)) * (req.reverse ? -1 : 1);
+		double localZ = radius * Math.sin(Math.toRadians(arcAngle));
+		double localY = (req.hor) * Math.sin(Math.toRadians(arcAngle - totalArcDegrees / 2));
+
+		double worldX = entityPos.x + (localX * Math.cos(yawRad) - localZ * Math.sin(yawRad));
+		double worldY = entityPos.y + centerY + localY;
+		double worldZ = entityPos.z + (localX * Math.sin(yawRad) + localZ * Math.cos(yawRad));
+
+		return new Vec3(worldX, worldY, worldZ);
+	}
+
+	public static float[] calculateRawHorizontalRotation(LivingEntity entity, float progress, SlashRenderRequest req) {
+		float yaw = entity.getYRot();
+		double totalArcDegrees = req.arcRange;
+		double arcAngle = progress * totalArcDegrees + (req.angleOffset);
+
+		// Model should rotate around the player as it sweeps
+		// Yaw rotates the model around the vertical axis to follow the arc
+		float modelYaw = yaw + (float) (arcAngle-90) * (req.reverse ? -1 : 1) + (float)(req.yawOffset);
+
+		// Pitch tilts the slash plane slightly for visual effect
+		float modelPitch = req.pitchOffset;
+
+		// Roll rotates the slash around its own forward axis
+		float modelRoll = req.rollOffset;
+
+		return new float[]{modelYaw, modelPitch, modelRoll};
+	}
+
+	public static Vec3 calculateRawVerticalPosition(LivingEntity entity, float progress, SlashRenderRequest req) {
+		Vec3 entityPos = entity.position().add(req.posOffset);
+		float yaw = entity.getYRot();
+		double entityHeight = entity.getBbHeight();
+		double yawRad = Math.toRadians(yaw);
+		double centerY = entityHeight * 0.9;
+		
+		double totalArcDegrees = req.arcRange;
+		double arcAngle = progress * totalArcDegrees + req.angleOffset + (req.reverse ? -20 : 0);
+		double arcAngleRad = Math.toRadians(arcAngle);
+
+		double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * req.radiusScaler;
+		double localY = radius * Math.cos(arcAngleRad);
+		double localForward = radius * Math.sin(arcAngleRad);
+		double localRight = radius * (req.vert*0.5) * Math.cos(arcAngleRad);
+
+		double worldX = entityPos.x + localForward * Math.cos(yawRad + Math.PI / 2) + localRight * Math.sin(yawRad + Math.PI / 2);
+		double worldY = entityPos.y + centerY + localY * (req.reverse ? -1 : 1);
+		double worldZ = entityPos.z + localForward * Math.sin(yawRad + Math.PI / 2) - localRight * Math.cos(yawRad + Math.PI / 2);
+
+		return new Vec3(worldX, worldY, worldZ);
+	}
+
+	public static float[] calculateRawVerticalRotation(LivingEntity entity, float progress, SlashRenderRequest req) {
+		
+		float yaw = entity.getYRot();
+		double totalArcDegrees = req.arcRange;
+		double arcAngle = progress * totalArcDegrees + req.angleOffset + (req.reverse ? -20 : 0);
+
+		// Model rotates around player in vertical plane
+		float modelYaw = yaw + (float)(req.yawOffset);
+		float modelPitch = (float) arcAngle * (req.reverse ? -1 : 1) + (float)(req.pitchOffset) + (req.reverse ? 90 : -90);
+		float modelRoll = (float)(-req.rollOffset)+90;
 
 		return new float[]{modelYaw, modelPitch, modelRoll};
 	}
