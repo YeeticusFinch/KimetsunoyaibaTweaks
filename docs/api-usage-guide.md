@@ -128,7 +128,7 @@ repositories {
 
 dependencies {
     implementation fg.deobf("curse.maven:demonslayer-471263:7151280")
-    implementation fg.deobf("maven.modrinth:kimetsunoyaiba-tweaks:1.6.29")
+    implementation fg.deobf("maven.modrinth:kimetsunoyaiba-tweaks:1.6.2999")
 }
 ```
 
