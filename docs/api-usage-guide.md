@@ -89,7 +89,7 @@ dependencies {
 
 ```properties
 # Always use the latest version from Modrinth
-kny_tweaks_version=1.6.21
+kny_tweaks_version=1.6.2999
 ```
 
 > **Important:** Check [Modrinth](https://modrinth.com/mod/kimetsunoyaiba-tweaks) for the latest version.
