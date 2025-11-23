@@ -13,6 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource.BufferSource;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
@@ -34,14 +35,17 @@ public class ClientRenderEvents {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES)
             return;
 
-        List<SlashRenderRequest> queue = BonePositionTracker.getRenderQueue();
-        if (queue.isEmpty())
-            return;
-
+        // Get common resources
         Minecraft mc = Minecraft.getInstance();
         PoseStack poseStack = event.getPoseStack();
         BufferSource bufferSource = mc.renderBuffers().bufferSource();
         Vec3 camera = event.getCamera().getPosition();
+
+        // Render slash models if any exist
+        List<SlashRenderRequest> queue = BonePositionTracker.getRenderQueue();
+        if (queue.isEmpty())
+            return;
+
         int packedLight = 0xF000F0;
 
         // Render all active slash models
@@ -105,5 +109,6 @@ public class ClientRenderEvents {
         // Remove old models (instead of clearing everything)
         queue.removeIf(req -> req.shouldRemove());
     }
-    
+
+
 }

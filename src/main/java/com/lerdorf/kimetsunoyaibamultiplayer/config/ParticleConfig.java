@@ -2,6 +2,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.config;
 
 import java.util.List;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
@@ -191,7 +193,7 @@ public class ParticleConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
-        System.out.println("PARTICLE CONFIG LOADING...");
+        Log.debug("PARTICLE CONFIG LOADING...");
         swordParticlesEnabled = SWORD_PARTICLES_ENABLED.get();
         swordParticlesForOtherEntities = SWORD_PARTICLES_FOR_OTHER_ENTITIES.get();
         particleTriggerMode = PARTICLE_TRIGGER_MODE.get();
@@ -211,11 +213,11 @@ public class ParticleConfig {
         List<? extends String> mappingStrings = PARTICLE_MAPPINGS.get();
         for (String mapping : mappingStrings) {
             try {
-                System.out.println("Parsing mapping: " + mapping);
+                Log.debug("Parsing mapping: " + mapping);
                 ParticleMapping parsed = parseParticleMapping(mapping);
                 if (parsed != null) {
                     particleMappings.put(parsed.itemId, parsed);
-                    System.out.println("Successfully added mapping: " + parsed.itemId + " -> " + parsed.particleType);
+                    Log.debug("Successfully added mapping: " + parsed.itemId + " -> " + parsed.particleType);
                 } else {
                     System.err.println("Failed to parse mapping (returned null): " + mapping);
                 }
@@ -224,7 +226,7 @@ public class ParticleConfig {
             }
         }
 
-        System.out.println("ParticleConfig loaded: particles=" + swordParticlesEnabled +
+        Log.debug("ParticleConfig loaded: particles=" + swordParticlesEnabled +
                          ", layers=" + radialLayers + ", stepsPerTick=" + particleStepsPerTick +
                          ", maxPerTick=" + maxParticlesPerTick + ", mappings=" + particleMappings.size());
     }
@@ -285,7 +287,7 @@ public class ParticleConfig {
             // Add to list if not already present
             if (!newMappings.contains(newMapping)) {
                 newMappings.add(newMapping);
-                System.out.println("Auto-added particle mapping to config: " + newMapping);
+                Log.debug("Auto-added particle mapping to config: " + newMapping);
 
                 // Update the config value
                 PARTICLE_MAPPINGS.set(newMappings);

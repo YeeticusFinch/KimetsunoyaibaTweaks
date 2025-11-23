@@ -1,0 +1,7 @@
+{
+	"parent": "kimetsunoyaibamultiplayer:custom/sword_sheath",
+	"textures": {
+		"0": "kimetsunoyaibamultiplayer:block/sword_sheath_rengoku",
+		"particle": "kimetsunoyaibamultiplayer:block/sword_sheath_rengoku"
+	}
+}

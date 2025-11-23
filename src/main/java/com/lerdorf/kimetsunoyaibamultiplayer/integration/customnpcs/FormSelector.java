@@ -1,5 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs;
-
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig;
 
 import net.minecraft.util.RandomSource;
@@ -125,7 +125,7 @@ public class FormSelector {
      * @param totalForms Total number of forms
      */
     public static void printWeightDistribution(int totalForms) {
-        System.out.println("[KnY Custom NPCs] Form Weight Distribution for " + totalForms + " forms:");
+        Log.debug("[KnY Custom NPCs] Form Weight Distribution for " + totalForms + " forms:");
 
         double totalWeight = 0.0;
         for (int i = 0; i < totalForms; i++) {

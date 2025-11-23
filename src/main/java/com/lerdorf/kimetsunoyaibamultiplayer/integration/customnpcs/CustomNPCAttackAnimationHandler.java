@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,11 +23,9 @@ public class CustomNPCAttackAnimationHandler {
     private static final ThreadLocal<Boolean> IS_PROCESSING = ThreadLocal.withInitial(() -> false);
 
     // Animation names for basic sword swings
-    private static final String[] SWORD_SWING_ANIMATIONS = {
-        "sword_to_left",
-        "sword_to_right",
-        "sword_overhead"
-    };
+    private static final String SWORD_TO_LEFT = "sword_to_left";
+    private static final String SWORD_TO_RIGHT = "sword_to_right";
+    private static final String SWORD_OVERHEAD = "sword_overhead";
 
     @SubscribeEvent(priority = EventPriority.LOW) // Lower priority than ability handler
     public static void onNPCAttack(LivingAttackEvent event) {
@@ -67,11 +66,20 @@ public class CustomNPCAttackAnimationHandler {
                 return;
             }
 
-            // Select random swing animation
-            String animationName = SWORD_SWING_ANIMATIONS[attacker.getRandom().nextInt(SWORD_SWING_ANIMATIONS.length)];
+            // Select weighted random swing animation
+            // 45% sword_to_left, 45% sword_to_right, 10% sword_overhead
+            String animationName;
+            double roll = attacker.getRandom().nextDouble();
+            if (roll < 0.45) {
+                animationName = SWORD_TO_LEFT;
+            } else if (roll < 0.90) {
+                animationName = SWORD_TO_RIGHT;
+            } else {
+                animationName = SWORD_OVERHEAD;
+            }
 
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] [Animation] Playing attack animation: " + animationName +
+                Log.debug("[KnY Custom NPCs] [Animation] Playing attack animation: " + animationName +
                                  " on NPC: " + attacker.getName().getString() + " (ID: " + attacker.getId() + ")");
             }
 
@@ -87,7 +95,7 @@ public class CustomNPCAttackAnimationHandler {
                 com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(packet);
 
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] [Animation] Sent animation packet to all clients");
+                    Log.debug("[KnY Custom NPCs] [Animation] Sent animation packet to all clients");
                 }
             } catch (Exception e) {
                 if (CustomNPCConfig.isDebugEnabled()) {

@@ -5,9 +5,15 @@
   "entity.kimetsunoyaibamultiplayer.komorebi": "Setsu Komorebi",
   "entity.kimetsunoyaibamultiplayer.shimizu": "Akira Shimizu",
   "entity.kimetsunoyaibamultiplayer.ghostly_clone": "Mist Apparition",
+  "entity.kimetsunoyaibamultiplayer.muichiro": "Muichiro Tokito",
 
   "item.kimetsunoyaibamultiplayer.nichirinsword_mist": "Nichirin Sword (Mist)",
   "item.kimetsunoyaibamultiplayer.nichirinsword_muichiro": "Nichirin Sword (Muichiro)",
+  "item.kimetsunoyaibamultiplayer.nichirinsword_kanroji": "Nichirin Sword (Kanroji)",
+  "item.kimetsunoyaibamultiplayer.muichiro_spawn_egg": "Muichiro Tokito Spawn Egg",
+  "item.kimetsunoyaibamultiplayer.sword_sheath": "Sword Sheath",
+  "item.kimetsunoyaibamultiplayer.sword_sheath_kanroji": "Kanroji Sword Sheath",
+  "item.kimetsunoyaibamultiplayer.sword_sheath_rengoku": "Rengoku Sword Sheath",
 
   "block.kimetsunoyaibamultiplayer.wisteria_log": "Wisteria Log",
   "block.kimetsunoyaibamultiplayer.stripped_wisteria_log": "Stripped Wisteria Log",

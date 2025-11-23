@@ -77,7 +77,9 @@ public class MistParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        // Use a translucent render type that does not write to depth buffer,
+        // so mist doesn't occlude other particles behind it.
+        return CustomParticleRenderTypes.TRANSLUCENT_NO_DEPTH;
     }
 
     @OnlyIn(Dist.CLIENT)

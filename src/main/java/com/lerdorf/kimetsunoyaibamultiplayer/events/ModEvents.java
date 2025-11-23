@@ -1,17 +1,37 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
+import com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidTriggerHandler;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber
 public class ModEvents {
+
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        Player player = event.getEntity();
+        // Load player's breathing form data from NBT
+        PlayerBreathingData.loadFromNBT(player);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        Player player = event.getEntity();
+        // Save player's breathing form data to NBT
+        PlayerBreathingData.saveToNBT(player);
+        // Clean up in-memory cache
+        PlayerBreathingData.clear(player.getUUID());
+    }
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
@@ -25,6 +45,14 @@ public class ModEvents {
 
         if (event.getSource().getEntity() instanceof LivingEntity) {
             source = (LivingEntity) event.getSource().getEntity();
+        }
+
+        // Don't apply omen effects if target is a raid entity or source is near a raid
+        if (RaidTriggerHandler.isRaidEntity(target)) {
+            return;
+        }
+        if (source instanceof Player && RaidTriggerHandler.isPlayerNearRaid((Player) source)) {
+            return;
         }
 
         // Check if the target was a demon slayer and the source is a demon

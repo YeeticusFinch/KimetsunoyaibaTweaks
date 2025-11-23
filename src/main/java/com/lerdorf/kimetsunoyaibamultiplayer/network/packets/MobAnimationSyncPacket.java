@@ -1,5 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
-
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.MobAnimationHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
@@ -60,12 +60,31 @@ public class MobAnimationSyncPacket {
             // Get the entity by ID
             Entity entity = mc.level.getEntity(entityId);
             if (entity == null || !(entity instanceof LivingEntity)) {
+                System.err.println("[MobAnimationSyncPacket] Client received packet but entity not found or not LivingEntity: id=" + entityId);
                 return;
             }
 
             LivingEntity livingEntity = (LivingEntity) entity;
 
             // Play animation using MobAnimationHelper
+            Log.debug("[MobAnimationSyncPacket] Client applying mob animation '" + animationName + "' to entity:");
+            Log.debug("  - Entity ID: " + entityId);
+            Log.debug("  - Entity Class: " + livingEntity.getClass().getName());
+            Log.debug("  - Entity Name: " + livingEntity.getName().getString());
+
+            // Try to get additional CustomNPC info
+            try {
+                Object displayObj = livingEntity.getClass().getMethod("getDisplay").invoke(livingEntity);
+                if (displayObj != null) {
+                    Object modelDataObj = displayObj.getClass().getMethod("getModel").invoke(displayObj);
+                    if (modelDataObj != null) {
+                        Log.debug("  - Model Data: " + modelDataObj.getClass().getSimpleName());
+                    }
+                }
+            } catch (Throwable ignored) {
+                // Not a CustomNPC or method doesn't exist
+            }
+
             MobAnimationHelper.playAnimationOnMob(livingEntity, animationName);
 
         } catch (Exception e) {

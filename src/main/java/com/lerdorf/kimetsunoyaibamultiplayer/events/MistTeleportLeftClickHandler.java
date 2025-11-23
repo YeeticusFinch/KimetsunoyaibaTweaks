@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.GhostlyCloneEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,7 +37,7 @@ public class MistTeleportLeftClickHandler {
     public static void onAttackEntity(AttackEntityEvent event) {
         Player player = event.getEntity();
         if (player instanceof ServerPlayer && player.getPersistentData().getBoolean("mist_7th_teleport_active")) {
-            System.out.println("[TELEPORT DEBUG] Attack entity triggered for " + player.getName().getString());
+            Log.debug("[TELEPORT DEBUG] Attack entity triggered for " + player.getName().getString());
             triggerCloneSwing(player);
             MistTeleportHandler.performSafeTeleport(player);
         }
@@ -49,7 +50,7 @@ public class MistTeleportLeftClickHandler {
     public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
         Player player = event.getEntity();
         if (player instanceof ServerPlayer && player.getPersistentData().getBoolean("mist_7th_teleport_active")) {
-            System.out.println("[TELEPORT DEBUG] Left click block triggered for " + player.getName().getString());
+            Log.debug("[TELEPORT DEBUG] Left click block triggered for " + player.getName().getString());
             triggerCloneSwing(player);
             MistTeleportHandler.performSafeTeleport(player);
         }
@@ -97,7 +98,7 @@ public class MistTeleportLeftClickHandler {
 
             Integer lastSwing = lastSwingTick.get(playerId);
             if (lastSwing == null || (currentTick - lastSwing) >= SWING_COOLDOWN) {
-                System.out.println("[TELEPORT DEBUG] Swing detected for " + player.getName().getString());
+                Log.debug("[TELEPORT DEBUG] Swing detected for " + player.getName().getString());
                 triggerCloneSwing(player);
                 MistTeleportHandler.performSafeTeleport(player);
                 lastSwingTick.put(playerId, currentTick);

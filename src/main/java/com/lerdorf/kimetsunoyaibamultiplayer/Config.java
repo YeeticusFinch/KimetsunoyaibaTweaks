@@ -55,6 +55,16 @@ public class Config
             .comment("Enable sword clashing system where attacks can be deflected or mitigated")
             .define("enable-sword-clashing", true);
 
+    private static final ForgeConfigSpec.BooleanValue ENABLE_NICHIRIN_SPRINT_ANIMATION = BUILDER
+            .comment("Enable custom sprint animation when holding a nichirin sword")
+            .define("enable-nichirin-sprint-animation", true);
+
+    // Networking / visuals radius
+    private static final ForgeConfigSpec.DoubleValue MOB_SLASH_BROADCAST_RANGE = BUILDER
+            .comment("Max distance in blocks to send mob sword slash packets to clients",
+                     "Lower to reduce network traffic; Default: 100")
+            .defineInRange("mob-slash-broadcast-range", 100.0, 8.0, 512.0);
+
     public enum DisplayPosition {
         TOP_LEFT,
         TOP_RIGHT,
@@ -79,6 +89,8 @@ public class Config
     public static double breathingDisplayScale;
     public static boolean suppressFormCycleChat;
     public static boolean enableSwordClashing;
+    public static boolean enableNichirinSprintAnimation;
+    public static double mobSlashBroadcastRange;
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event)
@@ -95,10 +107,13 @@ public class Config
         breathingDisplayScale = BREATHING_DISPLAY_SCALE.get();
         suppressFormCycleChat = SUPPRESS_FORM_CYCLE_CHAT.get();
         enableSwordClashing = ENABLE_SWORD_CLASHING.get();
+        enableNichirinSprintAnimation = ENABLE_NICHIRIN_SPRINT_ANIMATION.get();
+        mobSlashBroadcastRange = MOB_SLASH_BROADCAST_RANGE.get();
         if (Config.logDebug)
         System.out.println("Common config loaded: logDebug=" + logDebug + ", onScreenDebug=" + onScreenDebug +
                 ", showBreathingDisplay=" + showBreathingDisplay + ", breathingDisplayPosition=" + breathingDisplayPosition +
                 ", breathingDisplayScale=" + breathingDisplayScale + ", suppressFormCycleChat=" + suppressFormCycleChat +
-                ", enableSwordClashing=" + enableSwordClashing);
+                ", enableSwordClashing=" + enableSwordClashing + ", enableNichirinSprintAnimation=" + enableNichirinSprintAnimation +
+                ", mobSlashBroadcastRange=" + mobSlashBroadcastRange);
     }
 }

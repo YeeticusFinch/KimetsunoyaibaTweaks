@@ -1,6 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.config;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
@@ -155,18 +157,18 @@ public class SpawnRateConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
-        System.out.println("SPAWN RATE CONFIG LOADING...");
+        Log.debug("SPAWN RATE CONFIG LOADING...");
         // Update the cache when config is loaded
         updateCache();
-        System.out.println("Spawn rate config loaded successfully.");
+        Log.debug("Spawn rate config loaded successfully.");
     }
 
     @SubscribeEvent
     public static void onReload(final ModConfigEvent.Reloading event) {
-        System.out.println("SPAWN RATE CONFIG RELOADING...");
+        Log.debug("SPAWN RATE CONFIG RELOADING...");
         // Update the cache when config is reloaded
         updateCache();
-        System.out.println("Spawn rate config reloaded successfully.");
+        Log.debug("Spawn rate config reloaded successfully.");
     }
 
     private static void updateCache() {

@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -205,7 +206,7 @@ public class EntityReplacerHandler {
             event.setCanceled(true);
 
             if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                System.out.println("[Entity Replacer] Replaced " + entityTypeId + " with " + replacementId);
+                Log.debug("[Entity Replacer] Replaced " + entityTypeId + " with " + replacementId);
             }
 
         } catch (Exception e) {

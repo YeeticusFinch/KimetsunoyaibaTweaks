@@ -11,6 +11,7 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
+import net.minecraft.world.level.LightLayer;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -373,20 +374,25 @@ public class EnhancedSpawnRulesHandler {
      * Check if entity should be denied due to day/night restrictions
      */
     private static boolean shouldDenyByDayNight(Mob entity, Level level, BlockPos pos) {
-        // Generic demons don't spawn during the day (unless in specific biomes)
+        // Generic demons shouldn't spawn in direct sunlight during the day
         if (EntityTagHelper.isDemon(entity) && level.isDay()) {
-            // Check if in a biome that allows day spawning
+            // Mugen biome allows demons regardless of day/night
             ResourceLocation biomeId = EntityTagHelper.getCurrentBiome(entity);
-            if (biomeId == null) {
-                return true; // Deny if we can't determine biome
+            if (biomeId != null && biomeId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mugen_biome"))) {
+                return false;
             }
 
-            // Mugen biome allows demons during the day
-            if (biomeId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mugen_biome"))) {
-                return false; // Allow
+            // Allow in shade: under cover or low sky light
+            if (!level.canSeeSky(pos)) {
+                return false;
+            }
+            int sky = level.getBrightness(LightLayer.SKY, pos);
+            if (sky < 12) {
+                return false;
             }
 
-            return true; // Deny day spawning for demons
+            // Otherwise, deny daytime demon spawns
+            return true;
         }
 
         return false;

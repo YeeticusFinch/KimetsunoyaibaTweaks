@@ -165,7 +165,7 @@ public class AnimationSyncPacket {
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClientsExcept(relayPacket, sender);
 
                     if (Config.logDebug) {
-                        System.out.println("[DEBUG] Server relayed animation sync to all other clients (speed=" + speed + ", layer=" + layerPriority + ")");
+                        Log.debug("[DEBUG] Server relayed animation sync to all other clients (speed=" + speed + ", layer=" + layerPriority + ")");
                     }
                 }
             } else {

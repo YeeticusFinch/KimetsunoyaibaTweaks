@@ -250,8 +250,14 @@ public class BonePositionTracker {
 	 */
 	public static void spawnRadialRibbonParticles(LivingEntity entity, net.minecraft.world.item.ItemStack swordItem,
 			String animationName, int animationTick, ParticleOptions particleType) {
-		System.out.println("spawnRadialRibbonParticles called: entity=" + entity + ", anim=" + animationName + ", tick="
+		Log.debug("spawnRadialRibbonParticles called: entity=" + entity + ", anim=" + animationName + ", tick="
 				+ animationTick);
+
+		// TEMP: Skip sword swing models/particles for Kanroji sword (uses GeckoLib bone-based rendering instead)
+		if (swordItem != null && swordItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated) {
+			Log.debug("Early return: Kanroji sword uses GeckoLib bone-based rendering");
+			return;
+		}
 
 		// Reset particle counter at start of each animation call
 		particlesSpawnedThisTick = 0;
@@ -265,7 +271,7 @@ public class BonePositionTracker {
 
 			// If this is a new animation or there's been a gap, ensure we show particles
 			if (lastTime == null || (currentTime - lastTime) > 5) {
-				System.out.println("New animation detected or gap found, ensuring particles show");
+				Log.debug("New animation detected or gap found, ensuring particles show");
 				// For rapid swings, force progress to show complete arc
 				if (animationTick == -1) {
 					animationTick = 0; // Convert to tick-based for consistent timing
@@ -275,27 +281,27 @@ public class BonePositionTracker {
 		}
 
 		if (entity == null || animationName == null || particleType == null) {
-			System.out.println("Early return: null parameters");
+			Log.debug("Early return: null parameters");
 			return;
 		}
 
 		// Minecraft mc = Minecraft.getInstance();
 		ClientLevel level = mc.level;
 		if (level == null) {
-			System.out.println("Early return: null level");
+			Log.debug("Early return: null level");
 			return;
 		}
 
 		// Check if 3D sword slash models should be used instead of particles
 		if (SwordSwingConfig.useSwordSwingModel) {
-			System.out.println("Using 3D sword slash model rendering");
+			Log.debug("Using 3D sword slash model rendering");
 			float progress = getAnimationProgress(entity, animationTick);
 			spawnModelForAnimation(level, entity, swordItem, animationName, progress);
 			return; // Skip particle rendering
 		}
 
 		float progress = getAnimationProgress(entity, animationTick);
-		System.out.println("Animation progress: " + progress + ", spawning particles...");
+		Log.debug("Animation progress: " + progress + ", spawning particles...");
 		spawnRadialRibbonForAnimation(level, entity, animationName, progress, particleType);
 	}
 
@@ -406,7 +412,7 @@ public class BonePositionTracker {
 						if (ParticleConfig.maxParticlesPerTick > 0
 								&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
 							break;
-						//System.out.println("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
+						//Log.debug("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
 						level.addParticle(particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
 						incrementParticleCount();
 					}
@@ -450,7 +456,7 @@ public class BonePositionTracker {
 						if (ParticleConfig.maxParticlesPerTick > 0
 								&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
 							break;
-						//System.out.println("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
+						//Log.debug("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
 						level.addParticle(particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
 						incrementParticleCount();
 					}
@@ -489,7 +495,7 @@ public class BonePositionTracker {
 						if (ParticleConfig.maxParticlesPerTick > 0
 								&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
 							break;
-						//System.out.println("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
+						//Log.debug("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
 						level.addParticle(particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
 						incrementParticleCount();
 					}
@@ -734,6 +740,8 @@ public class BonePositionTracker {
 	private static void createSlashModel(String modelKey, UUID entityId, String animationName,
 			LivingEntity entity, boolean isHorizontal, boolean isVertical, boolean isSpin,
 			float angle, boolean upward) {
+		// All swords now use slash models (old whip rendering removed)
+
 		// Check if we already have a model for this entity+animation
 				for (SlashRenderRequest req : renderQueue) {
 					if (req.matches(entityId, animationName)) {
@@ -749,6 +757,8 @@ public class BonePositionTracker {
 	private static void createSlashModel(String modelKey, UUID entityId, String animationName,
 			LivingEntity entity, boolean isHorizontal, boolean isVertical, boolean isSpin,
 			boolean leftToRight, boolean upward) {
+
+		// All swords now use slash models (old whip rendering removed)
 
 		// Check if we already have a model for this entity+animation
 		for (SlashRenderRequest req : renderQueue) {
@@ -766,6 +776,8 @@ public class BonePositionTracker {
 			LivingEntity entity, float angle, float arcRange, int duration,
 			float yawOffset, float pitchOffset, float rollOffset,
 			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse, Vec3 posOffset) {
+
+		// All swords now use slash models (old whip rendering removed)
 
 		// Check if we already have a model for this entity+animation
 		for (SlashRenderRequest req : renderQueue) {
@@ -785,6 +797,8 @@ public class BonePositionTracker {
 			float yawOffset, float pitchOffset, float rollOffset,
 			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse, Vec3 posOffset) {
 
+		// All swords now use slash models (old whip rendering removed)
+
 		// Check if we already have a model for this entity+animation
 		for (SlashRenderRequest req : renderQueue) {
 			if (req.matches(entityId, animationName)) {
@@ -802,6 +816,8 @@ public class BonePositionTracker {
 			LivingEntity entity, float vert, float arcRange, int duration,
 			float yawOffset, float pitchOffset, float rollOffset,
 			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse, Vec3 posOffset) {
+
+		// All swords now use slash models (old whip rendering removed)
 
 		// Check if we already have a model for this entity+animation
 		for (SlashRenderRequest req : renderQueue) {

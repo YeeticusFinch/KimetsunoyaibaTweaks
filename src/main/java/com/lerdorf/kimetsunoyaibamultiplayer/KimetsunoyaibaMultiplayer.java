@@ -33,6 +33,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -89,7 +90,8 @@ public class KimetsunoyaibaMultiplayer
 
         // Register items
         ModItems.register(modEventBus);
-
+        com.lerdorf.kimetsunoyaibamultiplayer.items.SheathItems.register(modEventBus);
+        
         // Register effects
         ModEffects.register(modEventBus);
 
@@ -140,7 +142,7 @@ public class KimetsunoyaibaMultiplayer
         ModNetworking.register();
         Log.info("Network messages registered");
         
-        GeckoLib.initialize();
+        // GeckoLib initialization moved to client setup to avoid early shader reload issues
 
         // Register our built-in swords in the SwordRegistry (must be done after items are registered)
         event.enqueueWork(() -> {
@@ -172,6 +174,17 @@ public class KimetsunoyaibaMultiplayer
                 null
             );
 
+            // Register Mitsuri Kanroji's Love Breathing sword (special, whip sword with 5 forms)
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                "nichirinsword_kanroji",
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KANROJI.get(),
+                "love_breathing",
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
+                ParticleTypes.HEART,
+                SoundEvents.AMETHYST_BLOCK_CHIME,
+                null
+            );
+
             // Register breathing styles if not already registered
             if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("mist_breathing")) {
                 com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
@@ -191,6 +204,17 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedMistForms.createMuichiroMistBreathing(),
                     20000,
                     mistParticle,
+                    null
+                );
+            }
+
+            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("love_breathing")) {
+                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
+                    "love_breathing",
+                    "Love Breathing",
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms.createLoveBreathing(),
+                    21000,
+                    ParticleTypes.HEART,
                     null
                 );
             }
@@ -328,7 +352,14 @@ public class KimetsunoyaibaMultiplayer
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event)
         {
-        	if (Config.logDebug)
+            // Initialize GeckoLib on client side during client setup
+            try {
+                GeckoLib.initialize();
+            } catch (Throwable t) {
+                if (Config.logDebug)
+                Log.error("Failed GeckoLib.initialize on client setup: {}", t.getMessage());
+            }
+		if (Config.logDebug)
             Log.info("Animation sync system initialized for client");
         }
         
@@ -343,6 +374,16 @@ public class KimetsunoyaibaMultiplayer
             event.registerSpriteSet(
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.SMALL_MIST_PARTICLE.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.particles.SmallMistParticle.Provider::new
+            );
+
+            event.registerSpriteSet(
+                com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.LOVE_IMPACT.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.LoveImpactParticle.Provider::new
+            );
+
+            event.registerSpriteSet(
+                com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.LOVE_SLASH.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.LoveSlashParticle.Provider::new
             );
         }
 
@@ -363,6 +404,16 @@ public class KimetsunoyaibaMultiplayer
 
             if (Config.logDebug)
             Log.info("Registered entity renderers");
+        }
+
+        @SubscribeEvent
+        public static void registerAdditionalModels(net.minecraftforge.client.event.ModelEvent.RegisterAdditional event)
+        {
+            // Register the static GUI model for Kanroji sword
+            event.register(new net.minecraft.resources.ResourceLocation(MODID, "item/kanroji_sword_static"));
+
+            if (Config.logDebug)
+            Log.info("Registered additional models (kanroji_sword_static)");
         }
     }
 
@@ -389,6 +440,8 @@ public class KimetsunoyaibaMultiplayer
                 }
                 com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.tick();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.IdleWalkAnimationHandler.tick();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.SprintAnimationHandler.tick();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.KanrojiSwordAnimationHandler.tick();
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandlerClient.clientTick();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.tick();
 

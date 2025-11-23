@@ -310,16 +310,13 @@ public class GunAnimationHandler {
             return;
         }
 
-        // With mobplayeranimator, PlayerAnimationAccess.getPlayerAnimLayer() works with any LivingEntity
-        // However, at compile time it still requires AbstractClientPlayer, so we use reflection
+        // MobPlayerAnimator injects getAnimationStack() method into all Mob entities via mixin
+        // Since IAnimatedPlayer interface doesn't exist at compile time, use reflection
         try {
-            // Try to get the animation layer using reflection to bypass compile-time type checking
-            // mobplayeranimator adds support for LivingEntity at runtime
-            java.lang.reflect.Method method = PlayerAnimationAccess.class.getMethod("getPlayerAnimLayer", LivingEntity.class);
-            Object animationStackObj = method.invoke(null, entity);
+            java.lang.reflect.Method getAnimStackMethod = entity.getClass().getMethod("getAnimationStack");
+            Object animationStackObj = getAnimStackMethod.invoke(entity);
 
-            if (animationStackObj != null && animationStackObj instanceof AnimationStack) {
-                // Cast to AnimationStack and add the animation
+            if (animationStackObj instanceof AnimationStack) {
                 AnimationStack animationStack = (AnimationStack) animationStackObj;
                 animationStack.addAnimLayer(1000, new KeyframeAnimationPlayer(animation));
 
@@ -327,12 +324,11 @@ public class GunAnimationHandler {
                     Log.info("Playing gun animation for mob {}: {}", entity.getName().getString(), animationName);
                 }
             } else if (Config.logDebug) {
-                Log.debug("No animation stack available for entity: {}", entity.getName().getString());
+                Log.debug("getAnimationStack() returned null or wrong type for entity: {}", entity.getName().getString());
             }
         } catch (NoSuchMethodException e) {
-            // mobplayeranimator not present or wrong version
             if (Config.logDebug) {
-                Log.debug("mobplayeranimator not available - cannot animate mobs");
+                Log.debug("Entity does not have getAnimationStack() method (MobPlayerAnimator not loaded or entity is not a Mob): {}", entity.getName().getString());
             }
         } catch (Exception e) {
             if (Config.logDebug) {

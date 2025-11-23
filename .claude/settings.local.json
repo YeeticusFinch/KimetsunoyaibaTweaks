@@ -13,7 +13,21 @@
       "Bash(then echo \"File exists\")",
       "Bash(else echo \"File does NOT exist\")",
       "Bash(fi)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(python -c:*)",
+      "Bash(jar -tf:*)",
+      "Bash(javap:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(jar -xf:*)",
+      "Bash(nul)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(python check_texture.py:*)",
+      "Bash(gradlew.bat clean:*)",
+      "Bash(fc /b \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\src\\main\\resources\\assets\\kimetsunoyaibamultiplayer\\textures\\entity\\sword_slash_sound.png\" \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\build\\resources\\main\\assets\\kimetsunoyaibamultiplayer\\textures\\entity\\sword_slash_sound.png\")",
+      "Bash(python fix_sound_transparency.py:*)",
+      "Bash(./gradlew.bat compileJava:*)"
     ],
     "deny": [],
     "ask": []

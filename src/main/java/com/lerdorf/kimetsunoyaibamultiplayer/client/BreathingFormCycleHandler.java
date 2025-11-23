@@ -61,30 +61,56 @@ public class BreathingFormCycleHandler {
             return;
         }
 
-        // Check if player has a breathing form active
-        if (player.getPersistentData().getDouble("breathes") == 0.0) {
-            return;
-        }
+        // Check if this is a custom breathing sword (our API)
+        boolean isCustomBreathingSword = heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 
-        // Check if shift is held for backward cycling
-        boolean shiftHeld = mc.options.keyShift.isDown();
+        // For custom breathing swords, we handle ALL cycling (both forward and backward)
+        // For base mod swords, only handle backward cycling
+        if (isCustomBreathingSword) {
+            // Custom breathing sword - send packet to server for BOTH directions
+            boolean shiftHeld = mc.options.keyShift.isDown();
 
-        if (shiftHeld) {
-            // Backward cycling with Shift+R
-            if (Config.logDebug) {
-                Log.debug("Shift+R pressed - cycling backward");
+            if (shiftHeld) {
+                // Backward cycling
+                if (Config.logDebug) {
+                    Log.debug("Shift+R pressed on custom sword - cycling backward");
+                }
+                ModNetworking.sendToServer(new CycleBreathingFormPacket(-1));
+                handledShiftR = true;
+            } else {
+                // Forward cycling
+                if (Config.logDebug) {
+                    Log.debug("R pressed on custom sword - cycling forward");
+                }
+                ModNetworking.sendToServer(new CycleBreathingFormPacket(1));
+                handledShiftR = false;
             }
-
-            // Send packet to server to cycle backward TWICE (once to go back, once to counteract kimetsunoyaiba's forward)
-            ModNetworking.sendToServer(new CycleBreathingFormPacket(-2)); // -2 = backward twice
-
-            handledShiftR = true;
         } else {
-            // Forward cycling with R - let kimetsunoyaiba mod handle it normally
-            if (Config.logDebug) {
-                Log.debug("R pressed - cycling forward (handled by kimetsunoyaiba mod)");
+            // Base mod sword - check if player has a breathing form active
+            if (player.getPersistentData().getDouble("breathes") == 0.0) {
+                return;
             }
-            handledShiftR = false;
+
+            // Check if shift is held for backward cycling
+            boolean shiftHeld = mc.options.keyShift.isDown();
+
+            if (shiftHeld) {
+                // Backward cycling with Shift+R
+                if (Config.logDebug) {
+                    Log.debug("Shift+R pressed on base mod sword - cycling backward");
+                }
+
+                // Send packet to server to cycle backward TWICE (once to go back, once to counteract kimetsunoyaiba's forward)
+                ModNetworking.sendToServer(new CycleBreathingFormPacket(-2)); // -2 = backward twice
+
+                handledShiftR = true;
+            } else {
+                // Forward cycling with R - let kimetsunoyaiba mod handle it normally
+                if (Config.logDebug) {
+                    Log.debug("R pressed on base mod sword - letting base mod handle it");
+                }
+                handledShiftR = false;
+            }
         }
     }
 

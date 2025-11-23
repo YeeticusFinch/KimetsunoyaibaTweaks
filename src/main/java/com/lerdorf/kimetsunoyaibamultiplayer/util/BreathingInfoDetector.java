@@ -196,9 +196,9 @@ public class BreathingInfoDetector {
             return null;
         }
 
-        // Get player's breathing data
+        // Get player's breathing data (this will load from NBT if on server)
         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
-            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player);
 
         // Get current form index and form object
         int formIndex = data.getCurrentFormIndex();

@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -128,6 +129,9 @@ public class Damager {
 	 * Checks if one entity is angry at (targeting) another entity.
 	 * This is useful for determining if a mob is hostile towards a specific entity.
 	 *
+	 * REDUNDANCY: Also checks damage history as a fallback. If the entities have
+	 * recently damaged each other, they are considered to be in combat.
+	 *
 	 * @param entity The entity that might be angry
 	 * @param target The entity that might be targeted
 	 * @return true if entity is targeting target, false otherwise
@@ -152,8 +156,16 @@ public class Damager {
 			// The entity is targeting something, but we need to verify it's the right target
 			// This is a heuristic - in the original mod, cnt_target > 6 means active targeting
 			if (entity instanceof Mob mob) {
-				return mob.getTarget() != null && mob.getTarget().equals(target);
+				if (mob.getTarget() != null && mob.getTarget().equals(target)) {
+					return true;
+				}
 			}
+		}
+
+		// REDUNDANCY CHECK: Check damage history
+		// If these entities have recently damaged each other, they are in combat
+		if (DamageTracker.hasDamageHistory(entity, target)) {
+			return true;
 		}
 
 		return false;
@@ -220,6 +232,11 @@ public class Damager {
 	/**
 	 * Applies damage from a source entity to a target entity.
 	 *
+	 * REDUNDANCY: Uses multiple checks to determine if demon slayers should damage each other:
+	 * 1. Traditional isAngry() check (mob targeting)
+	 * 2. Damage history tracking (30-second window)
+	 * 3. If either indicates they are in combat, damage is allowed
+	 *
 	 * @param source The entity dealing the damage
 	 * @param target The entity receiving the damage
 	 * @param damage The amount of damage to deal
@@ -228,15 +245,25 @@ public class Damager {
 		if (source == null || target == null) {
 			return;
 		}
+
 		if (isDemonSlayer(source) && isDemonSlayer(target)) {
 			// Demon slayers shouldn't damage other demon slayers with their abilities by accident
-			if (isAngry(source, target)) {
-				// But if they are already fighting, then they can damage eachother just fine
+
+			// REDUNDANCY: Check both traditional anger detection AND damage history
+			boolean traditionallyAngry = isAngry(source, target);
+			boolean hasRecentCombat = DamageTracker.hasDamageHistory(source, target);
+
+			// If either check indicates combat, allow damage
+			if (traditionallyAngry || hasRecentCombat) {
+				// They are fighting - damage is allowed
+				target.hurt(DamageCalculator.getDamageSource(source), damage);
 			} else {
+				// Not in combat - prevent friendly fire
 				return;
 			}
+		} else {
+			// Not both demon slayers - apply damage normally
+			target.hurt(DamageCalculator.getDamageSource(source), damage);
 		}
-		
-		target.hurt(DamageCalculator.getDamageSource(source), damage);
 	}
 }

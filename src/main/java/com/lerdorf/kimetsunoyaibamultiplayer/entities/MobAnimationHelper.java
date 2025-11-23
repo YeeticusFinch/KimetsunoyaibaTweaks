@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+
 import dev.kosmx.playerAnim.api.layered.IAnimation;
 import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
 import dev.kosmx.playerAnim.api.layered.ModifierLayer;
@@ -27,35 +29,73 @@ public class MobAnimationHelper {
             return; // Only run on client
         }
 
-        // Parse animation name into ResourceLocation
+        // Parse animation name into ResourceLocation and resolve from registry
         ResourceLocation animLocation = parseAnimationName(animationName);
-
-        // Get animation from registry
         KeyframeAnimation animation = findAnimation(animLocation);
         if (animation == null) {
             System.err.println("[MobAnimationHelper] Animation not found: " + animLocation);
             return;
         }
 
+        // Prefer PlayerAnimator's entity-layer access if available (MobPlayerAnimator exposes this)
+        // Fallback to legacy getAnimationStack mixin if present on the entity class.
         try {
-            // Mob Player Animator makes PlayerAnimationAccess work with any LivingEntity
-            // We need to cast to Object first to bypass Java's type checking,
-            // then Mob Player Animator's runtime magic makes it work
-            @SuppressWarnings("unchecked")
-            var animationContainer = PlayerAnimationAccess.getPlayerAnimLayer((net.minecraft.client.player.AbstractClientPlayer)(Object)entity);
+            Object animationStackObj = null;
 
-            if (animationContainer != null) {
-                // Remove any existing animation on default layer
-                animationContainer.removeLayer(3000);
+            // Attempt: PlayerAnimationAccess.getPlayerAnimLayer(LivingEntity)
+            boolean usedEntityLayerApi = false;
+            try {
+                java.lang.reflect.Method entityLayerMethod =
+                        dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess.class
+                                .getMethod("getPlayerAnimLayer", net.minecraft.world.entity.LivingEntity.class);
+                animationStackObj = entityLayerMethod.invoke(null, entity);
+                usedEntityLayerApi = (animationStackObj != null);
+                if (usedEntityLayerApi) {
+                    Log.debug("[MobAnimationHelper] [DEBUG] Found animation stack via entity-layer API");
+                }
+            } catch (Throwable e) {
+                Log.debug("[MobAnimationHelper] [DEBUG] Entity-layer API not available: " + e.getClass().getSimpleName());
+            }
+
+            if (animationStackObj == null) {
+                // Fallback: entity.getAnimationStack() provided by MobPlayerAnimator mixin
+                try {
+                    java.lang.reflect.Method getAnimStackMethod = entity.getClass().getMethod("getAnimationStack");
+                    animationStackObj = getAnimStackMethod.invoke(entity);
+                    if (animationStackObj != null) {
+                        Log.debug("[MobAnimationHelper] Using mixin getAnimationStack() for entity: " + entity.getClass().getName());
+                    } else {
+                        System.err.println("[MobAnimationHelper] [DEBUG] getAnimationStack() returned null for: " + entity.getClass().getName());
+                    }
+                } catch (NoSuchMethodException e) {
+                    System.err.println("[MobAnimationHelper] [DEBUG] No getAnimationStack() method on: " + entity.getClass().getName());
+                } catch (Throwable e) {
+                    System.err.println("[MobAnimationHelper] [DEBUG] Error invoking getAnimationStack(): " + e.getMessage());
+                }
+            }
+
+            if (animationStackObj instanceof dev.kosmx.playerAnim.api.layered.AnimationStack animationStack) {
+                // Remove any existing animation on our mob layer (1000)
+                animationStack.removeLayer(1000);
 
                 // Create and add new animation
                 KeyframeAnimationPlayer animPlayer = new KeyframeAnimationPlayer(animation);
                 ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
                 modifierLayer.setAnimation(animPlayer);
-                animationContainer.addAnimLayer(3000, modifierLayer);
+                animationStack.addAnimLayer(1000, modifierLayer);
+
+                if (usedEntityLayerApi) {
+                    Log.debug("[MobAnimationHelper] Applied animation via entity-layer API to: " + entity.getName().getString());
+                }
+                Log.debug("[MobAnimationHelper] [DEBUG] Successfully added animation to stack");
+            } else {
+                System.err.println("[MobAnimationHelper] No compatible animation layer on entity: " + entity.getClass().getName());
+                System.err.println("[MobAnimationHelper] [DEBUG] animationStackObj type: " +
+                    (animationStackObj != null ? animationStackObj.getClass().getName() : "null"));
             }
         } catch (Exception e) {
             System.err.println("[MobAnimationHelper] Failed to play animation on mob: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -80,6 +120,7 @@ public class MobAnimationHelper {
             String[] parts = animationName.split(":", 2);
             return ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
         }
+        // Default without namespace; the finder will try multiple namespaces
         return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", animationName);
     }
 
@@ -90,9 +131,12 @@ public class MobAnimationHelper {
             return anim;
         }
 
-        // Try alternative namespaces
+        // Try alternative namespaces (order matters)
         String path = animationLocation.getPath();
         ResourceLocation[] alternativeLocations = {
+            // Mod’s own namespace first, then base mod, then playeranimator/minecraft, then base mod subpath
+            ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", path),
+            ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", path),
             ResourceLocation.fromNamespaceAndPath("playeranimator", path),
             ResourceLocation.fromNamespaceAndPath("minecraft", path),
             ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "animations/" + path)

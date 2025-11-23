@@ -40,6 +40,10 @@ public class RaidConfig {
     public static ForgeConfigSpec.BooleanValue enableOmenPotionRewards;
     public static ForgeConfigSpec.DoubleValue omenPotionSameLevelChance;
 
+    // Entity restrictions
+    public static ForgeConfigSpec.BooleanValue disableYoriichiInRaids;
+    public static ForgeConfigSpec.BooleanValue disableYoriichiOldInRaids;
+
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
@@ -118,6 +122,21 @@ public class RaidConfig {
         omenPotionSameLevelChance = builder
             .comment("Chance to receive same level omen potion (vs +1 level)")
             .defineInRange("omen_potion_same_level_chance", 0.5, 0.0, 1.0);
+
+        builder.pop();
+
+        // Entity restrictions
+        builder.comment("Entity Restrictions")
+            .comment("Disable specific powerful entities from spawning in raids")
+            .push("entity_restrictions");
+
+        disableYoriichiInRaids = builder
+            .comment("Disable Yoriichi from spawning in demon slayer raids")
+            .define("disable_yoriichi", false);
+
+        disableYoriichiOldInRaids = builder
+            .comment("Disable Old Yoriichi from spawning in demon slayer raids")
+            .define("disable_yoriichi_old", false);
 
         builder.pop();
 

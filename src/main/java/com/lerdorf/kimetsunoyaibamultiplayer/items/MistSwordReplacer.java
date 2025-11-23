@@ -1,5 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.items;
-
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -74,12 +74,12 @@ public class MistSwordReplacer {
             if (itemId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "nichirinsword_mist"))) {
                 // Replace with our generic mist sword
                 replacement = new ItemStack(ModItems.NICHIRINSWORD_MIST.get());
-                System.out.println("[Mist Sword Replacer] Replacing kimetsunoyaiba:nichirinsword_mist with our mist sword for " + player.getName().getString());
+                Log.debug("[Mist Sword Replacer] Replacing kimetsunoyaiba:nichirinsword_mist with our mist sword for " + player.getName().getString());
 
             } else if (itemId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "nichirinsword_tokito"))) {
                 // Replace with Muichiro's sword
                 replacement = new ItemStack(ModItems.NICHIRINSWORD_MUICHIRO.get());
-                System.out.println("[Mist Sword Replacer] Replacing kimetsunoyaiba:nichirinsword_tokito with Muichiro's sword for " + player.getName().getString());
+                Log.debug("[Mist Sword Replacer] Replacing kimetsunoyaiba:nichirinsword_tokito with Muichiro's sword for " + player.getName().getString());
             }
 
             if (replacement != null) {
@@ -97,7 +97,7 @@ public class MistSwordReplacer {
                 // Replace in inventory
                 player.getInventory().setItem(i, replacement);
 
-                System.out.println("[Mist Sword Replacer] Replacement successful in slot " + i);
+                Log.debug("[Mist Sword Replacer] Replacement successful in slot " + i);
             }
         }
     }

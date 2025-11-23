@@ -10,10 +10,12 @@ import java.util.function.Supplier;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
-// import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler; // REMOVED: Client-only, unused
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import net.minecraft.resources.ResourceLocation;
@@ -34,7 +36,8 @@ public class BreathingSwordSwingPacket {
     public BreathingSwordSwingPacket(FriendlyByteBuf buf) {}
     public void toBytes(FriendlyByteBuf buf) {}
 
-    float boxSize = 5f;
+    private static final float DEFAULT_BOX_SIZE = 5f;
+    private static final float KANROJI_BOX_SIZE = 10f; // Increased range for Kanroji's whip sword
     
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context ctx = supplier.get();
@@ -65,6 +68,10 @@ public class BreathingSwordSwingPacket {
                 10
             );
 
+            // Determine box size based on sword type
+            boolean isKanrojiSword = heldItem.getItem() instanceof NichirinSwordKanrojiAnimated;
+            float boxSize = isKanrojiSword ? KANROJI_BOX_SIZE : DEFAULT_BOX_SIZE;
+
             // Perform AOE
             Vec3 attackerPos = player.position().add(0, player.getEyeHeight(), 0);
             Vec3 lookVec = player.getLookAngle().normalize();
@@ -76,23 +83,35 @@ public class BreathingSwordSwingPacket {
                 LivingEntity.class, attackBox,
                 e -> e != player && e.isAlive()
             );
-            
+
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                     SoundSource.PLAYERS, 1.0F, 1.0F);
 
             float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
             for (LivingEntity target : targets) {
-                //target.hurt(player.level().damageSources().playerAttack(player), damage);
+                // Use smart targeting system to prevent friendly fire
+                if (!EnhancedLoveForms.isTargetable(player, target)) {
+                    continue; // Skip non-targetable entities
+                }
+
                 Damager.hurt(player, target, damage);
-                /*if (player.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                        target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
-                        1, 0, 0, 0, 0);
-                }*/
+
+                // Spawn love_slash particle on hit for Kanroji sword
+                if (isKanrojiSword && player.level() instanceof ServerLevel serverLevel) {
+                    double particleX = target.getX() + target.getBbHeight() * (Math.random() - 0.5);
+                    double particleY = target.getY() + target.getBbHeight() * Math.random();
+                    double particleZ = target.getZ() + target.getBbHeight() * (Math.random() - 0.5);
+                    serverLevel.sendParticles(
+                        ModParticles.LOVE_SLASH.get(),
+                        particleX, particleY, particleZ,
+                        1, 0, 0, 0, 0
+                    );
+                }
             }
-            
+
             if (Config.logDebug && !targets.isEmpty()) {
-                Log.debug("AOE attack hit {} additional entities", targets.size());
+                Log.debug("AOE attack hit {} entities (boxSize={}, isKanroji={})",
+                    targets.size(), boxSize, isKanrojiSword);
             }
         });
         ctx.setPacketHandled(true);

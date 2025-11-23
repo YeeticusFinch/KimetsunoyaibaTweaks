@@ -1,5 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors;
-
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.FormSelector;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.NPCCooldownManager;
@@ -88,17 +88,25 @@ public class BloodDemonArtExecutor {
         try {
             // Get demon art from item
             String demonArt = getDemonArtFromItem(item);
+            boolean genericBda = false;
             if (demonArt == null) {
-                if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] Unknown blood demon art item: " + item.getDescriptionId());
+                // Allow generic BDA execution for items that look like BDAs,
+                // even if we don't have a specific mapping.
+                if (isBloodDemonArt(item)) {
+                    genericBda = true;
+                    demonArt = "generic"; // for cooldown keying
+                } else {
+                    if (CustomNPCConfig.isDebugEnabled()) {
+                        Log.debug("[KnY Custom NPCs] Unknown blood demon art item: " + item.getDescriptionId());
+                    }
+                    return false;
                 }
-                return false;
             }
 
             DemonArtInfo artInfo = DEMON_ARTS.get(demonArt);
-            if (artInfo == null) {
+            if (artInfo == null && !genericBda) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] No demon art info for: " + demonArt);
+                    Log.debug("[KnY Custom NPCs] No demon art info for: " + demonArt);
                 }
                 return false;
             }
@@ -109,27 +117,27 @@ public class BloodDemonArtExecutor {
             if (!NPCCooldownManager.canUseAbility(npc, cooldownKey)) {
                 if (CustomNPCConfig.isDebugEnabled()) {
                     int remaining = NPCCooldownManager.getRemainingCooldown(npc, cooldownKey);
-                    System.out.println("[KnY Custom NPCs] On cooldown: " + remaining + " ticks remaining");
+                    Log.debug("[KnY Custom NPCs] On cooldown: " + remaining + " ticks remaining");
                 }
                 return false;
             }
 
             // Select weighted form
-            int formIndex = FormSelector.selectWeightedForm(npc.getRandom(), artInfo.formCount);
+            int formIndex = genericBda ? 0 : FormSelector.selectWeightedForm(npc.getRandom(), artInfo.formCount);
 
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] Executing Blood Demon Art:");
-                System.out.println("  NPC: " + npc.getName().getString());
-                System.out.println("  Art: " + demonArt);
-                System.out.println("  Form: " + FormSelector.getFormName(formIndex) + " (Index: " + formIndex + ")");
-                System.out.println("  Using: StartKekkizyutuProcedure");
+                Log.debug("[KnY Custom NPCs] Executing Blood Demon Art:");
+                Log.debug("  NPC: " + npc.getName().getString());
+                Log.debug("  Art: " + demonArt);
+                Log.debug("  Form: " + FormSelector.getFormName(formIndex) + " (Index: " + formIndex + ")");
+                Log.debug("  Using: StartKekkizyutuProcedure");
             }
 
             // Get held item and set "select" NBT (like the 1.16.5 script example)
             ItemStack heldItem = npc.getMainHandItem();
             if (heldItem.isEmpty()) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] NPC has no item in main hand");
+                    Log.debug("[KnY Custom NPCs] NPC has no item in main hand");
                 }
                 return false;
             }
@@ -142,7 +150,7 @@ public class BloodDemonArtExecutor {
 
             if (success) {
                 // Set cooldown
-                int cooldownTicks = artInfo.baseCooldownSeconds * 20;
+                int cooldownTicks = (genericBda ? 8 : artInfo.baseCooldownSeconds) * 20;
                 NPCCooldownManager.setCooldown(npc, cooldownKey, cooldownTicks);
 
                 // Remember which form was used
@@ -151,7 +159,7 @@ public class BloodDemonArtExecutor {
                 return true;
             } else {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] Failed to call demon art procedure");
+                    Log.debug("[KnY Custom NPCs] Failed to call demon art procedure");
                 }
                 return false;
             }
@@ -174,7 +182,20 @@ public class BloodDemonArtExecutor {
             return false;
         }
 
-        String descriptionId = item.getDescriptionId();
+        // Prefer registry path if available
+        net.minecraft.resources.ResourceLocation key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(item);
+        if (key != null) {
+            String path = key.getPath();
+            if (path.contains("blooddemonart") ||
+                path.contains("yahaba") || path.contains("kamanue") || path.contains("enmu") ||
+                path.contains("gyokko") || path.contains("doma") || path.contains("akaza") ||
+                path.contains("muzan") || path.contains("rui") || path.contains("daki") ||
+                path.contains("hantengu") || path.contains("zohakuten") || path.contains("nakime")) {
+                return true;
+            }
+        }
+
+        String descriptionId = item.getDescriptionId().toLowerCase();
         return descriptionId.contains("kimetsunoyaiba.blooddemonart");
     }
 
@@ -218,21 +239,21 @@ public class BloodDemonArtExecutor {
             executeMethod.invoke(null, world, entity, itemstack);
 
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] ✓ StartKekkizyutuProcedure executed successfully");
+                Log.debug("[KnY Custom NPCs] ✓ StartKekkizyutuProcedure executed successfully");
             }
 
             return true;
 
         } catch (ClassNotFoundException e) {
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] StartKekkizyutuProcedure class not found");
-                System.out.println("[KnY Custom NPCs] Is the base KimetsunoYaiba mod installed?");
+                Log.debug("[KnY Custom NPCs] StartKekkizyutuProcedure class not found");
+                Log.debug("[KnY Custom NPCs] Is the base KimetsunoYaiba mod installed?");
             }
             return false;
         } catch (NoSuchMethodException e) {
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] Execute method not found in StartKekkizyutuProcedure");
-                System.out.println("[KnY Custom NPCs] Base mod version may be incompatible");
+                Log.debug("[KnY Custom NPCs] Execute method not found in StartKekkizyutuProcedure");
+                Log.debug("[KnY Custom NPCs] Base mod version may be incompatible");
             }
             return false;
         } catch (Exception e) {

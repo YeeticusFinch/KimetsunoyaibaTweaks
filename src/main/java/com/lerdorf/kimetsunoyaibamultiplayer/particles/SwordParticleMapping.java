@@ -14,9 +14,19 @@ import com.mojang.logging.LogUtils;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class SwordParticleMapping {
+    // Items exempt from sword sheath display (e.g., Himejima's axe and ball)
+    private static final Set<String> SHEATH_EXEMPT_ITEMS = new HashSet<>();
+
+    static {
+        // Himejima's weapons should not render in sword sheath
+        SHEATH_EXEMPT_ITEMS.add("nichirinsword_himejima_1");
+        SHEATH_EXEMPT_ITEMS.add("nichirinsword_himejima_2");
+    }
     //private static final Log Log = LogUtils.getLog();
 
     private static final Map<String, ResourceLocation> SWORD_TO_PARTICLE_MAP = new HashMap<>();
@@ -135,7 +145,7 @@ public class SwordParticleMapping {
             Log.debug("Config mappings available: " + ParticleConfig.particleMappings.size());
             if (ParticleConfig.particleMappings.containsKey(itemIdString)) {
                 ParticleConfig.ParticleMapping mapping = ParticleConfig.particleMappings.get(itemIdString);
-                System.out.println("Found config mapping: " + mapping.particleType);
+                Log.debug("Found config mapping: " + mapping.particleType);
                 ParticleOptions result = createParticleFromMapping(mapping);
                 if (result != null) {
                     Log.debug("Successfully created particle from config mapping");
@@ -203,7 +213,7 @@ public class SwordParticleMapping {
                 return dustOptions;
             } else {
                 // Try to get the particle from the registry
-                System.out.println("Looking for particle in registry: " + particleId);
+                Log.debug("Looking for particle in registry: " + particleId);
                 if (BuiltInRegistries.PARTICLE_TYPE.containsKey(particleId)) {
                     var particleType = BuiltInRegistries.PARTICLE_TYPE.get(particleId);
                     Log.debug("Found particle type in registry: " + particleType);
@@ -270,5 +280,22 @@ public class SwordParticleMapping {
     public static void registerCustomMapping(String swordType, ResourceLocation particleId) {
         SWORD_TO_PARTICLE_MAP.put(swordType, particleId);
         Log.info("Registered custom sword particle mapping: {} -> {}", swordType, particleId);
+    }
+
+    /**
+     * Checks if an item should be exempt from sword sheath/hip display
+     * Some weapons like Himejima's axe and ball shouldn't render in the sheath
+     * @param item The ItemStack to check
+     * @return true if this item should NOT be displayed in the sword sheath
+     */
+    public static boolean isSheathExempt(ItemStack item) {
+        if (item.isEmpty()) {
+            return true;
+        }
+
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item.getItem());
+        String itemPath = itemId.getPath();
+
+        return SHEATH_EXEMPT_ITEMS.contains(itemPath);
     }
 }

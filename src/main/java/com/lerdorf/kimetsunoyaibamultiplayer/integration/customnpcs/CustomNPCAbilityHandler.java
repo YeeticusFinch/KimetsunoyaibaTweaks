@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BloodDemonArtExecutor;
@@ -60,9 +61,9 @@ public class CustomNPCAbilityHandler {
             }
 
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] ===== NPC Attack Detected =====");
-                System.out.println("[KnY Custom NPCs] Attacker: " + attacker.getName().getString());
-                System.out.println("[KnY Custom NPCs] Attacker Class: " + attacker.getClass().getName());
+                Log.debug("[KnY Custom NPCs] ===== NPC Attack Detected =====");
+                Log.debug("[KnY Custom NPCs] Attacker: " + attacker.getName().getString());
+                Log.debug("[KnY Custom NPCs] Attacker Class: " + attacker.getClass().getName());
             }
 
             // Check trigger chance
@@ -70,7 +71,7 @@ public class CustomNPCAbilityHandler {
             double roll = attacker.getRandom().nextDouble();
             if (roll > triggerChance) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] Trigger chance check failed: " + roll + " > " + triggerChance);
+                    Log.debug("[KnY Custom NPCs] Trigger chance check failed: " + roll + " > " + triggerChance);
                 }
                 return;
             }
@@ -79,7 +80,7 @@ public class CustomNPCAbilityHandler {
             ItemStack heldItem = attacker.getMainHandItem();
             if (heldItem.isEmpty()) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] No item in main hand");
+                    Log.debug("[KnY Custom NPCs] No item in main hand");
                 }
                 return;
             }
@@ -87,8 +88,8 @@ public class CustomNPCAbilityHandler {
             Item item = heldItem.getItem();
 
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] Held Item: " + item.getDescriptionId());
-                System.out.println("[KnY Custom NPCs] Item Class: " + item.getClass().getName());
+                Log.debug("[KnY Custom NPCs] Held Item: " + item.getDescriptionId());
+                Log.debug("[KnY Custom NPCs] Item Class: " + item.getClass().getName());
             }
 
             // Try to execute ability based on item type
@@ -100,47 +101,47 @@ public class CustomNPCAbilityHandler {
                 boolean isBaseModSword = BaseModBreathingExecutor.isBaseModNichirinSword(item);
                 boolean isBloodArt = BloodDemonArtExecutor.isBloodDemonArt(item);
 
-                System.out.println("[KnY Custom NPCs] Detection Results:");
-                System.out.println("  - Is Custom Breathing Sword: " + isCustomSword);
-                System.out.println("  - Is Base Mod Nichirin Sword: " + isBaseModSword);
-                System.out.println("  - Is Blood Demon Art: " + isBloodArt);
+                Log.debug("[KnY Custom NPCs] Detection Results:");
+                Log.debug("  - Is Custom Breathing Sword: " + isCustomSword);
+                Log.debug("  - Is Base Mod Nichirin Sword: " + isBaseModSword);
+                Log.debug("  - Is Blood Demon Art: " + isBloodArt);
             }
 
             // Priority 1: This mod's custom breathing swords
             if (CustomBreathingExecutor.isCustomBreathingSword(item)) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] → Executing custom breathing sword ability");
+                    Log.debug("[KnY Custom NPCs] → Executing custom breathing sword ability");
                 }
                 abilityExecuted = CustomBreathingExecutor.execute(attacker, heldItem);
             }
             // Priority 2: Base mod nichirin swords
             else if (BaseModBreathingExecutor.isBaseModNichirinSword(item)) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] → Executing base mod nichirin sword ability");
+                    Log.debug("[KnY Custom NPCs] → Executing base mod nichirin sword ability");
                 }
                 abilityExecuted = BaseModBreathingExecutor.execute(attacker, item);
             }
             // Priority 3: Blood demon arts
             else if (BloodDemonArtExecutor.isBloodDemonArt(item)) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] → Executing blood demon art ability");
+                    Log.debug("[KnY Custom NPCs] → Executing blood demon art ability");
                 }
                 abilityExecuted = BloodDemonArtExecutor.execute(attacker, item);
             }
             else {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] ✗ Item not recognized as any ability type");
+                    Log.debug("[KnY Custom NPCs] ✗ Item not recognized as any ability type");
                 }
             }
 
             if (abilityExecuted && CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] ✓ Ability executed successfully");
+                Log.debug("[KnY Custom NPCs] ✓ Ability executed successfully");
             } else if (!abilityExecuted && CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] ✗ Ability execution failed or not attempted");
+                Log.debug("[KnY Custom NPCs] ✗ Ability execution failed or not attempted");
             }
 
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] ================================");
+                Log.debug("[KnY Custom NPCs] ================================");
             }
 
         } catch (Exception e) {
@@ -155,15 +156,15 @@ public class CustomNPCAbilityHandler {
      * Print debug information about Custom NPCs compatibility
      */
     public static void printDebugInfo() {
-        System.out.println("=== KnY Custom NPCs Compatibility Debug Info ===");
-        System.out.println("Enabled: " + CustomNPCConfig.isEnabled());
-        System.out.println("Custom NPCs Mod Loaded: " + CustomNPCHelper.isCustomNPCsModLoaded());
-        System.out.println("Cooldown Multiplier: " + CustomNPCConfig.getCooldownMultiplier());
-        System.out.println("Trigger Chance: " + (CustomNPCConfig.getTriggerChance() * 100) + "%");
-        System.out.println("Debug Logging: " + CustomNPCConfig.isDebugEnabled());
-        System.out.println();
-        System.out.println("Form Weight Distribution (7 forms example):");
+        Log.debug("=== KnY Custom NPCs Compatibility Debug Info ===");
+        Log.debug("Enabled: " + CustomNPCConfig.isEnabled());
+        Log.debug("Custom NPCs Mod Loaded: " + CustomNPCHelper.isCustomNPCsModLoaded());
+        Log.debug("Cooldown Multiplier: " + CustomNPCConfig.getCooldownMultiplier());
+        Log.debug("Trigger Chance: " + (CustomNPCConfig.getTriggerChance() * 100) + "%");
+        Log.debug("Debug Logging: " + CustomNPCConfig.isDebugEnabled());
+        Log.debug("\n");
+        Log.debug("Form Weight Distribution (7 forms example):");
         FormSelector.printWeightDistribution(7);
-        System.out.println("================================================");
+        Log.debug("================================================");
     }
 }

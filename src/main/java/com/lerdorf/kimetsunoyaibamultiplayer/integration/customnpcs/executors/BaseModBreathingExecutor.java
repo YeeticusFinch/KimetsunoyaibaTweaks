@@ -1,8 +1,9 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors;
-
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.FormSelector;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.NPCCooldownManager;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -52,16 +53,22 @@ public class BaseModBreathingExecutor {
         // Sound Breathing
         BREATHING_STYLES.put("sound", new BreathingStyleInfo(1101, 1110, 5, "PlayerBreathSoundProcedure", 8));
 
-        // Love Breathing
-        BREATHING_STYLES.put("love", new BreathingStyleInfo(1201, 1210, 6, "PlayerBreathesLoveProcedure", 8));
+        // Love Breathing (base mod uses 1501+)
+        BREATHING_STYLES.put("love", new BreathingStyleInfo(1501, 1510, 6, "PlayerBreathesLoveProcedure", 8));
 
-        // Flower Breathing
-        BREATHING_STYLES.put("flower", new BreathingStyleInfo(1301, 1310, 7, "PlayerBreathesFlowerProcedure", 8));
+        // Flower Breathing (only has 4 forms: 2nd, 4th, 5th, 6th)
+        // Base mod breathes values are 1402, 1404, 1405, 1406 => baseId 1401 with select values {1,3,4,5}
+        BREATHING_STYLES.put("flower", new BreathingStyleInfo(1401, 1410, 7, "PlayerBreathesFlowerProcedure", 8, new int[]{1, 3, 4, 5}));
 
         // Beast Breathing
         BREATHING_STYLES.put("beast", new BreathingStyleInfo(1401, 1410, 10, "PlayerBreathBeastProcedure", 8));
 
-        // Moon Breathing
+        // Moon Breathing (Basic - forms 1, 2, 3, 5, 6 only)
+        // Used by nichirinswordmoon - only specific forms available
+        BREATHING_STYLES.put("moon_basic", new BreathingStyleInfo(1501, 1520, 16, "PlayerBreathMoonProcedure", 10, new int[]{0, 1, 2, 4, 5})); // 0=1st form, 1=2nd form, etc.
+
+        // Moon Breathing (Full - all 16 forms)
+        // Used by sword_kokushibo_1 and sword_kokushibo_2
         BREATHING_STYLES.put("moon", new BreathingStyleInfo(1501, 1520, 16, "PlayerBreathMoonProcedure", 10));
 
         // Sun Breathing
@@ -123,6 +130,7 @@ public class BaseModBreathingExecutor {
         // Flower Breathing
         ITEM_TO_STYLE.put("nichirinsword_kanae", "flower");
         ITEM_TO_STYLE.put("nichirinsword_kanawo", "flower"); // Kanao also uses flower breathing
+        ITEM_TO_STYLE.put("nichirinsword_flower", "flower"); // Generic flower sword id
 
         // Beast Breathing
         ITEM_TO_STYLE.put("nichirinsword_inosuke", "beast");
@@ -132,7 +140,10 @@ public class BaseModBreathingExecutor {
         ITEM_TO_STYLE.put("nichirinsword_bamboo_2", "bamboo");
 
         // Moon Breathing
-        ITEM_TO_STYLE.put("nichirinswordmoon", "moon");
+        // Moon Breathing swords
+        ITEM_TO_STYLE.put("nichirinswordmoon", "moon_basic"); // Basic moon sword - only forms 1,2,3,5,6
+        ITEM_TO_STYLE.put("sword_kokushibo_1", "moon"); // Kokushibo's swords - all 16 forms
+        ITEM_TO_STYLE.put("sword_kokushibo_2", "moon");
 
         // Cherry Blossom Breathing
         ITEM_TO_STYLE.put("nichirinsword_cherry_blossom", "cherry_blossom");
@@ -158,7 +169,7 @@ public class BaseModBreathingExecutor {
             String breathingStyle = getBreathingStyleFromItem(item);
             if (breathingStyle == null) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] Unknown base mod nichirin sword: " + item.getDescriptionId());
+                    Log.debug("[KnY Custom NPCs] Unknown base mod nichirin sword: " + item.getDescriptionId());
                 }
                 return false;
             }
@@ -166,9 +177,20 @@ public class BaseModBreathingExecutor {
             BreathingStyleInfo styleInfo = BREATHING_STYLES.get(breathingStyle);
             if (styleInfo == null) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] No breathing style info for: " + breathingStyle);
+                    Log.debug("[KnY Custom NPCs] No breathing style info for: " + breathingStyle);
                 }
                 return false;
+            }
+
+            // For Flower: only execute if there is an active target (prevents post-fight idle usage)
+            if (breathingStyle.equals("flower") && npc instanceof net.minecraft.world.entity.Mob mob) {
+                LivingEntity curTarget = mob.getTarget();
+                if (curTarget == null || !curTarget.isAlive()) {
+                    if (CustomNPCConfig.isDebugEnabled()) {
+                        Log.debug("[KnY Custom NPCs] Skipping Flower execution (no active target)");
+                    }
+                    return false;
+                }
             }
 
             String cooldownKey = "base_breathing_" + breathingStyle;
@@ -177,27 +199,42 @@ public class BaseModBreathingExecutor {
             if (!NPCCooldownManager.canUseAbility(npc, cooldownKey)) {
                 if (CustomNPCConfig.isDebugEnabled()) {
                     int remaining = NPCCooldownManager.getRemainingCooldown(npc, cooldownKey);
-                    System.out.println("[KnY Custom NPCs] On cooldown: " + remaining + " ticks remaining");
+                    Log.debug("[KnY Custom NPCs] On cooldown: " + remaining + " ticks remaining");
                 }
                 return false;
             }
 
-            // Select weighted form
-            int formIndex = FormSelector.selectWeightedForm(npc.getRandom(), styleInfo.formCount);
+            // Select weighted form from available forms
+            int effectiveFormCount = styleInfo.getEffectiveFormCount();
+            int selectionIndex = FormSelector.selectWeightedForm(npc.getRandom(), effectiveFormCount);
 
-            if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] Executing Base Mod Breathing:");
-                System.out.println("  NPC: " + npc.getName().getString());
-                System.out.println("  Style: " + breathingStyle);
-                System.out.println("  Form: " + FormSelector.getFormName(formIndex) + " (Index: " + formIndex + ")");
-                System.out.println("  Using: StartBreathesProcedure");
+            // Map selection index to actual form index (for restricted form sets like moon_basic)
+            int formIndex = styleInfo.getFormIndex(selectionIndex);
+
+            // ALWAYS log for flower breathing to debug the issue
+            if (CustomNPCConfig.isDebugEnabled() || breathingStyle.equals("flower")) {
+                Log.debug("[KnY Custom NPCs] Executing Base Mod Breathing:");
+                Log.debug("  NPC: " + npc.getName().getString());
+                Log.debug("  Style: " + breathingStyle);
+                Log.debug("  Effective Form Count: " + effectiveFormCount);
+                Log.debug("  Selection Index: " + selectionIndex);
+                Log.debug("  Form Index (select value): " + formIndex);
+                Log.debug("  Expected breathes value: " + (styleInfo.startId + formIndex));
+                if (styleInfo.allowedFormIndices != null) {
+                    Log.debug("  Allowed Form Indices: " + java.util.Arrays.toString(styleInfo.allowedFormIndices));
+                    Log.debug("  Selected: " + FormSelector.getFormName(selectionIndex) + " from " + effectiveFormCount + " allowed forms");
+                    Log.debug("  Actual Form: " + FormSelector.getFormName(formIndex) + " (Index: " + formIndex + ")");
+                } else {
+                    Log.debug("  Form: " + FormSelector.getFormName(formIndex) + " (Index: " + formIndex + ")");
+                }
+                Log.debug("  Using: StartBreathesProcedure");
             }
 
             // Get held item and set "select" NBT (like the 1.16.5 script example)
             ItemStack heldItem = npc.getMainHandItem();
             if (heldItem.isEmpty()) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] NPC has no item in main hand");
+                    Log.debug("[KnY Custom NPCs] NPC has no item in main hand");
                 }
                 return false;
             }
@@ -205,8 +242,30 @@ public class BaseModBreathingExecutor {
             // Set itemstack "select" NBT to form index (0-based)
             heldItem.getOrCreateTag().putDouble("select", (double) formIndex);
 
+            // WORKAROUND: Flower and Love Breathing have a bug where the breathes value gets stuck
+            // after the first execution, preventing subsequent uses. The base mod doesn't reset
+            // breathes back to 0.0, so StartBreathesProcedure refuses to execute when breathes is
+            // already set to a form ID. FIX: Always force breathes=0.0 before execution for these styles.
+            if (breathingStyle.equals("flower") || breathingStyle.equals("love")) {
+                double breathesValue = npc.getPersistentData().getDouble("breathes");
+
+                // ALWAYS reset breathes to 0.0 for these styles to ensure clean execution
+                npc.getPersistentData().putDouble("breathes", 0.0);
+
+                // Also reset all counters to ensure clean state
+                callResetCounterProcedure(npc);
+
+                if (CustomNPCConfig.isDebugEnabled()) {
+                    Log.debug("[KnY Custom NPCs] [" + breathingStyle + " Breathing Fix] Forced reset (breathes was " + breathesValue + ", now 0.0)");
+                }
+            }
+
             // Call StartBreathesProcedure (official base mod entry point)
             boolean success = callStartBreathesProcedure(npc.level(), npc, heldItem);
+            if (CustomNPCConfig.isDebugEnabled()) {
+                double postStart = npc.getPersistentData().getDouble("breathes");
+                Log.debug("[KnY Custom NPCs] Post-StartBreathes breathes=" + postStart);
+            }
 
             if (success) {
                 // Set cooldown
@@ -216,10 +275,65 @@ public class BaseModBreathingExecutor {
                 // Remember which form was used
                 NPCCooldownManager.setLastFormUsed(npc, breathingStyle, formIndex);
 
+                // CRITICAL FIX for Flower/Love Breathing: Lock the breathes value to prevent base mod from incrementing it
+                // The base mod increments breathes over time, moving it out of valid form ranges too quickly
+                if (breathingStyle.equals("flower") || breathingStyle.equals("love")) {
+                    final int targetBreathes = styleInfo.startId + formIndex;
+                    final String styleForLog = breathingStyle;
+
+                    // For Flower: Always force-call the Player procedure after setting breathes to ensure effects play
+                    if (breathingStyle.equals("flower")) {
+                        npc.getPersistentData().putDouble("breathes", (double) targetBreathes);
+                        boolean forcedNow = callPlayerBreathingProcedure("PlayerBreathesFlowerProcedure", npc.level(), npc);
+                        if (CustomNPCConfig.isDebugEnabled()) {
+                            Log.debug("[KnY Custom NPCs] [Flower Breathing Fallback] Forced PlayerBreathesFlowerProcedure immediate -> " + forcedNow + " (breathes=" + targetBreathes + ")");
+                        }
+                    }
+
+                    if (npc.level() instanceof ServerLevel serverLevel) {
+                        // Lock breathes value for 60 ticks (3 seconds) to allow form to execute
+                        for (int i = 1; i <= 60; i++) {
+                            final int tick = i;
+                            serverLevel.getServer().tell(new net.minecraft.server.TickTask(
+                                serverLevel.getServer().getTickCount() + tick,
+                                () -> {
+                                    if (npc.isAlive() && !npc.isRemoved()) {
+                                        double currentBreathes = npc.getPersistentData().getDouble("breathes");
+                                        // Only lock if still in the breathing range
+                                        if (currentBreathes >= styleInfo.startId && currentBreathes <= styleInfo.endId) {
+                                            npc.getPersistentData().putDouble("breathes", (double) targetBreathes);
+                                            // For Flower: reinforce call for first few ticks to ensure visual/audio effects spawn
+                                            if (breathingStyle.equals("flower") && tick <= 5) {
+                                                callPlayerBreathingProcedure("PlayerBreathesFlowerProcedure", npc.level(), npc);
+                                            }
+                                        }
+                                    }
+                                }
+                            ));
+                        }
+
+                        // After 3 seconds, do final cleanup
+                        serverLevel.getServer().tell(new net.minecraft.server.TickTask(
+                            serverLevel.getServer().getTickCount() + 65,
+                            () -> {
+                                if (npc.isAlive() && !npc.isRemoved()) {
+                                    double oldBreathes = npc.getPersistentData().getDouble("breathes");
+                                    npc.getPersistentData().putDouble("breathes", 0.0);
+                                    callResetCounterProcedure(npc);
+
+                                    if (CustomNPCConfig.isDebugEnabled()) {
+                                        Log.debug("[KnY Custom NPCs] [" + styleForLog + " Breathing Cleanup] Final reset after 3s (breathes was " + oldBreathes + ", now 0.0)");
+                                    }
+                                }
+                            }
+                        ));
+                    }
+                }
+
                 return true;
             } else {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] Failed to call breathing procedure");
+                    Log.debug("[KnY Custom NPCs] Failed to call breathing procedure");
                 }
                 return false;
             }
@@ -266,6 +380,60 @@ public class BaseModBreathingExecutor {
     }
 
     /**
+     * Call ResetCounterProcedure using reflection
+     * Resets all breathing form counters (cnt1-cnt10) and attack flag
+     *
+     * @param entity The entity to reset counters for
+     */
+    private static void callResetCounterProcedure(LivingEntity entity) {
+        try {
+            // Load ResetCounterProcedure class
+            Class<?> procedureClass = Class.forName("net.mcreator.kimetsunoyaiba.procedures.ResetCounterProcedure");
+
+            // Find execute method: execute(Entity entity)
+            Method executeMethod = procedureClass.getMethod("execute", net.minecraft.world.entity.Entity.class);
+
+            // Call the method
+            executeMethod.invoke(null, entity);
+
+            if (CustomNPCConfig.isDebugEnabled()) {
+                Log.debug("[KnY Custom NPCs] ✓ ResetCounterProcedure executed successfully");
+            }
+
+        } catch (Exception e) {
+            if (CustomNPCConfig.isDebugEnabled()) {
+                System.err.println("[KnY Custom NPCs] Failed to call ResetCounterProcedure: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Call a specific PlayerBreath...Procedure using reflection to force execution
+     */
+    private static boolean callPlayerBreathingProcedure(String simpleClassName, LevelAccessor world, LivingEntity entity) {
+        try {
+            Class<?> procedureClass = Class.forName("net.mcreator.kimetsunoyaiba.procedures." + simpleClassName);
+            Method executeMethod = procedureClass.getMethod("execute", LevelAccessor.class, double.class, double.class, double.class, net.minecraft.world.entity.Entity.class);
+            executeMethod.invoke(null, world, entity.getX(), entity.getY(), entity.getZ(), entity);
+            return true;
+        } catch (ClassNotFoundException e) {
+            if (CustomNPCConfig.isDebugEnabled()) {
+                Log.debug("[KnY Custom NPCs] Player breathing procedure not found: " + simpleClassName);
+            }
+            return false;
+        } catch (NoSuchMethodException e) {
+            if (CustomNPCConfig.isDebugEnabled()) {
+                Log.debug("[KnY Custom NPCs] Execute method not found in " + simpleClassName);
+            }
+            return false;
+        } catch (Exception e) {
+            System.err.println("[KnY Custom NPCs] Error forcing player breathing procedure (" + simpleClassName + "):");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
      * Call StartBreathesProcedure using reflection
      * This is the official base mod entry point for breathing techniques.
      *
@@ -287,21 +455,21 @@ public class BaseModBreathingExecutor {
             executeMethod.invoke(null, world, entity, itemstack);
 
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] ✓ StartBreathesProcedure executed successfully");
+                Log.debug("[KnY Custom NPCs] ✓ StartBreathesProcedure executed successfully");
             }
 
             return true;
 
         } catch (ClassNotFoundException e) {
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] StartBreathesProcedure class not found");
-                System.out.println("[KnY Custom NPCs] Is the base KimetsunoYaiba mod installed?");
+                Log.debug("[KnY Custom NPCs] StartBreathesProcedure class not found");
+                Log.debug("[KnY Custom NPCs] Is the base KimetsunoYaiba mod installed?");
             }
             return false;
         } catch (NoSuchMethodException e) {
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] Execute method not found in StartBreathesProcedure");
-                System.out.println("[KnY Custom NPCs] Base mod version may be incompatible");
+                Log.debug("[KnY Custom NPCs] Execute method not found in StartBreathesProcedure");
+                Log.debug("[KnY Custom NPCs] Base mod version may be incompatible");
             }
             return false;
         } catch (Exception e) {
@@ -320,13 +488,36 @@ public class BaseModBreathingExecutor {
         final int formCount;
         final String procedureClassName;
         final int baseCooldownSeconds;
+        final int[] allowedFormIndices; // null = all forms allowed, otherwise specific indices (0-based)
 
         BreathingStyleInfo(int startId, int endId, int formCount, String procedureClassName, int baseCooldownSeconds) {
+            this(startId, endId, formCount, procedureClassName, baseCooldownSeconds, null);
+        }
+
+        BreathingStyleInfo(int startId, int endId, int formCount, String procedureClassName, int baseCooldownSeconds, int[] allowedFormIndices) {
             this.startId = startId;
             this.endId = endId;
             this.formCount = formCount;
             this.procedureClassName = procedureClassName;
             this.baseCooldownSeconds = baseCooldownSeconds;
+            this.allowedFormIndices = allowedFormIndices;
+        }
+
+        /**
+         * Get actual form count (either all forms or just allowed forms)
+         */
+        int getEffectiveFormCount() {
+            return allowedFormIndices != null ? allowedFormIndices.length : formCount;
+        }
+
+        /**
+         * Get the form index to use (maps from selection index to actual form index)
+         */
+        int getFormIndex(int selectionIndex) {
+            if (allowedFormIndices != null && selectionIndex >= 0 && selectionIndex < allowedFormIndices.length) {
+                return allowedFormIndices[selectionIndex];
+            }
+            return selectionIndex;
         }
     }
 }

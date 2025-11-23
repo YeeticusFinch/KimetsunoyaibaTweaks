@@ -20,7 +20,7 @@ public class ClientProxy implements IClientProxy {
     @Override
     public void handleSwordDisplaySync(UUID playerUUID, ItemStack leftHipSword, ItemStack rightHipSword) {
         if (Config.logDebug) {
-            System.out.println("[DEBUG] Client received sword display sync for player " + playerUUID +
+            Log.debug("[DEBUG] Client received sword display sync for player " + playerUUID +
                 ": left=" + (leftHipSword.isEmpty() ? "empty" : leftHipSword.getItem().toString()) +
                 ", right=" + (rightHipSword.isEmpty() ? "empty" : rightHipSword.getItem().toString()));
         }
@@ -34,7 +34,7 @@ public class ClientProxy implements IClientProxy {
                                     ItemStack swordItem, ResourceLocation particleType,
                                     float speed, int layerPriority) {
         if (Config.logDebug) {
-            System.out.println("[DEBUG] Client received animation sync for player " + playerUUID +
+            Log.debug("[DEBUG] Client received animation sync for player " + playerUUID +
                 ": animation=" + animationId + ", tick=" + currentTick + ", stop=" + stopAnimation +
                 ", speed=" + speed + ", layer=" + layerPriority);
         }
@@ -73,7 +73,7 @@ public class ClientProxy implements IClientProxy {
                 }
 
                 if (Config.logDebug) {
-                    System.out.println("[DEBUG] Client received rotation sync for player " +
+                    Log.debug("[DEBUG] Client received rotation sync for player " +
                         player.getName().getString() + ": yaw=" + yaw + ", pitch=" + pitch + ", headYaw=" + headYaw);
                 }
             }

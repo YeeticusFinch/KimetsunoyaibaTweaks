@@ -58,14 +58,16 @@ public class MtFujikasaneDimensionDataHandler {
     // GitHub repository download URL
     // Downloads the entire repository as a zip and extracts .mca files from the region/ folder
     private static final String GITHUB_DOWNLOAD_URL =
-        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/archive/refs/heads/main.zip";
+        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.25/region.zip";
 
-    // Version tracking: a small text file hosted alongside the region files in the repo
-    // This allows overwriting local cache when upstream updates
+    // Version tracking: a small text file hosted alongside the region files
+    // Prefer the release asset version file; fallback to raw main branch
     private static final String VERSION_FILE_NAME = "mt_fujikasane.version";
-    // Raw URL to fetch the version text quickly without downloading the whole zip
-    // If you change repositories/branches, update this accordingly.
-    private static final String GITHUB_VERSION_URL =
+    // Primary version URL (release asset)
+    private static final String RELEASE_VERSION_URL =
+        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.25/mt_fujikasane.version";
+    // Fallback raw URL to fetch the version text quickly without downloading the whole zip
+    private static final String RAW_VERSION_URL =
         "https://raw.githubusercontent.com/YeeticusFinch/KimetsunoyaibaTweaks/main/region/" + VERSION_FILE_NAME;
 
     // Set to false to disable automatic downloading (useful for testing)
@@ -130,17 +132,22 @@ public class MtFujikasaneDimensionDataHandler {
             String remoteVersion = fetchRemoteVersion();
 
             if (!cacheHasMca) {
-                System.out.println("[Mt Fujikasane] Cache empty, downloading region files...");
-                System.out.println("[Mt Fujikasane] Cache location: " + CACHE_DIR);
-                System.out.println("[Mt Fujikasane] URL: " + GITHUB_DOWNLOAD_URL);
+                Log.debug("[Mt Fujikasane] Cache empty, downloading region files...");
+                Log.debug("[Mt Fujikasane] Cache location: " + CACHE_DIR);
+                Log.debug("[Mt Fujikasane] URL: " + GITHUB_DOWNLOAD_URL);
                 downloadFreshCache();
-            } else if (remoteVersion != null && (localVersion == null || !remoteVersion.trim().equals(localVersion.trim()))) {
-                System.out.println("[Mt Fujikasane] Remote region version differs (local: " + (localVersion == null ? "none" : localVersion) + ", remote: " + remoteVersion + ") — updating cache...");
+            } else if (localVersion == null) {
+                // Cache has MCA files but no version file — force a refresh
+                Log.debug("[Mt Fujikasane] Cache missing version file — refreshing cache...");
+                // Try to refresh without clearing first; extraction will overwrite/update files
+                downloadFreshCache();
+            } else if (remoteVersion != null && !remoteVersion.trim().equals(localVersion.trim())) {
+                Log.debug("[Mt Fujikasane] Remote region version differs (local: " + (localVersion == null ? "none" : localVersion) + ", remote: " + remoteVersion + ") — updating cache...");
                 clearDirectory(CACHE_DIR);
                 downloadFreshCache();
             } else {
-                System.out.println("[Mt Fujikasane] Cache found at: " + CACHE_DIR);
-                System.out.println("[Mt Fujikasane] Using cached region files" + (localVersion != null ? (" (version " + localVersion + ")") : ""));
+                Log.debug("[Mt Fujikasane] Cache found at: " + CACHE_DIR);
+                Log.debug("[Mt Fujikasane] Using cached region files" + (localVersion != null ? (" (version " + localVersion + ")") : ""));
             }
 
             cacheInitialized = true;
@@ -155,8 +162,8 @@ public class MtFujikasaneDimensionDataHandler {
     private static void downloadFreshCache() throws IOException {
         boolean success = downloadAndExtractRegionFiles(CACHE_DIR);
         if (success) {
-            System.out.println("[Mt Fujikasane] Successfully downloaded and cached region files!");
-            System.out.println("[Mt Fujikasane] Cache will be reused for all future worlds");
+            Log.debug("[Mt Fujikasane] Successfully downloaded and cached region files!");
+            Log.debug("[Mt Fujikasane] Cache will be reused for all future worlds");
         } else {
             System.err.println("[Mt Fujikasane] Failed to download region files");
             System.err.println("[Mt Fujikasane] Please check the GitHub URL in MtFujikasaneDimensionDataHandler.java");
@@ -185,7 +192,7 @@ public class MtFujikasaneDimensionDataHandler {
             }
         }
 
-        System.out.println("[Mt Fujikasane] Copied " + filesCopied + " region files from cache");
+        Log.debug("[Mt Fujikasane] Copied " + filesCopied + " region files from cache");
     }
 
     /**
@@ -220,7 +227,7 @@ public class MtFujikasaneDimensionDataHandler {
         border.setWarningTime(15); // Warning time in seconds
         border.setDamagePerBlock(0.2); // Damage when outside border
 
-        System.out.println("[Mt Fujikasane] World border configured: " +
+        Log.debug("[Mt Fujikasane] World border configured: " +
             (int)WORLD_BORDER_SIZE + "x" + (int)WORLD_BORDER_SIZE +
             " blocks centered at (" + (int)WORLD_BORDER_CENTER_X + ", " + (int)WORLD_BORDER_CENTER_Z + ")");
 
@@ -288,18 +295,18 @@ public class MtFujikasaneDimensionDataHandler {
 
                         // Log progress every 5MB
                         if (totalBytesRead % (5 * 1024 * 1024) == 0) {
-                            System.out.println("[Mt Fujikasane] Downloaded " + (totalBytesRead / (1024 * 1024)) + " MB...");
+                            Log.debug("[Mt Fujikasane] Downloaded " + (totalBytesRead / (1024 * 1024)) + " MB...");
                         }
                     }
 
-                    System.out.println("[Mt Fujikasane] Download complete (" + (totalBytesRead / (1024 * 1024)) + " MB)");
+                    Log.debug("[Mt Fujikasane] Download complete (" + (totalBytesRead / (1024 * 1024)) + " MB)");
                 }
 
                 // Extract zip file
-                System.out.println("[Mt Fujikasane] Extracting region files...");
+                Log.debug("[Mt Fujikasane] Extracting region files...");
                 int filesExtracted = extractZipFile(tempZipFile, targetDir);
 
-                System.out.println("[Mt Fujikasane] Extracted " + filesExtracted + " region files");
+                Log.debug("[Mt Fujikasane] Extracted " + filesExtracted + " region files");
 
                 return filesExtracted > 0;
 
@@ -353,9 +360,9 @@ public class MtFujikasaneDimensionDataHandler {
 
                     if (simpleName.endsWith(".mca")) {
                         filesExtracted++;
-                        System.out.println("[Mt Fujikasane] Extracted: " + simpleName);
+                        Log.debug("[Mt Fujikasane] Extracted: " + simpleName);
                     } else if (simpleName.equals(VERSION_FILE_NAME)) {
-                        System.out.println("[Mt Fujikasane] Extracted version file: " + simpleName);
+                        Log.debug("[Mt Fujikasane] Extracted version file: " + simpleName);
                     }
                 }
 
@@ -389,7 +396,25 @@ public class MtFujikasaneDimensionDataHandler {
     private static String fetchRemoteVersion() {
         HttpURLConnection connection = null;
         try {
-            URL url = new URL(GITHUB_VERSION_URL);
+            // Try release asset first (kept in lockstep with region.zip)
+            URL url = new URL(RELEASE_VERSION_URL);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(15000);
+            connection.setReadTimeout(15000);
+            int code = connection.getResponseCode();
+            if (code == HttpURLConnection.HTTP_OK) {
+                try (InputStream in = new BufferedInputStream(connection.getInputStream())) {
+                    return new String(in.readAllBytes(), StandardCharsets.UTF_8).trim();
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+        // Fallback to raw URL
+        try {
+            URL url = new URL(RAW_VERSION_URL);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(15000);
@@ -439,7 +464,7 @@ public class MtFujikasaneDimensionDataHandler {
         }
 
         if (logNotReady) {
-            System.out.println("[Mt Fujikasane] Dimension not ready yet; preparing files in background...");
+            Log.debug("[Mt Fujikasane] Dimension not ready yet; preparing files in background...");
         }
 
         if (!worldCopyInProgress.compareAndSet(false, true)) {
@@ -451,7 +476,7 @@ public class MtFujikasaneDimensionDataHandler {
 
             // If cache is missing MCA files, try to download them first
             if (!cacheHasAnyMca()) {
-                System.out.println("[Mt Fujikasane] Cache missing MCA files; downloading before copy...");
+                Log.debug("[Mt Fujikasane] Cache missing MCA files; downloading before copy...");
                 ensureCacheUpToDate();
             }
 
@@ -463,7 +488,7 @@ public class MtFujikasaneDimensionDataHandler {
                     server.getPlayerList().broadcastSystemMessage(
                         Component.literal("§a[Mt Fujikasane] Dimension is ready."), false);
                 } catch (Throwable t) {
-                    System.out.println("[Mt Fujikasane] Dimension is ready.");
+                    Log.debug("[Mt Fujikasane] Dimension is ready.");
                 }
             });
         } finally {

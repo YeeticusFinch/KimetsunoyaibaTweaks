@@ -1,5 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs;
-
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,6 +12,7 @@ public class NPCCooldownManager {
 
     private static final String COOLDOWN_PREFIX = "kny_npc_cooldown_";
     private static final String LAST_FORM_PREFIX = "kny_npc_last_form_";
+    private static final String LAST_ABILITY_USE_TIME = "kny_npc_last_ability_use_time";
 
     /**
      * Check if an NPC can use an ability (not on cooldown)
@@ -24,6 +25,9 @@ public class NPCCooldownManager {
             return false;
         }
 
+        // Check if max cooldown time has passed and auto-clear if enabled
+        checkAndClearMaxCooldown(npc);
+
         CompoundTag persistentData = npc.getPersistentData();
         String cooldownKey = COOLDOWN_PREFIX + abilityId;
 
@@ -35,6 +39,36 @@ public class NPCCooldownManager {
         long currentTime = npc.level().getGameTime();
 
         return currentTime >= lastUseTime;
+    }
+
+    /**
+     * Check if the maximum cooldown time has passed and clear all cooldowns if enabled
+     * @param npc The NPC entity
+     */
+    private static void checkAndClearMaxCooldown(LivingEntity npc) {
+        if (!CustomNPCConfig.isMaxCooldownClearEnabled()) {
+            return;
+        }
+
+        CompoundTag persistentData = npc.getPersistentData();
+
+        // Check if we have a last ability use time
+        if (!persistentData.contains(LAST_ABILITY_USE_TIME)) {
+            return; // No abilities used yet
+        }
+
+        long lastAbilityUseTime = persistentData.getLong(LAST_ABILITY_USE_TIME);
+        long currentTime = npc.level().getGameTime();
+        int maxCooldownTicks = CustomNPCConfig.getMaxCooldownSeconds() * 20;
+
+        // If max cooldown time has passed, clear all cooldowns
+        if (currentTime - lastAbilityUseTime >= maxCooldownTicks) {
+            clearAllCooldowns(npc);
+
+            if (CustomNPCConfig.isDebugEnabled()) {
+                Log.debug("[KnY Custom NPCs] Max cooldown time passed for " + npc.getName().getString() + " - cleared all cooldowns");
+            }
+        }
     }
 
     /**
@@ -60,8 +94,11 @@ public class NPCCooldownManager {
 
         persistentData.putLong(cooldownKey, cooldownEndTime);
 
+        // Update last ability use time for max cooldown tracking
+        persistentData.putLong(LAST_ABILITY_USE_TIME, currentTime);
+
         if (CustomNPCConfig.isDebugEnabled()) {
-            System.out.println("[KnY Custom NPCs] Set cooldown for " + npc.getName().getString()
+            Log.debug("[KnY Custom NPCs] Set cooldown for " + npc.getName().getString()
                 + " - Ability: " + abilityId
                 + " - Ticks: " + adjustedCooldown
                 + " (" + (adjustedCooldown / 20.0) + "s)");
@@ -119,10 +156,13 @@ public class NPCCooldownManager {
 
         CompoundTag persistentData = npc.getPersistentData();
 
-        // Remove all keys that start with cooldown prefix
-        persistentData.getAllKeys().stream()
+        // Collect keys to remove first to avoid ConcurrentModificationException
+        java.util.List<String> keysToRemove = persistentData.getAllKeys().stream()
             .filter(key -> key.startsWith(COOLDOWN_PREFIX))
-            .forEach(persistentData::remove);
+            .collect(java.util.stream.Collectors.toList());
+
+        // Now remove them
+        keysToRemove.forEach(persistentData::remove);
     }
 
     /**

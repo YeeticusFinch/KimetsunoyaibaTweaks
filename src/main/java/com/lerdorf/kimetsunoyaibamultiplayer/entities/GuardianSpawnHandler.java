@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.core.BlockPos;
@@ -199,7 +200,7 @@ public class GuardianSpawnHandler {
         level.addFreshEntity(hashira);
 
         if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logInfo) {
-            System.out.println("[Guardian Spawn Handler] Spawned hashira to protect civilian: " + hashiraId);
+            Log.debug("[Guardian Spawn Handler] Spawned hashira to protect civilian: " + hashiraId);
         }
     }
 
@@ -230,7 +231,7 @@ public class GuardianSpawnHandler {
         level.addFreshEntity(kamaboko);
 
         if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logInfo) {
-            System.out.println("[Guardian Spawn Handler] Spawned kamaboko to protect civilian: " + kamabokoId);
+            Log.debug("[Guardian Spawn Handler] Spawned kamaboko to protect civilian: " + kamabokoId);
         }
     }
 
@@ -267,7 +268,7 @@ public class GuardianSpawnHandler {
         }
 
         if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logInfo && spawned > 0) {
-            System.out.println("[Guardian Spawn Handler] Spawned " + spawned + " demon slayers to protect civilian");
+            Log.debug("[Guardian Spawn Handler] Spawned " + spawned + " demon slayers to protect civilian");
         }
     }
 

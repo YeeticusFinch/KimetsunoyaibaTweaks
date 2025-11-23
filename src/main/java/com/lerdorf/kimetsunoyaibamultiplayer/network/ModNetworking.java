@@ -115,6 +115,30 @@ public class ModNetworking {
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobAnimationSyncPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobAnimationSyncPacket::handle)
                 .add();
+
+        // Register mob sword slash packet (server -> client)
+        int mobSwordSlashPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket.class, mobSwordSlashPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket::handle)
+                .add();
+
+        // Register whip animation packet (bidirectional)
+        int whipAnimationPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WhipAnimationPacket.class, whipAnimationPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WhipAnimationPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WhipAnimationPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WhipAnimationPacket::handle)
+                .add();
+
+        // Register form sync packet (server -> client)
+        int formSyncPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket.class, formSyncPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {
@@ -135,5 +159,10 @@ public class ModNetworking {
                 sendToPlayer(message, player);
             }
         }
+    }
+
+    public static <MSG> void sendToNearby(MSG message, net.minecraft.server.level.ServerLevel level,
+                                          double x, double y, double z, double radius) {
+        INSTANCE.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(x, y, z, radius, level.dimension())), message);
     }
 }

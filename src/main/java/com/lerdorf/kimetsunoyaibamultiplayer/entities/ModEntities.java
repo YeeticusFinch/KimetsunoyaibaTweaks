@@ -50,6 +50,19 @@ public class ModEntities {
                 .build("ghostly_clone"));
 
     /**
+     * Muichiro Tokito - Mist Hashira
+     * Wields nichirinsword_muichiro, uses Enhanced Mist Breathing (all 7 forms)
+     * Neutral entity that targets hostile mobs
+     */
+    public static final RegistryObject<EntityType<MuichiroEntity>> MUICHIRO =
+        ENTITY_TYPES.register("muichiro",
+            () -> EntityType.Builder.of(MuichiroEntity::new, MobCategory.MISC)
+                .sized(0.48F, 1.44F) // 80% of player size (young appearance)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("muichiro"));
+
+    /**
      * Register entity types to the mod event bus
      */
     public static void register(IEventBus eventBus) {
@@ -71,6 +84,9 @@ public class ModEntities {
 
             // Register attributes for ghostly clone (visual-only entity)
             event.put(GHOSTLY_CLONE.get(), GhostlyCloneEntity.createAttributes().build());
+
+            // Register attributes for Muichiro Tokito
+            event.put(MUICHIRO.get(), MuichiroEntity.createAttributes().build());
 
             if (Config.logDebug)
             Log.info("Entity attributes registered successfully");

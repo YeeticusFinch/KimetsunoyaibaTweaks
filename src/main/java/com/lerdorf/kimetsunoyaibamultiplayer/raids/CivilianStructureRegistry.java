@@ -68,7 +68,8 @@ public class CivilianStructureRegistry {
         registerStructure("temple_doma", StructureSize.MEDIUM, "kimetsunoyaiba");
 
         // LARGE STRUCTURES (Villages)
-        registerStructure("village_swam", StructureSize.LARGE, "kimetsunoyaiba");
+        // Fix typo: swamp
+        registerStructure("village_swamp", StructureSize.LARGE, "kimetsunoyaiba");
         registerStructure("village_yukak", StructureSize.LARGE, "kimetsunoyaiba");
 
         // Vanilla villages (all LARGE)

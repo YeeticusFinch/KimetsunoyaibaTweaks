@@ -31,6 +31,9 @@ public class SwordSlashModelRegistry {
         SWORD_TO_MODEL_MAP.put("nichirinsword_mist", "mist");
         SWORD_TO_MODEL_MAP.put("nichirinsword_muichiro", "mist");
 
+        // Register sound breathing swords to use sound model
+        SWORD_TO_MODEL_MAP.put("nichirinsword_uzui", "sound");
+
         // Other swords will automatically fall back to generic model
     }
     

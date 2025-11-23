@@ -47,10 +47,22 @@ public abstract class BreathingSwordItem extends SwordItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         BreathingTechnique technique = getBreathingTechnique();
-        PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player.getUUID());
+
+        // Load player data from NBT if on server
+        PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
 
         int formIndex = data.getCurrentFormIndex();
         BreathingForm form = technique.getForm(formIndex);
+
+        // Debug logging
+        if (!level.isClientSide && com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("BreathingSwordItem.use() - Server side");
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Player: " + player.getName().getString());
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Sword: " + this.getClass().getSimpleName());
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Technique: " + technique.getName());
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Form Index: " + formIndex);
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Form: " + (form != null ? form.getName() : "null"));
+        }
 
         if (form != null) {
             // Check if player has cool_time effect from KnY mod (prevents ability usage)
@@ -66,13 +78,18 @@ public abstract class BreathingSwordItem extends SwordItem {
 
             // Check item cooldown
             if (!player.getCooldowns().isOnCooldown(this)) {
-                // Execute the form effect
-                form.getEffect().execute(player, level);
+                // Execute the form effect ONLY on server
+                if (!level.isClientSide) {
+                    if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                        com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Executing form on server...");
+                    }
+                    form.getEffect().execute(player, level);
 
-                // Apply item cooldown
-                player.getCooldowns().addCooldown(this, form.getCooldownSeconds() * 20);
+                    // Apply item cooldown
+                    player.getCooldowns().addCooldown(this, form.getCooldownSeconds() * 20);
+                }
 
-                // Send action bar message
+                // Send action bar message (both sides for immediate feedback)
                 player.displayClientMessage(
                     Component.literal("§b" + form.getName()),
                     true
@@ -124,7 +141,7 @@ public abstract class BreathingSwordItem extends SwordItem {
      */
     public void cycleForm(Player player, boolean backward) {
         BreathingTechnique technique = getBreathingTechnique();
-        PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player.getUUID());
+        PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
 
         if (backward) {
             data.cycleFormBackward(technique.getFormCount());
@@ -135,10 +152,36 @@ public abstract class BreathingSwordItem extends SwordItem {
         int newIndex = data.getCurrentFormIndex();
         BreathingForm form = technique.getForm(newIndex);
 
+        // Debug logging
+        if (!player.level().isClientSide && com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("BreathingSwordItem.cycleForm() - Server side");
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Player: " + player.getName().getString());
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Technique: " + technique.getName());
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Direction: " + (backward ? "backward" : "forward"));
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  New Index: " + newIndex);
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Form: " + (form != null ? form.getName() : "null"));
+        }
+
+        // Save to NBT if on server
+        if (!player.level().isClientSide) {
+            PlayerBreathingData.saveToNBT(player);
+
+            // Broadcast form change to all clients
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
+                    new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket(
+                        player.getUUID(),
+                        newIndex
+                    )
+                );
+            }
+        }
+
         if (form != null) {
             // Send chat message about the new form (unless suppressed by config)
             // Using bold text and technique-specific colors
-            if (!com.lerdorf.kimetsunoyaibamultiplayer.Config.suppressFormCycleChat) {
+            // Only send on server to avoid duplicate messages
+            if (!player.level().isClientSide && !com.lerdorf.kimetsunoyaibamultiplayer.Config.suppressFormCycleChat) {
                 String techniqueColor = technique.getTechniqueColor();
                 String formColor = technique.getFormColor();
 

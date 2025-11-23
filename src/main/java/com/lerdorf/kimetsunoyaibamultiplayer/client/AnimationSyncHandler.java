@@ -104,9 +104,15 @@ public class AnimationSyncHandler {
         } else {
             playAnimation(playerUUID, clientPlayer, animationId, currentTick, animationLength, isLooping, animationData, speed, layerPriority);
 
+            // Trigger GeckoLib sword animation (for Kanroji sword)
+            String animationName = animationId.getPath();
+            KanrojiSwordAnimationTrigger.triggerAnimation(clientPlayer, animationName);
+
+            // Notify the animation handler so it doesn't override with movement animations
+            KanrojiSwordAnimationHandler.notifyActionAnimation(playerUUID, animationName);
+
             // Trigger sword particles for synchronized animations if sword data is available
             if (!swordItem.isEmpty()) {
-                String animationName = animationId.getPath();
                 SwordParticleHandler.spawnSwordParticles(clientPlayer, swordItem, animationName);
 
                 if (Config.logDebug) {

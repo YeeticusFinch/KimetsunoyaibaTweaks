@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.config;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
@@ -89,7 +91,7 @@ public class EntityConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
-        System.out.println("ENTITY CONFIG LOADING...");
+        Log.debug("ENTITY CONFIG LOADING...");
         crowEnhancementsEnabled = CROW_ENHANCEMENTS_ENABLED.get();
         crowFlyingDodgeEnabled = CROW_FLYING_DODGE_ENABLED.get();
         crowFlightHeight = CROW_FLIGHT_HEIGHT.get();
@@ -103,7 +105,7 @@ public class EntityConfig {
         crowWaypointCompleteDistance = CROW_WAYPOINT_COMPLETE_DISTANCE.get();
         crowAutoDetectQuests = CROW_AUTO_DETECT_QUESTS.get();
 
-        System.out.println("EntityConfig loaded: crowEnhancements=" + crowEnhancementsEnabled +
+        Log.debug("EntityConfig loaded: crowEnhancements=" + crowEnhancementsEnabled +
                          ", flyingDodge=" + crowFlyingDodgeEnabled + ", flightHeight=" + crowFlightHeight +
                          ", flightDuration=" + crowFlightDuration + ", circleRadius=" + crowCircleRadius +
                          ", questArrow=" + crowQuestArrowEnabled + ", waypoint=" + crowWaypointEnabled +

@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.biome;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -76,7 +77,7 @@ public class WisteriaForestProtectionHandler {
             event.setResult(Event.Result.DENY);
 
             if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                System.out.println("[Wisteria Forest] Prevented demon spawn in wisteria forest: " +
+                Log.debug("[Wisteria Forest] Prevented demon spawn in wisteria forest: " +
                     EntityTagHelper.getEntityTypeId(mob));
             }
         }
@@ -111,7 +112,7 @@ public class WisteriaForestProtectionHandler {
             event.setCanceled(true);
 
             if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                System.out.println("[Wisteria Forest] Prevented demon from targeting entity in wisteria forest");
+                Log.debug("[Wisteria Forest] Prevented demon from targeting entity in wisteria forest");
             }
         }
     }
@@ -147,7 +148,7 @@ public class WisteriaForestProtectionHandler {
             mob.discard();
 
             if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                System.out.println("[Wisteria Forest] Despawned twelve kizuki in wisteria forest: " +
+                Log.debug("[Wisteria Forest] Despawned twelve kizuki in wisteria forest: " +
                     EntityTagHelper.getEntityTypeId(mob));
             }
         }
@@ -196,7 +197,7 @@ public class WisteriaForestProtectionHandler {
             mob.discard();
 
             if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                System.out.println("[Wisteria Forest] Despawned twelve kizuki that wandered into wisteria forest: " +
+                Log.debug("[Wisteria Forest] Despawned twelve kizuki that wandered into wisteria forest: " +
                     EntityTagHelper.getEntityTypeId(mob));
             }
         }

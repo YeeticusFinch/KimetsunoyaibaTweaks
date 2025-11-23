@@ -1,5 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs;
-
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BloodDemonArtExecutor;
@@ -62,37 +62,41 @@ public class CustomNPCRangedAbilityHandler {
                         continue;
                     }
 
-                    // Check if NPC has an attack target
+                    // Determine target strictly from AI target to prevent post-fight spam
                     LivingEntity target = mob.getTarget();
+
+                    // Only proceed if there is an active, living target
                     if (target == null || !target.isAlive()) {
+                        continue; // idle state: do not trigger ranged abilities
+                    }
+
+                    // Get the held item
+                    ItemStack heldItem = mob.getMainHandItem();
+                    if (heldItem.isEmpty()) {
                         continue;
                     }
 
-                    // Check if target is within range
+                    // Range check against the active target only (prevents idle spam)
+                    LivingEntity primary = target;
                     double range = CustomNPCConfig.getRangedAbilityRange();
-                    double distanceSq = mob.distanceToSqr(target);
+                    double distanceSq = mob.distanceToSqr(primary);
                     if (distanceSq > range * range) {
                         continue;
                     }
 
-                    // Check trigger chance
+                    // Check trigger chance (respect config for all swords including flower)
                     double triggerChance = CustomNPCConfig.getTriggerChance();
                     double roll = mob.getRandom().nextDouble();
                     if (roll > triggerChance) {
                         continue;
                     }
 
-                    // Get held item
-                    ItemStack heldItem = mob.getMainHandItem();
-                    if (heldItem.isEmpty()) {
-                        continue;
-                    }
-
                     Item item = heldItem.getItem();
 
                     if (CustomNPCConfig.isDebugEnabled()) {
-                        System.out.println("[KnY Custom NPCs] [Ranged] Checking NPC: " + mob.getName().getString() +
-                                         " (distance: " + String.format("%.1f", Math.sqrt(distanceSq)) + " blocks)");
+                        double dist = Math.sqrt(distanceSq);
+                        Log.debug("[KnY Custom NPCs] [Ranged] Checking NPC: " + mob.getName().getString() +
+                                         " (distance: " + String.format("%.1f", dist) + " blocks)");
                     }
 
                     // Try to execute ability based on item type
@@ -101,27 +105,27 @@ public class CustomNPCRangedAbilityHandler {
                     // Priority 1: This mod's custom breathing swords
                     if (CustomBreathingExecutor.isCustomBreathingSword(item)) {
                         if (CustomNPCConfig.isDebugEnabled()) {
-                            System.out.println("[KnY Custom NPCs] [Ranged] → Executing custom breathing sword ability");
+                            Log.debug("[KnY Custom NPCs] [Ranged] → Executing custom breathing sword ability");
                         }
                         abilityExecuted = CustomBreathingExecutor.execute(mob, heldItem);
                     }
                     // Priority 2: Base mod nichirin swords
                     else if (BaseModBreathingExecutor.isBaseModNichirinSword(item)) {
                         if (CustomNPCConfig.isDebugEnabled()) {
-                            System.out.println("[KnY Custom NPCs] [Ranged] → Executing base mod nichirin sword ability");
+                            Log.debug("[KnY Custom NPCs] [Ranged] → Executing base mod nichirin sword ability");
                         }
                         abilityExecuted = BaseModBreathingExecutor.execute(mob, item);
                     }
                     // Priority 3: Blood demon arts
                     else if (BloodDemonArtExecutor.isBloodDemonArt(item)) {
                         if (CustomNPCConfig.isDebugEnabled()) {
-                            System.out.println("[KnY Custom NPCs] [Ranged] → Executing blood demon art ability");
+                            Log.debug("[KnY Custom NPCs] [Ranged] → Executing blood demon art ability");
                         }
                         abilityExecuted = BloodDemonArtExecutor.execute(mob, item);
                     }
 
                     if (abilityExecuted && CustomNPCConfig.isDebugEnabled()) {
-                        System.out.println("[KnY Custom NPCs] [Ranged] ✓ Ability executed successfully");
+                        Log.debug("[KnY Custom NPCs] [Ranged] ✓ Ability executed successfully");
                     }
                 }
             }

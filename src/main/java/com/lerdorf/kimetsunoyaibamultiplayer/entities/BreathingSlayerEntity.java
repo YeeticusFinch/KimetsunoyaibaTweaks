@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import net.minecraft.core.registries.Registries;
@@ -348,7 +349,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
 
         // Debug logging
         if (!this.level().isClientSide) {
-            System.out.println("[BreathingSlayerEntity] Playing animation: " + animationName + " for " + durationTicks + " ticks");
+            Log.debug("[BreathingSlayerEntity] Playing animation: " + animationName + " for " + durationTicks + " ticks");
         }
     }
 
@@ -391,7 +392,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         // Main controller - handles ALL animations (walk, idle, attacks, abilities)
-        controllers.add(new AnimationController<>(this, "controller", 2, state -> {
+        controllers.add(new AnimationController<>(this, "controller", 0, state -> {
             String anim = getCurrentAnimation();
             int animTicks = getAnimationTicks();
 

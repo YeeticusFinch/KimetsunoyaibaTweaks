@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.config;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -35,6 +37,10 @@ public class CustomNPCConfig {
     // Attack Animations
     public static final ForgeConfigSpec.BooleanValue ENABLE_ATTACK_ANIMATIONS;
 
+    // Maximum Cooldown Auto-Clear
+    public static final ForgeConfigSpec.BooleanValue ENABLE_MAX_COOLDOWN_CLEAR;
+    public static final ForgeConfigSpec.IntValue MAX_COOLDOWN_SECONDS;
+
     // Form Selection Weights
     public static final ForgeConfigSpec.DoubleValue FORM_1_WEIGHT;
     public static final ForgeConfigSpec.DoubleValue FORM_2_WEIGHT;
@@ -57,8 +63,8 @@ public class CustomNPCConfig {
 
         NPC_TRIGGER_CHANCE = BUILDER
             .comment("Probability that an NPC will use an ability when attacking (if not on cooldown).",
-                    "0.0 = never use abilities, 1.0 = always use abilities, 0.8 = 80% chance")
-            .defineInRange("npcTriggerChance", 0.8, 0.0, 1.0);
+                    "0.0 = never use abilities, 1.0 = always use abilities, 0.8 = 90% chance")
+            .defineInRange("npcTriggerChance", 0.9, 0.0, 1.0);
 
         DEBUG_NPC_ABILITIES = BUILDER
             .comment("Enable debug logging for NPC ability usage.",
@@ -73,18 +79,30 @@ public class CustomNPCConfig {
         RANGED_ABILITY_RANGE = BUILDER
             .comment("Maximum range for NPCs to trigger abilities (in blocks).",
                     "NPCs will use abilities when their attack target is within this range.")
-            .defineInRange("rangedAbilityRange", 15.0, 5.0, 50.0);
+            .defineInRange("rangedAbilityRange", 15.0, 0.0, 500.0);
 
         RANGED_ABILITY_CHECK_INTERVAL = BUILDER
             .comment("How often to check for ranged ability triggering (in ticks).",
                     "Lower values = more frequent checks but more processing.",
                     "20 ticks = 1 second, 40 ticks = 2 seconds")
-            .defineInRange("rangedAbilityCheckInterval", 30, 10, 100);
+            .defineInRange("rangedAbilityCheckInterval", 20, 5, 1000);
 
         ENABLE_ATTACK_ANIMATIONS = BUILDER
             .comment("Enable basic attack animations for NPCs (sword_to_left, sword_to_right, sword_overhead).",
                     "When enabled, NPCs will play random sword swing animations on normal attacks.")
             .define("enableAttackAnimations", true);
+
+        ENABLE_MAX_COOLDOWN_CLEAR = BUILDER
+            .comment("Enable automatic cooldown clearing after maximum time.",
+                    "If enabled, all NPC cooldowns will be cleared after the max cooldown time passes.",
+                    "This prevents cooldowns from getting stuck indefinitely.")
+            .define("enableMaxCooldownClear", true);
+
+        MAX_COOLDOWN_SECONDS = BUILDER
+            .comment("Maximum cooldown time in seconds before auto-clearing all cooldowns.",
+                    "After an NPC uses any breathing form, if this many seconds pass, all cooldowns are cleared.",
+                    "This timer resets every time the NPC uses a breathing form.")
+            .defineInRange("maxCooldownSeconds", 10, 1, 300);
 
         BUILDER.push("Form Selection Weights");
         BUILDER.comment("Weighted probability for form selection. Lower forms are used more often.",
@@ -171,6 +189,20 @@ public class CustomNPCConfig {
     }
 
     /**
+     * Check if max cooldown auto-clear is enabled
+     */
+    public static boolean isMaxCooldownClearEnabled() {
+        return ENABLE_MAX_COOLDOWN_CLEAR.get();
+    }
+
+    /**
+     * Get the max cooldown time in seconds
+     */
+    public static int getMaxCooldownSeconds() {
+        return MAX_COOLDOWN_SECONDS.get();
+    }
+
+    /**
      * Get form selection weight for the given form index (0-based)
      * @param formIndex The form index (0 = First Form, 1 = Second Form, etc.)
      * @param totalForms Total number of forms available
@@ -196,11 +228,11 @@ public class CustomNPCConfig {
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
         if (isDebugEnabled()) {
-            System.out.println("[KnY Custom NPCs] Config loaded!");
-            System.out.println("  Enabled: " + isEnabled());
-            System.out.println("  Cooldown Multiplier: " + getCooldownMultiplier());
-            System.out.println("  Trigger Chance: " + (getTriggerChance() * 100) + "%");
-            System.out.println("  Debug Logging: " + isDebugEnabled());
+            Log.debug("[KnY Custom NPCs] Config loaded!");
+            Log.debug("  Enabled: " + isEnabled());
+            Log.debug("  Cooldown Multiplier: " + getCooldownMultiplier());
+            Log.debug("  Trigger Chance: " + (getTriggerChance() * 100) + "%");
+            Log.debug("  Debug Logging: " + isDebugEnabled());
         }
     }
 }

@@ -23,6 +23,11 @@ public class KeyInputHandler {
                 return;
             }
 
+            // Don't process keybindings when a screen/GUI is open (chat, inventory, etc.)
+            if (mc.screen != null) {
+                return;
+            }
+
             // Check if R key was pressed
             if (ModKeyBindings.CYCLE_BREATHING_FORM.consumeClick()) {
                 ItemStack mainHandItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);

@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticleHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 import net.minecraft.server.level.ServerLevel;
@@ -39,7 +40,7 @@ public class MistTeleportHandler {
         if (entity.getPersistentData().contains("mist_7th_teleport_cooldown")) {
             int cooldownTick = entity.getPersistentData().getInt("mist_7th_teleport_cooldown");
             if (entity.tickCount < cooldownTick) {
-                System.out.println("[TELEPORT DEBUG] Initial cooldown active, teleport blocked");
+                Log.debug("[TELEPORT DEBUG] Initial cooldown active, teleport blocked");
                 return;
             }
             // Remove cooldown tag once it expires

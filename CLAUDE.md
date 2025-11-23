@@ -25,23 +25,28 @@ Minecraft Forge 1.20.1 mod that enables synchronized player animations in multip
 ## Core Concepts
 
 ### Mod Registration Pattern
+
 Uses DeferredRegister for all registrations:
+
 1. Create DeferredRegister instances for each registry type
 2. Register objects as RegistryObject fields
 3. Register the DeferredRegister to mod event bus in constructor
 
 ### Client/Server Separation
+
 - Client-only code MUST be in `client` package
 - Use `@Mod.EventBusSubscriber(value = Dist.CLIENT)` for client events
 - Network packets use `DistExecutor.unsafeRunWhenOn()` for client code
 
 ### Animation System
+
 1. **Detection**: `AnimationTracker.java` uses reflection to detect active animations
 2. **Network**: `AnimationSyncPacket.java` transmits animation events
 3. **Application**: `AnimationSyncHandler.java` applies animations to other players
 4. **Dependencies**: Requires `player-animation-lib-forge` + `mobplayeranimator`
 
 ### Custom Dimensions
+
 - **Mt Fujikasane**: Separate dimension with WorldPainter world integration
   - 1000×1000 block world with overworld-like environment
   - Automatic region file download from GitHub
@@ -57,16 +62,19 @@ Uses DeferredRegister for all registrations:
 ## Key Rules
 
 ### Event Handling
+
 - Always wrap event handlers in try-catch blocks
 - Use `ThreadLocal<Boolean>` flags to prevent recursion
 - Never call `hurt()` in `LivingAttackEvent` without recursion protection
 
 ### Logging
+
 - **Never** use log4j in exception handlers (causes LinkageError crashes)
-- Use `System.err.println()` or `System.out.println()` instead
+- Use `System.err.println()` or `Log.debug()` instead
 - Exclude log4j from all dependencies in `build.gradle`
 
 ### Client-Only Code
+
 - **Never** import client classes (`net.minecraft.client.*`) outside `client` package
 - Client classes MUST be in `client` package (enforced by RuntimeDistCleaner)
 - Test on dedicated server early: `./gradlew runServer`
@@ -139,6 +147,7 @@ public static final RegistryObject<Item> MY_SWORD =
 ## Additional Documentation
 
 For detailed guides on specific topics, see the `docs/` directory:
+
 - **API Usage Guide**: Complete guide for using this mod as a library
 - **Migration Guide**: Refactoring existing swords to use the new API
 - **Mt Fujikasane Dimension**: WorldPainter integration and dimension setup

@@ -10,7 +10,6 @@ public class Log {
 		try {
 		if (Config.logDebug)
 			LOGGER.debug(message, args);
-        	//System.out.println("[DEBUG] " + format(message, args));
 		} catch (Exception e) {}
     }
 
@@ -18,7 +17,6 @@ public class Log {
     	try {
     	if (Config.logInfo)
     		LOGGER.info(message, args);
-        	//System.out.println("[INFO] " + format(message, args));
     	} catch (Exception e) {}
     }
 
@@ -26,7 +24,6 @@ public class Log {
     	try {
     	if (Config.logWarning)
     		LOGGER.warn(message, args);
-        	//System.out.println("[WARNING] " + format(message, args));
     	}catch (Exception e) {}
     }
 
@@ -34,7 +31,6 @@ public class Log {
     	try {
     	if (Config.logError)
     		LOGGER.error(message, args);
-        	//System.out.println("[ERROR] " + format(message, args));
     	} catch (Exception e) {}
     }
     

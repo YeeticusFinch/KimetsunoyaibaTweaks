@@ -37,22 +37,33 @@ public class CycleBreathingFormPacket {
 
             ItemStack heldItem = player.getMainHandItem();
 
-            // Get current breathing value
-            double currentBreathes = player.getPersistentData().getDouble("breathes");
+            // Check if this is a custom breathing sword (from our API)
+            if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem breathingSword) {
+                // Handle custom breathing sword cycling
+                breathingSword.cycleForm(player, direction < 0);
+                if (Config.logDebug) {
+                    Log.debug("Cycled custom breathing form for: " + heldItem.getItem().toString() +
+                             " (direction: " + (direction >= 0 ? "forward" : "backward") + ")");
+                }
+            } else {
+                // Handle base mod (kimetsunoyaiba) breathing form cycling
+                // Get current breathing value
+                double currentBreathes = player.getPersistentData().getDouble("breathes");
 
-            if (currentBreathes == 0.0) {
-                return; // No breathing form active
-            }
+                if (currentBreathes == 0.0) {
+                    return; // No breathing form active
+                }
 
-            // Calculate new breathing value based on direction
-            double newBreathes = cycleBreathingForm(currentBreathes, direction, heldItem);
+                // Calculate new breathing value based on direction
+                double newBreathes = cycleBreathingForm(currentBreathes, direction, heldItem);
 
-            // Update player's breathing form
-            player.getPersistentData().putDouble("breathes", newBreathes);
+                // Update player's breathing form
+                player.getPersistentData().putDouble("breathes", newBreathes);
 
-            if (Config.logDebug) {
-                Log.debug("Cycled breathing form: " + currentBreathes + " -> " + newBreathes +
-                         " (direction: " + (direction == 1 ? "forward" : "backward") + ")");
+                if (Config.logDebug) {
+                    Log.debug("Cycled base mod breathing form: " + currentBreathes + " -> " + newBreathes +
+                             " (direction: " + (direction == 1 ? "forward" : "backward") + ")");
+                }
             }
         });
         ctx.get().setPacketHandled(true);

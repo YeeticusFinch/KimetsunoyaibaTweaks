@@ -81,7 +81,7 @@ public class ParticleHelper {
 				// Spawn particles directly
 				if (true) {
 					for (int i = 0; i < ParticleConfig.particlesPerPosition; i++) {
-						// System.out.println("Spawning particle at: " + worldX + ", " + worldY + ", " +
+						// Log.debug("Spawning particle at: " + worldX + ", " + worldY + ", " +
 						// worldZ);
 						level.sendParticles(particle, worldX, worldY, worldZ, 1, 0, 0, 0, 0);
 					}
@@ -129,7 +129,7 @@ public class ParticleHelper {
 				// Spawn particles directly
 				if (true) {
 					for (int i = 0; i < ParticleConfig.particlesPerPosition; i++) {
-						//System.out.println("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
+						//Log.debug("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
 						level.sendParticles(particle, worldX, worldY, worldZ, 1, 0, 0, 0, 0);
 					}
 				}

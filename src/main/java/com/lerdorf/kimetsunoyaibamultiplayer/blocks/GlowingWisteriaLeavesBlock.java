@@ -127,7 +127,6 @@ public class GlowingWisteriaLeavesBlock extends LeavesBlock {
 
             // Apply maximum slowness and strong poison (10 seconds) - NO DAMAGE
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 9, false, false)); // Maximum slowness
-            living.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 1, false, false)); // Nausea/confusion
             if (wisteriaPoison != null) {
                 living.addEffect(new MobEffectInstance(wisteriaPoison, 200, 5, false, false)); // Very strong poison
             }

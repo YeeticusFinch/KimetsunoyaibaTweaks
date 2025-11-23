@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
@@ -53,7 +54,7 @@ public class CrowAnimationHandler {
             trySetPose(entity, flying);
 
             if (Config.logDebug) {
-                LOGGER.debug("Attempted to set flying animation for crow");
+                Log.debug("Attempted to set flying animation for crow");
             }
 
         } catch (Exception e) {

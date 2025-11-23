@@ -1,6 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client.renderer;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.client.SheathModelRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -10,13 +12,15 @@ import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Renders swords attached to player models (on hip or back)
+ * Renders swords and their sheaths attached to player models (on hip or back)
  */
 public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
     private final ItemInHandRenderer itemInHandRenderer;
@@ -38,23 +42,31 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
 
         SwordDisplayTracker.SwordDisplayState state = SwordDisplayTracker.getDisplayState(player.getUUID());
 
-        // Render left hip/back sword
+        // Render left hip/back sword (and sheath)
         if (state.hasLeftSword()) {
-            renderSword(poseStack, buffer, packedLight, player, state.leftHipSword, true);
+            renderSwordWithSheath(poseStack, buffer, packedLight, player, state.leftHipSword,
+                                 true, true);  // Always render sheath when sword is on hip
+        } else if (state.shouldShowLeftSheath()) {
+            // Render just the sheath if sword is drawn but sheath persists
+            renderSheathOnly(poseStack, buffer, packedLight, player, state.leftSheathItem, true);
         }
 
-        // Render right hip/back sword
+        // Render right hip/back sword (and sheath)
         if (state.hasRightSword()) {
-            renderSword(poseStack, buffer, packedLight, player, state.rightHipSword, false);
+            renderSwordWithSheath(poseStack, buffer, packedLight, player, state.rightHipSword,
+                                 true, false);  // Always render sheath when sword is on hip
+        } else if (state.shouldShowRightSheath()) {
+            // Render just the sheath if sword is drawn but sheath persists
+            renderSheathOnly(poseStack, buffer, packedLight, player, state.rightSheathItem, false);
         }
     }
 
     /**
-     * Renders a single sword on the player model
-     * @param isLeft true for left hip/back, false for right
+     * Renders a sword with its sheath
      */
-    private void renderSword(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-                            AbstractClientPlayer player, ItemStack sword, boolean isLeft) {
+    private void renderSwordWithSheath(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                      AbstractClientPlayer player, ItemStack sword,
+                                      boolean renderSheath, boolean isLeft) {
         poseStack.pushPose();
 
         // Get the display position from config
@@ -70,7 +82,15 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
         float scale = (float) SwordDisplayConfig.scale;
         poseStack.scale(scale, scale, scale);
 
-        // Render the item
+        // Render the sheath first (behind the sword) if enabled
+        if (renderSheath && SwordDisplayConfig.renderSheaths) {
+        	Item sheathItem = SwordSheathRegistry.getSheathItem(sword);
+        	if (sheathItem != null) {
+        	    SheathModelRenderer.renderSheath(sheathItem, poseStack, buffer, packedLight, player.getId());
+        	}
+        }
+
+        // Render the sword
         net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(
             sword,
             ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
@@ -81,6 +101,36 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
             player.level(),
             player.getId()
         );
+
+        poseStack.popPose();
+    }
+
+    /**
+     * Renders just a sheath (when sword is drawn but sheath persists)
+     */
+    private void renderSheathOnly(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+            AbstractClientPlayer player, Item sheathItem, boolean isLeft) {
+        if (!SwordDisplayConfig.renderSheaths || sheathItem == null) {
+            return;
+        }
+
+        poseStack.pushPose();
+
+        // Get the display position from config
+        SwordDisplayConfig.SwordDisplayPosition position = SwordDisplayConfig.position;
+
+        if (position == SwordDisplayConfig.SwordDisplayPosition.HIP) {
+            renderSwordOnHip(poseStack, player, isLeft);
+        } else {
+            renderSwordOnBack(poseStack, player, isLeft);
+        }
+
+        // Apply scale from config
+        float scale = (float) SwordDisplayConfig.scale;
+        poseStack.scale(scale, scale, scale);
+
+        // Render the sheath
+        SheathModelRenderer.renderSheath(sheathItem, poseStack, buffer, packedLight, player.getId());
 
         poseStack.popPose();
     }

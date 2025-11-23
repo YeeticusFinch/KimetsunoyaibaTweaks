@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.compat.ShoulderSurfingCompat;
 
 import net.minecraft.core.BlockPos;
@@ -131,6 +132,29 @@ public class MovementHelper {
     }
 
     /**
+     * Force a non-player entity to look at its current combat target, if any.
+     * Does nothing for players or if no target exists.
+     */
+    public static void lookAtTarget(LivingEntity entity) {
+        // Only for non-players
+        if (entity instanceof Player) {
+            return;
+        }
+
+        // Only mobs have a combat target
+        if (entity instanceof net.minecraft.world.entity.Mob mob) {
+            LivingEntity target = mob.getTarget();
+            if (target == null || !target.isAlive()) {
+                return;
+            }
+
+            // Look at target's eye position for a natural head tilt
+            Vec3 targetPos = target.position().add(0, target.getEyeHeight(), 0);
+            lookAt(entity, targetPos);
+        }
+    }
+
+    /**
      * Move entity towards a target position with specified speed
      * @param entity The entity to move
      * @param target Target position
@@ -208,10 +232,10 @@ public class MovementHelper {
                 AttributeModifier.Operation.ADDITION
             );
             attribute.addTransientModifier(modifier);
-            System.out.println("Set step height to " + stepHeight + " (added " + addition + " to base)");
+            Log.debug("Set step height to " + stepHeight + " (added " + addition + " to base)");
         } else {
             // If addition is 0 or negative, just remove the modifier (reset to default 0.6)
-            System.out.println("Reset step height to default (0.6)");
+            Log.debug("Reset step height to default (0.6)");
         }
     }
 
@@ -223,7 +247,7 @@ public class MovementHelper {
         AttributeInstance attribute = entity.getAttribute(ForgeMod.STEP_HEIGHT_ADDITION.get());
         if (attribute != null) {
             attribute.removeModifier(STEP_HEIGHT_MODIFIER_UUID);
-            System.out.println("Reset step height to default");
+            Log.debug("Reset step height to default");
         }
     }
 

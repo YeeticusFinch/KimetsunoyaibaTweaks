@@ -7,6 +7,8 @@ import net.minecraftforge.fml.event.config.ModConfigEvent;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+
 /**
  * Configuration for enhanced spawning rules system.
  *
@@ -31,7 +33,7 @@ public class EnhancedSpawnConfig {
             .comment("Master switch for enhanced spawning rules.",
                     "If true, uses complex biome/structure/dimension rules.",
                     "If false, falls back to simple spawn priority system.")
-            .define("enhanced_spawning_rules", true);
+            .define("enhanced_spawning_rules", false);
 
     // ========== GENERIC SPAWN RATES ==========
     static {
@@ -210,16 +212,16 @@ public class EnhancedSpawnConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
-        System.out.println("ENHANCED SPAWN CONFIG LOADING...");
+        Log.debug("ENHANCED SPAWN CONFIG LOADING...");
         updateCache();
-        System.out.println("Enhanced spawn config loaded successfully.");
+        Log.debug("Enhanced spawn config loaded successfully.");
     }
 
     @SubscribeEvent
     public static void onReload(final ModConfigEvent.Reloading event) {
-        System.out.println("ENHANCED SPAWN CONFIG RELOADING...");
+        Log.debug("ENHANCED SPAWN CONFIG RELOADING...");
         updateCache();
-        System.out.println("Enhanced spawn config reloaded successfully.");
+        Log.debug("Enhanced spawn config reloaded successfully.");
     }
 
     private static void updateCache() {

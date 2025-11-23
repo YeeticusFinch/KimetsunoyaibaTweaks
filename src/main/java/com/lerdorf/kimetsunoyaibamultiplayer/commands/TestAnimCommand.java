@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.commands;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.SwordParticleHandler;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -31,7 +32,7 @@ public class TestAnimCommand {
     }
 
     private static int testAnimation(CommandContext<CommandSourceStack> context, String animationName) {
-        System.out.println("TestAnimCommand executed with animation: " + animationName);
+        Log.debug("TestAnimCommand executed with animation: " + animationName);
 
         if (!(context.getSource().getEntity() instanceof ServerPlayer player)) {
             context.getSource().sendFailure(Component.literal("This command can only be used by players"));
@@ -39,7 +40,7 @@ public class TestAnimCommand {
         }
 
         ItemStack mainHand = player.getItemInHand(InteractionHand.MAIN_HAND);
-        System.out.println("Player holding: " + mainHand.getItem());
+        Log.debug("Player holding: " + mainHand.getItem());
 
         if (mainHand.isEmpty()) {
             player.sendSystemMessage(Component.literal("§cYou need to hold a sword to test particles"));

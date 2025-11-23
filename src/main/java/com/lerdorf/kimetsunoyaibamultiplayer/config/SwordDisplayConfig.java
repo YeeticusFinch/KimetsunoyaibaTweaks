@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.config;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
@@ -27,6 +29,11 @@ public class SwordDisplayConfig {
             .comment("Scale of displayed swords (0.5 = half size, 1.0 = normal size, 2.0 = double size)")
             .defineInRange("scale", 1.0, 0.1, 5.0);
 
+    // Enable/disable sheath rendering
+    private static final ForgeConfigSpec.BooleanValue RENDER_SHEATHS = BUILDER
+            .comment("Enable rendering sword sheaths on the hip/back")
+            .define("render_sheaths", true);
+
     // Hip position settings
     static {
         BUILDER.comment("Hip Display Position Configuration")
@@ -51,7 +58,7 @@ public class SwordDisplayConfig {
             .defineInRange("left_rotate_y", 180, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue HIP_LEFT_ROTATE_X = BUILDER
             .comment("Left hip X rotation (degrees)")
-            .defineInRange("left_rotate_x", -46.0, -360.0, 360.0);
+            .defineInRange("left_rotate_x", -65.0, -360.0, 360.0);
 
     // Right hip
     private static final ForgeConfigSpec.DoubleValue HIP_RIGHT_TRANSLATE_X = BUILDER
@@ -70,7 +77,7 @@ public class SwordDisplayConfig {
             .comment("Right hip Y rotation (degrees)")
             .defineInRange("right_rotate_y", 180, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue HIP_RIGHT_ROTATE_X = BUILDER
-            .comment("Right hip X rotation (degrees)")
+            .comment("Right hip Z rotation (degrees)")
             .defineInRange("right_rotate_x", -65.0, -360.0, 360.0);
 
     static {
@@ -133,6 +140,7 @@ public class SwordDisplayConfig {
     public static boolean enabled;
     public static SwordDisplayPosition position;
     public static double scale;
+    public static boolean renderSheaths;
 
     // Hip position values
     public static double hipLeftTranslateX;
@@ -169,10 +177,11 @@ public class SwordDisplayConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
-        System.out.println("SWORD DISPLAY CONFIG LOADING...");
+        Log.debug("SWORD DISPLAY CONFIG LOADING...");
         enabled = ENABLED.get();
         position = POSITION.get();
         scale = SCALE.get();
+        renderSheaths = RENDER_SHEATHS.get();
 
         // Load hip position values
         hipLeftTranslateX = HIP_LEFT_TRANSLATE_X.get();
@@ -202,7 +211,8 @@ public class SwordDisplayConfig {
         backRightRotateY = BACK_RIGHT_ROTATE_Y.get();
         backRightRotateX = BACK_RIGHT_ROTATE_X.get();
 
-        System.out.println("Sword display config loaded: enabled=" + enabled +
-                         ", position=" + position + ", scale=" + scale);
+        Log.debug("Sword display config loaded: enabled=" + enabled +
+                         ", position=" + position + ", scale=" + scale +
+                         ", renderSheaths=" + renderSheaths);
     }
 }

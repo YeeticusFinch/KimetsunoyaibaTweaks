@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CrowGeoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.GhostlyCloneRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroRenderer;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.entity.EntityType;
@@ -30,6 +31,9 @@ public class CrowRendererManager {
 
         // Register renderer for ghostly clone entity (Mist Breathing 7th Form effect)
         event.registerEntityRenderer(ModEntities.GHOSTLY_CLONE.get(), GhostlyCloneRenderer::new);
+
+        // Register renderer for Muichiro Tokito
+        event.registerEntityRenderer(ModEntities.MUICHIRO.get(), MuichiroRenderer::new);
 
         if (Config.logDebug)
         	Log.info("Entity renderers registered successfully");

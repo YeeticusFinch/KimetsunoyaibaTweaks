@@ -1,5 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors;
-
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
@@ -36,7 +36,7 @@ public class CustomBreathingExecutor {
             SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(item);
             if (registeredSword == null) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] Item not in SwordRegistry: " + item.getDescriptionId());
+                    Log.debug("[KnY Custom NPCs] Item not in SwordRegistry: " + item.getDescriptionId());
                 }
                 return false;
             }
@@ -45,7 +45,7 @@ public class CustomBreathingExecutor {
             BreathingSwordItem swordItem = registeredSword.getSwordItem();
             if (swordItem == null) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] Registered sword has no BreathingSwordItem");
+                    Log.debug("[KnY Custom NPCs] Registered sword has no BreathingSwordItem");
                 }
                 return false;
             }
@@ -54,7 +54,7 @@ public class CustomBreathingExecutor {
             BreathingTechnique technique = swordItem.getBreathingTechnique();
             if (technique == null) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] Sword has no breathing technique: " + swordItem.getDescriptionId());
+                    Log.debug("[KnY Custom NPCs] Sword has no breathing technique: " + swordItem.getDescriptionId());
                 }
                 return false;
             }
@@ -62,7 +62,7 @@ public class CustomBreathingExecutor {
             int formCount = technique.getFormCount();
             if (formCount == 0) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] Breathing technique has no forms");
+                    Log.debug("[KnY Custom NPCs] Breathing technique has no forms");
                 }
                 return false;
             }
@@ -75,7 +75,7 @@ public class CustomBreathingExecutor {
             if (!NPCCooldownManager.canUseAbility(npc, cooldownKey)) {
                 if (CustomNPCConfig.isDebugEnabled()) {
                     int remaining = NPCCooldownManager.getRemainingCooldown(npc, cooldownKey);
-                    System.out.println("[KnY Custom NPCs] On cooldown: " + remaining + " ticks remaining");
+                    Log.debug("[KnY Custom NPCs] On cooldown: " + remaining + " ticks remaining");
                 }
                 return false;
             }
@@ -86,17 +86,17 @@ public class CustomBreathingExecutor {
 
             if (selectedForm == null) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    System.out.println("[KnY Custom NPCs] Selected form is null at index " + formIndex);
+                    Log.debug("[KnY Custom NPCs] Selected form is null at index " + formIndex);
                 }
                 return false;
             }
 
             if (CustomNPCConfig.isDebugEnabled()) {
-                System.out.println("[KnY Custom NPCs] Executing Custom Breathing:");
-                System.out.println("  NPC: " + npc.getName().getString());
-                System.out.println("  Style: " + technique.getName());
-                System.out.println("  Form: " + selectedForm.getName() + " (" + FormSelector.getFormName(formIndex) + ")");
-                System.out.println("  Cooldown: " + selectedForm.getCooldownSeconds() + "s");
+                Log.debug("[KnY Custom NPCs] Executing Custom Breathing:");
+                Log.debug("  NPC: " + npc.getName().getString());
+                Log.debug("  Style: " + technique.getName());
+                Log.debug("  Form: " + selectedForm.getName() + " (" + FormSelector.getFormName(formIndex) + ")");
+                Log.debug("  Cooldown: " + selectedForm.getCooldownSeconds() + "s");
             }
 
             // Execute the breathing form effect

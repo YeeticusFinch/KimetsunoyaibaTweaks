@@ -33,8 +33,8 @@ public class GuardStateHelper {
     public static void setGuardState(LivingEntity entity, double defensivePower, double breathingId) {
         entity.getPersistentData().putDouble(NBT_DAMAGE, defensivePower);
         entity.getPersistentData().putBoolean(NBT_GUARD, true);
-        entity.getPersistentData().putDouble(NBT_SKILL, 1.0);
-        entity.getPersistentData().putDouble(NBT_BREATHES, breathingId);
+        // Don't set skill or breathes - they interfere with base mod's movement and form cycling
+        // Only set Damage and guard which are needed for sword clashing
     }
     
     /**
@@ -68,7 +68,7 @@ public class GuardStateHelper {
      * @param entity The entity to enable defense for
      */
     public static void enableContinuousDefense(LivingEntity entity) {
-        entity.getPersistentData().putDouble(NBT_SKILL, 1.0);
+        // Only set guard flag - don't set skill as it interferes with base mod
         entity.getPersistentData().putBoolean(NBT_GUARD, true);
     }
 
@@ -81,9 +81,8 @@ public class GuardStateHelper {
     public static void clearGuardState(LivingEntity entity) {
         entity.getPersistentData().putDouble(NBT_DAMAGE, 0.0);
         entity.getPersistentData().putBoolean(NBT_GUARD, false);
-        entity.getPersistentData().putDouble(NBT_SKILL, 0.0);
         entity.getPersistentData().putBoolean(NBT_ATTACK, false);
-        entity.getPersistentData().putDouble(NBT_BREATHES, 0.0);
+        // Don't touch skill or breathes tags - let base mod manage them
     }
 
     /**
@@ -108,7 +107,7 @@ public class GuardStateHelper {
 
     /**
      * Check if an entity is in guard state (can defend against attacks).
-     * Matches the original KnY mod's LogicGuardSuccessProcedure.
+     * Simplified version that only checks guard flag and damage.
      *
      * @param entity The entity to check
      * @param attacker The entity attacking (to prevent self-damage)
@@ -120,10 +119,9 @@ public class GuardStateHelper {
             return false;
         }
 
-        // Has skill value OR guard flag
-        double skill = entity.getPersistentData().getDouble(NBT_SKILL);
+        // Has guard flag
         boolean guard = entity.getPersistentData().getBoolean(NBT_GUARD);
-        if (skill == 0.0 && !guard) {
+        if (!guard) {
             return false;
         }
 

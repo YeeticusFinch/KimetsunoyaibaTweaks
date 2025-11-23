@@ -3,7 +3,9 @@
 ## log4j LinkageError Crashes
 
 ### Problem
+
 Persistent crashes with:
+
 ```
 java.lang.LinkageError: loader constraint violation: loader 'MC-BOOTSTRAP' wants to load interface org.apache.logging.log4j.util.MessageSupplier
 ```
@@ -11,10 +13,12 @@ java.lang.LinkageError: loader constraint violation: loader 'MC-BOOTSTRAP' wants
 ### Root Causes
 
 1. **Infinite Event Recursion**
+
    - `onLivingAttack` calling `entity.hurt()` triggers more `LivingAttackEvent`
    - Creates infinite loop until exception/stack overflow
 
 2. **log4j ClassLoader Conflicts**
+
    - Multiple mods bundle their own log4j classes
    - Creates classloader conflict with multiple `MessageSupplier` versions
    - MC-BOOTSTRAP can't resolve which version to use
@@ -63,8 +67,8 @@ Replace log4j with System.out:
 ```java
 public static void debug(String message, Object... args) {
     if (Config.logDebug)
-        //LOGGER.debug(message, args);  // DISABLED - causes LinkageError
-        System.out.println("[DEBUG] " + format(message, args));
+        //Log.debug(message, args);  // DISABLED - causes LinkageError
+        Log.debug("[DEBUG] " + format(message, args));
 }
 ```
 
@@ -103,6 +107,7 @@ public static void onEvent(SomeEvent event) {
 #### Rule 1: Never Call hurt() in LivingAttackEvent Without Protection
 
 **BAD:**
+
 ```java
 @SubscribeEvent
 public void onLivingAttack(LivingAttackEvent event) {
@@ -111,6 +116,7 @@ public void onLivingAttack(LivingAttackEvent event) {
 ```
 
 **GOOD:**
+
 ```java
 @SubscribeEvent
 public void onLivingAttack(LivingAttackEvent event) {
@@ -128,6 +134,7 @@ public void onLivingAttack(LivingAttackEvent event) {
 #### Rule 2: Always Wrap Event Handlers in Try-Catch
 
 **BAD:**
+
 ```java
 @SubscribeEvent
 public void onSomeEvent(SomeEvent event) {
@@ -136,6 +143,7 @@ public void onSomeEvent(SomeEvent event) {
 ```
 
 **GOOD:**
+
 ```java
 @SubscribeEvent
 public void onSomeEvent(SomeEvent event) {
@@ -150,6 +158,7 @@ public void onSomeEvent(SomeEvent event) {
 #### Rule 3: Never Use log4j in Exception Handlers
 
 **BAD:**
+
 ```java
 catch (Exception e) {
     Log.error("Error", e); // Can trigger LinkageError!
@@ -157,6 +166,7 @@ catch (Exception e) {
 ```
 
 **GOOD:**
+
 ```java
 catch (Exception e) {
     System.err.println("Error: " + e.getMessage());
@@ -171,6 +181,7 @@ Always add exclusions when adding dependencies.
 #### Rule 5: Watch for Event Chains
 
 Common recursion chains:
+
 - `LivingAttackEvent` → `hurt()` → `LivingAttackEvent`
 - `LivingHurtEvent` → `hurt()` → `LivingHurtEvent`
 - `PlayerInteractEvent` → `useOn()` → `PlayerInteractEvent`
@@ -187,6 +198,7 @@ Common recursion chains:
 5. **Test incrementally** after each fix
 
 ### Version History
+
 - **v1.5.13** - ShoulderSurfing integration (caused crashes)
 - **v1.5.14** - Added try-catch blocks
 - **v1.5.15** - More granular try-catch

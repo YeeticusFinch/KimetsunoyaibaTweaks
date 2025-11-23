@@ -31,9 +31,10 @@ import java.util.UUID;
  */
 public class IdleWalkAnimationHandler {
 
-    // Layer priorities for idle/walk animations (lower than action animations at 3000)
+    // Layer priorities for idle/walk/sprint animations (lower than action animations at 3000)
     private static final int IDLE_LAYER_PRIORITY = 100;
     private static final int WALK_LAYER_PRIORITY = 101;
+    private static final int SPRINT_LAYER_PRIORITY = 102;
 
     // Track the last held item for each player to detect equipment changes
     private static final Map<UUID, Item> lastHeldItem = new HashMap<>();
@@ -44,15 +45,20 @@ public class IdleWalkAnimationHandler {
     private static class ActiveReplacements {
         String idleAnimationName;
         String walkAnimationName;
+        String sprintAnimationName;
         ModifierLayer<IAnimation> idleLayer;
         ModifierLayer<IAnimation> walkLayer;
+        ModifierLayer<IAnimation> sprintLayer;
 
-        ActiveReplacements(String idleAnimationName, String walkAnimationName,
-                          ModifierLayer<IAnimation> idleLayer, ModifierLayer<IAnimation> walkLayer) {
+        ActiveReplacements(String idleAnimationName, String walkAnimationName, String sprintAnimationName,
+                          ModifierLayer<IAnimation> idleLayer, ModifierLayer<IAnimation> walkLayer,
+                          ModifierLayer<IAnimation> sprintLayer) {
             this.idleAnimationName = idleAnimationName;
             this.walkAnimationName = walkAnimationName;
+            this.sprintAnimationName = sprintAnimationName;
             this.idleLayer = idleLayer;
             this.walkLayer = walkLayer;
+            this.sprintLayer = sprintLayer;
         }
     }
 
@@ -186,7 +192,7 @@ public class IdleWalkAnimationHandler {
         // Track the active replacements
         if (idleLayer != null || walkLayer != null) {
             activeReplacements.put(player.getUUID(),
-                new ActiveReplacements(idleReplacement, walkReplacement, idleLayer, walkLayer));
+                new ActiveReplacements(idleReplacement, walkReplacement, null, idleLayer, walkLayer, null));
         }
     }
 

@@ -15,7 +15,13 @@ public class ModParticles {
     public static final RegistryObject<SimpleParticleType> MIST_PARTICLE = PARTICLE_TYPES.register("mist", 
         () -> new SimpleParticleType(false));
         
-    public static final RegistryObject<SimpleParticleType> SMALL_MIST_PARTICLE = PARTICLE_TYPES.register("mistsmall", 
+    public static final RegistryObject<SimpleParticleType> SMALL_MIST_PARTICLE = PARTICLE_TYPES.register("mistsmall",
+        () -> new SimpleParticleType(false));
+
+    public static final RegistryObject<SimpleParticleType> LOVE_IMPACT = PARTICLE_TYPES.register("love_impact",
+        () -> new SimpleParticleType(false));
+
+    public static final RegistryObject<SimpleParticleType> LOVE_SLASH = PARTICLE_TYPES.register("love_slash",
         () -> new SimpleParticleType(false));
 
     public static void register(IEventBus eventBus) {

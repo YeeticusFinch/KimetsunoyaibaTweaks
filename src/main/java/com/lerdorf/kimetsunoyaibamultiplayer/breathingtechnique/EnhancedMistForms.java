@@ -57,6 +57,9 @@ public class EnhancedMistForms {
             safePlayAnimation(player, animationName);
         } else if (entity instanceof BreathingSlayerEntity slayer) {
             slayer.playGeckoAnimation(animationName, 20);
+        } else {
+            // Generic mobs/NPCs (e.g., CustomNPCs) — route through AnimationHelper
+            AnimationHelper.playAnimation(entity, animationName);
         }
     }
 
@@ -79,6 +82,9 @@ public class EnhancedMistForms {
             AnimationHelper.playAnimationOnLayer(player, animationName, maxTicks, speed, layer);
         } else if (entity instanceof BreathingSlayerEntity slayer) {
             slayer.playGeckoAnimation(animationName, maxTicks);
+        } else {
+            // Generic mobs/NPCs (e.g., CustomNPCs) — route through AnimationHelper
+            AnimationHelper.playAnimationOnLayer(entity, animationName, maxTicks, speed, layer);
         }
     }
 
@@ -134,7 +140,7 @@ public class EnhancedMistForms {
 
 				// Launch player forward a little bit
 				Vec3 lookVec = entity.getLookAngle();
-				entity.setDeltaMovement(lookVec.scale(3).multiply(1, 0.3f, 1));
+				MovementHelper.setVelocity(entity, lookVec.scale(3).multiply(1, 0.3f, 1));
 
 				// Set attack state for damage dealing
 				GuardStateHelper.setAttackState(entity, 9.0);
@@ -148,6 +154,11 @@ public class EnhancedMistForms {
 						e -> e != entity && e.isAlive());
 				
 				if (level instanceof ServerLevel serverLevel) {
+						ParticleHelper.spawnForwardThrust(serverLevel, startPos, lookVec, 5.0, ModParticles.SMALL_MIST_PARTICLE.get(),
+								10);
+						ParticleHelper.spawnForwardThrust(serverLevel, startPos, lookVec, 5.0, new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
+								(float) (Math.random()*0.7f + 0.2f)),
+								10);
 					for (int i = 0; i <= 10; i ++) {
 	                    double x = entity.getX() + 3*(Math.random()-0.5);
 	                    double y = entity.getY() + 2*(Math.random()-0.5);
@@ -177,21 +188,17 @@ public class EnhancedMistForms {
 				// Spawn particles - forward thrust straight line
 				if (level instanceof ServerLevel serverLevel) {
 					ParticleHelper.spawnForwardThrust(serverLevel, startPos, lookVec, 5.0, ModParticles.SMALL_MIST_PARTICLE.get(),
-							30);
+							10);
 					ParticleHelper.spawnForwardThrust(serverLevel, startPos, lookVec, 5.0, new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
 							(float) (Math.random()*0.7f + 0.2f)),
-							30);
+							10);
 				}
 
                 // Restore step height and reset NBT tags after form
                 AbilityScheduler.scheduleOnce(entity, () -> {
                     MovementHelper.setStepHeight(entity, originalStepHeight);
 
-                    // CRITICAL: Reset breathes and cnt tags to allow next ability use
-                    // breathes is cleared immediately by dispatcher - this is defensive backup
-                    // Cooldown is handled by EnhancedMistDispatcher - do not reset skill here
-                    entity.getPersistentData().putDouble("cnt1", 0.0);
-                    
+                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
                     GuardStateHelper.clearGuardState(entity);
 
                     // Re-enable normal attack swings and particles
@@ -312,12 +319,12 @@ public class EnhancedMistForms {
 									*/
 							BonePositionTracker.sendRawHorizontalSlashToClients(
 									level, // level
-									new Vec3(3, heightRand-1, 0),
+									new Vec3(0, heightRand-1, 0),
 									modelKey, // model key
 									(float)0, // hor
 									directionFlag, // reverse
 									arcLength, // arc range
-									(int)(arcLength/1.4f), // duration
+									(int)(arcLength/1.2f), // duration
 									0, // yaw offset
 									(float)pitchDeg, // pitch offset
 									0, // roll offset 
@@ -351,13 +358,10 @@ public class EnhancedMistForms {
 					}
 
 				}, 1, totalTicks+1);
-				
+
 				// CRITICAL: Schedule cleanup after all slashes complete
                 AbilityScheduler.scheduleOnce(entity, () -> {
-                    // Reset breathes and cnt tags to allow next ability use
-                    // breathes is cleared immediately by dispatcher - this is defensive backup
-                    // Cooldown is handled by EnhancedMistDispatcher - do not reset skill here
-                    entity.getPersistentData().putDouble("cnt1", 0.0);
+                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
                     GuardStateHelper.clearGuardState(entity);
                 }, (totalTicks) + 5);
             }
@@ -459,10 +463,7 @@ public class EnhancedMistForms {
 
                 // CRITICAL: Schedule cleanup after form completes
                 AbilityScheduler.scheduleOnce(entity, () -> {
-                    // Reset breathes and cnt tags to allow next ability use
-                    // breathes is cleared immediately by dispatcher - this is defensive backup
-                    // Cooldown is handled by EnhancedMistDispatcher - do not reset skill here
-                    entity.getPersistentData().putDouble("cnt1", 0.0);
+                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
                     GuardStateHelper.clearGuardState(entity);
                 }, totalTicks + 1);
 
@@ -484,14 +485,12 @@ public class EnhancedMistForms {
             (entity, level) -> {
             	float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
             	GuardStateHelper.setGuardState(entity, damage, 20004);
+            	MovementHelper.lookAtTarget(entity);
 				shiftingFlowSlash(level, entity, 40, damage);
-                
+
                 // CRITICAL: Schedule cleanup after dash completes
                 AbilityScheduler.scheduleOnce(entity, () -> {
-                    // Reset breathes and cnt tags to allow next ability use
-                    // breathes is cleared immediately by dispatcher - this is defensive backup
-                    // Cooldown is handled by EnhancedMistDispatcher - do not reset skill here
-                    entity.getPersistentData().putDouble("cnt1", 0.0);
+                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
                     GuardStateHelper.clearGuardState(entity);
                 }, 20);
             }
@@ -537,7 +536,7 @@ public class EnhancedMistForms {
 		}
 		
 		if (level instanceof ServerLevel serverLevel) {
-			ParticleHelper.spawnParticleLine(serverLevel, startPos, targetPos, ModParticles.MIST_PARTICLE.get(), 40);
+			ParticleHelper.spawnParticleLine(serverLevel, startPos, targetPos, ModParticles.MIST_PARTICLE.get(), 80);
 		}
 			
 		// Teleport entity
@@ -547,9 +546,9 @@ public class EnhancedMistForms {
 		if (level instanceof ServerLevel serverLevel) {
 			ParticleHelper.spawnCircleParticles(serverLevel, targetPos.add(0, 1, 0), 3.0,
 					new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
-							(float) (Math.random()*0.7f + 0.2f)), 30);
+							(float) (Math.random()*0.7f + 0.2f)), 3);
 			ParticleHelper.spawnCircleParticles(serverLevel, targetPos.add(0, 1, 0), 3.0,
-					ModParticles.SMALL_MIST_PARTICLE.get(), 40);
+					ModParticles.SMALL_MIST_PARTICLE.get(), 4);
 		}
 
 		level.playSound(null, entity.blockPosition(), SoundEvents.WOOL_BREAK, SoundSource.PLAYERS, 1.0F,
@@ -574,9 +573,9 @@ public class EnhancedMistForms {
 			if (level instanceof ServerLevel serverLevel) {
 				ParticleHelper.spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 3.0,
 						new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
-								(float) (Math.random()*0.7f + 0.2f)), 30);
+								(float) (Math.random()*0.7f + 0.2f)), 3);
 				ParticleHelper.spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 3.0,
-						ModParticles.SMALL_MIST_PARTICLE.get(), 40);
+						ModParticles.SMALL_MIST_PARTICLE.get(), 4);
 				level.playSound(null, entity.blockPosition(), SoundEvents.WOOL_BREAK, SoundSource.PLAYERS, 1.0F,
 						0.8F);
 				level.playSound(null, entity.blockPosition(), SoundEvents.CANDLE_EXTINGUISH, SoundSource.PLAYERS, 1.0F,
@@ -620,7 +619,7 @@ public class EnhancedMistForms {
 				final float originalStepHeight = 0.6f;
 				MovementHelper.setStepHeight(entity, 3);
                 
-                final int totalTicks = 50; // 2.5 seconds
+                final int totalTicks = 36; // 1.8 seconds
                 final int attackInterval = 1; 
                 
                 entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 60, 3)); // Slow Falling
@@ -636,13 +635,15 @@ public class EnhancedMistForms {
 					Vec3 lookVec = entity.getLookAngle();
 					if (lookVec.y > 0)
 						lookVec = lookVec.multiply(1, 0, 1);
+					lookVec = lookVec.scale(1.7).add(0, entity.getDeltaMovement().y, 0);
 					int currentTick = tickCounter[0]++;
 					
 					// Launch player forward a little bit
 					//entity.setDeltaMovement(lookVec.scale(1.7));
-					MovementHelper.setVelocity(entity, lookVec.scale(1.7));
+					MovementHelper.setVelocity(entity, lookVec);
 					
 					if (currentTick % attackInterval == 1) {
+						MovementHelper.lookAtTarget(entity);
 						// Spawn mist clouds during the charge
 	                    if (level instanceof ServerLevel serverLevel) {
 	                        serverLevel.sendParticles(ModParticles.MIST_PARTICLE.get(),
@@ -681,9 +682,9 @@ public class EnhancedMistForms {
 
 							double yawRad = Math.toRadians(entity.getYRot() + (Math.random() - 0.5) * 30);
 							double pitchRad = Math.toRadians((Math.random()-0.3) * 5);
-
-							Vec3 pos = entity.position().add(Math.random() - 0.5, (Math.random() + 0.5) * 2,
+							Vec3 posOffset = new Vec3(Math.random() - 0.5, (Math.random() + 0.5) * 2,
 									Math.random() - 0.5);
+							Vec3 pos = entity.position().add(posOffset);
 
 							int arcLength = (int) (100 + Math.random() * 70);
 							double angle = (Math.random() - 0.5) * 10;
@@ -702,15 +703,15 @@ public class EnhancedMistForms {
 								
 								BonePositionTracker.sendRawHorizontalSlashToClients(
 										level, // level
-										Vec3.ZERO,
+										posOffset.add(0, -1, 0),
 										modelKey, // model key
-										(float)angle/10, // vert
+										(float)angle, // vert
 										Math.random() > 0.5, // reverse
-										120, // arc range
+										arcLength, // arc range
 										100, // duration
 										0, // yaw offset
 										0, // pitch offset
-										(float)angle, // roll offset 
+										(float)angle*10, // roll offset 
 										1.5f, // radius scalar
 										2.1f, // size scalar
 										15, // angle offset
@@ -730,15 +731,15 @@ public class EnhancedMistForms {
 
 								BonePositionTracker.sendRawVerticalSlashToClients(
 										level, // level
-										Vec3.ZERO,
+										posOffset.add(0, -1, 0) ,
 										modelKey, // model key
-										(float)angle/10, // angle
+										(float)angle, // angle
 										false, // reverse
-										120, // arc range
+										arcLength, // arc range
 										100, // duration
 										0, // yaw offset
 										0, // pitch offset
-										(float)angle, // roll offset 
+										(float)angle*10, // roll offset 
 										1.5f, // radius scalar
 										2.1f, // size scalar
 										0, // angle offset
@@ -758,14 +759,11 @@ public class EnhancedMistForms {
 					}
 
 				}, 1, totalTicks);
-                
+
                 // CRITICAL: Schedule cleanup after form completes
                 AbilityScheduler.scheduleOnce(entity, () -> {
                 	MovementHelper.setStepHeight(entity, originalStepHeight);
-                    // Reset breathes and cnt tags to allow next ability use
-                    // breathes is cleared immediately by dispatcher - this is defensive backup
-                    // Cooldown is handled by EnhancedMistDispatcher - do not reset skill here
-                    entity.getPersistentData().putDouble("cnt1", 0.0);
+                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
                     GuardStateHelper.clearGuardState(entity);
                     GuardStateHelper.clearAttackFlag(entity);
                 }, totalTicks + 5);
@@ -809,6 +807,7 @@ public class EnhancedMistForms {
                 AbilityScheduler.scheduleRepeating(entity, () -> {
                 	
                 	if (currentTick[0] < 7) { // Jump upwards and backwards
+                		MovementHelper.lookAtTarget(entity);
                 		MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(-0.2).add(0, 0.5f, 0));
                 	}
                 	else if (currentTick[0] < 17) { // Hover
@@ -821,7 +820,8 @@ public class EnhancedMistForms {
                 	else if (currentTick[0] < 50) { // Charge forward with multiple slashes
                 		if (currentTick[0] < 22) { // Forward movement 
                 			
-                			MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(1.2).multiply(1, 0.5, 1));
+                			MovementHelper.lookAtTarget(entity);
+                			MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(0.9).multiply(1, 0.5, 1));
 
                 		} else { // Hover
                 			MovementHelper.setVelocity(entity, entity.getDeltaMovement().multiply(1, 0, 1));
@@ -836,7 +836,7 @@ public class EnhancedMistForms {
 	                		int animIndex = (currentTick[0]/interval) % 4;
 	
 							if (Config.logDebug) {
-								Log.debug("Fifth Form: Playing attack animation '{}' on layer 4000",
+								Log.debug("Sixth Form: Playing attack animation '{}' on layer 4000",
 										animations[animIndex]);
 							}
 	
@@ -855,6 +855,8 @@ public class EnhancedMistForms {
 							for (LivingEntity target : targets) {
 								Damager.hurt(entity, target, (float)damage);
 							}
+							
+							MovementHelper.lookAtTarget(entity);
 	
 							// Spawn particles
 							if (level instanceof ServerLevel serverLevel) {
@@ -872,33 +874,65 @@ public class EnhancedMistForms {
 									particle = true;
 									ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
 											3 + Math.random() * 2, 0.1, arcLength, 1, angle, ModParticles.SMALL_MIST_PARTICLE.get(),
-											40);
+											4);
 	
 									ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
 											3 + Math.random() * 2, 0.1, arcLength, 1, angle,
 											new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
 													(float) (Math.random()*0.7f + 0.2f)),
-											20);
+											2);
 									/*
 									ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, pitchRad,
 											3 + Math.random(), 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK,
 											3);
 											*/
+									BonePositionTracker.sendRawHorizontalSlashToClients(
+											level, // level
+											Vec3.ZERO,
+											modelKey, // model key
+											(float)angle, // vert
+											Math.random() > 0.5, // reverse
+											arcLength, // arc range
+											100, // duration
+											0, // yaw offset
+											0, // pitch offset
+											(float)angle*10, // roll offset 
+											1.5f, // radius scalar
+											2.1f, // size scalar
+											15, // angle offset
+											entity.getUUID(), // entity id
+											"sword_to_left"); // animation name
 								}
 								if (Math.random() > 0.5 || !particle) {
 									ParticleHelper.spawnVerticalArc(serverLevel, pos, yawRad, pitchRad,
 											4 + Math.random() * 2, 0.1, arcLength, 1, angle, ModParticles.SMALL_MIST_PARTICLE.get(),
-											80);
+											4);
 	
 									ParticleHelper.spawnVerticalArc(serverLevel, pos, yawRad, pitchRad,
 											3 + Math.random() * 2, 0.1, arcLength, 1, angle,
 											new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
 													(float) (Math.random()*0.7f + 0.2f)),
-											30);
+											2);
 									/*
 									ParticleHelper.spawnVerticalArc(serverLevel, pos, yawRad, pitchRad,
 											3 + Math.random(), 0.1, arcLength, 1, angle, ParticleTypes.SWEEP_ATTACK,
 											5);*/
+									BonePositionTracker.sendRawVerticalSlashToClients(
+											level, // level
+											Vec3.ZERO,
+											modelKey, // model key
+											(float)angle, // angle
+											false, // reverse
+											arcLength, // arc range
+											100, // duration
+											0, // yaw offset
+											0, // pitch offset
+											(float)angle*10, // roll offset 
+											1.5f, // radius scalar
+											2.1f, // size scalar
+											0, // angle offset
+											entity.getUUID(), // entity id
+											"sword_overhead"); // animation name
 								}
 							}
 	
@@ -916,9 +950,12 @@ public class EnhancedMistForms {
                 		// SLASHES END
                 	}
                 	else { // Hover
-                		if (currentTick[0] < totalDuration)
+                		if (currentTick[0] < totalDuration) {
                 			MovementHelper.setVelocity(entity, entity.getDeltaMovement().multiply(1, 0, 1));
+                			MovementHelper.lookAtTarget(entity);
+                		}
                 		if (!bools[1]) {
+                			MovementHelper.lookAtTarget(entity);
                 			bools[1] = true;
                 			// Huge vertical slash ranged attack
                 			vecs[0] = entity.getEyePosition();
@@ -953,13 +990,13 @@ public class EnhancedMistForms {
         	                	ParticleHelper.spawnVerticalArc(serverLevel, pos, nums[0], nums[1],
         								8 + Math.random() * 3, 0.1, 160, 1, -1, new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
     											(float) (Math.random()*1.5f + 0.2f)),
-        								80);
+        								4);
         	                	ParticleHelper.spawnVerticalArc(serverLevel, pos, nums[0], nums[1],
         								8 + Math.random() * 3, 0.1, 160, 1, -1, ModParticles.SMALL_MIST_PARTICLE.get(),
-        								80);
+        								4);
         	                	ParticleHelper.spawnVerticalArc(serverLevel, pos, nums[0], nums[1],
         								8 + Math.random() * 3, 0.1, 160, 1, -1, ParticleTypes.SWEEP_ATTACK,
-        								5);
+        								2);
         	                }
         	                
         	                for (LivingEntity target : targets) {
@@ -972,14 +1009,11 @@ public class EnhancedMistForms {
                 	
                 	currentTick[0] += interval;
                 }, interval, totalDuration + rangedDuration);
-                
+
                 // CRITICAL: Schedule cleanup after form completes
                 AbilityScheduler.scheduleOnce(entity, () -> {
                 	MovementHelper.setStepHeight(entity, originalStepHeight);
-                    // Reset breathes and cnt tags to allow next ability use
-                    // breathes is cleared immediately by dispatcher - this is defensive backup
-                    // Cooldown is handled by EnhancedMistDispatcher - do not reset skill here
-                    entity.getPersistentData().putDouble("cnt1", 0.0);
+                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
                     GuardStateHelper.clearGuardState(entity);
                 }, totalDuration + 5);
             }
@@ -1092,15 +1126,15 @@ public class EnhancedMistForms {
 
                 // ===== PHASE 2: SPAWN GHOSTLY CLONES =====
                 Vec3 centerPos = entity.position();
-                System.out.println("[DEBUG 7TH FORM] Starting clone spawn phase...");
-                System.out.println("[DEBUG 7TH FORM] Level type: " + level.getClass().getSimpleName());
-                System.out.println("[DEBUG 7TH FORM] Is ServerLevel: " + (level instanceof ServerLevel));
+                Log.debug("[DEBUG 7TH FORM] Starting clone spawn phase...");
+                Log.debug("[DEBUG 7TH FORM] Level type: " + level.getClass().getSimpleName());
+                Log.debug("[DEBUG 7TH FORM] Is ServerLevel: " + (level instanceof ServerLevel));
 
                 if (level instanceof ServerLevel serverLevel) {
                     int numClones = 6 + level.random.nextInt(5); // INCREASED: 6-10 clones
-                    System.out.println("[DEBUG 7TH FORM] Spawning " + numClones + " clones");
-                    System.out.println("[DEBUG 7TH FORM] Center position: " + centerPos);
-                    System.out.println("[DEBUG 7TH FORM] Player: " + entity.getName().getString());
+                    Log.debug("[DEBUG 7TH FORM] Spawning " + numClones + " clones");
+                    Log.debug("[DEBUG 7TH FORM] Center position: " + centerPos);
+                    Log.debug("[DEBUG 7TH FORM] Player: " + entity.getName().getString());
 
                     for (int i = 0; i < numClones; i++) {
                         // Spawn clones at random positions around the user
@@ -1111,7 +1145,7 @@ public class EnhancedMistForms {
                         double spawnZ = entity.getZ() + Math.sin(angle) * distance;
                         double spawnY = entity.getY();
 
-                        System.out.println("[DEBUG 7TH FORM] Clone #" + i + " at: " + spawnX + ", " + spawnY + ", " + spawnZ);
+                        Log.debug("[DEBUG 7TH FORM] Clone #" + i + " at: " + spawnX + ", " + spawnY + ", " + spawnZ);
 
                         try {
                             // Create clone with center position for circular motion
@@ -1121,15 +1155,15 @@ public class EnhancedMistForms {
 
                             clone.setPos(spawnX, spawnY, spawnZ);
                             boolean success = serverLevel.addFreshEntity(clone);
-                            System.out.println("[DEBUG 7TH FORM] Clone #" + i + " added: " + success + " (ID: " + clone.getId() + ")");
+                            Log.debug("[DEBUG 7TH FORM] Clone #" + i + " added: " + success + " (ID: " + clone.getId() + ")");
                         } catch (Exception e) {
                             System.err.println("[ERROR 7TH FORM] Failed to spawn clone #" + i);
                             e.printStackTrace();
                         }
                     }
-                    System.out.println("[DEBUG 7TH FORM] Finished spawning " + numClones + " clones");
+                    Log.debug("[DEBUG 7TH FORM] Finished spawning " + numClones + " clones");
                 } else {
-                    System.out.println("[DEBUG 7TH FORM] NOT spawning clones - level is client-side");
+                    Log.debug("[DEBUG 7TH FORM] NOT spawning clones - level is client-side");
                 }
 
                 // ===== PHASE 3: TELEPORT ON ATTACK MECHANIC =====
@@ -1178,14 +1212,24 @@ public class EnhancedMistForms {
 
                 }, 1, formDuration);
 
-                // Apply blindness to nearby enemies
-                AABB effectArea = new AABB(entity.position(), entity.position()).inflate(15.0);
-                List<LivingEntity> nearbyEnemies = entity.level().getEntitiesOfClass(LivingEntity.class, effectArea,
-                    e -> e != entity && e.isAlive() && !(e instanceof Player) && !(e instanceof BreathingSlayerEntity));
-
-                for (LivingEntity enemy : nearbyEnemies) {
-                    enemy.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, formDuration, 0));
-                    enemy.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, formDuration / 2, 1));
+                // Apply blindness to all living entities within 20 blocks of the cloud origin
+                // every second during the form. Excludes the caster.
+                if (level instanceof ServerLevel) {
+                    final Vec3 cloudOrigin = entity.position();
+                    final int tickInterval = 20; // every 1 second
+                    AbilityScheduler.scheduleRepeating(entity, () -> {
+                        AABB area = new AABB(cloudOrigin, cloudOrigin).inflate(20.0);
+                        List<LivingEntity> nearby = entity.level().getEntitiesOfClass(
+                            LivingEntity.class,
+                            area,
+                            e -> e != entity && e.isAlive()
+                        );
+                        for (LivingEntity le : nearby) {
+                            // 3 seconds of blindness, reapplied every second while inside the cloud
+                        	if (!(le instanceof Player p && (p.isCreative() || p.isSpectator())))
+                        		le.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
+                        }
+                    }, tickInterval, formDuration);
                 }
 
                 // ===== CLEANUP =====
@@ -1193,10 +1237,7 @@ public class EnhancedMistForms {
                     entity.getPersistentData().remove("mist_7th_teleport_active");
                     entity.getPersistentData().remove("mist_7th_teleport_duration");
 
-                    // Reset ability counters
-                    entity.getPersistentData().putDouble("cnt1", 0.0);
-                    entity.getPersistentData().putDouble("cnt2", 0.0);
-                    entity.getPersistentData().putDouble("cnt3", 0.0);
+                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
                     GuardStateHelper.clearGuardState(entity);
 
                     if (Config.logDebug) {
