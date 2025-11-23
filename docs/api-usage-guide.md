@@ -89,10 +89,10 @@ dependencies {
 
 ```properties
 # Always use the latest version from Modrinth
-kny_tweaks_version=1.6.2999
+kny_tweaks_version=1.6.29
 ```
 
-> **Important:** Check [Modrinth](https://modrinth.com/mod/kimetsunoyaiba-tweaks) for the latest version.
+> **Important:** Check [Modrinth](https://modrinth.com/mod/kimetsunoyaiba-tweaks) for the latest version (currently 1.6.29, soon 1.6.30).
 
 ### Step 3: Configure `mods.toml`
 
@@ -131,10 +131,13 @@ import net.minecraftforge.registries.RegistryObject;
 /**
  * Registry for custom nichirin swords.
  *
- * Style Ranges (choose unique values >= 1900):
- * - 1900: Your first breathing style
- * - 2000: Your second breathing style
- * - etc.
+ * Style Ranges - USE EVEN THOUSANDS to avoid conflicts:
+ * - 4000, 4100, 4200...: Your breathing styles
+ * - 6000, 6100, 6200...: More breathing styles
+ * - 8000+: Additional styles
+ *
+ * Slytharis uses ODD thousands (3000, 5000, 7000...)
+ * We use EVEN thousands (4000, 6000, 8000...)
  */
 public class ModItems {
     public static final DeferredRegister<Item> ITEMS =
@@ -144,7 +147,7 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_FROST =
         KnYAPI.createSword("nichirinsword_frost")
             .breathingStyle("frost_breathing", MyBreathingForms.createFrostBreathing())
-            .styleRange(2100)
+            .styleRange(4100)
             .defaultParticle(ParticleTypes.SNOWFLAKE)
             .category(SwordRegistry.SwordCategory.NICHIRIN)
             .durability(2000)
@@ -154,7 +157,7 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_KOMOREBI =
         KnYAPI.createSword("nichirinsword_komorebi")
             .breathingStyle("frost_breathing", MyBreathingForms.createFrostBreathingWithSeventh())
-            .styleRange(2100)
+            .styleRange(4100)
             .defaultParticle(ParticleTypes.SNOWFLAKE)
             .swordParticle(ParticleTypes.END_ROD)  // Override style default
             .category(SwordRegistry.SwordCategory.SPECIAL)
@@ -165,7 +168,7 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_GOLDEN =
         KnYAPI.createSword("nichirinsword_golden")
             .breathingStyle("frost_breathing", MyBreathingForms.createGoldenBreathing())
-            .styleRange(2100)
+            .styleRange(4100)
             .defaultParticle(ParticleTypes.END_ROD)
             .category(SwordRegistry.SwordCategory.SPECIAL)
             .durability(3000)
@@ -180,16 +183,22 @@ public class ModItems {
 
 ### Style Range Guidelines
 
-Choose unique ranges to avoid conflicts with other addons:
+**Important:** Use EVEN thousands to avoid conflicts with Slytharis addon (which uses odd thousands).
 
 | Range | Status |
 |-------|--------|
-| 0-1800 | Reserved (base mod) |
-| 1900 | Available |
-| 2000 | Available |
-| 2100 | Used by KnY-Extra-Additions (Frost) |
-| 2200 | Used by KnY-Extra-Additions (Ice) |
-| 2300+ | Available |
+| 0-2000 | Reserved (base mod - includes Sun Breathing at 2000) |
+| 3000, 5000, 7000... | Reserved for Slytharis (odd thousands) |
+| 4000 | KnY-Extra-Additions: Alcohol Breathing |
+| 4100 | KnY-Extra-Additions: Forest Breathing |
+| 4200 | KnY-Extra-Additions: Frost Breathing |
+| 4300 | KnY-Extra-Additions: Ice Breathing |
+| 6000+ | Available for your addon |
+| 8000+ | Available for your addon |
+| 20000 | KnY Tweaks: Enhanced Mist Breathing |
+| 22000 | KnY Tweaks: Enhanced Love Breathing |
+
+**Pattern:** Use even thousands (4000, 6000, 8000...) with hundreds for sub-styles (4100, 4200, 6100, 6200...).
 
 ### Spawn Eggs
 
