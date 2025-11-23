@@ -243,7 +243,7 @@ public class EnhancedLoveForms {
             5, // 5 second cooldown
             (entity, level) -> {
                 // Set guard state
-                GuardStateHelper.setGuardState(entity, 8.0, 21001); // ID 21001 for Love Breathing
+                GuardStateHelper.setGuardState(entity, 8.0, 22001); // ID 21001 for Love Breathing
                 
                 // Use default player step height (0.6f) for reset
 				final float originalStepHeight = 0.6f;
@@ -431,7 +431,7 @@ public class EnhancedLoveForms {
             (entity, level) -> {
                 // TODO: Implement second form
             	 // Set guard state
-                GuardStateHelper.setGuardState(entity, 8.0, 21002); // ID 21002 for Love Breathing
+                GuardStateHelper.setGuardState(entity, 8.0, 22002); // ID 21002 for Love Breathing
 
                 // Play player animation
                 playEntityAnimation(entity, "love_second_form");
@@ -475,7 +475,7 @@ public class EnhancedLoveForms {
             (entity, level) -> {
                 // TODO: Implement third form
             	 // Set guard state
-                GuardStateHelper.setGuardState(entity, 8.0, 21003); // ID 21003 for Love Breathing
+                GuardStateHelper.setGuardState(entity, 8.0, 22003); // ID 21003 for Love Breathing
 
                 // Play player animation
                 playEntityAnimation(entity, "love_third_form");
@@ -519,7 +519,7 @@ public class EnhancedLoveForms {
             (entity, level) -> {
                 // TODO: Implement fifth form
             	 // Set guard state
-                GuardStateHelper.setGuardState(entity, 8.0, 21001); // ID 21001 for Love Breathing
+                GuardStateHelper.setGuardState(entity, 8.0, 22005); // ID 21001 for Love Breathing
 
                 // Play player animation
                 playEntityAnimation(entity, "love_fifth_form");
@@ -563,7 +563,7 @@ public class EnhancedLoveForms {
             (entity, level) -> {
                 // TODO: Implement sixth form
             	 // Set guard state
-                GuardStateHelper.setGuardState(entity, 8.0, 21001); // ID 21001 for Love Breathing
+                GuardStateHelper.setGuardState(entity, 8.0, 22006); // ID 21001 for Love Breathing
 
                 // Play player animation
                 playEntityAnimation(entity, "love_sixth_form");

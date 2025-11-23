@@ -28,7 +28,11 @@
       "Bash(fc /b \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\src\\main\\resources\\assets\\kimetsunoyaibamultiplayer\\textures\\entity\\sword_slash_sound.png\" \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\build\\resources\\main\\assets\\kimetsunoyaibamultiplayer\\textures\\entity\\sword_slash_sound.png\")",
       "Bash(python fix_sound_transparency.py:*)",
       "Bash(./gradlew.bat compileJava:*)",
-      "Bash(./gradlew.bat clean:*)"
+      "Bash(./gradlew.bat clean:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nUpdate API usage guide with comprehensive documentation\n\n- Added complete examples from KnY-Extra-Additions reference implementation\n- Added custom entity creation section with BreathingSlayerEntity\n- Added Modrinth dependency setup instructions\n- Added sword slash model documentation for custom breathing styles\n- Updated best practices and troubleshooting sections\n- Added style range guidelines for addon compatibility\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
