@@ -8,6 +8,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * Handles key input events for breathing techniques
@@ -23,12 +24,22 @@ public class KeyInputHandler {
                 return;
             }
 
+            // Only process on key press, not release or repeat
+            if (event.getAction() != GLFW.GLFW_PRESS) {
+                return;
+            }
+
             // Don't process keybindings when a screen/GUI is open (chat, inventory, etc.)
             if (mc.screen != null) {
                 return;
             }
 
-            // Check if R key was pressed
+            // Check if the pressed key matches our keybinding
+            if (!ModKeyBindings.CYCLE_BREATHING_FORM.matches(event.getKey(), event.getScanCode())) {
+                return;
+            }
+
+            // Consume the click and process
             if (ModKeyBindings.CYCLE_BREATHING_FORM.consumeClick()) {
                 ItemStack mainHandItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
 

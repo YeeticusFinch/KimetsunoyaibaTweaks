@@ -20,24 +20,69 @@ public class LoveSlashParticle extends TextureSheetParticle {
     private final SpriteSet spriteSet;
     private final int startFrame;
     private final int frameCount; // Random 4-6 frames
-    private static final int TOTAL_FRAMES = 8;
+    private static final int TOTAL_FRAMES = 20;
+    private final short type;
 
     protected LoveSlashParticle(ClientLevel level, double x, double y, double z,
                                  double xSpeed, double ySpeed, double zSpeed,
                                  SpriteSet spriteSet) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
+        
+        type = (short)(Math.random()*5);
 
         this.spriteSet = spriteSet;
 
-        // Random lifetime between 4-6 ticks
-        this.frameCount = 4 + (int)(Math.random() * 3); // 4, 5, or 6
-        this.lifetime = this.frameCount;
+        switch (type) {
+        	case 2: // love_slash_heart
+        		// Random lifetime between 4-6 ticks
+                this.frameCount = 6 + (int)(Math.random()); // 6 or 7
+                this.lifetime = this.frameCount;
 
-        // Start at a random frame
-        this.startFrame = (int)(Math.random() * TOTAL_FRAMES);
+                // Start at a random frame
+                this.startFrame = 8;
+                
+             // Set initial sprite
+                this.setSprite(spriteSet.get(startFrame, TOTAL_FRAMES - 1));
+        		break;
+        	case 3: // love_slash_knot
+        		this.roll = (float)Math.random()*6.28f;
+                this.frameCount = 5;
+                this.lifetime = this.frameCount;
 
-        // Set initial sprite
-        this.setSprite(spriteSet.get(startFrame, TOTAL_FRAMES - 1));
+                // Start at a random frame
+                this.startFrame = 15;
+                
+             // Set initial sprite
+                this.setSprite(spriteSet.get(startFrame, TOTAL_FRAMES - 1));
+        		break;
+        	case 4: // love_slash_knot (backwards)
+        		this.roll = (float)Math.random()*6.28f;
+        		 this.frameCount = 5;
+                 this.lifetime = this.frameCount;
+
+                 // Start at a random frame
+                 this.startFrame = 19;
+                 
+              // Set initial sprite
+                 this.setSprite(spriteSet.get(startFrame, TOTAL_FRAMES - 1));
+        		break;
+        	default:
+        	case 0:
+        	case 1:
+        		// love_slash (the circular one)
+        		// Random lifetime between 4-6 ticks
+                this.frameCount = 4 + (int)(Math.random() * 3); // 4, 5, or 6
+                this.lifetime = this.frameCount;
+
+                // Start at a random frame
+                this.startFrame = (int)(Math.random() * 8); // 8 frames in this type
+                
+             // Set initial sprite
+                this.setSprite(spriteSet.get(startFrame, TOTAL_FRAMES - 1));
+        		break;
+        }
+        
+        
 
         // Set movement - slight random drift
         this.xd = (Math.random() - 0.5) * 0.08;
@@ -65,13 +110,16 @@ public class LoveSlashParticle extends TextureSheetParticle {
         this.yo = this.y;
         this.zo = this.z;
 
-        if (this.age++ >= this.lifetime) {
+        this.age++;
+        if (this.age >= this.lifetime) {
             this.remove();
             return;
         }
 
         // Calculate current frame with modulo cycling (only plays frameCount frames)
-        int currentFrame = (startFrame + this.age) % TOTAL_FRAMES;
+        int currentFrame = startFrame + (type == 4 ? -this.age : this.age);
+        if (type <= 1)
+        	currentFrame %= 8; // modulo cycling is just for type 0 and type 1
         this.setSprite(spriteSet.get(currentFrame, TOTAL_FRAMES - 1));
 
         // Slight fade towards end for smoother transition

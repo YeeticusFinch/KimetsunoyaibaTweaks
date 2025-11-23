@@ -6,6 +6,11 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class SwordDisplayConfig {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 
@@ -19,10 +24,22 @@ public class SwordDisplayConfig {
             .comment("Enable displaying swords on player model when not actively held")
             .define("enabled", true);
 
-    // Position preference (HIP or BACK)
+    // Position preference (HIP or BACK) - this is now the default fallback
     private static final ForgeConfigSpec.EnumValue<SwordDisplayPosition> POSITION = BUILDER
-            .comment("Where to display swords on the player model (HIP or BACK)")
-            .defineEnum("position", SwordDisplayPosition.HIP);
+            .comment("Default position for swords on the player model (HIP or BACK). Per-sword overrides below take precedence.")
+            .defineEnum("default_position", SwordDisplayPosition.HIP);
+
+    // Per-sword position overrides
+    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SWORD_POSITIONS = BUILDER
+            .comment("Per-sword position overrides. Format: 'modid:itemname=POSITION' (e.g., 'kimetsunoyaiba:nichirinsword_uzui=BACK')")
+            .defineList("sword_position_overrides",
+                () -> {
+                    List<String> defaults = new ArrayList<>();
+                    defaults.add("kimetsunoyaiba:nichirinsword_uzui=BACK");
+                    defaults.add("kimetsunoyaiba:nichirinsword_inosuke=HIP");
+                    return defaults;
+                },
+                obj -> obj instanceof String && ((String) obj).contains("="));
 
     // Scale of displayed swords
     private static final ForgeConfigSpec.DoubleValue SCALE = BUILDER
@@ -93,7 +110,7 @@ public class SwordDisplayConfig {
     // Left back
     private static final ForgeConfigSpec.DoubleValue BACK_LEFT_TRANSLATE_X = BUILDER
             .comment("Left back X translation")
-            .defineInRange("left_translate_x", 0.2, -2.0, 2.0);
+            .defineInRange("left_translate_x", 0.3, -2.0, 2.0);
     private static final ForgeConfigSpec.DoubleValue BACK_LEFT_TRANSLATE_Y = BUILDER
             .comment("Left back Y translation")
             .defineInRange("left_translate_y", -0.1, -2.0, 2.0);
@@ -113,10 +130,10 @@ public class SwordDisplayConfig {
     // Right back
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_TRANSLATE_X = BUILDER
             .comment("Right back X translation")
-            .defineInRange("right_translate_x", -0.4, -2.0, 2.0);
+            .defineInRange("right_translate_x", -0.3, -2.0, 2.0);
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_TRANSLATE_Y = BUILDER
             .comment("Right back Y translation")
-            .defineInRange("right_translate_y", 0.0, -2.0, 2.0);
+            .defineInRange("right_translate_y", -0.1, -2.0, 2.0);
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_TRANSLATE_Z = BUILDER
             .comment("Right back Z translation")
             .defineInRange("right_translate_z", 0.2, -2.0, 2.0);
@@ -125,7 +142,7 @@ public class SwordDisplayConfig {
             .defineInRange("right_rotate_z", -35.0, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_ROTATE_Y = BUILDER
             .comment("Right back Y rotation (degrees)")
-            .defineInRange("right_rotate_y", 90.0, -360.0, 360.0);
+            .defineInRange("right_rotate_y", -90.0, -360.0, 360.0);
     private static final ForgeConfigSpec.DoubleValue BACK_RIGHT_ROTATE_X = BUILDER
             .comment("Right back X rotation (degrees)")
             .defineInRange("right_rotate_x", 0.0, -360.0, 360.0);
@@ -138,9 +155,12 @@ public class SwordDisplayConfig {
     public static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static boolean enabled;
-    public static SwordDisplayPosition position;
+    public static SwordDisplayPosition position;  // Default position
     public static double scale;
     public static boolean renderSheaths;
+
+    // Per-sword position overrides (parsed from config)
+    public static Map<String, SwordDisplayPosition> swordPositionOverrides = new HashMap<>();
 
     // Hip position values
     public static double hipLeftTranslateX;
@@ -211,8 +231,39 @@ public class SwordDisplayConfig {
         backRightRotateY = BACK_RIGHT_ROTATE_Y.get();
         backRightRotateX = BACK_RIGHT_ROTATE_X.get();
 
+        // Parse per-sword position overrides
+        swordPositionOverrides.clear();
+        List<? extends String> overrides = SWORD_POSITIONS.get();
+        if (overrides != null) {
+            for (String override : overrides) {
+                String[] parts = override.split("=");
+                if (parts.length == 2) {
+                    String itemId = parts[0].trim();
+                    String posStr = parts[1].trim().toUpperCase();
+                    try {
+                        SwordDisplayPosition pos = SwordDisplayPosition.valueOf(posStr);
+                        swordPositionOverrides.put(itemId, pos);
+                        Log.debug("Loaded sword position override: {} = {}", itemId, pos);
+                    } catch (IllegalArgumentException e) {
+                        Log.warn("Invalid position '{}' for sword '{}', ignoring", posStr, itemId);
+                    }
+                }
+            }
+        }
+
         Log.debug("Sword display config loaded: enabled=" + enabled +
-                         ", position=" + position + ", scale=" + scale +
-                         ", renderSheaths=" + renderSheaths);
+                         ", defaultPosition=" + position + ", scale=" + scale +
+                         ", renderSheaths=" + renderSheaths +
+                         ", overrides=" + swordPositionOverrides.size());
+    }
+
+    /**
+     * Gets the display position for a specific sword item
+     * @param itemId The full item ID (e.g., "kimetsunoyaiba:nichirinsword_uzui")
+     * @return The position for this sword (from override or default)
+     */
+    public static SwordDisplayPosition getPositionForSword(String itemId) {
+        SwordDisplayPosition override = swordPositionOverrides.get(itemId);
+        return override != null ? override : position;
     }
 }

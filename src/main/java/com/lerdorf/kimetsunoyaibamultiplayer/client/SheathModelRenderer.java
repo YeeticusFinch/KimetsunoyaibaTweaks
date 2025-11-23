@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.SheathItems;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -11,10 +12,30 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Helper class for rendering sheath models without requiring an actual item
  */
 public class SheathModelRenderer {
+
+	// Per-sheath scale multipliers (for sheaths that need different sizing)
+	private static final Map<Item, Float> sheathScales = new HashMap<>();
+
+	/**
+	 * Registers a custom scale for a specific sheath item
+	 */
+	public static void registerSheathScale(Item sheathItem, float scale) {
+		sheathScales.put(sheathItem, scale);
+	}
+
+	/**
+	 * Gets the scale multiplier for a sheath item (defaults to 1.0)
+	 */
+	public static float getSheathScale(Item sheathItem) {
+		return sheathScales.getOrDefault(sheathItem, 1.0f);
+	}
 
 	/**
 	 * Renders a sheath item at the current pose stack position
@@ -29,6 +50,13 @@ public class SheathModelRenderer {
 	        Minecraft mc = Minecraft.getInstance();
 	        ItemStack sheathStack = new ItemStack(sheathItem);
 
+	        // Apply per-sheath scale if registered
+	        float scale = getSheathScale(sheathItem);
+	        if (scale != 1.0f) {
+	            poseStack.pushPose();
+	            poseStack.scale(scale, scale, scale);
+	        }
+
 	        // Render the sheath item
 	        mc.getItemRenderer().renderStatic(
 	            sheathStack,
@@ -40,6 +68,10 @@ public class SheathModelRenderer {
 	            mc.level,
 	            levelId
 	        );
+
+	        if (scale != 1.0f) {
+	            poseStack.popPose();
+	        }
 
 	    } catch (Exception e) {
 	        System.err.println("Error rendering sheath item " + sheathItem + ": " + e.getMessage());

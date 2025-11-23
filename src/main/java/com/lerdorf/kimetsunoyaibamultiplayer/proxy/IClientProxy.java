@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.proxy;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -14,7 +15,10 @@ public interface IClientProxy {
     /**
      * Handle sword display sync on client
      */
-    void handleSwordDisplaySync(UUID playerUUID, ItemStack leftHipSword, ItemStack rightHipSword);
+    void handleSwordDisplaySync(UUID playerUUID, ItemStack leftHipSword, ItemStack rightHipSword,
+                                SwordDisplayConfig.SwordDisplayPosition leftPos,
+                                SwordDisplayConfig.SwordDisplayPosition rightPos,
+                                int leftSlot, int rightSlot);
 
     /**
      * Handle animation sync on client

@@ -129,7 +129,7 @@ public class EnhancedMistForms {
 
 				MovementHelper.setStepHeight(entity, 3);
 				
-				entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 60, 3)); // Slow Falling
+				entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 10, 3)); // Slow Falling
 
 				// Play animation
 				playEntityAnimation(entity, "speed_attack_sword");
@@ -387,7 +387,7 @@ public class EnhancedMistForms {
                 Vec3 centerPos = entity.position();
 
                 entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 3));
-                entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 30, 3)); // Slow Falling
+                entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 3)); // Slow Falling
 
                 final int totalTicks = 30; // 1.5 seconds
                 final double[] currentAngle = {0};
@@ -556,7 +556,7 @@ public class EnhancedMistForms {
 		level.playSound(null, entity.blockPosition(), SoundEvents.CANDLE_EXTINGUISH, SoundSource.PLAYERS, 1.0F,
 				1.5F);
 
-		entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 100, 3)); // Slow Falling
+		entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 3)); // Slow Falling
 		
 		// Damage nearby entities (AOE)
 		AABB area = entity.getBoundingBox().inflate(3.0);
@@ -622,7 +622,7 @@ public class EnhancedMistForms {
                 final int totalTicks = 36; // 1.8 seconds
                 final int attackInterval = 1; 
                 
-                entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 60, 3)); // Slow Falling
+                entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 30, 3)); // Slow Falling
                 
                 final String[] animations = { "sword_to_left", "sword_to_right", "sword_overhead", "sword_to_upper",
 						"sword_to_left_reverse", "sword_to_right_reverse" };
@@ -828,7 +828,7 @@ public class EnhancedMistForms {
                 			if (!bools[0]) {
                 				bools[0] = true;
                 				// give slowfall
-                				 entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, totalDuration, 3)); // Slow Falling
+                				 entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, totalDuration/2, 3)); // Slow Falling
                 			}
                 		}
                 		// SLASHES

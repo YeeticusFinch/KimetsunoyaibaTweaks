@@ -44,20 +44,20 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
 
         // Render left hip/back sword (and sheath)
         if (state.hasLeftSword()) {
-            renderSwordWithSheath(poseStack, buffer, packedLight, player, state.leftHipSword,
-                                 true, true);  // Always render sheath when sword is on hip
+            renderSwordWithSheath(poseStack, buffer, packedLight, player, state.getLeftHipSword(),
+                                 true, true, state.getLeftPosition());
         } else if (state.shouldShowLeftSheath()) {
             // Render just the sheath if sword is drawn but sheath persists
-            renderSheathOnly(poseStack, buffer, packedLight, player, state.leftSheathItem, true);
+            renderSheathOnly(poseStack, buffer, packedLight, player, state.leftSheathItem, true, state.getLeftPosition());
         }
 
         // Render right hip/back sword (and sheath)
         if (state.hasRightSword()) {
-            renderSwordWithSheath(poseStack, buffer, packedLight, player, state.rightHipSword,
-                                 true, false);  // Always render sheath when sword is on hip
+            renderSwordWithSheath(poseStack, buffer, packedLight, player, state.getRightHipSword(),
+                                 true, false, state.getRightPosition());
         } else if (state.shouldShowRightSheath()) {
             // Render just the sheath if sword is drawn but sheath persists
-            renderSheathOnly(poseStack, buffer, packedLight, player, state.rightSheathItem, false);
+            renderSheathOnly(poseStack, buffer, packedLight, player, state.rightSheathItem, false, state.getRightPosition());
         }
     }
 
@@ -66,12 +66,11 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
      */
     private void renderSwordWithSheath(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                                       AbstractClientPlayer player, ItemStack sword,
-                                      boolean renderSheath, boolean isLeft) {
+                                      boolean renderSheath, boolean isLeft,
+                                      SwordDisplayConfig.SwordDisplayPosition position) {
         poseStack.pushPose();
 
-        // Get the display position from config
-        SwordDisplayConfig.SwordDisplayPosition position = SwordDisplayConfig.position;
-
+        // Use the per-sword position
         if (position == SwordDisplayConfig.SwordDisplayPosition.HIP) {
             renderSwordOnHip(poseStack, player, isLeft);
         } else {
@@ -109,16 +108,15 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
      * Renders just a sheath (when sword is drawn but sheath persists)
      */
     private void renderSheathOnly(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
-            AbstractClientPlayer player, Item sheathItem, boolean isLeft) {
+            AbstractClientPlayer player, Item sheathItem, boolean isLeft,
+            SwordDisplayConfig.SwordDisplayPosition position) {
         if (!SwordDisplayConfig.renderSheaths || sheathItem == null) {
             return;
         }
 
         poseStack.pushPose();
 
-        // Get the display position from config
-        SwordDisplayConfig.SwordDisplayPosition position = SwordDisplayConfig.position;
-
+        // Use the per-sword position
         if (position == SwordDisplayConfig.SwordDisplayPosition.HIP) {
             renderSwordOnHip(poseStack, player, isLeft);
         } else {

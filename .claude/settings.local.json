@@ -27,7 +27,8 @@
       "Bash(gradlew.bat clean:*)",
       "Bash(fc /b \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\src\\main\\resources\\assets\\kimetsunoyaibamultiplayer\\textures\\entity\\sword_slash_sound.png\" \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\build\\resources\\main\\assets\\kimetsunoyaibamultiplayer\\textures\\entity\\sword_slash_sound.png\")",
       "Bash(python fix_sound_transparency.py:*)",
-      "Bash(./gradlew.bat compileJava:*)"
+      "Bash(./gradlew.bat compileJava:*)",
+      "Bash(./gradlew.bat clean:*)"
     ],
     "deny": [],
     "ask": []

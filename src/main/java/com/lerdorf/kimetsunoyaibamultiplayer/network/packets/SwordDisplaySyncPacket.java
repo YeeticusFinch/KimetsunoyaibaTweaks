@@ -13,34 +13,49 @@ import java.util.function.Supplier;
 
 /**
  * Synchronizes sword display state between clients
+ * Now includes per-sword positions and hotbar slot tracking
  */
 public class SwordDisplaySyncPacket {
 
     private final UUID playerUUID;
     private final ItemStack leftHipSword;
     private final ItemStack rightHipSword;
-    private final SwordDisplayConfig.SwordDisplayPosition displayPosition;
+    private final SwordDisplayConfig.SwordDisplayPosition leftPosition;
+    private final SwordDisplayConfig.SwordDisplayPosition rightPosition;
+    private final int leftSlot;
+    private final int rightSlot;
 
     public SwordDisplaySyncPacket(UUID playerUUID, ItemStack leftHipSword, ItemStack rightHipSword,
-                                  SwordDisplayConfig.SwordDisplayPosition displayPosition) {
+                                  SwordDisplayConfig.SwordDisplayPosition leftPosition,
+                                  SwordDisplayConfig.SwordDisplayPosition rightPosition,
+                                  int leftSlot, int rightSlot) {
         this.playerUUID = playerUUID;
         this.leftHipSword = leftHipSword != null ? leftHipSword : ItemStack.EMPTY;
         this.rightHipSword = rightHipSword != null ? rightHipSword : ItemStack.EMPTY;
-        this.displayPosition = displayPosition != null ? displayPosition : SwordDisplayConfig.SwordDisplayPosition.HIP;
+        this.leftPosition = leftPosition != null ? leftPosition : SwordDisplayConfig.SwordDisplayPosition.HIP;
+        this.rightPosition = rightPosition != null ? rightPosition : SwordDisplayConfig.SwordDisplayPosition.HIP;
+        this.leftSlot = leftSlot;
+        this.rightSlot = rightSlot;
     }
 
     public SwordDisplaySyncPacket(FriendlyByteBuf buf) {
         this.playerUUID = buf.readUUID();
         this.leftHipSword = buf.readItem();
         this.rightHipSword = buf.readItem();
-        this.displayPosition = buf.readEnum(SwordDisplayConfig.SwordDisplayPosition.class);
+        this.leftPosition = buf.readEnum(SwordDisplayConfig.SwordDisplayPosition.class);
+        this.rightPosition = buf.readEnum(SwordDisplayConfig.SwordDisplayPosition.class);
+        this.leftSlot = buf.readInt();
+        this.rightSlot = buf.readInt();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(playerUUID);
         buf.writeItem(leftHipSword);
         buf.writeItem(rightHipSword);
-        buf.writeEnum(displayPosition);
+        buf.writeEnum(leftPosition);
+        buf.writeEnum(rightPosition);
+        buf.writeInt(leftSlot);
+        buf.writeInt(rightSlot);
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
@@ -51,16 +66,18 @@ public class SwordDisplaySyncPacket {
                 ServerPlayer sender = ctx.getSender();
                 if (sender != null) {
                     if (Config.logDebug) {
-                        Log.info("Server received sword display sync from player {}: left={}, right={}, position={}",
+                        Log.info("Server received sword display sync from player {}: left={}@{} ({}), right={}@{} ({})",
                             sender.getName().getString(),
                             leftHipSword.isEmpty() ? "empty" : leftHipSword.getItem().toString(),
+                            leftSlot, leftPosition,
                             rightHipSword.isEmpty() ? "empty" : rightHipSword.getItem().toString(),
-                            displayPosition);
+                            rightSlot, rightPosition);
                     }
 
                     // Relay to all other clients
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClientsExcept(
-                        new SwordDisplaySyncPacket(playerUUID, leftHipSword, rightHipSword, displayPosition),
+                        new SwordDisplaySyncPacket(playerUUID, leftHipSword, rightHipSword,
+                            leftPosition, rightPosition, leftSlot, rightSlot),
                         sender
                     );
 
@@ -73,7 +90,8 @@ public class SwordDisplaySyncPacket {
                 net.minecraftforge.api.distmarker.Dist clientDist = net.minecraftforge.api.distmarker.Dist.CLIENT;
                 net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(clientDist, () -> () -> {
                     com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.updateRemotePlayerDisplay(
-                        playerUUID, leftHipSword, rightHipSword
+                        playerUUID, leftHipSword, rightHipSword,
+                        leftPosition, rightPosition, leftSlot, rightSlot
                     );
                 });
             }

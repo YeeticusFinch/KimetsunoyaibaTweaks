@@ -5,6 +5,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -14,17 +16,43 @@ import java.util.*;
  * Tracks which swords should be displayed on which players
  * Monitors inventory changes and held item changes
  * Also tracks sheath visibility when swords are drawn
+ * Now tracks by hotbar slot to support duplicate swords
  */
 public class SwordDisplayTracker {
     // Per-player tracking: UUID -> SwordDisplayState
     private static final Map<UUID, SwordDisplayState> playerStates = new HashMap<>();
 
-    // Track previous held items to detect changes
-    private static final Map<UUID, ItemStack> previousHeldItems = new HashMap<>();
+    // Track previous held slot to detect changes
+    private static final Map<UUID, Integer> previousHeldSlots = new HashMap<>();
+
+    // Track previous hotbar contents to detect inventory changes
+    private static final Map<UUID, ItemStack[]> previousHotbarContents = new HashMap<>();
+
+    /**
+     * Represents a sword display with its source hotbar slot
+     */
+    public static class SlotSwordEntry {
+        public int hotbarSlot;
+        public ItemStack sword;
+        public SwordDisplayConfig.SwordDisplayPosition displayPosition;
+
+        public SlotSwordEntry(int slot, ItemStack sword) {
+            this.hotbarSlot = slot;
+            this.sword = sword.copy();
+            // Get per-sword position
+            ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(sword.getItem());
+            this.displayPosition = SwordDisplayConfig.getPositionForSword(itemId.toString());
+        }
+
+        public boolean isEmpty() {
+            return sword.isEmpty();
+        }
+    }
 
     public static class SwordDisplayState {
-        public ItemStack leftHipSword = ItemStack.EMPTY;
-        public ItemStack rightHipSword = ItemStack.EMPTY;
+        // Now using slot-based tracking for up to 2 displayed swords
+        public SlotSwordEntry leftDisplay = null;
+        public SlotSwordEntry rightDisplay = null;
 
         // Track sheaths that should persist when sword is drawn
         public Item leftSheathItem = null;
@@ -33,11 +61,27 @@ public class SwordDisplayTracker {
         private boolean rightSheathPersists = false;
 
         public boolean hasLeftSword() {
-            return !leftHipSword.isEmpty();
+            return leftDisplay != null && !leftDisplay.isEmpty();
         }
 
         public boolean hasRightSword() {
-            return !rightHipSword.isEmpty();
+            return rightDisplay != null && !rightDisplay.isEmpty();
+        }
+
+        public ItemStack getLeftHipSword() {
+            return leftDisplay != null ? leftDisplay.sword : ItemStack.EMPTY;
+        }
+
+        public ItemStack getRightHipSword() {
+            return rightDisplay != null ? rightDisplay.sword : ItemStack.EMPTY;
+        }
+
+        public SwordDisplayConfig.SwordDisplayPosition getLeftPosition() {
+            return leftDisplay != null ? leftDisplay.displayPosition : SwordDisplayConfig.position;
+        }
+
+        public SwordDisplayConfig.SwordDisplayPosition getRightPosition() {
+            return rightDisplay != null ? rightDisplay.displayPosition : SwordDisplayConfig.position;
         }
 
         public boolean shouldShowLeftSheath() {
@@ -48,9 +92,61 @@ public class SwordDisplayTracker {
             return rightSheathItem != null && rightSheathPersists;
         }
 
+        /**
+         * Checks if a specific hotbar slot is already being displayed
+         */
+        public boolean isSlotDisplayed(int slot) {
+            return (leftDisplay != null && leftDisplay.hotbarSlot == slot) ||
+                   (rightDisplay != null && rightDisplay.hotbarSlot == slot);
+        }
+
+        /**
+         * Removes display for a specific hotbar slot
+         */
+        public boolean removeSlot(int slot) {
+            if (leftDisplay != null && leftDisplay.hotbarSlot == slot) {
+                leftDisplay = null;
+                leftSheathItem = null;
+                leftSheathPersists = false;
+                return true;
+            }
+            if (rightDisplay != null && rightDisplay.hotbarSlot == slot) {
+                rightDisplay = null;
+                rightSheathItem = null;
+                rightSheathPersists = false;
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * Adds a sword to display from a specific slot
+         * @return true if added successfully
+         */
+        public boolean addSword(int slot, ItemStack sword) {
+            if (isSlotDisplayed(slot)) {
+                return false;
+            }
+
+            SlotSwordEntry entry = new SlotSwordEntry(slot, sword);
+
+            if (leftDisplay == null) {
+                leftDisplay = entry;
+                leftSheathItem = null;
+                leftSheathPersists = false;
+                return true;
+            } else if (rightDisplay == null) {
+                rightDisplay = entry;
+                rightSheathItem = null;
+                rightSheathPersists = false;
+                return true;
+            }
+            return false;
+        }
+
         public void clear() {
-            leftHipSword = ItemStack.EMPTY;
-            rightHipSword = ItemStack.EMPTY;
+            leftDisplay = null;
+            rightDisplay = null;
             leftSheathItem = null;
             rightSheathItem = null;
             leftSheathPersists = false;
@@ -86,115 +182,154 @@ public class SwordDisplayTracker {
         // Get or create state
         SwordDisplayState state = playerStates.computeIfAbsent(playerUUID, k -> new SwordDisplayState());
 
-        // Get currently held item
+        // Get current held slot
+        int currentSlot = player.getInventory().selected;
+        int previousSlot = previousHeldSlots.getOrDefault(playerUUID, -1);
         ItemStack heldItem = player.getMainHandItem();
-        ItemStack previousHeld = previousHeldItems.getOrDefault(playerUUID, ItemStack.EMPTY);
 
-        // Check if held item changed
-        boolean heldChanged = !ItemStack.matches(heldItem, previousHeld);
+        // Get previous hotbar contents
+        ItemStack[] prevHotbar = previousHotbarContents.get(playerUUID);
+        if (prevHotbar == null) {
+            prevHotbar = new ItemStack[9];
+            for (int i = 0; i < 9; i++) {
+                prevHotbar[i] = ItemStack.EMPTY;
+            }
+        }
 
-        if (heldChanged) {
+        boolean stateChanged = false;
+
+        // Check if held slot changed
+        boolean slotChanged = currentSlot != previousSlot;
+
+        if (slotChanged && previousSlot >= 0 && previousSlot < 9) {
+            ItemStack previousHeld = prevHotbar[previousSlot];
+
             if (Config.logDebug) {
-                Log.debug("Player {} held item changed: {} -> {}",
+                Log.debug("Player {} switched slots: {} -> {} (prev item: {}, new item: {})",
                     player.getName().getString(),
+                    previousSlot, currentSlot,
                     previousHeld.isEmpty() ? "empty" : previousHeld.getItem().toString(),
                     heldItem.isEmpty() ? "empty" : heldItem.getItem().toString());
             }
 
-            // If player just started holding a sword that was displayed, remove sword but keep sheath if it persists
-            if (SwordParticleMapping.isKimetsunoyaibaSword(heldItem)) {
-                if (ItemStack.isSameItemSameTags(heldItem, state.leftHipSword)) {
-                    // Sword is being drawn - check if sheath should persist
-                    SwordSheathRegistry.SheathInfo sheathInfo = SwordSheathRegistry.getSheathInfo(state.leftHipSword);
+            // If new slot has a sword that was displayed, remove it from display (drawing it)
+            if (SwordParticleMapping.isKimetsunoyaibaSword(heldItem) && state.isSlotDisplayed(currentSlot)) {
+                // Handle sheath persistence
+                if (state.leftDisplay != null && state.leftDisplay.hotbarSlot == currentSlot) {
+                    SwordSheathRegistry.SheathInfo sheathInfo = SwordSheathRegistry.getSheathInfo(state.leftDisplay.sword);
                     if (sheathInfo != null) {
                         state.leftSheathItem = sheathInfo.getSheathItem();
                         state.leftSheathPersists = sheathInfo.persistsWhenDrawn();
                     }
-
-                    state.leftHipSword = ItemStack.EMPTY;
-                    sendDisplayUpdateToServer(player, state);
-                } else if (ItemStack.isSameItemSameTags(heldItem, state.rightHipSword)) {
-                    // Sword is being drawn - check if sheath should persist
-                    SwordSheathRegistry.SheathInfo sheathInfo = SwordSheathRegistry.getSheathInfo(state.rightHipSword);
+                } else if (state.rightDisplay != null && state.rightDisplay.hotbarSlot == currentSlot) {
+                    SwordSheathRegistry.SheathInfo sheathInfo = SwordSheathRegistry.getSheathInfo(state.rightDisplay.sword);
                     if (sheathInfo != null) {
                         state.rightSheathItem = sheathInfo.getSheathItem();
                         state.rightSheathPersists = sheathInfo.persistsWhenDrawn();
                     }
-
-                    state.rightHipSword = ItemStack.EMPTY;
-                    sendDisplayUpdateToServer(player, state);
                 }
+                state.removeSlot(currentSlot);
+                stateChanged = true;
             }
 
-            // If player just stopped holding a sword, add it to display
-            // Skip sheath-exempt items (like Himejima's axe and ball)
+            // If previous slot had a nichirin sword, add it to display (sheathing it)
+            // This now works for nichirin-to-nichirin swaps!
             if (SwordParticleMapping.isKimetsunoyaibaSword(previousHeld) &&
                 !SwordParticleMapping.isSheathExempt(previousHeld) &&
-                !SwordParticleMapping.isKimetsunoyaibaSword(heldItem) &&
-                hasItemInInventory(player, previousHeld)) {
+                !state.isSlotDisplayed(previousSlot)) {
 
-                // Add to left hip if empty, otherwise right hip
-                if (!state.hasLeftSword()) {
-                    state.leftHipSword = previousHeld.copy();
-                    state.leftSheathItem = null;  // Clear sheath when sword is sheathed
-                    state.leftSheathPersists = false;
+                if (state.addSword(previousSlot, previousHeld)) {
                     if (Config.logDebug) {
-                        Log.debug("Adding sword to left hip for player {}", player.getName().getString());
+                        Log.debug("Adding sword from slot {} to display for player {}",
+                            previousSlot, player.getName().getString());
                     }
-                } else if (!state.hasRightSword()) {
-                    state.rightHipSword = previousHeld.copy();
-                    state.rightSheathItem = null;  // Clear sheath when sword is sheathed
-                    state.rightSheathPersists = false;
-                    if (Config.logDebug) {
-                        Log.debug("Adding sword to right hip for player {}", player.getName().getString());
-                    }
+                    stateChanged = true;
                 }
-                sendDisplayUpdateToServer(player, state);
             }
-
-            previousHeldItems.put(playerUUID, heldItem.copy());
         }
 
-        // Check if displayed swords or persistent sheaths are still in hotbar
-        boolean stateChanged = false;
+        // Update previous slot tracking
+        previousHeldSlots.put(playerUUID, currentSlot);
 
-        // Check left sword/sheath
-        if (state.hasLeftSword() && !hasItemInHotbar(player, state.leftHipSword)) {
-            if (Config.logDebug) {
-                Log.debug("Removing left hip sword for player {} (not in hotbar)", player.getName().getString());
-            }
-            state.leftHipSword = ItemStack.EMPTY;
-            state.leftSheathItem = null;
-            state.leftSheathPersists = false;
-            stateChanged = true;
-        } else if (state.shouldShowLeftSheath()) {
-            // If only sheath is showing, check if the sword is still in hotbar
-            ItemStack swordForSheath = findSwordWithSheath(player, state.leftSheathItem);
-            if (swordForSheath.isEmpty() || !hasItemInHotbar(player, swordForSheath)) {
+        // Check if any displayed slots' items changed (removed from hotbar)
+        if (state.leftDisplay != null) {
+            int slot = state.leftDisplay.hotbarSlot;
+            ItemStack currentInSlot = player.getInventory().getItem(slot);
+            if (!ItemStack.isSameItemSameTags(currentInSlot, state.leftDisplay.sword)) {
+                if (Config.logDebug) {
+                    Log.debug("Removing left display for player {} (slot {} contents changed)",
+                        player.getName().getString(), slot);
+                }
+                state.leftDisplay = null;
                 state.leftSheathItem = null;
                 state.leftSheathPersists = false;
                 stateChanged = true;
             }
         }
 
-        // Check right sword/sheath
-        if (state.hasRightSword() && !hasItemInHotbar(player, state.rightHipSword)) {
-            if (Config.logDebug) {
-                Log.debug("Removing right hip sword for player {} (not in hotbar)", player.getName().getString());
-            }
-            state.rightHipSword = ItemStack.EMPTY;
-            state.rightSheathItem = null;
-            state.rightSheathPersists = false;
-            stateChanged = true;
-        } else if (state.shouldShowRightSheath()) {
-            // If only sheath is showing, check if the sword is still in hotbar
-            ItemStack swordForSheath = findSwordWithSheath(player, state.rightSheathItem);
-            if (swordForSheath.isEmpty() || !hasItemInHotbar(player, swordForSheath)) {
+        if (state.rightDisplay != null) {
+            int slot = state.rightDisplay.hotbarSlot;
+            ItemStack currentInSlot = player.getInventory().getItem(slot);
+            if (!ItemStack.isSameItemSameTags(currentInSlot, state.rightDisplay.sword)) {
+                if (Config.logDebug) {
+                    Log.debug("Removing right display for player {} (slot {} contents changed)",
+                        player.getName().getString(), slot);
+                }
+                state.rightDisplay = null;
                 state.rightSheathItem = null;
                 state.rightSheathPersists = false;
                 stateChanged = true;
             }
         }
+
+        // Check sheath persistence
+        if (state.shouldShowLeftSheath() && state.leftDisplay == null) {
+            // Sheath is showing but no sword - check if we still have a sword for this sheath
+            boolean foundSword = false;
+            for (int i = 0; i < 9; i++) {
+                if (i == currentSlot) continue;
+                ItemStack slotItem = player.getInventory().getItem(i);
+                if (SwordParticleMapping.isKimetsunoyaibaSword(slotItem)) {
+                    Item sheathItem = SwordSheathRegistry.getSheathItem(slotItem);
+                    if (sheathItem == state.leftSheathItem) {
+                        foundSword = true;
+                        break;
+                    }
+                }
+            }
+            if (!foundSword) {
+                state.leftSheathItem = null;
+                state.leftSheathPersists = false;
+                stateChanged = true;
+            }
+        }
+
+        if (state.shouldShowRightSheath() && state.rightDisplay == null) {
+            boolean foundSword = false;
+            for (int i = 0; i < 9; i++) {
+                if (i == currentSlot) continue;
+                ItemStack slotItem = player.getInventory().getItem(i);
+                if (SwordParticleMapping.isKimetsunoyaibaSword(slotItem)) {
+                    Item sheathItem = SwordSheathRegistry.getSheathItem(slotItem);
+                    if (sheathItem == state.rightSheathItem) {
+                        foundSword = true;
+                        break;
+                    }
+                }
+            }
+            if (!foundSword) {
+                state.rightSheathItem = null;
+                state.rightSheathPersists = false;
+                stateChanged = true;
+            }
+        }
+
+        // Update previous hotbar contents
+        ItemStack[] newHotbar = new ItemStack[9];
+        for (int i = 0; i < 9; i++) {
+            newHotbar[i] = player.getInventory().getItem(i).copy();
+        }
+        previousHotbarContents.put(playerUUID, newHotbar);
 
         if (stateChanged) {
             sendDisplayUpdateToServer(player, state);
@@ -262,13 +397,16 @@ public class SwordDisplayTracker {
         // Only send if this is the local player
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && mc.player.getUUID().equals(player.getUUID())) {
-            // Send packet to server
+            // Send packet to server with slot info and per-sword positions
             com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
                 new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordDisplaySyncPacket(
                     player.getUUID(),
-                    state.leftHipSword.copy(),
-                    state.rightHipSword.copy(),
-                    SwordDisplayConfig.position
+                    state.getLeftHipSword(),
+                    state.getRightHipSword(),
+                    state.getLeftPosition(),
+                    state.getRightPosition(),
+                    state.leftDisplay != null ? state.leftDisplay.hotbarSlot : -1,
+                    state.rightDisplay != null ? state.rightDisplay.hotbarSlot : -1
                 )
             );
 
@@ -281,16 +419,33 @@ public class SwordDisplayTracker {
     /**
      * Updates the display state for a remote player (called when receiving network packet)
      */
-    public static void updateRemotePlayerDisplay(UUID playerUUID, ItemStack leftSword, ItemStack rightSword) {
+    public static void updateRemotePlayerDisplay(UUID playerUUID, ItemStack leftSword, ItemStack rightSword,
+                                                  SwordDisplayConfig.SwordDisplayPosition leftPos,
+                                                  SwordDisplayConfig.SwordDisplayPosition rightPos,
+                                                  int leftSlot, int rightSlot) {
         SwordDisplayState state = playerStates.computeIfAbsent(playerUUID, k -> new SwordDisplayState());
-        state.leftHipSword = leftSword.copy();
-        state.rightHipSword = rightSword.copy();
+
+        // Update left display
+        if (!leftSword.isEmpty() && leftSlot >= 0) {
+            state.leftDisplay = new SlotSwordEntry(leftSlot, leftSword);
+            state.leftDisplay.displayPosition = leftPos;
+        } else {
+            state.leftDisplay = null;
+        }
+
+        // Update right display
+        if (!rightSword.isEmpty() && rightSlot >= 0) {
+            state.rightDisplay = new SlotSwordEntry(rightSlot, rightSword);
+            state.rightDisplay.displayPosition = rightPos;
+        } else {
+            state.rightDisplay = null;
+        }
 
         if (Config.logDebug) {
-            Log.debug("Updated remote player display: UUID={}, left={}, right={}",
+            Log.debug("Updated remote player display: UUID={}, left={}@{} ({}), right={}@{} ({})",
                 playerUUID,
-                leftSword.isEmpty() ? "empty" : leftSword.getItem().toString(),
-                rightSword.isEmpty() ? "empty" : rightSword.getItem().toString());
+                leftSword.isEmpty() ? "empty" : leftSword.getItem().toString(), leftSlot, leftPos,
+                rightSword.isEmpty() ? "empty" : rightSword.getItem().toString(), rightSlot, rightPos);
         }
     }
 
@@ -306,7 +461,8 @@ public class SwordDisplayTracker {
      */
     public static void clearAll() {
         playerStates.clear();
-        previousHeldItems.clear();
+        previousHeldSlots.clear();
+        previousHotbarContents.clear();
         Log.debug("Cleared all sword display tracking data");
     }
 
@@ -315,6 +471,7 @@ public class SwordDisplayTracker {
      */
     public static void clearPlayer(UUID playerUUID) {
         playerStates.remove(playerUUID);
-        previousHeldItems.remove(playerUUID);
+        previousHeldSlots.remove(playerUUID);
+        previousHotbarContents.remove(playerUUID);
     }
 }

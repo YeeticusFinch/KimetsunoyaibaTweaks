@@ -140,6 +140,11 @@ public class CrowMirrorHandler {
      */
     public static void scanForUnmirroredCrows(ServerLevel level) {
         for (Entity entity : level.getAllEntities()) {
+            // Skip null entities
+            if (entity == null) {
+                continue;
+            }
+
             // Check if this is a kasugai_crow
             if (!isKasugaiCrow(entity)) {
                 continue;

@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.proxy.IClientProxy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleOptions;
@@ -18,14 +19,18 @@ import java.util.UUID;
 public class ClientProxy implements IClientProxy {
 
     @Override
-    public void handleSwordDisplaySync(UUID playerUUID, ItemStack leftHipSword, ItemStack rightHipSword) {
+    public void handleSwordDisplaySync(UUID playerUUID, ItemStack leftHipSword, ItemStack rightHipSword,
+                                       SwordDisplayConfig.SwordDisplayPosition leftPos,
+                                       SwordDisplayConfig.SwordDisplayPosition rightPos,
+                                       int leftSlot, int rightSlot) {
         if (Config.logDebug) {
             Log.debug("[DEBUG] Client received sword display sync for player " + playerUUID +
                 ": left=" + (leftHipSword.isEmpty() ? "empty" : leftHipSword.getItem().toString()) +
                 ", right=" + (rightHipSword.isEmpty() ? "empty" : rightHipSword.getItem().toString()));
         }
 
-        SwordDisplayTracker.updateRemotePlayerDisplay(playerUUID, leftHipSword, rightHipSword);
+        SwordDisplayTracker.updateRemotePlayerDisplay(playerUUID, leftHipSword, rightHipSword,
+            leftPos, rightPos, leftSlot, rightSlot);
     }
 
     @Override

@@ -28,6 +28,18 @@ public class SheathItems {
     public static final RegistryObject<Item> SWORD_SHEATH_RENGOKU = ITEMS.register("sword_sheath_rengoku",
         () -> new Item(new Item.Properties().stacksTo(1)));
 
+    // Uzui-specific sheath
+    public static final RegistryObject<Item> SWORD_SHEATH_UZUI = ITEMS.register("sword_sheath_uzui",
+        () -> new Item(new Item.Properties().stacksTo(1)));
+
+    // Iguro-specific sheath
+    public static final RegistryObject<Item> SWORD_SHEATH_IGURO = ITEMS.register("sword_sheath_iguro",
+        () -> new Item(new Item.Properties().stacksTo(1)));
+
+    // Inosuke-specific sheath
+    public static final RegistryObject<Item> SWORD_SHEATH_INOSUKE = ITEMS.register("sword_sheath_inosuke",
+        () -> new Item(new Item.Properties().stacksTo(1)));
+
     /**
      * Registers sheath items to the mod event bus
      */

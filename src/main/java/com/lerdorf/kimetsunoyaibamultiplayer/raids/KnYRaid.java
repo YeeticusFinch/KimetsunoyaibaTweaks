@@ -22,6 +22,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 
 import java.util.*;
 
@@ -69,6 +72,9 @@ public class KnYRaid {
     private long waveStartTime = 0;
     private boolean glowingApplied = false;
     private static final long GLOWING_TIMER = 6000L; // 5 minutes in ticks
+
+    // Cleanup tracking
+    private boolean cleanupDone = false;
 
     public KnYRaid(ServerLevel level, ResourceLocation structureId, BlockPos center, RaidType type, int difficultyLevel) {
         this.raidId = UUID.randomUUID();
@@ -185,11 +191,13 @@ public class KnYRaid {
         updateHealthProgress();
 
         // Apply glowing effect after 5 minutes if wave is still ongoing
-        if (!glowingApplied && !aliveEntities.isEmpty() && gameTime - waveStartTime >= GLOWING_TIMER) {
-            applyGlowingToAllRaidEntities();
-            glowingApplied = true;
-            broadcastMessage(Component.literal("Remaining raid entities are now glowing!").withStyle(style ->
-                style.withColor(0xFFFF55)));
+        if (!aliveEntities.isEmpty() && gameTime - waveStartTime >= GLOWING_TIMER) {
+            boolean anyApplied = applyGlowingToAllRaidEntities();
+            if (!glowingApplied && anyApplied) {
+                glowingApplied = true;
+                broadcastMessage(Component.literal("Remaining raid entities are now glowing!").withStyle(style ->
+                    style.withColor(0xFFFF55)));
+            }
         }
 
         // Check if wave is complete
@@ -204,14 +212,29 @@ public class KnYRaid {
         }
     }
 
-    private void applyGlowingToAllRaidEntities() {
-        for (UUID entityId : aliveEntities) {
-            var entity = level.getEntity(entityId);
-            if (entity instanceof LivingEntity living) {
-                // Apply glowing for 10 minutes (should last rest of wave)
-                living.addEffect(new MobEffectInstance(MobEffects.GLOWING, 12000, 0, false, false, true));
+    private boolean applyGlowingToAllRaidEntities() {
+        boolean anyApplied = false;
+
+        // Search for entities in the raid area - more reliable than UUID lookup
+        int radius = CivilianStructureRegistry.getSpawnRadius(structureId);
+        if (radius <= 0) radius = 64;
+
+        net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
+            center.getX() - radius, center.getY() - 32, center.getZ() - radius,
+            center.getX() + radius, center.getY() + 32, center.getZ() + radius
+        );
+
+        for (LivingEntity living : level.getEntitiesOfClass(LivingEntity.class, searchBox)) {
+            if (aliveEntities.contains(living.getUUID())) {
+                // Only apply if not already glowing
+                if (!living.hasEffect(MobEffects.GLOWING)) {
+                    // Apply glowing for 10 minutes (should last rest of wave)
+                    living.addEffect(new MobEffectInstance(MobEffects.GLOWING, 12000, 0, false, false, true));
+                    anyApplied = true;
+                }
             }
         }
+        return anyApplied;
     }
 
     private void scheduleNextWave() {
@@ -301,6 +324,16 @@ public class KnYRaid {
             return;
         }
 
+        // Calculate current health from actual entity health
+        float actualHealth = 0f;
+        for (UUID entityId : aliveEntities) {
+            var entity = level.getEntity(entityId);
+            if (entity instanceof LivingEntity living && living.isAlive()) {
+                actualHealth += living.getHealth();
+            }
+        }
+        currentHealth = actualHealth;
+
         float progress = Math.max(0, Math.min(1, currentHealth / totalMaxHealth));
         bossBar.setProgress(progress);
     }
@@ -309,22 +342,15 @@ public class KnYRaid {
         if (!aliveEntities.contains(entityId)) return false;
 
         aliveEntities.remove(entityId);
-        Float health = entityMaxHealth.get(entityId);
-        if (health != null) {
-            currentHealth -= health;
-        }
-        updateHealthProgress();
+        // Don't subtract health here - updateHealthProgress will recalculate from actual entities
 
         Log.debug("Raid entity killed: " + entityId + " (" + aliveEntities.size() + " remaining)");
         return true;
     }
 
     public void onEntityDamaged(UUID entityId, float damage) {
-        if (!aliveEntities.contains(entityId)) return;
-
-        currentHealth -= damage;
-        if (currentHealth < 0) currentHealth = 0;
-        updateHealthProgress();
+        // Health is now calculated from actual entities in updateHealthProgress
+        // This method is kept for compatibility but doesn't need to do anything
     }
 
     private void triggerVictory() {
@@ -336,6 +362,9 @@ public class KnYRaid {
         broadcastMessage(Component.literal("Raid Complete! Victory!").withStyle(style ->
             style.withColor(0x55FF55)));
 
+        // Send victory title to all participants
+        sendVictoryTitle();
+
         // Give rewards
         giveRewards();
 
@@ -344,6 +373,24 @@ public class KnYRaid {
 
         // Play victory sound
         level.playSound(null, center.getX(), center.getY(), center.getZ(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.HOSTILE, 128.0f, 1.0f);
+    }
+
+    private void sendVictoryTitle() {
+        String raidName = (type == RaidType.DEMON ? "Demon Raid" : "Demon Slayer Raid");
+        Component title = Component.literal("VICTORY!").withStyle(style ->
+            style.withColor(0x55FF55).withBold(true));
+        Component subtitle = Component.literal(raidName + " " + toRoman(difficultyLevel) + " Complete!").withStyle(style ->
+            style.withColor(0xFFFFFF));
+
+        for (UUID playerId : participants) {
+            ServerPlayer player = level.getServer().getPlayerList().getPlayer(playerId);
+            if (player != null) {
+                // Set title animation times (fadeIn, stay, fadeOut in ticks)
+                player.connection.send(new ClientboundSetTitlesAnimationPacket(10, 70, 20));
+                player.connection.send(new ClientboundSetSubtitleTextPacket(subtitle));
+                player.connection.send(new ClientboundSetTitleTextPacket(title));
+            }
+        }
     }
 
     private void triggerDefeat(String reason) {
@@ -417,6 +464,8 @@ public class KnYRaid {
     private void cleanup() {
         // Remove boss bar from all players
         bossBar.removeAllPlayers();
+        cleanupDone = true;
+        Log.debug("Raid cleanup complete for " + raidId);
     }
 
     private boolean checkPlayerNearby() {
@@ -487,7 +536,7 @@ public class KnYRaid {
     public RaidType getType() { return type; }
     public int getDifficultyLevel() { return difficultyLevel; }
     public RaidState getState() { return state; }
-    public boolean isFinished() { return state == RaidState.VICTORY || state == RaidState.DEFEAT; }
+    public boolean isFinished() { return (state == RaidState.VICTORY || state == RaidState.DEFEAT) && cleanupDone; }
     public boolean isRaidEntity(UUID entityId) { return allRaidEntities.contains(entityId); }
 
     // NBT Serialization

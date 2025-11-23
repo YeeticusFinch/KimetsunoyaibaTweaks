@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.proxy;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -12,7 +13,10 @@ import java.util.UUID;
 public class ServerProxy implements IClientProxy {
 
     @Override
-    public void handleSwordDisplaySync(UUID playerUUID, ItemStack leftHipSword, ItemStack rightHipSword) {
+    public void handleSwordDisplaySync(UUID playerUUID, ItemStack leftHipSword, ItemStack rightHipSword,
+                                       SwordDisplayConfig.SwordDisplayPosition leftPos,
+                                       SwordDisplayConfig.SwordDisplayPosition rightPos,
+                                       int leftSlot, int rightSlot) {
         // Server doesn't handle client-side display
     }
 

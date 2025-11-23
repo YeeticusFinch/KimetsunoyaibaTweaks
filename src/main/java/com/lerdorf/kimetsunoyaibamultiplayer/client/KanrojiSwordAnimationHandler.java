@@ -99,9 +99,9 @@ public class KanrojiSwordAnimationHandler {
         // Check if Kanroji sword is displayed on hip/back
         SwordDisplayTracker.SwordDisplayState displayState = SwordDisplayTracker.getDisplayState(playerUUID);
         boolean kanrojiOnLeftHip = displayState.hasLeftSword() &&
-                                  displayState.leftHipSword.getItem() instanceof NichirinSwordKanrojiAnimated;
+                                  displayState.getLeftHipSword().getItem() instanceof NichirinSwordKanrojiAnimated;
         boolean kanrojiOnRightHip = displayState.hasRightSword() &&
-                                   displayState.rightHipSword.getItem() instanceof NichirinSwordKanrojiAnimated;
+                                   displayState.getRightHipSword().getItem() instanceof NichirinSwordKanrojiAnimated;
 
         // If not holding AND not displayed, nothing to do
         if (!isHoldingKanrojiSword && !kanrojiOnLeftHip && !kanrojiOnRightHip) {
@@ -121,10 +121,10 @@ public class KanrojiSwordAnimationHandler {
                 state.currentAnimation = targetAnimation;
                 // Trigger sheath animation on the displayed sword(s)
                 if (kanrojiOnLeftHip) {
-                    KanrojiSwordAnimationTrigger.triggerAnimationOnItemStack(player, displayState.leftHipSword, targetAnimation);
+                    KanrojiSwordAnimationTrigger.triggerAnimationOnItemStack(player, displayState.getLeftHipSword(), targetAnimation);
                 }
                 if (kanrojiOnRightHip) {
-                    KanrojiSwordAnimationTrigger.triggerAnimationOnItemStack(player, displayState.rightHipSword, targetAnimation);
+                    KanrojiSwordAnimationTrigger.triggerAnimationOnItemStack(player, displayState.getRightHipSword(), targetAnimation);
                 }
             }
             return;
