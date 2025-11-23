@@ -5,11 +5,13 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import java.util.*;
 
 /**
@@ -214,21 +216,49 @@ public class SwordDisplayTracker {
 
             // If new slot has a sword that was displayed, remove it from display (drawing it)
             if (SwordParticleMapping.isKimetsunoyaibaSword(heldItem) && state.isSlotDisplayed(currentSlot)) {
-                // Handle sheath persistence
-                if (state.leftDisplay != null && state.leftDisplay.hotbarSlot == currentSlot) {
+                // Get sheath info before removing
+                Item sheathToKeep = null;
+                boolean isLeftSlot = state.leftDisplay != null && state.leftDisplay.hotbarSlot == currentSlot;
+                SwordDisplayConfig.SwordDisplayPosition sheathPosition = null;
+
+                if (isLeftSlot) {
                     SwordSheathRegistry.SheathInfo sheathInfo = SwordSheathRegistry.getSheathInfo(state.leftDisplay.sword);
+                    sheathPosition = state.leftDisplay.displayPosition;
                     if (sheathInfo != null) {
-                        state.leftSheathItem = sheathInfo.getSheathItem();
-                        state.leftSheathPersists = sheathInfo.persistsWhenDrawn();
+                        if (sheathInfo.persistsWhenDrawn()) {
+                            sheathToKeep = sheathInfo.getSheathItem();
+                        } else {
+                            // Spawn cloud particles for temporary sheaths (Uzui, Inosuke)
+                            spawnSheathDisappearParticles(player, sheathPosition, true);
+                        }
                     }
                 } else if (state.rightDisplay != null && state.rightDisplay.hotbarSlot == currentSlot) {
                     SwordSheathRegistry.SheathInfo sheathInfo = SwordSheathRegistry.getSheathInfo(state.rightDisplay.sword);
+                    sheathPosition = state.rightDisplay.displayPosition;
                     if (sheathInfo != null) {
-                        state.rightSheathItem = sheathInfo.getSheathItem();
-                        state.rightSheathPersists = sheathInfo.persistsWhenDrawn();
+                        if (sheathInfo.persistsWhenDrawn()) {
+                            sheathToKeep = sheathInfo.getSheathItem();
+                        } else {
+                            // Spawn cloud particles for temporary sheaths (Uzui, Inosuke)
+                            spawnSheathDisappearParticles(player, sheathPosition, false);
+                        }
                     }
                 }
+
+                // Remove sword from display
                 state.removeSlot(currentSlot);
+
+                // Restore sheath if it should persist
+                if (sheathToKeep != null) {
+                    if (isLeftSlot) {
+                        state.leftSheathItem = sheathToKeep;
+                        state.leftSheathPersists = true;
+                    } else {
+                        state.rightSheathItem = sheathToKeep;
+                        state.rightSheathPersists = true;
+                    }
+                }
+
                 stateChanged = true;
             }
 
@@ -473,5 +503,75 @@ public class SwordDisplayTracker {
         playerStates.remove(playerUUID);
         previousHeldSlots.remove(playerUUID);
         previousHotbarContents.remove(playerUUID);
+    }
+
+    /**
+     * Spawns cloud particles at the sheath position when a temporary sheath disappears
+     */
+    private static void spawnSheathDisappearParticles(Player player, SwordDisplayConfig.SwordDisplayPosition position, boolean isLeft) {
+        if (player == null || player.level() == null) return;
+
+        // Calculate offset based on position (hip or back) and side (left or right)
+        double offsetX, offsetY, offsetZ;
+
+        if (position == SwordDisplayConfig.SwordDisplayPosition.BACK) {
+            // Back position
+            if (isLeft) {
+                offsetX = SwordDisplayConfig.backLeftTranslateX;
+                offsetY = SwordDisplayConfig.backLeftTranslateY;
+                offsetZ = SwordDisplayConfig.backLeftTranslateZ;
+            } else {
+                offsetX = SwordDisplayConfig.backRightTranslateX;
+                offsetY = SwordDisplayConfig.backRightTranslateY;
+                offsetZ = SwordDisplayConfig.backRightTranslateZ;
+            }
+        } else {
+            // Hip position (default)
+            if (isLeft) {
+                offsetX = SwordDisplayConfig.hipLeftTranslateX;
+                offsetY = SwordDisplayConfig.hipLeftTranslateY;
+                offsetZ = SwordDisplayConfig.hipLeftTranslateZ;
+            } else {
+                offsetX = SwordDisplayConfig.hipRightTranslateX;
+                offsetY = SwordDisplayConfig.hipRightTranslateY;
+                offsetZ = SwordDisplayConfig.hipRightTranslateZ;
+            }
+        }
+
+        // Convert local offset to world position based on player's rotation
+        double yawRad = Math.toRadians(player.getYRot());
+        double cosYaw = Math.cos(yawRad);
+        double sinYaw = Math.sin(yawRad);
+
+        // Rotate the offset by player's yaw
+        double worldOffsetX = offsetX * cosYaw - offsetZ * sinYaw;
+        double worldOffsetZ = offsetX * sinYaw + offsetZ * cosYaw;
+
+        // Calculate final world position
+        Vec3 playerPos = player.position();
+        double particleX = playerPos.x + worldOffsetX;
+        double particleY = playerPos.y + 1.0 + offsetY; // Add 1.0 for player height offset
+        double particleZ = playerPos.z + worldOffsetZ;
+
+        // Spawn cloud particles in a small poof
+        Random rand = new Random();
+        for (int i = 0; i < 8; i++) {
+            double velX = (rand.nextDouble() - 0.5) * 0.1;
+            double velY = rand.nextDouble() * 0.1;
+            double velZ = (rand.nextDouble() - 0.5) * 0.1;
+
+            player.level().addParticle(
+                ParticleTypes.CLOUD,
+                particleX + (rand.nextDouble() - 0.5) * 0.2,
+                particleY + (rand.nextDouble() - 0.5) * 0.2,
+                particleZ + (rand.nextDouble() - 0.5) * 0.2,
+                velX, velY, velZ
+            );
+        }
+
+        if (Config.logDebug) {
+            Log.debug("Spawned sheath disappear particles at ({}, {}, {}) for player {}",
+                particleX, particleY, particleZ, player.getName().getString());
+        }
     }
 }

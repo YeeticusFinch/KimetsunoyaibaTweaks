@@ -71,17 +71,18 @@ public class SheathRegistration {
         }
 
         // Register uzui sheath for the base mod's uzui sword (if it exists)
+        // Uzui's sheath disappears when sword is drawn (with cloud particle effect)
         net.minecraft.world.item.Item baseModUzuiSword =
             net.minecraftforge.registries.ForgeRegistries.ITEMS
                 .getValue(new ResourceLocation("kimetsunoyaiba", "nichirinsword_uzui"));
 
         if (baseModUzuiSword != null) {
-            SwordSheathRegistry.registerPersistentSheath(
+            SwordSheathRegistry.registerTemporarySheath(
                 baseModUzuiSword,
                 SheathItems.SWORD_SHEATH_UZUI.get()
             );
             if (Config.logDebug) {
-                Log.info("Registered uzui sheath for base mod's nichirinsword_uzui");
+                Log.info("Registered uzui sheath for base mod's nichirinsword_uzui (temporary)");
             }
         }
 
@@ -101,22 +102,23 @@ public class SheathRegistration {
         }
 
         // Register inosuke sheath for the base mod's inosuke sword (if it exists)
+        // Inosuke's sheath disappears when sword is drawn (with cloud particle effect)
         net.minecraft.world.item.Item baseModInosukeSword =
             net.minecraftforge.registries.ForgeRegistries.ITEMS
                 .getValue(new ResourceLocation("kimetsunoyaiba", "nichirinsword_inosuke"));
 
         if (baseModInosukeSword != null) {
-            SwordSheathRegistry.registerPersistentSheath(
+            SwordSheathRegistry.registerTemporarySheath(
                 baseModInosukeSword,
                 SheathItems.SWORD_SHEATH_INOSUKE.get()
             );
             if (Config.logDebug) {
-                Log.info("Registered inosuke sheath for base mod's nichirinsword_inosuke");
+                Log.info("Registered inosuke sheath for base mod's nichirinsword_inosuke (temporary)");
             }
         }
 
         // Register custom sheath scales
-        SheathModelRenderer.registerSheathScale(SheathItems.SWORD_SHEATH_IGURO.get(), 1.5f);
+        SheathModelRenderer.registerSheathScale(SheathItems.SWORD_SHEATH_IGURO.get(), 1.25f);
 
         if (Config.logDebug) {
             Log.info("Registered custom sword sheaths");
