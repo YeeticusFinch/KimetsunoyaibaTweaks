@@ -109,6 +109,124 @@ The `ordering="AFTER"` is critical - ensures KnY Multiplayer loads first.
 
 ---
 
+## MCreator Integration
+
+MCreator can use the KimetsunoYaiba Tweaks API with some additional setup. This requires using MCreator's custom code features.
+
+### Step 1: Add Dependencies to MCreator
+
+1. Open your MCreator workspace
+2. Go to **Workspace** → **Workspace Settings** → **External APIs**
+3. Click **Add dependency from mvnrepository**
+4. Alternatively, manually edit `build.gradle` in your workspace folder:
+
+```gradle
+repositories {
+    maven { url = "https://api.modrinth.com/maven" }
+    maven { url = "https://cursemaven.com" }
+}
+
+dependencies {
+    implementation fg.deobf("curse.maven:demonslayer-471263:7151280")
+    implementation fg.deobf("maven.modrinth:kimetsunoyaiba-tweaks:1.6.29")
+}
+```
+
+5. Run **Build & Run** → **Regenerate code and build** to download dependencies
+
+### Step 2: Configure mods.toml
+
+Edit `src/main/resources/META-INF/mods.toml` and add the dependency:
+
+```toml
+[[dependencies.yourmodid]]
+    modId="kimetsunoyaibamultiplayer"
+    mandatory=true
+    versionRange="[1.5.0,)"
+    ordering="AFTER"
+    side="BOTH"
+```
+
+### Step 3: Create Custom Code Elements
+
+MCreator requires custom code elements to use the API:
+
+#### Option A: Custom Procedure (Recommended)
+
+1. Create a new **Procedure**
+2. Click the **<>** button to switch to code view
+3. Write your breathing form logic:
+
+```java
+// In a custom procedure
+import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.*;
+
+public class YourProcedure {
+    public static void execute(Entity entity) {
+        if (entity instanceof Player player) {
+            // Play animation
+            KnYAPI.playAnimation(player, "sword_to_left");
+
+            // Deal damage to nearby enemies
+            // ... your logic here
+        }
+    }
+}
+```
+
+#### Option B: Custom Element for Sword Registration
+
+1. Create a **Custom Element** (requires MCreator 2023.1+)
+2. Use the full sword builder pattern:
+
+```java
+package net.yourmod.item;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.item.Item;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.RegistryObject;
+
+public class ModSwords {
+    public static final DeferredRegister<Item> ITEMS =
+        DeferredRegister.create(ForgeRegistries.ITEMS, "yourmodid");
+
+    public static final RegistryObject<Item> MY_SWORD =
+        KnYAPI.createSword("my_sword")
+            .breathingStyle("my_breathing", YourBreathingForms.create())
+            .styleRange(6000)  // Use even thousands
+            .defaultParticle(ParticleTypes.FLAME)
+            .category(SwordRegistry.SwordCategory.NICHIRIN)
+            .durability(2000)
+            .build(ITEMS);
+}
+```
+
+### Limitations in MCreator
+
+- **No visual editors**: Breathing forms must be coded manually
+- **Custom code only**: Cannot use MCreator's block-based procedures for API calls
+- **Manual registration**: Items need custom registration code
+- **Debugging harder**: Less IDE support than IntelliJ/Eclipse
+
+### Recommended Approach
+
+For complex addons with multiple breathing styles and entities, consider:
+1. Start in MCreator for basic mod structure
+2. Export to IntelliJ IDEA or Eclipse for API integration
+3. Use the full development environment for breathing forms
+
+### Alternative: Hybrid Approach
+
+1. Create basic items/blocks in MCreator's visual editor
+2. Add custom code elements for KnY API integration
+3. Use MCreator procedures for non-API logic (sounds, particles, etc.)
+
+---
+
 ## Creating Nichirin Swords
 
 ### Basic Sword Registration
