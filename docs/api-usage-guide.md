@@ -1,10 +1,12 @@
 # KnY Multiplayer - API Usage Guide
 
-**Version:** 1.0.0
+**Version:** 1.6.x
 **Minecraft:** 1.20.1
 **Forge:** 47.4.0+
 
-This guide explains how to use the Kimetsu no Yaiba Multiplayer mod as a library to create your own custom breathing styles and nichirin swords.
+This guide explains how to use the Kimetsu no Yaiba Multiplayer mod as a library to create your own custom breathing styles, nichirin swords, and entities.
+
+**Reference Implementation:** [KnY-Extra-Additions](https://github.com/YeeticusFinch/KnY-Extra-Additions)
 
 ---
 
@@ -12,11 +14,12 @@ This guide explains how to use the Kimetsu no Yaiba Multiplayer mod as a library
 
 1. [Getting Started](#getting-started)
 2. [Adding as a Dependency](#adding-as-a-dependency)
-3. [Creating a Breathing Style](#creating-a-breathing-style)
-4. [Creating a Nichirin Sword](#creating-a-nichirin-sword)
-5. [Complete Example](#complete-example)
-6. [Advanced Topics](#advanced-topics)
-7. [API Reference](#api-reference)
+3. [Creating Nichirin Swords](#creating-nichirin-swords)
+4. [Creating Breathing Styles](#creating-breathing-styles)
+5. [Creating Custom Entities](#creating-custom-entities)
+6. [API Reference](#api-reference)
+7. [Best Practices](#best-practices)
+8. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -25,265 +28,90 @@ This guide explains how to use the Kimetsu no Yaiba Multiplayer mod as a library
 ### Prerequisites
 
 - Forge 1.20.1 mod development environment
-- KnY Multiplayer mod as a dependency
+- Java 17
 - Basic understanding of Minecraft modding
+- GeckoLib 4.4.4+ (for custom entities)
 
 ### What You Can Create
 
-With this API, you can:
-- **Custom Breathing Styles**: Create new breathing techniques with multiple forms
-- **Nichirin Swords**: Create swords that use your breathing styles
-- **Custom Particles**: Define unique particle effects for sword swings
-- **Special Abilities**: Use the built-in animation, movement, and damage systems
+- **Custom Breathing Styles**: New breathing techniques with multiple forms
+- **Nichirin Swords**: Swords that use your breathing styles
+- **Custom Entities**: NPCs that wield your swords and use breathing forms
+- **Custom Particles**: Unique particle effects for attacks
+- **Special Abilities**: Movement, damage, animation systems
 
 ---
 
 ## Adding as a Dependency
 
-### Step 1: Add to `build.gradle`
+### Step 1: Configure `build.gradle`
 
 ```gradle
 repositories {
+    // Modrinth Maven for Kimetsunoyaiba Tweaks
     maven {
-       	url = "https://api.modrinth.com/maven"
+        url = "https://api.modrinth.com/maven"
+    }
+
+    // CurseMaven for base KimetsunoYaiba mod
+    maven {
+        url = "https://cursemaven.com"
+    }
+
+    // GeckoLib (required for custom entities)
+    maven {
+        name = 'GeckoLib'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+    }
+
+    // KosmX maven for player animations
+    maven {
+        name = "KosmX's maven"
+        url = 'https://maven.kosmx.dev/'
     }
 }
 
 dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    // Base KimetsunoYaiba mod from CurseForge
+    implementation fg.deobf("curse.maven:demonslayer-471263:7151280")
+
+    // Kimetsunoyaiba Tweaks API from Modrinth (REQUIRED)
     implementation fg.deobf("maven.modrinth:kimetsunoyaiba-tweaks:${kny_tweaks_version}")
+
+    // GeckoLib for custom entity models
+    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-1.20.1:4.4.9")
 }
 ```
 
-### Step 2: Add to `mods.toml`
+### Step 2: Add version to `gradle.properties`
+
+```properties
+# Always use the latest version from Modrinth
+kny_tweaks_version=1.6.21
+```
+
+> **Important:** Check [Modrinth](https://modrinth.com/mod/kimetsunoyaiba-tweaks) for the latest version.
+
+### Step 3: Configure `mods.toml`
 
 ```toml
 [[dependencies.yourmodid]]
     modId="kimetsunoyaibamultiplayer"
     mandatory=true
-    versionRange="[1.0.0,)"
+    versionRange="[1.5.0,)"
     ordering="AFTER"
     side="BOTH"
 ```
 
----
-
-## Creating a Breathing Style
-
-### Step 1: Create Your Forms
-
-Create a class to hold your breathing forms (e.g., `MyBreathingForms.java`):
-
-```java
-package com.yourmod.breathing;
-
-import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
-import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.*;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
-
-import java.util.Arrays;
-
-public class MyBreathingForms {
-
-    /**
-     * Create your custom breathing technique with all forms.
-     */
-    public static BreathingTechnique createMyBreathing() {
-        return KnYAPI.createTechnique("My Breathing", Arrays.asList(
-            firstForm(),
-            secondForm(),
-            thirdForm()
-            // Add more forms...
-        ));
-    }
-
-    /**
-     * First Form: Example Attack
-     */
-    private static BreathingForm firstForm() {
-        return KnYAPI.createForm(
-            "First Form: Example Attack",
-            "A powerful forward slash",
-            5, // 5 second cooldown
-            (player, level) -> {
-                // Play animation
-                KnYAPI.playAnimation(player, "sword_to_left", 10);
-
-                // Deal damage to nearby enemies
-                if (!level.isClientSide) {
-                    var hitbox = player.getBoundingBox().inflate(3.0);
-                    var targets = level.getEntitiesOfClass(
-                        net.minecraft.world.entity.LivingEntity.class,
-                        hitbox,
-                        e -> e != player && e.isAlive()
-                    );
-
-                    for (var target : targets) {
-                        float damage = KnYAPI.calculateScaledDamage(player, 8.0f);
-                        target.hurt(level.damageSources().playerAttack(player), damage);
-                    }
-
-                    // Spawn particles
-                    if (level instanceof ServerLevel serverLevel) {
-                        serverLevel.sendParticles(
-                            ParticleTypes.SNOWFLAKE,
-                            player.getX(), player.getY() + 1, player.getZ(),
-                            30, 0.5, 0.5, 0.5, 0.1
-                        );
-                    }
-                }
-            }
-        );
-    }
-
-    /**
-     * Second Form: Example Movement
-     */
-    private static BreathingForm secondForm() {
-        return KnYAPI.createForm(
-            "Second Form: Example Dash",
-            "A quick dash forward",
-            8,
-            (player, level) -> {
-                // Play animation
-                KnYAPI.playAnimation(player, "speed_attack_sword");
-
-                // Move player forward
-                var lookAngle = player.getLookAngle();
-                MovementHelper.setVelocity(player,
-                    lookAngle.x * 2.0,
-                    0.5,
-                    lookAngle.z * 2.0
-                );
-
-                // Schedule damage during dash
-                KnYAPI.scheduleRepeating(player, () -> {
-                    // Deal damage each tick during dash
-                    var hitbox = player.getBoundingBox().inflate(2.0);
-                    var targets = level.getEntitiesOfClass(
-                        net.minecraft.world.entity.LivingEntity.class,
-                        hitbox,
-                        e -> e != player && e.isAlive()
-                    );
-
-                    for (var target : targets) {
-                        float damage = KnYAPI.calculateScaledDamage(player, 3.0f);
-                        target.hurt(level.damageSources().playerAttack(player), damage);
-                    }
-                }, 1, 20); // Every tick for 20 ticks (1 second)
-            }
-        );
-    }
-
-    /**
-     * Third Form: Example Multi-Phase
-     */
-    private static BreathingForm thirdForm() {
-        return KnYAPI.createForm(
-            "Third Form: Example Combo",
-            "A multi-hit combo attack",
-            12,
-            (player, level) -> {
-                // Phase 1: Initial animation
-                KnYAPI.playAnimation(player, "sword_overhead", 10);
-
-                // Phase 2: After 10 ticks, start combo
-                KnYAPI.scheduleOnce(player, () -> {
-                    final int[] tickCounter = {0};
-
-                    KnYAPI.scheduleRepeating(player, () -> {
-                        int currentTick = tickCounter[0]++;
-
-                        // Play attack animation every 10 ticks
-                        if (currentTick % 10 == 0) {
-                            KnYAPI.playAnimationOnLayer(
-                                player, "sword_to_left", 10, 2.0f, 4000
-                            );
-
-                            // Deal damage
-                            var hitbox = player.getBoundingBox().inflate(3.0);
-                            var targets = level.getEntitiesOfClass(
-                                net.minecraft.world.entity.LivingEntity.class,
-                                hitbox,
-                                e -> e != player && e.isAlive()
-                            );
-
-                            for (var target : targets) {
-                                float damage = KnYAPI.calculateScaledDamage(player, 5.0f);
-                                target.hurt(level.damageSources().playerAttack(player), damage);
-                            }
-                        }
-                    }, 1, 40); // Run for 40 ticks (4 hits total)
-                }, 10);
-            }
-        );
-    }
-}
-```
-
-### Step 2: Choose a Style Range
-
-Each breathing style needs a unique numeric range (must be a multiple of 100):
-
-```java
-// Existing ranges (DO NOT USE):
-// 100  - Water Breathing (kimetsunoyaiba mod)
-// 200  - Beast Breathing
-// 300  - Thunder Breathing
-// 400  - Flame Breathing
-// 500  - Wind Breathing
-// 600  - Stone Breathing
-// 700  - Mist Breathing
-// 800  - Serpent Breathing
-// 900  - Sound Breathing
-// 1000 - Ice Breathing
-// 1100 - Moon Breathing
-// 1200 - Sun Breathing
-// 1300 - Flower Breathing
-// 1400 - Insect Breathing
-// 1500 - Love Breathing
-// 1600 - Frost Breathing
-// 1700 - Cherry Blossom Breathing
-// 1800 - Sakura Breathing
-
-// Choose a range >= 1900:
-int MY_STYLE_RANGE = 1900;
-```
+The `ordering="AFTER"` is critical - ensures KnY Multiplayer loads first.
 
 ---
 
-## Creating a Nichirin Sword
+## Creating Nichirin Swords
 
-### Step 1: Set Up Your Items Registry
-
-In your main mod class:
-
-```java
-package com.yourmod;
-
-import net.minecraft.world.item.Item;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafxmod.FXMLLoader;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-
-@Mod("yourmodid")
-public class YourMod {
-    public static final String MODID = "yourmodid";
-
-    public YourMod() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
-        // Register your items
-        ModItems.register(modEventBus);
-    }
-}
-```
-
-### Step 2: Create Your Sword Using the Builder
+### Basic Sword Registration
 
 Create `ModItems.java`:
 
@@ -300,28 +128,48 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+/**
+ * Registry for custom nichirin swords.
+ *
+ * Style Ranges (choose unique values >= 1900):
+ * - 1900: Your first breathing style
+ * - 2000: Your second breathing style
+ * - etc.
+ */
 public class ModItems {
     public static final DeferredRegister<Item> ITEMS =
         DeferredRegister.create(ForgeRegistries.ITEMS, "yourmodid");
 
-    // Create your sword using the builder API
-    public static final RegistryObject<Item> MY_SWORD =
-        KnYAPI.createSword("nichirinsword_mysword")
-            .breathingStyle("my_breathing", MyBreathingForms.createMyBreathing())
-            .styleRange(1900)
+    // Standard nichirin sword
+    public static final RegistryObject<Item> NICHIRINSWORD_FROST =
+        KnYAPI.createSword("nichirinsword_frost")
+            .breathingStyle("frost_breathing", MyBreathingForms.createFrostBreathing())
+            .styleRange(2100)
             .defaultParticle(ParticleTypes.SNOWFLAKE)
             .category(SwordRegistry.SwordCategory.NICHIRIN)
             .durability(2000)
             .build(ITEMS);
 
-    // Example: Special sword (like Komorebi or Shimizu)
-    public static final RegistryObject<Item> MY_SPECIAL_SWORD =
-        KnYAPI.createSword("nichirinsword_special")
-            .breathingStyle("my_breathing", MyBreathingForms.createMyBreathing())
-            .styleRange(1900)
-            .defaultParticle(ParticleTypes.ENCHANTED_HIT)
+    // Special sword with unique abilities (e.g., 7th form access)
+    public static final RegistryObject<Item> NICHIRINSWORD_KOMOREBI =
+        KnYAPI.createSword("nichirinsword_komorebi")
+            .breathingStyle("frost_breathing", MyBreathingForms.createFrostBreathingWithSeventh())
+            .styleRange(2100)
+            .defaultParticle(ParticleTypes.SNOWFLAKE)
+            .swordParticle(ParticleTypes.END_ROD)  // Override style default
+            .category(SwordRegistry.SwordCategory.SPECIAL)
+            .durability(2500)
+            .build(ITEMS);
+
+    // Hidden sword (not in creative tab - obtained through gameplay)
+    public static final RegistryObject<Item> NICHIRINSWORD_GOLDEN =
+        KnYAPI.createSword("nichirinsword_golden")
+            .breathingStyle("frost_breathing", MyBreathingForms.createGoldenBreathing())
+            .styleRange(2100)
+            .defaultParticle(ParticleTypes.END_ROD)
             .category(SwordRegistry.SwordCategory.SPECIAL)
             .durability(3000)
+            .registerToCreativeTab(false)  // Hidden from creative menu
             .build(ITEMS);
 
     public static void register(IEventBus eventBus) {
@@ -330,287 +178,480 @@ public class ModItems {
 }
 ```
 
-### Step 3: Automatic Creative Tab Integration
+### Style Range Guidelines
 
-Swords created via the API are **automatically added** to the "KnY Additions" creative tab. No additional configuration is needed!
+Choose unique ranges to avoid conflicts with other addons:
 
-If you still want to add your swords to your own creative tab:
+| Range | Status |
+|-------|--------|
+| 0-1800 | Reserved (base mod) |
+| 1900 | Available |
+| 2000 | Available |
+| 2100 | Used by KnY-Extra-Additions (Frost) |
+| 2200 | Used by KnY-Extra-Additions (Ice) |
+| 2300+ | Available |
+
+### Spawn Eggs
 
 ```java
-public static final DeferredRegister<CreativeModeTab> CREATIVE_TABS =
-    DeferredRegister.create(Registries.CREATIVE_MODE_TAB, "yourmodid");
-
-public static final RegistryObject<CreativeModeTab> MY_TAB = CREATIVE_TABS.register("my_tab",
-    () -> CreativeModeTab.builder()
-        .title(Component.translatable("My Mod"))
-        .icon(() -> new ItemStack(MY_SWORD.get()))
-        .displayItems((parameters, output) -> {
-            output.accept(MY_SWORD.get());
-            output.accept(MY_SPECIAL_SWORD.get());
-        })
-        .build());
+public static final RegistryObject<Item> MY_ENTITY_SPAWN_EGG = ITEMS.register("my_entity_spawn_egg",
+    () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+        ModEntities.MY_ENTITY,
+        0x5DBCD2, 0xFFFFFF,  // Primary and secondary colors
+        new Item.Properties().stacksTo(64)));
 ```
 
 ---
 
-## Complete Example
+## Creating Breathing Styles
 
-Here's a complete, minimal mod that adds a custom breathing style and sword:
+### Basic Structure
 
-### Project Structure
-```
-src/main/java/com/yourmod/
-├── YourMod.java
-├── items/
-│   └── ModItems.java
-└── breathing/
-    └── MyBreathingForms.java
+Create a forms class for each breathing style:
 
-src/main/resources/
-├── META-INF/
-│   └── mods.toml
-├── assets/yourmodid/
-│   ├── lang/
-│   │   └── en_us.json
-│   ├── models/item/
-│   │   └── nichirinsword_mysword.json
-│   └── textures/item/
-│       └── nichirinsword_mysword.png
-```
-
-### `YourMod.java`
 ```java
-package com.yourmod;
+package com.yourmod.breathing;
 
-import com.yourmod.items.ModItems;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafxmod.FXMLLoader;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.*;
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
-@Mod("yourmodid")
-public class YourMod {
-    public static final String MODID = "yourmodid";
+import java.util.ArrayList;
+import java.util.List;
 
-    public YourMod() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        ModItems.register(modEventBus);
+public class FrostBreathingForms {
+
+    /**
+     * Create the complete breathing technique
+     */
+    public static BreathingTechnique createFrostBreathing() {
+        List<BreathingForm> forms = new ArrayList<>();
+        forms.add(firstForm());
+        forms.add(secondForm());
+        forms.add(thirdForm());
+        forms.add(fourthForm());
+        forms.add(fifthForm());
+        forms.add(sixthForm());
+        return new BreathingTechnique("Frost Breathing", forms);
+    }
+
+    /**
+     * Version with 7th form for special swords
+     */
+    public static BreathingTechnique createFrostBreathingWithSeventh() {
+        List<BreathingForm> forms = new ArrayList<>();
+        forms.add(firstForm());
+        forms.add(secondForm());
+        forms.add(thirdForm());
+        forms.add(fourthForm());
+        forms.add(fifthForm());
+        forms.add(sixthForm());
+        forms.add(seventhForm());
+        return new BreathingTechnique("Frost Breathing", forms);
+    }
+
+    // Form implementations below...
+}
+```
+
+### Form Implementation Patterns
+
+#### Pattern 1: Basic Attack Form
+
+```java
+private static BreathingForm firstForm() {
+    return new BreathingForm(
+        "First Form: Example Slash",
+        "A powerful horizontal strike",
+        5, // Cooldown in seconds
+        (entity, level) -> {
+            // Play animation
+            playEntityAnimation(entity, "sword_to_left");
+
+            // Get targets in front
+            Vec3 lookVec = entity.getLookAngle();
+            Vec3 attackPos = entity.position().add(lookVec.scale(2.0));
+            AABB hitBox = new AABB(attackPos, attackPos).inflate(3.0);
+
+            List<LivingEntity> targets = level.getEntitiesOfClass(
+                LivingEntity.class, hitBox,
+                e -> e != entity && e.isAlive());
+
+            // Deal damage
+            for (LivingEntity target : targets) {
+                float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
+                Damager.hurt(entity, target, damage);
+            }
+
+            // Spawn particles (server-side only)
+            if (level instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(
+                    ParticleTypes.SNOWFLAKE,
+                    entity.getX(), entity.getY() + 1, entity.getZ(),
+                    30, 0.5, 0.5, 0.5, 0.1);
+            }
+
+            // Play sound
+            level.playSound(null, entity.blockPosition(),
+                SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 1.0F);
+        }
+    );
+}
+```
+
+#### Pattern 2: Movement + Timed Attacks
+
+```java
+private static BreathingForm secondForm() {
+    return new BreathingForm(
+        "Second Form: Dash Attack",
+        "Dash forward with multiple strikes",
+        6,
+        (entity, level) -> {
+            playEntityAnimation(entity, "sword_to_left");
+
+            // Apply speed buff
+            entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 2));
+
+            // Enable step climbing
+            MovementHelper.setStepHeight(entity, 1.8F);
+
+            final int totalTicks = 60;
+            final int attackInterval = 10;
+
+            // Schedule repeating attacks
+            AbilityScheduler.scheduleRepeating(entity, () -> {
+                Vec3 lookVec = entity.getLookAngle();
+
+                // Move forward
+                MovementHelper.setVelocity(entity,
+                    lookVec.x * 1.2, entity.getDeltaMovement().y, lookVec.z * 1.2);
+
+                // Damage nearby enemies
+                AABB hitBox = entity.getBoundingBox().inflate(3.0);
+                List<LivingEntity> targets = level.getEntitiesOfClass(
+                    LivingEntity.class, hitBox,
+                    e -> e != entity && e.isAlive());
+
+                for (LivingEntity target : targets) {
+                    float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
+                    Damager.hurt(entity, target, damage);
+                }
+            }, attackInterval, totalTicks);
+
+            // Reset step height after ability ends
+            AbilityScheduler.scheduleOnce(entity, () -> {
+                MovementHelper.setStepHeight(entity, 0.6F);
+            }, totalTicks + 1);
+        }
+    );
+}
+```
+
+#### Pattern 3: Multi-Phase Ability
+
+```java
+private static BreathingForm thirdForm() {
+    return new BreathingForm(
+        "Third Form: Aerial Strike",
+        "Leap up, hover, then strike down",
+        8,
+        (entity, level) -> {
+            // Phase 1: Initial leap
+            MovementHelper.addVelocity(entity, 0, 1.2, 0);
+            entity.setNoGravity(true);
+            playEntityAnimation(entity, "sword_spin");
+
+            final int hoverDuration = 30;
+
+            // Phase 2: Hover and spawn particles
+            AbilityScheduler.scheduleRepeating(entity, () -> {
+                // Stop vertical movement
+                MovementHelper.setVelocity(entity,
+                    entity.getDeltaMovement().x, 0, entity.getDeltaMovement().z);
+
+                // Spawn particles
+                if (level instanceof ServerLevel serverLevel) {
+                    serverLevel.sendParticles(ParticleTypes.CLOUD,
+                        entity.getX(), entity.getY() + 2, entity.getZ(),
+                        10, 2, 0.5, 2, 0.01);
+                }
+            }, 1, hoverDuration);
+
+            // Phase 3: Strike down
+            AbilityScheduler.scheduleOnce(entity, () -> {
+                entity.setNoGravity(false);
+                playEntityAnimation(entity, "speed_attack_sword");
+
+                Vec3 lookVec = entity.getLookAngle();
+                MovementHelper.setVelocity(entity, lookVec.scale(2.0));
+
+                // Large AOE damage
+                AABB hitBox = entity.getBoundingBox().inflate(5.0);
+                List<LivingEntity> targets = level.getEntitiesOfClass(
+                    LivingEntity.class, hitBox,
+                    e -> e != entity && e.isAlive());
+
+                for (LivingEntity target : targets) {
+                    float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
+                    Damager.hurt(entity, target, damage);
+                    target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 0));
+                }
+
+                level.playSound(null, entity.blockPosition(),
+                    SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 1.0F, 1.0F);
+            }, hoverDuration + 1);
+        }
+    );
+}
+```
+
+#### Pattern 4: Effect Application
+
+```java
+private static BreathingForm fourthForm() {
+    return new BreathingForm(
+        "Fourth Form: Freezing Jab",
+        "Quick jab that immobilizes",
+        3,
+        (entity, level) -> {
+            playEntityAnimation(entity, "speed_attack_sword");
+
+            Vec3 lookVec = entity.getLookAngle();
+            Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
+            Vec3 endPos = startPos.add(lookVec.scale(4.0));
+
+            AABB hitBox = new AABB(startPos, endPos).inflate(1.0);
+            List<LivingEntity> targets = level.getEntitiesOfClass(
+                LivingEntity.class, hitBox,
+                e -> e != entity && e.isAlive());
+
+            for (LivingEntity target : targets) {
+                float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
+                Damager.hurt(entity, target, damage);
+
+                // Apply debuffs
+                target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4));
+                target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4));
+
+                // Apply KnY Cold effect
+                net.minecraft.world.effect.MobEffect coldEffect = KnYEffects.getColdEffect();
+                if (coldEffect != null) {
+                    target.addEffect(new MobEffectInstance(coldEffect, 160, 0));
+                }
+
+                // Visual freeze effect
+                target.setTicksFrozen(target.getTicksFrozen() + 400);
+            }
+
+            // Spawn forward thrust particles
+            if (level instanceof ServerLevel serverLevel) {
+                ParticleHelper.spawnForwardThrust(serverLevel, startPos, lookVec, 4.0,
+                    ParticleTypes.SNOWFLAKE, 25);
+            }
+        }
+    );
+}
+```
+
+### Entity-Agnostic Animation Helper
+
+To make forms work with both players and custom entities:
+
+```java
+/**
+ * Unified animation helper that works with both players and GeckoLib entities
+ */
+private static void playEntityAnimation(LivingEntity entity, String animationName) {
+    if (entity instanceof Player player) {
+        AnimationHelper.playAnimation(player, animationName);
+    } else if (entity instanceof BreathingSlayerEntity slayer) {
+        slayer.playGeckoAnimation(animationName, 20);
+    }
+}
+
+/**
+ * Animation with layer and speed control
+ */
+private static void playEntityAnimationOnLayer(LivingEntity entity, String animationName,
+        int maxTicks, float speed, int layer) {
+    if (entity instanceof Player player) {
+        AnimationHelper.playAnimationOnLayer(player, animationName, maxTicks, speed, layer);
+    } else if (entity instanceof BreathingSlayerEntity slayer) {
+        slayer.playGeckoAnimation(animationName, maxTicks);
     }
 }
 ```
 
-### `ModItems.java`
-*(See Step 2 above)*
+### Available Animations
 
-### `MyBreathingForms.java`
-*(See Step 1 of Creating a Breathing Style)*
-
-### `en_us.json`
-```json
-{
-  "item.yourmodid.nichirinsword_mysword": "My Breathing Sword"
-}
-```
-
-### `nichirinsword_mysword.json`
-```json
-{
-  "parent": "minecraft:item/handheld",
-  "textures": {
-    "layer0": "yourmodid:item/nichirinsword_mysword"
-  }
-}
-```
-
----
-
-## Advanced Topics
-
-### Custom Sound Effects
-
-Each sword can have a custom swing sound effect that plays when hitting enemies. The sweep attack sound is played automatically for all nichirin swords, and your custom sound plays **in addition** to it.
+From `player-animation-lib`:
 
 ```java
-// First, register your sound events in your mod
-public class ModSounds {
-    public static final DeferredRegister<SoundEvent> SOUNDS =
-        DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, "yourmodid");
-
-    public static final RegistryObject<SoundEvent> FROST_SWING = SOUNDS.register("frost_swing",
-        () -> SoundEvent.createVariableRangeEvent(
-            new ResourceLocation("yourmodid", "frost_swing")
-        ));
-
-    public static void register(IEventBus eventBus) {
-        SOUNDS.register(eventBus);
-    }
-}
-
-// Then use it in your sword builder
-KnYAPI.createSword("nichirinsword_mysword")
-    .breathingStyle("my_breathing", MyBreathingForms.createMyBreathing())
-    .styleRange(1900)
-    .defaultParticle(ParticleTypes.SNOWFLAKE)
-    .swingSound(ModSounds.FROST_SWING.get())  // Add custom swing sound
-    .build(ITEMS);
-```
-
-You can also use vanilla sound events:
-```java
-.swingSound(SoundEvents.PLAYER_ATTACK_CRIT)  // Critical hit sound
-.swingSound(SoundEvents.PLAYER_ATTACK_KNOCKBACK)  // Knockback sound
-.swingSound(SoundEvents.TRIDENT_THROW)  // Trident throw sound
-```
-
-### Custom Particles
-
-You can use custom particles or vanilla particles:
-
-```java
-.defaultParticle(ParticleTypes.SNOWFLAKE)      // Vanilla
-.defaultParticle(ParticleTypes.ENCHANTED_HIT)  // Vanilla
-.defaultParticle(ParticleTypes.FLAME)          // Vanilla
-
-// For custom particles from another mod:
-.defaultParticle(MyModParticles.MY_CUSTOM_PARTICLE.get())
-```
-
-### Sword-Specific Particles
-
-Override the style's default particle for a specific sword:
-
-```java
-KnYAPI.createSword("nichirinsword_variant")
-    .breathingStyle("my_breathing", MyBreathingForms.createMyBreathing())
-    .styleRange(1900)
-    .defaultParticle(ParticleTypes.SNOWFLAKE)    // Style default
-    .swordParticle(ParticleTypes.ENCHANTED_HIT)  // This sword only
-    .build(ITEMS);
-```
-
-### Animation System
-
-Available animations (from `player-animation-lib`):
-
-```java
-// Basic attacks (use 10 tick limit for responsiveness)
-"sword_to_left"      // Left slash
-"sword_to_right"     // Right slash
-"sword_overhead"     // Overhead slash
+// Basic attacks
+"sword_to_left"      // Left horizontal slash
+"sword_to_right"     // Right horizontal slash
+"sword_overhead"     // Overhead downward slash
 "sword_to_upper"     // Upward slash
 
 // Special animations
-"speed_attack_sword" // Fast thrust
+"speed_attack_sword" // Fast thrust/jab
+"sword_rotate"       // Spinning attack
 "ragnaraku1"         // Multi-hit combo
-"ragnaraku2"         // Spinning attack
+"ragnaraku2"         // Spinning combo
 "ragnaraku3"         // Ultimate attack
-"sword_rotate"       // Spin attack
 "kamusari3"          // Powerful strike
+"kaishin3"           // Flash strike
+"invisibility"       // Stealth pose
 ```
 
 Animation layers:
-- **Layer 3000**: Base animations (for main ability animations)
-- **Layer 4000**: Overlay animations (for attacks during abilities)
+- **Layer 3000**: Base animations (main ability)
+- **Layer 4000**: Overlay animations (attacks during abilities)
+
+---
+
+## Creating Custom Entities
+
+### Step 1: Create Entity Class
 
 ```java
-// Play on overlay layer at double speed
-KnYAPI.playAnimationOnLayer(player, "sword_to_left", 10, 2.0f, 4000);
-```
+package com.yourmod.entities;
 
-### Movement System
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.yourmod.breathing.FrostBreathingForms;
+import com.yourmod.items.ModItems;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
-The `MovementHelper` class provides utilities:
+public class KomorebiEntity extends BreathingSlayerEntity {
 
-```java
-// Set velocity
-MovementHelper.setVelocity(player, x, y, z);
+    public KomorebiEntity(EntityType<? extends BreathingSlayerEntity> entityType, Level level) {
+        super(entityType, level);
+        this.setCustomName(Component.literal("Setsu Komorebi"));
+    }
 
-// Add velocity
-MovementHelper.addVelocity(player, dx, dy, dz);
+    @Override
+    public BreathingTechnique getBreathingTechnique() {
+        return FrostBreathingForms.createFrostBreathingWithSeventh();
+    }
 
-// Look at position
-MovementHelper.lookAt(player, targetPos);
+    @Override
+    public ItemStack getEquippedSword() {
+        return new ItemStack(ModItems.NICHIRINSWORD_KOMOREBI.get());
+    }
 
-// Set rotation
-MovementHelper.setRotation(player, yaw, pitch);
+    @Override
+    public ItemStack[] getArmorEquipment() {
+        // Load KnY mod uniform boots
+        net.minecraft.world.item.Item uniformBoots =
+            net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
+                net.minecraft.resources.ResourceLocation.tryBuild("kimetsunoyaiba", "uniform_boots"));
 
-// Enable block climbing (like step assist)
-MovementHelper.setStepHeight(player, 1.8f);
-
-// Disable gravity
-player.setNoGravity(true);
-// Remember to re-enable it!
-player.setNoGravity(false);
-```
-
-### Particle System
-
-The `ParticleHelper` class provides patterns:
-
-```java
-// Must spawn on server side
-if (level instanceof ServerLevel serverLevel) {
-    // Line of particles
-    ParticleHelper.spawnParticleLine(
-        serverLevel, startPos, endPos, ParticleTypes.SNOWFLAKE, 20
-    );
-
-    // Circle of particles
-    ParticleHelper.spawnCircleParticles(
-        serverLevel, center, radius, ParticleTypes.SNOWFLAKE, 30
-    );
-
-    // Forward thrust line
-    ParticleHelper.spawnForwardThrust(
-        serverLevel, startPos, direction, distance, ParticleTypes.SNOWFLAKE, 25
-    );
-
-    // Horizontal arc
-    ParticleHelper.spawnHorizontalArc(
-        serverLevel, center, yaw, pitch, baseRadius, radiusIncrement,
-        arcDegrees, angleIncrement, verticalOffset, ParticleTypes.SNOWFLAKE, 50
-    );
+        return new ItemStack[]{
+            new ItemStack(ModItems.KOMOREBI_HAIR.get()),    // Head
+            new ItemStack(ModItems.KOMOREBI_HAORI.get()),   // Chest
+            new ItemStack(ModItems.KOMOREBI_HAKAMA.get()),  // Legs
+            uniformBoots != null ? new ItemStack(uniformBoots) : ItemStack.EMPTY  // Feet
+        };
+    }
 }
 ```
 
-### Damage Calculation
+### Step 2: Register Entity
 
-Always use `DamageCalculator.calculateScaledDamage()` to respect player attributes:
+Create `ModEntities.java`:
 
 ```java
-// Scales with player's attack damage (including strength effects)
-float damage = KnYAPI.calculateScaledDamage(player, baseDamage);
-target.hurt(level.damageSources().playerAttack(player), damage);
+package com.yourmod.entities;
 
-// Recommended base damage values:
-// Light attack:  3-5
-// Medium attack: 6-8
-// Heavy attack:  10-12
-// Ultimate:      15+
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.yourmod.YourMod;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
+
+public class ModEntities {
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
+        DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, YourMod.MODID);
+
+    public static final RegistryObject<EntityType<KomorebiEntity>> KOMOREBI =
+        ENTITY_TYPES.register("komorebi",
+            () -> EntityType.Builder.of(KomorebiEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F)  // Player-sized hitbox
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("komorebi"));
+
+    public static void register(IEventBus eventBus) {
+        ENTITY_TYPES.register(eventBus);
+    }
+
+    // Register attributes
+    @Mod.EventBusSubscriber(modid = YourMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+    public static class EntityAttributeRegistry {
+        @SubscribeEvent
+        public static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+            event.put(KOMOREBI.get(), BreathingSlayerEntity.createAttributes().build());
+        }
+    }
+}
 ```
 
-### Scheduling System
-
-Use `AbilityScheduler` for timed effects:
+### Step 3: Create Renderer (Client)
 
 ```java
-// One-time delayed action
-KnYAPI.scheduleOnce(player, () -> {
-    // Execute after delay
-}, 20); // 20 ticks = 1 second
+package com.yourmod.client.renderer;
 
-// Repeating action (RECOMMENDED for multi-phase abilities)
-final int[] tickCounter = {0};
-KnYAPI.scheduleRepeating(player, () -> {
-    int currentTick = tickCounter[0]++;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BreathingSlayerRenderer;
+import com.yourmod.entities.KomorebiEntity;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 
-    if (currentTick % 10 == 0) {
-        // Every 10 ticks
+public class KomorebiRenderer extends BreathingSlayerRenderer<KomorebiEntity> {
+
+    public KomorebiRenderer(EntityRendererProvider.Context context) {
+        super(context);
     }
 
-    if (currentTick >= 60 - 1) {
-        // Cleanup on last tick
+    @Override
+    public ResourceLocation getTextureLocation(KomorebiEntity entity) {
+        return new ResourceLocation("yourmodid", "textures/entity/komorebi.png");
     }
-}, 1, 60); // Every 1 tick for 60 ticks
+}
+```
+
+### Step 4: Register Renderer
+
+In your client setup event:
+
+```java
+@Mod.EventBusSubscriber(modid = YourMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+public class ClientSetup {
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        EntityRenderers.register(ModEntities.KOMOREBI.get(), KomorebiRenderer::new);
+    }
+}
 ```
 
 ---
@@ -621,39 +662,11 @@ KnYAPI.scheduleRepeating(player, () -> {
 
 Main entry point for the API.
 
-#### Breathing Style Registration
-
-```java
-// Register a breathing style
-KnYAPI.registerBreathingStyle(styleId, styleName, technique, styleRange, particle)
-
-// Get registered style
-KnYAPI.getBreathingStyle(styleId)
-
-// Get all styles
-KnYAPI.getAllBreathingStyles()
-```
-
-#### Sword Registration
-
 ```java
 // Create sword builder
 KnYAPI.createSword(swordId)
 
-// Get registered sword
-KnYAPI.getSword(swordId)
-KnYAPI.getSword(item)
-
-// Query swords
-KnYAPI.getNichirinSwords()
-KnYAPI.getSpecialSwords()
-KnYAPI.getAllSwords()
-```
-
-#### Helper Methods
-
-```java
-// Create forms and techniques
+// Create breathing forms
 KnYAPI.createForm(name, description, cooldown, effect)
 KnYAPI.createTechnique(name, forms)
 
@@ -666,98 +679,364 @@ KnYAPI.playAnimationOnLayer(player, animationName, maxTicks, speed, layer)
 KnYAPI.scheduleOnce(player, action, delayTicks)
 KnYAPI.scheduleRepeating(player, action, intervalTicks, durationTicks)
 
-// Damage
+// Damage calculation
 KnYAPI.calculateScaledDamage(player, baseDamage)
-
-// Access to helper classes
-KnYAPI.getMovementHelper()  // Returns MovementHelper.class
-KnYAPI.getParticleHelper()  // Returns ParticleHelper.class
 ```
 
-### NichirinSwordBuilder Class
+### NichirinSwordBuilder
 
 Fluent builder for creating swords.
 
 ```java
 NichirinSwordBuilder.create(swordId)
-    .breathingStyle(styleId, technique)
-    .styleRange(range)
-    .defaultParticle(particle)       // For the style
-    .swordParticle(particle)         // For this sword only
-    .swingSound(soundEvent)          // Custom sound when hitting enemies
+    .breathingStyle(styleId, technique)       // Required
+    .styleRange(range)                        // Required, multiple of 100
+    .defaultParticle(particle)                // Style default particle
+    .swordParticle(particle)                  // Override for this sword
+    .swingSound(soundEvent)                   // Custom hit sound
     .category(SwordCategory.NICHIRIN | SPECIAL)
-    .durability(durability)
-    .registerToCreativeTab(boolean)
+    .durability(durability)                   // Default: 2000
+    .registerToCreativeTab(boolean)           // Default: true
     .build(itemRegistry)
 ```
 
-#### Builder Methods
+### Helper Classes
 
-- **breathingStyle(styleId, technique)**: Set the breathing style (required)
-- **styleRange(range)**: Set the style range number, must be multiple of 100 (required)
-- **defaultParticle(particle)**: Set particle for the entire breathing style (required unless swordParticle is set)
-- **swordParticle(particle)**: Override style particle for this specific sword (optional)
-- **swingSound(soundEvent)**: Add custom sound effect when sword hits enemies (optional)
-- **category(category)**: Set sword category - NICHIRIN or SPECIAL (default: NICHIRIN)
-- **durability(durability)**: Set sword durability (default: 2000)
-- **registerToCreativeTab(boolean)**: Whether to add to creative tab (default: true, automatically added to KnY Additions tab)
-- **build(itemRegistry)**: Build and register the sword (returns RegistryObject<Item>)
+#### MovementHelper
+```java
+MovementHelper.setVelocity(entity, x, y, z)
+MovementHelper.setVelocity(entity, vec3)
+MovementHelper.addVelocity(entity, dx, dy, dz)
+MovementHelper.setStepHeight(entity, height)
+MovementHelper.stepUp(entity, x, y, z)
+```
 
-### SwordRegistry.SwordCategory
+#### ParticleHelper
+```java
+ParticleHelper.spawnForwardThrust(level, start, direction, distance, particle, count)
+ParticleHelper.spawnHorizontalArc(level, center, yaw, pitch, radius, increment, arc, step, offset, particle, count)
+ParticleHelper.spawnVerticalArc(level, center, yaw, pitch, radius, increment, arc, step, offset, particle, count)
+ParticleHelper.spawnCircleParticles(level, center, radius, particle, count)
+```
+
+#### DamageCalculator
+```java
+DamageCalculator.calculateScaledDamage(entity, baseDamage)
+```
+
+#### Damager
+```java
+Damager.hurt(attacker, target, damage)  // Prevents recursion issues
+```
+
+#### AbilityScheduler
+```java
+AbilityScheduler.scheduleOnce(entity, task, delayTicks)
+AbilityScheduler.scheduleRepeating(entity, task, intervalTicks, durationTicks)
+```
+
+#### KnYEffects
+```java
+KnYEffects.getColdEffect()  // Returns the Cold mob effect from base mod
+```
+
+---
+
+## Custom Sword Slash Models
+
+The KnY Multiplayer mod supports custom 3D sword slash effects that display when using breathing forms. You can create custom slash models for your breathing style.
+
+### Available Slash Models
+
+Built-in model keys:
+- `generic` - Default slash effect
+- `mist` - Mist breathing slash
+- `love` - Love breathing slash
+- `sound` - Sound breathing slash
+
+### Creating a Custom Slash Model
+
+#### Step 1: Create the Geometry File
+
+Create a GeckoLib-compatible `.geo.json` file:
+
+```
+assets/yourmodid/geo/sword_slash_yourbreathing.geo.json
+```
+
+Use Blockbench to create the model. The slash should be a curved arc shape centered at origin.
+
+#### Step 2: Create the Texture
+
+Create a texture for your slash:
+
+```
+assets/yourmodid/textures/entity/sword_slash_yourbreathing.png
+```
+
+Tips:
+- Use bright, saturated colors
+- Add transparency for glow effects
+- Size: 64x64 or 128x128 recommended
+
+#### Step 3: Create the Model Class
 
 ```java
-SwordRegistry.SwordCategory.NICHIRIN  // Standard breathing swords
-SwordRegistry.SwordCategory.SPECIAL   // Special named swords
+package com.yourmod.client.models;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModel;
+import net.minecraft.resources.ResourceLocation;
+
+public class YourBreathingSlashModel extends SwordSlashModel {
+
+    public YourBreathingSlashModel() {
+        super("yourbreathing");
+    }
+
+    @Override
+    public ResourceLocation getModelResource() {
+        return new ResourceLocation("yourmodid", "geo/sword_slash_yourbreathing.geo.json");
+    }
+
+    @Override
+    public ResourceLocation getTextureResource() {
+        return new ResourceLocation("yourmodid", "textures/entity/sword_slash_yourbreathing.png");
+    }
+}
+```
+
+#### Step 4: Register with the Slash Renderer
+
+Register your custom model during client setup:
+
+```java
+@Mod.EventBusSubscriber(modid = YourMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+public class ClientSetup {
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        // Register custom slash model
+        SwordSlashRenderer.registerModel("yourbreathing", () -> new YourBreathingSlashModel());
+    }
+}
+```
+
+### Using Slash Models in Forms
+
+To render a slash effect during a breathing form:
+
+```java
+private static BreathingForm firstForm() {
+    return new BreathingForm(
+        "First Form: Your Attack",
+        "Description",
+        5,
+        (entity, level) -> {
+            // Play animation
+            playEntityAnimation(entity, "sword_to_left");
+
+            // Render slash model (client-side only)
+            if (level.isClientSide && entity instanceof Player player) {
+                Vec3 slashPos = entity.position().add(entity.getLookAngle().scale(1.5)).add(0, 1.2, 0);
+
+                SwordSlashRenderer.render(
+                    new PoseStack(),
+                    Minecraft.getInstance().renderBuffers().bufferSource(),
+                    slashPos,
+                    entity.getYRot(),      // yaw
+                    entity.getXRot(),      // pitch
+                    0,                      // roll
+                    1.5f,                   // scale
+                    0.5f,                   // progress (0.0 to 1.0)
+                    "yourbreathing",        // model key
+                    0xF000F0               // packed light (full bright)
+                );
+            }
+
+            // Deal damage, spawn particles, etc.
+        }
+    );
+}
+```
+
+### Slash Model via Network Packet
+
+For multiplayer synchronization, use the `RawSlashRenderPacket`:
+
+```java
+// Server-side: Send slash render to all clients
+if (!level.isClientSide) {
+    Vec3 pos = entity.position().add(entity.getLookAngle().scale(1.5)).add(0, 1.2, 0);
+
+    ModNetworking.sendToAllClients(new RawSlashRenderPacket(
+        pos.x, pos.y, pos.z,
+        entity.getYRot(),
+        entity.getXRot(),
+        0,              // roll
+        1.5f,           // scale
+        20,             // duration ticks
+        "yourbreathing" // model key
+    ));
+}
+```
+
+### Configuration
+
+Users can configure slash models via `config/kimetsunoyaibamultiplayer/swordswing.toml`:
+
+```toml
+# Enable/disable sword swing models
+useSwordSwingModel = true
+
+# Global scale multiplier
+modelScale = 1.0
+
+# Rotation offsets
+globalYawOffset = 0.0
+globalPitchOffset = 0.0
+globalRollOffset = 0.0
 ```
 
 ---
 
 ## Best Practices
 
-1. **Always use unique style ranges**: Choose ranges >= 1900 to avoid conflicts
-2. **Server-side particle spawning**: Always check `level instanceof ServerLevel`
-3. **Scaled damage**: Use `KnYAPI.calculateScaledDamage()` for all damage
-4. **Animation timing**: Use 10-tick limit for basic attack animations
-5. **Cleanup**: Always reset player state (gravity, step height) after abilities
-6. **Thread safety**: Registrations can be done during mod init (thread-safe)
-7. **Cooldowns**: Set appropriate cooldowns (5-15 seconds for most forms)
+### 1. Always Use Scaled Damage
+
+```java
+// Good - scales with player's attack damage attribute
+float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
+Damager.hurt(entity, target, damage);
+
+// Bad - fixed damage ignores equipment/effects
+target.hurt(level.damageSources().playerAttack(player), 8.0F);
+```
+
+### 2. Server-Side Particle Spawning
+
+```java
+// Always check for ServerLevel before spawning particles
+if (level instanceof ServerLevel serverLevel) {
+    serverLevel.sendParticles(ParticleTypes.SNOWFLAKE, x, y, z, count, dx, dy, dz, speed);
+}
+```
+
+### 3. Clean Up Resources
+
+```java
+// Reset gravity after aerial abilities
+entity.setNoGravity(false);
+
+// Reset step height after movement abilities
+MovementHelper.setStepHeight(entity, 0.6F);
+
+// Remove tags when done
+entity.removeTag("AbilityActive");
+```
+
+### 4. Entity-Agnostic Forms
+
+Write forms that work with both players and entities:
+
+```java
+// Check entity type before player-specific operations
+if (!(entity instanceof Player player)) {
+    return;  // Skip for non-player entities
+}
+
+// Use capability only on players
+player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
+    data.setCancelAttackSwing(true);
+});
+```
+
+### 5. Appropriate Cooldowns
+
+| Form Type | Recommended Cooldown |
+|-----------|---------------------|
+| Basic attack | 2-5 seconds |
+| Dash/movement | 5-8 seconds |
+| Multi-phase | 8-12 seconds |
+| Ultimate | 20-30 seconds |
+
+### 6. Damage Guidelines
+
+| Attack Type | Base Damage |
+|-------------|-------------|
+| Light attack | 3-5 |
+| Medium attack | 6-8 |
+| Heavy attack | 10-12 |
+| Ultimate | 15+ |
+
+### 7. Debug Logging
+
+```java
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+
+if (Config.logDebug) {
+    Log.debug("Fifth Form: Jab {} hit {} for {} damage",
+        jabNumber, target.getName().getString(), damage);
+}
+```
 
 ---
 
 ## Troubleshooting
 
 ### Sword doesn't appear in game
-- Check that `ITEMS.register(eventBus)` is called in your mod constructor
-- Verify item model JSON exists at correct path
+
+- Verify `ITEMS.register(eventBus)` is called in mod constructor
+- Check item model JSON exists at `assets/yourmodid/models/item/swordname.json`
 - Check logs for registration errors
 
 ### Particles don't appear
-- Ensure particles are spawned on server side (`level instanceof ServerLevel`)
-- Verify particle type is registered and available
-- Check particle config file isn't blocking your particle
+
+- Ensure spawning on server side (`level instanceof ServerLevel`)
+- Verify particle count > 0
+- Check particle config isn't blocking your particle
 
 ### Animations don't sync in multiplayer
-- Animations are automatically synced by `AnimationHelper`
-- Ensure you're using `KnYAPI.playAnimation()` methods
-- Check that `player-animation-lib` is installed on both client and server
+
+- Use `AnimationHelper.playAnimation()` methods (auto-syncs)
+- Ensure `player-animation-lib` is on both client and server
+- Verify animation name is spelled correctly
+
+### Entity doesn't spawn
+
+- Check `EntityAttributeCreationEvent` handler is registered
+- Verify entity type registration is correct
+- Check spawn egg colors are valid hex values
 
 ### Form cycling doesn't work
-- Ensure your sword extends `BreathingSwordItem` (automatic via builder)
+
 - Verify `BreathingTechnique` is properly created with all forms
-- Check that player has the R key bound correctly
+- Ensure sword is built with `.breathingStyle()`
+- Check R key binding in controls
+
+### Server crashes with client-only code
+
+- Never import `net.minecraft.client.*` classes outside `client` package
+- Use `DistExecutor` for client-specific code in shared classes
+- Test on dedicated server early: `./gradlew runServer`
 
 ---
 
 ## Support
 
-For additional help:
-- Read the full breathing system docs: `docs/breathing-system.md`
-- Check architecture docs: `docs/architecture.md`
-- Review existing implementations: `FrostBreathingForms.java`, `IceBreathingForms.java`
+- **Reference Implementation**: [KnY-Extra-Additions](https://github.com/YeeticusFinch/KnY-Extra-Additions)
+- **Architecture Docs**: `docs/architecture.md`
+- **Breathing System**: `docs/breathing-system.md`
+- **Bug Prevention**: `docs/bug-prevention.md`
 
 ---
 
 ## Version History
+
+- **1.6.x**: Updated API with entity support
+  - BreathingSlayerEntity base class
+  - Entity-agnostic form patterns
+  - Improved particle helpers
+  - GeckoLib integration
 
 - **1.0.0**: Initial API release
   - BreathingStyleRegistry
