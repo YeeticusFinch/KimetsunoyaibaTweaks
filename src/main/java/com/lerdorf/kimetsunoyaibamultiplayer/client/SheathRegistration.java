@@ -118,7 +118,7 @@ public class SheathRegistration {
         }
 
         // Register custom sheath scales
-        SheathModelRenderer.registerSheathScale(SheathItems.SWORD_SHEATH_IGURO.get(), 1.25f);
+        SheathModelRenderer.registerSheathScale(SheathItems.SWORD_SHEATH_IGURO.get(), 1.35f);
 
         if (Config.logDebug) {
             Log.info("Registered custom sword sheaths");

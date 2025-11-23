@@ -61,6 +61,9 @@ public class SwordDisplayTracker {
         public Item rightSheathItem = null;
         private boolean leftSheathPersists = false;
         private boolean rightSheathPersists = false;
+        // Track which slot the persisting sheath's sword came from
+        private int leftSheathOriginalSlot = -1;
+        private int rightSheathOriginalSlot = -1;
 
         public boolean hasLeftSword() {
             return leftDisplay != null && !leftDisplay.isEmpty();
@@ -110,12 +113,14 @@ public class SwordDisplayTracker {
                 leftDisplay = null;
                 leftSheathItem = null;
                 leftSheathPersists = false;
+                leftSheathOriginalSlot = -1;
                 return true;
             }
             if (rightDisplay != null && rightDisplay.hotbarSlot == slot) {
                 rightDisplay = null;
                 rightSheathItem = null;
                 rightSheathPersists = false;
+                rightSheathOriginalSlot = -1;
                 return true;
             }
             return false;
@@ -153,6 +158,8 @@ public class SwordDisplayTracker {
             rightSheathItem = null;
             leftSheathPersists = false;
             rightSheathPersists = false;
+            leftSheathOriginalSlot = -1;
+            rightSheathOriginalSlot = -1;
         }
     }
 
@@ -253,9 +260,11 @@ public class SwordDisplayTracker {
                     if (isLeftSlot) {
                         state.leftSheathItem = sheathToKeep;
                         state.leftSheathPersists = true;
+                        state.leftSheathOriginalSlot = currentSlot;
                     } else {
                         state.rightSheathItem = sheathToKeep;
                         state.rightSheathPersists = true;
+                        state.rightSheathOriginalSlot = currentSlot;
                     }
                 }
 
@@ -312,44 +321,43 @@ public class SwordDisplayTracker {
             }
         }
 
-        // Check sheath persistence
+        // Check sheath persistence - sheath stays only if sword is still in its original slot
         if (state.shouldShowLeftSheath() && state.leftDisplay == null) {
-            // Sheath is showing but no sword - check if we still have a sword for this sheath
-            boolean foundSword = false;
-            for (int i = 0; i < 9; i++) {
-                if (i == currentSlot) continue;
-                ItemStack slotItem = player.getInventory().getItem(i);
+            // Sheath is showing but no sword displayed - check if sword is still in original slot
+            boolean swordInOriginalSlot = false;
+            if (state.leftSheathOriginalSlot >= 0 && state.leftSheathOriginalSlot < 9) {
+                ItemStack slotItem = player.getInventory().getItem(state.leftSheathOriginalSlot);
                 if (SwordParticleMapping.isKimetsunoyaibaSword(slotItem)) {
                     Item sheathItem = SwordSheathRegistry.getSheathItem(slotItem);
                     if (sheathItem == state.leftSheathItem) {
-                        foundSword = true;
-                        break;
+                        swordInOriginalSlot = true;
                     }
                 }
             }
-            if (!foundSword) {
+            if (!swordInOriginalSlot) {
                 state.leftSheathItem = null;
                 state.leftSheathPersists = false;
+                state.leftSheathOriginalSlot = -1;
                 stateChanged = true;
             }
         }
 
         if (state.shouldShowRightSheath() && state.rightDisplay == null) {
-            boolean foundSword = false;
-            for (int i = 0; i < 9; i++) {
-                if (i == currentSlot) continue;
-                ItemStack slotItem = player.getInventory().getItem(i);
+            // Sheath is showing but no sword displayed - check if sword is still in original slot
+            boolean swordInOriginalSlot = false;
+            if (state.rightSheathOriginalSlot >= 0 && state.rightSheathOriginalSlot < 9) {
+                ItemStack slotItem = player.getInventory().getItem(state.rightSheathOriginalSlot);
                 if (SwordParticleMapping.isKimetsunoyaibaSword(slotItem)) {
                     Item sheathItem = SwordSheathRegistry.getSheathItem(slotItem);
                     if (sheathItem == state.rightSheathItem) {
-                        foundSword = true;
-                        break;
+                        swordInOriginalSlot = true;
                     }
                 }
             }
-            if (!foundSword) {
+            if (!swordInOriginalSlot) {
                 state.rightSheathItem = null;
                 state.rightSheathPersists = false;
+                state.rightSheathOriginalSlot = -1;
                 stateChanged = true;
             }
         }
@@ -506,12 +514,13 @@ public class SwordDisplayTracker {
     }
 
     /**
-     * Spawns cloud particles at the sheath position when a temporary sheath disappears
+     * Spawns dust particles at the sheath position when a temporary sheath disappears
      */
     private static void spawnSheathDisappearParticles(Player player, SwordDisplayConfig.SwordDisplayPosition position, boolean isLeft) {
         if (player == null || player.level() == null) return;
 
         // Calculate offset based on position (hip or back) and side (left or right)
+        // These are in model space: +X = player's right, +Y = up, +Z = forward (in front of player)
         double offsetX, offsetY, offsetZ;
 
         if (position == SwordDisplayConfig.SwordDisplayPosition.BACK) {
@@ -538,14 +547,17 @@ public class SwordDisplayTracker {
             }
         }
 
-        // Convert local offset to world position based on player's rotation
-        double yawRad = Math.toRadians(player.getYRot());
+        // Convert model space offset to world position based on player's rotation
+        // Player yaw: 0 = south (+Z), 90 = west (-X), 180 = north (-Z), 270 = east (+X)
+        double yawRad = Math.toRadians(-player.getYRot()); // Negate for correct rotation direction
         double cosYaw = Math.cos(yawRad);
         double sinYaw = Math.sin(yawRad);
 
-        // Rotate the offset by player's yaw
-        double worldOffsetX = offsetX * cosYaw - offsetZ * sinYaw;
-        double worldOffsetZ = offsetX * sinYaw + offsetZ * cosYaw;
+        // Model space to world space transformation
+        // In model space: X is right, Z is forward
+        // Rotate around Y axis by player's yaw
+        double worldOffsetX = offsetX * cosYaw + offsetZ * sinYaw;
+        double worldOffsetZ = -offsetX * sinYaw + offsetZ * cosYaw;
 
         // Calculate final world position
         Vec3 playerPos = player.position();
@@ -553,19 +565,15 @@ public class SwordDisplayTracker {
         double particleY = playerPos.y + 1.0 + offsetY; // Add 1.0 for player height offset
         double particleZ = playerPos.z + worldOffsetZ;
 
-        // Spawn cloud particles in a small poof
+        // Spawn small dust/poof particles
         Random rand = new Random();
-        for (int i = 0; i < 8; i++) {
-            double velX = (rand.nextDouble() - 0.5) * 0.1;
-            double velY = rand.nextDouble() * 0.1;
-            double velZ = (rand.nextDouble() - 0.5) * 0.1;
-
+        for (int i = 0; i < 6; i++) {
             player.level().addParticle(
-                ParticleTypes.CLOUD,
-                particleX + (rand.nextDouble() - 0.5) * 0.2,
-                particleY + (rand.nextDouble() - 0.5) * 0.2,
-                particleZ + (rand.nextDouble() - 0.5) * 0.2,
-                velX, velY, velZ
+                ParticleTypes.POOF,
+                particleX + (rand.nextDouble() - 0.5) * 0.15,
+                particleY + (rand.nextDouble() - 0.5) * 0.15,
+                particleZ + (rand.nextDouble() - 0.5) * 0.15,
+                0, 0, 0
             );
         }
 
