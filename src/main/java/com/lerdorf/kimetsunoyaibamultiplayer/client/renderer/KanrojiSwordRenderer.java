@@ -70,6 +70,11 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
             Log.debug("[KanrojiSwordRenderer] Static model not found, falling back to GeckoLib");
         }
 
+        // Apply translation offset for third person right hand to center the sword
+        if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
+            poseStack.translate(1.25 / 16.0, 0.7 / 16.0, 1.25 / 16.0);
+        }
+
         // For hand rendering and other contexts, use the animated GeckoLib model
         super.renderByItem(stack, displayContext, poseStack, bufferSource, packedLight, packedOverlay);
     }

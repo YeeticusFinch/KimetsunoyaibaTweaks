@@ -45,24 +45,22 @@ public class LoveSlashParticle extends TextureSheetParticle {
                 this.setSprite(spriteSet.get(startFrame, TOTAL_FRAMES - 1));
         		break;
         	case 3: // love_slash_knot
-        		this.roll = (float)Math.random()*6.28f;
                 this.frameCount = 5;
                 this.lifetime = this.frameCount;
 
-                // Start at a random frame
+                // Start at first knot frame
                 this.startFrame = 15;
-                
+
              // Set initial sprite
                 this.setSprite(spriteSet.get(startFrame, TOTAL_FRAMES - 1));
         		break;
         	case 4: // love_slash_knot (backwards)
-        		this.roll = (float)Math.random()*6.28f;
         		 this.frameCount = 5;
                  this.lifetime = this.frameCount;
 
-                 // Start at a random frame
+                 // Start at last knot frame
                  this.startFrame = 19;
-                 
+
               // Set initial sprite
                  this.setSprite(spriteSet.get(startFrame, TOTAL_FRAMES - 1));
         		break;

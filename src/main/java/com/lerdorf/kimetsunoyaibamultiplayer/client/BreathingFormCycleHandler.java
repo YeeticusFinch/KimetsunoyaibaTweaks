@@ -33,13 +33,18 @@ public class BreathingFormCycleHandler {
             return;
         }
 
-        // Only handle R key (GLFW.GLFW_KEY_R = 82)
-        if (event.getKey() != GLFW.GLFW_KEY_R) {
+        // Only handle key press, not release
+        if (event.getAction() != GLFW.GLFW_PRESS) {
             return;
         }
 
-        // Only handle key press, not release
-        if (event.getAction() != GLFW.GLFW_PRESS) {
+        // Don't process keybindings when a screen/GUI is open (chat, inventory, etc.)
+        if (mc.screen != null) {
+            return;
+        }
+
+        // Only handle R key (GLFW.GLFW_KEY_R = 82)
+        if (event.getKey() != GLFW.GLFW_KEY_R) {
             return;
         }
 

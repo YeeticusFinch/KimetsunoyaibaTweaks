@@ -13,7 +13,7 @@
 						"vector": [0, -180, 0]
 					},
 					"position": {
-						"vector": [0, 0, 0]
+						"vector": [2, 0, 0]
 					},
 					"scale": {
 						"vector": [1, 1, 1]
@@ -5446,7 +5446,7 @@
 						}
 					},
 					"position": {
-						"vector": [0, 0, 0]
+						"vector": [2, 0, 0]
 					},
 					"scale": {
 						"vector": [1, 1, 1]
@@ -8417,7 +8417,7 @@
 						"vector": [0, -180, 0]
 					},
 					"position": {
-						"vector": [0, 0, 0]
+						"vector": [2, 0, 0]
 					},
 					"scale": {
 						"vector": [1, 1, 1]
@@ -19556,7 +19556,7 @@
 						"vector": [0, -180, 0]
 					},
 					"position": {
-						"vector": [0, 0, 0]
+						"vector": [2, 0, 0]
 					},
 					"scale": {
 						"vector": [1, 1, 1]
@@ -27995,15 +27995,10 @@
 			"bones": {
 				"kanroji_sword": {
 					"rotation": {
-						"0.0": {
-							"vector": [0, 0, 0]
-						},
-						"0.0417": {
-							"vector": [0, -180, 0]
-						}
+						"vector": [0, -180, 0]
 					},
 					"position": {
-						"vector": [0, 0, 0]
+						"vector": [2, 0, 0]
 					},
 					"scale": {
 						"vector": [1, 1, 1]
@@ -43025,7 +43020,7 @@
 						"vector": [0, -180, 0]
 					},
 					"position": {
-						"vector": [0, 0, 0]
+						"vector": [2, 0, 0]
 					},
 					"scale": {
 						"vector": [1, 1, 1]
@@ -67602,7 +67597,7 @@
 						"vector": [0, 0, 0]
 					},
 					"position": {
-						"vector": [-1, 0, 1]
+						"vector": [0.25, 0, 0.25]
 					},
 					"scale": {
 						"vector": [1, 1, 1]
@@ -68015,7 +68010,7 @@
 						"vector": [0, -180, 0]
 					},
 					"position": {
-						"vector": [0, 0, 0]
+						"vector": [2, 0, 0]
 					},
 					"scale": {
 						"vector": [1, 1, 1]
@@ -126339,7 +126334,7 @@
 						"vector": [0, -180, 0]
 					},
 					"position": {
-						"vector": [0, 0, 0]
+						"vector": [2, 0, 0]
 					},
 					"scale": {
 						"vector": [1, 1, 1]
