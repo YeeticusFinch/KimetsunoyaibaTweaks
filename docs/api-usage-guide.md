@@ -311,7 +311,7 @@ public class ModItems {
 | 4100 | KnY-Extra-Additions: Forest Breathing |
 | 4200 | KnY-Extra-Additions: Frost Breathing |
 | 4300 | KnY-Extra-Additions: Ice Breathing |
-| 6000+ | Used by stxrwvbs (Star Breathing) |
+| 6000+ | Used by KNY X (Star Breathing) |
 | 8000+ | Available for your addon |
 | 20000 | KnY Tweaks: Enhanced Mist Breathing |
 | 22000 | KnY Tweaks: Enhanced Love Breathing |
