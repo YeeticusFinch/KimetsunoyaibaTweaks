@@ -10802,7 +10802,7 @@
 		},
 		"love_second_form": {
 			"loop": "hold_on_last_frame",
-			"animation_length": 2,
+			"animation_length": 4,
 			"bones": {
 				"body": {
 					"rotation": {

@@ -111,6 +111,10 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
         .triggerableAnim("random", RawAnimation.begin().thenPlay("random"))
         .triggerableAnim("random2", RawAnimation.begin().thenPlay("random2"))
         .triggerableAnim("love_first_form", RawAnimation.begin().thenPlay("love_first_form"))
+        .triggerableAnim("love_second_form", RawAnimation.begin().thenPlay("love_second_form"))
+        .triggerableAnim("love_third_form", RawAnimation.begin().thenPlay("love_third_form"))
+        .triggerableAnim("love_fifth_form", RawAnimation.begin().thenPlay("love_fifth_form"))
+        .triggerableAnim("love_sixth_form", RawAnimation.begin().thenPlay("love_sixth_form"))
         );
         Log.info("[NichirinSwordKanrojiAnimated] Animation controller registered with triggerable animations");
     }

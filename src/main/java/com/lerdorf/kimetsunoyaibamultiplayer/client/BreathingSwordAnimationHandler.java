@@ -52,6 +52,8 @@ public class BreathingSwordAnimationHandler {
                     } else if (roll < 20) {
                         // 10% chance for kanroji_sword_overhead
                         animationName = "kanroji_sword_overhead";
+                    } else if (roll < 30) {
+                        animationName = "sword_rotate";
                     } else {
                         // 80% chance for normal alternating attacks
                         animationName = lastWasLeft ? "sword_to_right" : "sword_to_left";
@@ -92,7 +94,10 @@ public class BreathingSwordAnimationHandler {
 
                 return animationName;
             }
-        } catch (Exception e) {
+        }catch(
+
+    Exception e)
+    {
             // Silently catch all exceptions to prevent crashes
         }
         return null;

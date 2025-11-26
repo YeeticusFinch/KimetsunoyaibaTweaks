@@ -76,6 +76,14 @@ public class KnYRaid {
     // Cleanup tracking
     private boolean cleanupDone = false;
 
+    // Clumped spawning - track last spawn location to create groups
+    private BlockPos lastSpawnLocation = null;
+    private int spawnClumpRemaining = 0;
+
+    // Periodic demon scanning (for demons that spawn other demons or have phases)
+    private long lastDemonScanTime = 0;
+    private static final long DEMON_SCAN_INTERVAL = 100L; // Scan every 5 seconds
+
     public KnYRaid(ServerLevel level, ResourceLocation structureId, BlockPos center, RaidType type, int difficultyLevel) {
         this.raidId = UUID.randomUUID();
         this.level = level;
@@ -123,30 +131,33 @@ public class KnYRaid {
         // Update player tracking
         updateBossBarPlayers();
 
-        // Check for abandonment
-        if (!checkPlayerNearby()) {
-            if (!abandonmentWarningShown) {
-                abandonmentWarningShown = true;
-                abandonmentWarningTime = gameTime;
-                broadcastMessage(Component.literal("Return to the raid area within 10 seconds or the raid will be lost!").withStyle(style ->
-                    style.withColor(0xFFAA00)));
-            } else if (gameTime - abandonmentWarningTime > 200) { // 10 seconds
-                triggerDefeat("Players abandoned the raid");
+        // Only check abandonment and timeout during active raid phases
+        if (state == RaidState.PREPARING || state == RaidState.ACTIVE) {
+            // Check for abandonment
+            if (!checkPlayerNearby()) {
+                if (!abandonmentWarningShown) {
+                    abandonmentWarningShown = true;
+                    abandonmentWarningTime = gameTime;
+                    broadcastMessage(Component.literal("Return to the raid area within 10 seconds or the raid will be lost!").withStyle(style ->
+                        style.withColor(0xFFAA00)));
+                } else if (gameTime - abandonmentWarningTime > 200) { // 10 seconds
+                    triggerDefeat("Players abandoned the raid");
+                    return;
+                }
+            } else {
+                if (abandonmentWarningShown) {
+                    abandonmentWarningShown = false;
+                    broadcastMessage(Component.literal("Player returned to raid area").withStyle(style ->
+                        style.withColor(0x55FF55)));
+                }
+                lastPlayerNearbyTime = gameTime;
+            }
+
+            // Check timeout
+            if (gameTime - raidStartTime > RaidConfig.raidTimeout.get() * 20L) {
+                triggerDefeat("Raid timed out");
                 return;
             }
-        } else {
-            if (abandonmentWarningShown) {
-                abandonmentWarningShown = false;
-                broadcastMessage(Component.literal("Player returned to raid area").withStyle(style ->
-                    style.withColor(0x55FF55)));
-            }
-            lastPlayerNearbyTime = gameTime;
-        }
-
-        // Check timeout
-        if (gameTime - raidStartTime > RaidConfig.raidTimeout.get() * 20L) {
-            triggerDefeat("Raid timed out");
-            return;
         }
 
         // State-specific handling
@@ -190,6 +201,13 @@ public class KnYRaid {
         // Update health-based progress
         updateHealthProgress();
 
+        // Periodically scan for new demons (for demon raids only)
+        // This handles cases where demons spawn other demons or have phase changes
+        if (type == RaidType.DEMON && gameTime - lastDemonScanTime >= DEMON_SCAN_INTERVAL) {
+            scanForNewDemons();
+            lastDemonScanTime = gameTime;
+        }
+
         // Apply glowing effect after 5 minutes if wave is still ongoing
         if (!aliveEntities.isEmpty() && gameTime - waveStartTime >= GLOWING_TIMER) {
             boolean anyApplied = applyGlowingToAllRaidEntities();
@@ -209,6 +227,52 @@ public class KnYRaid {
                 // Next wave
                 scheduleNextWave();
             }
+        }
+    }
+
+    /**
+     * Scan for new demons in the raid area (for demon raids only).
+     * This handles demons that spawn other demons or have multiple phases.
+     */
+    private void scanForNewDemons() {
+        int radius = CivilianStructureRegistry.getSpawnRadius(structureId);
+        if (radius <= 0) radius = 64;
+
+        net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
+            center.getX() - radius, center.getY() - 32, center.getZ() - radius,
+            center.getX() + radius, center.getY() + 32, center.getZ() + radius
+        );
+
+        // Find all hostile mobs in the raid area
+        for (Mob mob : level.getEntitiesOfClass(Mob.class, searchBox)) {
+            // Skip if already tracked
+            if (allRaidEntities.contains(mob.getUUID())) continue;
+
+            // Only add hostile mobs (demons)
+            if (mob.getType().getCategory() != net.minecraft.world.entity.MobCategory.MONSTER) continue;
+
+            // Don't add mobs that are too far from the raid area vertically
+            if (Math.abs(mob.getY() - center.getY()) > 32) continue;
+
+            // Add this demon to the raid
+            UUID entityUUID = mob.getUUID();
+            allRaidEntities.add(entityUUID);
+            aliveEntities.add(entityUUID);
+
+            // Track health
+            float maxHealth = mob.getMaxHealth();
+            entityMaxHealth.put(entityUUID, maxHealth);
+            totalMaxHealth += maxHealth;
+            currentHealth += mob.getHealth();
+
+            // Set initial pathfinding target
+            setInitialPathfindingTarget(mob);
+
+            // Make sure it doesn't despawn
+            mob.setPersistenceRequired();
+
+            Log.debug("Detected new demon in raid area: " + mob.getType().getDescriptionId() +
+                " (health: " + maxHealth + ") - adding to raid");
         }
     }
 
@@ -290,16 +354,57 @@ public class KnYRaid {
             int radius = CivilianStructureRegistry.getSpawnRadius(structureId);
             if (radius <= 0) radius = 32;
 
-            // Random ring spawn
-            double angle = level.random.nextDouble() * Math.PI * 2.0;
-            int dist = Math.max(8, level.random.nextInt(radius));
-            int x = center.getX() + (int) Math.round(Math.cos(angle) * dist);
-            int z = center.getZ() + (int) Math.round(Math.sin(angle) * dist);
-            BlockPos p = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, center.getY(), z));
+            // Reduce spawn radius to keep entities closer (max 40 blocks from center)
+            radius = Math.min(radius, 40);
 
-            mob.moveTo(p.getX() + 0.5, p.getY(), p.getZ() + 0.5, level.random.nextFloat() * 360F, 0);
+            BlockPos spawnPos = null;
+
+            // 60% chance to spawn in a clump near last spawn location
+            if (lastSpawnLocation != null && spawnClumpRemaining > 0 && level.random.nextFloat() < 0.6f) {
+                // Spawn within 3-8 blocks of last spawn location
+                spawnPos = findValidSpawnNear(lastSpawnLocation, 3, 8);
+                spawnClumpRemaining--;
+            }
+
+            // If clump spawn failed or not in clump mode, find new location
+            if (spawnPos == null) {
+                // Try to find a valid spawn location (max 10 attempts)
+                for (int attempt = 0; attempt < 10; attempt++) {
+                    double angle = level.random.nextDouble() * Math.PI * 2.0;
+                    int dist = 10 + level.random.nextInt(radius - 10); // Spawn between 10 and radius blocks
+                    int x = center.getX() + (int) Math.round(Math.cos(angle) * dist);
+                    int z = center.getZ() + (int) Math.round(Math.sin(angle) * dist);
+
+                    BlockPos testPos = findValidSpawnNear(new BlockPos(x, center.getY(), z), 0, 5);
+                    if (testPos != null) {
+                        spawnPos = testPos;
+
+                        // Start a new clump (2-4 entities per clump)
+                        lastSpawnLocation = spawnPos;
+                        spawnClumpRemaining = 2 + level.random.nextInt(3);
+                        break;
+                    }
+                }
+            }
+
+            // If still no valid position found, fall back to heightmap
+            if (spawnPos == null) {
+                double angle = level.random.nextDouble() * Math.PI * 2.0;
+                int dist = 10 + level.random.nextInt(radius - 10);
+                int x = center.getX() + (int) Math.round(Math.cos(angle) * dist);
+                int z = center.getZ() + (int) Math.round(Math.sin(angle) * dist);
+                spawnPos = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    new BlockPos(x, center.getY(), z));
+            }
+
+            // Spawn the mob
+            mob.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5,
+                level.random.nextFloat() * 360F, 0);
             mob.setPersistenceRequired();
             level.addFreshEntity(mob);
+
+            // Set initial pathfinding target to nearest raid participant
+            setInitialPathfindingTarget(mob);
 
             // Track entity
             UUID entityUUID = mob.getUUID();
@@ -312,9 +417,93 @@ public class KnYRaid {
             totalMaxHealth += maxHealth;
             currentHealth += maxHealth;
 
-            Log.debug("Spawned " + id + " at " + p + " (health: " + maxHealth + ")");
+            Log.debug("Spawned " + id + " at " + spawnPos + " (health: " + maxHealth + ")");
         } catch (Exception e) {
             Log.debug("Failed to spawn entity: " + id + " - " + e.getMessage());
+        }
+    }
+
+    /**
+     * Find a valid spawn position near a target position.
+     * Checks for: solid ground, not in water, not underground, sky visible.
+     */
+    private BlockPos findValidSpawnNear(BlockPos target, int minDist, int maxDist) {
+        for (int attempt = 0; attempt < 5; attempt++) {
+            int offsetX = (minDist == 0 ? 0 : minDist) + level.random.nextInt(maxDist - minDist + 1);
+            int offsetZ = (minDist == 0 ? 0 : minDist) + level.random.nextInt(maxDist - minDist + 1);
+            if (level.random.nextBoolean()) offsetX = -offsetX;
+            if (level.random.nextBoolean()) offsetZ = -offsetZ;
+
+            BlockPos testPos = level.getHeightmapPos(
+                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                new BlockPos(target.getX() + offsetX, target.getY(), target.getZ() + offsetZ)
+            );
+
+            // Validate spawn position
+            if (isValidSpawnPosition(testPos)) {
+                return testPos;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Check if a position is valid for spawning (not underground, not in water, solid ground).
+     */
+    private boolean isValidSpawnPosition(BlockPos pos) {
+        // Check if block below is solid
+        BlockPos below = pos.below();
+        if (!level.getBlockState(below).isSolidRender(level, below)) {
+            return false;
+        }
+
+        // Check if spawn position and above are air/passable
+        if (!level.getBlockState(pos).isAir() || !level.getBlockState(pos.above()).isAir()) {
+            return false;
+        }
+
+        // Check not in water
+        if (level.getBlockState(pos).getFluidState().isSource()) {
+            return false;
+        }
+
+        // Check can see sky (not in a cave)
+        if (!level.canSeeSky(pos)) {
+            return false;
+        }
+
+        // Check not too far below or above the structure center (within 20 blocks Y)
+        if (Math.abs(pos.getY() - center.getY()) > 20) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Set initial pathfinding goal to nearest raid participant.
+     */
+    private void setInitialPathfindingTarget(Mob mob) {
+        ServerPlayer nearestPlayer = null;
+        double nearestDistSq = Double.MAX_VALUE;
+
+        int radius = RaidConfig.raidParticipationRadius.get();
+        int radiusSq = radius * radius;
+
+        for (ServerPlayer player : level.players()) {
+            if (player.blockPosition().distSqr(center) <= radiusSq) {
+                double distSq = mob.distanceToSqr(player);
+                if (distSq < nearestDistSq) {
+                    nearestDistSq = distSq;
+                    nearestPlayer = player;
+                }
+            }
+        }
+
+        if (nearestPlayer != null) {
+            // Set target and make mob aware of player
+            mob.setTarget(nearestPlayer);
+            mob.setLastHurtByMob(nearestPlayer);
         }
     }
 

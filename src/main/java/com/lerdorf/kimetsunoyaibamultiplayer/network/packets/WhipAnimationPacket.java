@@ -1,6 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.client.WhipPhysics;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
@@ -98,7 +97,7 @@ public class WhipAnimationPacket {
                 net.minecraft.world.entity.player.Player player = mc.level.getPlayerByUUID(playerUUID);
                 if (player != null) {
                     // Apply animation state to whip physics
-                    WhipPhysics.playAnimation(
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.WhipPhysics.playAnimation(
                         player,
                         animationName,
                         extensionLevel,

@@ -4,8 +4,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.WhipPhysics;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.combat.WhipDamageHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
@@ -16,6 +14,7 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -27,6 +26,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -226,7 +228,15 @@ public class EnhancedLoveForms {
             com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(packet);
         } else {
             // If called on client (shouldn't happen for forms), apply directly
-            WhipPhysics.playAnimation(player, animationName, extension, 10);
+            // Use DistExecutor to avoid loading client class on server
+            final Player finalPlayer = player;
+            final String finalAnimName = animationName;
+            final double finalExtension = extension;
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+                com.lerdorf.kimetsunoyaibamultiplayer.client.WhipPhysics.playAnimation(
+                    finalPlayer, finalAnimName, finalExtension, 10
+                );
+            });
         }
     }
 
@@ -263,11 +273,12 @@ public class EnhancedLoveForms {
                 final int[] currentTick = {0};
                 final int interval = 1;
 
-                final Vec3[] vectors = new Vec3[2];
+                
 
                 final ArrayList<LivingEntity> targets = new ArrayList<>();
                 final float baseDamage = 12.0f;
 
+                final Vec3[] vectors = new Vec3[2];
                 // Get initial forward and right vectors using yaw (handles looking up/down)
                 float yawRad = (float) Math.toRadians(-entity.getYRot());
                 vectors[0] = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
@@ -278,6 +289,8 @@ public class EnhancedLoveForms {
         		//if (currentTick[0] == 0) {
         			entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, 10, false, false));
         		//}
+        			
+        		float [][][] particlePoints = ParticlePositions.first_form.get("point_a");
                 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
 
@@ -289,7 +302,7 @@ public class EnhancedLoveForms {
                 		vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
                 	}
 
-                	float [][][] particlePoints = ParticlePositions.first_form.get("point_a");
+                	
                 	if (level instanceof ServerLevel serverLevel && particlePoints != null && currentTick[0] < particlePoints.length && particlePoints[currentTick[0]].length > 0) {
                 		for (int i = 0; i < particlePoints[currentTick[0]].length; i++) {
                 			float x = particlePoints[currentTick[0]][i][0];
@@ -321,15 +334,29 @@ public class EnhancedLoveForms {
                 	}
 
                 	if (currentTick[0] < 26) { // Preparing for the pounce (1.31 seconds)
-                		
+                		if (currentTick[0] % 5 == 0 && currentTick[0] < 10) {
+                			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                				    SoundSource.PLAYERS, 1.0f, 1.5f);
+                		}
                 	}
                 	else if (currentTick[0] < 52) { // Sprinting fast (2.6 seconds)
+                		if (currentTick[0] < 27) {
+                			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                				    SoundEvents.EVOKER_PREPARE_ATTACK, SoundSource.PLAYERS, 1.0f, 2.0f);
+                			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                				    SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.7f);
+                		}
                 		if (currentTick[0] < 31 && level instanceof ServerLevel serverLevel) {
                 			serverLevel.sendParticles(
             						ModParticles.LOVE_IMPACT.get(),
             						entity.getX(), entity.getY(), entity.getZ(),
             						3, 0.3, 0.3, 0.3, 0
             					);
+                		}
+                		if (currentTick[0] % 2 == 0) {
+                			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                				    SoundEvents.HORSE_STEP, SoundSource.PLAYERS, 1.0f, 2f);
                 		}
                 		// Make the player zoom forward
                 		Vec3 forward = vectors[0].scale(1.4); // Speed boost
@@ -354,6 +381,9 @@ public class EnhancedLoveForms {
                 						target.getX(), particleY, target.getZ(),
                 						3, 0.3, 0.3, 0.3, 0
                 					);
+                					level.playSound(null, target.getX(), target.getY(), target.getZ(),
+                        				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                        				    SoundSource.PLAYERS, 1.0f, 1.5f);
                 				}
                 			}
                 		}
@@ -365,6 +395,12 @@ public class EnhancedLoveForms {
                 		}
                 	}
                 	else if (currentTick[0] > 55 && currentTick[0] % 2 == 1 && currentTick[0] < 80) { // Sword swing - damage all targets
+                		
+                		if (currentTick[0] % 3 == 0) {
+                			level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                        			SoundSource.PLAYERS, 1.5F, 1.3F);
+                		}
+                		
                 		// Damage all collected targets
                 		for (LivingEntity target : targets) {
                 			if (target.isAlive() && Math.random() < 0.3) {
@@ -392,12 +428,25 @@ public class EnhancedLoveForms {
                     							target.getZ() - offsetZ,
                     							1, 0, 0, 0, 0
                     						);
+                						
+                						level.playSound(null, target.getX(), target.getY(), target.getZ(),
+                            				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "punch1")),
+                            				    SoundSource.PLAYERS, 1.0f, 1.5f);
+                						
+                						level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                            				    SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.7f);
+                						
+                						level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                            				    SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 2f);
                 					}
                 				}
                 				
                 				// Play impact sound
                         		level.playSound(null, target.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                         			SoundSource.PLAYERS, 1.5F, 0.8F);
+                        		level.playSound(null, target.getX(), target.getY(), target.getZ(),
+                    				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                    				    SoundSource.PLAYERS, 1.0f, 1f);
                 			}
                 		}
 
@@ -432,6 +481,8 @@ public class EnhancedLoveForms {
                 // TODO: Implement second form
             	 // Set guard state
                 GuardStateHelper.setGuardState(entity, 8.0, 22002); // ID 21002 for Love Breathing
+                
+                float baseDamage = 10;
 
                 // Play player animation
                 playEntityAnimation(entity, "love_second_form");
@@ -442,11 +493,97 @@ public class EnhancedLoveForms {
                 // Prevent normal attack swing
                 setCancelAttackSwing(entity, true);
 
-                final int totalDuration = 40; // 2 seconds
+                final int totalDuration = 80; // 4 seconds
                 final int[] currentTick = {0};
                 final int interval = 1;
                 
+                final Vec3[] vectors = new Vec3[2];
+                // Get initial forward and right vectors using yaw (handles looking up/down)
+                float yawRad = (float) Math.toRadians(-entity.getYRot());
+                vectors[0] = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
+                // Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
+                vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
+                
+                float [][][] particlePoints = ParticlePositions.second_form.get("point_a");
+                
+                entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 10, 50, false, false));
+                
                 AbilityScheduler.scheduleRepeating(entity, () -> {
+
+                	if (currentTick[0] % 4 == 0) {
+                		// Use yaw rotation to get forward direction (works even when looking up/down)
+                		float yaw = (float) Math.toRadians(-entity.getYRot());
+                		vectors[0] = new Vec3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
+                		// Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
+                		vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
+                	}
+
+                	
+                	if (level instanceof ServerLevel serverLevel && particlePoints != null && currentTick[0] < particlePoints.length && particlePoints[currentTick[0]].length > 0) {
+                		for (int i = 0; i < particlePoints[currentTick[0]].length; i++) {
+                			float x = particlePoints[currentTick[0]][i][0];
+                			float y = particlePoints[currentTick[0]][i][1];
+                			float z = particlePoints[currentTick[0]][i][2];
+
+                			Vec3 pos = entity.position().add(vectors[0].scale(z).add(vectors[1].scale(x)).add(0, y, 0));
+
+                			// Spawn pink dust particle at pos
+                			serverLevel.sendParticles(
+                		            new DustParticleOptions(
+                		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                		                1.2f                           // scale
+                		            ),
+                		            pos.x, pos.y, pos.z,
+                		            2, 0.05, 0.05, 0.05, 0 // count, velocity
+                		        );
+                			
+                			// Spawn white dust particle at pos
+                			serverLevel.sendParticles(
+                					new DustParticleOptions(
+                    		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
+                    		                1f                           // scale
+                    		            ),
+                		            pos.x, pos.y, pos.z,
+                		            1, 0, 0, 0, 0 // count, velocity
+                		        );
+                		}
+                	}
+                	
+                	if (currentTick[0] < 12) {
+                		// Jump up (0.6 seconds)
+                		MovementHelper.lookAtTarget(entity);
+                		MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(-0.2).add(0, 0.5f, 0));
+                	}
+                	else if (currentTick[0] < 40) {
+                		// Launch forward and attack (2.9 seconds)
+                		MovementHelper.lookAtTarget(entity);
+                		MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(0.8));
+                		
+                		if (level instanceof ServerLevel serverLevel && currentTick[0] % 2 == 0) {
+                			AABB searchBox = entity.getBoundingBox().inflate(6.0);
+                			List<LivingEntity> nearby = level.getEntitiesOfClass(
+                				LivingEntity.class, searchBox,
+                				e -> e != entity && e.isAlive() && isTargetable(entity, e)
+                			);
+
+                			for (LivingEntity target : nearby) {
+                				if (Math.random() < 0.3) {
+                					Damager.hurt(entity, target, baseDamage);
+                					// Spawn love_slash particles on newly added target
+                					double particleY = target.getY() + target.getBbHeight() * 0.5;
+                					serverLevel.sendParticles(
+                						ModParticles.LOVE_SLASH.get(),
+                						target.getX(), particleY, target.getZ(),
+                						3, 0.3, 0.3, 0.3, 0
+                					);
+                					level.playSound(null, target.getX(), target.getY(), target.getZ(),
+                        				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                        				    SoundSource.PLAYERS, 1.0f, 1.5f);
+                				}
+
+                			}
+                		}
+                	}
             	
             	
             	
