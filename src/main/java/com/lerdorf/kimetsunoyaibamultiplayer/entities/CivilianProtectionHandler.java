@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,6 +16,8 @@ import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+
+import java.util.List;
 
 /**
  * Spawns demon slayers to protect civilians when attacked or targeted by demons.
@@ -59,20 +62,40 @@ public class CivilianProtectionHandler {
 
         BlockPos near = civilian.blockPosition();
 
+        // Check for raids within 200 blocks - raids take precedence over civilian protection
+        if (RaidRegistry.hasRaidNearby(level, near, 200)) {
+            return; // Don't spawn protectors during raids
+        }
+
+        // Count nearby demon slayers within 50 blocks
+        int nearbySlayerCount = countNearbyDemonSlayers(level, near, 50);
+
+        // If 10+ demon slayers nearby, don't spawn any more
+        if (nearbySlayerCount >= 10) {
+            return;
+        }
+
+        // Calculate spawn chance multiplier based on nearby slayers
+        double spawnChanceMultiplier = 1.0;
+        if (nearbySlayerCount >= 5) {
+            // 5-9 demon slayers: significantly reduce spawn chance (20% of normal)
+            spawnChanceMultiplier = 0.2;
+        }
+
         boolean isDemon = EntityTagHelper.isDemon(threat);
         boolean isKizuki = EntityTagHelper.isTwelveKizuki(threat);
 
         if (isKizuki) {
-            // Chance to spawn a hashira and/or a kamaboko
-            if (RNG.nextDouble() < EnhancedSpawnConfig.hashiraSpawnChance) {
+            // Chance to spawn a hashira and/or a kamaboko (with multiplier)
+            if (RNG.nextDouble() < EnhancedSpawnConfig.hashiraSpawnChance * spawnChanceMultiplier) {
                 spawnById(level, near, ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", pickRandomHashira()));
             }
-            if (RNG.nextDouble() < EnhancedSpawnConfig.kamabokoSpawnChance) {
+            if (RNG.nextDouble() < EnhancedSpawnConfig.kamabokoSpawnChance * spawnChanceMultiplier) {
                 spawnById(level, near, ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", pickRandomKamaboko()));
             }
         } else if (isDemon) {
-            // Spawn a small group of generic demon slayers
-            if (RNG.nextDouble() < EnhancedSpawnConfig.demonSlayerSpawnChance) {
+            // Spawn a small group of generic demon slayers (with multiplier)
+            if (RNG.nextDouble() < EnhancedSpawnConfig.demonSlayerSpawnChance * spawnChanceMultiplier) {
                 int count = clamp(EnhancedSpawnConfig.demonSlayerGroupSizeMin, EnhancedSpawnConfig.demonSlayerGroupSizeMax, 2);
                 for (int i = 0; i < count; i++) {
                     spawnById(level, near.offset(RNG.nextInt(7) - 3, 0, RNG.nextInt(7) - 3),
@@ -80,6 +103,22 @@ public class CivilianProtectionHandler {
                 }
             }
         }
+    }
+
+    /**
+     * Count demon slayers (including hashira and kamaboko) within a radius.
+     */
+    private static int countNearbyDemonSlayers(ServerLevel level, BlockPos center, int radius) {
+        List<LivingEntity> nearbyEntities = level.getEntitiesOfClass(
+            LivingEntity.class,
+            new net.minecraft.world.phys.AABB(center).inflate(radius),
+            entity -> entity != null && (
+                EntityTagHelper.isDemonSlayer(entity) ||
+                EntityTagHelper.isHashira(entity) ||
+                EntityTagHelper.isKamaboko(entity)
+            )
+        );
+        return nearbyEntities.size();
     }
 
     private static void spawnById(ServerLevel level, BlockPos around, ResourceLocation id) {

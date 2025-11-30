@@ -64,9 +64,10 @@ public class KnYRaid {
     private final ServerBossEvent bossBar;
     private final Set<UUID> participants = new HashSet<>();
 
-    // Warning state for abandonment
-    private boolean abandonmentWarningShown = false;
-    private long abandonmentWarningTime = 0;
+    // Abandonment tracking
+    private long abandonmentStartTime = 0;
+    private long lastAbandonmentWarningTime = 0;
+    private boolean isAbandoned = false;
 
     // Wave timer for glowing effect (5 minutes = 6000 ticks)
     private long waveStartTime = 0;
@@ -83,6 +84,23 @@ public class KnYRaid {
     // Periodic demon scanning (for demons that spawn other demons or have phases)
     private long lastDemonScanTime = 0;
     private static final long DEMON_SCAN_INTERVAL = 100L; // Scan every 5 seconds
+
+    // Delayed spawn tasks for mugen door sequence
+    private static class DelayedSpawnTask {
+        final ResourceLocation entityId;
+        final BlockPos position;
+        final long executeAt;
+
+        DelayedSpawnTask(ResourceLocation entityId, BlockPos position, long executeAt) {
+            this.entityId = entityId;
+            this.position = position;
+            this.executeAt = executeAt;
+        }
+    }
+    private final List<DelayedSpawnTask> delayedTasks = new ArrayList<>();
+
+    // Containment tracking
+    private long lastContainmentCheckTime = 0;
 
     public KnYRaid(ServerLevel level, ResourceLocation structureId, BlockPos center, RaidType type, int difficultyLevel) {
         this.raidId = UUID.randomUUID();
@@ -131,31 +149,94 @@ public class KnYRaid {
         // Update player tracking
         updateBossBarPlayers();
 
+        // Process delayed spawn tasks (for mugen door sequences)
+        processDelayedTasks(gameTime);
+
+        // Auto-defeat demon raids during daytime
+        if (type == RaidType.DEMON && level.isDay() && (state == RaidState.PREPARING || state == RaidState.ACTIVE)) {
+            broadcastToParticipants(Component.literal("☀ The sun has risen! Demons flee from the light!")
+                .withStyle(style -> style.withColor(0xFFFF00).withBold(true)));
+            triggerDefeat("Daylight arrived");
+            return; // Exit early to prevent further processing
+        }
+
         // Only check abandonment and timeout during active raid phases
         if (state == RaidState.PREPARING || state == RaidState.ACTIVE) {
             // Check for abandonment
             if (!checkPlayerNearby()) {
-                if (!abandonmentWarningShown) {
-                    abandonmentWarningShown = true;
-                    abandonmentWarningTime = gameTime;
-                    broadcastMessage(Component.literal("Return to the raid area within 10 seconds or the raid will be lost!").withStyle(style ->
-                        style.withColor(0xFFAA00)));
-                } else if (gameTime - abandonmentWarningTime > 200) { // 10 seconds
-                    triggerDefeat("Players abandoned the raid");
+                // Start abandonment timer if not already started
+                if (abandonmentStartTime == 0) {
+                    abandonmentStartTime = gameTime;
+                    lastAbandonmentWarningTime = gameTime;
+                    isAbandoned = true;
+
+                    int timeoutMinutes = RaidConfig.raidAbandonmentTimeout.get() / 60;
+
+                    // Check if chunks are unloaded
+                    if (!level.isLoaded(center)) {
+                        broadcastToParticipants(Component.literal("⚠ Raid area has been unloaded!")
+                            .withStyle(style -> style.withColor(0xFFAA00).withBold(true)));
+                        broadcastToParticipants(Component.literal("Return to the raid area within " + timeoutMinutes + " minutes or the raid will be cancelled!")
+                            .withStyle(style -> style.withColor(0xFFAA00)));
+                    } else {
+                        broadcastToParticipants(Component.literal("⚠ All raid participants have left the area!")
+                            .withStyle(style -> style.withColor(0xFFAA00).withBold(true)));
+                        broadcastToParticipants(Component.literal("Return within " + timeoutMinutes + " minutes or the raid will be cancelled!")
+                            .withStyle(style -> style.withColor(0xFFAA00)));
+                    }
+                }
+
+                // Periodic warnings
+                long warningInterval = RaidConfig.raidAbandonmentWarningInterval.get() * 20L;
+                if (gameTime - lastAbandonmentWarningTime >= warningInterval) {
+                    lastAbandonmentWarningTime = gameTime;
+
+                    long elapsed = (gameTime - abandonmentStartTime) / 20L;
+                    long remaining = RaidConfig.raidAbandonmentTimeout.get() - elapsed;
+
+                    if (remaining > 0) {
+                        int remainingMinutes = (int) (remaining / 60);
+                        int remainingSeconds = (int) (remaining % 60);
+
+                        String timeStr = remainingMinutes > 0
+                            ? remainingMinutes + "m " + remainingSeconds + "s"
+                            : remainingSeconds + "s";
+
+                        broadcastToParticipants(Component.literal("⚠ Raid abandoned! Return within " + timeStr + "!")
+                            .withStyle(style -> style.withColor(0xFFAA00)));
+                    }
+                }
+
+                // Check if abandonment timeout reached
+                long abandonmentTimeout = RaidConfig.raidAbandonmentTimeout.get() * 20L;
+                if (gameTime - abandonmentStartTime >= abandonmentTimeout) {
+                    cancelRaid("All players abandoned the raid");
                     return;
                 }
             } else {
-                if (abandonmentWarningShown) {
-                    abandonmentWarningShown = false;
-                    broadcastMessage(Component.literal("Player returned to raid area").withStyle(style ->
-                        style.withColor(0x55FF55)));
+                // Players returned
+                if (isAbandoned) {
+                    isAbandoned = false;
+                    abandonmentStartTime = 0;
+                    lastAbandonmentWarningTime = 0;
+
+                    // Only notify participants who are actually in the raid area
+                    int radius = RaidConfig.raidParticipationRadius.get();
+                    int radiusSq = radius * radius;
+                    for (UUID participantId : participants) {
+                        ServerPlayer player = level.getServer().getPlayerList().getPlayer(participantId);
+                        if (player != null && player.blockPosition().distSqr(center) <= radiusSq) {
+                            player.sendSystemMessage(Component.literal("✓ Players returned! Raid continues.")
+                                .withStyle(style -> style.withColor(0x55FF55).withBold(true)));
+                        }
+                    }
                 }
                 lastPlayerNearbyTime = gameTime;
             }
 
-            // Check timeout
+            // Check maximum raid timeout
             if (gameTime - raidStartTime > RaidConfig.raidTimeout.get() * 20L) {
-                triggerDefeat("Raid timed out");
+                triggerDefeat("Raid timed out after 30 minutes");
                 return;
             }
         }
@@ -201,6 +282,9 @@ public class KnYRaid {
         // Update health-based progress
         updateHealthProgress();
 
+        // Enforce containment boundary
+        enforceContainmentBoundary(gameTime);
+
         // Periodically scan for new demons (for demon raids only)
         // This handles cases where demons spawn other demons or have phase changes
         if (type == RaidType.DEMON && gameTime - lastDemonScanTime >= DEMON_SCAN_INTERVAL) {
@@ -233,6 +317,7 @@ public class KnYRaid {
     /**
      * Scan for new demons in the raid area (for demon raids only).
      * This handles demons that spawn other demons or have multiple phases.
+     * Only tracks specific demons: gyokko2, sekido, karaku, aizetsu, urogi, zohakuten, gyutaro
      */
     private void scanForNewDemons() {
         int radius = CivilianStructureRegistry.getSpawnRadius(structureId);
@@ -243,16 +328,24 @@ public class KnYRaid {
             center.getX() + radius, center.getY() + 32, center.getZ() + radius
         );
 
-        // Find all hostile mobs in the raid area
+        // Specific demons that can be added dynamically (phase changes, spawns, etc.)
+        java.util.Set<String> allowedDemons = java.util.Set.of(
+            "gyokko2", "sekido", "karaku", "aizetsu", "urogi", "zohakuten", "gyutaro"
+        );
+
+        // Find all mobs in the raid area
         for (Mob mob : level.getEntitiesOfClass(Mob.class, searchBox)) {
             // Skip if already tracked
             if (allRaidEntities.contains(mob.getUUID())) continue;
 
-            // Only add hostile mobs (demons)
-            if (mob.getType().getCategory() != net.minecraft.world.entity.MobCategory.MONSTER) continue;
-
             // Don't add mobs that are too far from the raid area vertically
             if (Math.abs(mob.getY() - center.getY()) > 32) continue;
+
+            // Check if this is one of the allowed demons
+            String entityId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+                .getKey(mob.getType()).getPath();
+
+            if (!allowedDemons.contains(entityId)) continue;
 
             // Add this demon to the raid
             UUID entityUUID = mob.getUUID();
@@ -271,7 +364,7 @@ public class KnYRaid {
             // Make sure it doesn't despawn
             mob.setPersistenceRequired();
 
-            Log.debug("Detected new demon in raid area: " + mob.getType().getDescriptionId() +
+            Log.debug("Detected new demon in raid area: " + entityId +
                 " (health: " + maxHealth + ") - adding to raid");
         }
     }
@@ -397,30 +490,113 @@ public class KnYRaid {
                     new BlockPos(x, center.getY(), z));
             }
 
-            // Spawn the mob
-            mob.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5,
-                level.random.nextFloat() * 360F, 0);
-            mob.setPersistenceRequired();
-            level.addFreshEntity(mob);
+            // Check if this is a kizuki demon - if so, spawn with mugen door
+            if (isKizukiDemon(id)) {
+                // Spawn mugen door entity for demon spawning
+                // Door will: open (6 ticks) -> stay open (6 ticks) -> close (5 ticks) = 17 ticks total
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.MugenDoorEntity door =
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.MugenDoorEntity.createForSpawning(level, spawnPos, 6);
+                level.addFreshEntity(door);
 
-            // Set initial pathfinding target to nearest raid participant
-            setInitialPathfindingTarget(mob);
+                long currentTime = level.getGameTime();
 
-            // Track entity
-            UUID entityUUID = mob.getUUID();
-            allRaidEntities.add(entityUUID);
-            aliveEntities.add(entityUUID);
+                // Schedule demon spawn for after door opens (6 ticks)
+                delayedTasks.add(new DelayedSpawnTask(id, spawnPos, currentTime + 6));
 
-            // Track health
-            float maxHealth = mob.getMaxHealth();
-            entityMaxHealth.put(entityUUID, maxHealth);
-            totalMaxHealth += maxHealth;
-            currentHealth += maxHealth;
+                Log.debug("Spawned mugen door for kizuki demon " + id + " at " + spawnPos);
+            } else {
+                // Normal spawn (non-kizuki demons or slayers)
+                mob.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5,
+                    level.random.nextFloat() * 360F, 0);
+                mob.setPersistenceRequired();
+                level.addFreshEntity(mob);
 
-            Log.debug("Spawned " + id + " at " + spawnPos + " (health: " + maxHealth + ")");
+                // Set initial pathfinding target to nearest raid participant
+                setInitialPathfindingTarget(mob);
+
+                // Track entity
+                UUID entityUUID = mob.getUUID();
+                allRaidEntities.add(entityUUID);
+                aliveEntities.add(entityUUID);
+
+                // Track health
+                float maxHealth = mob.getMaxHealth();
+                entityMaxHealth.put(entityUUID, maxHealth);
+                totalMaxHealth += maxHealth;
+                currentHealth += maxHealth;
+
+                Log.debug("Spawned " + id + " at " + spawnPos + " (health: " + maxHealth + ")");
+            }
         } catch (Exception e) {
             Log.debug("Failed to spawn entity: " + id + " - " + e.getMessage());
         }
+    }
+
+    /**
+     * Process delayed spawn tasks (for mugen door sequences).
+     */
+    private void processDelayedTasks(long gameTime) {
+        Iterator<DelayedSpawnTask> iterator = delayedTasks.iterator();
+        while (iterator.hasNext()) {
+            DelayedSpawnTask task = iterator.next();
+
+            if (gameTime >= task.executeAt) {
+                // Spawn the demon (mugen door handles its own lifecycle)
+                try {
+                    EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(task.entityId);
+                    if (entityType != null) {
+                        Mob mob = (Mob) entityType.create(level);
+                        if (mob != null) {
+                            mob.moveTo(task.position.getX() + 0.5, task.position.getY(), task.position.getZ() + 0.5,
+                                level.random.nextFloat() * 360F, 0);
+                            mob.setPersistenceRequired();
+                            level.addFreshEntity(mob);
+
+                            // Set initial pathfinding target to nearest raid participant
+                            setInitialPathfindingTarget(mob);
+
+                            // Track entity
+                            UUID entityUUID = mob.getUUID();
+                            allRaidEntities.add(entityUUID);
+                            aliveEntities.add(entityUUID);
+
+                            // Track health
+                            float maxHealth = mob.getMaxHealth();
+                            entityMaxHealth.put(entityUUID, maxHealth);
+                            totalMaxHealth += maxHealth;
+                            currentHealth += maxHealth;
+
+                            Log.debug("Spawned kizuki demon " + task.entityId + " at " + task.position + " (health: " + maxHealth + ")");
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.debug("Failed to spawn delayed entity: " + task.entityId + " - " + e.getMessage());
+                }
+
+                // Remove the completed task
+                iterator.remove();
+            }
+        }
+    }
+
+    /**
+     * Check if an entity ID is a kizuki demon (medium or hard boss).
+     * These demons should spawn with the mugen door animation.
+     */
+    private boolean isKizukiDemon(ResourceLocation id) {
+        String path = id.getPath();
+
+        // Medium Boss Demons (Lower Moons)
+        Set<String> lowerMoons = Set.of(
+            "kyogai", "kamanue", "rui", "mukago", "wakuraba", "rokuro", "hairo", "enmu"
+        );
+
+        // Hard Boss Demons (Upper Moons)
+        Set<String> upperMoons = Set.of(
+            "daki", "gyutaro", "kaigaku", "gyokko", "hantengu", "nakime", "akaza", "doma", "kokushibo"
+        );
+
+        return lowerMoons.contains(path) || upperMoons.contains(path);
     }
 
     /**
@@ -478,6 +654,159 @@ public class KnYRaid {
         }
 
         return true;
+    }
+
+    /**
+     * Enforce containment boundary for all raid entities.
+     * Called periodically during raid tick.
+     */
+    private void enforceContainmentBoundary(long gameTime) {
+        // Only check at configured interval
+        long interval = RaidConfig.containmentCheckInterval.get();
+        if (gameTime - lastContainmentCheckTime < interval) return;
+        lastContainmentCheckTime = gameTime;
+
+        // Get structure-specific containment radius
+        int containmentRadius = CivilianStructureRegistry.getContainmentRadius(structureId);
+        if (containmentRadius == 0) return; // Not configured
+
+        int teleportThreshold = RaidConfig.containmentTeleportThreshold.get();
+        int pushBackDistance = RaidConfig.containmentPushBackDistance.get();
+
+        // Calculate squared distances (avoid sqrt for performance)
+        int searchRadius = containmentRadius + teleportThreshold;
+        int containmentRadiusSq = containmentRadius * containmentRadius;
+        int teleportDistanceSq = (containmentRadius + teleportThreshold)
+            * (containmentRadius + teleportThreshold);
+
+        // Create expanded search box (center ± search radius)
+        net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(
+            center.getX() - searchRadius, center.getY() - 32, center.getZ() - searchRadius,
+            center.getX() + searchRadius, center.getY() + 32, center.getZ() + searchRadius
+        );
+
+        // Check all mobs in expanded area
+        for (Mob mob : level.getEntitiesOfClass(Mob.class, searchBox)) {
+            // Only enforce on raid entities
+            if (!allRaidEntities.contains(mob.getUUID())) continue;
+            if (!mob.isAlive()) continue;
+
+            // Calculate horizontal distance (ignore Y for flying entities)
+            double dx = mob.getX() - center.getX();
+            double dz = mob.getZ() - center.getZ();
+            double distSq = dx * dx + dz * dz;
+
+            // Graduated response
+            if (distSq > teleportDistanceSq) {
+                // Extreme violation: Emergency teleport
+                teleportEntityToRaidArea(mob);
+            } else if (distSq > containmentRadiusSq) {
+                // Border zone: Gentle push-back
+                pushEntityTowardCenter(mob, containmentRadius, pushBackDistance);
+            }
+            // Within boundary: No action
+        }
+    }
+
+    /**
+     * Push an entity toward the raid center using velocity.
+     * Gentle force that redirects entity movement without jarring teleportation.
+     */
+    private void pushEntityTowardCenter(Mob mob, int containmentRadius, int pushBackDistance) {
+        // Calculate direction from entity to center (XZ plane only)
+        double dx = center.getX() + 0.5 - mob.getX();
+        double dz = center.getZ() + 0.5 - mob.getZ();
+        double dist = Math.sqrt(dx * dx + dz * dz);
+
+        if (dist < 0.01) return; // At center, skip to avoid division by zero
+
+        // Normalize direction vector
+        double dirX = dx / dist;
+        double dirZ = dz / dist;
+
+        // Calculate target position (pushBackDistance blocks inside boundary)
+        double targetDist = containmentRadius - pushBackDistance;
+        double targetX = center.getX() + 0.5 - dirX * targetDist;
+        double targetZ = center.getZ() + 0.5 - dirZ * targetDist;
+
+        // Apply gentle push (0.05 = ~1 block/second movement toward safe zone)
+        double pushX = (targetX - mob.getX()) * 0.05;
+        double pushZ = (targetZ - mob.getZ()) * 0.05;
+
+        // Use existing MovementHelper (preserves Y velocity for flying entities)
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper.setVelocity(
+            mob,
+            pushX,
+            mob.getDeltaMovement().y,  // Preserve vertical movement
+            pushZ
+        );
+
+        if (RaidConfig.enableDebugLogging.get()) {
+            Log.debug("Raid: Pushed entity toward center (dist: " + (int)dist + " blocks)");
+        }
+    }
+
+    /**
+     * Teleport an entity back to the raid area.
+     * Uses existing spawn validation to find safe position.
+     * Adds mugen door visual effect for kizuki demons.
+     */
+    private void teleportEntityToRaidArea(Mob mob) {
+        // Find safe spawn position using existing validation
+        BlockPos safePos = findValidSpawnNear(center, 10, 40);
+
+        // Fallback: Use heightmap at center (always succeeds)
+        if (safePos == null) {
+            safePos = level.getHeightmapPos(
+                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                center
+            );
+        }
+
+        // Check if entity is kizuki demon (boss-tier)
+        ResourceLocation entityTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
+        boolean isKizuki = isKizukiDemon(entityTypeId);
+
+        // Spawn mugen doors for kizuki demons (visual polish)
+        if (isKizuki && RaidConfig.enableMugenDoorTeleportation.get()) {
+            try {
+                // Exit door at current position
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.MugenDoorEntity exitDoor =
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.MugenDoorEntity.createForTeleportation(
+                        level, mob.blockPosition()
+                    );
+                level.addFreshEntity(exitDoor);
+
+                // Entrance door at target position
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.MugenDoorEntity entranceDoor =
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.MugenDoorEntity.createForTeleportation(
+                        level, safePos
+                    );
+                level.addFreshEntity(entranceDoor);
+            } catch (Exception e) {
+                // Mugen door optional - continue with teleport even if door fails
+                if (RaidConfig.enableDebugLogging.get()) {
+                    Log.debug("Raid: Could not spawn mugen doors for teleportation");
+                }
+            }
+        }
+
+        // Teleport entity (center of block)
+        mob.moveTo(
+            safePos.getX() + 0.5,
+            safePos.getY(),
+            safePos.getZ() + 0.5,
+            mob.getYRot(),  // Preserve rotation
+            mob.getXRot()
+        );
+
+        // Clear velocity and reset pathfinding
+        mob.setDeltaMovement(0, 0, 0);
+        setInitialPathfindingTarget(mob);
+
+        if (RaidConfig.enableDebugLogging.get()) {
+            Log.debug("Raid: Teleported entity back to raid area (kizuki: " + isKizuki + ")");
+        }
     }
 
     /**
@@ -598,11 +927,47 @@ public class KnYRaid {
         nextActionTime = level.getGameTime() + 100; // 5 seconds
     }
 
+    /**
+     * Cancel the raid due to abandonment (different from defeat).
+     * Despawns all entities and removes bossbar immediately.
+     */
+    private void cancelRaid(String reason) {
+        Log.debug("Cancelling raid: " + reason);
+
+        // Notify all participants (even those far away)
+        broadcastToParticipants(Component.literal("✗ Raid Cancelled: " + reason)
+            .withStyle(style -> style.withColor(0xFF5555).withBold(true)));
+
+        // Despawn all raid entities
+        despawnRaidEntities();
+
+        // Remove bossbar from all players immediately
+        bossBar.removeAllPlayers();
+
+        // Mark as finished for cleanup
+        state = RaidState.DEFEAT;
+        cleanupDone = true;
+
+        Log.debug("Raid cancelled and cleaned up: " + raidId);
+    }
+
     private void despawnRaidEntities() {
         for (UUID entityId : aliveEntities) {
-            level.getEntity(entityId);
             var entity = level.getEntity(entityId);
             if (entity != null) {
+                // Check if this is a kizuki demon
+                if (entity instanceof Mob mob) {
+                    ResourceLocation entityTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
+                    if (entityTypeId != null && isKizukiDemon(entityTypeId)) {
+                        // Spawn mugen door at demon's position for teleportation
+                        // Door will: open (6 ticks) -> stay open (20 ticks) -> close (5 ticks) = 31 ticks total
+                        BlockPos pos = mob.blockPosition();
+                        com.lerdorf.kimetsunoyaibamultiplayer.entities.MugenDoorEntity door =
+                            com.lerdorf.kimetsunoyaibamultiplayer.entities.MugenDoorEntity.createForTeleportation(level, pos);
+                        level.addFreshEntity(door);
+                        Log.debug("Spawned mugen door for defeated kizuki demon at " + pos);
+                    }
+                }
                 entity.discard();
             }
         }
@@ -624,22 +989,82 @@ public class KnYRaid {
                 ? difficultyLevel
                 : Math.min(5, difficultyLevel + 1);
 
-            // Create appropriate potion item
-            // This will use the OmenPotionItem once implemented
-            ItemStack potion = createOmenPotionItem(type == RaidType.DEMON ? "muzan" : "ubuyashiki", rewardLevel);
-            if (!player.addItem(potion)) {
+            // Create appropriate omen potion item
+            ItemStack omenPotion = createOmenPotionItem(type == RaidType.DEMON ? "muzan" : "ubuyashiki", rewardLevel);
+            if (!player.addItem(omenPotion)) {
                 // Drop on ground if inventory full
-                player.drop(potion, false);
+                player.drop(omenPotion, false);
             }
 
             player.sendSystemMessage(Component.literal("Received Omen Potion Level " + toRoman(rewardLevel) + "!").withStyle(style ->
                 style.withColor(0xFFAA00)));
+
+            // Favor potion reward (opposite type from raid)
+            // Demon raids give Ubuyashiki favor, Slayer raids give Muzan favor
+            ItemStack favorPotion = giveFavorPotion(player);
+            if (favorPotion != null && !favorPotion.isEmpty()) {
+                if (!player.addItem(favorPotion)) {
+                    player.drop(favorPotion, false);
+                }
+            }
         }
+    }
+
+    /**
+     * Give favor potion based on raid type and difficulty.
+     * Demon raids -> Ubuyashiki favor (protection from demons)
+     * Slayer raids -> Muzan favor (protection from slayers)
+     */
+    private ItemStack giveFavorPotion(Player player) {
+        // Determine favor type (opposite of raid type)
+        String favorType = type == RaidType.DEMON ? "ubuyashiki" : "muzan";
+
+        // Calculate favor level based on raid difficulty
+        int favorLevel = calculateFavorLevel();
+
+        if (favorLevel > 0) {
+            ItemStack favorPotion = createFavorPotionItem(favorType, favorLevel);
+            if (!favorPotion.isEmpty()) {
+                player.sendSystemMessage(Component.literal("Received Favor Potion Level " + toRoman(favorLevel) + "!")
+                    .withStyle(style -> style.withColor(type == RaidType.DEMON ? 0x00FF00 : 0x964B00)));
+                return favorPotion;
+            }
+        }
+
+        return ItemStack.EMPTY;
+    }
+
+    /**
+     * Calculate favor potion level based on raid difficulty and RNG.
+     * Level 1 raid: 50% chance for level 1
+     * Level 2 raid: 75% chance for level 1
+     * Level 3 raid: 60% level 1, 40% level 2
+     * Level 4 raid: 30% level 1, 40% level 2, 30% level 3
+     * Level 5 raid: 10% level 1, 15% level 2, 75% level 3
+     */
+    private int calculateFavorLevel() {
+        float roll = level.random.nextFloat();
+
+        return switch (difficultyLevel) {
+            case 1 -> roll < 0.5f ? 1 : 0;
+            case 2 -> roll < 0.75f ? 1 : 0;
+            case 3 -> roll < 0.6f ? 1 : 2;
+            case 4 -> {
+                if (roll < 0.3f) yield 1;
+                else if (roll < 0.7f) yield 2;
+                else yield 3;
+            }
+            case 5 -> {
+                if (roll < 0.1f) yield 1;
+                else if (roll < 0.25f) yield 2;
+                else yield 3;
+            }
+            default -> 0;
+        };
     }
 
     private ItemStack createOmenPotionItem(String type, int level) {
         // Return the omen potion item
-        // This needs to be connected to the actual item registration
         ResourceLocation itemId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer",
             "omen_of_" + type + "_potion_" + level);
         var item = BuiltInRegistries.ITEM.get(itemId);
@@ -650,22 +1075,71 @@ public class KnYRaid {
         return ItemStack.EMPTY;
     }
 
+    private ItemStack createFavorPotionItem(String type, int level) {
+        // Return the favor potion item
+        ResourceLocation itemId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer",
+            "favor_of_" + type + "_potion_" + level);
+        var item = BuiltInRegistries.ITEM.get(itemId);
+        if (item != null && item != net.minecraft.world.item.Items.AIR) {
+            return new ItemStack(item);
+        }
+        return ItemStack.EMPTY;
+    }
+
     private void cleanup() {
-        // Remove boss bar from all players
+        // Remove boss bar from all players (both current viewers and participants)
         bossBar.removeAllPlayers();
+
+        // Extra safety: explicitly remove from all participants
+        for (UUID playerId : participants) {
+            ServerPlayer player = level.getServer().getPlayerList().getPlayer(playerId);
+            if (player != null) {
+                bossBar.removePlayer(player);
+            }
+        }
+
+        // Extra safety: remove from all players in level
+        for (ServerPlayer player : level.players()) {
+            bossBar.removePlayer(player);
+        }
+
         cleanupDone = true;
-        Log.debug("Raid cleanup complete for " + raidId);
+        Log.debug("Raid cleanup complete for " + raidId + " - bossbar removed from all players");
     }
 
     private boolean checkPlayerNearby() {
         int radius = RaidConfig.raidParticipationRadius.get();
         int radiusSq = radius * radius;
 
+        // First check if raid chunks are even loaded (is anyone keeping the area loaded?)
+        if (!level.isLoaded(center)) {
+            // Chunks unloaded - no one is in the area
+            return false;
+        }
+
+        // Check if any players are in the raid area at all (to keep chunks loaded)
+        boolean anyPlayerInArea = false;
         for (ServerPlayer player : level.players()) {
             if (player.blockPosition().distSqr(center) <= radiusSq) {
+                anyPlayerInArea = true;
+                break;
+            }
+        }
+
+        // If no players at all in the area, chunks might unload soon
+        if (!anyPlayerInArea) {
+            return false;
+        }
+
+        // Now check if any PARTICIPANTS are in the area
+        for (UUID participantId : participants) {
+            ServerPlayer player = level.getServer().getPlayerList().getPlayer(participantId);
+            if (player != null && player.blockPosition().distSqr(center) <= radiusSq) {
                 return true;
             }
         }
+
+        // Players are in area keeping chunks loaded, but no participants
         return false;
     }
 
@@ -702,6 +1176,19 @@ public class KnYRaid {
 
         for (ServerPlayer player : level.players()) {
             if (player.blockPosition().distSqr(center) <= radiusSq) {
+                player.sendSystemMessage(message);
+            }
+        }
+    }
+
+    /**
+     * Broadcast message to all participants, regardless of distance.
+     * Used for important notifications like abandonment warnings and cancellation.
+     */
+    private void broadcastToParticipants(Component message) {
+        for (UUID playerId : participants) {
+            ServerPlayer player = level.getServer().getPlayerList().getPlayer(playerId);
+            if (player != null) {
                 player.sendSystemMessage(message);
             }
         }

@@ -63,6 +63,34 @@ public class ModEntities {
                 .build("muichiro"));
 
     /**
+     * Mugen Door - Decorative entity for kizuki demon spawns
+     * Plays an opening animation and sound, then disappears
+     */
+    public static final RegistryObject<EntityType<MugenDoorEntity>> MUGEN_DOOR =
+        ENTITY_TYPES.register("mugen_door",
+            () -> EntityType.Builder.of(MugenDoorEntity::new, MobCategory.MISC)
+                .sized(1.0F, 2.0F) // Door-sized
+                .clientTrackingRange(64) // Visible from distance
+                .updateInterval(1) // Update every tick for smooth animation
+                .noSave() // Don't save to world (temporary entity)
+                .fireImmune()
+                .build("mugen_door"));
+
+    /**
+     * Love Sword Slashes - Visual effect entity for Love Breathing forms
+     * Spawns, plays specified animation, and despawns after lifetime
+     */
+    public static final RegistryObject<EntityType<LoveSwordSlashesEntity>> LOVE_SWORD_SLASHES =
+        ENTITY_TYPES.register("love_sword_slashes",
+            () -> EntityType.Builder.of(LoveSwordSlashesEntity::new, MobCategory.MISC)
+                .sized(2.0F, 2.0F) // Slash effect size
+                .clientTrackingRange(64) // Visible from distance
+                .updateInterval(1) // Update every tick for smooth animation
+                .noSave() // Don't save to world (temporary entity)
+                .fireImmune()
+                .build("love_sword_slashes"));
+
+    /**
      * Register entity types to the mod event bus
      */
     public static void register(IEventBus eventBus) {
@@ -87,6 +115,12 @@ public class ModEntities {
 
             // Register attributes for Muichiro Tokito
             event.put(MUICHIRO.get(), MuichiroEntity.createAttributes().build());
+
+            // Register attributes for Mugen Door (visual-only entity)
+            event.put(MUGEN_DOOR.get(), MugenDoorEntity.createAttributes().build());
+
+            // Register attributes for Love Sword Slashes (visual-only entity)
+            event.put(LOVE_SWORD_SLASHES.get(), LoveSwordSlashesEntity.createAttributes().build());
 
             if (Config.logDebug)
             Log.info("Entity attributes registered successfully");

@@ -183,4 +183,28 @@ public class CivilianStructureRegistry {
                 return 32; // Fallback
         }
     }
+
+    /**
+     * Get the containment radius for a structure (in blocks).
+     *
+     * @param structureId The structure ID
+     * @return The containment radius, or 0 if not categorized
+     */
+    public static int getContainmentRadius(ResourceLocation structureId) {
+        StructureSize size = getStructureSize(structureId);
+        if (size == null) {
+            return 0;
+        }
+
+        switch (size) {
+            case SMALL:
+                return RaidConfig.smallStructureContainmentRadius.get();
+            case MEDIUM:
+                return RaidConfig.mediumStructureContainmentRadius.get();
+            case LARGE:
+                return RaidConfig.largeStructureContainmentRadius.get();
+            default:
+                return 150; // Fallback
+        }
+    }
 }

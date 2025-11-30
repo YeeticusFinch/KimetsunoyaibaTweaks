@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.SheathItems;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -50,11 +51,14 @@ public class SheathModelRenderer {
 	        Minecraft mc = Minecraft.getInstance();
 	        ItemStack sheathStack = new ItemStack(sheathItem);
 
-	        // Apply per-sheath scale if registered
-	        float scale = getSheathScale(sheathItem);
-	        if (scale != 1.0f) {
+	        // Apply combined scale: global config scale * per-sheath scale
+	        float globalScale = (float) SwordDisplayConfig.scale;
+	        float perSheathScale = getSheathScale(sheathItem);
+	        float combinedScale = globalScale * perSheathScale;
+
+	        if (combinedScale != 1.0f) {
 	            poseStack.pushPose();
-	            poseStack.scale(scale, scale, scale);
+	            poseStack.scale(combinedScale, combinedScale, combinedScale);
 	        }
 
 	        // Render the sheath item
@@ -69,7 +73,7 @@ public class SheathModelRenderer {
 	            levelId
 	        );
 
-	        if (scale != 1.0f) {
+	        if (combinedScale != 1.0f) {
 	            poseStack.popPose();
 	        }
 

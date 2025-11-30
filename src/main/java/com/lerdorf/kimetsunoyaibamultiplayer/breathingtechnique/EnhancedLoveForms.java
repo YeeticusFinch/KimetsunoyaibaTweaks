@@ -557,7 +557,8 @@ public class EnhancedLoveForms {
                 	else if (currentTick[0] < 40) {
                 		// Launch forward and attack (2.9 seconds)
                 		MovementHelper.lookAtTarget(entity);
-                		MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(0.8));
+                		Vec3 vel = new Vec3(entity.getLookAngle().x, Math.min(entity.getLookAngle().y, -0.01), entity.getLookAngle().z);
+                		MovementHelper.setVelocity(entity, vel.scale(0.8f));
                 		
                 		if (level instanceof ServerLevel serverLevel && currentTick[0] % 2 == 0) {
                 			AABB searchBox = entity.getBoundingBox().inflate(6.0);
@@ -610,31 +611,43 @@ public class EnhancedLoveForms {
             "Overhead rain of whip slashes",
             4,
             (entity, level) -> {
-                // TODO: Implement third form
             	 // Set guard state
                 GuardStateHelper.setGuardState(entity, 8.0, 22003); // ID 21003 for Love Breathing
 
                 // Play player animation
                 playEntityAnimation(entity, "love_third_form");
-                
+
                 // Trigger whip animation (client-side)
                 triggerWhipAnimation(entity, "love_third_form", 1.0);
 
                 // Prevent normal attack swing
                 setCancelAttackSwing(entity, true);
 
+                // Spawn love sword slashes visual effect
+                Vec3 spawnPos = entity.position().add(0, entity.getEyeHeight(), 0); // Eye level
+                Vec3 lookVec = entity.getLookAngle();
+
+                // Calculate yaw and pitch from look vector
+                float yaw = (float) Math.toDegrees(Math.atan2(-lookVec.x, lookVec.z));
+                float pitch = (float) Math.toDegrees(Math.asin(-lookVec.y));
+
+                // Spawn the love sword slashes entity
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesSpawner.spawnLoveSwordSlashes(
+                    level, spawnPos, yaw, pitch, "love_third_form", 40
+                );
+
                 final int totalDuration = 40; // 2 seconds
                 final int[] currentTick = {0};
                 final int interval = 1;
-                
+
                 AbilityScheduler.scheduleRepeating(entity, () -> {
-            	
-            	
-            	
+
+
+
 	            	currentTick[0] += interval;
 	            }, interval, totalDuration);
-                
-               
+
+
                 // Schedule cleanup
                 AbilityScheduler.scheduleOnce(entity, () -> {
                     GuardStateHelper.clearGuardState(entity);

@@ -48,11 +48,33 @@
   "effect.kimetsunoyaibamultiplayer.omen_of_ubuyashiki": "Ubuyashiki's Omen",
   "effect.kimetsunoyaibamultiplayer.favor_of_muzan": "Muzan's Favor",
   "effect.kimetsunoyaibamultiplayer.omen_of_muzan": "Muzan's Omen",
+  
+  "item.kimetsunoyaibamultiplayer.omen_of_ubuyashiki_potion_1": "Potion of Ubuyashiki Omen I",
+  "item.kimetsunoyaibamultiplayer.omen_of_ubuyashiki_potion_2": "Potion of Ubuyashiki Omen II",
+  "item.kimetsunoyaibamultiplayer.omen_of_ubuyashiki_potion_3": "Potion of Ubuyashiki Omen III",
+  "item.kimetsunoyaibamultiplayer.omen_of_ubuyashiki_potion_4": "Potion of Ubuyashiki Omen IV",
+  "item.kimetsunoyaibamultiplayer.omen_of_ubuyashiki_potion_5": "Potion of Ubuyashiki Omen V",
+
+  "item.kimetsunoyaibamultiplayer.omen_of_muzan_potion_1": "Potion of Muzan Omen I",
+  "item.kimetsunoyaibamultiplayer.omen_of_muzan_potion_2": "Potion of Muzan Omen II",
+  "item.kimetsunoyaibamultiplayer.omen_of_muzan_potion_3": "Potion of Muzan Omen III",
+  "item.kimetsunoyaibamultiplayer.omen_of_muzan_potion_4": "Potion of Muzan Omen IV",
+  "item.kimetsunoyaibamultiplayer.omen_of_muzan_potion_5": "Potion of Muzan Omen V",
+  
+
+  "item.kimetsunoyaibamultiplayer.favor_of_ubuyashiki_potion_1": "Potion of Ubuyashiki Favor I",
+  "item.kimetsunoyaibamultiplayer.favor_of_ubuyashiki_potion_2": "Potion of Ubuyashiki Favor II",
+  "item.kimetsunoyaibamultiplayer.favor_of_ubuyashiki_potion_3": "Potion of Ubuyashiki Favor III",
+
+  "item.kimetsunoyaibamultiplayer.favor_of_muzan_potion_1": "Potion of Muzan Favor I",
+  "item.kimetsunoyaibamultiplayer.favor_of_muzan_potion_2": "Potion of Muzan Favor II",
+  "item.kimetsunoyaibamultiplayer.favor_of_muzan_potion_3": "Potion of Muzan Favor III",
 
   "biome.kimetsunoyaibamultiplayer.wisteria_forest": "Wisteria Forest",
   "biome.kimetsunoyaibamultiplayer.wisteria_forest_cyan": "Cyan Wisteria Forest",
   "biome.kimetsunoyaibamultiplayer.wisteria_forest_cream": "Cream Wisteria Forest",
 
   "key.categories.kimetsunoyaibamultiplayer": "Kimetsunoyaiba Multiplayer",
-  "key.kimetsunoyaibamultiplayer.cycle_breathing_form": "Cycle Breathing Form"
+  "key.kimetsunoyaibamultiplayer.cycle_breathing_form": "Cycle Breathing Form",
+  "key.kimetsunoyaibamultiplayer.cycle_breathing_form_backward": "Cycle Breathing Form (Reverse)"
 }

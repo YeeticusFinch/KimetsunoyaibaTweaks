@@ -64,6 +64,22 @@ public class ModItems {
     public static final RegistryObject<Item> OMEN_OF_UBUYASHIKI_POTION_5 = ITEMS.register("omen_of_ubuyashiki_potion_5",
         () -> new OmenPotionItem(new Item.Properties().stacksTo(16), OmenPotionItem.OmenType.UBUYASHIKI, 5));
 
+    // Favor Potion Items - Muzan (demon protection - spawns demons when attacked by non-demons)
+    public static final RegistryObject<Item> FAVOR_OF_MUZAN_POTION_1 = ITEMS.register("favor_of_muzan_potion_1",
+        () -> new FavorPotionItem(new Item.Properties().stacksTo(16), FavorPotionItem.FavorType.MUZAN, 1));
+    public static final RegistryObject<Item> FAVOR_OF_MUZAN_POTION_2 = ITEMS.register("favor_of_muzan_potion_2",
+        () -> new FavorPotionItem(new Item.Properties().stacksTo(16), FavorPotionItem.FavorType.MUZAN, 2));
+    public static final RegistryObject<Item> FAVOR_OF_MUZAN_POTION_3 = ITEMS.register("favor_of_muzan_potion_3",
+        () -> new FavorPotionItem(new Item.Properties().stacksTo(16), FavorPotionItem.FavorType.MUZAN, 3));
+
+    // Favor Potion Items - Ubuyashiki (slayer protection - spawns slayers when attacked by demons/players)
+    public static final RegistryObject<Item> FAVOR_OF_UBUYASHIKI_POTION_1 = ITEMS.register("favor_of_ubuyashiki_potion_1",
+        () -> new FavorPotionItem(new Item.Properties().stacksTo(16), FavorPotionItem.FavorType.UBUYASHIKI, 1));
+    public static final RegistryObject<Item> FAVOR_OF_UBUYASHIKI_POTION_2 = ITEMS.register("favor_of_ubuyashiki_potion_2",
+        () -> new FavorPotionItem(new Item.Properties().stacksTo(16), FavorPotionItem.FavorType.UBUYASHIKI, 2));
+    public static final RegistryObject<Item> FAVOR_OF_UBUYASHIKI_POTION_3 = ITEMS.register("favor_of_ubuyashiki_potion_3",
+        () -> new FavorPotionItem(new Item.Properties().stacksTo(16), FavorPotionItem.FavorType.UBUYASHIKI, 3));
+
     // Creative tab
     public static final RegistryObject<CreativeModeTab> KNY_ADDITIONS_TAB = CREATIVE_MODE_TABS.register("kny_additions",
         () -> CreativeModeTab.builder()
@@ -125,6 +141,14 @@ public class ModItems {
                 output.accept(OMEN_OF_UBUYASHIKI_POTION_3.get());
                 output.accept(OMEN_OF_UBUYASHIKI_POTION_4.get());
                 output.accept(OMEN_OF_UBUYASHIKI_POTION_5.get());
+
+                // Favor Potions
+                output.accept(FAVOR_OF_MUZAN_POTION_1.get());
+                output.accept(FAVOR_OF_MUZAN_POTION_2.get());
+                output.accept(FAVOR_OF_MUZAN_POTION_3.get());
+                output.accept(FAVOR_OF_UBUYASHIKI_POTION_1.get());
+                output.accept(FAVOR_OF_UBUYASHIKI_POTION_2.get());
+                output.accept(FAVOR_OF_UBUYASHIKI_POTION_3.get());
 
                 // Add spawn eggs from KnY Extra Additions (if mod is loaded)
                 try {

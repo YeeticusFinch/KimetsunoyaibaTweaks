@@ -17,6 +17,9 @@ public class ModSounds {
     public static final RegistryObject<SoundEvent> CROW2 = registerSoundEvent("crow2");
     public static final RegistryObject<SoundEvent> CROW3 = registerSoundEvent("crow3");
 
+    // Mugen door sound
+    public static final RegistryObject<SoundEvent> DEMON_SLAYER_DOOR_OPEN = registerSoundEvent("demon_slayer_door_open");
+
     private static RegistryObject<SoundEvent> registerSoundEvent(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

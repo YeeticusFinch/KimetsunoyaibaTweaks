@@ -16,8 +16,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Handles breathing form cycling with R key (forward) and Shift+R (backward).
- * This intercepts the kimetsunoyaiba mod's R key to add backward cycling functionality.
+ * Handles breathing form cycling with configurable keybinding (forward) and Shift+Key (backward).
+ * This intercepts the kimetsunoyaiba mod's key to add backward cycling functionality.
  */
 @OnlyIn(Dist.CLIENT)
 public class BreathingFormCycleHandler {
@@ -43,8 +43,11 @@ public class BreathingFormCycleHandler {
             return;
         }
 
-        // Only handle R key (GLFW.GLFW_KEY_R = 82)
-        if (event.getKey() != GLFW.GLFW_KEY_R) {
+        // Check if either keybinding was pressed
+        boolean isForward = ModKeyBindings.CYCLE_BREATHING_FORM.matches(event.getKey(), event.getScanCode());
+        boolean isBackward = ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD.matches(event.getKey(), event.getScanCode());
+
+        if (!isForward && !isBackward) {
             return;
         }
 
@@ -72,47 +75,130 @@ public class BreathingFormCycleHandler {
         // For custom breathing swords, we handle ALL cycling (both forward and backward)
         // For base mod swords, only handle backward cycling
         if (isCustomBreathingSword) {
-            // Custom breathing sword - send packet to server for BOTH directions
-            boolean shiftHeld = mc.options.keyShift.isDown();
+            // Custom breathing sword - WE handle both directions
+            // Consume the base mod's key to prevent it from processing
+            try {
+                net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART.consumeClick();
+            } catch (Exception e) {
+                // Ignore if base mod key not accessible
+            }
 
-            if (shiftHeld) {
+            if (isBackward) {
                 // Backward cycling
                 if (Config.logDebug) {
-                    Log.debug("Shift+R pressed on custom sword - cycling backward");
+                    Log.debug("Backward key pressed on custom sword - cycling backward");
                 }
                 ModNetworking.sendToServer(new CycleBreathingFormPacket(-1));
                 handledShiftR = true;
             } else {
                 // Forward cycling
                 if (Config.logDebug) {
-                    Log.debug("R pressed on custom sword - cycling forward");
+                    Log.debug("Forward key pressed on custom sword - cycling forward");
                 }
                 ModNetworking.sendToServer(new CycleBreathingFormPacket(1));
                 handledShiftR = false;
             }
         } else {
-            // Base mod sword - check if player has a breathing form active
-            if (player.getPersistentData().getDouble("breathes") == 0.0) {
+            // Base mod sword - allow cycling if either breathes or demon_art is active
+            double breathes = player.getPersistentData().getDouble("breathes");
+            double demonArt = player.getPersistentData().getDouble("demon_art");
+            if (breathes == 0.0 && demonArt == 0.0) {
                 return;
             }
 
-            // Check if shift is held for backward cycling
-            boolean shiftHeld = mc.options.keyShift.isDown();
-
-            if (shiftHeld) {
-                // Backward cycling with Shift+R
+            if (isBackward) {
+                // Backward cycling - consume base mod's key and send our backward packet
                 if (Config.logDebug) {
-                    Log.debug("Shift+R pressed on base mod sword - cycling backward");
+                    Log.debug("Backward key pressed on base mod sword - cycling backward");
                 }
 
-                // Send packet to server to cycle backward TWICE (once to go back, once to counteract kimetsunoyaiba's forward)
-                ModNetworking.sendToServer(new CycleBreathingFormPacket(-2)); // -2 = backward twice
+                // Consume the base mod's key to prevent forward cycling
+                try {
+                    net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART.consumeClick();
+                } catch (Exception e) {
+                    // Ignore if base mod key not accessible
+                }
 
+                // Send backward cycle packet
+                ModNetworking.sendToServer(new CycleBreathingFormPacket(-1));
                 handledShiftR = true;
             } else {
-                // Forward cycling with R - let kimetsunoyaiba mod handle it normally
+                // Forward cycling - let the base mod handle it normally
                 if (Config.logDebug) {
-                    Log.debug("R pressed on base mod sword - letting base mod handle it");
+                    Log.debug("Forward key pressed on base mod sword - letting base mod handle it");
+                }
+                handledShiftR = false;
+            }
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onMouseInput(InputEvent.MouseButton event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return;
+        if (event.getAction() != GLFW.GLFW_PRESS) return;
+        if (mc.screen != null) return;
+
+        boolean isForward = ModKeyBindings.CYCLE_BREATHING_FORM.matchesMouse(event.getButton());
+        boolean isBackward = ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD.matchesMouse(event.getButton());
+
+        if (!isForward && !isBackward) return;
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastCycleTime < CYCLE_COOLDOWN_MS) {
+            if (Config.logDebug) {
+                Log.debug("Form cycling on cooldown, ignoring mouse press");
+            }
+            return;
+        }
+        lastCycleTime = currentTime;
+
+        LocalPlayer player = mc.player;
+        ItemStack heldItem = player.getMainHandItem();
+        if (!BreathingInfoDetector.isNichirinSword(heldItem)) return;
+
+        boolean isCustomBreathingSword = heldItem.getItem() instanceof
+            com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
+
+        if (isCustomBreathingSword) {
+            try {
+                net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings
+                    .CHANGE_BREATHES_AND_BLOOD_ART.consumeClick();
+            } catch (Exception e) {}
+
+            if (isBackward) {
+                if (Config.logDebug) {
+                    Log.debug("Backward mouse button pressed on custom sword - cycling backward");
+                }
+                ModNetworking.sendToServer(new CycleBreathingFormPacket(-1));
+                handledShiftR = true;
+            } else {
+                if (Config.logDebug) {
+                    Log.debug("Forward mouse button pressed on custom sword - cycling forward");
+                }
+                ModNetworking.sendToServer(new CycleBreathingFormPacket(1));
+                handledShiftR = false;
+            }
+        } else {
+            double breathes = player.getPersistentData().getDouble("breathes");
+            double demonArt = player.getPersistentData().getDouble("demon_art");
+            if (breathes == 0.0 && demonArt == 0.0) return;
+
+            if (isBackward) {
+                if (Config.logDebug) {
+                    Log.debug("Backward mouse button pressed on base mod sword - cycling backward");
+                }
+
+                try {
+                    net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings
+                        .CHANGE_BREATHES_AND_BLOOD_ART.consumeClick();
+                } catch (Exception e) {}
+
+                ModNetworking.sendToServer(new CycleBreathingFormPacket(-1));
+                handledShiftR = true;
+            } else {
+                if (Config.logDebug) {
+                    Log.debug("Forward mouse button pressed on base mod sword - letting base mod handle it");
                 }
                 handledShiftR = false;
             }

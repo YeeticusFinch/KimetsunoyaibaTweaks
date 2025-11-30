@@ -50,8 +50,6 @@ public class EntityCategorization {
         registerDemon("swamp_demon", EntityPowerScale.MEDIUM_DEMON);
 
         // HARD_DEMON / EASY_BOSS_DEMON
-        registerDemon("demon_6", EntityPowerScale.HARD_DEMON);
-        registerDemon("demon_7", EntityPowerScale.HARD_DEMON);
         registerDemon("demon_8", EntityPowerScale.HARD_DEMON);
         registerDemon("demon_10", EntityPowerScale.HARD_DEMON);
         registerDemon("hand_demon", EntityPowerScale.HARD_DEMON);
@@ -63,6 +61,9 @@ public class EntityCategorization {
         registerDemon("rui_father", EntityPowerScale.HARD_DEMON);
         registerDemon("susamaru", EntityPowerScale.HARD_DEMON);
         registerDemon("yahaba", EntityPowerScale.HARD_DEMON);
+        
+        registerDemon("demon_6", EntityPowerScale.MEDIUM_BOSS_DEMON);
+        registerDemon("demon_7", EntityPowerScale.MEDIUM_BOSS_DEMON);
 
         // MEDIUM_BOSS_DEMON (Lower Twelve Kizuki)
         // Listed in order from weakest to strongest
@@ -114,7 +115,6 @@ public class EntityCategorization {
 
         // HARD_SLAYER
         registerSlayer("dice_steak_senior", EntityPowerScale.HARD_SLAYER);
-        registerSlayer("dice_steak_senior_super", EntityPowerScale.HARD_SLAYER);
 
         // HASHIRA
         // Listed in order from weakest to strongest
@@ -128,6 +128,7 @@ public class EntityCategorization {
         registerSlayer("tomioka", EntityPowerScale.HASHIRA);
         registerSlayer("muichirou", EntityPowerScale.HASHIRA);
         registerSlayer("himejima", EntityPowerScale.HASHIRA);
+        registerSlayer("dice_steak_senior_super", EntityPowerScale.HASHIRA);
 
         // SUPER_HASHIRA
         // Listed in order from weakest to strongest

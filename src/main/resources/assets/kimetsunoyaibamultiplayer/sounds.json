@@ -25,5 +25,14 @@
         "stream": false
       }
     ]
+  },
+  "demon_slayer_door_open": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.demon_slayer_door_open",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:demon_slayer_door_open",
+        "stream": false
+      }
+    ]
   }
 }

@@ -34,21 +34,46 @@ public class KeyInputHandler {
                 return;
             }
 
-            // Check if the pressed key matches our keybinding
-            if (!ModKeyBindings.CYCLE_BREATHING_FORM.matches(event.getKey(), event.getScanCode())) {
+            // Check if either keybinding was pressed
+            boolean isForward = ModKeyBindings.CYCLE_BREATHING_FORM.matches(event.getKey(), event.getScanCode());
+            boolean isBackward = ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD.matches(event.getKey(), event.getScanCode());
+
+            if (!isForward && !isBackward) {
                 return;
             }
 
             // Consume the click and process
-            if (ModKeyBindings.CYCLE_BREATHING_FORM.consumeClick()) {
+            if ((isForward && ModKeyBindings.CYCLE_BREATHING_FORM.consumeClick()) ||
+                (isBackward && ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD.consumeClick())) {
+
                 ItemStack mainHandItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
 
                 // Check if holding a breathing sword
                 if (mainHandItem.getItem() instanceof BreathingSwordItem breathingSword) {
-                    // Check if shift is held for backward cycling
-                    boolean shiftHeld = mc.options.keyShift.isDown();
-                    breathingSword.cycleForm(mc.player, shiftHeld);
+                    breathingSword.cycleForm(mc.player, isBackward);
                 }
+            }
+        } catch (Exception e) {
+            // Silently catch exceptions to prevent crashes
+        }
+    }
+
+    @SubscribeEvent
+    public static void onMouseInput(InputEvent.MouseButton event) {
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player == null) return;
+            if (event.getAction() != GLFW.GLFW_PRESS) return;
+            if (mc.screen != null) return;
+
+            boolean isForward = ModKeyBindings.CYCLE_BREATHING_FORM.matchesMouse(event.getButton());
+            boolean isBackward = ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD.matchesMouse(event.getButton());
+
+            if (!isForward && !isBackward) return;
+
+            ItemStack mainHandItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
+            if (mainHandItem.getItem() instanceof BreathingSwordItem breathingSword) {
+                breathingSword.cycleForm(mc.player, isBackward);
             }
         } catch (Exception e) {
             // Silently catch exceptions to prevent crashes

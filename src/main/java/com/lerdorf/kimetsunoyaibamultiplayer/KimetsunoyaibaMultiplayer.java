@@ -391,8 +391,9 @@ public class KimetsunoyaibaMultiplayer
         public static void onKeyRegister(net.minecraftforge.client.event.RegisterKeyMappingsEvent event)
         {
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
+            event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD);
             if (Config.logDebug)
-            Log.info("Registered breathing technique key binding");
+            Log.info("Registered breathing technique cycling key bindings");
         }
 
         @SubscribeEvent
@@ -402,6 +403,12 @@ public class KimetsunoyaibaMultiplayer
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.GHOSTLY_CLONE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.GhostlyCloneRenderer::new);
 
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MUGEN_DOOR.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MugenDoorRenderer::new);
+
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.LOVE_SWORD_SLASHES.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.LoveSwordSlashesRenderer::new);
+
             if (Config.logDebug)
             Log.info("Registered entity renderers");
         }
@@ -410,7 +417,7 @@ public class KimetsunoyaibaMultiplayer
         public static void registerAdditionalModels(net.minecraftforge.client.event.ModelEvent.RegisterAdditional event)
         {
             // Register the static GUI model for Kanroji sword
-            event.register(new net.minecraft.resources.ResourceLocation(MODID, "item/kanroji_sword_static"));
+            event.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "item/kanroji_sword_static"));
 
             if (Config.logDebug)
             Log.info("Registered additional models (kanroji_sword_static)");

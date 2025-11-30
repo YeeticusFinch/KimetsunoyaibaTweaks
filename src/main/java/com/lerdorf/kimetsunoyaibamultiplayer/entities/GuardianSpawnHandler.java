@@ -48,7 +48,8 @@ public class GuardianSpawnHandler {
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "kocho"),
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "kanroji"),
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "iguro"),
-        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "uzui")
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "uzui"),
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "dice_steak_senior_super")
     );
 
     private static final List<ResourceLocation> KAMABOKO_ENTITIES = Arrays.asList(
@@ -61,7 +62,6 @@ public class GuardianSpawnHandler {
 
     private static final List<ResourceLocation> DEMON_SLAYER_ENTITIES = Arrays.asList(
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "dice_steak_senior"),
-        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "dice_steak_senior_super"),
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "murata"),
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sabito"),
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "makomo")
