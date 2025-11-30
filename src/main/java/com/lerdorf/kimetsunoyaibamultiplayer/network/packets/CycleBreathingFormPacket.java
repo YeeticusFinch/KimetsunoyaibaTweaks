@@ -46,29 +46,23 @@ public class CycleBreathingFormPacket {
                              " (direction: " + (direction >= 0 ? "forward" : "backward") + ")");
                 }
             } else {
-                // Handle base mod (kimetsunoyaiba) breathing form cycling or demon art cycling
+                // Handle base mod (kimetsunoyaiba) breathing form cycling
+                // Get current breathing value
                 double currentBreathes = player.getPersistentData().getDouble("breathes");
-                double currentDemonArt = player.getPersistentData().getDouble("demon_art");
 
-                boolean useDemonArt = currentDemonArt != 0.0 && currentBreathes == 0.0;
-                double currentValue = useDemonArt ? currentDemonArt : currentBreathes;
-
-                if (currentValue == 0.0) {
-                    return; // No form active
+                if (currentBreathes == 0.0) {
+                    return; // No breathing form active
                 }
 
-                double newValue = cycleKimetsuForm(currentValue, direction, heldItem, useDemonArt);
+                // Calculate new breathing value based on direction
+                double newBreathes = cycleBreathingForm(currentBreathes, direction, heldItem);
 
-                if (useDemonArt) {
-                    player.getPersistentData().putDouble("demon_art", newValue);
-                } else {
-                    player.getPersistentData().putDouble("breathes", newValue);
-                }
+                // Update player's breathing form
+                player.getPersistentData().putDouble("breathes", newBreathes);
 
                 if (Config.logDebug) {
-                    Log.debug("Cycled base mod " + (useDemonArt ? "demon art" : "breathing") +
-                             " form: " + currentValue + " -> " + newValue +
-                             " (direction: " + (direction >= 0 ? "forward" : "backward") + ")");
+                    Log.debug("Cycled base mod breathing form: " + currentBreathes + " -> " + newBreathes +
+                             " (direction: " + (direction == 1 ? "forward" : "backward") + ")");
                 }
             }
         });
@@ -76,9 +70,9 @@ public class CycleBreathingFormPacket {
     }
 
     /**
-     * Cycles through breathing or demon art forms with wraparound.
+     * Cycles through breathing forms with wraparound.
      */
-    private static double cycleKimetsuForm(double current, int direction, ItemStack sword, boolean isDemonArt) {
+    private static double cycleBreathingForm(double current, int direction, ItemStack sword) {
         // Check if multi-style sword with offset
         double selectOffset = 0.0;
         if (sword != null && !sword.isEmpty() && sword.getOrCreateTag().contains("select")) {
@@ -90,16 +84,10 @@ public class CycleBreathingFormPacket {
         int breathingStyle = (int)(actualBreathes / 100) * 100;
 
         // Define form lists for each breathing style
-        int[] forms = getFormsForStyle(breathingStyle, isDemonArt);
+        int[] forms = getFormsForStyle(breathingStyle);
 
         if (forms.length == 0) {
-            // Fallback: simple rolling within the style range (1..20)
-            int currentForm = ((int) actualBreathes) % 100;
-            int newForm = (currentForm + direction) % 20;
-            if (newForm < 0) {
-                newForm += 20;
-            }
-            return breathingStyle + newForm - selectOffset;
+            return current; // Unknown style
         }
 
         // Find current index in the array
@@ -132,45 +120,27 @@ public class CycleBreathingFormPacket {
     }
 
     /**
-     * Gets the list of available forms for a breathing style or demon art style.
+     * Gets the list of available forms for a breathing style.
      */
-    private static int[] getFormsForStyle(int style, boolean isDemonArt) {
-        if (!isDemonArt) {
-            return switch (style) {
-                case 100 -> new int[]{101, 102, 103, 104, 105, 106, 107, 111, 112, 113}; // Water
-                case 200 -> new int[]{201, 202, 203, 204, 205, 206, 207, 208, 209, 210}; // Beast
-                case 300 -> new int[]{301, 302, 303, 304, 305, 309}; // Thunder
-                case 400 -> new int[]{401, 402, 403, 404, 405, 409}; // Flame
-                case 500 -> new int[]{501, 502, 503, 504, 505, 506, 507, 508, 509}; // Wind
-                case 600 -> new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 611}; // Stone
-                case 700 -> new int[]{701, 702, 703, 704, 705, 707}; // Mist
-                case 800 -> new int[]{801, 802, 803, 804, 805}; // Serpent
-                case 900 -> new int[]{901, 902, 903, 904}; // Sound
-                case 1000 -> new int[]{1001, 1002, 1003, 1004, 1005, 1006, 1007}; // Ice
-                case 1100 -> new int[]{1101, 1102, 1103, 1105, 1106, 1107, 1108, 1109, 1110, 1114, 1116}; // Moon
-                case 1200 -> new int[]{1201, 1202, 1203, 1204, 1205, 1206, 1207, 1208, 1209, 1210, 1211, 1212}; // Sun
-                case 1300 -> new int[]{1301, 1304, 1305}; // Flower
-                case 1400 -> new int[]{1401, 1402, 1404, 1405, 1406}; // Insect
-                case 1500 -> new int[]{1501, 1502, 1505, 1506}; // Love
-                case 1600 -> new int[]{1601, 1602, 1603, 1604, 1605, 1606, 1607}; // Frost
-                default -> new int[0];
-            };
-        }
-
-        // Demon art: limited knowledge of form ranges, so provide generic sequences per style bucket
-        // Default: 10 forms per style unless overridden
-        int base = style;
-        int count = 10;
-
-        // Known broader ranges (Akaza, etc.) use more forms
-        if (style == 400 || style == 800 || style == 1200) {
-            count = 12;
-        }
-
-        int[] generated = new int[count];
-        for (int i = 0; i < count; i++) {
-            generated[i] = base + 1 + i;
-        }
-        return generated;
+    private static int[] getFormsForStyle(int style) {
+        return switch (style) {
+            case 100 -> new int[]{101, 102, 103, 104, 105, 106, 107, 111, 112, 113}; // Water
+            case 200 -> new int[]{201, 202, 203, 204, 205, 206, 207, 208, 209, 210}; // Beast
+            case 300 -> new int[]{301, 302, 303, 304, 305, 309}; // Thunder
+            case 400 -> new int[]{401, 402, 403, 404, 405, 409}; // Flame
+            case 500 -> new int[]{501, 502, 503, 504, 505, 506, 507, 508, 509}; // Wind
+            case 600 -> new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 611}; // Stone
+            case 700 -> new int[]{701, 702, 703, 704, 705, 707}; // Mist
+            case 800 -> new int[]{801, 802, 803, 804, 805}; // Serpent
+            case 900 -> new int[]{901, 902, 903, 904}; // Sound
+            case 1000 -> new int[]{1001, 1002, 1003, 1004, 1005, 1006, 1007}; // Ice
+            case 1100 -> new int[]{1101, 1102, 1103, 1105, 1106, 1107, 1108, 1109, 1110, 1114, 1116}; // Moon
+            case 1200 -> new int[]{1201, 1202, 1203, 1204, 1205, 1206, 1207, 1208, 1209, 1210, 1211, 1212}; // Sun
+            case 1300 -> new int[]{1301, 1304, 1305}; // Flower
+            case 1400 -> new int[]{1401, 1402, 1404, 1405, 1406}; // Insect
+            case 1500 -> new int[]{1501, 1502, 1505, 1506}; // Love
+            case 1600 -> new int[]{1601, 1602, 1603, 1604, 1605, 1606, 1607}; // Frost
+            default -> new int[0];
+        };
     }
 }

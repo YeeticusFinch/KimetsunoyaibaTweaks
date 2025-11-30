@@ -391,9 +391,9 @@ public class KimetsunoyaibaMultiplayer
         public static void onKeyRegister(net.minecraftforge.client.event.RegisterKeyMappingsEvent event)
         {
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
-            event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD);
+            //event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD);
             if (Config.logDebug)
-            Log.info("Registered breathing technique cycling key bindings");
+            	Log.info("Registered breathing technique cycling key bindings");
         }
 
         @SubscribeEvent

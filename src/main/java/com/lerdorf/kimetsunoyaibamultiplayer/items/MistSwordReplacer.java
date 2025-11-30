@@ -71,12 +71,12 @@ public class MistSwordReplacer {
             // Check if this is a base mod mist sword
             ItemStack replacement = null;
 
-            if (itemId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "nichirinsword_mist"))) {
+            if (itemId.equals(new ResourceLocation("kimetsunoyaiba", "nichirinsword_mist"))) {
                 // Replace with our generic mist sword
                 replacement = new ItemStack(ModItems.NICHIRINSWORD_MIST.get());
                 Log.debug("[Mist Sword Replacer] Replacing kimetsunoyaiba:nichirinsword_mist with our mist sword for " + player.getName().getString());
 
-            } else if (itemId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "nichirinsword_tokito"))) {
+            } else if (itemId.equals(new ResourceLocation("kimetsunoyaiba", "nichirinsword_tokito"))) {
                 // Replace with Muichiro's sword
                 replacement = new ItemStack(ModItems.NICHIRINSWORD_MUICHIRO.get());
                 Log.debug("[Mist Sword Replacer] Replacing kimetsunoyaiba:nichirinsword_tokito with Muichiro's sword for " + player.getName().getString());

@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.combat.WhipDamageHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesSpawner;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 
@@ -632,7 +633,7 @@ public class EnhancedLoveForms {
                 float pitch = (float) Math.toDegrees(Math.asin(-lookVec.y));
 
                 // Spawn the love sword slashes entity
-                com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesSpawner.spawnLoveSwordSlashes(
+                LoveSwordSlashesSpawner.spawnLoveSwordSlashes(
                     level, spawnPos, yaw, pitch, "love_third_form", 40
                 );
 

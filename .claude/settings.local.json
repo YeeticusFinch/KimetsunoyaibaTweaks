@@ -32,7 +32,10 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nUpdate API usage guide with comprehensive documentation\n\n- Added complete examples from KnY-Extra-Additions reference implementation\n- Added custom entity creation section with BreathingSlayerEntity\n- Added Modrinth dependency setup instructions\n- Added sword slash model documentation for custom breathing styles\n- Updated best practices and troubleshooting sections\n- Added style range guidelines for addon compatibility\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(if [ -f \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\src\\main\\java\\com\\lerdorf\\kimetsunoyaibamultiplayer\\client\\KeyInputHandler.java\" ])",
+      "Bash(then echo \"File still exists\")",
+      "Bash(else echo \"File successfully deleted\")"
     ],
     "deny": [],
     "ask": []
