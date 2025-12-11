@@ -447,8 +447,8 @@ public class CrowEnhancementHandler {
 
     public static void clearFlyingCrows() {
         flyingCrows.clear();
-        if (Config.logDebug)
-        Log.info("Cleared all flying crow states");
+        //if (Config.logDebug)
+        //    Log.info("Cleared all flying crow states");
     }
 
     public static boolean isCrowFlying(UUID crowId) {

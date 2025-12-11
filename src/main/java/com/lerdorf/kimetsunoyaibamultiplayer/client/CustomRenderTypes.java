@@ -76,4 +76,63 @@ public class CustomRenderTypes extends RenderType {
                 renderState
         );
     }
+
+    /**
+     * GeckoLib-compatible additive render type for love sword slashes
+     * Uses additive blending to avoid depth sorting issues with clouds/water
+     * while maintaining compatibility with GeckoLib's rendering system
+     */
+    public static RenderType geoEntityAdditive(ResourceLocation texture) {
+        CompositeState renderState = CompositeState.builder()
+                .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER) // Entity shader for GeckoLib
+                .setTextureState(new TextureStateShard(texture, false, false)) // Texture
+                .setTransparencyState(ADDITIVE_TRANSPARENCY) // ADDITIVE BLENDING - avoids depth issues
+                .setLightmapState(LIGHTMAP) // Use lightmap
+                .setOverlayState(OVERLAY) // Required for entity format
+                .setCullState(NO_CULL) // Don't cull faces
+                .setWriteMaskState(COLOR_WRITE) // Write colors only (not depth)
+                .setOutputState(TRANSLUCENT_TARGET) // Render to translucent target
+                .createCompositeState(true); // Affects outline
+
+        return create(
+                "geo_entity_additive",
+                DefaultVertexFormat.NEW_ENTITY,
+                VertexFormat.Mode.QUADS,
+                256,
+                true,
+                true,
+                renderState
+        );
+    }
+
+    /**
+     * GeckoLib-compatible translucent emissive render type with proper alpha blending
+     * Uses translucent transparency for proper partial alpha/translucency support
+     * Combined with emissive shader for glowing appearance
+     *
+     * This is the correct render type for models with alpha gradients/partial transparency.
+     * Use this instead of geoEntityAdditive when you need smooth alpha blending.
+     */
+    public static RenderType geoEntityTranslucentEmissive(ResourceLocation texture) {
+        CompositeState renderState = CompositeState.builder()
+                .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER) // Emissive shader for glow
+                .setTextureState(new TextureStateShard(texture, false, false)) // Texture
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY) // TRANSLUCENT BLENDING - proper alpha support
+                .setLightmapState(LIGHTMAP) // Use lightmap
+                .setOverlayState(OVERLAY) // Required for entity format
+                .setCullState(NO_CULL) // Don't cull faces
+                .setWriteMaskState(COLOR_DEPTH_WRITE) // Write both color and depth for proper sorting
+                .setOutputState(TRANSLUCENT_TARGET) // Render to translucent target
+                .createCompositeState(true); // Affects outline
+
+        return create(
+                "geo_entity_translucent_emissive",
+                DefaultVertexFormat.NEW_ENTITY,
+                VertexFormat.Mode.QUADS,
+                256,
+                true,
+                true,
+                renderState
+        );
+    }
 }

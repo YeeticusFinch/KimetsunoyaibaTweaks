@@ -390,8 +390,8 @@ public class KimetsunoyaibaMultiplayer
         @SubscribeEvent
         public static void onKeyRegister(net.minecraftforge.client.event.RegisterKeyMappingsEvent event)
         {
-            event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
-            //event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD);
+            //event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
+            event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD);
             if (Config.logDebug)
             	Log.info("Registered breathing technique cycling key bindings");
         }
@@ -408,6 +408,9 @@ public class KimetsunoyaibaMultiplayer
 
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.LOVE_SWORD_SLASHES.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.LoveSwordSlashesRenderer::new);
+
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.LOVE_TORNADO.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.LoveTornadoRenderer::new);
 
             if (Config.logDebug)
             Log.info("Registered entity renderers");

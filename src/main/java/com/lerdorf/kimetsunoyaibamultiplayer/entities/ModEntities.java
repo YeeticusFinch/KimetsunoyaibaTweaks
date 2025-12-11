@@ -89,6 +89,21 @@ public class ModEntities {
                 .noSave() // Don't save to world (temporary entity)
                 .fireImmune()
                 .build("love_sword_slashes"));
+    
+
+    /**
+     * Love Sword Slashes - Visual effect entity for Love Breathing forms
+     * Spawns, plays specified animation, and despawns after lifetime
+     */
+    public static final RegistryObject<EntityType<LoveTornadoEntity>> LOVE_TORNADO =
+        ENTITY_TYPES.register("love_tornado",
+            () -> EntityType.Builder.of(LoveTornadoEntity::new, MobCategory.MISC)
+                .sized(20.0F, 20.0F) // Tornado effect size (doubled for bigger visual impact)
+                .clientTrackingRange(64) // Visible from distance
+                .updateInterval(1) // Update every tick for smooth animation
+                .noSave() // Don't save to world (temporary entity)
+                .fireImmune()
+                .build("love_tornado"));
 
     /**
      * Register entity types to the mod event bus
@@ -121,6 +136,9 @@ public class ModEntities {
 
             // Register attributes for Love Sword Slashes (visual-only entity)
             event.put(LOVE_SWORD_SLASHES.get(), LoveSwordSlashesEntity.createAttributes().build());
+
+            // Register attributes for Love Tornado (visual-only entity)
+            event.put(LOVE_TORNADO.get(), LoveTornadoEntity.createAttributes().build());
 
             if (Config.logDebug)
             Log.info("Entity attributes registered successfully");

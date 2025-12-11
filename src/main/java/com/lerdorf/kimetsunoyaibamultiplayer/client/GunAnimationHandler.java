@@ -587,7 +587,7 @@ public class GunAnimationHandler {
     public static void clearAll() {
         currentGunType.clear();
         currentAnimationState.clear();
-        if (Config.logDebug)
-        	Log.info("Cleared all gun animation data");
+        //if (Config.logDebug)
+        //	Log.info("Cleared all gun animation data");
     }
 }

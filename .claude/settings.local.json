@@ -35,7 +35,8 @@
       "Bash(git push:*)",
       "Bash(if [ -f \"C:\\Users\\carlf\\eclipse-workspace-2\\Kimetsunoyaiba-Multiplayer\\src\\main\\java\\com\\lerdorf\\kimetsunoyaibamultiplayer\\client\\KeyInputHandler.java\" ])",
       "Bash(then echo \"File still exists\")",
-      "Bash(else echo \"File successfully deleted\")"
+      "Bash(else echo \"File successfully deleted\")",
+      "Bash(fc /b:*)"
     ],
     "deny": [],
     "ask": []

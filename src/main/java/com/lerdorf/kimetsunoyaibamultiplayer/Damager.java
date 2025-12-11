@@ -240,10 +240,36 @@ public class Damager {
 	 * @param source The entity dealing the damage
 	 * @param target The entity receiving the damage
 	 * @param damage The amount of damage to deal
+	 * @return true if damage was applied, false otherwise
 	 */
-	public static void hurt(LivingEntity source, LivingEntity target, float damage) {
+	public static boolean hurt(LivingEntity source, LivingEntity target, float damage) {
+		return hurt(source, target, damage, false);
+	}
+
+	/**
+	 * Applies damage from a source entity to a target entity with optional invulnerability frame reset.
+	 *
+	 * REDUNDANCY: Uses multiple checks to determine if demon slayers should damage each other:
+	 * 1. Traditional isAngry() check (mob targeting)
+	 * 2. Damage history tracking (30-second window)
+	 * 3. If either indicates they are in combat, damage is allowed
+	 *
+	 * @param source The entity dealing the damage
+	 * @param target The entity receiving the damage
+	 * @param damage The amount of damage to deal
+	 * @param resetInvulnerability If true, resets the target's invulnerability frames before applying damage,
+	 *                            allowing the target to be damaged even if they were recently hit (within 10 ticks)
+	 * @return true if damage was applied, false otherwise
+	 */
+	public static boolean hurt(LivingEntity source, LivingEntity target, float damage, boolean resetInvulnerability) {
 		if (source == null || target == null) {
-			return;
+			return false;
+		}
+
+		// Reset invulnerability frames if requested
+		// This allows the target to take damage even if they were recently damaged
+		if (resetInvulnerability) {
+			target.invulnerableTime = 0;
 		}
 
 		if (isDemonSlayer(source) && isDemonSlayer(target)) {
@@ -257,13 +283,15 @@ public class Damager {
 			if (traditionallyAngry || hasRecentCombat) {
 				// They are fighting - damage is allowed
 				target.hurt(DamageCalculator.getDamageSource(source), damage);
+				return true;
 			} else {
 				// Not in combat - prevent friendly fire
-				return;
+				return false;
 			}
 		} else {
 			// Not both demon slayers - apply damage normally
 			target.hurt(DamageCalculator.getDamageSource(source), damage);
+			return true;
 		}
 	}
 }

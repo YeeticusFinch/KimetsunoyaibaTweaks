@@ -119,6 +119,13 @@ public class AnimationTracker {
                             KeyframeAnimationPlayer animPlayer = (KeyframeAnimationPlayer) innerAnim;
                             KeyframeAnimation data = animPlayer.getData();
                             if (data != null) {
+                                // Check if this is a sprint animation - if so, skip it and continue to next layer
+                                if (isSprintAnimation(data)) {
+                                    if (Config.logDebug) {
+                                        Log.info("Skipping sprint animation, looking for attack animations on other layers");
+                                    }
+                                    continue; // Skip sprint animation, check next layer
+                                }
                                 foundActiveAnimation = true;
                                 if (Config.logDebug) {
                                     Log.info("Processing wrapped keyframe animation for player {}", player.getName().getString());
@@ -132,6 +139,13 @@ public class AnimationTracker {
                             if (animPlayer != null) {
                                 KeyframeAnimation data = animPlayer.getData();
                                 if (data != null) {
+                                    // Check if this is a sprint animation - if so, skip it and continue to next layer
+                                    if (isSprintAnimation(data)) {
+                                        if (Config.logDebug) {
+                                            Log.info("Skipping sprint animation, looking for attack animations on other layers");
+                                        }
+                                        continue; // Skip sprint animation, check next layer
+                                    }
                                     foundActiveAnimation = true;
                                     if (Config.logDebug) {
                                         Log.info("Processing deeply nested keyframe animation for player {}", player.getName().getString());
@@ -146,6 +160,13 @@ public class AnimationTracker {
                         KeyframeAnimation data = animPlayer.getData();
 
                         if (data != null) {
+                            // Check if this is a sprint animation - if so, skip it and continue to next layer
+                            if (isSprintAnimation(data)) {
+                                if (Config.logDebug) {
+                                    Log.info("Skipping sprint animation, looking for attack animations on other layers");
+                                }
+                                continue; // Skip sprint animation, check next layer
+                            }
                             foundActiveAnimation = true;
                             if (Config.logDebug) {
                                 Log.info("Processing direct keyframe animation for player {}", player.getName().getString());
@@ -469,6 +490,37 @@ public class AnimationTracker {
 
         // Only sword_to_right and sword_to_left are basic left-click attacks
         return animationName.equals("sword_to_right") || animationName.equals("sword_to_left");
+    }
+
+    /**
+     * Determines if an animation is a sprint animation that should be skipped when looking for attack animations
+     * @param data The KeyframeAnimation data to check
+     * @return true if this is a sprint animation
+     */
+    private static boolean isSprintAnimation(KeyframeAnimation data) {
+        if (data == null) {
+            return false;
+        }
+
+        // Try to get animation name from extraData
+        try {
+            Field extraDataField = KeyframeAnimation.class.getDeclaredField("extraData");
+            extraDataField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> extraData = (Map<String, Object>) extraDataField.get(data);
+            if (extraData != null) {
+                Object name = extraData.get("name");
+                if (name instanceof String) {
+                    String animName = (String) name;
+                    // Check if it's a sprint animation
+                    return animName.equals("sprint") || animName.equals("sprint2");
+                }
+            }
+        } catch (Exception e) {
+            // Couldn't get extraData, not a sprint animation
+        }
+
+        return false;
     }
 
     /**

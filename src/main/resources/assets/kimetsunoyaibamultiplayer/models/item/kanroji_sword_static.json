@@ -1161,14 +1161,14 @@
 		},
 		"gui": {
 			"rotation": [28.96, 11.96, -40.25],
-			"translation": [10, 11.25, 0],
+			"translation": [11.25, 13.25, 0],
 			"scale": [0.9, 0.9, 0.9]
 		},
 		"head": {
 			"translation": [0, 11.25, 0]
 		},
 		"fixed": {
-			"rotation": [180, -88.25, 180],
+			"rotation": [-180, -88.25, -180],
 			"translation": [7.75, 7, 0]
 		},
 		"on_shelf": {

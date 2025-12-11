@@ -236,8 +236,8 @@ public class CrowQuestMarkerHandler {
      */
     static void clearAllMarkers() {
         activeQuests.clear();
-        if (Config.logDebug)
-            Log.info("Cleared all quest markers");
+        //if (Config.logDebug)
+        //    Log.info("Cleared all quest markers");
     }
 
     /**

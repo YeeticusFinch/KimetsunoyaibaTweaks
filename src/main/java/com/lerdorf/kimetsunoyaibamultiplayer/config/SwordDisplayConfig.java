@@ -46,6 +46,12 @@ public class SwordDisplayConfig {
             .comment("Scale of displayed swords (0.5 = half size, 1.0 = normal size, 2.0 = double size)")
             .defineInRange("scale", 1.0, 0.1, 5.0);
 
+    // Additional scale multiplier for sheaths
+    private static final ForgeConfigSpec.DoubleValue SHEATH_SCALE = BUILDER
+            .comment("Additional scale multiplier for sheaths (applied on top of sword scale)",
+                     "Example: sword scale=0.5, sheath scale=1.2 → sheath displays at 0.6 (0.5 * 1.2)")
+            .defineInRange("sheath_scale", 1.0, 0.1, 5.0);
+
     // Enable/disable sheath rendering
     private static final ForgeConfigSpec.BooleanValue RENDER_SHEATHS = BUILDER
             .comment("Enable rendering sword sheaths on the hip/back")
@@ -157,6 +163,7 @@ public class SwordDisplayConfig {
     public static boolean enabled;
     public static SwordDisplayPosition position;  // Default position
     public static double scale;
+    public static double sheathScale;
     public static boolean renderSheaths;
 
     // Per-sword position overrides (parsed from config)
@@ -201,6 +208,7 @@ public class SwordDisplayConfig {
         enabled = ENABLED.get();
         position = POSITION.get();
         scale = SCALE.get();
+        sheathScale = SHEATH_SCALE.get();
         renderSheaths = RENDER_SHEATHS.get();
 
         // Load hip position values
@@ -253,7 +261,7 @@ public class SwordDisplayConfig {
 
         Log.debug("Sword display config loaded: enabled=" + enabled +
                          ", defaultPosition=" + position + ", scale=" + scale +
-                         ", renderSheaths=" + renderSheaths +
+                         ", sheathScale=" + sheathScale + ", renderSheaths=" + renderSheaths +
                          ", overrides=" + swordPositionOverrides.size());
     }
 

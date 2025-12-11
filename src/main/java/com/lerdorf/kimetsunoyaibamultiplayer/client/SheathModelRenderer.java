@@ -40,6 +40,8 @@ public class SheathModelRenderer {
 
 	/**
 	 * Renders a sheath item at the current pose stack position
+	 * Note: Sword scale should be applied by the caller (e.g., SwordDisplayRenderer)
+	 * This applies the global sheath scale multiplier and per-sheath scale multiplier
 	 */
 	public static void renderSheath(Item sheathItem, PoseStack poseStack,
 	                               MultiBufferSource buffer, int packedLight, int levelId) {
@@ -51,14 +53,14 @@ public class SheathModelRenderer {
 	        Minecraft mc = Minecraft.getInstance();
 	        ItemStack sheathStack = new ItemStack(sheathItem);
 
-	        // Apply combined scale: global config scale * per-sheath scale
-	        float globalScale = (float) SwordDisplayConfig.scale;
+	        // Apply global sheath scale * per-sheath scale (sword scale already applied by caller)
+	        float globalSheathScale = (float) SwordDisplayConfig.sheathScale;
 	        float perSheathScale = getSheathScale(sheathItem);
-	        float combinedScale = globalScale * perSheathScale;
+	        float combinedSheathScale = globalSheathScale * perSheathScale;
 
-	        if (combinedScale != 1.0f) {
+	        if (combinedSheathScale != 1.0f) {
 	            poseStack.pushPose();
-	            poseStack.scale(combinedScale, combinedScale, combinedScale);
+	            poseStack.scale(combinedSheathScale, combinedSheathScale, combinedSheathScale);
 	        }
 
 	        // Render the sheath item
@@ -73,7 +75,7 @@ public class SheathModelRenderer {
 	            levelId
 	        );
 
-	        if (combinedScale != 1.0f) {
+	        if (combinedSheathScale != 1.0f) {
 	            poseStack.popPose();
 	        }
 

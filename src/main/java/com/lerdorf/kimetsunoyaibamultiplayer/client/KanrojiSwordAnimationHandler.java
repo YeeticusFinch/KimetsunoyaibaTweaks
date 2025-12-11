@@ -326,6 +326,11 @@ public class KanrojiSwordAnimationHandler {
             case "kanroji_sword_overhead":
             case "sword_rotate":
             case "love_first_form":
+            case "love_second_form":
+            case "love_third_form":
+            case "love_fourth_form":
+            case "love_fifth_form":
+            case "love_sixth_form":
                 return true;
             default:
                 return false;
@@ -376,6 +381,14 @@ public class KanrojiSwordAnimationHandler {
                 return 1500; // 1.5 seconds
             case "love_first_form":
                 return 4600; // 4.6 seconds (92 ticks)
+            case "love_second_form":
+                return 2700; // 2.7 seconds (54 ticks)
+            case "love_third_form":
+                return 2400; // 2.4 seconds (48 ticks)
+            case "love_fifth_form":
+                return 7500; // 7.5 seconds (150 ticks)
+            case "love_sixth_form":
+                return 2500; // 2.5 seconds (50 ticks)
             default:
                 return 1000; // Default 1 second
         }

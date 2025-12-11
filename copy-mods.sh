@@ -89,6 +89,7 @@ JAR_FILE="$NAMED_REOBF_JAR"
 
 # Define Minecraft instance paths
 INSTANCES=(
+    'C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite(3)/minecraft/mods/'
     'C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite(2)/minecraft/mods/'
     'C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite(1)/minecraft/mods/'
     'C:/Users/carlf/AppData/Roaming/PrismLauncher/instances/Demon Slayer Lite/minecraft/mods/'
