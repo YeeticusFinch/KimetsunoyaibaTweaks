@@ -34,6 +34,10 @@ public class Config
             .comment("Enable on-screen debug information display")
             .define("on-screen-debug", false);
 
+    private static final ForgeConfigSpec.BooleanValue SHOW_BREATHES_VALUE = BUILDER
+            .comment("Show the raw breathes NBT value in the breathing display (useful for debugging form IDs)")
+            .define("show-breathes-value", false);
+
     // Breathing form display settings
     private static final ForgeConfigSpec.BooleanValue SHOW_BREATHING_DISPLAY = BUILDER
             .comment("Show on-screen breathing form display when holding a nichirin sword")
@@ -84,6 +88,7 @@ public class Config
     public static boolean logInfo;
     public static boolean logError;
     public static boolean onScreenDebug;
+    public static boolean showBreathesValue;
     public static boolean showBreathingDisplay;
     public static DisplayPosition breathingDisplayPosition;
     public static double breathingDisplayScale;
@@ -102,6 +107,7 @@ public class Config
         logInfo = LOG_INFO.get();
         logError = LOG_ERROR.get();
         onScreenDebug = ON_SCREEN_DEBUG.get();
+        showBreathesValue = SHOW_BREATHES_VALUE.get();
         showBreathingDisplay = SHOW_BREATHING_DISPLAY.get();
         breathingDisplayPosition = BREATHING_DISPLAY_POSITION.get();
         breathingDisplayScale = BREATHING_DISPLAY_SCALE.get();

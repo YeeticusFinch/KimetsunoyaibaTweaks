@@ -39,8 +39,9 @@ public class BreathingFormChatFilter {
     // Form/attack keywords that appear in ability names
     private static final String[] FORM_KEYWORDS = {
         "Form", "form", "FORM",
+        "Fang", "fang", // for beast breathing
         "型", // Japanese for "form/kata"
-        "Dance", "dance", // For Hinokami Kagura
+        "Dance", "dance", "Kagura", "kagura", "Hinokami", "hinokami",// For Hinokami Kagura
         "Slash", "Strike", "Wheel", "Flash", "Spirit"
     };
 

@@ -67,8 +67,8 @@ public class BreathingFormAttackGoal extends Goal {
             // Face the target immediately before executing the form
             faceTarget(target);
 
-            // Execute the breathing form
-            form.getEffect().execute(this.entity, this.entity.level());
+            // Execute the breathing form (formId is auto-injected)
+            form.execute(this.entity, this.entity.level());
 
             // Set cooldown
             int cooldownTicks;

@@ -64,7 +64,22 @@ public class BreathingDisplayOverlay {
         Font font = mc.font;
 
         // Create the display component with color codes
-        Component displayText = Component.literal(info.getColoredDisplay());
+        String displayString = info.getColoredDisplay();
+
+        // If variations are available, append the count: (current/total)
+        // currentVariationIndex: 0 = base (shows as 1/N), 1 = first variation (shows as 2/N), etc.
+        if (info.totalVariations > 0) {
+            int currentPosition = info.currentVariationIndex + 1; // +1 because 0 = base form (position 1)
+            int totalPositions = info.totalVariations + 1; // +1 to include base form in count
+            displayString += " §8(" + currentPosition + "/" + totalPositions + ")";
+        }
+
+        // If config is enabled, show the raw breathes value for debugging
+        if (Config.showBreathesValue) {
+            displayString += " §7[Breathes: " + String.format("%.1f", info.fullBreathesValue) + "]";
+        }
+
+        Component displayText = Component.literal(displayString);
 
         // Apply scaling
         float scale = (float) Config.breathingDisplayScale;

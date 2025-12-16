@@ -16,10 +16,11 @@ This guide explains how to use the Kimetsu no Yaiba Multiplayer mod as a library
 2. [Adding as a Dependency](#adding-as-a-dependency)
 3. [Creating Nichirin Swords](#creating-nichirin-swords)
 4. [Creating Breathing Styles](#creating-breathing-styles)
-5. [Creating Custom Entities](#creating-custom-entities)
-6. [API Reference](#api-reference)
-7. [Best Practices](#best-practices)
-8. [Troubleshooting](#troubleshooting)
+5. [Registering Breathing Form Variations](#registering-breathing-form-variations)
+6. [Creating Custom Entities](#creating-custom-entities)
+7. [API Reference](#api-reference)
+8. [Best Practices](#best-practices)
+9. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -391,6 +392,24 @@ public class FrostBreathingForms {
 }
 ```
 
+### Form IDs
+
+**IMPORTANT**: Each breathing form requires a unique form ID.
+
+**Form ID Ranges:**
+- **0-1999**: Reserved (base KimetsunoYaiba mod forms)
+  - Example: 102 = Water Second Form, 701 = Mist First Form
+- **20000-21999**: Kimetsunoyaiba Tweaks internal forms
+  - 20001-20007 = Enhanced Mist Breathing
+  - 22001-22006 = Enhanced Love Breathing
+- **30000+**: Available for your mod
+  - Choose a unique range (e.g., 30000-30999 for your "Frost Breathing")
+
+**Why Form IDs Matter:**
+- Required for `GuardStateHelper.setGuardState()` (defensive power during forms)
+- Used by the variation system to register alternate forms
+- Only specified ONCE in the constructor - automatically passed to your effect
+
 ### Form Implementation Patterns
 
 #### Pattern 1: Basic Attack Form
@@ -398,12 +417,16 @@ public class FrostBreathingForms {
 ```java
 private static BreathingForm firstForm() {
     return new BreathingForm(
-        "First Form: Example Slash",
-        "A powerful horizontal strike",
+        30001, // Form ID - choose unique range >= 30000 for your mod
+        "First Form: Glacial Slash",
+        "A powerful horizontal ice strike",
         5, // Cooldown in seconds
-        (entity, level) -> {
+        (entity, level, formId) -> {
+            // formId is automatically 30001 - use it for GuardStateHelper
+            GuardStateHelper.setGuardState(entity, 8.0, formId);
+
             // Play animation
-            playEntityAnimation(entity, "sword_to_left");
+            AnimationHelper.playAnimation(entity, "sword_to_left");
 
             // Get targets in front
             Vec3 lookVec = entity.getLookAngle();
@@ -441,11 +464,13 @@ private static BreathingForm firstForm() {
 ```java
 private static BreathingForm secondForm() {
     return new BreathingForm(
-        "Second Form: Dash Attack",
-        "Dash forward with multiple strikes",
+        30002, // Form ID for Second Form
+        "Second Form: Frost Dash",
+        "Dash forward with multiple ice strikes",
         6,
-        (entity, level) -> {
-            playEntityAnimation(entity, "sword_to_left");
+        (entity, level, formId) -> {
+            GuardStateHelper.setGuardState(entity, 10.0, formId);
+            AnimationHelper.playAnimation(entity, "sword_to_left");
 
             // Apply speed buff
             entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 60, 2));
@@ -645,6 +670,218 @@ From `player-animation-lib`:
 Animation layers:
 - **Layer 3000**: Base animations (main ability)
 - **Layer 4000**: Overlay animations (attacks during abilities)
+
+---
+
+## Registering Breathing Form Variations
+
+**Variations** allow you to create alternate versions of existing breathing forms. They work with both:
+- **Base mod forms** (0-1999 form IDs from KimetsunoYaiba mod)
+- **Custom forms** (30000+ form IDs from your mod or other mods)
+
+Variations are cycled with the **G key** (or mouse button 4) and persist per player across all swords that use that breathing style.
+
+### How Variations Work
+
+1. **Auto-Assigned Indices**: Variations are assigned indices (1, 2, 3...) in the order they're registered
+2. **Index 0 = Base Form**: The original form is always index 0
+3. **Player Selection Persists**: Each player's variation choice is saved to NBT
+4. **Sword-Specific or Global**: Variations can apply to all swords or specific swords
+
+### Registering Variations for Base Mod Forms
+
+To add variations for breathing forms from the base KimetsunoYaiba mod:
+
+```java
+package com.yourmod.variations;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import net.minecraft.world.level.Level;
+import java.util.Collections;
+
+public class WaterBreathingVariations {
+
+    public static void register() {
+        // Water Breathing Second Form has form ID 102 (breathes value 102.0)
+        // Register two variations for it
+
+        // Variation 1: Lateral Water Wheel
+        BreathingFormVariation lateralWheel = new BreathingFormVariation(
+            "Second Form: Lateral Water Wheel",
+            "Spinning water wheel attack with wider horizontal range",
+            3, // 3 second cooldown
+            (entity, level, formId) -> {
+                Log.debug("Executing Lateral Water Wheel (Form ID: " + formId + ")");
+
+                // Your custom effect implementation
+                // This completely replaces the base form's effect
+
+                // Example: Set defensive power using auto-injected formId
+                // GuardStateHelper.setGuardState(entity, 8.0, formId);
+
+                // Add your particles, damage, movement, etc.
+            },
+            Collections.emptySet() // Empty = applies to all Water Breathing swords
+        );
+
+        // Register for form ID 102 (Water Second Form)
+        // Auto-assigned variation index: 1
+        VariationRegistry.register(102, lateralWheel);
+
+        // Variation 2: Rolling Water Wheel
+        BreathingFormVariation rollingWheel = new BreathingFormVariation(
+            "Second Form: Rolling Water Wheel",
+            "Water wheel that can curve around obstacles",
+            4,
+            (entity, level, formId) -> {
+                Log.debug("Executing Rolling Water Wheel (Form ID: " + formId + ")");
+                // Your custom effect implementation
+            },
+            Collections.emptySet()
+        );
+
+        // Auto-assigned variation index: 2
+        VariationRegistry.register(102, rollingWheel);
+
+        Log.info("Registered 2 variations for Water Breathing Second Form (ID 102)");
+    }
+}
+```
+
+**Base Mod Form IDs:**
+- Water Breathing: 101-111 (First-Eleventh Form)
+- Beast Breathing: 201-211
+- Thunder Breathing: 301-306
+- Flame Breathing: 401-409
+- Wind Breathing: 501-509
+- Stone Breathing: 601-605
+- Mist Breathing: 701-707
+- Serpent Breathing: 801-805
+- Sound Breathing: 901-905
+- Love Breathing: 1501-1505
+
+*(Full list in `BaseModStyleMapping.java`)*
+
+### Registering Variations for Custom Forms
+
+To add variations for your own breathing forms:
+
+```java
+package com.yourmod.variations;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
+import java.util.Collections;
+
+public class FrostBreathingVariations {
+
+    public static void register() {
+        // Frost Breathing First Form has form ID 30001 (from our custom breathing style)
+
+        // Variation 1: Extended Glacial Slash
+        BreathingFormVariation extendedSlash = new BreathingFormVariation(
+            "First Form: Extended Glacial Slash",
+            "Longer range ice slash with increased damage",
+            6,
+            (entity, level, formId) -> {
+                // formId will be 30001 (auto-injected)
+                // Your custom effect implementation
+            },
+            Collections.emptySet()
+        );
+
+        // Auto-assigned variation index: 1
+        VariationRegistry.register(30001, extendedSlash);
+
+        // Variation 2: Rapid Glacial Slash
+        BreathingFormVariation rapidSlash = new BreathingFormVariation(
+            "First Form: Rapid Glacial Slash",
+            "Faster attack speed but normal range",
+            3,
+            (entity, level, formId) -> {
+                // Your custom effect implementation
+            },
+            Collections.emptySet()
+        );
+
+        // Auto-assigned variation index: 2
+        VariationRegistry.register(30001, rapidSlash);
+    }
+}
+```
+
+### Sword-Specific Variations
+
+To create variations that only work with specific swords:
+
+```java
+import java.util.Set;
+
+// Variation only for Frost Breathing swords
+BreathingFormVariation frostOnlyVariation = new BreathingFormVariation(
+    "Frost-Only Variation",
+    "Only available when using Frost Breathing swords",
+    5,
+    (entity, level, formId) -> {
+        // Effect implementation
+    },
+    Set.of("nichirinsword_frost") // Only applies to this sword ID
+);
+
+VariationRegistry.register(30001, frostOnlyVariation);
+
+// Variation for multiple specific swords
+BreathingFormVariation multiSwordVariation = new BreathingFormVariation(
+    "Multi-Sword Variation",
+    "Works with Frost and Ice swords",
+    5,
+    (entity, level, formId) -> {
+        // Effect implementation
+    },
+    Set.of("nichirinsword_frost", "nichirinsword_ice")
+);
+
+VariationRegistry.register(30001, multiSwordVariation);
+```
+
+### Calling Your Registration Method
+
+In your main mod class:
+
+```java
+@Mod.EventBusSubscriber(modid = YourMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+public class YourMod {
+
+    @SubscribeEvent
+    public static void onCommonSetup(FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            // Register your variations AFTER breathing styles are registered
+            WaterBreathingVariations.register();
+            FrostBreathingVariations.register();
+        });
+    }
+}
+```
+
+### Usage In-Game
+
+1. **Cycle Forms**: Press **R** to cycle through breathing forms (First, Second, Third...)
+2. **Cycle Variations**: Press **G** (or mouse button 4) to cycle variations of current form
+   - Display shows: `(1/3)` = Base form, `(2/3)` = First variation, `(3/3)` = Second variation
+3. **Backward Cycling**: Hold **Shift** + **G** to cycle variations backward
+4. **Persistence**: Variation selection is saved per player and persists across logout/login
+
+### Key Points
+
+- **Form ID must exist**: You can only register variations for forms that actually exist
+- **Registration order matters**: Variations get indices 1, 2, 3... in registration order
+- **No duplicate IDs needed**: The form ID is the only ID needed - variations auto-index
+- **Complete replacement**: Variations completely replace the base form's effect
+- **Auto-injected formId**: The `formId` parameter in the lambda is automatically injected
+- **Multiplayer synced**: Variation changes are automatically synced to all clients
+- **Config compatible**: Respects `VariationConfig.isBlacklisted()` for disabled variations
 
 ---
 
@@ -852,9 +1089,57 @@ DamageCalculator.calculateScaledDamage(entity, baseDamage)
 ```
 
 #### Damager
+
+The `Damager` class provides safe damage application that prevents event recursion issues. There are two versions:
+
 ```java
-Damager.hurt(attacker, target, damage)  // Prevents recursion issues
+// Original version - uses default invulnerability frames
+Damager.hurt(LivingEntity source, LivingEntity target, float damage)
+
+// New version - with invulnerability control
+Damager.hurt(LivingEntity source, LivingEntity target, float damage, boolean resetInvulnerability)
 ```
+
+**Parameters:**
+- `source` - The entity dealing the damage (attacker)
+- `target` - The entity receiving the damage
+- `damage` - Amount of damage to deal
+- `resetInvulnerability` - If true, resets invulnerability frames allowing rapid successive hits
+
+**Reset Invulnerability:**
+
+By default, when an entity takes damage, they get **10 ticks (~0.5 seconds) of invulnerability frames** where they cannot be damaged again. This prevents the same attack from hitting multiple times.
+
+However, for **rapid multi-hit attacks** (like Love Breathing's whip flurry or Mist Breathing's continuous slashes), you may want every hit to deal damage. Set `resetInvulnerability = true` to override the invulnerability frames.
+
+**Examples:**
+
+```java
+// Standard single-hit attack - use default invulnerability
+Damager.hurt(player, target, 10.0f);
+
+// Multi-hit combo - reset invulnerability for each hit
+for (int i = 0; i < 5; i++) {
+    AbilityScheduler.scheduleOnce(player, () -> {
+        Damager.hurt(player, target, 3.0f, true); // Each hit damages
+    }, i * 2); // Hit every 2 ticks
+}
+
+// Fast continuous slashes (hits every tick)
+AbilityScheduler.scheduleRepeating(player, () -> {
+    List<LivingEntity> targets = getNearbyTargets();
+    for (LivingEntity target : targets) {
+        Damager.hurt(player, target, 2.0f, true); // Bypass invulnerability
+    }
+}, 1, 20); // Every tick for 20 ticks
+```
+
+**When to Use Reset Invulnerability:**
+
+- ✅ **Use `true`** for: Multi-hit combos, rapid slashes, continuous beam attacks, whip flurries
+- ❌ **Use `false`** (or default) for: Single powerful strikes, area-of-effect explosions, projectile hits
+
+**Important:** Overusing `resetInvulnerability = true` can make attacks feel unfair or cause excessive damage. Use it intentionally for forms designed as rapid multi-hit attacks.
 
 #### AbilityScheduler
 ```java

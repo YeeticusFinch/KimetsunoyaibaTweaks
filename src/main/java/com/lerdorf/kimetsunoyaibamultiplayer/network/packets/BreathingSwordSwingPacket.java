@@ -5,6 +5,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
@@ -32,9 +33,23 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraftforge.network.NetworkEvent;
 
 public class BreathingSwordSwingPacket {
-	public BreathingSwordSwingPacket() {}
-    public BreathingSwordSwingPacket(FriendlyByteBuf buf) {}
-    public void toBytes(FriendlyByteBuf buf) {}
+    private final String animationName;
+
+    public BreathingSwordSwingPacket() {
+        this.animationName = "";
+    }
+
+    public BreathingSwordSwingPacket(String animationName) {
+        this.animationName = animationName != null ? animationName : "";
+    }
+
+    public BreathingSwordSwingPacket(FriendlyByteBuf buf) {
+        this.animationName = buf.readUtf(32767);
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+        buf.writeUtf(this.animationName);
+    }
 
     private static final float DEFAULT_BOX_SIZE = 5f;
     private static final float KANROJI_BOX_SIZE = 10f; // Increased range for Kanroji's whip sword
@@ -113,8 +128,104 @@ public class BreathingSwordSwingPacket {
                 Log.debug("AOE attack hit {} entities (boxSize={}, isKanroji={})",
                     targets.size(), boxSize, isKanrojiSword);
             }
+
+            // Spawn particle trail for Kanroji sword swings (sword_to_left and sword_to_right animations)
+            if (isKanrojiSword && player.level() instanceof ServerLevel serverLevel) {
+                spawnKanrojiSwordTrailParticles(player, serverLevel, animationName);
+            }
         });
         ctx.setPacketHandled(true);
         return true;
+    }
+
+    /**
+     * Spawn particle trail for Kanroji sword swing animations (sword_to_left and sword_to_right)
+     */
+    private void spawnKanrojiSwordTrailParticles(ServerPlayer player, ServerLevel serverLevel, String animName) {
+        // Only spawn particles for sword_to_left and sword_to_right animations
+        if (!animName.equals("sword_to_left") && !animName.equals("sword_to_right")) {
+            return;
+        }
+
+        // Get particle position data from ParticlePositions
+        Map<String, float[][][]> particleMap = null;
+        if (animName.equals("sword_to_left")) {
+            particleMap = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticlePositions.sword_to_left;
+        } else if (animName.equals("sword_to_right")) {
+            particleMap = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticlePositions.sword_to_right;
+        }
+
+        if (particleMap == null) {
+            if (Config.logDebug) {
+                Log.debug("No ParticlePositions map found for animation: {}", animName);
+            }
+            return;
+        }
+
+        float[][][] particlePoints = particleMap.get("point_a");
+        if (particlePoints == null || particlePoints.length == 0) {
+            if (Config.logDebug) {
+                Log.debug("No particle points found in map for animation: {}", animName);
+            }
+            return;
+        }
+
+        // Track current tick for particle spawning
+        final int[] currentTick = {0};
+        final int totalTicks = particlePoints.length;
+
+        // Get initial forward and right vectors using yaw (handles looking up/down)
+        final Vec3[] vectors = new Vec3[2];
+        float yawRad = (float) Math.toRadians(-player.getYRot());
+        vectors[0] = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
+        // Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
+        vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
+
+        // Schedule particle spawning for each tick of the animation
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler.scheduleRepeating(player, () -> {
+            // Update vectors every 4 ticks to account for player rotation
+            if (currentTick[0] % 4 == 0) {
+                float yaw = (float) Math.toRadians(-player.getYRot());
+                vectors[0] = new Vec3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
+                vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
+            }
+
+            // Spawn particles for current tick
+            if (currentTick[0] < particlePoints.length && particlePoints[currentTick[0]].length > 0) {
+                for (int i = 0; i < particlePoints[currentTick[0]].length; i++) {
+                    float x = particlePoints[currentTick[0]][i][0];
+                    float y = particlePoints[currentTick[0]][i][1];
+                    float z = particlePoints[currentTick[0]][i][2];
+
+                    Vec3 pos = player.position().add(vectors[0].scale(z).add(vectors[1].scale(x)).add(0, y, 0));
+
+                    // Spawn pink dust particle at pos
+                    serverLevel.sendParticles(
+                        new net.minecraft.core.particles.DustParticleOptions(
+                            new org.joml.Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                            1.2f                                      // scale
+                        ),
+                        pos.x, pos.y, pos.z,
+                        2, 0.05, 0.05, 0.05, 0 // count, velocity
+                    );
+
+                    // Spawn white dust particle at pos
+                    serverLevel.sendParticles(
+                        new net.minecraft.core.particles.DustParticleOptions(
+                            new org.joml.Vector3f(1.0f, 1.0f, 1.0f), // WHITE
+                            1f                                        // scale
+                        ),
+                        pos.x, pos.y, pos.z,
+                        1, 0, 0, 0, 0 // count, velocity
+                    );
+                }
+            }
+
+            currentTick[0]++;
+        }, 1, totalTicks); // Run for totalTicks iterations, once per tick
+
+        if (Config.logDebug) {
+            Log.debug("Started Kanroji sword trail particles for animation: {} ({} ticks)", animName, totalTicks);
+        }
     }
 }

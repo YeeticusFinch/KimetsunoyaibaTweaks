@@ -1,6 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -109,6 +108,99 @@ public class EnhancedMistForms {
                     serverPlayer);
         }
     }
+    
+    /*
+    public static BreathingForm firstForm() {
+        return new BreathingForm(
+            60001, // Star First Form ID
+            "First Form: Comet Flash", // name
+            "Swift arching slash", // description
+            2, // 2 second cooldown
+            (entity, level, formId) -> {
+            	
+            	static String modelKey = "star"; // this is the name of the slash model
+            	
+            	float damage = DamageCalculator.calculateScaledDamage(entity, 9.0F); // scale the damage based on potion effects
+
+            	int tickDuration = 20; // form lasts 20 ticks
+            	
+                // Set guard state - defensive power 9.0 to match offensive damage (formId auto-injected as 20001)
+				GuardStateHelper.setGuardState(entity, 9.0, formId);
+				
+				// Play animation
+				playEntityAnimation(entity, "sword_to_right");
+
+				// Prevent the attacks from triggering unwanted sword swings and particles (like
+				// from the left click attacks)
+				setCancelAttackSwing(entity, true);
+				
+				Vec3 lookVec = entity.getLookAngle(); // this is a unit vector pointing in the entity's direction
+				
+				// Apply damage to targets in front
+				Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
+				Vec3 endPos = startPos.add(lookVec.scale(6.0));
+
+				AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
+				List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
+						e -> e != entity && e.isAlive()); // only collect living targets that aren't the entity
+				
+				for (LivingEntity le : targets) {
+					Damager.hurt(entity, le, damage); // damage the target (entity is the source, le is the target)
+					MovementHelper.setVelocity(le, lookVec.scale(0.9f).add(0, 0.5f, 0)); // Apply knockback
+				}
+				
+				// Spawn particles and slash models (server-side only)
+				if (level instanceof ServerLevel serverLevel) {
+
+					double yawRad = Math.toRadians(entity.getYRot()+20); // get the yaw rotation of the entity
+					
+					Vec3 pos = entity.position();
+					
+					int arcLength = 140;
+					
+					// Send raw slash render request to all clients (this is the slash model)
+					BonePositionTracker.sendRawHorizontalSlashToClients(
+							level, // level
+							new Vec3(0, 0, 0), // this is a position offset
+							modelKey, // model key
+							(float)0, // hor
+							false, // reverse
+							arcLength, // arc range (in degrees)
+							120, // duration (in milliseconds)
+							0, // yaw offset (in radians)
+							0, // pitch offset (in radians)
+							0, // roll offset  (in radians)
+							1.2f, // radius scalar
+							1.1f, // size scalar
+							15, // angle offset
+							entity.getUUID(), // entity id
+							"sword_to_left"); // animation name
+					
+					// This spawns particles in an arc shape
+					// Center at pos, angled horizontally with yawRad, vertically with 0 (it's horizontal), Radius is 2 blocks, radius increment is 0.2, length is arcLength in degrees, with 15 degree spacing, 0.2 is the vertical to horizontal ratio (so mostly horizontal), using end rod particles, and just 1 particle count per point
+					ParticleHelper.spawnHorizontalArc(serverLevel, pos, yawRad, 0,
+							2, 0.2, arcLength, 15, 0.2, ParticleTypes.END_ROD,
+							1);
+				}
+				
+				
+				
+				// Reset NBT tags after form
+                AbilityScheduler.scheduleOnce(entity, () -> {
+
+                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
+                    GuardStateHelper.clearGuardState(entity);
+
+                    // Re-enable normal attack swings and particles
+                    setCancelAttackSwing(entity, false);
+                }, tickDuration);
+                
+                // Play an attack sound
+                level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS,
+						1.0F, 1.0F);
+				
+            });
+    }*/
 
     /**
      * First Form: Low Clouds, Distant Haze
@@ -116,13 +208,14 @@ public class EnhancedMistForms {
      */
     public static BreathingForm firstForm() {
         return new BreathingForm(
+            20001, // Mist First Form ID
             "First Form: Low Clouds, Distant Haze",
             "Dash forward through a veil of mist with a singular stab",
             2, // 2 second cooldown
-            (entity, level) -> {
-            	
-                // Set guard state - defensive power 9.0 to match offensive damage
-				GuardStateHelper.setGuardState(entity, 9.0, 20001); // ID 20001 for Mist Breathing
+            (entity, level, formId) -> {
+
+                // Set guard state - defensive power 9.0 to match offensive damage (formId auto-injected as 20001)
+				GuardStateHelper.setGuardState(entity, 9.0, formId);
 
 				// Use default player step height (0.6f) for reset
 				final float originalStepHeight = 0.6f;
@@ -222,12 +315,13 @@ public class EnhancedMistForms {
      */
     public static BreathingForm secondForm() {
         return new BreathingForm(
+            20002, // Mist Second Form ID
             "Second Form: Eight-Layered Mist",
             "Perform eight slashes in super quick succession",
             5, // 5 second cooldown
-            (entity, level) -> {
+            (entity, level, formId) -> {
             	float damage = DamageCalculator.calculateScaledDamage(entity, 7F);
-            	GuardStateHelper.setGuardState(entity, damage*2, 20002);
+            	GuardStateHelper.setGuardState(entity, damage*2, formId);
                 //playEntityAnimation(entity, "sword_to_right");
                 
                 // Perform 8 rapid slashes
@@ -375,12 +469,13 @@ public class EnhancedMistForms {
      */
     public static BreathingForm thirdForm() {
         return new BreathingForm(
+            20003, // Mist Third Form ID
             "Third Form: Scattering Mist Splash",
             "Scatter enemies with a wide mist wave",
             4, // 4 second cooldown
-            (entity, level) -> {
+            (entity, level, formId) -> {
                 float damage = DamageCalculator.calculateScaledDamage(entity, 7.0F);
-            	GuardStateHelper.setGuardState(entity, damage, 20003);
+            	GuardStateHelper.setGuardState(entity, damage, formId);
                 playEntityAnimation(entity, "sword_rotate");
 
                 // Spinning 360-degree attack
@@ -479,12 +574,13 @@ public class EnhancedMistForms {
      */
     public static BreathingForm fourthForm() {
         return new BreathingForm(
+            20004, // Mist Fourth Form ID
             "Fourth Form: Shifting Flow Slash",
             "Take a low stance and dash toward target with a powerful slash",
             4, // 4 second cooldown
-            (entity, level) -> {
+            (entity, level, formId) -> {
             	float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
-            	GuardStateHelper.setGuardState(entity, damage, 20004);
+            	GuardStateHelper.setGuardState(entity, damage, formId);
             	MovementHelper.lookAtTarget(entity);
 				shiftingFlowSlash(level, entity, 40, damage);
 
@@ -608,12 +704,13 @@ public class EnhancedMistForms {
      */
     public static BreathingForm fifthForm() {
         return new BreathingForm(
+            20005, // Mist Fifth Form ID
             "Fifth Form: Sea of Clouds and Haze",
             "Charge at target in zig-zag motion with barrage of slashes",
             6, // 6 second cooldown
-            (entity, level) -> {
+            (entity, level, formId) -> {
             	double damage = DamageCalculator.calculateScaledDamage(entity, 5F);
-            	GuardStateHelper.setGuardState(entity, damage, 20005); // ID 20001 for Mist Breathing
+            	GuardStateHelper.setGuardState(entity, damage, formId);
             	GuardStateHelper.setAttackState(entity, damage);
 				
 				final float originalStepHeight = 0.6f;
@@ -777,12 +874,13 @@ public class EnhancedMistForms {
      */
     public static BreathingForm sixthForm() {
         return new BreathingForm(
+            20006, // Mist Sixth Form ID
             "Sixth Form: Lunar Dispersing Mist",
             "Leap into air, charge forward with multiple slashes, then deliver circular vertical slash",
             7, // 7 second cooldown
-            (entity, level) -> {
+            (entity, level, formId) -> {
             	double damage = DamageCalculator.calculateScaledDamage(entity, 12F);
-            	GuardStateHelper.setGuardState(entity, damage*2, 20006); // ID 20001 for Mist Breathing
+            	GuardStateHelper.setGuardState(entity, damage*2, formId);
                 playEntityAnimation(entity, "backstep");
                 
                 final float originalStepHeight = 0.6f;
@@ -1033,15 +1131,16 @@ public class EnhancedMistForms {
      */
     public static BreathingForm seventhForm() {
         return new BreathingForm(
+            20007, // Mist Seventh Form ID
             "Seventh Form: Obscuring Clouds",
             "Blanket the battlefield in thick mist, spawn ghostly clones, and teleport through enemies",
             15, // 10 second cooldown
-            (entity, level) -> {
+            (entity, level, formId) -> {
                 if (Config.logDebug) {
                     Log.debug("Enhanced Mist 7th Form: Starting for {}", entity.getName().getString());
                 }
-                
-                GuardStateHelper.setGuardState(entity, 10, 20007);
+
+                GuardStateHelper.setGuardState(entity, 10, formId);
 
                 // Play initial animation
                 playEntityAnimation(entity, "sword_overhead");

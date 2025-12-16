@@ -46,6 +46,7 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -113,6 +114,7 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.class);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "kimetsunoyaibamultiplayer/common.toml");
@@ -126,6 +128,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.SPEC, "kimetsunoyaibamultiplayer/raids.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_breathing.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig.SPEC, "kimetsunoyaibamultiplayer/customnpcs.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.SPEC, "kimetsunoyaibamultiplayer/variations.toml");
     }
 
     public static final Capability<ISwordWielderData> SWORD_WIELDER_DATA = CapabilityManager.get(new CapabilityToken<>() {});
@@ -219,6 +222,9 @@ public class KimetsunoyaibaMultiplayer
                 );
             }
 
+            // Register example breathing form variations
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.WaterVariations.register();
+
             Log.info("Registered built-in swords in SwordRegistry");
         });
     }
@@ -243,6 +249,54 @@ public class KimetsunoyaibaMultiplayer
     public void onServerStarting(ServerStartingEvent event)
     {
         Log.info("Kimetsunoyaiba Multiplayer server starting");
+    }
+
+    /**
+     * Sync breathing form and variation data when player joins the server.
+     * This is critical for multiplayer functionality - ensures client has current state.
+     */
+    @SubscribeEvent
+    public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event)
+    {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            // Get player's current breathing data
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
+                com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(serverPlayer);
+
+            // Sync base mod breathes value to client (includes encoded variation)
+            double breathes = serverPlayer.getPersistentData().getDouble("breathes");
+            if (breathes > 0) {
+                if (com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping.isKnownFormId(
+                        com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(breathes))) {
+                    data.setBaseModBreathesValue(breathes);
+                }
+                ModNetworking.sendToPlayer(
+                    new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathesValueSyncPacket(
+                        serverPlayer.getUUID(),
+                        breathes
+                    ),
+                    serverPlayer
+                );
+            }
+            // Sync variation index separately
+            ModNetworking.sendToPlayer(
+                new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket(
+                    serverPlayer.getUUID(),
+                    data.getCurrentVariationIndex()
+                ),
+                serverPlayer
+            );
+
+            if (Config.logDebug) {
+                // Decode form index to show base form and variation
+                int encodedFormIndex = data.getCurrentFormIndex();
+                int baseFormIndex = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(encodedFormIndex);
+                int variationIndex = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getVariationIndex(encodedFormIndex);
+
+                Log.debug("Synced breathing data to joining player: " + serverPlayer.getName().getString() +
+                         " (form: " + baseFormIndex + ", variation: " + variationIndex + ", breathes: " + breathes + ")");
+            }
+        }
     }
 
     /**
@@ -287,6 +341,37 @@ public class KimetsunoyaibaMultiplayer
         // DebugParticlesCommand.register(event.getDispatcher()); // REMOVED: Uses client-only SwordParticleHandler and BonePositionTracker
         // TestAnimCommand.register(event.getDispatcher()); // REMOVED: Uses client-only SwordParticleHandler
         TestCrowQuestCommand.register(event.getDispatcher());
+    }
+
+    @SubscribeEvent
+    public void onPlayerTick(net.minecraftforge.event.TickEvent.PlayerTickEvent event) {
+        if (event.phase != net.minecraftforge.event.TickEvent.Phase.END) {
+            return;
+        }
+        if (event.player.level().isClientSide()) {
+            return;
+        }
+        net.minecraft.world.entity.player.Player player = event.player;
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
+
+        var main = player.getMainHandItem();
+        String key = main.isEmpty() ? "" : main.getItem().toString();
+        if (!main.isEmpty() && main.getOrCreateTag().contains("select")) {
+            key += "#select_" + main.getOrCreateTag().getDouble("select");
+        }
+
+        if (!key.equals(data.getLastSwordKey())) {
+            data.setLastSwordKey(key);
+            data.setCurrentVariationIndex(0);
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.saveToNBT(player);
+            if (player instanceof net.minecraft.server.level.ServerPlayer sp) {
+                ModNetworking.sendToPlayer(
+                    new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket(player.getUUID(), 0),
+                    sp
+                );
+            }
+        }
     }
 
     // Prevent infinite recursion when AOE attacks trigger more events
@@ -392,6 +477,7 @@ public class KimetsunoyaibaMultiplayer
         {
             //event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD);
+            event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_FORM_VARIATION);
             if (Config.logDebug)
             	Log.info("Registered breathing technique cycling key bindings");
         }
@@ -580,8 +666,34 @@ public class KimetsunoyaibaMultiplayer
                         com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.updateDisplayTextFromChat(
                             mc.player.getUUID(), heldSword, message);
 
-                        if (Config.logDebug) {
-                            Log.debug("Cached breathing form display text for " + heldSword.getItem() + ": " + message);
+                        // CRITICAL: Also extract and cache the breathes value from the chat message
+                        com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.BreathingInfo info =
+                            com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.parseDisplayText(message);
+                        if (info != null) {
+                            // Store the breathes value so the display shows the correct form ID
+                            double cachedBreathes = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
+                                .getCachedForm(mc.player.getUUID(), heldSword);
+                            double breathesToStore = cachedBreathes > 0.0
+                                ? cachedBreathes
+                                : mc.player.getPersistentData().getDouble("breathes");
+                            if (breathesToStore == 0.0) {
+                                breathesToStore = info.fullBreathesValue; // Fallback to parsed pseudo value
+                            }
+
+                            com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.updateForm(
+                                mc.player.getUUID(), heldSword, breathesToStore);
+
+                            // Also cache the colored display text by form ID so base form names are preserved
+                            int formId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(breathesToStore);
+                            if (formId > 0) {
+                                com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.updateDisplayTextForForm(
+                                    mc.player.getUUID(), formId, info.originalColoredText);
+                            }
+
+                            if (Config.logDebug) {
+                                Log.debug("Cached breathing form from chat - breathes: " + info.fullBreathesValue +
+                                         " for " + heldSword.getItem() + ": " + message);
+                            }
                         }
                     }
                 }
@@ -645,7 +757,7 @@ public class KimetsunoyaibaMultiplayer
 
                     // Only send packet and set sticky bit if animation was actually played (cooldown check passed)
                     if (animationName != null) {
-                        ModNetworking.sendToServer(new BreathingSwordSwingPacket()); // For AOE damage (only our mod's swords)
+                        ModNetworking.sendToServer(new BreathingSwordSwingPacket(animationName)); // For AOE damage (only our mod's swords)
 
                         // Set the left-click attack flag (sticky bit) so AnimationTracker will spawn particles
                         com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.markLeftClickAttack(mc.player.getUUID());

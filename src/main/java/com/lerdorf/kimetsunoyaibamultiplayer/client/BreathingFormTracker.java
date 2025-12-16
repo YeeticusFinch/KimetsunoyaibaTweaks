@@ -23,6 +23,10 @@ public class BreathingFormTracker {
     // Keyed by both player UUID and sword item type, so switching swords remembers each sword's form
     private static final Map<UUID, Map<String, String>> formDisplayTextCache = new HashMap<>();
 
+    // Map: Player UUID -> (Form ID -> Display Text with colors)
+    // Stores the exact chat display text for a specific base form ID (e.g., 102)
+    private static final Map<UUID, Map<Integer, String>> formIdDisplayTextCache = new HashMap<>();
+
     /**
      * Updates the cached breathing form for a player's sword.
      */
@@ -85,6 +89,7 @@ public class BreathingFormTracker {
     public static void clearAll() {
         playerFormCache.clear();
         formDisplayTextCache.clear();
+        formIdDisplayTextCache.clear();
     }
 
     /**
@@ -100,6 +105,33 @@ public class BreathingFormTracker {
         String swordType = getSwordType(sword);
         formDisplayTextCache.computeIfAbsent(playerUUID, k -> new HashMap<>())
                 .put(swordType, displayText);
+    }
+
+    /**
+     * Updates the cached display text for a specific form ID (base mod forms).
+     */
+    public static void updateDisplayTextForForm(UUID playerUUID, int formId, String displayText) {
+        if (playerUUID == null || formId <= 0 || displayText == null) {
+            return;
+        }
+
+        formIdDisplayTextCache.computeIfAbsent(playerUUID, k -> new HashMap<>())
+            .put(formId, displayText);
+    }
+
+    /**
+     * Gets the cached display text for a specific form ID.
+     */
+    public static String getDisplayTextForForm(UUID playerUUID, int formId) {
+        if (playerUUID == null || formId <= 0) {
+            return null;
+        }
+
+        Map<Integer, String> byForm = formIdDisplayTextCache.get(playerUUID);
+        if (byForm == null) {
+            return null;
+        }
+        return byForm.get(formId);
     }
 
     /**

@@ -99,8 +99,8 @@ public class CustomBreathingExecutor {
                 Log.debug("  Cooldown: " + selectedForm.getCooldownSeconds() + "s");
             }
 
-            // Execute the breathing form effect
-            selectedForm.getEffect().execute(npc, npc.level());
+            // Execute the breathing form effect (formId is auto-injected)
+            selectedForm.execute(npc, npc.level());
 
             // Set cooldown (convert seconds to ticks: seconds * 20)
             int cooldownTicks = selectedForm.getCooldownSeconds() * 20;

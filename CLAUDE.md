@@ -14,6 +14,7 @@ Minecraft Forge 1.20.1 mod that enables synchronized player animations in multip
 - **Build Commands**: See [docs/build-commands.md](docs/build-commands.md)
 - **Architecture**: See [docs/architecture.md](docs/architecture.md)
 - **Breathing Techniques**: See [docs/breathing-system.md](docs/breathing-system.md)
+- **Variations System**: See [docs/variations-system.md](docs/variations-system.md) - Breathing form variations, form IDs, and display system
 - **API Usage Guide**: See [docs/api-usage-guide.md](docs/api-usage-guide.md) - For using this mod as a library
 - **Migration Guide**: See [docs/migration-guide.md](docs/migration-guide.md) - For refactoring existing swords
 - **Critical Bugs**: See [docs/bug-prevention.md](docs/bug-prevention.md)

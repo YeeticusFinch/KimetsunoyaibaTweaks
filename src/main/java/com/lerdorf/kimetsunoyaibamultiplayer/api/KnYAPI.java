@@ -137,18 +137,20 @@ public final class KnYAPI {
      * Create a new BreathingForm.
      * This is a convenience method for creating breathing forms.
      *
+     * @param formId Unique form ID (choose a unique range >= 20000 for your mod)
      * @param name Form name (e.g., "First Form: Glacial Slash")
      * @param description Form description
      * @param cooldownSeconds Cooldown in seconds
-     * @param effect The effect to execute (BiConsumer of Player and Level)
+     * @param effect The effect to execute (receives entity, level, formId automatically)
      * @return A new BreathingForm
      */
     public static BreathingForm createForm(
+            int formId,
             String name,
             String description,
             int cooldownSeconds,
             BreathingForm.FormEffect effect) {
-        return new BreathingForm(name, description, cooldownSeconds, effect);
+        return new BreathingForm(formId, name, description, cooldownSeconds, effect);
     }
 
     /**

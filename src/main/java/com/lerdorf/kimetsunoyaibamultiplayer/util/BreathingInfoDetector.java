@@ -31,11 +31,106 @@ public class BreathingInfoDetector {
         if (player.level().isClientSide()) {
             String cachedText = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.getCachedDisplayText(
                 player.getUUID(), heldSword);
+            // If no sword-specific cache, try form-specific cache using current breathes
+            if (cachedText == null) {
+                double currentBreathes = player.getPersistentData().getDouble("breathes");
+                int formIdForCache = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(currentBreathes);
+                cachedText = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
+                    .getDisplayTextForForm(player.getUUID(), formIdForCache);
+
+                if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] No sword-specific cache, using form-specific cache. " +
+                                                                     "currentBreathes: " + currentBreathes +
+                                                                     ", formIdForCache: " + formIdForCache +
+                                                                     ", cachedText: " + cachedText);
+                }
+            } else if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] Using sword-specific cached text: " + cachedText);
+            }
 
             if (cachedText != null) {
                 // Parse the cached display text to create BreathingInfo
                 // Keep the original text WITH color codes for display
-                return parseDisplayText(cachedText);
+                BreathingInfo info = parseDisplayText(cachedText);
+
+                // Use the best-known breathes value (synced from server) for variation decoding
+                double cachedBreathes = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
+                    .getCachedForm(player.getUUID(), heldSword);
+                double breathesValue = cachedBreathes > 0.0
+                    ? cachedBreathes
+                    : player.getPersistentData().getDouble("breathes");
+
+                if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] cachedBreathes: " + cachedBreathes +
+                                                                     ", player NBT breathes: " + player.getPersistentData().getDouble("breathes") +
+                                                                     ", using breathesValue: " + breathesValue);
+                }
+
+                int formIdFromBreathes = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(breathesValue);
+                String baseFormText = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
+                    .getDisplayTextForForm(player.getUUID(), formIdFromBreathes);
+
+                if (info != null && breathesValue > 0) {
+                    int formId = formIdFromBreathes;
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData pdata =
+                        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player);
+                    int variationIndex = pdata.getCurrentVariationIndex();
+
+                    if (formId > 0) {
+                        int totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+                            .getVariationCount(formId, null);
+                        String variationName = null;
+                        if (variationIndex > 0) {
+                            var variation = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+                                .getVariation(formId, variationIndex, null);
+                            if (variation != null) {
+                                variationName = variation.getName();
+                            }
+                        }
+
+                        // Base form: reuse cached colored text so we don't show "Form 102"
+                        if (variationIndex == 0) {
+                            String colored = baseFormText != null ? baseFormText : info.originalColoredText;
+                            // Ensure we show the real base form name (not "Form 102")
+                            String displayFormName = info.formName;
+                            return new BreathingInfo(
+                                info.styleName,
+                                displayFormName,
+                                info.formNumber,
+                                info.styleRange,
+                                breathesValue,
+                                colored,
+                                variationIndex,
+                                totalVariations,
+                                null
+                            );
+                        }
+
+                        // Variations: rebuild colored display using base form's color
+                        String sourceText = baseFormText != null ? baseFormText : info.originalColoredText;
+                        String stylePart = extractStylePart(sourceText);
+                        String formColor = extractLeadingColor(sourceText);
+                        String displayFormName = variationName != null ? variationName : info.formName;
+                        String rebuiltColored = null;
+                        if (stylePart != null && formColor != null) {
+                            rebuiltColored = stylePart + " - " + formColor + displayFormName;
+                        }
+
+                        return new BreathingInfo(
+                            info.styleName,
+                            displayFormName,
+                            info.formNumber,
+                            info.styleRange,
+                            breathesValue,
+                            rebuiltColored != null ? rebuiltColored : info.originalColoredText,
+                            variationIndex,
+                            totalVariations,
+                            variationName
+                        );
+                    }
+                }
+
+                return info;
             }
         }
 
@@ -45,10 +140,12 @@ public class BreathingInfoDetector {
 
     /**
      * Parses breathing form information from kimetsunoyaiba mod's chat message format.
-     * Expected format: "§6Water Breathing §7- §bFirst Form: Water Surface Slash" or similar
+     * Expected formats:
+     * - "Water Breathing 2nd Form: Water Wheel" (common format)
+     * - "Water Breathing - First Form: Water Surface Slash" (alternate format)
      * Preserves the original colored text for display.
      */
-    private static BreathingInfo parseDisplayText(String displayText) {
+    public static BreathingInfo parseDisplayText(String displayText) {
         if (displayText == null || displayText.isEmpty()) {
             return null;
         }
@@ -69,8 +166,13 @@ public class BreathingInfoDetector {
         String styleName = parts[0].trim();
         String formName = parts.length > 1 ? parts[1].trim() : "";
 
-        // Extract form number from the form name (e.g., "First Form" -> 1)
-        int formNumber = extractFormNumber(formName);
+        // Extract form number - check BOTH styleName and formName since the format varies
+        // e.g., "Water Breathing 2nd Form" or "First Form: Water Surface Slash"
+        int formNumber = extractFormNumber(styleName);
+        if (formNumber == 1 && !styleName.contains("First") && !styleName.contains("1st")) {
+            // Didn't find form number in styleName, try formName
+            formNumber = extractFormNumber(formName);
+        }
 
         // Estimate style range from style name
         int styleRange = getStyleRangeFromName(styleName);
@@ -78,14 +180,35 @@ public class BreathingInfoDetector {
         // Create pseudo breathes value
         double pseudoBreathes = styleRange + formNumber;
 
+        // IMPORTANT: Look up variation data for base mod swords
+        // Extract form ID and check for registered variations
+        int formId = com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping.getFormId(pseudoBreathes);
+        int variationIndex = 0;
+        int totalVariations = 0;
+        String variationName = null;
+
+        if (formId > 0) {
+            // Get total variations for this form
+            totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+                .getVariationCount(formId, null);
+
+            // Try to get player's current variation index
+            // Note: This requires player context, which we don't have here
+            // The variation index will be retrieved separately by the overlay
+            // For now, we just include the total count so the UI can show "(1/N)"
+        }
+
         // Pass the original colored text to preserve exact formatting from chat
-        return new BreathingInfo(styleName, formName, formNumber, styleRange, pseudoBreathes, displayText);
+        return new BreathingInfo(styleName, formName, formNumber, styleRange, pseudoBreathes,
+                                displayText, variationIndex, totalVariations, variationName);
     }
 
     /**
      * Extracts form number from form name string.
+     * Handles formats like "First", "Second", "2nd", "3rd", etc.
      */
     private static int extractFormNumber(String formName) {
+        // Handle written-out numbers
         if (formName.contains("First")) return 1;
         if (formName.contains("Second")) return 2;
         if (formName.contains("Third")) return 3;
@@ -98,12 +221,19 @@ public class BreathingInfoDetector {
         if (formName.contains("Tenth")) return 10;
         if (formName.contains("Eleventh")) return 11;
         if (formName.contains("Twelfth")) return 12;
+        if (formName.contains("Thirteenth")) return 13;
 
-        // Try to extract number from "Form X" pattern
+        // Handle numeric formats: "2nd", "3rd", "4th", etc.
+        // Split by spaces and look for numbers or ordinal suffixes
         String[] words = formName.split(" ");
         for (String word : words) {
+            // Remove common suffixes (st, nd, rd, th)
+            String numStr = word.replaceAll("(?i)(st|nd|rd|th)", "");
             try {
-                return Integer.parseInt(word);
+                int num = Integer.parseInt(numStr);
+                if (num > 0 && num <= 20) { // Sanity check
+                    return num;
+                }
             } catch (NumberFormatException e) {
                 // Continue checking other words
             }
@@ -125,7 +255,8 @@ public class BreathingInfoDetector {
             return registeredRange;
         }
 
-        // Fallback to hardcoded mappings for kimetsunoyaiba mod styles
+        // Fallback to hardcoded mappings for base mod breathing styles (0-2000 range only)
+        // NOTE: Ice (4300) and Frost (4200) are from ADDONS, not the base mod
         if (styleName.contains("Water")) return 100;
         if (styleName.contains("Beast")) return 200;
         if (styleName.contains("Thunder")) return 300;
@@ -135,15 +266,14 @@ public class BreathingInfoDetector {
         if (styleName.contains("Mist")) return 700;
         if (styleName.contains("Serpent")) return 800;
         if (styleName.contains("Sound")) return 900;
-        if (styleName.contains("Ice")) return 1000;
         if (styleName.contains("Moon")) return 1100;
         if (styleName.contains("Sun") || styleName.contains("Hinokami")) return 1200;
         if (styleName.contains("Flower")) return 1300;
         if (styleName.contains("Insect")) return 1400;
         if (styleName.contains("Love")) return 1500;
-        if (styleName.contains("Frost")) return 1600;
-        if (styleName.contains("Cherry")) return 1700;
+        if (styleName.contains("Cherry")) return 1700;  // Cherry Blossom or Bamboo
         if (styleName.contains("Sakura")) return 1800;
+        // Ice and Frost breathing are from addons (4200+, 4300+) - not handled here
         return 0;
     }
 
@@ -153,8 +283,12 @@ public class BreathingInfoDetector {
      * Returns a simple generic message until player cycles forms and chat message populates the cache.
      */
     private static BreathingInfo getBreathingInfoFromNBT(Player player, ItemStack heldSword) {
-        // Get player's base breathes value from NBT (for kimetsunoyaiba mod swords)
+        // Use authoritative NBT breathes (server-synced) to avoid stale cached values
         double playerBreathes = player.getPersistentData().getDouble("breathes");
+
+        if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] getBreathingInfoFromNBT - playerBreathes from NBT: " + playerBreathes);
+        }
 
         // Check if sword modifies the breathing style (multi-style swords)
         double selectOffset = 0.0;
@@ -164,10 +298,14 @@ public class BreathingInfoDetector {
 
             if (tag.contains("select")) {
                 selectOffset = tag.getDouble("select");
+                if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] Sword has selectOffset: " + selectOffset);
+                }
             }
         }
 
-        // Calculate actual breathes value
+        // Calculate actual breathes value (with selectOffset for multi-style swords)
+        // This is only used for determining style/form, NOT for display
         double actualBreathes = playerBreathes + selectOffset;
 
         // If no breathes value, return null (no form selected yet)
@@ -175,15 +313,51 @@ public class BreathingInfoDetector {
             return null;
         }
 
-        // Simple extraction: style and form number
+        // Simple extraction: style and form number (using actualBreathes with selectOffset)
         int breathingStyle = (int)(actualBreathes / 100) * 100;
         int formNumber = (int)actualBreathes % 100;
 
+        // CRITICAL FIX: Use playerBreathes (not actualBreathes) for form ID extraction
+        // The breathes NBT value should already be the base form ID (without selectOffset)
+        // SelectOffset is only used by the base mod for multi-style sword display, not for our system
+        int formId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(playerBreathes);
+
+        if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] actualBreathes: " + actualBreathes +
+                                                             ", formId: " + formId +
+                                                             ", breathingStyle: " + breathingStyle +
+                                                             ", formNumber: " + formNumber);
+        }
+
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData pdata =
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
+        int variationIndex = pdata.getCurrentVariationIndex();
+
+        String variationName = null;
+        int totalVariations = 0;
+
+        if (formId > 0) {
+            totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+                .getVariationCount(formId, null);
+
+            if (variationIndex > 0) {
+                com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation variation =
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+                        .getVariation(formId, variationIndex, null);
+                if (variation != null) {
+                    variationName = variation.getName();
+                }
+            }
+        }
+
         // Use simple generic names - chat messages will provide the real names
         String styleName = "";
-        String formName = "";
+        String formName = variationName != null ? variationName : "";
 
-        return new BreathingInfo(styleName, formName, formNumber, breathingStyle, actualBreathes);
+        // CRITICAL FIX: Return playerBreathes (base form ID) as fullBreathesValue, NOT actualBreathes
+        // actualBreathes (with selectOffset) should only be used for internal base mod compatibility
+        return new BreathingInfo(styleName, formName, formNumber, breathingStyle, playerBreathes,
+                                null, variationIndex, totalVariations, variationName);
     }
 
     /**
@@ -200,25 +374,61 @@ public class BreathingInfoDetector {
         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player);
 
-        // Get current form index and form object
-        int formIndex = data.getCurrentFormIndex();
-        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm form = technique.getForm(formIndex);
+        int baseFormIndex = data.getCurrentFormIndex();
+        int variationIndex = data.getCurrentVariationIndex();
+
+        // Get form object (use base form index)
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm form = technique.getForm(baseFormIndex);
 
         if (form == null) {
             return null;
         }
 
+        // Determine variation from synced breathes value (if it matches this form)
+        double cachedBreathes = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
+            .getCachedForm(player.getUUID(), player.getMainHandItem());
+        double breathesValue = cachedBreathes > 0.0 ? cachedBreathes : player.getPersistentData().getDouble("breathes");
+        if (com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(breathesValue) == form.getFormId()) {
+            variationIndex = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getVariationIndex(breathesValue);
+        }
+
+        // Get registered sword info for variation lookup
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.RegisteredSword registeredSword =
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getSword(breathingSword);
+        String swordId = registeredSword != null ? registeredSword.getSwordId() : breathingSword.toString();
+
+        // Get form ID for variation lookup
+        int formId = form.getFormId();
+
+        // Check for active variation
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation variation = null;
+        String variationName = null;
+        String displayFormName = form.getName(); // Default to base form name
+
+        if (variationIndex > 0) {
+            variation = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry.getVariation(
+                formId, variationIndex, swordId);
+            if (variation != null) {
+                variationName = variation.getName();
+                displayFormName = variationName; // Replace form name with variation name
+            }
+        }
+
+        // Get total variation count for this form using form ID
+        int totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry.getVariationCount(
+            formId, swordId);
+
         // Extract names
         String techniqueName = technique.getName();
-        String formName = form.getName();
 
         // Create a pseudo breathes value for consistency (technique type * 100 + form number)
         // Our forms are 0-indexed, so add 1 to make them 1-indexed like kimetsunoyaiba mod
-        int formNumber = formIndex + 1;
+        int formNumber = baseFormIndex + 1;
         int styleRange = getTechniqueTypeNumber(techniqueName) * 100;
-        double pseudoBreathes = styleRange + formNumber;
+        double displayBreathes = breathesValue > 0.0 ? breathesValue : (styleRange + formNumber);
 
-        return new BreathingInfo(techniqueName, formName, formNumber, styleRange, pseudoBreathes);
+        return new BreathingInfo(techniqueName, displayFormName, formNumber, styleRange, displayBreathes,
+                                null, variationIndex, totalVariations, variationName);
     }
 
     /**
@@ -255,7 +465,8 @@ public class BreathingInfoDetector {
             return registeredStyle.getStyleName();
         }
 
-        // Fallback to hardcoded mappings
+        // Fallback to hardcoded mappings for base mod breathing styles only (0-2000 range)
+        // NOTE: Ice and Frost are from addons, not the base mod
         return switch (breathingStyle) {
             case 100 -> "Water Breathing";
             case 200 -> "Beast Breathing";
@@ -266,15 +477,14 @@ public class BreathingInfoDetector {
             case 700 -> "Mist Breathing";
             case 800 -> "Serpent Breathing";
             case 900 -> "Sound Breathing";
-            case 1000 -> "Ice Breathing";
             case 1100 -> "Moon Breathing";
             case 1200 -> "Sun Breathing";
             case 1300 -> "Flower Breathing";
             case 1400 -> "Insect Breathing";
             case 1500 -> "Love Breathing";
-            case 1600 -> "Frost Breathing";
-            case 1700 -> "Cherry Blossom Breathing";
+            case 1700 -> "Cherry Blossom Breathing";  // Or Bamboo
             case 1800 -> "Sakura Breathing";
+            // Ice (4300) and Frost (4200) are addon breathing styles, not base mod
             default -> "";
         };
     }
@@ -308,6 +518,28 @@ public class BreathingInfoDetector {
     }
 
     /**
+     * Extract the style part (prefix before " - ") from a colored chat string.
+     */
+    private static String extractStylePart(String coloredText) {
+        if (coloredText == null) return null;
+        int idx = coloredText.indexOf(" - ");
+        if (idx <= 0) return null;
+        return coloredText.substring(0, idx);
+    }
+
+    /**
+     * Extract the first color code (two chars) from the text (e.g., §b).
+     */
+    private static String extractLeadingColor(String coloredText) {
+        if (coloredText == null) return null;
+        int idx = coloredText.indexOf('§');
+        if (idx >= 0 && idx + 1 < coloredText.length()) {
+            return coloredText.substring(idx, idx + 2);
+        }
+        return null;
+    }
+
+    /**
      * Data class containing breathing technique information.
      */
     public static class BreathingInfo {
@@ -318,17 +550,30 @@ public class BreathingInfoDetector {
         public final double fullBreathesValue;
         public final String originalColoredText; // Original text from chat with color codes preserved
 
+        // Variation data (for our mod's breathing swords)
+        public final int currentVariationIndex; // 0 = base form, 1+ = variations
+        public final int totalVariations;       // Total number of variations available for this form
+        public final String variationName;      // Name of active variation (null if base form)
+
         public BreathingInfo(String styleName, String formName, int formNumber, int styleRange, double fullBreathesValue) {
-            this(styleName, formName, formNumber, styleRange, fullBreathesValue, null);
+            this(styleName, formName, formNumber, styleRange, fullBreathesValue, null, 0, 0, null);
         }
 
         public BreathingInfo(String styleName, String formName, int formNumber, int styleRange, double fullBreathesValue, String originalColoredText) {
+            this(styleName, formName, formNumber, styleRange, fullBreathesValue, originalColoredText, 0, 0, null);
+        }
+
+        public BreathingInfo(String styleName, String formName, int formNumber, int styleRange, double fullBreathesValue,
+                           String originalColoredText, int currentVariationIndex, int totalVariations, String variationName) {
             this.styleName = styleName;
             this.formName = formName;
             this.formNumber = formNumber;
             this.styleRange = styleRange;
             this.fullBreathesValue = fullBreathesValue;
             this.originalColoredText = originalColoredText;
+            this.currentVariationIndex = currentVariationIndex;
+            this.totalVariations = totalVariations;
+            this.variationName = variationName;
         }
 
         /**

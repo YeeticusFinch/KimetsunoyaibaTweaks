@@ -140,6 +140,16 @@ public class ModNetworking {
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket::handle)
                 .add();
 
+        // Register cycle form variation packet (client -> server)
+        int cycleFormVariationPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleFormVariationPacket.class, cycleFormVariationPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleFormVariationPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleFormVariationPacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleFormVariationPacket::handle)
+                .add();
+
+        // NOTE: VariationSyncPacket removed - variations are now encoded in breathes value
+
         // Register spawn love sword slashes packet (server -> client)
         int spawnLoveSwordSlashesPacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SpawnLoveSwordSlashesPacket.class, spawnLoveSwordSlashesPacketId)
@@ -154,6 +164,22 @@ public class ModNetworking {
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SpawnLoveTornadoPacket::new)
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SpawnLoveTornadoPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SpawnLoveTornadoPacket::handle)
+                .add();
+
+        // Register breathes value sync packet (server -> client)
+        int breathesValueSyncPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathesValueSyncPacket.class, breathesValueSyncPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathesValueSyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathesValueSyncPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathesValueSyncPacket::handle)
+                .add();
+
+        // Register variation index sync packet (server -> client)
+        int variationIndexSyncPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket.class, variationIndexSyncPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket::handle)
                 .add();
     }
 

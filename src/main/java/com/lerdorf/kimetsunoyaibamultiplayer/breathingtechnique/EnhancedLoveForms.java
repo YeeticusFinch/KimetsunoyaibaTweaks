@@ -25,6 +25,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -254,14 +255,15 @@ public class EnhancedLoveForms {
      */
     public static BreathingForm firstForm() {
         return new BreathingForm(
+            22001, // Love First Form ID
             "First Form: Shivers of First Love",
             "Multi-directional rapid slashes with the whip",
             5, // 5 second cooldown
-            (entity, level) -> {
+            (entity, level, formId) -> {
             	final ServerLevel serverLevel = level instanceof ServerLevel ? ((ServerLevel)level) : null;
 
-                // Set guard state
-                GuardStateHelper.setGuardState(entity, 8.0, 22001); // ID 21001 for Love Breathing
+                // Set guard state (formId auto-injected as 22001)
+                GuardStateHelper.setGuardState(entity, 8.0, formId);
                 
                 // Use default player step height (0.6f) for reset
 				final float originalStepHeight = 0.6f;
@@ -481,15 +483,16 @@ public class EnhancedLoveForms {
      */
     public static BreathingForm secondForm() {
         return new BreathingForm(
+            22002, // Love Second Form ID
             "Second Form: Love Pangs",
             "Rapid extension strikes",
             3,
-            (entity, level) -> {
+            (entity, level, formId) -> {
                 // TODO: Implement second form
 
 				final float damage = DamageCalculator.calculateScaledDamage(entity, 10.0F);
-            	 // Set guard state
-                GuardStateHelper.setGuardState(entity, 8.0, 22002); // ID 21002 for Love Breathing
+            	 // Set guard state (formId auto-injected as 22002)
+                GuardStateHelper.setGuardState(entity, 8.0, formId);
 
                 // Play player animation
                 playEntityAnimation(entity, "love_second_form");
@@ -614,12 +617,13 @@ public class EnhancedLoveForms {
      */
     public static BreathingForm thirdForm() {
         return new BreathingForm(
+            22003, // Love Third Form ID
             "Third Form: Catlove Shower",
             "Overhead rain of whip slashes",
             4,
-            (entity, level) -> {
-            	 // Set guard state
-                GuardStateHelper.setGuardState(entity, 8.0, 22003); // ID 21003 for Love Breathing
+            (entity, level, formId) -> {
+            	 // Set guard state (formId auto-injected as 22003)
+                GuardStateHelper.setGuardState(entity, 8.0, formId);
 
                 // Play player animation
                 playEntityAnimation(entity, "love_third_form");
@@ -877,18 +881,19 @@ public class EnhancedLoveForms {
      */
     public static BreathingForm fifthForm() {
         return new BreathingForm(
+            22005, // Love Fifth Form ID
             "Fifth Form: Swaying Love, Wildclaw",
             "Wide sweeping arc attack",
             4,
-            (entity, level) -> {
+            (entity, level, formId) -> {
                 // TODO: Implement fifth form
-            	
+
             	ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
             	float [][][] particlePoints = ParticlePositions.fifth_form.get("point_a");
 
 				float damage = DamageCalculator.calculateScaledDamage(entity, 13.0F);
-            	 // Set guard state
-                GuardStateHelper.setGuardState(entity, 12.0, 22005); // ID 21001 for Love Breathing
+            	 // Set guard state (formId auto-injected as 22005)
+                GuardStateHelper.setGuardState(entity, damage, formId);
 
                 // Play player animation
                 playEntityAnimation(entity, "love_fifth_form");
@@ -1197,13 +1202,17 @@ public class EnhancedLoveForms {
      */
     public static BreathingForm sixthForm() {
         return new BreathingForm(
+            22006, // Love Sixth Form ID
             "Sixth Form: Cat-Legged Winds of Love",
             "Spinning tornado whip attack",
             5,
-            (entity, level) -> {
+            (entity, level, formId) -> {
                 // TODO: Implement sixth form
-            	 // Set guard state
-                GuardStateHelper.setGuardState(entity, 8.0, 22006); // ID 21001 for Love Breathing
+            	float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
+            	ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
+            	float [][][] particlePoints = ParticlePositions.sixth_form.get("point_a");
+            	 // Set guard state (formId auto-injected as 22006)
+                GuardStateHelper.setGuardState(entity, damage*4, formId); // extra protection
 
                 // Play player animation
                 playEntityAnimation(entity, "love_sixth_form");
@@ -1214,26 +1223,124 @@ public class EnhancedLoveForms {
                 // Prevent normal attack swing
                 setCancelAttackSwing(entity, true);
 
-                final int totalDuration = 60; // 3 seconds
+                final int totalDuration = 90; // 4.5 seconds
                 final int[] currentTick = {0};
                 final int interval = 1;
+                
+                final Vec3[] vectors = new Vec3[3];
+                // Get initial forward and right vectors using yaw (handles looking up/down)
+                float yawRad = (float) Math.toRadians(-entity.getYRot());
+                vectors[0] = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
+                // Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
+                vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
                 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
             	
                 	if (currentTick[0] == 0) {
                 		triggerWhipAnimation(entity, "sword_to_right", 1.0);
+                		MovementHelper.setVelocity(entity, entity.getLookAngle().scale(0.9f));
                 	}
                 	else if (currentTick[0] == 10) {
                 		triggerWhipAnimation(entity, "sword_to_left", 1.0);
+                		MovementHelper.setVelocity(entity, entity.getLookAngle().scale(0.9f));
                 	}
                 	else if (currentTick[0] == 20) {
                 		triggerWhipAnimation(entity, "love_sixth_form", 1.0);
+                		MovementHelper.setVelocity(entity, entity.getLookAngle().scale(0.5f).add(0, 1, 0));
+                		entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 3));
                 	}
+                	
+                	if (currentTick[0] == 2 || currentTick[0] == 12 || currentTick[0] == 32) {
+                		// Damage the idiots in front of you
+                		if (serverLevel != null) {
+                			AABB searchBox = entity.getBoundingBox().move(entity.getEyePosition().add(entity.getLookAngle().scale(6))).inflate(6.0);
+                			List<LivingEntity> nearby = level.getEntitiesOfClass(
+                				LivingEntity.class, searchBox,
+                				e -> e != entity && e.isAlive() && isTargetable(entity, e)
+                			);
+
+                			for (LivingEntity target : nearby) {
+                				//if (Math.random() < 0.8) {
+                					Damager.hurt(entity, target, damage, true);
+                					// Spawn love_slash particles on newly added target
+                					double particleY = target.getY() + target.getBbHeight() * 0.5;
+                					serverLevel.sendParticles(
+                						ModParticles.LOVE_SLASH.get(),
+                						target.getX(), particleY, target.getZ(),
+                						3, 0.3, 0.3, 0.3, 0
+                					);
+                					level.playSound(null, target.getX(), target.getY(), target.getZ(),
+                        				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                        				    SoundSource.PLAYERS, 1.0f, 1.5f);
+                				//}
+
+                			}
+                		}
+                	}
+                	
+                	if (currentTick[0] % 4 == 0) {
+                		// Use yaw rotation to get forward direction (works even when looking up/down)
+                		float yaw = (float) Math.toRadians(-entity.getYRot());
+                		vectors[0] = new Vec3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
+                		// Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
+                		vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
+                	}
+                	
+                	if (currentTick[0] > 30 && currentTick[0] % 2 == 0) {
+                		AABB hitBox = entity.getBoundingBox().move(entity.getEyePosition().add(entity.getLookAngle().scale(6))).inflate(6.0);
+                        List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
+
+                        for (Entity target : targets) {
+                        	/*if (target instanceof LivingEntity livingTarget) {
+    	                        Damager.hurt(entity, livingTarget, damage/2);
+    	
+    	                        // Brief confusion
+    	                        //livingTarget.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0));
+                        	}*/
+                        	// Knockback away from center
+                            Vec3 knockbackDir = target.position().subtract(entity.getEyePosition()).normalize();
+                            target.setDeltaMovement(target.getDeltaMovement().add(knockbackDir.scale(1.0)));
+                        }
+                	}
+                	
+                	if (currentTick[0] >= 20) { // Particles from particle positions (starting at tick 20
+                    	if (serverLevel != null && particlePoints != null && currentTick[0] < particlePoints.length && particlePoints[currentTick[0]-20].length > 0) {
+                    		for (int i = 0; i < particlePoints[currentTick[0]-20].length; i++) {
+                    			float x = particlePoints[currentTick[0]-20][i][0];
+                    			float y = particlePoints[currentTick[0]-20][i][1];
+                    			float z = particlePoints[currentTick[0]-20][i][2];
+
+                    			Vec3 pos = entity.position().add(vectors[0].scale(z).add(vectors[1].scale(x)).add(0, y, 0));
+
+                    			// Spawn pink dust particle at pos
+                    			serverLevel.sendParticles(
+                    		            new DustParticleOptions(
+                    		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                    		                1.2f                           // scale
+                    		            ),
+                    		            pos.x, pos.y, pos.z,
+                    		            2, 0.05, 0.05, 0.05, 0 // count, velocity
+                    		        );
+                    			
+                    			// Spawn white dust particle at pos
+                    			serverLevel.sendParticles(
+                    					new DustParticleOptions(
+                        		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
+                        		                1f                           // scale
+                        		            ),
+                    		            pos.x, pos.y, pos.z,
+                    		            1, 0, 0, 0, 0 // count, velocity
+                    		        );
+                    		}
+                    	}
+                    }
             	
 	            	currentTick[0] += interval;
 	            }, interval, totalDuration);
                 
                
+               
+                
                 // Schedule cleanup
                 AbilityScheduler.scheduleOnce(entity, () -> {
                     GuardStateHelper.clearGuardState(entity);

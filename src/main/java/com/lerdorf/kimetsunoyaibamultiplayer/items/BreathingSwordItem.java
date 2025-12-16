@@ -51,27 +51,101 @@ public abstract class BreathingSwordItem extends SwordItem {
         // Load player data from NBT if on server
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
 
-        int formIndex = data.getCurrentFormIndex();
-        BreathingForm form = technique.getForm(formIndex);
+        // Determine selected form from our index, and variation from tracked value (not breathes)
+        int baseFormIndex = data.getCurrentFormIndex();
+        int variationIndex = data.getCurrentVariationIndex();
 
-        // Debug logging
-        if (!level.isClientSide && com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("BreathingSwordItem.use() - Server side");
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Player: " + player.getName().getString());
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Sword: " + this.getClass().getSimpleName());
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Technique: " + technique.getName());
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Form Index: " + formIndex);
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Form: " + (form != null ? form.getName() : "null"));
+        // Get the current form to access its form ID (use base form index)
+        BreathingForm form = technique.getForm(baseFormIndex);
+        if (form == null) {
+            return InteractionResultHolder.pass(stack);
         }
 
-        if (form != null) {
+        // Get registered sword info for variation lookup
+        SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(this);
+        String swordId = registeredSword != null ? registeredSword.getSwordId() : this.toString();
+
+        // Clamp variation to available variations
+        int totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+            .getVariationCount(form.getFormId(), swordId);
+        if (totalVariations == 0) {
+            variationIndex = 0;
+            data.setCurrentVariationIndex(0);
+        } else if (variationIndex > totalVariations) {
+            variationIndex = 0;
+            data.setCurrentVariationIndex(0);
+        }
+
+        // Check for active variation using form ID
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation variation = null;
+        if (variationIndex > 0) {
+            variation = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry.getVariation(
+                form.getFormId(), variationIndex, swordId);
+        }
+
+        // Determine which effect to use and which cooldown
+        String displayName;
+        int cooldownSeconds;
+
+        if (variation != null) {
+            // Use variation
+            displayName = variation.getName();
+            cooldownSeconds = variation.getCooldownSeconds();
+
+            // Debug logging
+            if (!level.isClientSide && com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("BreathingSwordItem.use() - Server side (VARIATION)");
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Player: " + player.getName().getString());
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Sword: " + this.getClass().getSimpleName());
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Technique: " + technique.getName());
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Form Index: " + baseFormIndex);
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Variation Index: " + variationIndex);
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Variation: " + variation.getName());
+            }
+
+            // Check cooldowns
+            if (com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects.hasCoolTime(player)) {
+                if (level.isClientSide) {
+                    player.displayClientMessage(Component.literal("§cAbility on cooldown!"), true);
+                }
+                return InteractionResultHolder.fail(stack);
+            }
+
+            if (!player.getCooldowns().isOnCooldown(this)) {
+                // Execute variation effect ONLY on server
+                if (!level.isClientSide) {
+                    variation.getEffect().execute(player, level, form.getFormId());
+                    player.getCooldowns().addCooldown(this, cooldownSeconds * 20);
+                }
+
+                // Send action bar message
+                player.displayClientMessage(Component.literal("§b" + displayName), true);
+                return InteractionResultHolder.success(stack);
+            } else {
+                if (level.isClientSide) {
+                    player.displayClientMessage(Component.literal("§cAbility on cooldown!"), true);
+                }
+                return InteractionResultHolder.fail(stack);
+            }
+        } else {
+            // Use base form
+            displayName = form.getName();
+            cooldownSeconds = form.getCooldownSeconds();
+
+            // Debug logging
+            if (!level.isClientSide && com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("BreathingSwordItem.use() - Server side");
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Player: " + player.getName().getString());
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Sword: " + this.getClass().getSimpleName());
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Technique: " + technique.getName());
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Form Index: " + baseFormIndex);
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Form: " + form.getName());
+            }
+
             // Check if player has cool_time effect from KnY mod (prevents ability usage)
             if (com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects.hasCoolTime(player)) {
                 if (level.isClientSide) {
-                    player.displayClientMessage(
-                        Component.literal("§cAbility on cooldown!"),
-                        true
-                    );
+                    player.displayClientMessage(Component.literal("§cAbility on cooldown!"), true);
                 }
                 return InteractionResultHolder.fail(stack);
             }
@@ -80,35 +154,21 @@ public abstract class BreathingSwordItem extends SwordItem {
             if (!player.getCooldowns().isOnCooldown(this)) {
                 // Execute the form effect ONLY on server
                 if (!level.isClientSide) {
-                    if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                        com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Executing form on server...");
-                    }
-                    form.getEffect().execute(player, level);
-
-                    // Apply item cooldown
-                    player.getCooldowns().addCooldown(this, form.getCooldownSeconds() * 20);
+                    form.execute(player, level);
+                    player.getCooldowns().addCooldown(this, cooldownSeconds * 20);
                 }
 
                 // Send action bar message (both sides for immediate feedback)
-                player.displayClientMessage(
-                    Component.literal("§b" + form.getName()),
-                    true
-                );
-
+                player.displayClientMessage(Component.literal("§b" + displayName), true);
                 return InteractionResultHolder.success(stack);
             } else {
                 // Still on cooldown
                 if (level.isClientSide) {
-                    player.displayClientMessage(
-                        Component.literal("§cAbility on cooldown!"),
-                        true
-                    );
+                    player.displayClientMessage(Component.literal("§cAbility on cooldown!"), true);
                 }
                 return InteractionResultHolder.fail(stack);
             }
         }
-
-        return InteractionResultHolder.pass(stack);
     }
     
     @Override
@@ -152,6 +212,20 @@ public abstract class BreathingSwordItem extends SwordItem {
         int newIndex = data.getCurrentFormIndex();
         BreathingForm form = technique.getForm(newIndex);
 
+        // CRITICAL: Also update the "breathes" NBT tag with the form's ID
+        // This is what the execution system reads when activating forms
+        if (form != null && !player.level().isClientSide) {
+            double formId = form.getFormId();
+            player.getPersistentData().putDouble("breathes", formId);
+
+            // Also update the cached base mod breathes value
+            data.setBaseModBreathesValue(formId);
+
+            if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("Updated breathes tag to formId: " + formId);
+            }
+        }
+
         // Debug logging
         if (!player.level().isClientSide && com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
             com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("BreathingSwordItem.cycleForm() - Server side");
@@ -168,12 +242,32 @@ public abstract class BreathingSwordItem extends SwordItem {
 
             // Broadcast form change to all clients
             if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                // Reset variation on form change
+                PlayerBreathingData.PlayerData pdata = PlayerBreathingData.getOrCreate(player);
+                pdata.setCurrentVariationIndex(0);
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+                    new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket(
+                        player.getUUID(), 0),
+                    serverPlayer
+                );
+                // Sync form index (for custom sword tracking)
                 com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
                     new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket(
                         player.getUUID(),
                         newIndex
                     )
                 );
+
+                // Sync breathes value (for form execution and display)
+                if (form != null) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+                        new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathesValueSyncPacket(
+                            player.getUUID(),
+                            form.getFormId()
+                        ),
+                        serverPlayer
+                    );
+                }
             }
         }
 

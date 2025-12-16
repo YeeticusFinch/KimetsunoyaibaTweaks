@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -40,7 +41,17 @@ public class CycleBreathingFormPacket {
             // Check if this is a custom breathing sword (from our API)
             if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem breathingSword) {
                 // Handle custom breathing sword cycling
+                // Note: cycleForm() handles all syncing internally (FormSyncPacket + BreathesValueSyncPacket)
                 breathingSword.cycleForm(player, direction < 0);
+                // Reset variation selection
+                com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
+                        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
+                data.setCurrentVariationIndex(0);
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+                    new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket(player.getUUID(), 0),
+                    player
+                );
+
                 if (Config.logDebug) {
                     Log.debug("Cycled custom breathing form for: " + heldItem.getItem().toString() +
                              " (direction: " + (direction >= 0 ? "forward" : "backward") + ")");
@@ -57,12 +68,35 @@ public class CycleBreathingFormPacket {
                 // Calculate new breathing value based on direction
                 double newBreathes = cycleBreathingForm(currentBreathes, direction, heldItem);
 
+                // CRITICAL: Reset to base form (no variation) when form changes
+                // If newBreathes is encoded (from a previous variation), decode and reset
+                if (com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.isEncoded(newBreathes)) {
+                    int formId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(newBreathes);
+                    newBreathes = formId; // Reset to base form (no encoding)
+                }
+
                 // Update player's breathing form
                 player.getPersistentData().putDouble("breathes", newBreathes);
 
+                // Cache for BaseModVariationHandler
+                com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
+                data.setBaseModBreathesValue(newBreathes);
+                data.setCurrentVariationIndex(0); // reset variation on form change
+
+                // Sync the new breathes value to the client
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+                    new BreathesValueSyncPacket(player.getUUID(), newBreathes),
+                    player
+                );
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+                    new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket(player.getUUID(), 0),
+                    player
+                );
+
                 if (Config.logDebug) {
                     Log.debug("Cycled base mod breathing form: " + currentBreathes + " -> " + newBreathes +
-                             " (direction: " + (direction == 1 ? "forward" : "backward") + ")");
+                             " (direction: " + (direction == 1 ? "forward" : "backward") + "), reset to base form");
                 }
             }
         });
@@ -123,24 +157,6 @@ public class CycleBreathingFormPacket {
      * Gets the list of available forms for a breathing style.
      */
     private static int[] getFormsForStyle(int style) {
-        return switch (style) {
-            case 100 -> new int[]{101, 102, 103, 104, 105, 106, 107, 111, 112, 113}; // Water
-            case 200 -> new int[]{201, 202, 203, 204, 205, 206, 207, 208, 209, 210}; // Beast
-            case 300 -> new int[]{301, 302, 303, 304, 305, 309}; // Thunder
-            case 400 -> new int[]{401, 402, 403, 404, 405, 409}; // Flame
-            case 500 -> new int[]{501, 502, 503, 504, 505, 506, 507, 508, 509}; // Wind
-            case 600 -> new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 611}; // Stone
-            case 700 -> new int[]{701, 702, 703, 704, 705, 707}; // Mist
-            case 800 -> new int[]{801, 802, 803, 804, 805}; // Serpent
-            case 900 -> new int[]{901, 902, 903, 904}; // Sound
-            case 1000 -> new int[]{1001, 1002, 1003, 1004, 1005, 1006, 1007}; // Ice
-            case 1100 -> new int[]{1101, 1102, 1103, 1105, 1106, 1107, 1108, 1109, 1110, 1114, 1116}; // Moon
-            case 1200 -> new int[]{1201, 1202, 1203, 1204, 1205, 1206, 1207, 1208, 1209, 1210, 1211, 1212}; // Sun
-            case 1300 -> new int[]{1301, 1304, 1305}; // Flower
-            case 1400 -> new int[]{1401, 1402, 1404, 1405, 1406}; // Insect
-            case 1500 -> new int[]{1501, 1502, 1505, 1506}; // Love
-            case 1600 -> new int[]{1601, 1602, 1603, 1604, 1605, 1606, 1607}; // Frost
-            default -> new int[0];
-        };
+        return BaseModStyleMapping.getFormsForStyle(style);
     }
 }
