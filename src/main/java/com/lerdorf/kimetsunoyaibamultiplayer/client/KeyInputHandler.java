@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
@@ -31,9 +33,6 @@ public class KeyInputHandler {
             if (mc.screen != null)
                 return;
 
-            // Debug: Log every key press to verify event handler is working
-            System.out.println("DEBUG KeyInput: key=" + event.getKey() + " scanCode=" + event.getScanCode());
-
             // IMPORTANT: Skip this handler if the keybinding is bound to a mouse button!
             // Check if the base mod's key is bound to a mouse button
             if (net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART.getKey()
@@ -54,20 +53,14 @@ public class KeyInputHandler {
             }
 
             // Check if variation cycle key was pressed
-            System.out.println("DEBUG: CYCLE_FORM_VARIATION key binding: " +
-                (ModKeyBindings.CYCLE_FORM_VARIATION != null ? ModKeyBindings.CYCLE_FORM_VARIATION.getKey() : "NULL"));
             boolean variationCycleKey = ModKeyBindings.CYCLE_FORM_VARIATION != null &&
                     ModKeyBindings.CYCLE_FORM_VARIATION.matches(event.getKey(), event.getScanCode());
-            System.out.println("DEBUG: variationCycleKey matches? " + variationCycleKey);
 
             if (variationCycleKey) {
-                System.out.println("DEBUG: G key detected! Checking held item...");
                 ItemStack mainHandItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
-                System.out.println("DEBUG: Held item: " + mainHandItem.getItem());
 
-                // Handle custom breathing swords (our API swords)
+                // Handle custom breathing swords
                 if (mainHandItem.getItem() instanceof BreathingSwordItem) {
-                    System.out.println("DEBUG: Custom breathing sword detected, sending packet");
                     // Send packet to server to cycle variation
                     // Direction: Shift+G = backward (-1), G = forward (1)
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
@@ -77,24 +70,20 @@ public class KeyInputHandler {
                 }
                 // Handle base mod swords
                 else if (com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.isNichirinSword(mainHandItem)) {
-                    System.out.println("DEBUG: Base mod sword detected, sending packet");
-
-                    // Get client-side breathes value (from cache or NBT)
+                    // Get client-side breathes value (from cache)
                     double breathes = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
                         .getCachedForm(mc.player.getUUID(), mainHandItem);
                     if (breathes == 0.0) {
                         breathes = mc.player.getPersistentData().getDouble("breathes");
                     }
-                    System.out.println("DEBUG: Client breathes value = " + breathes);
 
                     // Send packet to server with breathes value
+                    // Server will handle cycling and send chat message
                     // Direction: Shift+G = backward (-1), G = forward (1)
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
                             new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleFormVariationPacket(
                                     mc.options.keyShift.isDown() ? -1 : 1, breathes));
                     return;
-                } else {
-                    System.out.println("DEBUG: Not holding a nichirin sword, ignoring");
                 }
                 return;
             }
@@ -181,15 +170,12 @@ public class KeyInputHandler {
                 }
                 // Handle base mod swords
                 else if (com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.isNichirinSword(mainHandItem)) {
-                    System.out.println("DEBUG: Base mod sword detected (mouse), sending packet");
-
                     // Get client-side breathes value (from cache or NBT)
                     double breathes = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
                         .getCachedForm(mc.player.getUUID(), mainHandItem);
                     if (breathes == 0.0) {
                         breathes = mc.player.getPersistentData().getDouble("breathes");
                     }
-                    System.out.println("DEBUG: Client breathes value (mouse) = " + breathes);
 
                     // Send packet to server with breathes value
                     // Direction: Shift+Mouse = backward (-1), Mouse = forward (1)
@@ -214,7 +200,6 @@ public class KeyInputHandler {
             // COOLDOWN CHECK: Prevent rapid double-cycling (same as BreathingFormCycleHandler)
             long currentTime = System.currentTimeMillis();
             if (currentTime - lastMouseCycleTime < MOUSE_CYCLE_COOLDOWN_MS) {
-                System.out.println("Mouse cycle on cooldown - blocked duplicate (time since last: " + (currentTime - lastMouseCycleTime) + "ms)");
                 return; // Too soon after last cycle - ignore
             }
             // Update timestamp IMMEDIATELY to block race conditions
@@ -226,7 +211,6 @@ public class KeyInputHandler {
             // Handle custom breathing swords
             if (mainHandItem.getItem() instanceof BreathingSwordItem) {
                 // Determine direction (same logic as keyboard)
-                System.out.println("Cycling custom sword");
                 boolean shouldReverse = dedicatedReverseButton || (baseCycleButton && mc.options.keyShift.isDown());
 
                 // Consume base mod's keybind

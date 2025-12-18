@@ -2,7 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
-import net.minecraft.client.Minecraft;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientPacketHandler;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.network.FriendlyByteBuf;
@@ -51,17 +51,16 @@ public class MobSwordSlashPacket {
     }
 
     private static void handleClient(UUID entityUUID, String animationName, int animationTick) {
-        Minecraft mc = Minecraft.getInstance();
-        ClientLevel level = mc.level;
-        if (level == null) return;
+        var level = ClientPacketHandler.getClientLevel();
+        if (!(level instanceof ClientLevel clientLevel)) return;
 
         // Resolve entity by UUID
-        Entity found = level.getEntity(entityUUID.hashCode());
+        Entity found = clientLevel.getEntity(entityUUID.hashCode());
         LivingEntity living = null;
         if (found instanceof LivingEntity) {
             living = (LivingEntity) found;
         } else {
-            for (Entity e : level.entitiesForRendering()) {
+            for (Entity e : clientLevel.entitiesForRendering()) {
                 if (e.getUUID().equals(entityUUID) && e instanceof LivingEntity) {
                     living = (LivingEntity) e;
                     break;
@@ -79,4 +78,3 @@ public class MobSwordSlashPacket {
         BonePositionTracker.spawnRadialRibbonParticles(living, swordItem, animationName, animationTick, particleType);
     }
 }
-

@@ -29,6 +29,8 @@ public class PlayerBreathingData {
         private String baseModFormName = null;  // Cached form name for display
         private int currentVariationIndex = 0; // 0 = base form, 1+ = variations
         private String lastSwordKey = "";
+        private double lastBreathesValue = 0.0; // For tracking breathes changes
+        private boolean wasSprintingWithSword = false; // For tracking sprint animation sync
 
         public int getCurrentFormIndex() {
             return currentFormIndex;
@@ -78,6 +80,22 @@ public class PlayerBreathingData {
             this.lastSwordKey = key != null ? key : "";
         }
 
+        public double getLastBreathesValue() {
+            return lastBreathesValue;
+        }
+
+        public void setLastBreathesValue(double value) {
+            this.lastBreathesValue = value;
+        }
+
+        public boolean wasSprintingWithSword() {
+            return wasSprintingWithSword;
+        }
+
+        public void setWasSprintingWithSword(boolean value) {
+            this.wasSprintingWithSword = value;
+        }
+
         public void cycleForm(int maxForms) {
             // Custom swords use simple form indices (0, 1, 2...), not encoded values
             // Just cycle directly without decoding
@@ -111,7 +129,11 @@ public class PlayerBreathingData {
             if (persistentData.contains(NBT_KEY_FORM_INDEX)) {
                 data.currentFormIndex = persistentData.getInt(NBT_KEY_FORM_INDEX);
             }
-            // Note: Variation is now encoded in formIndex itself
+            // CRITICAL FIX: Also load variation index from NBT
+            // This ensures that when we reset variation to 0 on form cycle, it's properly loaded
+            if (persistentData.contains(NBT_KEY_VARIATION_INDEX)) {
+                data.currentVariationIndex = Math.max(0, persistentData.getInt(NBT_KEY_VARIATION_INDEX));
+            }
         }
 
         return data;

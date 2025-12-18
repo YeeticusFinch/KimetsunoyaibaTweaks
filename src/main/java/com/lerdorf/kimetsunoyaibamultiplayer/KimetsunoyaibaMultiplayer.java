@@ -355,6 +355,18 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
 
+        // Track breathes value changes for debugging
+        double currentBreathes = player.getPersistentData().getDouble("breathes");
+        if (currentBreathes > 0 && currentBreathes != data.getLastBreathesValue()) {
+            if (Config.logDebug) {
+                var main = player.getMainHandItem();
+                double selectOffset = main.isEmpty() ? 0 : (main.getOrCreateTag().contains("select") ? main.getOrCreateTag().getDouble("select") : 0);
+                Log.debug("[PlayerTick] Breathes changed: " + data.getLastBreathesValue() + " -> " + currentBreathes +
+                         " (sword: " + (main.isEmpty() ? "none" : main.getItem()) + ", select: " + selectOffset + ")");
+            }
+            data.setLastBreathesValue(currentBreathes);
+        }
+
         var main = player.getMainHandItem();
         String key = main.isEmpty() ? "" : main.getItem().toString();
         if (!main.isEmpty() && main.getOrCreateTag().contains("select")) {
@@ -370,6 +382,67 @@ public class KimetsunoyaibaMultiplayer
                     new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket(player.getUUID(), 0),
                     sp
                 );
+            }
+        }
+
+        // SPRINT ANIMATION SYNC: Detect when player starts/stops sprinting with a nichirin sword
+        if (Config.enableNichirinSprintAnimation && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            boolean holdingNichirinSword = main.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem ||
+                                          (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getSword(main.getItem()) != null);
+            boolean isSprintingWithSword = player.isSprinting() && holdingNichirinSword;
+            boolean wasSprintingWithSword = data.wasSprintingWithSword();
+
+            if (isSprintingWithSword != wasSprintingWithSword) {
+                data.setWasSprintingWithSword(isSprintingWithSword);
+
+                if (isSprintingWithSword) {
+                    // Player started sprinting with sword - send looping sprint animation to nearby players
+                    dev.kosmx.playerAnim.core.data.KeyframeAnimation sprintAnim =
+                        dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry.getAnimation(
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint2"));
+
+                    if (sprintAnim == null) {
+                        // Fallback to "sprint" without the 2
+                        sprintAnim = dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry.getAnimation(
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint"));
+                    }
+
+                    if (sprintAnim != null) {
+                        com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket packet =
+                            new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket(
+                                player.getUUID(),
+                                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint2"),
+                                0,
+                                sprintAnim.getLength(),
+                                true, // looping
+                                false, // not stopping
+                                sprintAnim,
+                                1.0f, // normal speed
+                                200 // sprint layer priority
+                            );
+                        // Send to all nearby players (including self) within 64 blocks
+                        ModNetworking.sendToNearby(packet, (net.minecraft.server.level.ServerLevel) player.level(),
+                            player.getX(), player.getY(), player.getZ(), 64.0);
+                        // Also send to the player themselves
+                        ModNetworking.sendToPlayer(packet, serverPlayer);
+                    }
+                } else {
+                    // Player stopped sprinting or switched items - send stop packet
+                    com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket stopPacket =
+                        new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket(
+                            player.getUUID(),
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint2"),
+                            0,
+                            20,
+                            false,
+                            true // stopping
+                        );
+                    // Send to all nearby players (including self) within 64 blocks
+                    ModNetworking.sendToNearby(stopPacket, (net.minecraft.server.level.ServerLevel) player.level(),
+                        player.getX(), player.getY(), player.getZ(), 64.0);
+                    // Also send to the player themselves
+                    ModNetworking.sendToPlayer(stopPacket, serverPlayer);
+                }
             }
         }
     }
@@ -666,33 +739,34 @@ public class KimetsunoyaibaMultiplayer
                         com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.updateDisplayTextFromChat(
                             mc.player.getUUID(), heldSword, message);
 
-                        // CRITICAL: Also extract and cache the breathes value from the chat message
+                        // CRITICAL: Parse and cache breathes value from chat message
+                        // Client-side player NBT doesn't have breathes, so chat is our source of truth!
                         com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.BreathingInfo info =
                             com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.parseDisplayText(message);
                         if (info != null) {
-                            // Store the breathes value so the display shows the correct form ID
-                            double cachedBreathes = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
-                                .getCachedForm(mc.player.getUUID(), heldSword);
-                            double breathesToStore = cachedBreathes > 0.0
-                                ? cachedBreathes
-                                : mc.player.getPersistentData().getDouble("breathes");
-                            if (breathesToStore == 0.0) {
-                                breathesToStore = info.fullBreathesValue; // Fallback to parsed pseudo value
+                            // Correct out-of-range breathes (e.g., 602 → 102)
+                            double displayBreathes = info.fullBreathesValue;
+                            int expectedRange = com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping.getExpectedRangeForSword(heldSword);
+                            int actualRange = ((int)displayBreathes / 100) * 100;
+
+                            double trueBreathes = displayBreathes;
+                            if (expectedRange > 0 && actualRange == expectedRange + 500) {
+                                trueBreathes = displayBreathes - 500;
                             }
 
-                            com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.updateForm(
-                                mc.player.getUUID(), heldSword, breathesToStore);
+                            int trueFormId = (int) trueBreathes;
 
-                            // Also cache the colored display text by form ID so base form names are preserved
-                            int formId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(breathesToStore);
-                            if (formId > 0) {
+                            // Cache BOTH the breathes value AND the display text
+                            if (trueFormId > 0) {
+                                com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.updateForm(
+                                    mc.player.getUUID(), heldSword, trueBreathes);
                                 com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.updateDisplayTextForForm(
-                                    mc.player.getUUID(), formId, info.originalColoredText);
-                            }
+                                    mc.player.getUUID(), trueFormId, info.originalColoredText);
 
-                            if (Config.logDebug) {
-                                Log.debug("Cached breathing form from chat - breathes: " + info.fullBreathesValue +
-                                         " for " + heldSword.getItem() + ": " + message);
+                                if (Config.logDebug) {
+                                    Log.debug("[ChatCache] Cached form " + trueFormId + " (display=" + displayBreathes +
+                                             ", corrected=" + trueBreathes + "): " + info.originalColoredText);
+                                }
                             }
                         }
                     }

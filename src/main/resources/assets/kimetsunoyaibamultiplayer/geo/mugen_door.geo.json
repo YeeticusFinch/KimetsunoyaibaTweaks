@@ -1,0 +1,71 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.mugen_door",
+				"texture_width": 256,
+				"texture_height": 256,
+				"visible_bounds_width": 6,
+				"visible_bounds_height": 1.5,
+				"visible_bounds_offset": [0, 0.25, 0]
+			},
+			"bones": [
+				{
+					"name": "Door Left",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{
+							"origin": [0, 0, -36],
+							"size": [36, 1, 72],
+							"uv": {
+								"north": {"uv": [72, 72], "uv_size": [36, 1]},
+								"east": {"uv": [0, 72], "uv_size": [72, 1]},
+								"south": {"uv": [180, 72], "uv_size": [36, 1]},
+								"west": {"uv": [108, 72], "uv_size": [72, 1]},
+								"up": {"uv": [108, 0], "uv_size": [-36, 72]},
+								"down": {"uv": [108, 72], "uv_size": [-36, -72]}
+							}
+						}
+					]
+				},
+				{
+					"name": "Door Right",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{
+							"origin": [-36, 0, -36],
+							"size": [36, 1, 72],
+							"uv": {
+								"north": {"uv": [72, 72], "uv_size": [36, 1]},
+								"east": {"uv": [0, 72], "uv_size": [72, 1]},
+								"south": {"uv": [180, 72], "uv_size": [36, 1]},
+								"west": {"uv": [108, 72], "uv_size": [72, 1]},
+								"up": {"uv": [72, 0], "uv_size": [36, 72]},
+								"down": {"uv": [72, 72], "uv_size": [36, -72]}
+							}
+						}
+					]
+				},
+				{
+					"name": "door inside",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{
+							"origin": [-36, 0.25, -36],
+							"size": [72, 0, 72],
+							"uv": {
+								"north": {"uv": [38, 180], "uv_size": [72, 0]},
+								"east": {"uv": [-34, 180], "uv_size": [72, 0]},
+								"south": {"uv": [182, 180], "uv_size": [72, 0]},
+								"west": {"uv": [110, 180], "uv_size": [72, 0]},
+								"up": {"uv": [14, 74], "uv_size": [221, 182]},
+								"down": {"uv": [14, 256], "uv_size": [218, -181]}
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

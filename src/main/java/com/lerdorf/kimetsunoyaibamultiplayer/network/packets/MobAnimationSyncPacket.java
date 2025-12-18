@@ -1,7 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.MobAnimationHelper;
-import net.minecraft.client.Minecraft;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientPacketHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -52,13 +52,13 @@ public class MobAnimationSyncPacket {
 
     private static void handleClientSide(int entityId, String animationName) {
         try {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.level == null) {
+            var level = ClientPacketHandler.getClientLevel();
+            if (level == null) {
                 return;
             }
 
             // Get the entity by ID
-            Entity entity = mc.level.getEntity(entityId);
+            Entity entity = level.getEntity(entityId);
             if (entity == null || !(entity instanceof LivingEntity)) {
                 System.err.println("[MobAnimationSyncPacket] Client received packet but entity not found or not LivingEntity: id=" + entityId);
                 return;

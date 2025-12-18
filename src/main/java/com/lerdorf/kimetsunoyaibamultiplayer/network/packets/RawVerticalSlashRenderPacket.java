@@ -1,7 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientPacketHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
@@ -110,19 +110,18 @@ public class RawVerticalSlashRenderPacket {
         ctx.enqueueWork(() -> {
             // Run on client thread only
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                Minecraft mc = Minecraft.getInstance();
-                ClientLevel level = mc.level;
-                if (level == null) return;
+                var level = ClientPacketHandler.getClientLevel();
+                if (!(level instanceof ClientLevel clientLevel)) return;
 
                 // Find the entity by UUID
-                Entity entity = level.getEntity(entityId.hashCode());
+                Entity entity = clientLevel.getEntity(entityId.hashCode());
                 LivingEntity livingEntity = null;
 
                 if (entity instanceof LivingEntity) {
                     livingEntity = (LivingEntity) entity;
                 } else {
                     // Try alternate lookup
-                    for (Entity e : level.entitiesForRendering()) {
+                    for (Entity e : clientLevel.entitiesForRendering()) {
                         if (e.getUUID().equals(entityId) && e instanceof LivingEntity) {
                             livingEntity = (LivingEntity) e;
                             break;

@@ -38,7 +38,10 @@
       "Bash(else echo \"File successfully deleted\")",
       "Bash(fc /b:*)",
       "Bash(grep:*)",
-      "Bash(./copy-mods.sh)"
+      "Bash(./copy-mods.sh)",
+      "Bash(for:*)",
+      "Bash(do echo \"Processing $file\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

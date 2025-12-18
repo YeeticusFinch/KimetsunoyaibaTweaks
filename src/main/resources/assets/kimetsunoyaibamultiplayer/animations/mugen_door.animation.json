@@ -1,0 +1,89 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"kimetsunoyaibamultiplayer.mugen_door.open": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.29,
+			"bones": {
+				"Door Left": {
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.29": {
+							"vector": [36, 0, 0]
+						}
+					},
+					"scale": {
+						"0.0": {
+							"vector": [1, 1, 1]
+						},
+						"0.29": {
+							"vector": [0.1, 1, 1]
+						}
+					}
+				},
+				"Door Right": {
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.29": {
+							"vector": [-36, 0, 0]
+						}
+					},
+					"scale": {
+						"0.0": {
+							"vector": [1, 1, 1]
+						},
+						"0.29": {
+							"vector": [0.1, 1, 1]
+						}
+					}
+				}
+			}
+		},
+		"kimetsunoyaibamultiplayer.mugen_door.close": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.25,
+			"bones": {
+				"Door Left": {
+					"position": {
+						"0.0": {
+							"vector": [36, 0, 0]
+						},
+						"0.25": {
+							"vector": [0, 0, 0]
+						}
+					},
+					"scale": {
+						"0.0": {
+							"vector": [0.1, 1, 1]
+						},
+						"0.25": {
+							"vector": [1, 1, 1]
+						}
+					}
+				},
+				"Door Right": {
+					"position": {
+						"0.0": {
+							"vector": [-36, 0, 0]
+						},
+						"0.25": {
+							"vector": [0, 0, 0]
+						}
+					},
+					"scale": {
+						"0.0": {
+							"vector": [0.1, 1, 1]
+						},
+						"0.25": {
+							"vector": [1, 1, 1]
+						}
+					}
+				}
+			}
+		}
+	}
+}

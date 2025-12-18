@@ -1,7 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
-import net.minecraft.client.Minecraft;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientPacketHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
@@ -38,9 +38,9 @@ public class FormSyncPacket {
         ctx.get().enqueueWork(() -> {
             // This packet is received on the client side
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                Minecraft mc = Minecraft.getInstance();
-                if (mc.level != null) {
-                    Player player = mc.level.getPlayerByUUID(playerId);
+                var level = ClientPacketHandler.getClientLevel();
+                if (level != null) {
+                    Player player = level.getPlayerByUUID(playerId);
                     if (player != null) {
                         // Update the player's form index in client-side data
                         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(playerId);

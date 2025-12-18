@@ -1253,7 +1253,8 @@ public class EnhancedLoveForms {
                 	if (currentTick[0] == 2 || currentTick[0] == 12 || currentTick[0] == 32) {
                 		// Damage the idiots in front of you
                 		if (serverLevel != null) {
-                			AABB searchBox = entity.getBoundingBox().move(entity.getEyePosition().add(entity.getLookAngle().scale(6))).inflate(6.0);
+                			Vec3 centerPos = entity.getEyePosition().add(entity.getLookAngle().scale(6));
+                			AABB searchBox = new AABB(centerPos, centerPos).inflate(6.0);
                 			List<LivingEntity> nearby = level.getEntitiesOfClass(
                 				LivingEntity.class, searchBox,
                 				e -> e != entity && e.isAlive() && isTargetable(entity, e)
@@ -1287,7 +1288,8 @@ public class EnhancedLoveForms {
                 	}
                 	
                 	if (currentTick[0] > 30 && currentTick[0] % 2 == 0) {
-                		AABB hitBox = entity.getBoundingBox().move(entity.getEyePosition().add(entity.getLookAngle().scale(6))).inflate(6.0);
+                		Vec3 hitBoxCenter = entity.getEyePosition().add(entity.getLookAngle().scale(6));
+                		AABB hitBox = new AABB(hitBoxCenter, hitBoxCenter).inflate(6.0);
                         List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
 
                         for (Entity target : targets) {
