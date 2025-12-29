@@ -161,7 +161,7 @@ public class MuichiroEntity extends BreathingSlayerEntity {
         return PathfinderMob.createMobAttributes()
             .add(Attributes.MAX_HEALTH, 135.0D)      // Hashira health
             .add(Attributes.ATTACK_DAMAGE, 1.0D)     // Base damage (Strength effect adds the rest)
-            .add(Attributes.MOVEMENT_SPEED, 0.32D)   // Fast movement (Speed effect multiplies this)
+            .add(Attributes.MOVEMENT_SPEED, 0.24D)   // Moderate base movement (Speed effect multiplies this)
             .add(Attributes.ATTACK_SPEED, 14.0D)     // Extremely fast attack speed baseline
             .add(Attributes.ARMOR, 6.0D)             // From armor equipment
             .add(Attributes.ARMOR_TOUGHNESS, 2.0D)   // From armor equipment
@@ -292,9 +292,9 @@ public class MuichiroEntity extends BreathingSlayerEntity {
     public float getSpeed() {
         float baseSpeed = super.getSpeed();
 
-        // Apply 50% speed boost when sprinting (in combat)
+        // Apply 100% speed boost when sprinting (in combat)
         if (this.isSprinting() && this.getTarget() != null) {
-            return baseSpeed * 1.5F;
+            return baseSpeed * 2.0F;
         }
 
         return baseSpeed;

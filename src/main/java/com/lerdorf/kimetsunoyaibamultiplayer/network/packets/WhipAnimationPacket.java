@@ -94,11 +94,19 @@ public class WhipAnimationPacket {
         net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(clientDist, () -> () -> {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.level != null) {
-                net.minecraft.world.entity.player.Player player = mc.level.getPlayerByUUID(playerUUID);
-                if (player != null) {
+                // Search for entity by UUID (could be player or any other LivingEntity)
+                net.minecraft.world.entity.LivingEntity entity = null;
+                for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+                    if (e instanceof net.minecraft.world.entity.LivingEntity living && e.getUUID().equals(playerUUID)) {
+                        entity = living;
+                        break;
+                    }
+                }
+
+                if (entity != null) {
                     // Apply animation state to whip physics
                     com.lerdorf.kimetsunoyaibamultiplayer.client.WhipPhysics.playAnimation(
-                        player,
+                        entity,
                         animationName,
                         extensionLevel,
                         10 // Default transition ticks

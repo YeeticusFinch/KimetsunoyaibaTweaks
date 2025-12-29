@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CrowGeoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.GhostlyCloneRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanrojiRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroRenderer;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.renderer.entity.EntityRenderers;
@@ -34,6 +35,9 @@ public class CrowRendererManager {
 
         // Register renderer for Muichiro Tokito
         event.registerEntityRenderer(ModEntities.MUICHIRO.get(), MuichiroRenderer::new);
+
+        // Register renderer for Mitsuri Kanroji
+        event.registerEntityRenderer(ModEntities.KANROJI.get(), KanrojiRenderer::new);
 
         if (Config.logDebug)
         	Log.info("Entity renderers registered successfully");

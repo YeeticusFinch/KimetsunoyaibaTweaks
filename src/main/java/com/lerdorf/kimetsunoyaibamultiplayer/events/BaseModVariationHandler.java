@@ -5,7 +5,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -14,21 +13,13 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 /**
  * Handles execution of variations for base KimetsunoYaiba mod swords.
  * When a player right-clicks with a base mod sword that has a variation selected,
- * this handler executes the variation's effect.
+ * this handler executes the variation's effect using substring matching on form names.
  */
 @Mod.EventBusSubscriber(modid = com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer.MODID)
 public class BaseModVariationHandler {
-
-    // Track cooldowns per player per form ID
-    // Map: Player UUID -> (Form ID -> Cooldown end time in milliseconds)
-    private static final Map<UUID, Map<Integer, Long>> formCooldowns = new HashMap<>();
 
     // Track last execution time to prevent double-triggering
     private static long lastExecutionTime = 0;
@@ -59,44 +50,30 @@ public class BaseModVariationHandler {
             return;
         }
 
-        // Prefer the current NBT form for the active sword; overlay/use cache only if same base form
+        // Get current form name and variation index from player data
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player.getUUID());
-        double nbtBreathes = player.getPersistentData().getDouble("breathes");
-        double cachedBreathes = data.getBaseModBreathesValue();
-        double breathes = nbtBreathes;
-
-        if (breathes == 0.0 && cachedBreathes > 0.0) {
-            breathes = cachedBreathes;
-        } else if (breathes > 0.0 && cachedBreathes > 0.0) {
-            int nbtFormId = com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping.getFormId(breathes);
-            int cachedFormId = com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping.getFormId(cachedBreathes);
-            if (nbtFormId == cachedFormId) {
-                // Use encoded cached value if it matches the same base form
-                breathes = cachedBreathes;
-            }
-        }
-
-        if (breathes == 0.0) {
-            return; // No form selected
-        }
-
-        // CRITICAL: Correct out-of-range breathes values (e.g., 602 → 102)
-        // Base mod sometimes writes form ID with +500 offset
-        int expectedRange = com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping.getExpectedRangeForSword(heldItem);
-        int actualRange = ((int)breathes / 100) * 100;
-        if (expectedRange > 0 && actualRange == expectedRange + 500) {
-            breathes = breathes - 500;
-            if (Config.logDebug) {
-                Log.debug("[BaseModVariationHandler] Corrected out-of-range breathes: " + (breathes + 500) + " -> " + breathes);
-            }
-        }
-
-        // Decode base form ID; variation tracked separately
-        int formId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(breathes);
+        String currentFormName = data.getBaseModFormName();
         int variationIndex = data.getCurrentVariationIndex();
 
-        if (formId <= 0) {
-            return; // Invalid form ID
+        // Fallback: If form name not cached, try to get it from breathes value
+        if (currentFormName == null || currentFormName.isEmpty()) {
+            double breathes = player.getPersistentData().getDouble("breathes");
+            if (breathes > 0) {
+                int formId = (int) breathes;
+                com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.BaseForm form =
+                    com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.forms.get(formId);
+                if (form != null) {
+                    currentFormName = form.name;
+                    data.setBaseModFormName(currentFormName); // Cache it
+                    if (Config.logDebug) {
+                        Log.debug("[BaseModVariationHandler] Populated form name from breathes: " + formId + " -> " + currentFormName);
+                    }
+                }
+            }
+        }
+
+        if (currentFormName == null || currentFormName.isEmpty()) {
+            return; // No form selected
         }
 
         if (variationIndex == 0) {
@@ -113,24 +90,17 @@ public class BaseModVariationHandler {
             return;
         }
 
-        // CRITICAL: Check if form is on cooldown before executing variation (our tracking system)
-        if (isFormOnCooldown(player.getUUID(), formId)) {
-            if (Config.logDebug) {
-                long remainingCooldown = getRemainingCooldown(player.getUUID(), formId);
-                Log.debug("Form " + formId + " is on cooldown (remaining: " + remainingCooldown + "ms), blocking variation execution");
-            }
-            // Cancel the event to prevent the base mod from executing as well
-            event.setCanceled(true);
-            return;
-        }
+        // Get the variation using substring matching
+        BreathingFormVariation variation = VariationRegistry.getVariationBySubstring(
+            currentFormName, variationIndex, null
+        );
 
-        // Get the variation for this form
-        BreathingFormVariation variation = VariationRegistry.getVariation(formId, variationIndex, null);
         if (variation == null) {
             // Reset bad variation
             data.setCurrentVariationIndex(0);
             if (Config.logDebug) {
-                Log.debug("No variation found for form " + formId + " variation " + variationIndex + " -> resetting to base form");
+                Log.debug("No variation found for form '" + currentFormName +
+                         "' variation " + variationIndex + " -> resetting to base form");
             }
             return;
         }
@@ -138,24 +108,33 @@ public class BaseModVariationHandler {
         // Execute the variation's effect
         lastExecutionTime = currentTime;
 
+        // Get the form ID from player's breathes value
+        double breathes = player.getPersistentData().getDouble("breathes");
+        int formId = (int) breathes;
+
         if (Config.logDebug) {
             Log.debug("Executing base mod variation: " + variation.getName() +
-                     " (Breathes: " + breathes + ", Form ID: " + formId + ", Variation Index: " + variationIndex + ")");
+                     " (Form: " + currentFormName + ", Variation Index: " + variationIndex + ", FormID: " + formId + ")");
         }
 
         try {
             variation.getEffect().execute(player, player.level(), formId);
 
-            // CRITICAL: Set cooldown for this form after execution
-            int cooldownSeconds = variation.getCooldownSeconds();
-            setFormCooldown(player.getUUID(), formId, cooldownSeconds);
+            // CRITICAL: Restore breathes value after execution
+            // The base mod or variation execution might have changed it
+            player.getPersistentData().putDouble("breathes", breathes);
+
+            if (Config.logDebug) {
+                Log.debug("Restored breathes value to " + breathes + " after variation execution");
+            }
 
             // CRITICAL: Set Minecraft item cooldown so the sword shows cooldown bar and can't be used
+            int cooldownSeconds = variation.getCooldownSeconds();
             int cooldownTicks = cooldownSeconds * 20; // Convert seconds to ticks (20 ticks = 1 second)
             player.getCooldowns().addCooldown(heldItem.getItem(), cooldownTicks);
 
             if (Config.logDebug) {
-                Log.debug("Set " + cooldownSeconds + "s (" + cooldownTicks + " ticks) cooldown for form " + formId + " on item " + heldItem.getItem());
+                Log.debug("Set " + cooldownSeconds + "s (" + cooldownTicks + " ticks) cooldown on item " + heldItem.getItem());
             }
 
             // CRITICAL: Cancel to prevent the base mod from also executing the base form
@@ -167,55 +146,4 @@ public class BaseModVariationHandler {
         }
     }
 
-    /**
-     * Check if a form is on cooldown for a player.
-     */
-    private static boolean isFormOnCooldown(UUID playerUUID, int formId) {
-        Map<Integer, Long> playerCooldowns = formCooldowns.get(playerUUID);
-        if (playerCooldowns == null) {
-            return false;
-        }
-
-        Long cooldownEndTime = playerCooldowns.get(formId);
-        if (cooldownEndTime == null) {
-            return false;
-        }
-
-        return System.currentTimeMillis() < cooldownEndTime;
-    }
-
-    /**
-     * Get remaining cooldown time for a form in milliseconds.
-     */
-    private static long getRemainingCooldown(UUID playerUUID, int formId) {
-        Map<Integer, Long> playerCooldowns = formCooldowns.get(playerUUID);
-        if (playerCooldowns == null) {
-            return 0;
-        }
-
-        Long cooldownEndTime = playerCooldowns.get(formId);
-        if (cooldownEndTime == null) {
-            return 0;
-        }
-
-        long remaining = cooldownEndTime - System.currentTimeMillis();
-        return Math.max(0, remaining);
-    }
-
-    /**
-     * Set cooldown for a form for a player.
-     */
-    private static void setFormCooldown(UUID playerUUID, int formId, int cooldownSeconds) {
-        long cooldownEndTime = System.currentTimeMillis() + (cooldownSeconds * 1000L);
-
-        formCooldowns.computeIfAbsent(playerUUID, k -> new HashMap<>())
-            .put(formId, cooldownEndTime);
-    }
-
-    /**
-     * Clear all cooldowns for a player (e.g., when they log out).
-     */
-    public static void clearPlayerCooldowns(UUID playerUUID) {
-        formCooldowns.remove(playerUUID);
-    }
 }

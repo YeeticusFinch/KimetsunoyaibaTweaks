@@ -61,7 +61,7 @@ public class CrowQuestMarkerHandler {
     /**
      * Package-private: Add a quest marker (used by client wrapper)
      */
-    static void addQuestMarker(UUID playerId, QuestMarker marker) {
+    public static void addQuestMarker(UUID playerId, QuestMarker marker) {
         activeQuests.put(playerId, marker);
     }
 
@@ -84,7 +84,7 @@ public class CrowQuestMarkerHandler {
     /**
      * Called when player reaches a waypoint
      */
-    static void onWaypointReached(Player player, Vec3 location, Level level) {
+    public static void onWaypointReached(Player player, Vec3 location, Level level) {
         // Play success sound
         level.playSound(player, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.5f, 1.0f);
 
@@ -150,7 +150,7 @@ public class CrowQuestMarkerHandler {
     /**
      * Draws a particle arrow from the player pointing towards the quest location
      */
-    static void drawQuestArrow(Player player, Vec3 target, Level level) {
+    public static void drawQuestArrow(Player player, Vec3 target, Level level) {
         Vec3 playerPos = player.position().add(0, player.getEyeHeight(), 0);
         Vec3 direction = target.subtract(playerPos).normalize();
 
@@ -192,7 +192,7 @@ public class CrowQuestMarkerHandler {
     /**
      * Draws a waypoint marker at the target location
      */
-    static void drawWaypoint(Vec3 target, Level level) {
+    public static void drawWaypoint(Vec3 target, Level level) {
         // Draw a vertical beam of particles
         for (int i = 0; i < 20; i++) {
             double y = target.y + i * 0.5;
@@ -234,7 +234,7 @@ public class CrowQuestMarkerHandler {
     /**
      * Clears all quest markers (called on world unload)
      */
-    static void clearAllMarkers() {
+    public static void clearAllMarkers() {
         activeQuests.clear();
         //if (Config.logDebug)
         //    Log.info("Cleared all quest markers");
@@ -243,7 +243,7 @@ public class CrowQuestMarkerHandler {
     /**
      * Gets the current quest marker for a player, if any
      */
-    static QuestMarker getQuestMarker(UUID playerId) {
+    public static QuestMarker getQuestMarker(UUID playerId) {
         return activeQuests.get(playerId);
     }
 

@@ -15,6 +15,7 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Handles entity replacement system.
@@ -195,6 +196,36 @@ public class EntityReplacerHandler {
 
             // Load the copied data
             replacementEntity.load(newNbt);
+
+            // Transfer raid metadata if this is a raid entity
+            CompoundTag oldPersistentData = entity.getPersistentData();
+            if (oldPersistentData.contains("RaidId")) {
+                UUID raidId = oldPersistentData.getUUID("RaidId");
+                String raidType = oldPersistentData.getString("RaidType");
+
+                // Tag the replacement entity with the same raid metadata
+                CompoundTag newPersistentData = replacementEntity.getPersistentData();
+                newPersistentData.putUUID("RaidId", raidId);
+                newPersistentData.putString("RaidType", raidType);
+
+                // Notify raid system to transfer tracking
+                if (event.getLevel() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                    // Get the replacement entity's max health (if it's a LivingEntity)
+                    float newMaxHealth = replacementEntity instanceof net.minecraft.world.entity.LivingEntity living
+                        ? living.getMaxHealth()
+                        : 100f; // Fallback value
+
+                    // Transfer raid tracking from old UUID to new UUID
+                    com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidRegistry registry =
+                        com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidRegistry.get(serverLevel);
+                    registry.replaceRaidEntity(raidId, entity.getUUID(), replacementEntity.getUUID(), newMaxHealth);
+
+                    if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                        Log.debug("[Entity Replacer] Transferred raid tracking from " +
+                                  entity.getUUID() + " to " + replacementEntity.getUUID());
+                    }
+                }
+            }
 
             // Spawn the replacement entity
             event.getLevel().addFreshEntity(replacementEntity);

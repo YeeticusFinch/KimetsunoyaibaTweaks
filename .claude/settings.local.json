@@ -41,7 +41,13 @@
       "Bash(./copy-mods.sh)",
       "Bash(for:*)",
       "Bash(do echo \"Processing $file\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(ls:*)",
+      "Bash(./gradlew.bat:*)",
+      "Bash(do if [ -f \"$dir/minecraft/config/kimetsunoyaibamultiplayer/entities.toml\" ])",
+      "Bash(then sed -i 's/enhancements-enabled = false/enhancements-enabled = true/' \"$dir/minecraft/config/kimetsunoyaibamultiplayer/entities.toml\")",
+      "Bash(echo:*)",
+      "Bash(exit 0)"
     ],
     "deny": [],
     "ask": []

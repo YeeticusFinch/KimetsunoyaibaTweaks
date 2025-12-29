@@ -237,7 +237,7 @@ public class AnimationHelper {
     /**
      * Trigger GeckoLib animation on the Kanroji sword if the entity is holding it
      */
-    private static void triggerKanrojiSwordAnimation(LivingEntity entity, String animationName) {
+    public static void triggerKanrojiSwordAnimation(LivingEntity entity, String animationName) {
         if (entity.level().isClientSide) {
             if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
                 com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[AnimationHelper] triggerKanrojiSwordAnimation(entity={}, anim={})", entity.getName().getString(), animationName);

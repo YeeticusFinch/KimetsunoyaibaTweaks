@@ -40,6 +40,12 @@ public class ModItems {
             0x8ABED4, 0xFFFFFF, // Light blue-gray body (Muichiro's hair color), white spots
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> KANROJI_SPAWN_EGG = ITEMS.register("kanroji_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KANROJI,
+            0xFFB6D9, 0x9FE88D, // Pink body (Mitsuri's hair), light green spots (hair gradient)
+            new Item.Properties().stacksTo(64)));
+
     // Omen Potion Items - Muzan (for demon slayer players)
     public static final RegistryObject<Item> OMEN_OF_MUZAN_POTION_1 = ITEMS.register("omen_of_muzan_potion_1",
         () -> new OmenPotionItem(new Item.Properties().stacksTo(16), OmenPotionItem.OmenType.MUZAN, 1));
@@ -129,6 +135,7 @@ public class ModItems {
 
                 // Spawn eggs
                 output.accept(MUICHIRO_SPAWN_EGG.get());
+                output.accept(KANROJI_SPAWN_EGG.get());
 
                 // Omen Potions
                 output.accept(OMEN_OF_MUZAN_POTION_1.get());

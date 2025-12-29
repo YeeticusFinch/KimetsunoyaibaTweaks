@@ -25,6 +25,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModMobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -217,17 +218,14 @@ public class EnhancedLoveForms {
     /**
      * Trigger whip extension animation via network packet.
      * Sends to all clients so they can apply the whip physics animation.
+     * Works for any LivingEntity holding a Kanroji sword (players, mobs, etc.)
      */
-    private static void triggerWhipAnimation(LivingEntity entity, String animationName, double extension) {
-        if (!(entity instanceof Player player)) {
-            return; // Whip physics only work for players
-        }
-
+    public static void triggerWhipAnimation(LivingEntity entity, String animationName, double extension) {
         // Send whip animation packet to all clients
         if (!entity.level().isClientSide) {
             com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WhipAnimationPacket packet =
                 new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WhipAnimationPacket(
-                    player.getUUID(),
+                    entity.getUUID(),
                     animationName,
                     extension,
                     0 // Start at tick 0
@@ -236,12 +234,12 @@ public class EnhancedLoveForms {
         } else {
             // If called on client (shouldn't happen for forms), apply directly
             // Use DistExecutor to avoid loading client class on server
-            final Player finalPlayer = player;
+            final LivingEntity finalEntity = entity;
             final String finalAnimName = animationName;
             final double finalExtension = extension;
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
                 com.lerdorf.kimetsunoyaibamultiplayer.client.WhipPhysics.playAnimation(
-                    finalPlayer, finalAnimName, finalExtension, 10
+                    finalEntity, finalAnimName, finalExtension, 10
                 );
             });
         }
@@ -874,20 +872,202 @@ public class EnhancedLoveForms {
             }
         );
     }
+    
+    /**
+     * Fourth Form: The Heartbreak of Unrequited Love
+     */
+    public static BreathingForm fourthForm() {
+    	return new BreathingForm(
+    			22004, // Love Fourth Form ID
+    			"Fourth Form: The Heartbreak of Unrequited Love",
+    			"The slayer catches an oncoming attack with their whip-blade, tossing it aside leaving the target open for a counter, or a retreat",
+    			6,
+    			(entity, level, formId) -> {
+    				// TODO: Implement fourth form
+    				ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
+                	float [][][] particlePoints = ParticlePositions.fourth_form.get("point_a");
+                	
+                	float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
+
+                	// Set guard state
+                	GuardStateHelper.setGuardState(entity, damage, formId);
+
+                	// Play player animation - try multiple approaches to ensure it works
+                    //System.out.println("[FourthForm] Playing player animation: love_fourth_form");
+                    if (entity instanceof Player player) {
+                        // Direct animation call to bypass SwordRegistry lookups
+                        AnimationHelper.playAnimationOnLayer(player, "love_fourth_form", -1, 1.0f, 3000);
+                    } else {
+                        playEntityAnimation(entity, "love_fourth_form");
+                    }
+
+                    // Trigger whip animation (client-side)
+                    //System.out.println("[FourthForm] Triggering whip animation: love_fourth_form");
+                    triggerWhipAnimation(entity, "love_fourth_form", 1.0);
+
+                    // ALSO trigger Kanroji sword animation directly
+                    AnimationHelper.triggerKanrojiSwordAnimation(entity, "love_fourth_form");
+
+                    // Prevent normal attack swing
+                    setCancelAttackSwing(entity, true);
+                    
+                    int interval = 1;
+                    int totalDuration = 60;
+                    
+                    int[] currentTick = {0};
+                    
+                    List<LivingEntity> targets = new ArrayList<LivingEntity>();
+                    
+                    final Vec3[] vecs = new Vec3[5]; // 0=position, 1=forward, 2=right, 3=up, 4=target
+                    float yawStart = (float) Math.toRadians(-entity.getYRot());
+
+            		// Build orthonormal basis (forward, right, up)
+            		vecs[0] = entity.position();
+            		vecs[1] = entity.getLookAngle(); // Forward vector
+            		vecs[2] = new Vec3(Math.sin(yawStart + Math.PI/2), 0, Math.cos(yawStart + Math.PI/2)).normalize(); // Right vector (90° from forward on horizontal plane)
+            		vecs[3] = vecs[2].cross(vecs[1]).normalize(); // Up vector (right × forward, perpendicular to both)
+                    
+                    // Catch entities in front and tie them in the whip, then toss them forward
+                    
+                    AbilityScheduler.scheduleRepeating(entity, () -> {
+                    	
+                    	if (currentTick[0] == 38 || (currentTick[0] < 38 && currentTick[0] % 3 == 0)) {
+                    		float yaw = (float) Math.toRadians(-entity.getYRot());
+
+                    		// Build orthonormal basis (forward, right, up)
+                    		vecs[0] = entity.position();
+                    		vecs[1] = entity.getLookAngle(); // Forward vector
+                    		if (vecs[1].y > 0) vecs[1] = new Vec3(vecs[1].x, 0, vecs[1].z);
+                    		vecs[2] = new Vec3(Math.sin(yaw + Math.PI/2), 0, Math.cos(yaw + Math.PI/2)).normalize(); // Right vector (90° from forward on horizontal plane)
+                    		vecs[3] = vecs[2].cross(vecs[1]).scale(-1).normalize(); // Up vector (right × forward, perpendicular to both)
+                    	}
+                    	
+                    	if (currentTick[0] <= 15) { // Spiral around and gather targets
+                    		if (currentTick[0] % 2 == 0) {
+                    			int r = 4;
+                    			AABB rayBox = new AABB(vecs[0].subtract(r, r, r), vecs[0].add(r, r, r));
+                    			List<LivingEntity> entitiesInRay = level.getEntitiesOfClass(
+                    				LivingEntity.class, rayBox,
+                    				e -> e != entity && e.isAlive() && isTargetable(entity, e) && !targets.contains(e)
+                    			);
+                    			targets.addAll(entitiesInRay);
+                    			
+                    			rayBox = new AABB(vecs[0].add(vecs[1].scale(5)).subtract(r, r, r), vecs[0].add(vecs[1].scale(5)).add(r, r, r));
+                    			entitiesInRay = level.getEntitiesOfClass(
+                    				LivingEntity.class, rayBox,
+                    				e -> e != entity && e.isAlive() && isTargetable(entity, e) && !targets.contains(e)
+                    			);
+                    			targets.addAll(entitiesInRay);
+                    			
+                    			for (LivingEntity le : entitiesInRay) {
+                    				// Play fishing rod sound
+                    				level.playSound(null, le.getX(), le.getY(), le.getZ(),
+                    					SoundEvents.FISHING_BOBBER_THROW,
+                    					SoundSource.PLAYERS, 1.0f, 1.2f);
+
+                    				// Give the entity 3 seconds (60 ticks) of immovable effect
+                    				//le.addEffect(new MobEffectInstance(KimetsunoyaibaModMobEffects.IMMVABLE.get(), 60, 0));
+                    				
+                    				// Launch entity into the air
+                    				MovementHelper.setVelocity(le, new Vec3(0, 0.8f, 0));
+
+                    				// Small circle of pink dust particles around le
+                    				for (float i = 0; i < Math.PI*2; i += 0.2f) {
+                    					Vec3 pos = le.position().add(1.5f*Math.sin(i), 1, 1.5f*Math.cos(i));
+                    					serverLevel.sendParticles(
+                            		            new DustParticleOptions(
+                            		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                            		                1.8f                           // scale
+                            		            ),
+                            		            pos.x, pos.y, pos.z,
+                            		            2, 0.05, 0.05, 0.05, 0 // count, velocity
+                            		        );
+                    				}
+                    			}
+                    		}
+                    	}
+                    	else if (currentTick[0] < 35) { // Hold entities in front
+                    		Vec3 point = vecs[0].add(vecs[1].scale(7)).add(0, 5, 0);
+                    		for (LivingEntity le : targets) {
+                    			MovementHelper.setVelocity(le, point.subtract(le.position()));
+                    		}
+                    	}
+                    	else if (currentTick[0] < 38) { // Flick to the right
+                    		Vec3 point = vecs[0].add(vecs[1].scale(6)).add(0, 7, 0).add(vecs[2].scale(-8));
+                    		for (LivingEntity le : targets) {
+                    			MovementHelper.setVelocity(le, point.subtract(le.position()));
+                    		}
+                    	}
+                    	else if (currentTick[0] < 41) { // Launch entities forward
+                    		if (currentTick[0] == 39) {
+                    			// Play the projectile launch sound effect
+                    			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                    				SoundEvents.ARROW_SHOOT,
+                    				SoundSource.PLAYERS, 1.5f, 0.8f);
+                    			for (LivingEntity le : targets)
+                    				Damager.hurt(entity, le, damage);
+                    		}
+                    		for (LivingEntity le : targets) {
+                    			MovementHelper.setVelocity(le, vecs[1].scale(1.5f).add(0, 0.8f, 0));
+                    		}
+                    	}
+                    	
+                    	if (serverLevel != null && particlePoints != null && currentTick[0] < particlePoints.length && particlePoints[currentTick[0]].length > 0) {
+                    		for (int i = 0; i < particlePoints[currentTick[0]].length; i++) {
+                    			float x = particlePoints[currentTick[0]][i][0];
+                    			float y = particlePoints[currentTick[0]][i][1];
+                    			float z = particlePoints[currentTick[0]][i][2];
+
+                    			Vec3 pos = entity.position().add(vecs[1].scale(z).add(vecs[2].scale(x)).add(vecs[3].scale(y)));
+
+                    			// Spawn pink dust particle at pos
+                    			serverLevel.sendParticles(
+                    		            new DustParticleOptions(
+                    		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                    		                1.8f                           // scale
+                    		            ),
+                    		            pos.x, pos.y, pos.z,
+                    		            2, 0.05, 0.05, 0.05, 0 // count, velocity
+                    		        );
+                    			
+                    			// Spawn white dust particle at pos
+                    			serverLevel.sendParticles(
+                    					new DustParticleOptions(
+                        		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
+                        		                1.5f                           // scale
+                        		            ),
+                    		            pos.x, pos.y, pos.z,
+                    		            1, 0, 0, 0, 0 // count, velocity
+                    		        );
+                    		}
+                    	}
+                    	
+                    	currentTick[0] += interval;
+    	            }, interval, totalDuration);
+                    
+                   
+                    // Schedule cleanup
+                    AbilityScheduler.scheduleOnce(entity, () -> {
+                        GuardStateHelper.clearGuardState(entity);
+                        setCancelAttackSwing(entity, false);
+                    }, totalDuration+2);
+    			}
+    			);
+    			
+    }
 
     /**
-     * Fifth Form: Swaying Love, Wildclaw (PLACEHOLDER)
-     * TODO: Implement
+     * Fifth Form: Swaying Love, Wildclaw
+     * 
      */
     public static BreathingForm fifthForm() {
         return new BreathingForm(
             22005, // Love Fifth Form ID
             "Fifth Form: Swaying Love, Wildclaw",
             "Wide sweeping arc attack",
-            4,
+            10,
             (entity, level, formId) -> {
-                // TODO: Implement fifth form
-
+            	
             	ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
             	float [][][] particlePoints = ParticlePositions.fifth_form.get("point_a");
 
@@ -1009,7 +1189,7 @@ public class EnhancedLoveForms {
                 				yawPitch[1],
                 				"love_fifth_form",
                 				85);
-                		entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 30, 3)); // To stop the fall damage
+                		entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, totalDuration+2-currentTick[0], 3)); // To stop the fall damage
                 	}
                 	else if (currentTick[0] < 31) {
                 		// Tornado is starting in the thin phase
@@ -1039,7 +1219,7 @@ public class EnhancedLoveForms {
 	        				level.playSound(null, x, y, z,
 	                				   SoundEvents.PLAYER_ATTACK_STRONG,
 	                				    SoundSource.PLAYERS, 1.0f, 1f);
-            				Damager.hurt(entity, le, damage*0.5f);
+            				Damager.hurt(entity, le, damage*0.7f);
             			}
                 	}
                 	else if (currentTick[0] < 41) {
@@ -1087,7 +1267,7 @@ public class EnhancedLoveForms {
     	        				level.playSound(null, x, y, z,
     	                				   SoundEvents.PLAYER_ATTACK_STRONG,
     	                				    SoundSource.PLAYERS, 1.0f, 1f);
-                				Damager.hurt(entity, le, damage*0.5f, true);
+                				Damager.hurt(entity, le, damage*0.7f, true);
                 			}
                 		}
                 	}
@@ -1115,7 +1295,7 @@ public class EnhancedLoveForms {
     	        				level.playSound(null, x, y, z,
     	                				   SoundEvents.PLAYER_ATTACK_STRONG,
     	                				    SoundSource.PLAYERS, 1.0f, 1f);
-                				Damager.hurt(entity, le, damage);
+                				Damager.hurt(entity, le, damage * 0.7f);
                 			}
                 		}
                 		
@@ -1360,6 +1540,7 @@ public class EnhancedLoveForms {
         forms.add(firstForm());
         forms.add(secondForm());
         forms.add(thirdForm());
+        forms.add(fourthForm());
         forms.add(fifthForm());
         forms.add(sixthForm());
 

@@ -253,11 +253,9 @@ public class BonePositionTracker {
 		Log.debug("spawnRadialRibbonParticles called: entity=" + entity + ", anim=" + animationName + ", tick="
 				+ animationTick);
 
-		// TEMP: Skip sword swing models/particles for Kanroji sword (uses GeckoLib bone-based rendering instead)
-		if (swordItem != null && swordItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated) {
-			Log.debug("Early return: Kanroji sword uses GeckoLib bone-based rendering");
-			return;
-		}
+		// NOTE: Removed early return for Kanroji sword - GeckoLib handles sword MODEL animations,
+		// but we still want trail particles to spawn in the air during attacks
+		// (GeckoLib is only for the sword item itself, not for the particle trails)
 
 		// Reset particle counter at start of each animation call
 		particlesSpawnedThisTick = 0;
@@ -293,7 +291,10 @@ public class BonePositionTracker {
 		}
 
 		// Check if 3D sword slash models should be used instead of particles
-		if (SwordSwingConfig.useSwordSwingModel) {
+		// Exception: Kanroji sword uses GeckoLib for item model, so skip the swing model but still show particles
+		boolean isKanrojiSword = swordItem != null && swordItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+
+		if (SwordSwingConfig.useSwordSwingModel && !isKanrojiSword) {
 			Log.debug("Using 3D sword slash model rendering");
 			float progress = getAnimationProgress(entity, animationTick);
 			spawnModelForAnimation(level, entity, swordItem, animationName, progress);
@@ -302,7 +303,7 @@ public class BonePositionTracker {
 
 		float progress = getAnimationProgress(entity, animationTick);
 		Log.debug("Animation progress: " + progress + ", spawning particles...");
-		spawnRadialRibbonForAnimation(level, entity, animationName, progress, particleType);
+		spawnRadialRibbonForAnimation(level, entity, animationName, progress, particleType, animationTick);
 	}
 
 	private static float getAnimationProgress(LivingEntity entity, int animationTick) {
@@ -324,13 +325,17 @@ public class BonePositionTracker {
 	}
 
 	private static void spawnRadialRibbonForAnimation(ClientLevel level, LivingEntity entity, String animationName,
-			float progress, ParticleOptions particleType) {
-		
+			float progress, ParticleOptions particleType, int animationTick) {
+
 		if (entity.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).map(data -> data.cancelAttackSwing()).orElse(false)) {
         	// We are canceling attack swings and their particles
         	return;
         }
-		
+
+		// Check if entity is holding Kanroji sword
+		net.minecraft.world.item.ItemStack heldItem = entity.getMainHandItem();
+		boolean isKanrojiSword = heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+
 		float yaw = entity.getYRot();
 		double entityHeight = entity.getBbHeight();
 		double yawRad = Math.toRadians(yaw);
@@ -338,22 +343,40 @@ public class BonePositionTracker {
 
 		switch (animationName) {
 		case "sword_to_right":
-			spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
+			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
+			if (!isKanrojiSword) {
+				spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
+			}
 			break;
 		case "sword_to_left":
-			spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
+			if (!isKanrojiSword) {
+				spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+			}
 			break;
 		case "sword_overhead":
-			spawnVerticalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
+			// Use custom particle positions from ParticlePositions.sword_overhead
+			spawnSwordOverheadParticles(level, entity, particleType, animationTick);
+			break;
+		case "kanroji_sword_overhead":
+			// Use custom particle positions from ParticlePositions.kanroji_sword_overhead
+			spawnKanrojiSwordOverheadParticles(level, entity, particleType, animationTick);
 			break;
 		case "sword_to_upper":
-			spawnVerticalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
+			if (!isKanrojiSword) {
+				spawnVerticalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+			}
 			break;
 		case "sword_rotate":
-			spawnSpinRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType);
+			// Use custom particle positions from ParticlePositions.sword_rotate (allowed for all swords)
+			spawnSwordRotateParticles(level, entity, particleType, animationTick);
 			break;
 		case "speed_attack_sword":
-			spawnForwardThrust(level, entityPos, yawRad, entityHeight, progress, particleType);
+			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
+			if (!isKanrojiSword) {
+				spawnForwardThrust(level, entityPos, yawRad, entityHeight, progress, particleType);
+			}
 			break;
 		default:
 			if (animationName.contains("sword") || animationName.contains("breath")) {
@@ -499,6 +522,156 @@ public class BonePositionTracker {
 						level.addParticle(particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
 						incrementParticleCount();
 					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Spawns particles for kanroji_sword_overhead using custom particle positions
+	 */
+	private static void spawnKanrojiSwordOverheadParticles(ClientLevel level, LivingEntity entity,
+			ParticleOptions particleType, int animationTick) {
+		// Get the particle positions from ParticlePositions
+		float[][][] particlePoints = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticlePositions.kanroji_sword_overhead.get("point_a");
+
+		if (particlePoints == null || animationTick < 0 || animationTick >= particlePoints.length) {
+			return; // No particle data or invalid tick
+		}
+
+		if (particlePoints[animationTick].length == 0) {
+			return; // No particles for this tick
+		}
+
+		// Get entity orientation
+		float yaw = entity.getYRot();
+		double yawRad = Math.toRadians(-yaw);
+
+		// Build orthonormal basis (forward, right, up) for positioning
+		Vec3 forward = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
+		Vec3 right = new Vec3(Math.sin(yawRad + Math.PI/2), 0, Math.cos(yawRad + Math.PI/2)).normalize();
+		Vec3 up = right.cross(forward).normalize();
+
+		Vec3 entityPos = entity.position();
+
+		// Spawn particles at each position
+		for (int i = 0; i < particlePoints[animationTick].length; i++) {
+			float x = particlePoints[animationTick][i][0];
+			float y = particlePoints[animationTick][i][1];
+			float z = particlePoints[animationTick][i][2];
+
+			// Transform particle position from local space to world space
+			Vec3 pos = entityPos.add(forward.scale(z).add(right.scale(x)).add(up.scale(y)));
+
+			// Spawn particle
+			if (ParticleConfig.maxParticlesPerTick <= 0
+					|| getTotalParticlesThisTick() < ParticleConfig.maxParticlesPerTick) {
+				for (int j = 0; j < ParticleConfig.particlesPerPosition; j++) {
+					if (ParticleConfig.maxParticlesPerTick > 0
+							&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
+						break;
+					level.addParticle(particleType, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
+					incrementParticleCount();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Spawns particles for sword_overhead using custom particle positions
+	 */
+	private static void spawnSwordOverheadParticles(ClientLevel level, LivingEntity entity,
+			ParticleOptions particleType, int animationTick) {
+		// Get the particle positions from ParticlePositions
+		float[][][] particlePoints = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticlePositions.sword_overhead.get("point_a");
+
+		if (particlePoints == null || animationTick < 0 || animationTick >= particlePoints.length) {
+			return; // No particle data or invalid tick
+		}
+
+		if (particlePoints[animationTick].length == 0) {
+			return; // No particles for this tick
+		}
+
+		// Get entity orientation
+		float yaw = entity.getYRot();
+		double yawRad = Math.toRadians(-yaw);
+
+		// Build orthonormal basis (forward, right, up) for positioning
+		Vec3 forward = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
+		Vec3 right = new Vec3(Math.sin(yawRad + Math.PI/2), 0, Math.cos(yawRad + Math.PI/2)).normalize();
+		Vec3 up = right.cross(forward).normalize();
+
+		Vec3 entityPos = entity.position();
+
+		// Spawn particles at each position
+		for (int i = 0; i < particlePoints[animationTick].length; i++) {
+			float x = particlePoints[animationTick][i][0];
+			float y = particlePoints[animationTick][i][1];
+			float z = particlePoints[animationTick][i][2];
+
+			// Transform particle position from local space to world space
+			Vec3 pos = entityPos.add(forward.scale(z).add(right.scale(x)).add(up.scale(y)));
+
+			// Spawn particle
+			if (ParticleConfig.maxParticlesPerTick <= 0
+					|| getTotalParticlesThisTick() < ParticleConfig.maxParticlesPerTick) {
+				for (int j = 0; j < ParticleConfig.particlesPerPosition; j++) {
+					if (ParticleConfig.maxParticlesPerTick > 0
+							&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
+						break;
+					level.addParticle(particleType, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
+					incrementParticleCount();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Spawns particles for sword_rotate using custom particle positions
+	 */
+	private static void spawnSwordRotateParticles(ClientLevel level, LivingEntity entity,
+			ParticleOptions particleType, int animationTick) {
+		// Get the particle positions from ParticlePositions
+		float[][][] particlePoints = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticlePositions.sword_rotate.get("point_a");
+
+		if (particlePoints == null || animationTick < 0 || animationTick >= particlePoints.length) {
+			return; // No particle data or invalid tick
+		}
+
+		if (particlePoints[animationTick].length == 0) {
+			return; // No particles for this tick
+		}
+
+		// Get entity orientation
+		float yaw = entity.getYRot();
+		double yawRad = Math.toRadians(-yaw);
+
+		// Build orthonormal basis (forward, right, up) for positioning
+		Vec3 forward = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
+		Vec3 right = new Vec3(Math.sin(yawRad + Math.PI/2), 0, Math.cos(yawRad + Math.PI/2)).normalize();
+		Vec3 up = right.cross(forward).normalize();
+
+		Vec3 entityPos = entity.position();
+
+		// Spawn particles at each position
+		for (int i = 0; i < particlePoints[animationTick].length; i++) {
+			float x = particlePoints[animationTick][i][0];
+			float y = particlePoints[animationTick][i][1];
+			float z = particlePoints[animationTick][i][2];
+
+			// Transform particle position from local space to world space
+			Vec3 pos = entityPos.add(forward.scale(z).add(right.scale(x)).add(up.scale(y)));
+
+			// Spawn particle
+			if (ParticleConfig.maxParticlesPerTick <= 0
+					|| getTotalParticlesThisTick() < ParticleConfig.maxParticlesPerTick) {
+				for (int j = 0; j < ParticleConfig.particlesPerPosition; j++) {
+					if (ParticleConfig.maxParticlesPerTick > 0
+							&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
+						break;
+					level.addParticle(particleType, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
+					incrementParticleCount();
 				}
 			}
 		}

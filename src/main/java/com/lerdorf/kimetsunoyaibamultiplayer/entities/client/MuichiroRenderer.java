@@ -40,6 +40,9 @@ public class MuichiroRenderer extends GeoEntityRenderer<MuichiroEntity> {
         // Add equipment rendering layer - renders held items
         this.addRenderLayer(new GeoEquipmentLayer<>(this));
 
+        // Sword display on back/hip (GeoRenderLayer, matches player positioning)
+        this.addRenderLayer(new GeoSwordDisplayLayer<>(this));
+
         // Scale to 80% to match Muichiro's younger appearance
         this.scaleHeight = 0.8F;
         this.scaleWidth = 0.8F;

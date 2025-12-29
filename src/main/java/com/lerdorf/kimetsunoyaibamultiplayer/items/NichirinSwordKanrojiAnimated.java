@@ -8,11 +8,14 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechniq
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
 
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
@@ -23,6 +26,7 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Mitsuri Kanroji's Animated Nichirin Sword (Love Breathing)
@@ -53,12 +57,36 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
+    // Track which entity is currently being rendered (for animation lookup)
+    private static final ThreadLocal<net.minecraft.world.entity.LivingEntity> currentRenderingEntity = new ThreadLocal<>();
+
+    /**
+     * Set the entity currently being rendered. Called by the renderer.
+     */
+    public static void setCurrentRenderingEntity(net.minecraft.world.entity.LivingEntity entity) {
+        currentRenderingEntity.set(entity);
+    }
+
+    /**
+     * Get the entity currently being rendered.
+     */
+    private static net.minecraft.world.entity.LivingEntity getCurrentRenderingEntity() {
+        return currentRenderingEntity.get();
+    }
+
+    /**
+     * Clear the current rendering entity. Called after rendering completes.
+     */
+    public static void clearCurrentRenderingEntity() {
+        currentRenderingEntity.remove();
+    }
+
     public NichirinSwordKanrojiAnimated(Properties properties) {
         super(properties);
-        Log.info("[NichirinSwordKanrojiAnimated] Constructor called - registering GeckoLib item");
-        // Register this item for synced animations (required for GeckoLib items)
-        SingletonGeoAnimatable.registerSyncedAnimatable(this);
-        Log.info("[NichirinSwordKanrojiAnimated] GeckoLib registration complete");
+        Log.info("[NichirinSwordKanrojiAnimated] Constructor called - GeckoLib item ready");
+        // NOTE: We DO NOT use SingletonGeoAnimatable because it makes ALL swords share animations
+        // Instead, we use per-entity animation tracking via KanrojiSwordEntityAnimationTracker
+        Log.info("[NichirinSwordKanrojiAnimated] Per-entity animation system initialized");
     }
 
     @Override
@@ -92,8 +120,41 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         Log.info("[NichirinSwordKanrojiAnimated] registerControllers() called");
         controllers.add(new AnimationController<>(this, "controller", 0, state -> {
-            // Set default sheath animation for GUI/inventory rendering
-            // This will be overridden by triggered animations when held in hand
+            // Try to get the entity holding this sword from the animation state
+            // GeckoLib provides this when rendering items held by entities
+            net.minecraft.world.entity.LivingEntity entity = getCurrentRenderingEntity();
+
+            Log.debug("[NichirinSwordKanrojiAnimated] Animation controller tick - entity: {}",
+                      entity != null ? entity.getName().getString() : "null");
+
+            if (entity != null) {
+                // Look up this specific entity's animation from our tracker
+                String animName = com.lerdorf.kimetsunoyaibamultiplayer.client.KanrojiSwordEntityAnimationTracker
+                    .getAnimation(entity.getUUID());
+
+                Log.debug("[NichirinSwordKanrojiAnimated] Entity {} UUID {} has animation: {}",
+                          entity.getName().getString(), entity.getUUID(), animName);
+
+                if (animName != null && !animName.isEmpty()) {
+                    Log.debug("[NichirinSwordKanrojiAnimated] Playing animation: {}", animName);
+
+                    // Determine if it's a looping animation or one-shot
+                    boolean isLooping = animName.equals("idle") || animName.equals("walk") ||
+                                       animName.equals("sprint") || animName.equals("sheath");
+
+                    if (isLooping) {
+                        state.getController().setAnimation(RawAnimation.begin().thenLoop(animName));
+                    } else {
+                        state.getController().setAnimation(RawAnimation.begin().thenPlay(animName));
+                    }
+                    return software.bernie.geckolib.core.object.PlayState.CONTINUE;
+                }
+            }
+
+            // Default: sheath animation for GUI/inventory rendering or when no entity
+            Log.debug("[NichirinSwordKanrojiAnimated] Using default sheath animation (entity={}, has anim={})",
+                      entity != null ? entity.getName().getString() : "null",
+                      entity != null ? com.lerdorf.kimetsunoyaibamultiplayer.client.KanrojiSwordEntityAnimationTracker.getAnimation(entity.getUUID()) : "null");
             state.getController().setAnimation(RawAnimation.begin().thenLoop("sheath"));
             return software.bernie.geckolib.core.object.PlayState.CONTINUE;
         })
@@ -113,6 +174,7 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
         .triggerableAnim("love_first_form", RawAnimation.begin().thenPlay("love_first_form"))
         .triggerableAnim("love_second_form", RawAnimation.begin().thenPlay("love_second_form"))
         .triggerableAnim("love_third_form", RawAnimation.begin().thenPlay("love_third_form"))
+        .triggerableAnim("love_fourth_form", RawAnimation.begin().thenPlay("love_fourth_form"))
         .triggerableAnim("love_fifth_form", RawAnimation.begin().thenPlay("love_fifth_form"))
         .triggerableAnim("love_sixth_form", RawAnimation.begin().thenPlay("love_sixth_form"))
         );

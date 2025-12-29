@@ -509,6 +509,12 @@ public class KnYRaid {
                 mob.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5,
                     level.random.nextFloat() * 360F, 0);
                 mob.setPersistenceRequired();
+
+                // Tag entity with raid metadata BEFORE spawning (for EntityReplacer integration)
+                CompoundTag persistentData = mob.getPersistentData();
+                persistentData.putUUID("RaidId", raidId);
+                persistentData.putString("RaidType", type.name());
+
                 level.addFreshEntity(mob);
 
                 // Set initial pathfinding target to nearest raid participant
@@ -550,6 +556,12 @@ public class KnYRaid {
                             mob.moveTo(task.position.getX() + 0.5, task.position.getY(), task.position.getZ() + 0.5,
                                 level.random.nextFloat() * 360F, 0);
                             mob.setPersistenceRequired();
+
+                            // Tag entity with raid metadata BEFORE spawning (for EntityReplacer integration)
+                            CompoundTag persistentData = mob.getPersistentData();
+                            persistentData.putUUID("RaidId", raidId);
+                            persistentData.putString("RaidType", type.name());
+
                             level.addFreshEntity(mob);
 
                             // Set initial pathfinding target to nearest raid participant
@@ -869,6 +881,46 @@ public class KnYRaid {
     public void onEntityDamaged(UUID entityId, float damage) {
         // Health is now calculated from actual entities in updateHealthProgress
         // This method is kept for compatibility but doesn't need to do anything
+    }
+
+    /**
+     * Replace an entity in the raid tracking system (for EntityReplacer integration).
+     * Transfers all tracking data from the old entity UUID to the new entity UUID.
+     *
+     * @param oldUUID The UUID of the original entity being replaced
+     * @param newUUID The UUID of the replacement entity
+     * @param newMaxHealth The max health of the replacement entity
+     */
+    public void replaceRaidEntity(UUID oldUUID, UUID newUUID, float newMaxHealth) {
+        // Check if old entity was tracked by this raid
+        if (!allRaidEntities.contains(oldUUID)) {
+            return;
+        }
+
+        // Transfer tracking to new entity
+        allRaidEntities.remove(oldUUID);
+        allRaidEntities.add(newUUID);
+
+        // Transfer alive tracking if applicable
+        boolean wasAlive = aliveEntities.remove(oldUUID);
+        if (wasAlive) {
+            aliveEntities.add(newUUID);
+        }
+
+        // Transfer health tracking
+        Float oldMaxHealth = entityMaxHealth.remove(oldUUID);
+        if (oldMaxHealth != null) {
+            entityMaxHealth.put(newUUID, newMaxHealth);
+
+            // Adjust total health (replace old max health with new max health)
+            totalMaxHealth -= oldMaxHealth;
+            totalMaxHealth += newMaxHealth;
+            currentHealth -= oldMaxHealth;
+            currentHealth += newMaxHealth;
+        }
+
+        Log.debug("Replaced raid entity " + oldUUID + " with " + newUUID +
+                  " (old health: " + oldMaxHealth + ", new health: " + newMaxHealth + ")");
     }
 
     private void triggerVictory() {

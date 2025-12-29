@@ -7,7 +7,9 @@
   "mixins": [
 
   ],
-  "client": [],
+  "client": [
+    "BlockAndItemGeoLayerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

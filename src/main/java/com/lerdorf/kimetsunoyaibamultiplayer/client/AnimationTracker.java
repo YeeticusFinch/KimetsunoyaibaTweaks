@@ -87,33 +87,33 @@ public class AnimationTracker {
             @SuppressWarnings("unchecked")
             List<Pair<Integer, IAnimation>> layers = (List<Pair<Integer, IAnimation>>) layersField.get(animationStack);
 
-            if (Config.logDebug) {
-                Log.debug("Found {} animation layers for player {}", layers.size(), player.getName().getString());
-            }
+            //if (Config.logDebug) {
+            //    Log.debug("Found {} animation layers for player {}", layers.size(), player.getName().getString());
+            //}
 
             boolean foundActiveAnimation = false;
 
             for (int i = 0; i < layers.size(); i++) {
                 Pair<Integer, IAnimation> pair = layers.get(i);
                 IAnimation anim = pair.getRight();
-                if (Config.logDebug) {
-                    Log.debug("Layer {}: animation={}, active={}, type={}",
-                        i, anim, (anim != null ? anim.isActive() : "null"),
-                        (anim != null ? anim.getClass().getSimpleName() : "null"));
-                }
+                //if (Config.logDebug) {
+                //    Log.debug("Layer {}: animation={}, active={}, type={}",
+                //        i, anim, (anim != null ? anim.isActive() : "null"),
+                //        (anim != null ? anim.getClass().getSimpleName() : "null"));
+                //}
 
                 if (anim != null && anim.isActive()) {
-                    if (Config.logDebug) {
-                        Log.info("Found active animation on layer {}: type={}", i, anim.getClass().getSimpleName());
-                    }
+                    //if (Config.logDebug) {
+                    //    Log.info("Found active animation on layer {}: type={}", i, anim.getClass().getSimpleName());
+                    //}
 
                     // Check if it's a ModifierLayer wrapping another animation
                     if (anim instanceof ModifierLayer) {
                         ModifierLayer<?> modLayer = (ModifierLayer<?>) anim;
                         IAnimation innerAnim = modLayer.getAnimation();
-                        if (Config.logDebug) {
-                            Log.info("ModifierLayer contains: {}", innerAnim != null ? innerAnim.getClass().getSimpleName() : "null");
-                        }
+                        //if (Config.logDebug) {
+                        //    Log.info("ModifierLayer contains: {}", innerAnim != null ? innerAnim.getClass().getSimpleName() : "null");
+                        //}
 
                         if (innerAnim instanceof KeyframeAnimationPlayer) {
                             KeyframeAnimationPlayer animPlayer = (KeyframeAnimationPlayer) innerAnim;
@@ -121,9 +121,9 @@ public class AnimationTracker {
                             if (data != null) {
                                 // Check if this is a sprint animation - if so, skip it and continue to next layer
                                 if (isSprintAnimation(data)) {
-                                    if (Config.logDebug) {
-                                        Log.info("Skipping sprint animation, looking for attack animations on other layers");
-                                    }
+                                    //if (Config.logDebug) {
+                                    //    Log.info("Skipping sprint animation, looking for attack animations on other layers");
+                                    //}
                                     continue; // Skip sprint animation, check next layer
                                 }
                                 foundActiveAnimation = true;
@@ -141,15 +141,15 @@ public class AnimationTracker {
                                 if (data != null) {
                                     // Check if this is a sprint animation - if so, skip it and continue to next layer
                                     if (isSprintAnimation(data)) {
-                                        if (Config.logDebug) {
-                                            Log.info("Skipping sprint animation, looking for attack animations on other layers");
-                                        }
+                                        //if (Config.logDebug) {
+                                        //    Log.info("Skipping sprint animation, looking for attack animations on other layers");
+                                        //}
                                         continue; // Skip sprint animation, check next layer
                                     }
                                     foundActiveAnimation = true;
-                                    if (Config.logDebug) {
-                                        Log.info("Processing deeply nested keyframe animation for player {}", player.getName().getString());
-                                    }
+                                    //if (Config.logDebug) {
+                                    //    Log.info("Processing deeply nested keyframe animation for player {}", player.getName().getString());
+                                    //}
                                     processActiveAnimation(player, animPlayer, data);
                                     break;
                                 }
@@ -162,24 +162,24 @@ public class AnimationTracker {
                         if (data != null) {
                             // Check if this is a sprint animation - if so, skip it and continue to next layer
                             if (isSprintAnimation(data)) {
-                                if (Config.logDebug) {
-                                    Log.info("Skipping sprint animation, looking for attack animations on other layers");
-                                }
+                                //if (Config.logDebug) {
+                                //    Log.info("Skipping sprint animation, looking for attack animations on other layers");
+                                //}
                                 continue; // Skip sprint animation, check next layer
                             }
                             foundActiveAnimation = true;
-                            if (Config.logDebug) {
-                                Log.info("Processing direct keyframe animation for player {}", player.getName().getString());
-                            }
+                            //if (Config.logDebug) {
+                            //    Log.info("Processing direct keyframe animation for player {}", player.getName().getString());
+                            //}
                             processActiveAnimation(player, animPlayer, data);
                             break;
                         } else {
                             Log.warn("KeyframeAnimationPlayer has null data for player {}", player.getName().getString());
                         }
                     } else {
-                        if (Config.logDebug) {
-                            Log.info("Found active non-keyframe animation: {}", anim.getClass().getSimpleName());
-                        }
+                        //if (Config.logDebug) {
+                        //    Log.info("Found active non-keyframe animation: {}", anim.getClass().getSimpleName());
+                        //}
                     }
                 }
             }
@@ -211,9 +211,9 @@ public class AnimationTracker {
                 Object name = extraData.get("name");
                 if (name instanceof String && !((String) name).isEmpty()) {
                     animationName = (String) name;
-                    if (Config.logDebug) {
-                        Log.info("Found animation name from extraData: {}", animationName);
-                    }
+                    //if (Config.logDebug) {
+                    //    Log.info("Found animation name from extraData: {}", animationName);
+                    //}
                 }
             }
         } catch (Exception ex) {
@@ -231,9 +231,9 @@ public class AnimationTracker {
         if (animationName == null) {
             UUID animUuid = data.getUuid();
             if (animUuid != null) {
-                if (Config.logDebug) {
-                    Log.info("Animation UUID: {}", animUuid);
-                }
+                //if (Config.logDebug) {
+                //    Log.info("Animation UUID: {}", animUuid);
+                //}
                 animationName = mapUuidToAnimationName(animUuid);
             }
         }
@@ -241,9 +241,9 @@ public class AnimationTracker {
         // 4. Final fallback
         if (animationName == null) {
             animationName = "unknown_" + System.currentTimeMillis();
-            if (Config.logDebug) {
-                Log.warn("Could not determine animation name, using fallback: {}", animationName);
-            }
+            //if (Config.logDebug) {
+            //    Log.warn("Could not determine animation name, using fallback: {}", animationName);
+            //}
         }
 
         // Create ResourceLocation with the detected/fallback name
@@ -258,10 +258,10 @@ public class AnimationTracker {
         if (currentState == null || !currentState.animationId.equals(animationId) ||
             Math.abs(currentState.lastTick - currentTick) > 3) {
 
-            if (Config.logDebug) {
+            /*if (Config.logDebug) {
                 Log.info("Sending animation sync: player={}, animation={}, tick={}, length={}, looping={}",
                     player.getName().getString(), animationId, currentTick, length, isLooping);
-            }
+            }*/
 
             // Send debug chat message to local player
             if (Config.onScreenDebug) {
@@ -305,9 +305,9 @@ public class AnimationTracker {
     private static void checkForStoppedAnimation(UUID playerUUID) {
         AnimationState state = activeAnimations.get(playerUUID);
         if (state != null && state.isActive) {
-            if (Config.logDebug) {
-                Log.info("Animation stopped for player {}", playerUUID);
-            }
+            //if (Config.logDebug) {
+            //    Log.info("Animation stopped for player {}", playerUUID);
+            //}
 
             // Send debug chat message to local player
             if (Config.onScreenDebug) {
@@ -364,18 +364,18 @@ public class AnimationTracker {
                     String strValue = (String) value;
                     // Check if this looks like an animation name from our list
                     if (isKnownAnimationName(strValue)) {
-                        if (Config.logDebug) {
-                            Log.info("Found animation name via reflection in field '{}': {}", field.getName(), strValue);
-                        }
+                        //if (Config.logDebug) {
+                        //    Log.info("Found animation name via reflection in field '{}': {}", field.getName(), strValue);
+                        //}
                         return strValue;
                     }
                 } else if (value instanceof ResourceLocation) {
                     ResourceLocation resLoc = (ResourceLocation) value;
                     String path = resLoc.getPath();
                     if (isKnownAnimationName(path)) {
-                        if (Config.logDebug) {
-                            Log.info("Found animation name via ResourceLocation in field '{}': {}", field.getName(), path);
-                        }
+                        //if (Config.logDebug) {
+                        //    Log.info("Found animation name via ResourceLocation in field '{}': {}", field.getName(), path);
+                        //}
                         return path;
                     }
                 }

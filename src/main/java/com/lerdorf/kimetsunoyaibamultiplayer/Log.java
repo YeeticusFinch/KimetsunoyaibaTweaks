@@ -9,28 +9,32 @@ public class Log {
 	public static void debug(String message, Object... args) {
 		try {
 		if (Config.logDebug)
-			LOGGER.debug(message, args);
+			//LOGGER.debug(message, args);
+			System.out.println("[Kimetsunoyaiba Tweaks] [DEBUG] " + format(message, args));
 		} catch (Exception e) {}
     }
 
     public static void info(String message, Object... args) {
     	try {
     	if (Config.logInfo)
-    		LOGGER.info(message, args);
+    		//LOGGER.info(message, args);
+    		System.out.println("[Kimetsunoyaiba Tweaks] [INFO] " + format(message, args));
     	} catch (Exception e) {}
     }
 
     public static void warn(String message, Object... args) {
     	try {
     	if (Config.logWarning)
-    		LOGGER.warn(message, args);
+    		//LOGGER.warn(message, args);
+    		System.out.println("[Kimetsunoyaiba Tweaks] [WARNING] " + format(message, args));
     	}catch (Exception e) {}
     }
 
     public static void error(String message, Object... args) {
     	try {
     	if (Config.logError)
-    		LOGGER.error(message, args);
+    		//LOGGER.error(message, args);
+    		System.out.println("[Kimetsunoyaiba Tweaks] [ERROR] " + format(message, args));
     	} catch (Exception e) {}
     }
     

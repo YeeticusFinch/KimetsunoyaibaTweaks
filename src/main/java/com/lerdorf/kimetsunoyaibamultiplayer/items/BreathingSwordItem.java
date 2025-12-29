@@ -65,13 +65,23 @@ public abstract class BreathingSwordItem extends SwordItem {
         SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(this);
         String swordId = registeredSword != null ? registeredSword.getSwordId() : this.toString();
 
+        System.out.println("[BreathingSwordItem] Form ID: " + form.getFormId() + ", Sword ID: " + swordId + ", Current variation index: " + variationIndex);
+
         // Clamp variation to available variations
         int totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
             .getVariationCount(form.getFormId(), swordId);
+        System.out.println("[BreathingSwordItem] Total variations found: " + totalVariations);
+
         if (totalVariations == 0) {
+            System.out.println("[BreathingSwordItem] No variations found, resetting variation index to 0");
+            System.out.println("[BreathingSwordItem] STACK TRACE:");
+            new Exception().printStackTrace();
             variationIndex = 0;
             data.setCurrentVariationIndex(0);
         } else if (variationIndex > totalVariations) {
+            System.out.println("[BreathingSwordItem] Variation index " + variationIndex + " exceeds total " + totalVariations + ", resetting to 0");
+            System.out.println("[BreathingSwordItem] STACK TRACE:");
+            new Exception().printStackTrace();
             variationIndex = 0;
             data.setCurrentVariationIndex(0);
         }

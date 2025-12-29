@@ -43,13 +43,21 @@ public class VariationIndexSyncPacket {
                 System.out.println("[Server] Updated variation index for " + playerUUID + ": " + variationIndex);
             } else {
                 // Client side: Update client-side PlayerBreathingData
+                System.out.println("[Client] VariationIndexSyncPacket received for player " + playerUUID + ", variation index: " + variationIndex);
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
                     var level = ClientPacketHandler.getClientLevel();
-                    if (level == null) return;
+                    if (level == null) {
+                        System.out.println("[Client] ERROR: Client level is null, cannot update variation index!");
+                        return;
+                    }
                     var player = level.getPlayerByUUID(playerUUID);
-                    if (player == null) return;
+                    if (player == null) {
+                        System.out.println("[Client] ERROR: Player " + playerUUID + " not found in client level!");
+                        return;
+                    }
                     PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(playerUUID);
                     data.setCurrentVariationIndex(variationIndex);
+                    System.out.println("[Client] Successfully updated variation index for " + playerUUID + " to " + variationIndex);
                 });
             }
         });

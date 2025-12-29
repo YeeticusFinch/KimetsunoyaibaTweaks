@@ -143,7 +143,7 @@ public class BreathingSwordSwingPacket {
      */
     private void spawnKanrojiSwordTrailParticles(ServerPlayer player, ServerLevel serverLevel, String animName) {
         // Only spawn particles for sword_to_left and sword_to_right animations
-        if (!animName.equals("sword_to_left") && !animName.equals("sword_to_right")) {
+        if (!animName.equals("sword_to_left") && !animName.equals("sword_to_right") && !animName.equals("sword_overhead") && !animName.equals("kanroji_sword_overhead") && !animName.equals("sword_overhead_kanroji") && !animName.equals("sword_rotate")) {
             return;
         }
 
@@ -153,7 +153,13 @@ public class BreathingSwordSwingPacket {
             particleMap = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticlePositions.sword_to_left;
         } else if (animName.equals("sword_to_right")) {
             particleMap = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticlePositions.sword_to_right;
-        }
+        } else if (animName.equals("sword_rotate")) {
+             particleMap = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticlePositions.sword_rotate;
+         } else if (animName.equals("sword_overhead") || animName.equals("sword_overheaed")) {
+             particleMap = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticlePositions.sword_overhead;
+         } else if (animName.equals("kanroji_sword_overhead") || animName.equals("sword_overhead_kanroji") || animName.equals("kanroji_sword_overheaed") || animName.equals("sword_overheaed_kanroji")) {
+             particleMap = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticlePositions.kanroji_sword_overhead;
+         }
 
         if (particleMap == null) {
             if (Config.logDebug) {

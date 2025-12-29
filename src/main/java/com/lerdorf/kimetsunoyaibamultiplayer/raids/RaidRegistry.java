@@ -182,6 +182,18 @@ public class RaidRegistry extends SavedData {
         }
     }
 
+    /**
+     * Replace an entity in raid tracking (for EntityReplacer integration).
+     * Finds the raid by ID and transfers tracking from old entity to new entity.
+     */
+    public void replaceRaidEntity(UUID raidId, UUID oldEntityUUID, UUID newEntityUUID, float newMaxHealth) {
+        KnYRaid raid = activeRaids.get(raidId);
+        if (raid != null) {
+            raid.replaceRaidEntity(oldEntityUUID, newEntityUUID, newMaxHealth);
+            setDirty();
+        }
+    }
+
     // Static methods for backward compatibility
     private static final Map<ServerLevel, RaidRegistry> CACHE = new WeakHashMap<>();
 

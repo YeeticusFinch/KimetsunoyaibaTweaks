@@ -155,6 +155,115 @@ public class SwordDisplayConfig {
 
     static {
         BUILDER.pop(); // back_position
+        BUILDER.comment("Entity Display Overrides (non-player)")
+                .push("entity_display");
+        BUILDER.comment("Back display overrides for entities")
+                .push("back");
+        BUILDER.comment("Translation overrides for entity sword/sheath display on back")
+                .push("translation");
+    }
+
+    private static final ForgeConfigSpec.DoubleValue ENTITY_BACK_TRANSLATE_OFFSET_X = BUILDER
+            .comment("Entity translation X offset (added after optional flip)")
+            .defineInRange("offset_x", 0.0, -5.0, 5.0);
+    private static final ForgeConfigSpec.DoubleValue ENTITY_BACK_TRANSLATE_OFFSET_Y = BUILDER
+            .comment("Entity translation Y offset (added after optional flip)")
+            .defineInRange("offset_y", 1.5, -5.0, 5.0);
+    private static final ForgeConfigSpec.DoubleValue ENTITY_BACK_TRANSLATE_OFFSET_Z = BUILDER
+            .comment("Entity translation Z offset (added after optional flip)")
+            .defineInRange("offset_z", 0.0, -5.0, 5.0);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_BACK_TRANSLATE_FLIP_X = BUILDER
+            .comment("Flip entity translation X (multiply base by -1)")
+            .define("flip_x", false);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_BACK_TRANSLATE_FLIP_Y = BUILDER
+            .comment("Flip entity translation Y (multiply base by -1)")
+            .define("flip_y", true);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_BACK_TRANSLATE_FLIP_Z = BUILDER
+            .comment("Flip entity translation Z (multiply base by -1)")
+            .define("flip_z", false);
+
+    static {
+        BUILDER.pop(); // translation
+        BUILDER.comment("Rotation overrides for entity sword/sheath display on back")
+                .push("rotation");
+    }
+
+    private static final ForgeConfigSpec.DoubleValue ENTITY_BACK_ROTATE_OFFSET_X = BUILDER
+            .comment("Entity rotation X offset in degrees (added after optional flip)")
+            .defineInRange("offset_x", 180.0, -360.0, 360.0);
+    private static final ForgeConfigSpec.DoubleValue ENTITY_BACK_ROTATE_OFFSET_Y = BUILDER
+            .comment("Entity rotation Y offset in degrees (added after optional flip)")
+            .defineInRange("offset_y", 0.0, -360.0, 360.0);
+    private static final ForgeConfigSpec.DoubleValue ENTITY_BACK_ROTATE_OFFSET_Z = BUILDER
+            .comment("Entity rotation Z offset in degrees (added after optional flip)")
+            .defineInRange("offset_z", 0.0, -360.0, 360.0);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_BACK_ROTATE_FLIP_X = BUILDER
+            .comment("Flip entity rotation X (multiply base by -1)")
+            .define("flip_x", false);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_BACK_ROTATE_FLIP_Y = BUILDER
+            .comment("Flip entity rotation Y (multiply base by -1)")
+            .define("flip_y", true);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_BACK_ROTATE_FLIP_Z = BUILDER
+            .comment("Flip entity rotation Z (multiply base by -1)")
+            .define("flip_z", true);
+
+    static {
+        BUILDER.pop(); // rotation
+        BUILDER.pop(); // back
+        BUILDER.comment("Hip display overrides for entities")
+                .push("hip");
+        BUILDER.comment("Translation overrides for entity sword/sheath display on hip")
+                .push("translation");
+    }
+
+    private static final ForgeConfigSpec.DoubleValue ENTITY_HIP_TRANSLATE_OFFSET_X = BUILDER
+            .comment("Entity translation X offset (added after optional flip)")
+            .defineInRange("offset_x", 0.0, -5.0, 5.0);
+    private static final ForgeConfigSpec.DoubleValue ENTITY_HIP_TRANSLATE_OFFSET_Y = BUILDER
+            .comment("Entity translation Y offset (added after optional flip)")
+            .defineInRange("offset_y", 1.5, -5.0, 5.0);
+    private static final ForgeConfigSpec.DoubleValue ENTITY_HIP_TRANSLATE_OFFSET_Z = BUILDER
+            .comment("Entity translation Z offset (added after optional flip)")
+            .defineInRange("offset_z", 0.0, -5.0, 5.0);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_HIP_TRANSLATE_FLIP_X = BUILDER
+            .comment("Flip entity translation X (multiply base by -1)")
+            .define("flip_x", false);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_HIP_TRANSLATE_FLIP_Y = BUILDER
+            .comment("Flip entity translation Y (multiply base by -1)")
+            .define("flip_y", true);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_HIP_TRANSLATE_FLIP_Z = BUILDER
+            .comment("Flip entity translation Z (multiply base by -1)")
+            .define("flip_z", false);
+
+    static {
+        BUILDER.pop(); // translation
+        BUILDER.comment("Rotation overrides for entity sword/sheath display on hip")
+                .push("rotation");
+    }
+
+    private static final ForgeConfigSpec.DoubleValue ENTITY_HIP_ROTATE_OFFSET_X = BUILDER
+            .comment("Entity rotation X offset in degrees (added after optional flip)")
+            .defineInRange("offset_x", 0.0, -360.0, 360.0);
+    private static final ForgeConfigSpec.DoubleValue ENTITY_HIP_ROTATE_OFFSET_Y = BUILDER
+            .comment("Entity rotation Y offset in degrees (added after optional flip)")
+            .defineInRange("offset_y", 0.0, -360.0, 360.0);
+    private static final ForgeConfigSpec.DoubleValue ENTITY_HIP_ROTATE_OFFSET_Z = BUILDER
+            .comment("Entity rotation Z offset in degrees (added after optional flip)")
+            .defineInRange("offset_z", 180.0, -360.0, 360.0);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_HIP_ROTATE_FLIP_X = BUILDER
+            .comment("Flip entity rotation X (multiply base by -1)")
+            .define("flip_x", false);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_HIP_ROTATE_FLIP_Y = BUILDER
+            .comment("Flip entity rotation Y (multiply base by -1)")
+            .define("flip_y", false);
+    private static final ForgeConfigSpec.BooleanValue ENTITY_HIP_ROTATE_FLIP_Z = BUILDER
+            .comment("Flip entity rotation Z (multiply base by -1)")
+            .define("flip_z", false);
+
+    static {
+        BUILDER.pop(); // rotation
+        BUILDER.pop(); // hip
+        BUILDER.pop(); // entity_display
         BUILDER.pop(); // sword_display
     }
 
@@ -197,6 +306,32 @@ public class SwordDisplayConfig {
     public static double backRightRotateY;
     public static double backRightRotateX;
 
+    // Entity display overrides (non-player)
+    public static double entityBackTranslateOffsetX;
+    public static double entityBackTranslateOffsetY;
+    public static double entityBackTranslateOffsetZ;
+    public static boolean entityBackTranslateFlipX;
+    public static boolean entityBackTranslateFlipY;
+    public static boolean entityBackTranslateFlipZ;
+    public static double entityBackRotateOffsetX;
+    public static double entityBackRotateOffsetY;
+    public static double entityBackRotateOffsetZ;
+    public static boolean entityBackRotateFlipX;
+    public static boolean entityBackRotateFlipY;
+    public static boolean entityBackRotateFlipZ;
+    public static double entityHipTranslateOffsetX;
+    public static double entityHipTranslateOffsetY;
+    public static double entityHipTranslateOffsetZ;
+    public static boolean entityHipTranslateFlipX;
+    public static boolean entityHipTranslateFlipY;
+    public static boolean entityHipTranslateFlipZ;
+    public static double entityHipRotateOffsetX;
+    public static double entityHipRotateOffsetY;
+    public static double entityHipRotateOffsetZ;
+    public static boolean entityHipRotateFlipX;
+    public static boolean entityHipRotateFlipY;
+    public static boolean entityHipRotateFlipZ;
+
     public enum SwordDisplayPosition {
         HIP,
         BACK
@@ -238,6 +373,32 @@ public class SwordDisplayConfig {
         backRightRotateZ = BACK_RIGHT_ROTATE_Z.get();
         backRightRotateY = BACK_RIGHT_ROTATE_Y.get();
         backRightRotateX = BACK_RIGHT_ROTATE_X.get();
+
+        // Load entity display overrides
+        entityBackTranslateOffsetX = ENTITY_BACK_TRANSLATE_OFFSET_X.get();
+        entityBackTranslateOffsetY = ENTITY_BACK_TRANSLATE_OFFSET_Y.get();
+        entityBackTranslateOffsetZ = ENTITY_BACK_TRANSLATE_OFFSET_Z.get();
+        entityBackTranslateFlipX = ENTITY_BACK_TRANSLATE_FLIP_X.get();
+        entityBackTranslateFlipY = ENTITY_BACK_TRANSLATE_FLIP_Y.get();
+        entityBackTranslateFlipZ = ENTITY_BACK_TRANSLATE_FLIP_Z.get();
+        entityBackRotateOffsetX = ENTITY_BACK_ROTATE_OFFSET_X.get();
+        entityBackRotateOffsetY = ENTITY_BACK_ROTATE_OFFSET_Y.get();
+        entityBackRotateOffsetZ = ENTITY_BACK_ROTATE_OFFSET_Z.get();
+        entityBackRotateFlipX = ENTITY_BACK_ROTATE_FLIP_X.get();
+        entityBackRotateFlipY = ENTITY_BACK_ROTATE_FLIP_Y.get();
+        entityBackRotateFlipZ = ENTITY_BACK_ROTATE_FLIP_Z.get();
+        entityHipTranslateOffsetX = ENTITY_HIP_TRANSLATE_OFFSET_X.get();
+        entityHipTranslateOffsetY = ENTITY_HIP_TRANSLATE_OFFSET_Y.get();
+        entityHipTranslateOffsetZ = ENTITY_HIP_TRANSLATE_OFFSET_Z.get();
+        entityHipTranslateFlipX = ENTITY_HIP_TRANSLATE_FLIP_X.get();
+        entityHipTranslateFlipY = ENTITY_HIP_TRANSLATE_FLIP_Y.get();
+        entityHipTranslateFlipZ = ENTITY_HIP_TRANSLATE_FLIP_Z.get();
+        entityHipRotateOffsetX = ENTITY_HIP_ROTATE_OFFSET_X.get();
+        entityHipRotateOffsetY = ENTITY_HIP_ROTATE_OFFSET_Y.get();
+        entityHipRotateOffsetZ = ENTITY_HIP_ROTATE_OFFSET_Z.get();
+        entityHipRotateFlipX = ENTITY_HIP_ROTATE_FLIP_X.get();
+        entityHipRotateFlipY = ENTITY_HIP_ROTATE_FLIP_Y.get();
+        entityHipRotateFlipZ = ENTITY_HIP_ROTATE_FLIP_Z.get();
 
         // Parse per-sword position overrides
         swordPositionOverrides.clear();

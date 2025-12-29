@@ -44,7 +44,7 @@ public class EnhancedBreathingConfig {
     private static final ForgeConfigSpec.BooleanValue ENHANCED_LOVE_BREATHING = BUILDER
             .comment("Enable enhanced Love Breathing forms",
                     "When true, automatically replaces base mod love swords with enhanced versions:",
-                    "  - kimetsunoyaiba:nichirinsword_konroji -> kimetsunoyaibamultiplayer:nichirinsword_mitsuri",
+                    "  - kimetsunoyaiba:nichirinsword_kanroji -> kimetsunoyaibamultiplayer:nichirinsword_kanroji",
                     "",
                     "Enhanced features:",
                     "  - Flexible whip-like sword rendering",

@@ -75,19 +75,19 @@ public class EntityConfig {
 
     public static final ForgeConfigSpec SPEC = BUILDER.build();
 
-    // Cached values
-    public static boolean crowEnhancementsEnabled;
-    public static boolean crowFlyingDodgeEnabled;
-    public static double crowFlightHeight;
-    public static int crowFlightDuration;
-    public static double crowCircleRadius;
-    public static boolean crowQuestArrowEnabled;
-    public static boolean crowWaypointEnabled;
-    public static int crowArrowUpdateInterval;
-    public static double crowArrowLength;
-    public static int crowWaypointDuration;
-    public static double crowWaypointCompleteDistance;
-    public static boolean crowAutoDetectQuests;
+    // Cached values - initialized with defaults in case config doesn't load
+    public static boolean crowEnhancementsEnabled = true;
+    public static boolean crowFlyingDodgeEnabled = true;
+    public static double crowFlightHeight = 15.0;
+    public static int crowFlightDuration = 600;
+    public static double crowCircleRadius = 15.0;
+    public static boolean crowQuestArrowEnabled = true;
+    public static boolean crowWaypointEnabled = true;
+    public static int crowArrowUpdateInterval = 5;
+    public static double crowArrowLength = 3.0;
+    public static int crowWaypointDuration = 1200;
+    public static double crowWaypointCompleteDistance = 2.0;
+    public static boolean crowAutoDetectQuests = true;
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {

@@ -63,6 +63,19 @@ public class ModEntities {
                 .build("muichiro"));
 
     /**
+     * Mitsuri Kanroji - Love Hashira
+     * Wields nichirinsword_kanroji (animated whip sword), uses Enhanced Love Breathing (all 6 forms)
+     * Long-range whip attacks with multi-target damage
+     */
+    public static final RegistryObject<EntityType<KanrojiEntity>> KANROJI =
+        ENTITY_TYPES.register("kanroji",
+            () -> EntityType.Builder.of(KanrojiEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F) // Player-sized (adult appearance)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("kanroji"));
+
+    /**
      * Mugen Door - Decorative entity for kizuki demon spawns
      * Plays an opening animation and sound, then disappears
      */
@@ -130,6 +143,9 @@ public class ModEntities {
 
             // Register attributes for Muichiro Tokito
             event.put(MUICHIRO.get(), MuichiroEntity.createAttributes().build());
+
+            // Register attributes for Mitsuri Kanroji
+            event.put(KANROJI.get(), KanrojiEntity.createAttributes().build());
 
             // Register attributes for Mugen Door (visual-only entity)
             event.put(MUGEN_DOOR.get(), MugenDoorEntity.createAttributes().build());

@@ -45,9 +45,9 @@ public class WhipPhysics {
     /**
      * Get whip points for rendering.
      */
-    public static List<Vec3> getPoints(Player player) {
-        WhipState state = whipStates.computeIfAbsent(player.getUUID(), id -> {
-            return initState(player);
+    public static List<Vec3> getPoints(net.minecraft.world.entity.LivingEntity entity) {
+        WhipState state = whipStates.computeIfAbsent(entity.getUUID(), id -> {
+            return initState(entity);
         });
         Log.debug("[WhipPhysics] Returning {} positions", state.positions.size());
         return state.positions;
@@ -56,13 +56,13 @@ public class WhipPhysics {
     /**
      * Initialize a new whip state with proper visible length.
      */
-    private static WhipState initState(Player player) {
+    private static WhipState initState(net.minecraft.world.entity.LivingEntity entity) {
         Log.debug("[WhipPhysics] initState() starting...");
         WhipState state = new WhipState();
 
         // Start from hand position, not body
-        Vec3 handPos = getHandPosition(player);
-        Vec3 lookVec = player.getLookAngle();
+        Vec3 handPos = getHandPosition(entity);
+        Vec3 lookVec = entity.getLookAngle();
         Vec3 down = new Vec3(0, -1, 0);
 
         int segments = EnhancedBreathingConfig.whipSegmentCount;
@@ -95,8 +95,8 @@ public class WhipPhysics {
     /**
      * Play an animation on a player's whip.
      */
-    public static void playAnimation(Player player, String animationName, double targetExtension, int transitionTicks) {
-        WhipState state = whipStates.computeIfAbsent(player.getUUID(), id -> initState(player));
+    public static void playAnimation(net.minecraft.world.entity.LivingEntity entity, String animationName, double targetExtension, int transitionTicks) {
+        WhipState state = whipStates.computeIfAbsent(entity.getUUID(), id -> initState(entity));
 
         // Only restart if it's a different animation or a non-looping animation finished
         MitsuriWhipAnimations.WhipAnimation anim = MitsuriWhipAnimations.getAnimation(animationName);
@@ -114,15 +114,15 @@ public class WhipPhysics {
     /**
      * Play an animation with default extension (idle length).
      */
-    public static void playAnimation(Player player, String animationName) {
-        playAnimation(player, animationName, 0.0, EnhancedBreathingConfig.whipExtensionTicks);
+    public static void playAnimation(net.minecraft.world.entity.LivingEntity entity, String animationName) {
+        playAnimation(entity, animationName, 0.0, EnhancedBreathingConfig.whipExtensionTicks);
     }
 
     /**
      * Set extension level immediately (for special cases).
      */
-    public static void setExtension(Player player, double extension) {
-        WhipState state = whipStates.computeIfAbsent(player.getUUID(), id -> initState(player));
+    public static void setExtension(net.minecraft.world.entity.LivingEntity entity, double extension) {
+        WhipState state = whipStates.computeIfAbsent(entity.getUUID(), id -> initState(entity));
         state.extensionLevel = Mth.clamp(extension, 0.0, 1.0);
         state.targetExtension = state.extensionLevel;
         state.extensionTransitionProgress = state.extensionTransitionTicks;
@@ -131,24 +131,24 @@ public class WhipPhysics {
     /**
      * Get current animation name for a player.
      */
-    public static String getCurrentAnimation(Player player) {
-        WhipState state = whipStates.get(player.getUUID());
+    public static String getCurrentAnimation(net.minecraft.world.entity.LivingEntity entity) {
+        WhipState state = whipStates.get(entity.getUUID());
         return state != null ? state.currentAnimation : "idle";
     }
 
     /**
-     * Get current animation tick for a player.
+     * Get current animation tick for an entity.
      */
-    public static int getAnimationTick(Player player) {
-        WhipState state = whipStates.get(player.getUUID());
+    public static int getAnimationTick(net.minecraft.world.entity.LivingEntity entity) {
+        WhipState state = whipStates.get(entity.getUUID());
         return state != null ? state.animationTick : 0;
     }
 
     /**
      * Main physics update tick.
      */
-    public static void tick(Player player) {
-        WhipState state = whipStates.computeIfAbsent(player.getUUID(), id -> initState(player));
+    public static void tick(net.minecraft.world.entity.LivingEntity entity) {
+        WhipState state = whipStates.computeIfAbsent(entity.getUUID(), id -> initState(entity));
 
         // Handle extension transition
         if (state.extensionTransitionProgress < state.extensionTransitionTicks) {
@@ -178,10 +178,10 @@ public class WhipPhysics {
         }
 
         // Get hand position (attachment point)
-        Vec3 handPos = getHandPosition(player);
+        Vec3 handPos = getHandPosition(entity);
 
         // Get keyframe targets
-        List<Vec3> keyframeTargets = getKeyframeTargets(player, anim, state.animationTick, handPos);
+        List<Vec3> keyframeTargets = getKeyframeTargets(entity, anim, state.animationTick, handPos);
 
         // Get current whip length based on extension
         double currentLength = Mth.lerp(state.extensionLevel,
@@ -190,7 +190,7 @@ public class WhipPhysics {
         double segmentLength = currentLength / state.positions.size();
 
         // Apply physics with keyframe blending
-        updatePhysics(state, handPos, keyframeTargets, segmentLength, player);
+        updatePhysics(state, handPos, keyframeTargets, segmentLength, entity);
 
         state.lastUpdateTime = System.currentTimeMillis();
     }
@@ -199,15 +199,15 @@ public class WhipPhysics {
      * Get player's hand position (whip attachment point).
      * Works for both first-person and third-person view.
      */
-    private static Vec3 getHandPosition(Player player) {
+    private static Vec3 getHandPosition(net.minecraft.world.entity.LivingEntity entity) {
         // Get eye position and look vector
-        Vec3 eyePos = player.getEyePosition(1.0f);
-        Vec3 lookVec = player.getLookAngle();
+        Vec3 eyePos = entity.getEyePosition(1.0f);
+        Vec3 lookVec = entity.getLookAngle();
         Vec3 right = lookVec.cross(new Vec3(0, 1, 0)).normalize();
 
-        // Check if player is local (first person) or remote (third person)
+        // Check if entity is local player (first person) or any other entity/remote player (third person)
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-        boolean isLocalPlayer = (mc.player != null && mc.player.getUUID().equals(player.getUUID()));
+        boolean isLocalPlayer = (entity instanceof net.minecraft.world.entity.player.Player && mc.player != null && mc.player.getUUID().equals(entity.getUUID()));
         boolean isFirstPerson = isLocalPlayer && mc.options.getCameraType().isFirstPerson();
 
         if (isFirstPerson) {
@@ -216,7 +216,7 @@ public class WhipPhysics {
         } else {
             // Third person: attach to visible hand position
             // This accounts for arm swing and positioning
-            Vec3 bodyPos = player.position().add(0, player.getEyeHeight() * 0.85, 0);
+            Vec3 bodyPos = entity.position().add(0, entity.getEyeHeight() * 0.85, 0);
             Vec3 armOffset = right.scale(0.35); // Right arm offset
             Vec3 forwardOffset = lookVec.scale(0.35); // Slight forward from body
 
@@ -227,7 +227,7 @@ public class WhipPhysics {
     /**
      * Get keyframe target positions for current animation frame.
      */
-    private static List<Vec3> getKeyframeTargets(Player player, MitsuriWhipAnimations.WhipAnimation anim,
+    private static List<Vec3> getKeyframeTargets(net.minecraft.world.entity.LivingEntity entity, MitsuriWhipAnimations.WhipAnimation anim,
                                                    int tick, Vec3 handPos) {
         // Find current keyframe
         int accumulatedTicks = 0;
@@ -252,8 +252,8 @@ public class WhipPhysics {
         Vec3 c3 = lerpVec(currentPose.c3(), nextPose.c3(), t);
         Vec3 tip = lerpVec(currentPose.tip(), nextPose.tip(), t);
 
-        // Transform to world space (rotate with player)
-        Vec3 lookVec = player.getLookAngle();
+        // Transform to world space (rotate with entity)
+        Vec3 lookVec = entity.getLookAngle();
         Vec3 right = lookVec.cross(new Vec3(0, 1, 0)).normalize();
         Vec3 up = right.cross(lookVec);
 
@@ -354,7 +354,7 @@ public class WhipPhysics {
      * Update physics simulation with keyframe blending.
      */
     private static void updatePhysics(WhipState state, Vec3 handPos, List<Vec3> keyframeTargets,
-                                       double restLength, Player player) {
+                                       double restLength, net.minecraft.world.entity.LivingEntity entity) {
         double stiffness = EnhancedBreathingConfig.whipStiffness;
         double damping = EnhancedBreathingConfig.whipDamping;
         double gravity = EnhancedBreathingConfig.whipGravity;

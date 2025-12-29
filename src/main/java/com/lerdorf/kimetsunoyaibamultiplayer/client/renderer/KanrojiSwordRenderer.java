@@ -44,39 +44,80 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
         // Store the display context so we can check it in actuallyRender
         this.currentDisplayContext = displayContext;
 
-        // For GUI contexts (inventory, hotbar), use the static item model instead of GeckoLib
-        if (displayContext == ItemDisplayContext.GUI ||
-            displayContext == ItemDisplayContext.FIXED ||
-            displayContext == ItemDisplayContext.GROUND) {
+        // Try to get the entity holding this item from render context
+        Minecraft mc = Minecraft.getInstance();
+        net.minecraft.world.entity.LivingEntity renderingEntity = null;
 
-            Minecraft mc = Minecraft.getInstance();
-            BakedModel staticModel = mc.getModelManager().getModel(STATIC_MODEL_LOCATION);
+        // First, try to get from EntityRenderContext (set during entity rendering)
+        renderingEntity = com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext.getCurrentEntity();
 
-            if (staticModel != null && staticModel != mc.getModelManager().getMissingModel()) {
-                // Render the static model using vanilla item renderer
-                mc.getItemRenderer().render(
-                    stack,
-                    displayContext,
-                    false, // leftHand
-                    poseStack,
-                    bufferSource,
-                    packedLight,
-                    packedOverlay,
-                    staticModel
-                );
-                return;
+        // If not rendering an entity, check if it's the player (first-person view)
+        if (renderingEntity == null &&
+            (displayContext == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND ||
+             displayContext == ItemDisplayContext.FIRST_PERSON_LEFT_HAND)) {
+            if (mc.player != null) {
+                renderingEntity = mc.player;
             }
-            // Fallback to GeckoLib if static model not found
-            Log.debug("[KanrojiSwordRenderer] Static model not found, falling back to GeckoLib");
         }
 
-        // Apply translation offset for third person right hand to center the sword
-        if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            poseStack.translate(1.25 / 16.0, 0.7 / 16.0, 1.25 / 16.0);
+        // Verify the entity is actually holding the Kanroji sword
+        if (renderingEntity != null) {
+            boolean isHoldingKanrojiSword =
+                renderingEntity.getMainHandItem().getItem() instanceof NichirinSwordKanrojiAnimated ||
+                renderingEntity.getOffhandItem().getItem() instanceof NichirinSwordKanrojiAnimated;
+
+            if (!isHoldingKanrojiSword) {
+                renderingEntity = null;
+            }
         }
 
-        // For hand rendering and other contexts, use the animated GeckoLib model
-        super.renderByItem(stack, displayContext, poseStack, bufferSource, packedLight, packedOverlay);
+        Log.debug("[KanrojiSwordRenderer] renderByItem() - displayContext={}, entity={}",
+                  displayContext, renderingEntity != null ? renderingEntity.getName().getString() : "null");
+
+        // Set the entity for the animation controller to read
+        if (renderingEntity != null) {
+            Log.debug("[KanrojiSwordRenderer] Setting current rendering entity: {} (UUID: {})",
+                      renderingEntity.getName().getString(), renderingEntity.getUUID());
+            NichirinSwordKanrojiAnimated.setCurrentRenderingEntity(renderingEntity);
+        }
+
+        try {
+            // For GUI contexts (inventory, hotbar), use the static item model instead of GeckoLib
+            if (displayContext == ItemDisplayContext.GUI ||
+                displayContext == ItemDisplayContext.FIXED ||
+                displayContext == ItemDisplayContext.GROUND) {
+
+                BakedModel staticModel = mc.getModelManager().getModel(STATIC_MODEL_LOCATION);
+
+                if (staticModel != null && staticModel != mc.getModelManager().getMissingModel()) {
+                    // Render the static model using vanilla item renderer
+                    mc.getItemRenderer().render(
+                        stack,
+                        displayContext,
+                        false, // leftHand
+                        poseStack,
+                        bufferSource,
+                        packedLight,
+                        packedOverlay,
+                        staticModel
+                    );
+                    return;
+                }
+                // Fallback to GeckoLib if static model not found
+                Log.debug("[KanrojiSwordRenderer] Static model not found, falling back to GeckoLib");
+            }
+
+            // Apply translation offset for third person right hand to center the sword
+            if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
+                poseStack.translate(1.25 / 16.0, 0.7 / 16.0, 1.25 / 16.0);
+            }
+
+            // For hand rendering and other contexts, use the animated GeckoLib model
+            super.renderByItem(stack, displayContext, poseStack, bufferSource, packedLight, packedOverlay);
+        } finally {
+            // Clear the entity after rendering
+            NichirinSwordKanrojiAnimated.clearCurrentRenderingEntity();
+        }
     }
 
     @Override
@@ -88,6 +129,7 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
                                boolean isReRender, float partialTick, int packedLight,
                                int packedOverlay, float red, float green, float blue, float alpha) {
 
+        // Entity is already set by renderByItem(), so animation controller can read it
         Log.debug("[KanrojiSwordRenderer] actuallyRender() called, context={}", currentDisplayContext);
         super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer,
                            isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);

@@ -77,12 +77,14 @@ public class BreathingInfoDetector {
                     int variationIndex = pdata.getCurrentVariationIndex();
 
                     if (formId > 0) {
+                        // Get sword ID for filtering variations
+                        String swordId = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(heldSword.getItem()).toString();
                         int totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
-                            .getVariationCount(formId, null);
+                            .getVariationCount(formId, swordId);
                         String variationName = null;
                         if (variationIndex > 0) {
                             var variation = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
-                                .getVariation(formId, variationIndex, null);
+                                .getVariation(formId, variationIndex, swordId);
                             if (variation != null) {
                                 variationName = variation.getName();
                             }
@@ -337,13 +339,17 @@ public class BreathingInfoDetector {
         int totalVariations = 0;
 
         if (formId > 0) {
+            // Get sword ID for filtering variations
+            String swordId = heldSword != null && !heldSword.isEmpty()
+                ? net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(heldSword.getItem()).toString()
+                : null;
             totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
-                .getVariationCount(formId, null);
+                .getVariationCount(formId, swordId);
 
             if (variationIndex > 0) {
                 com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation variation =
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
-                        .getVariation(formId, variationIndex, null);
+                        .getVariation(formId, variationIndex, swordId);
                 if (variation != null) {
                     variationName = variation.getName();
                 }
@@ -427,8 +433,13 @@ public class BreathingInfoDetector {
         int styleRange = getTechniqueTypeNumber(techniqueName) * 100;
         double displayBreathes = breathesValue > 0.0 ? breathesValue : (styleRange + formNumber);
 
+        // Construct colored display text using technique's colors
+        String techniqueColor = technique.getTechniqueColor();
+        String formColor = technique.getFormColor();
+        String coloredDisplayText = techniqueColor + techniqueName + " - " + formColor + displayFormName;
+
         return new BreathingInfo(techniqueName, displayFormName, formNumber, styleRange, displayBreathes,
-                                null, variationIndex, totalVariations, variationName);
+                                coloredDisplayText, variationIndex, totalVariations, variationName);
     }
 
     /**

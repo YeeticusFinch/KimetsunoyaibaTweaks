@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
@@ -55,10 +56,11 @@ public class SprintAnimationHandler {
         UUID playerUUID = player.getUUID();
         boolean isSprinting = player.isSprinting();
 
-        // Check if player is holding a nichirin sword
+        // Check if player is holding a nichirin sword (custom or base mod)
         ItemStack mainHandItem = player.getItemInHand(InteractionHand.MAIN_HAND);
         boolean holdingNichirinSword = mainHandItem.getItem() instanceof BreathingSwordItem ||
-                                      (SwordRegistry.getSword(mainHandItem.getItem()) != null);
+                                      (SwordRegistry.getSword(mainHandItem.getItem()) != null) ||
+                                      BaseModBreathingExecutor.isBaseModNichirinSword(mainHandItem.getItem());
 
         // Only process if holding a nichirin sword
         if (!holdingNichirinSword || !isSprinting) {

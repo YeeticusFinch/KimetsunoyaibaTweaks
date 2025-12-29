@@ -96,13 +96,51 @@ public class WhipDamageHandler {
     }
 
     /**
-     * Apply damage with custom source attribution.
+     * Apply damage with custom source attribution (for entities).
+     * For entities, uses a simpler radial sweep instead of whip physics.
      */
     public static int applyWhipDamage(LivingEntity attacker, float damage, double hitboxRadius) {
-        if (!(attacker instanceof Player player)) {
-            return 0; // Only players have whips
+        if (attacker instanceof Player player) {
+            return applyWhipDamage(player, damage, hitboxRadius);
         }
-        return applyWhipDamage(player, damage, hitboxRadius);
+
+        // For non-player entities (like KanrojiEntity), use radial sweep
+        return applyRadialWhipDamage(attacker, damage, hitboxRadius);
+    }
+
+    /**
+     * Apply whip damage in a radial sweep for entities.
+     * Uses a simple arc-based hitbox instead of complex whip physics.
+     */
+    private static int applyRadialWhipDamage(LivingEntity attacker, float damage, double range) {
+        Level level = attacker.level();
+
+        // Get entities in range
+        AABB searchBox = attacker.getBoundingBox().inflate(range);
+        List<LivingEntity> targets = level.getEntitiesOfClass(
+            LivingEntity.class,
+            searchBox,
+            entity -> entity != attacker && entity.isAlive()
+        );
+
+        int damagedCount = 0;
+        Vec3 attackerPos = attacker.position().add(0, attacker.getBbHeight() / 2, 0);
+        Vec3 attackerLook = attacker.getLookAngle();
+
+        for (LivingEntity target : targets) {
+            Vec3 targetPos = target.position().add(0, target.getBbHeight() / 2, 0);
+            Vec3 toTarget = targetPos.subtract(attackerPos).normalize();
+
+            // Check if target is in front (120 degree arc)
+            double dotProduct = toTarget.dot(attackerLook);
+            if (dotProduct > -0.5) { // cos(120°) ≈ -0.5
+                // Deal damage
+                Damager.hurt(attacker, target, damage);
+                damagedCount++;
+            }
+        }
+
+        return damagedCount;
     }
 
     /**

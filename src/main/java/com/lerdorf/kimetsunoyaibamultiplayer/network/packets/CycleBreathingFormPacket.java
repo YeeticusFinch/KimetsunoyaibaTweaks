@@ -43,10 +43,11 @@ public class CycleBreathingFormPacket {
                 // Handle custom breathing sword cycling
                 // Note: cycleForm() handles all syncing internally (FormSyncPacket + BreathesValueSyncPacket)
                 breathingSword.cycleForm(player, direction < 0);
-                // CRITICAL: Reset variation selection when cycling forms
+                // CRITICAL: Reset variation selection AND form name cache when cycling forms
                 com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
                         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
                 data.setCurrentVariationIndex(0);
+                data.setBaseModFormName(""); // Clear cached form name so it gets fresh from breathes value
                 // Save to NBT to persist the reset
                 com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.saveToNBT(player);
                 // Sync to client
@@ -64,10 +65,11 @@ public class CycleBreathingFormPacket {
                 // CRITICAL: Check if this is a multi-style sword - if so, let base mod handle it
                 if (heldItem.getOrCreateTag().contains("select")) {
                     double selectOffset = heldItem.getOrCreateTag().getDouble("select");
-                    // Reset variation selection even when deferring form cycling to the base mod
+                    // Reset variation selection AND form name cache even when deferring form cycling to the base mod
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
                         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
                     data.setCurrentVariationIndex(0);
+                    data.setBaseModFormName(""); // Clear cached form name so it gets fresh from breathes value
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.saveToNBT(player);
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
                         new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket(player.getUUID(), 0),

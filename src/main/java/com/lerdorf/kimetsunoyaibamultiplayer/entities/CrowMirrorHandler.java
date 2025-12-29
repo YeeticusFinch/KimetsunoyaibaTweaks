@@ -15,8 +15,11 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.Iterator;
 
 /**
  * Handles spawning GeckolibCrowEntity mirrors when kasugai_crow entities spawn,
@@ -27,6 +30,14 @@ public class CrowMirrorHandler {
 
     // Map from original crow UUID to mirror crow
     private static final Map<UUID, GeckolibCrowEntity> CROW_MIRRORS = new HashMap<>();
+
+    // Cache of all known original crow UUIDs (for faster lookups)
+    private static final Set<UUID> KNOWN_CROW_UUIDS = new HashSet<>();
+
+    // Batching state for scanForUnmirroredCrows
+    private static Iterator<Entity> currentScanIterator = null;
+    private static int entitiesProcessedThisTick = 0;
+    private static final int MAX_ENTITIES_PER_TICK = 50; // Process max 50 entities per scan tick
 
     @SubscribeEvent
     public static void onEntitySpawn(EntityJoinLevelEvent event) {
@@ -41,6 +52,9 @@ public class CrowMirrorHandler {
         if (!isKasugaiCrow(entity)) {
             return;
         }
+
+        // Add to known crow UUIDs cache
+        KNOWN_CROW_UUIDS.add(entity.getUUID());
 
         // Check if we already have a mirror for this crow
         if (CROW_MIRRORS.containsKey(entity.getUUID())) {
@@ -108,8 +122,9 @@ public class CrowMirrorHandler {
             // The mirror will auto-remove when it detects original is dead in its tick()
         }
 
-        // Clean up from map
+        // Clean up from maps and cache
         CROW_MIRRORS.remove(entity.getUUID());
+        KNOWN_CROW_UUIDS.remove(entity.getUUID());
     }
 
     /**
@@ -135,41 +150,83 @@ public class CrowMirrorHandler {
     }
 
     /**
-     * Scan for existing kasugai_crow entities that don't have mirrors
-     * Should be called periodically (e.g., every second)
+     * Scan for existing kasugai_crow entities that don't have mirrors.
+     * Uses batching to avoid iterating all entities in a single tick.
+     * Should be called periodically (e.g., every 5 seconds).
+     *
+     * PERFORMANCE FIX: Instead of calling level.getAllEntities() which can iterate
+     * over 10,000+ entities and freeze the server, this method processes entities
+     * in batches of MAX_ENTITIES_PER_TICK across multiple ticks.
      */
     public static void scanForUnmirroredCrows(ServerLevel level) {
-        for (Entity entity : level.getAllEntities()) {
-            // Skip null entities
-            if (entity == null) {
-                continue;
+        // Initialize iterator if we're starting a new scan
+        if (currentScanIterator == null || !currentScanIterator.hasNext()) {
+            // Start a new scan - get fresh iterator
+            // Note: We still need to get all entities, but we'll process them in batches
+            Iterable<Entity> allEntities = level.getAllEntities();
+            currentScanIterator = allEntities.iterator();
+            entitiesProcessedThisTick = 0;
+            if (Config.logDebug) {
+                Log.info("Starting new crow scan batch");
             }
+        }
 
-            // Check if this is a kasugai_crow
-            if (!isKasugaiCrow(entity)) {
-                continue;
-            }
+        // Process up to MAX_ENTITIES_PER_TICK entities this tick
+        int processedThisTick = 0;
+        while (currentScanIterator.hasNext() && processedThisTick < MAX_ENTITIES_PER_TICK) {
+            try {
+                Entity entity = currentScanIterator.next();
+                processedThisTick++;
+                entitiesProcessedThisTick++;
 
-            // Check if we already have a mirror
-            if (CROW_MIRRORS.containsKey(entity.getUUID())) {
-                // Verify mirror still exists
-                GeckolibCrowEntity mirror = CROW_MIRRORS.get(entity.getUUID());
-                if (mirror == null || mirror.isRemoved() || !mirror.isAlive()) {
-                    // Mirror is gone, remove from map and re-create
-                	if (Config.logDebug)
-                    Log.warn("Mirror crow was removed, recreating...");
-                    CROW_MIRRORS.remove(entity.getUUID());
-                } else {
-                    // Mirror exists and is valid - ensure original crow is still invisible
-                    ensureCrowInvisibility(entity);
-                    continue; // Mirror exists and is valid
+                // Skip null entities
+                if (entity == null) {
+                    continue;
+                }
+
+                // Check if this is a kasugai_crow
+                if (!isKasugaiCrow(entity)) {
+                    continue;
+                }
+
+                // Add to cache if not already tracked
+                KNOWN_CROW_UUIDS.add(entity.getUUID());
+
+                // Check if we already have a mirror
+                if (CROW_MIRRORS.containsKey(entity.getUUID())) {
+                    // Verify mirror still exists
+                    GeckolibCrowEntity mirror = CROW_MIRRORS.get(entity.getUUID());
+                    if (mirror == null || mirror.isRemoved() || !mirror.isAlive()) {
+                        // Mirror is gone, remove from map and re-create
+                        if (Config.logDebug)
+                            Log.warn("Mirror crow was removed, recreating...");
+                        CROW_MIRRORS.remove(entity.getUUID());
+                    } else {
+                        // Mirror exists and is valid - ensure original crow is still invisible
+                        ensureCrowInvisibility(entity);
+                        continue; // Mirror exists and is valid
+                    }
+                }
+
+                // No mirror exists - create one
+                if (Config.logDebug)
+                    Log.info("Found unmirrored kasugai crow, creating GeckoLib mirror...");
+                createMirrorForCrow(entity, level);
+            } catch (Exception e) {
+                // Catch any errors during iteration to prevent complete server freeze
+                System.err.println("Error scanning crow entity: " + e.getMessage());
+                if (Config.logDebug) {
+                    e.printStackTrace();
                 }
             }
+        }
 
-            // No mirror exists - create one
-            if (Config.logDebug)
-            Log.info("Found unmirror kasugai crow, creating GeckoLib mirror...");
-            createMirrorForCrow(entity, level);
+        // Log when scan completes
+        if (!currentScanIterator.hasNext()) {
+            if (Config.logDebug) {
+                Log.info("Completed crow scan batch - processed {} entities total", entitiesProcessedThisTick);
+            }
+            currentScanIterator = null; // Reset for next scan
         }
     }
 
@@ -259,6 +316,11 @@ public class CrowMirrorHandler {
             if (Config.logDebug)
             Log.info("Cleared all crow mirrors");
         }
+
+        // Clear the UUID cache and scan state
+        KNOWN_CROW_UUIDS.clear();
+        currentScanIterator = null;
+        entitiesProcessedThisTick = 0;
     }
 
     /**

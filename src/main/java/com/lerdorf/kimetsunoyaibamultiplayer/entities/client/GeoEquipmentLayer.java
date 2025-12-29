@@ -1,5 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities.client;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -38,7 +41,18 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
 
         // MAIN HAND
         if (boneName.equals("itemMainHand") || boneName.equals("itemMainHand2") || boneName.equals("itemMainHand3")) {
-            return animatable.getItemBySlot(EquipmentSlot.MAINHAND);
+            ItemStack mainHand = animatable.getItemBySlot(EquipmentSlot.MAINHAND);
+
+            // CRITICAL: Hide nichirin swords when not in combat (render-only, no state modification)
+            // When entity is peaceful, sword will be displayed on their back/hip by GeoSwordDisplayLayer
+            if (SwordDisplayConfig.enabled &&
+                SwordParticleMapping.isKimetsunoyaibaSword(mainHand) &&
+                !SwordParticleMapping.isSheathExempt(mainHand) &&
+                !EntityCombatStateTracker.isInCombat(animatable)) {
+                return ItemStack.EMPTY; // Hide from hand (render-only)
+            }
+
+            return mainHand;
         }
 
         // OFF HAND

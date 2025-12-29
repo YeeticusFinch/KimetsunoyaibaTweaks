@@ -21,42 +21,46 @@ import java.util.function.Supplier;
 /**
  * Packet sent from client to server to cycle variations of the current breathing form.
  * Direction: -1 = backward, 1 = forward
- * For base mod swords, also includes the breathes value (since server-side NBT may be stale)
+ * For base mod swords, also includes the form name (resolved client-side from breathes value)
  */
 public class CycleFormVariationPacket {
     private final int direction;
-    private final double breathesValue; // For base mod swords (client sends this)
+    private final String formName; // For base mod swords (client sends the form name)
 
     public CycleFormVariationPacket(int direction) {
-        this(direction, 0.0);
+        this(direction, "");
     }
 
-    public CycleFormVariationPacket(int direction, double breathesValue) {
+    public CycleFormVariationPacket(int direction, String formName) {
         this.direction = direction;
-        this.breathesValue = breathesValue;
+        this.formName = formName != null ? formName : "";
     }
 
     public CycleFormVariationPacket(FriendlyByteBuf buf) {
         this.direction = buf.readInt();
-        this.breathesValue = buf.readDouble();
+        this.formName = buf.readUtf();
     }
 
     public void encode(FriendlyByteBuf buf) {
         buf.writeInt(direction);
-        buf.writeDouble(breathesValue);
+        buf.writeUtf(formName);
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
+            System.out.println("[CycleFormVariationPacket] SERVER received packet, direction=" + direction + ", formName=" + formName);
             ServerPlayer player = ctx.get().getSender();
             if (player == null) {
+                System.out.println("[CycleFormVariationPacket] Player is null, aborting");
                 return;
             }
 
             ItemStack heldItem = player.getMainHandItem();
+            System.out.println("[CycleFormVariationPacket] Player holding: " + heldItem.getItem());
 
             // Custom breathing swords
             if (heldItem.getItem() instanceof BreathingSwordItem breathingSword) {
+                System.out.println("[CycleFormVariationPacket] Handling CUSTOM breathing sword");
                 PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
                 int baseFormIndex = data.getCurrentFormIndex();
 
@@ -79,12 +83,32 @@ public class CycleFormVariationPacket {
                 }
 
                 int currentVariation = data.getCurrentVariationIndex();
-                int newVariation = direction >= 0
-                        ? (currentVariation + 1) % (variationCount + 1)
-                        : (currentVariation - 1 + (variationCount + 1)) % (variationCount + 1);
+                System.out.println("[CycleFormVariationPacket] Custom sword: currentVariation=" + currentVariation +
+                                  ", variationCount=" + variationCount + ", direction=" + direction);
+
+                // Cycle variation with proper wrapping
+                // variationCount + 1 = total options (base form + variations)
+                // Examples: variationCount=1 means 2 total (0=base, 1=variation)
+                //   Forward from 1: (1+1) % 2 = 0 ✓ wraps to base
+                //   Backward from 0: (0-1+2) % 2 = 1 ✓ wraps to variation
+                int totalOptions = variationCount + 1;
+                int newVariation;
+                if (direction >= 0) {
+                    // Forward: wrap after last variation
+                    newVariation = (currentVariation + 1) % totalOptions;
+                } else {
+                    // Backward: wrap before base form
+                    // Add totalOptions to handle negative modulo correctly
+                    newVariation = ((currentVariation - 1) % totalOptions + totalOptions) % totalOptions;
+                }
+
+                System.out.println("[CycleFormVariationPacket] Custom sword: newVariation=" + newVariation +
+                                  " (display as " + (newVariation + 1) + "/" + totalOptions + ")");
 
                 // Store variation index (don't modify breathes NBT)
                 data.setCurrentVariationIndex(newVariation);
+                // CRITICAL: Save to NBT so it persists when getOrCreate() loads from NBT later
+                PlayerBreathingData.saveToNBT(player);
                 ModNetworking.sendToPlayer(new VariationIndexSyncPacket(player.getUUID(), newVariation), player);
 
                 if (!Config.suppressFormCycleChat) {
@@ -101,7 +125,11 @@ public class CycleFormVariationPacket {
             }
             // Base mod swords
             else if (com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.isNichirinSword(heldItem)) {
-                handleBaseModSword(player, direction);
+                System.out.println("[CycleFormVariationPacket] Handling BASE MOD sword, calling handleBaseModSword() with formName=" + formName);
+                handleBaseModSword(player, direction, formName);
+            }
+            else {
+                System.out.println("[CycleFormVariationPacket] Not a breathing sword!");
             }
         });
         ctx.get().setPacketHandled(true);
@@ -109,147 +137,147 @@ public class CycleFormVariationPacket {
 
     /**
      * Handle variation cycling for base mod swords.
+     * Uses string-based form name matching instead of form ID.
+     * @param player The player cycling variations
+     * @param direction Cycle direction (-1 = backward, 1 = forward)
+     * @param clientFormName The form name sent from the client (resolved from breathes value)
      */
-    private void handleBaseModSword(ServerPlayer player, int direction) {
-        ItemStack heldSword = player.getMainHandItem();
-
-        // Get breathes value from server NBT, cache, or client
-        double currentBreathes = player.getPersistentData().getDouble("breathes");
+    private void handleBaseModSword(ServerPlayer player, int direction, String clientFormName) {
+        System.out.println("[handleBaseModSword] ENTERED, direction=" + direction + ", clientFormName=" + clientFormName);
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player.getUUID());
-        if (currentBreathes == 0.0) {
-            currentBreathes = data.getBaseModBreathesValue();
-        }
-        if (currentBreathes == 0.0) {
-            currentBreathes = this.breathesValue;
+
+        // Get the held sword to determine sword ID
+        ItemStack heldItem = player.getMainHandItem();
+        String swordId = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(heldItem.getItem()).toString();
+        System.out.println("[handleBaseModSword] Held sword ID: " + swordId);
+
+        // Use the form name sent from the client
+        String currentFormName = clientFormName;
+
+        // If client didn't send form name, fall back to cached value
+        if (currentFormName == null || currentFormName.isEmpty()) {
+            currentFormName = data.getBaseModFormName();
+            System.out.println("[handleBaseModSword] Client form name empty, using cached: " + currentFormName);
+        } else {
+            System.out.println("[handleBaseModSword] Using form name from client: " + currentFormName);
+            // Cache it for future use
+            data.setBaseModFormName(currentFormName);
         }
 
-        // CRITICAL FIX: Detect and correct out-of-range breathes values
-        // Base mod sometimes writes form ID with +500 offset (e.g., 602 instead of 102)
-        // We need to detect this and correct it to the TRUE form ID
-        int expectedRange = BaseModStyleMapping.getExpectedRangeForSword(heldSword);
-        int actualRange = ((int)currentBreathes / 100) * 100;
-
-        double trueBreathes = currentBreathes;
-        if (expectedRange > 0 && actualRange != expectedRange && actualRange == expectedRange + 500) {
-            // Breathes is in wrong range (e.g., 602 when expecting 100s range)
-            // Subtract 500 to get true form ID
-            trueBreathes = currentBreathes - 500;
+        if (currentFormName == null || currentFormName.isEmpty()) {
+            System.out.println("[handleBaseModSword] No form name available - aborting");
             if (Config.logDebug) {
-                Log.debug("[CycleVariation] Corrected out-of-range breathes: " + currentBreathes +
-                         " -> " + trueBreathes + " (expected range: " + expectedRange + ", was: " + actualRange + ")");
+                Log.debug("[CycleVariation] No form name available - cannot cycle variations");
             }
-        }
-
-        int formId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(trueBreathes);
-
-        if (Config.logDebug) {
-            Log.debug("[CycleVariation] Variation cycling: formId=" + formId +
-                     " (breathes=" + currentBreathes + ", corrected=" + trueBreathes + ")");
-        }
-
-        if (!BaseModStyleMapping.isKnownFormId(formId)) {
-            // Try to recover from cached known form
-            int cachedFormId = BaseModStyleMapping.isKnownFormId((int) data.getBaseModBreathesValue())
-                ? (int) data.getBaseModBreathesValue()
-                : 0;
-            if (cachedFormId > 0) {
-                formId = cachedFormId;
-                currentBreathes = cachedFormId;
-            }
-        }
-
-        if (formId == 0 || !BaseModStyleMapping.isKnownFormId(formId)) {
             return;
         }
 
-        int variationCount = VariationRegistry.getVariationCount(formId, null);
+        // Use substring matching to get variation count, filtering by sword ID
+        int variationCount = VariationRegistry.getVariationCountBySubstring(currentFormName, swordId);
+        System.out.println("[handleBaseModSword] Form '" + currentFormName + "' has " + variationCount + " variations for sword '" + swordId + "'");
 
         // If no variations, reset and sync
         if (variationCount == 0) {
+            System.out.println("[handleBaseModSword] No variations found, resetting to 0");
             data.setCurrentVariationIndex(0);
-            data.setBaseModBreathesValue(formId);
-            player.getPersistentData().putDouble("breathes", formId);
-            ModNetworking.sendToPlayer(new BreathesValueSyncPacket(player.getUUID(), formId), player);
             ModNetworking.sendToPlayer(new VariationIndexSyncPacket(player.getUUID(), 0), player);
+            if (Config.logDebug) {
+                Log.debug("[CycleVariation] No variations found for form: " + currentFormName);
+            }
             return;
         }
 
+        // Cycle variation
         int currentVariation = data.getCurrentVariationIndex();
+        System.out.println("[handleBaseModSword] Current variation index: " + currentVariation);
         int newVariation = direction >= 0
                 ? (currentVariation + 1) % (variationCount + 1)
                 : (currentVariation - 1 + (variationCount + 1)) % (variationCount + 1);
+        System.out.println("[handleBaseModSword] New variation index: " + newVariation);
 
-        // CRITICAL: Don't touch the breathes NBT!
-        // The base mod needs it as-is (e.g., 602) for sword swing animations/particles
-        // We only need to track variation index separately for form execution
-
-        // Cache the TRUE form ID (for variation lookups) and variation index
-        data.setBaseModBreathesValue(formId);
+        // Store variation index
         data.setCurrentVariationIndex(newVariation);
+        System.out.println("[handleBaseModSword] Stored new variation index in PlayerData");
 
-        // Sync variation index to client (DON'T sync breathes - leave it untouched)
+        // Sync variation index to client
         ModNetworking.sendToPlayer(new VariationIndexSyncPacket(player.getUUID(), newVariation), player);
+        System.out.println("[handleBaseModSword] Sent VariationIndexSyncPacket to client");
 
-        // Send chat message about variation change (single color taken from form color if available)
+        // Send chat message about variation change
+        // Note: Chat handler will NOT cache these messages (they contain variation names and/or counters)
         if (!Config.suppressFormCycleChat) {
-            String displayName = getBaseModVariationDisplayName(formId, newVariation, data);
-            String styleName = getStyleDisplayName(formId);
-            String color = "§b"; // default aqua; we will reuse style color if available from cached form name
-            String cachedBase = data.getBaseModFormName();
-            if (cachedBase != null && cachedBase.length() >= 2 && cachedBase.charAt(0) == '§') {
-                color = cachedBase.substring(0, 2);
-            }
-            player.sendSystemMessage(Component.literal(color + styleName + " - " + color + displayName));
+            String displayName = getBaseModVariationDisplayNameByString(currentFormName, newVariation, swordId);
+            String color = extractColorFromFormName(currentFormName);
+            // Send to chat so user can see variation names (chat handler prevents caching)
+            player.sendSystemMessage(Component.literal(
+                color + displayName +
+                " (" + (newVariation + 1) + "/" + (variationCount + 1) + ")"
+            ));
+            System.out.println("[handleBaseModSword] Sent chat message: " + displayName);
+        } else {
+            System.out.println("[handleBaseModSword] Chat messages suppressed by config");
         }
 
         if (Config.logDebug) {
-            Log.debug("Base mod variation cycled: breathes " + currentBreathes +
-                     " -> base " + formId +
-                     " (form ID " + formId + ", variation " + newVariation + ")");
+            Log.debug("Base mod variation cycled: form '" + currentFormName +
+                     "', variation " + newVariation + "/" + variationCount);
         }
     }
 
     /**
-     * Get display name for base mod variation.
+     * Get display name for base mod variation using string-based matching.
      */
-    private String getBaseModVariationDisplayName(int formId, int variationIndex, PlayerBreathingData.PlayerData data) {
+    private String getBaseModVariationDisplayNameByString(String currentFormName, int variationIndex, String swordId) {
         if (variationIndex == 0) {
-            String cachedName = data.getBaseModFormName();
-            if (cachedName != null && !cachedName.isEmpty()) {
-                return cachedName;
-            }
-            return "Form ID " + formId;
+            // Strip color code from form name for display
+            return currentFormName.startsWith("§") && currentFormName.length() > 2
+                ? currentFormName.substring(2)
+                : currentFormName;
         } else {
-            BreathingFormVariation variation = VariationRegistry.getVariation(formId, variationIndex, null);
+            BreathingFormVariation variation = VariationRegistry.getVariationBySubstring(
+                currentFormName, variationIndex, swordId
+            );
             return variation != null ? variation.getName() : "Unknown Variation";
         }
     }
 
     /**
-     * Convert form ID to style display name.
+     * Extract color code from form name (e.g., "§1Water Breathing..." -> "§1").
      */
-    private String getStyleDisplayName(int formId) {
-        int styleRange = (formId / 100) * 100;
+    private String extractColorFromFormName(String formName) {
+        // First check if the form name already has a color code
+        if (formName != null && formName.length() >= 2 && formName.charAt(0) == '§') {
+            return formName.substring(0, 2);
+        }
 
-        return switch (styleRange) {
-            case 100 -> "Water Breathing";
-            case 200 -> "Beast Breathing";
-            case 300 -> "Thunder Breathing";
-            case 400 -> "Flame Breathing";
-            case 500 -> "Wind Breathing";
-            case 600 -> "Stone Breathing";
-            case 700 -> "Mist Breathing";
-            case 800 -> "Serpent Breathing";
-            case 900 -> "Sound Breathing";
-            case 1000 -> "Ice Breathing";
-            case 1100 -> "Moon Breathing";
-            case 1200 -> "Sun Breathing";
-            case 1300 -> "Flower Breathing";
-            case 1400 -> "Insect Breathing";
-            case 1500 -> "Love Breathing";
-            case 1600 -> "Frost Breathing";
-            default -> "Unknown Style";
-        };
+        // Look up the color from BaseKnYForms using substring matching
+        if (formName != null) {
+            // Strip color codes from form name if present for matching
+            String cleanFormName = formName.replaceAll("§.", "");
+
+            for (com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.BaseForm form :
+                 com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.forms.values()) {
+                // Exact match (case-insensitive)
+                if (cleanFormName.equalsIgnoreCase(form.name)) {
+                    System.out.println("[extractColor] Exact match: '" + cleanFormName + "' -> color: " + form.color);
+                    return form.color;
+                }
+            }
+
+            // Fallback: substring match
+            for (com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.BaseForm form :
+                 com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.forms.values()) {
+                if (cleanFormName.toLowerCase().contains(form.name.toLowerCase()) ||
+                    form.name.toLowerCase().contains(cleanFormName.toLowerCase())) {
+                    System.out.println("[extractColor] Substring match: '" + cleanFormName + "' with '" + form.name + "' -> color: " + form.color);
+                    return form.color;
+                }
+            }
+
+            System.out.println("[extractColor] No match for '" + cleanFormName + "', using default §b");
+        }
+
+        return "§b"; // Default aqua if no match found
     }
 
     /**

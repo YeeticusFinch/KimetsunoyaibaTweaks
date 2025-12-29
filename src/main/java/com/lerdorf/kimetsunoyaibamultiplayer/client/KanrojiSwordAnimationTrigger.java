@@ -41,7 +41,8 @@ public class KanrojiSwordAnimationTrigger {
 
     /**
      * Trigger a GeckoLib animation on a specific Kanroji sword ItemStack.
-     * This is useful for triggering animations on displayed swords (hip/back) as well as held swords.
+     * Now uses per-entity animation tracking instead of per-ItemStack to avoid
+     * all swords sharing the same animation state.
      *
      * @param entity The entity associated with the sword
      * @param itemStack The ItemStack containing the Kanroji sword
@@ -62,36 +63,22 @@ public class KanrojiSwordAnimationTrigger {
         }
 
         // Map entity animation names to sword animation names
-        // The sword has these animations: idle, walk, sprint, sheath, sword_to_left, sword_to_right,
-        // speed_attack_sword, sword_overhead, sword_rotate
         String swordAnimName = mapToSwordAnimation(cleanAnimName);
 
-        Log.debug("[KanrojiSwordAnimationTrigger] Entity animation: {} -> Clean: {} -> Sword anim: {}",
-                  animationName, cleanAnimName, swordAnimName);
+        Log.debug("[KanrojiSwordAnimationTrigger] Entity {} animation: {} -> Clean: {} -> Sword anim: {}",
+                  entity.getName().getString(), animationName, cleanAnimName, swordAnimName);
 
         if (swordAnimName != null) {
-            // Trigger the animation on the sword using GeckoLib's animation system
-            try {
-                // Use the ItemStack's GeoItem instance ID so the renderer and
-                // triggerAnim refer to the same animatable instance.
-                // This is required for GeckoLib item animations to play.
-                long instanceId = resolveGeoItemInstanceId(itemStack, entity);
+            // Store animation in per-entity tracker
+            // The animation controller reads from this tracker during rendering
+            KanrojiSwordEntityAnimationTracker.setAnimation(entity.getUUID(), swordAnimName);
 
-                Log.debug("[KanrojiSwordAnimationTrigger] Triggering animation: {} on controller 'controller' with instanceId: {} (entity: {})",
-                          swordAnimName, instanceId, entity.getName().getString());
+            Log.debug("[KanrojiSwordAnimationTrigger] Set animation {} for entity {}",
+                      swordAnimName, entity.getName().getString());
 
-                // Trigger the animation
-                sword.triggerAnim(entity, instanceId, "controller", swordAnimName);
-
-                // Notify the animation handler so it doesn't override with movement animations
-                if (entity instanceof net.minecraft.world.entity.player.Player) {
-                    KanrojiSwordAnimationHandler.notifyActionAnimation(entity.getUUID(), swordAnimName);
-                }
-
-                Log.debug("[KanrojiSwordAnimationTrigger] Animation triggered successfully!");
-            } catch (Exception e) {
-                // Log errors for debugging
-                Log.error("[KanrojiSwordAnimationTrigger] Failed to trigger Kanroji sword animation: {}", e.getMessage());
+            // Notify the animation handler so it doesn't override with movement animations
+            if (entity instanceof net.minecraft.world.entity.player.Player) {
+                KanrojiSwordAnimationHandler.notifyActionAnimation(entity.getUUID(), swordAnimName);
             }
         } else {
             Log.debug("[KanrojiSwordAnimationTrigger] No sword animation mapping for entity anim: {} (clean: {})",
@@ -156,6 +143,7 @@ public class KanrojiSwordAnimationTrigger {
             case "love_first_form":
             case "love_second_form":
             case "love_third_form":
+            case "love_fourth_form":
             case "love_fifth_form":
             case "love_sixth_form":
                 return entityAnimationName;

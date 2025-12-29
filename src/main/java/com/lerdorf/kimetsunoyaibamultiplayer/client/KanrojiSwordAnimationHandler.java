@@ -385,6 +385,8 @@ public class KanrojiSwordAnimationHandler {
                 return 2700; // 2.7 seconds (54 ticks)
             case "love_third_form":
                 return 2400; // 2.4 seconds (48 ticks)
+            case "love_fourth_form":
+                return 2500; // 2.5 seconds
             case "love_fifth_form":
                 return 7500; // 7.5 seconds (150 ticks)
             case "love_sixth_form":
