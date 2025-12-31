@@ -214,7 +214,8 @@ public class CrowMirrorHandler {
                 createMirrorForCrow(entity, level);
             } catch (Exception e) {
                 // Catch any errors during iteration to prevent complete server freeze
-                System.err.println("Error scanning crow entity: " + e.getMessage());
+                Log.error("Error scanning crow entity: " + e != null && e.getMessage() != null ? e.getMessage()
+                        : "empty");
                 if (Config.logDebug) {
                     e.printStackTrace();
                 }

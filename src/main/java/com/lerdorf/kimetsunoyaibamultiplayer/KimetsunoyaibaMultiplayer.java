@@ -627,22 +627,21 @@ public class KimetsunoyaibaMultiplayer
         }
 
         @SubscribeEvent
-        public static void onPlayerLoggedOut(TickEvent.ClientTickEvent event)
+        public static void onPlayerLoggedOut(net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingOut event)
         {
-            if (net.minecraft.client.Minecraft.getInstance().level == null && event.phase == TickEvent.Phase.END) {
-                com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.clearTrackedAnimations();
-                com.lerdorf.kimetsunoyaibamultiplayer.client.IdleWalkAnimationHandler.clear();
-                com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler.clearAllAnimations();
-                com.lerdorf.kimetsunoyaibamultiplayer.client.CrowQuestMarkerHandlerClient.clearAllMarkers();
-                CrowEnhancementHandler.clearFlyingCrows();
-                com.lerdorf.kimetsunoyaibamultiplayer.client.CrowAnimatableWrapper.clearAll();
-                com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.clearAll();
-                com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.clearAll();
-                com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.clearAll();
-                com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.clearAll();
-                // Don't clear mirrors from client side - they are server-side entities
-                // They will be cleared when the server shuts down or dimension unloads
-            }
+            // This event fires exactly once when disconnecting from a world
+            com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.clearTrackedAnimations();
+            com.lerdorf.kimetsunoyaibamultiplayer.client.IdleWalkAnimationHandler.clear();
+            com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler.clearAllAnimations();
+            com.lerdorf.kimetsunoyaibamultiplayer.client.CrowQuestMarkerHandlerClient.clearAllMarkers();
+            CrowEnhancementHandler.clearFlyingCrows();
+            com.lerdorf.kimetsunoyaibamultiplayer.client.CrowAnimatableWrapper.clearAll();
+            com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.clearAll();
+            com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.clearAll();
+            com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.clearAll();
+            com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.clearAll();
+            // Don't clear mirrors from client side - they are server-side entities
+            // They will be cleared when the server shuts down or dimension unloads
         }
 
         @SubscribeEvent

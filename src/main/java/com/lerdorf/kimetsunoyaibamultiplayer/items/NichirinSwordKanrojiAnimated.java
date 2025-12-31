@@ -26,7 +26,6 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.function.Consumer;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Mitsuri Kanroji's Animated Nichirin Sword (Love Breathing)
@@ -84,9 +83,6 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
     public NichirinSwordKanrojiAnimated(Properties properties) {
         super(properties);
         Log.info("[NichirinSwordKanrojiAnimated] Constructor called - GeckoLib item ready");
-        // NOTE: We DO NOT use SingletonGeoAnimatable because it makes ALL swords share animations
-        // Instead, we use per-entity animation tracking via KanrojiSwordEntityAnimationTracker
-        Log.info("[NichirinSwordKanrojiAnimated] Per-entity animation system initialized");
     }
 
     @Override
@@ -119,13 +115,11 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         Log.info("[NichirinSwordKanrojiAnimated] registerControllers() called");
+        // Use transition time of 0 for instant animation switching (no blending)
         controllers.add(new AnimationController<>(this, "controller", 0, state -> {
-            // Try to get the entity holding this sword from the animation state
-            // GeckoLib provides this when rendering items held by entities
+            // Get the entity holding this sword from our ThreadLocal
+            // Set by the renderer before rendering each entity's sword
             net.minecraft.world.entity.LivingEntity entity = getCurrentRenderingEntity();
-
-            Log.debug("[NichirinSwordKanrojiAnimated] Animation controller tick - entity: {}",
-                      entity != null ? entity.getName().getString() : "null");
 
             if (entity != null) {
                 // Look up this specific entity's animation from our tracker
@@ -142,21 +136,18 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
                     boolean isLooping = animName.equals("idle") || animName.equals("walk") ||
                                        animName.equals("sprint") || animName.equals("sheath");
 
+                    // GeckoLib creates separate animation instances per ItemStack/context
+                    // Using setAndContinue() instead of setAnimation() for proper state handling
                     if (isLooping) {
-                        state.getController().setAnimation(RawAnimation.begin().thenLoop(animName));
+                        return state.setAndContinue(RawAnimation.begin().thenLoop(animName));
                     } else {
-                        state.getController().setAnimation(RawAnimation.begin().thenPlay(animName));
+                        return state.setAndContinue(RawAnimation.begin().thenPlay(animName));
                     }
-                    return software.bernie.geckolib.core.object.PlayState.CONTINUE;
                 }
             }
 
             // Default: sheath animation for GUI/inventory rendering or when no entity
-            Log.debug("[NichirinSwordKanrojiAnimated] Using default sheath animation (entity={}, has anim={})",
-                      entity != null ? entity.getName().getString() : "null",
-                      entity != null ? com.lerdorf.kimetsunoyaibamultiplayer.client.KanrojiSwordEntityAnimationTracker.getAnimation(entity.getUUID()) : "null");
-            state.getController().setAnimation(RawAnimation.begin().thenLoop("sheath"));
-            return software.bernie.geckolib.core.object.PlayState.CONTINUE;
+            return state.setAndContinue(RawAnimation.begin().thenLoop("sheath"));
         })
         // Register triggerable animations
         .triggerableAnim("idle", RawAnimation.begin().thenLoop("idle"))

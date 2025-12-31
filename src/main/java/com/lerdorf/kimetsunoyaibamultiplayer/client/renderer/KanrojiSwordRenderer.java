@@ -1,8 +1,10 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client.renderer;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.models.KanrojiSwordModel;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.KanrojiEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -44,6 +46,8 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
         // Store the display context so we can check it in actuallyRender
         this.currentDisplayContext = displayContext;
 
+        //Log.debug("Display context: " + displayContext.toString());
+
         // Try to get the entity holding this item from render context
         Minecraft mc = Minecraft.getInstance();
         net.minecraft.world.entity.LivingEntity renderingEntity = null;
@@ -71,13 +75,13 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
             }
         }
 
-        Log.debug("[KanrojiSwordRenderer] renderByItem() - displayContext={}, entity={}",
-                  displayContext, renderingEntity != null ? renderingEntity.getName().getString() : "null");
+        //Log.debug("[KanrojiSwordRenderer] renderByItem() - displayContext={}, entity={}",
+        //          displayContext, renderingEntity != null ? renderingEntity.getName().getString() : "null");
 
-        // Set the entity for the animation controller to read
+        // Set the entity for the animation controller to read (used for hand offset calculations)
         if (renderingEntity != null) {
-            Log.debug("[KanrojiSwordRenderer] Setting current rendering entity: {} (UUID: {})",
-                      renderingEntity.getName().getString(), renderingEntity.getUUID());
+            //Log.debug("[KanrojiSwordRenderer] Setting current rendering entity: {} (UUID: {})",
+            //          renderingEntity.getName().getString(), renderingEntity.getUUID());
             NichirinSwordKanrojiAnimated.setCurrentRenderingEntity(renderingEntity);
         }
 
@@ -104,12 +108,25 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
                     return;
                 }
                 // Fallback to GeckoLib if static model not found
-                Log.debug("[KanrojiSwordRenderer] Static model not found, falling back to GeckoLib");
+                //Log.debug("[KanrojiSwordRenderer] Static model not found, falling back to GeckoLib");
             }
 
             // Apply translation offset for third person right hand to center the sword
             if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
+                //Log.debug("Entering translation offset for third person right hand");
+                //Log.debug("RenderingEntity: " + (renderingEntity != null ? renderingEntity.getName().toString() : "null"));
                 poseStack.translate(1.25 / 16.0, 0.7 / 16.0, 1.25 / 16.0);
+
+                // Only apply Kanroji entity hand offset when the entity is actually holding the sword (in combat)
+                // When out of combat, the sword is on the back/hip and shouldn't use hand offsets
+                if (renderingEntity instanceof KanrojiEntity &&
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInCombat(renderingEntity)) {
+                    //Log.debug("Entering translation offset for kanroji entity (in combat)");
+                    // Extra hand offset for Kanroji entity to compensate for its model alignment.
+                    poseStack.translate(Config.kanrojiEntityHandOffsetX / 16.0,
+                                       Config.kanrojiEntityHandOffsetY / 16.0,
+                                       Config.kanrojiEntityHandOffsetZ / 16.0);
+                }
             }
 
             // For hand rendering and other contexts, use the animated GeckoLib model

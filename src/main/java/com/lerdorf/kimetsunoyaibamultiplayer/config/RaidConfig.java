@@ -45,6 +45,7 @@ public class RaidConfig {
     // Entity restrictions
     public static ForgeConfigSpec.BooleanValue disableYoriichiInRaids;
     public static ForgeConfigSpec.BooleanValue disableYoriichiOldInRaids;
+    public static ForgeConfigSpec.BooleanValue enableKimetsuAddonEntities;
 
     // Mugen door settings
     public static ForgeConfigSpec.BooleanValue enableMugenDoorTeleportation;
@@ -158,6 +159,13 @@ public class RaidConfig {
         disableYoriichiOldInRaids = builder
             .comment("Disable Old Yoriichi from spawning in demon slayer raids")
             .define("disable_yoriichi_old", false);
+
+        enableKimetsuAddonEntities = builder
+            .comment("Enable kimetsu addon mod entities in raids",
+                    "When true, entities from the 'kimetsu' mod can spawn in raids",
+                    "This includes additional upper moons, hashira, and other powerful entities",
+                    "Only works if the kimetsu addon mod is installed")
+            .define("enable_kimetsu_addon_entities", true);
 
         builder.pop();
 

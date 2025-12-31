@@ -95,6 +95,22 @@ public class KanrojiRenderer extends GeoEntityRenderer<KanrojiEntity> {
     }
 
     @Override
+    public void render(KanrojiEntity entity, float entityYaw, float partialTick,
+                      com.mojang.blaze3d.vertex.PoseStack poseStack,
+                      net.minecraft.client.renderer.MultiBufferSource bufferSource,
+                      int packedLight) {
+        // Set entity context for item rendering (so KanrojiSwordRenderer can detect the entity)
+        com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext.setCurrentEntity(entity);
+
+        try {
+            super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        } finally {
+            // Clear entity context after rendering
+            com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext.clearCurrentEntity();
+        }
+    }
+
+    @Override
     protected float getDeathMaxRotation(KanrojiEntity entityLivingBaseIn) {
         return 0.0F; // Match base mod (no rotation on death)
     }

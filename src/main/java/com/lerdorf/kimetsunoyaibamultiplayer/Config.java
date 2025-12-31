@@ -69,6 +69,19 @@ public class Config
                      "Lower to reduce network traffic; Default: 100")
             .defineInRange("mob-slash-broadcast-range", 100.0, 8.0, 512.0);
 
+    // Kanroji entity sword rendering offsets
+    private static final ForgeConfigSpec.DoubleValue KANROJI_ENTITY_HAND_OFFSET_X = BUILDER
+            .comment("X offset for Kanroji entity sword position to compensate for model alignment (in pixels, divided by 16)")
+            .defineInRange("kanroji-entity-hand-offset-x", -9.3, -16.0, 16.0);
+
+    private static final ForgeConfigSpec.DoubleValue KANROJI_ENTITY_HAND_OFFSET_Y = BUILDER
+            .comment("Y offset for Kanroji entity sword position to compensate for model alignment (in pixels, divided by 16)")
+            .defineInRange("kanroji-entity-hand-offset-y", -7.5, -16.0, 16.0);
+
+    private static final ForgeConfigSpec.DoubleValue KANROJI_ENTITY_HAND_OFFSET_Z = BUILDER
+            .comment("Z offset for Kanroji entity sword position to compensate for model alignment (in pixels, divided by 16)")
+            .defineInRange("kanroji-entity-hand-offset-z", -8.7, -16.0, 16.0);
+
     public enum DisplayPosition {
         TOP_LEFT,
         TOP_RIGHT,
@@ -96,6 +109,9 @@ public class Config
     public static boolean enableSwordClashing;
     public static boolean enableNichirinSprintAnimation;
     public static double mobSlashBroadcastRange;
+    public static double kanrojiEntityHandOffsetX;
+    public static double kanrojiEntityHandOffsetY;
+    public static double kanrojiEntityHandOffsetZ;
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event)
@@ -115,6 +131,9 @@ public class Config
         enableSwordClashing = ENABLE_SWORD_CLASHING.get();
         enableNichirinSprintAnimation = ENABLE_NICHIRIN_SPRINT_ANIMATION.get();
         mobSlashBroadcastRange = MOB_SLASH_BROADCAST_RANGE.get();
+        kanrojiEntityHandOffsetX = KANROJI_ENTITY_HAND_OFFSET_X.get();
+        kanrojiEntityHandOffsetY = KANROJI_ENTITY_HAND_OFFSET_Y.get();
+        kanrojiEntityHandOffsetZ = KANROJI_ENTITY_HAND_OFFSET_Z.get();
         if (Config.logDebug)
         System.out.println("Common config loaded: logDebug=" + logDebug + ", onScreenDebug=" + onScreenDebug +
                 ", showBreathingDisplay=" + showBreathingDisplay + ", breathingDisplayPosition=" + breathingDisplayPosition +

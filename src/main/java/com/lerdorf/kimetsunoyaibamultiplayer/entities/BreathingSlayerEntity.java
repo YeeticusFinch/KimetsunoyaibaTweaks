@@ -393,6 +393,11 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         // Main controller - handles ALL animations (walk, idle, attacks, abilities)
         controllers.add(new AnimationController<>(this, "controller", 0, state -> {
+            // Death animation (highest priority)
+            if (this.isDeadOrDying()) {
+                return state.setAndContinue(RawAnimation.begin().thenPlay("death"));
+            }
+
             String anim = getCurrentAnimation();
             int animTicks = getAnimationTicks();
 

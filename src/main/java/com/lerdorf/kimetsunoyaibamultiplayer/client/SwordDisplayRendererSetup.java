@@ -3,7 +3,14 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.SwordDisplayRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.GeoSwordDisplayLayer;
 import net.minecraft.client.Minecraft;
+import software.bernie.geckolib.renderer.GeoEntityRenderer;
+import software.bernie.geckolib.core.animatable.GeoAnimatable;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraftforge.api.distmarker.Dist;
@@ -16,6 +23,8 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class SwordDisplayRendererSetup {
 
+    private static final String BASE_MODID = "kimetsunoyaiba";
+
     @SubscribeEvent
     public static void onAddLayers(EntityRenderersEvent.AddLayers event) {
         Log.info("Adding sword display renderer layers to player models");
@@ -24,10 +33,38 @@ public class SwordDisplayRendererSetup {
         addLayerToPlayerSkin(event, "default");
         addLayerToPlayerSkin(event, "slim");
 
-        // NOTE: Entity sword/sheath rendering is handled by GeoSwordDisplayLayer
-        // added directly to GeckoLib entity renderers
+        addLayerToBaseModEntities(event);
 
         Log.info("Sword display renderer layers added successfully");
+    }
+
+
+    private static void addLayerToBaseModEntities(EntityRenderersEvent.AddLayers event) {
+        for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
+            ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
+            if (id == null || !BASE_MODID.equals(id.getNamespace())) {
+                continue;
+            }
+
+            Class<?> baseClass = type.getBaseClass();
+            if (!LivingEntity.class.isAssignableFrom(baseClass) ||
+                !GeoAnimatable.class.isAssignableFrom(baseClass)) {
+                continue;
+            }
+
+            @SuppressWarnings("unchecked")
+            EntityType<? extends LivingEntity> livingType = (EntityType<? extends LivingEntity>) type;
+            EntityRenderer<?> renderer = event.getRenderer(livingType);
+            if (renderer instanceof GeoEntityRenderer<?> geoRenderer) {
+                addGeoSwordLayer(geoRenderer, id);
+            }
+        }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void addGeoSwordLayer(GeoEntityRenderer geoRenderer, ResourceLocation id) {
+        geoRenderer.addRenderLayer(new GeoSwordDisplayLayer(geoRenderer));
+        Log.debug("Added sword display layer to base mod entity renderer {}", id);
     }
 
     private static void addLayerToPlayerSkin(EntityRenderersEvent.AddLayers event, String skinName) {

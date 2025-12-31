@@ -88,7 +88,10 @@ public class CivilianProtectionHandler {
         if (isKizuki) {
             // Chance to spawn a hashira and/or a kamaboko (with multiplier)
             if (RNG.nextDouble() < EnhancedSpawnConfig.hashiraSpawnChance * spawnChanceMultiplier) {
-                spawnById(level, near, ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", pickRandomHashira()));
+                ResourceLocation hashiraId = pickRandomHashiraId();
+                if (hashiraId != null) {
+                    spawnById(level, near, hashiraId);
+                }
             }
             if (RNG.nextDouble() < EnhancedSpawnConfig.kamabokoSpawnChance * spawnChanceMultiplier) {
                 spawnById(level, near, ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", pickRandomKamaboko()));
@@ -140,7 +143,23 @@ public class CivilianProtectionHandler {
 
     private static String pickRandomHashira() {
         String[] opts = {"kocho", "kanroji", "kanae", "shinazugawa", "rengoku", "iguro", "uzui", "tomioka", "muichirou", "himejima"};
-        return opts[RNG.nextInt(opts.length)];
+        String selectedHashira = opts[RNG.nextInt(opts.length)];
+
+        // Apply enhanced breathing replacement
+        ResourceLocation baseId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", selectedHashira);
+        ResourceLocation replacedId = com.lerdorf.kimetsunoyaibamultiplayer.raids.EntitySpawnHelper.filterForProtectiveSpawning(baseId);
+
+        // Return the path from the replaced ID
+        return replacedId != null ? replacedId.getPath() : selectedHashira;
+    }
+
+    private static ResourceLocation pickRandomHashiraId() {
+        String[] opts = {"kocho", "kanroji", "kanae", "shinazugawa", "rengoku", "iguro", "uzui", "tomioka", "muichirou", "himejima"};
+        String selectedHashira = opts[RNG.nextInt(opts.length)];
+
+        // Apply enhanced breathing replacement
+        ResourceLocation baseId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", selectedHashira);
+        return com.lerdorf.kimetsunoyaibamultiplayer.raids.EntitySpawnHelper.filterForProtectiveSpawning(baseId);
     }
 
     private static String pickRandomKamaboko() {

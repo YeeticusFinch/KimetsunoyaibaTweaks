@@ -47,7 +47,9 @@
       "Bash(do if [ -f \"$dir/minecraft/config/kimetsunoyaibamultiplayer/entities.toml\" ])",
       "Bash(then sed -i 's/enhancements-enabled = false/enhancements-enabled = true/' \"$dir/minecraft/config/kimetsunoyaibamultiplayer/entities.toml\")",
       "Bash(echo:*)",
-      "Bash(exit 0)"
+      "Bash(exit 0)",
+      "Bash(del \"C:\\\\Users\\\\carlf\\\\eclipse-workspace-2\\\\Kimetsunoyaiba-Multiplayer\\\\src\\\\main\\\\resources\\\\data\\\\kimetsunoyaiba\\\\tags\\\\entity_types\\\\tag_hashira_addition.json\")",
+      "Bash(xargs jar:*)"
     ],
     "deny": [],
     "ask": []

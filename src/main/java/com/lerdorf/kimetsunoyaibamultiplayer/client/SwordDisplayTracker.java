@@ -501,7 +501,7 @@ public class SwordDisplayTracker {
         playerStates.clear();
         previousHeldSlots.clear();
         previousHotbarContents.clear();
-        Log.debug("Cleared all sword display tracking data");
+        //Log.debug("Cleared all sword display tracking data");
     }
 
     /**

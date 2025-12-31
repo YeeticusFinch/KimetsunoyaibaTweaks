@@ -165,9 +165,9 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 	 * from the original entity
 	 */
 	public static AttributeSupplier.Builder createAttributes() {
-		return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 135.0D) // Hashira health
+		return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 140.0D) // Hashira health
 				.add(Attributes.ATTACK_DAMAGE, 1.0D) // Base damage (Strength effect adds the rest)
-				.add(Attributes.MOVEMENT_SPEED, 0.20D) // Fast movement (Speed effect multiplies this)
+				.add(Attributes.MOVEMENT_SPEED, 0.17D) // Fast movement (Speed effect multiplies this)
 				.add(Attributes.ATTACK_SPEED, 14.0D) // Extremely fast attack speed baseline
 				.add(Attributes.ARMOR, 12.0D) // From armor equipment
 				.add(Attributes.ARMOR_TOUGHNESS, 2.0D) // From armor equipment
@@ -294,11 +294,16 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		// Main controller - handles ALL animations (walk, idle, sprint, attacks,
 		// abilities)
 		controllers.add(new AnimationController<>(this, "controller", 0, state -> {
+			// Death animation (highest priority)
+			if (this.isDeadOrDying()) {
+				return state.setAndContinue(RawAnimation.begin().thenPlay("death"));
+			}
+
 			String anim = getCurrentAnimation();
 			int animTicks = getAnimationTicks();
 
 			// Attack and ability animations (play once)
-			if (animTicks > 0 && !anim.equals("idle") && !anim.equals("walk") && !anim.equals("sprint")) {
+			if (animTicks > 0 && !anim.equals("idle") && !anim.equals("walk") && !anim.equals("walk_female") && !anim.equals("sprint")) {
 				return state.setAndContinue(RawAnimation.begin().thenPlay(anim));
 			}
 
@@ -312,7 +317,7 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 				if (shouldSprint) {
 					return state.setAndContinue(RawAnimation.begin().thenLoop("sprint"));
 				} else {
-					return state.setAndContinue(RawAnimation.begin().thenLoop("walk"));
+					return state.setAndContinue(RawAnimation.begin().thenLoop("walk_female"));
 				}
 			} else {
 				return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));

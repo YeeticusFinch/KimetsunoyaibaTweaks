@@ -25,11 +25,11 @@ public class EntityCombatStateTracker {
     // CRITICAL: Use WeakHashMap to auto-cleanup when entities are garbage collected
     private static final Map<LivingEntity, Boolean> combatStates = new WeakHashMap<>();
 
-    // Track last combat time for each entity (for 10-second cooldown)
-    private static final Map<LivingEntity, Long> lastCombatTime = new WeakHashMap<>();
+    // Track last combat tick for each entity (for 10-second cooldown)
+    private static final Map<LivingEntity, Integer> lastCombatTick = new WeakHashMap<>();
 
-    // Combat cooldown in milliseconds (10 seconds)
-    private static final long COMBAT_COOLDOWN_MS = 10000;
+    // Combat cooldown in ticks (10 seconds = 200 ticks, only counts when game is running)
+    private static final int COMBAT_COOLDOWN_TICKS = 200;
 
     /**
      * Check if entity is currently in combat.
@@ -44,7 +44,7 @@ public class EntityCombatStateTracker {
         if (entity == null) return false;
 
         boolean activelyFighting = false;
-        long currentTime = System.currentTimeMillis();
+        int currentTick = entity.tickCount;
 
         // Check active target for Mob entities (ensure it's alive and not removed)
         if (entity instanceof Mob mob) {
@@ -79,19 +79,20 @@ public class EntityCombatStateTracker {
             activelyFighting = true;
         }
 
-        // Update last combat time if actively fighting
+        // Update last combat tick if actively fighting
         if (activelyFighting) {
-            lastCombatTime.put(entity, currentTime);
+            lastCombatTick.put(entity, currentTick);
             return true;
         }
 
-        // Check cooldown period - remain "in combat" for 10 seconds after last activity
-        Long lastCombat = lastCombatTime.get(entity);
+        // Check cooldown period - remain "in combat" for 10 seconds (200 ticks) after last activity
+        // Using ticks ensures cooldown pauses when game is paused
+        Integer lastCombat = lastCombatTick.get(entity);
         if (lastCombat != null) {
-            long timeSinceLastCombat = currentTime - lastCombat;
-            if (timeSinceLastCombat < COMBAT_COOLDOWN_MS) {
-                Log.debug("EntityCombatStateTracker: {} in combat cooldown ({} ms remaining)",
-                    entity.getType().getDescriptionId(), COMBAT_COOLDOWN_MS - timeSinceLastCombat);
+            int ticksSinceLastCombat = currentTick - lastCombat;
+            if (ticksSinceLastCombat < COMBAT_COOLDOWN_TICKS) {
+                Log.debug("EntityCombatStateTracker: {} in combat cooldown ({} ticks remaining)",
+                    entity.getType().getDescriptionId(), COMBAT_COOLDOWN_TICKS - ticksSinceLastCombat);
                 return true;
             }
         }
@@ -166,6 +167,6 @@ public class EntityCombatStateTracker {
      */
     public static void clearAll() {
         combatStates.clear();
-        lastCombatTime.clear();
+        lastCombatTick.clear();
     }
 }

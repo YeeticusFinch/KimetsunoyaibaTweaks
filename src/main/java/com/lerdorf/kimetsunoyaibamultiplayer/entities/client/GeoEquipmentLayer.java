@@ -1,10 +1,13 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities.client;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -14,6 +17,7 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShieldItem;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -133,7 +137,13 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
             poseStack.mulPose(Axis.YP.rotationDegrees(0f));
             poseStack.mulPose(Axis.ZP.rotationDegrees(0f));
             poseStack.scale(1.0f, 1.0f, 1.0f);
-            super.renderStackForBone(poseStack, bone, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);
+
+            // Special handling for Kanroji sword - use custom renderer for animations
+            if (stack.getItem() instanceof NichirinSwordKanrojiAnimated) {
+                renderKanrojiSwordWithAnimation(poseStack, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);
+            } else {
+                super.renderStackForBone(poseStack, bone, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);
+            }
             poseStack.popPose();
             return;
         }
@@ -183,5 +193,59 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
 
         // Default
         super.renderStackForBone(poseStack, bone, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);
+    }
+
+    /**
+     * Manually render Kanroji sword using its custom GeckoLib renderer with entity context.
+     * This ensures the sword animates properly when held by entities.
+     */
+    private void renderKanrojiSwordWithAnimation(
+            PoseStack poseStack,
+            ItemStack stack,
+            T animatable,
+            MultiBufferSource bufferSource,
+            float partialTick,
+            int packedLight,
+            int packedOverlay
+    ) {
+        Log.debug("[GeoEquipmentLayer] Rendering Kanroji sword for entity: {}", animatable.getName().getString());
+
+        // Set entity context so the animation controller knows which entity's animation to play
+        NichirinSwordKanrojiAnimated.setCurrentRenderingEntity(animatable);
+
+        try {
+            // Get the custom renderer via IClientItemExtensions
+            IClientItemExtensions extensions = IClientItemExtensions.of(stack);
+            var customRenderer = extensions.getCustomRenderer();
+
+            if (customRenderer != null) {
+                Log.debug("[GeoEquipmentLayer] Using custom renderer for Kanroji sword");
+                // Render using the custom GeckoLib renderer
+                customRenderer.renderByItem(
+                    stack,
+                    ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+                    poseStack,
+                    bufferSource,
+                    packedLight,
+                    packedOverlay
+                );
+            } else {
+                Log.debug("[GeoEquipmentLayer] No custom renderer found, using vanilla rendering");
+                // Fallback to vanilla rendering
+                Minecraft.getInstance().getItemRenderer().renderStatic(
+                    stack,
+                    ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+                    packedLight,
+                    packedOverlay,
+                    poseStack,
+                    bufferSource,
+                    animatable.level(),
+                    animatable.getId()
+                );
+            }
+        } finally {
+            // Always clear the entity context after rendering
+            NichirinSwordKanrojiAnimated.clearCurrentRenderingEntity();
+        }
     }
 }

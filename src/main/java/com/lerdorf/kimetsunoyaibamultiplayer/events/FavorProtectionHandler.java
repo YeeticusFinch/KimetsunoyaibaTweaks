@@ -2,7 +2,10 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
+import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntitySpawnHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
@@ -120,36 +123,47 @@ public class FavorProtectionHandler {
      * Spawn a random demon slayer based on favor level.
      */
     private static Mob spawnRandomSlayer(ServerLevel level, BlockPos pos, int favorLevel) {
-        // Try to get a demon slayer entity type from the base mod
-        // For now, spawn a generic entity - this can be expanded with specific slayer types
+        // Determine which slayer type to spawn based on favor level
+        ResourceLocation slayerId;
 
-        // Fallback: Try to find any slayer-type entity
-        String[] slayerTypes = {
-            "kimetsunoyaiba:generic_slayer",
-            "kimetsunoyaiba:slayer",
-            "kimetsunoyaiba:hashira",
-            "minecraft:iron_golem" // Fallback
-        };
+        if (favorLevel >= 3) {
+            // Level 3: Spawn hashira (with enhanced breathing replacement)
+            String[] hashiraOptions = {"kocho", "kanroji", "muichirou", "himejima", "tomioka", "rengoku"};
+            String selectedHashira = hashiraOptions[level.random.nextInt(hashiraOptions.length)];
+            slayerId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", selectedHashira);
 
-        for (String typeId : slayerTypes) {
-            try {
-                net.minecraft.resources.ResourceLocation entityId =
-                    net.minecraft.resources.ResourceLocation.tryParse(typeId);
-                if (entityId == null) continue;
+            // Apply enhanced breathing replacement
+            slayerId = EntitySpawnHelper.filterForProtectiveSpawning(slayerId);
+        } else if (favorLevel >= 2) {
+            // Level 2: Spawn named slayer
+            String[] namedSlayers = {"tanjiro", "zennitsu", "inosuke", "kanawo"};
+            String selectedSlayer = namedSlayers[level.random.nextInt(namedSlayers.length)];
+            slayerId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", selectedSlayer);
+        } else {
+            // Level 1: Spawn generic demon slayer
+            slayerId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "demon_slayer");
+        }
 
-                EntityType<?> entityType = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.get(entityId);
-                if (entityType != null) {
-                    Entity entity = entityType.create(level);
-                    if (entity instanceof Mob mob) {
-                        mob.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0, 0);
-                        mob.setPersistenceRequired();
-                        level.addFreshEntity(mob);
-                        return mob;
-                    }
-                }
-            } catch (Exception e) {
-                // Try next type
+        if (slayerId == null) {
+            return null;
+        }
+
+        // Try to spawn the entity
+        EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(slayerId);
+        if (entityType == null) {
+            return null;
+        }
+
+        try {
+            Entity entity = entityType.create(level);
+            if (entity instanceof Mob mob) {
+                mob.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5, 0, 0);
+                mob.setPersistenceRequired();
+                level.addFreshEntity(mob);
+                return mob;
             }
+        } catch (Exception e) {
+            System.err.println("[Favor Protection] Failed to spawn slayer: " + e.getMessage());
         }
 
         return null;

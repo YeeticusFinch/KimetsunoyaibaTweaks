@@ -43,24 +43,34 @@ kimetsunoyaiba:wakuraba
 kimetsunoyaiba:rokuro
 kimetsunoyaiba:hairo
 kimetsunoyaiba:enmu
+kimetsu:kocho
 
 ### Hard Boss Demons (upper 12 kizuki)
 
 Here are the upper moons in order of least to most powerful
 
+kimetsu:tomioka
 kimetsunoyaiba:daki
 kimetsunoyaiba:gyutaro (this one spawns automatically while fighting daki, so we shouldn't spawn it)
 kimetsunoyaiba:kaigaku
+kimetsu:kaigaku
 kimetsunoyaiba:gyokko (this one spawns a bunch of goldfish)
+kimetsu:gyokko
 kimetsunoyaiba:hantengu (this one will spawn a bunch of different forms during the battle)
 kimetsunoyaiba:nakime (this one might get replaced by kimetsu:nakime)
+kimetsu:demon_nakime
+kimetsu:nakime_real
+kimetsu:zohakuten
 kimetsunoyaiba:akaza
 kimetsunoyaiba:doma
+kimetsu:doma
 kimetsunoyaiba:kokushibo
+kimetsu:kokushibo
 
 ### Demon Kings (hardest)
 
 kimetsunoyaiba:muzan, kimetsunoyaiba:tanjiro_demon (this one should never spawn if muzan has never been killed in this world)
+kimetsu:yoriichi
 
 ## Demon Slayer Power Scales
 
@@ -94,7 +104,10 @@ kimetsunoyaiba:dice_steak_senior_super
 Here are the Hashiras in order of least to most powerful:
 
 kimetsunoyaiba:kocho
+kimetsu:slayer_kocho
+kimetsu:slayer_kocho_kakusei
 kimetsunoyaiba:kanroji
+kimetsunoyaibamultiplayer:kanroji
 kimetsunoyaiba:kanae
 kimetsunoyaiba:shinazugawa
 kimetsunoyaiba:rengoku
@@ -102,7 +115,9 @@ kimetsunoyaiba:iguro
 kimetsunoyaiba:uzui
 kimetsunoyaiba:tomioka
 kimetsunoyaiba:muichirou
+kimetsunoyaibamultiplayer:muichiro
 kimetsunoyaiba:himejima
+kimetsu:himejima
 
 ### Super Hashira
 

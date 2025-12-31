@@ -8,7 +8,7 @@
 
   ],
   "client": [
-    "BlockAndItemGeoLayerMixin"
+    "GenericItemLayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

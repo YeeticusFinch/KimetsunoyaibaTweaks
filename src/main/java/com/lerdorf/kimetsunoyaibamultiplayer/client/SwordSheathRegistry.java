@@ -113,6 +113,6 @@ public class SwordSheathRegistry {
     public static void clear() {
         swordSheathMap.clear();
         defaultSheathItem = null;
-        Log.debug("Cleared all sword sheath registrations");
+        //Log.debug("Cleared all sword sheath registrations");
     }
 }

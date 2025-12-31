@@ -52,16 +52,6 @@ public class EntityKanrojiSwordAnimationSync {
      */
     private static void checkEntityAnimation(KanrojiEntity entity) {
         UUID entityUUID = entity.getUUID();
-        String currentAnimation = entity.getCurrentAnimation();
-
-        // Check if animation changed
-        String lastAnimation = lastKnownAnimation.get(entityUUID);
-        if (currentAnimation.equals(lastAnimation)) {
-            return; // No change
-        }
-
-        // Update tracking
-        lastKnownAnimation.put(entityUUID, currentAnimation);
 
         // Check if entity is holding Kanroji sword
         ItemStack mainHand = entity.getItemInHand(InteractionHand.MAIN_HAND);
@@ -69,13 +59,38 @@ public class EntityKanrojiSwordAnimationSync {
             return;
         }
 
+        // Check combat state - if not in combat, always use sheath animation
+        boolean inCombat = EntityCombatStateTracker.isInCombat(entity);
+        String targetAnimation;
+
+        if (!inCombat) {
+            // Out of combat - sword should always be in sheath animation
+            targetAnimation = "sheath";
+            Log.debug("[EntityKanrojiSwordAnimationSync] Entity {} out of combat - forcing sheath animation",
+                      entity.getName().getString());
+        } else {
+            // In combat - use entity's current animation
+            targetAnimation = entity.getCurrentAnimation();
+            Log.debug("[EntityKanrojiSwordAnimationSync] Entity {} in combat - using animation: {}",
+                      entity.getName().getString(), targetAnimation);
+        }
+
+        // Check if animation changed
+        String lastAnimation = lastKnownAnimation.get(entityUUID);
+        if (targetAnimation.equals(lastAnimation)) {
+            return; // No change
+        }
+
+        // Update tracking
+        lastKnownAnimation.put(entityUUID, targetAnimation);
+
         Log.debug("[EntityKanrojiSwordAnimationSync] Animation changed for entity {} from {} to {}",
-                  entity.getName().getString(), lastAnimation, currentAnimation);
+                  entity.getName().getString(), lastAnimation, targetAnimation);
 
         // Trigger matching sword animation
-        KanrojiSwordAnimationTrigger.triggerAnimation(entity, currentAnimation);
+        KanrojiSwordAnimationTrigger.triggerAnimation(entity, targetAnimation);
 
-        Log.debug("[EntityKanrojiSwordAnimationSync] Triggered sword animation: {}", currentAnimation);
+        Log.debug("[EntityKanrojiSwordAnimationSync] Triggered sword animation: {}", targetAnimation);
     }
 
     /**

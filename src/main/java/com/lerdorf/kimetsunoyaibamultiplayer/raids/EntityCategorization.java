@@ -61,7 +61,7 @@ public class EntityCategorization {
         registerDemon("rui_father", EntityPowerScale.HARD_DEMON);
         registerDemon("susamaru", EntityPowerScale.HARD_DEMON);
         registerDemon("yahaba", EntityPowerScale.HARD_DEMON);
-        
+
         registerDemon("demon_6", EntityPowerScale.MEDIUM_BOSS_DEMON);
         registerDemon("demon_7", EntityPowerScale.MEDIUM_BOSS_DEMON);
 
@@ -76,6 +76,9 @@ public class EntityCategorization {
         registerDemon("hairo", EntityPowerScale.MEDIUM_BOSS_DEMON);
         registerDemon("enmu", EntityPowerScale.MEDIUM_BOSS_DEMON);
 
+        // MEDIUM_BOSS_DEMON (kimetsu addon - optional)
+        registerKimetsuDemon("kocho", EntityPowerScale.MEDIUM_BOSS_DEMON);
+
         // HARD_BOSS_DEMON (Upper Twelve Kizuki)
         // Listed in order from weakest to strongest
         registerDemon("daki", EntityPowerScale.HARD_BOSS_DEMON);
@@ -88,9 +91,22 @@ public class EntityCategorization {
         registerDemon("doma", EntityPowerScale.HARD_BOSS_DEMON);
         registerDemon("kokushibo", EntityPowerScale.HARD_BOSS_DEMON);
 
+        // HARD_BOSS_DEMON (kimetsu addon - optional)
+        registerKimetsuDemon("tomioka", EntityPowerScale.HARD_BOSS_DEMON);
+        registerKimetsuDemon("nakime_real", EntityPowerScale.HARD_BOSS_DEMON);
+        registerKimetsuDemon("demon_nakime", EntityPowerScale.HARD_BOSS_DEMON);
+        registerKimetsuDemon("gyokko", EntityPowerScale.HARD_BOSS_DEMON);
+        registerKimetsuDemon("doma", EntityPowerScale.HARD_BOSS_DEMON);
+        registerKimetsuDemon("kaigaku", EntityPowerScale.HARD_BOSS_DEMON);
+        registerKimetsuDemon("kokushibo", EntityPowerScale.HARD_BOSS_DEMON);
+        registerKimetsuDemon("zohakuten", EntityPowerScale.HARD_BOSS_DEMON);
+
         // DEMON_KING
         registerDemon("muzan", EntityPowerScale.DEMON_KING);
         registerDemon("tanjiro_demon", EntityPowerScale.DEMON_KING);
+
+        // DEMON_KING (kimetsu addon - optional)
+        registerKimetsuDemon("yoriichi", EntityPowerScale.DEMON_KING);
     }
 
     /**
@@ -130,6 +146,15 @@ public class EntityCategorization {
         registerSlayer("himejima", EntityPowerScale.HASHIRA);
         registerSlayer("dice_steak_senior_super", EntityPowerScale.HASHIRA);
 
+        // HASHIRA (kimetsu addon - optional)
+        registerKimetsuSlayer("slayer_kocho", EntityPowerScale.HASHIRA);
+        registerKimetsuSlayer("slayer_kocho_kakusei", EntityPowerScale.HASHIRA);
+        registerKimetsuSlayer("himejima", EntityPowerScale.HASHIRA);
+
+        // HASHIRA (kimetsunoyaibamultiplayer - enhanced breathing)
+        registerMultiplayerSlayer("kanroji", EntityPowerScale.HASHIRA);
+        registerMultiplayerSlayer("muichiro", EntityPowerScale.HASHIRA);
+
         // SUPER_HASHIRA
         // Listed in order from weakest to strongest
         registerSlayer("michikatsu", EntityPowerScale.SUPER_HASHIRA);
@@ -150,6 +175,30 @@ public class EntityCategorization {
      */
     private static void registerSlayer(String path, EntityPowerScale scale) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", path);
+        ENTITY_SCALES.put(id, scale);
+    }
+
+    /**
+     * Register a kimetsu addon demon entity.
+     */
+    private static void registerKimetsuDemon(String path, EntityPowerScale scale) {
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath("kimetsu", path);
+        ENTITY_SCALES.put(id, scale);
+    }
+
+    /**
+     * Register a kimetsu addon demon slayer entity.
+     */
+    private static void registerKimetsuSlayer(String path, EntityPowerScale scale) {
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath("kimetsu", path);
+        ENTITY_SCALES.put(id, scale);
+    }
+
+    /**
+     * Register a kimetsunoyaibamultiplayer demon slayer entity.
+     */
+    private static void registerMultiplayerSlayer(String path, EntityPowerScale scale) {
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", path);
         ENTITY_SCALES.put(id, scale);
     }
 
