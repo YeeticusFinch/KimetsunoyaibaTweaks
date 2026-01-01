@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client.models;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +23,12 @@ public class SwordSlashModelRegistry {
 
     // Config overrides (allows users to force specific swords to use specific models)
     private static final Map<String, String> MODEL_OVERRIDES = new HashMap<>();
+
+    // Map model keys to frame counts for animated textures (e.g., "forest" -> 10)
+    private static final Map<String, Integer> ANIMATED_TEXTURE_FRAMES = new HashMap<>();
+
+    // Map model keys to resource namespaces (e.g., "forest" -> "knyextraadditions")
+    private static final Map<String, String> MODEL_KEY_TO_NAMESPACE = new HashMap<>();
 
     // Generic fallback model key
     private static final String GENERIC_MODEL = "generic";
@@ -101,6 +108,30 @@ public class SwordSlashModelRegistry {
     }
 
     /**
+     * Registers a custom namespace for a model key's resources.
+     * @param modelKey The model key (e.g., "forest")
+     * @param namespace The resource namespace where model/texture files live
+     */
+    public static void registerModelNamespace(String modelKey, String namespace) {
+        if (namespace == null || namespace.isEmpty()) {
+            Log.warn("Namespace must be non-empty for model key: " + modelKey);
+            return;
+        }
+        MODEL_KEY_TO_NAMESPACE.put(modelKey, namespace);
+        Log.debug("Registered model namespace: " + modelKey + " -> " + namespace);
+    }
+
+    /**
+     * Gets the namespace for a model key's resources.
+     * Defaults to the core mod namespace when not explicitly registered.
+     * @param modelKey The model key
+     * @return Namespace to use for model resources
+     */
+    public static String getNamespaceForModelKey(String modelKey) {
+        return MODEL_KEY_TO_NAMESPACE.getOrDefault(modelKey, KimetsunoyaibaMultiplayer.MODID);
+    }
+
+    /**
      * Sets a config override to force a sword to use a specific model
      * @param swordFullId The full item ID (e.g., "kimetsunoyaiba:nichirinsword_mist")
      * @param modelKey The model key to force
@@ -133,5 +164,37 @@ public class SwordSlashModelRegistry {
      */
     public static String getGenericModel() {
         return GENERIC_MODEL;
+    }
+
+    /**
+     * Registers a model key to use animated textures with a specified frame count
+     * @param modelKey The model key (e.g., "forest")
+     * @param frameCount Number of texture frames (must be > 1)
+     */
+    public static void registerAnimatedTexture(String modelKey, int frameCount) {
+        if (frameCount > 1) {
+            ANIMATED_TEXTURE_FRAMES.put(modelKey, frameCount);
+            Log.info("Registered animated texture: " + modelKey + " with " + frameCount + " frames");
+        } else {
+            Log.warn("Frame count must be > 1 for animated textures. Ignoring registration for: " + modelKey);
+        }
+    }
+
+    /**
+     * Gets the frame count for a model key
+     * @param modelKey The model key
+     * @return Frame count (1 if not animated, >1 if animated)
+     */
+    public static int getFrameCount(String modelKey) {
+        return ANIMATED_TEXTURE_FRAMES.getOrDefault(modelKey, 1);
+    }
+
+    /**
+     * Checks if a model key uses animated textures
+     * @param modelKey The model key
+     * @return true if animated, false if static
+     */
+    public static boolean isAnimated(String modelKey) {
+        return ANIMATED_TEXTURE_FRAMES.containsKey(modelKey) && ANIMATED_TEXTURE_FRAMES.get(modelKey) > 1;
     }
 }

@@ -2,29 +2,31 @@ package com.lerdorf.kimetsunoyaibamultiplayer.items;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
 
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.nbt.Tag;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
+import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 /**
@@ -56,28 +58,70 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
-    // Track which entity is currently being rendered (for animation lookup)
-    private static final ThreadLocal<net.minecraft.world.entity.LivingEntity> currentRenderingEntity = new ThreadLocal<>();
+    private static final String ANIM_NBT_KEY = "KanrojiSwordAnim";
+    private static final String DEFAULT_ANIM = "idle";
+    private static final AtomicLong CLIENT_ID_ALLOCATOR = new AtomicLong(Long.MIN_VALUE + 1L);
 
     /**
-     * Set the entity currently being rendered. Called by the renderer.
+     * Get the current animation name from the ItemStack NBT.
      */
-    public static void setCurrentRenderingEntity(net.minecraft.world.entity.LivingEntity entity) {
-        currentRenderingEntity.set(entity);
+    public static String getAnimationFromStack(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return DEFAULT_ANIM;
+        }
+
+        CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains(ANIM_NBT_KEY, Tag.TAG_STRING)) {
+            String animName = tag.getString(ANIM_NBT_KEY);
+            if (!animName.isEmpty()) {
+                return animName;
+            }
+        }
+
+        return DEFAULT_ANIM;
     }
 
     /**
-     * Get the entity currently being rendered.
+     * Store the current animation name on the ItemStack NBT.
      */
-    private static net.minecraft.world.entity.LivingEntity getCurrentRenderingEntity() {
-        return currentRenderingEntity.get();
+    public static void setAnimationOnStack(ItemStack stack, String animationName) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+
+        if (animationName == null || animationName.isEmpty()) {
+            CompoundTag tag = stack.getTag();
+            if (tag != null) {
+                tag.remove(ANIM_NBT_KEY);
+            }
+            return;
+        }
+
+        stack.getOrCreateTag().putString(ANIM_NBT_KEY, animationName);
     }
 
     /**
-     * Clear the current rendering entity. Called after rendering completes.
+     * Ensure each stack has a unique GeckoLib instance id.
      */
-    public static void clearCurrentRenderingEntity() {
-        currentRenderingEntity.remove();
+    public static void ensureAnimatableId(ItemStack stack, Level level) {
+        if (stack == null || stack.isEmpty() || level == null) {
+            return;
+        }
+
+        CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains(GeoItem.ID_NBT_KEY, Tag.TAG_LONG)) {
+            return;
+        }
+
+        if (level instanceof ServerLevel serverLevel) {
+            GeoItem.getOrAssignId(stack, serverLevel);
+            return;
+        }
+
+        if (level.isClientSide) {
+            long id = CLIENT_ID_ALLOCATOR.getAndIncrement();
+            stack.getOrCreateTag().putLong(GeoItem.ID_NBT_KEY, id);
+        }
     }
 
     public NichirinSwordKanrojiAnimated(Properties properties) {
@@ -110,6 +154,14 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
         return super.getDefaultAttributeModifiers(slot);
     }
 
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
+        super.inventoryTick(stack, level, entity, slot, selected);
+
+        // Ensure per-stack ids so multiple swords don't share a single animation timeline.
+        ensureAnimatableId(stack, level);
+    }
+
     // ==================== GeckoLib Implementation ====================
 
     @Override
@@ -117,37 +169,20 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
         Log.info("[NichirinSwordKanrojiAnimated] registerControllers() called");
         // Use transition time of 0 for instant animation switching (no blending)
         controllers.add(new AnimationController<>(this, "controller", 0, state -> {
-            // Get the entity holding this sword from our ThreadLocal
-            // Set by the renderer before rendering each entity's sword
-            net.minecraft.world.entity.LivingEntity entity = getCurrentRenderingEntity();
+            ItemStack stack = state.getData(DataTickets.ITEMSTACK);
+            String animName = getAnimationFromStack(stack);
 
-            if (entity != null) {
-                // Look up this specific entity's animation from our tracker
-                String animName = com.lerdorf.kimetsunoyaibamultiplayer.client.KanrojiSwordEntityAnimationTracker
-                    .getAnimation(entity.getUUID());
+            // Determine if it's a looping animation or one-shot
+            boolean isLooping = animName.equals("idle") || animName.equals("walk") ||
+                               animName.equals("sprint") || animName.equals("sheath");
 
-                Log.debug("[NichirinSwordKanrojiAnimated] Entity {} UUID {} has animation: {}",
-                          entity.getName().getString(), entity.getUUID(), animName);
-
-                if (animName != null && !animName.isEmpty()) {
-                    Log.debug("[NichirinSwordKanrojiAnimated] Playing animation: {}", animName);
-
-                    // Determine if it's a looping animation or one-shot
-                    boolean isLooping = animName.equals("idle") || animName.equals("walk") ||
-                                       animName.equals("sprint") || animName.equals("sheath");
-
-                    // GeckoLib creates separate animation instances per ItemStack/context
-                    // Using setAndContinue() instead of setAnimation() for proper state handling
-                    if (isLooping) {
-                        return state.setAndContinue(RawAnimation.begin().thenLoop(animName));
-                    } else {
-                        return state.setAndContinue(RawAnimation.begin().thenPlay(animName));
-                    }
-                }
+            // GeckoLib creates separate animation instances per ItemStack/context
+            // Using setAndContinue() instead of setAnimation() for proper state handling
+            if (isLooping) {
+                return state.setAndContinue(RawAnimation.begin().thenLoop(animName));
+            } else {
+                return state.setAndContinue(RawAnimation.begin().thenPlay(animName));
             }
-
-            // Default: sheath animation for GUI/inventory rendering or when no entity
-            return state.setAndContinue(RawAnimation.begin().thenLoop("sheath"));
         })
         // Register triggerable animations
         .triggerableAnim("idle", RawAnimation.begin().thenLoop("idle"))

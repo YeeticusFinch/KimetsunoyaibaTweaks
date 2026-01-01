@@ -19,6 +19,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticleHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry;
+//import com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
@@ -297,6 +298,8 @@ public class MistVariations {
      							Log.debug("Seventh Form: Playing attack animation '{}' on layer 4000",
      									animations[animIndex]);
      						}
+     						
+     						MovementHelper.lookAtTarget(entity);
 
      						// Use layer 4000 with 3x speed for ultra-fast attacks
      						playEntityAnimationOnLayer(entity, animations[animIndex], 10, 3.0f, 4000);

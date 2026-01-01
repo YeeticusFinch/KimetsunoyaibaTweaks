@@ -161,13 +161,19 @@ public class CrowMirrorHandler {
     public static void scanForUnmirroredCrows(ServerLevel level) {
         // Initialize iterator if we're starting a new scan
         if (currentScanIterator == null || !currentScanIterator.hasNext()) {
-            // Start a new scan - get fresh iterator
-            // Note: We still need to get all entities, but we'll process them in batches
-            Iterable<Entity> allEntities = level.getAllEntities();
-            currentScanIterator = allEntities.iterator();
-            entitiesProcessedThisTick = 0;
-            if (Config.logDebug) {
-                Log.info("Starting new crow scan batch");
+            try {
+                // Start a new scan - get fresh iterator
+                // Note: We still need to get all entities, but we'll process them in batches
+                Iterable<Entity> allEntities = level.getAllEntities();
+                currentScanIterator = allEntities.iterator();
+                entitiesProcessedThisTick = 0;
+                if (Config.logDebug) {
+                    Log.info("Starting new crow scan batch");
+                }
+            } catch (Exception e) {
+                Log.error("Failed to initialize crow scan iterator: " + e.getClass().getSimpleName());
+                currentScanIterator = null;
+                return;
             }
         }
 
@@ -179,8 +185,8 @@ public class CrowMirrorHandler {
                 processedThisTick++;
                 entitiesProcessedThisTick++;
 
-                // Skip null entities
-                if (entity == null) {
+                // Skip null or removed entities
+                if (entity == null || entity.isRemoved()) {
                     continue;
                 }
 
@@ -212,10 +218,22 @@ public class CrowMirrorHandler {
                 if (Config.logDebug)
                     Log.info("Found unmirrored kasugai crow, creating GeckoLib mirror...");
                 createMirrorForCrow(entity, level);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                // Iterator became invalid - reset and try again next tick
+                Log.error("Crow scan iterator became invalid (entity list changed), resetting scan");
+                currentScanIterator = null;
+                entitiesProcessedThisTick = 0;
+                return;
+            } catch (java.util.ConcurrentModificationException e) {
+                // Entity list modified during iteration - reset and try again next tick
+                Log.error("Concurrent modification during crow scan, resetting scan");
+                currentScanIterator = null;
+                entitiesProcessedThisTick = 0;
+                return;
             } catch (Exception e) {
-                // Catch any errors during iteration to prevent complete server freeze
-                Log.error("Error scanning crow entity: " + e != null && e.getMessage() != null ? e.getMessage()
-                        : "empty");
+                // Catch any other errors during iteration to prevent complete server freeze
+                Log.error("Error scanning crow entity: " + (e != null ? (e.getMessage() != null ? e.getMessage()
+                        : e.getClass().getSimpleName()) : "null exception"));
                 if (Config.logDebug) {
                     e.printStackTrace();
                 }

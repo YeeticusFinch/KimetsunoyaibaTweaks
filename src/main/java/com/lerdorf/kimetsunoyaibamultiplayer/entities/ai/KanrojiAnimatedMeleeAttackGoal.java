@@ -10,13 +10,14 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.fml.DistExecutor;
 
 /**
  * Custom melee attack goal for Kanroji Entity with long-range whip attacks.
  *
  * Features:
- * - Extended attack range (5 blocks) for whip-style combat
+ * - Extended attack range (15 blocks, using entity's ENTITY_REACH attribute) for whip-style combat
  * - Multi-target damage using WhipDamageHandler
  * - Synchronized sword animations via KanrojiSwordAnimationTrigger
  * - Attack animations match the GeckoLib sword animations
@@ -34,7 +35,6 @@ public class KanrojiAnimatedMeleeAttackGoal extends MeleeAttackGoal {
     };
 
     // Whip attack configuration
-    private static final double WHIP_RANGE = 5.0; // 5 block range (vs normal 2-3 blocks)
     private static final double WHIP_DAMAGE_RADIUS = 1.5; // Hitbox radius for whip hits
 
     public KanrojiAnimatedMeleeAttackGoal(KanrojiEntity entity, double speedModifier, boolean followingTargetEvenIfNotSeen) {
@@ -81,25 +81,28 @@ public class KanrojiAnimatedMeleeAttackGoal extends MeleeAttackGoal {
 
     /**
      * Check if entity can perform a whip attack (extended range check).
+     * Uses the entity's ENTITY_REACH attribute for dynamic range.
      */
     private boolean canPerformWhipAttack(LivingEntity target) {
         if (!this.isTimeToAttack()) {
             return false;
         }
 
-        // Use extended whip range instead of normal melee range
+        // Use entity's reach attribute (15 blocks for Kanroji)
+        double whipRange = entity.getAttributeValue(ForgeMod.ENTITY_REACH.get());
         double distanceSq = this.mob.distanceToSqr(target);
-        double maxRangeSq = WHIP_RANGE * WHIP_RANGE;
+        double maxRangeSq = whipRange * whipRange;
 
         return distanceSq <= maxRangeSq;
     }
 
     /**
-     * Override to use whip range instead of normal melee range.
+     * Override to use whip range from entity's ENTITY_REACH attribute.
      */
     @Override
     protected double getAttackReachSqr(LivingEntity target) {
-        return WHIP_RANGE * WHIP_RANGE;
+        double whipRange = entity.getAttributeValue(ForgeMod.ENTITY_REACH.get());
+        return whipRange * whipRange;
     }
 
     /**

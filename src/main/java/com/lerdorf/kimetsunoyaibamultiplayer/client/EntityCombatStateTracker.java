@@ -91,8 +91,8 @@ public class EntityCombatStateTracker {
         if (lastCombat != null) {
             int ticksSinceLastCombat = currentTick - lastCombat;
             if (ticksSinceLastCombat < COMBAT_COOLDOWN_TICKS) {
-                Log.debug("EntityCombatStateTracker: {} in combat cooldown ({} ticks remaining)",
-                    entity.getType().getDescriptionId(), COMBAT_COOLDOWN_TICKS - ticksSinceLastCombat);
+                //Log.debug("EntityCombatStateTracker: {} in combat cooldown ({} ticks remaining)",
+                //    entity.getType().getDescriptionId(), COMBAT_COOLDOWN_TICKS - ticksSinceLastCombat);
                 return true;
             }
         }

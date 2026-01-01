@@ -435,4 +435,69 @@ public class SwordDisplayConfig {
         SwordDisplayPosition override = swordPositionOverrides.get(itemId);
         return override != null ? override : position;
     }
+
+    /**
+     * Programmatically adds a sword position override
+     * @param itemId The full item ID (e.g., "knyextraadditions:nichirinsword_forest")
+     * @param position The position (HIP or BACK)
+     */
+    public static void addSwordPositionOverride(String itemId, SwordDisplayPosition position) {
+        swordPositionOverrides.put(itemId, position);
+        Log.info("Added sword position override: {} = {}", itemId, position);
+    }
+
+    /**
+     * Per-sword position and rotation offsets
+     * Maps sword item IDs to their custom offset values
+     */
+    public static class SwordOffsets {
+        public double translateX = 0.0;
+        public double translateY = 0.0;
+        public double translateZ = 0.0;
+        public double rotateX = 0.0;
+        public double rotateY = 0.0;
+        public double rotateZ = 0.0;
+
+        public SwordOffsets() {}
+
+        public SwordOffsets(double tx, double ty, double tz, double rx, double ry, double rz) {
+            this.translateX = tx;
+            this.translateY = ty;
+            this.translateZ = tz;
+            this.rotateX = rx;
+            this.rotateY = ry;
+            this.rotateZ = rz;
+        }
+    }
+
+    // Per-sword custom offsets (added to base position offsets)
+    private static Map<String, SwordOffsets> swordOffsets = new HashMap<>();
+
+    /**
+     * Registers custom position/rotation offsets for a specific sword
+     * @param itemId The full item ID (e.g., "knyextraadditions:nichirinsword_forest")
+     * @param offsets The custom offsets to apply
+     */
+    public static void registerSwordOffsets(String itemId, SwordOffsets offsets) {
+        swordOffsets.put(itemId, offsets);
+        Log.info("Registered custom offsets for sword: {}", itemId);
+    }
+
+    /**
+     * Gets the custom offsets for a specific sword, or null if none are registered
+     * @param itemId The full item ID
+     * @return The custom offsets, or null if not registered
+     */
+    public static SwordOffsets getSwordOffsets(String itemId) {
+        return swordOffsets.get(itemId);
+    }
+
+    /**
+     * Checks if a sword has custom offsets registered
+     * @param itemId The full item ID
+     * @return true if custom offsets exist, false otherwise
+     */
+    public static boolean hasSwordOffsets(String itemId) {
+        return swordOffsets.containsKey(itemId);
+    }
 }

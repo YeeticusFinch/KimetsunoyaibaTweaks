@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.particles;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.mojang.logging.LogUtils;
@@ -48,7 +49,11 @@ public class SwordParticleHandler {
      * @param animationTick The current tick of the animation (-1 if unknown)
      */
     public static void spawnSwordParticles(LivingEntity entity, ItemStack swordItem, String animationName, int animationTick) {
-    	animationName.replace("kimetsunoyaiba:", "");
+        String baseAnimationName = resolveBaseAnimationName(swordItem, animationName);
+        baseAnimationName = normalizeAnimationName(baseAnimationName);
+        if (baseAnimationName == null) {
+            return;
+        }
         Log.debug("spawnSwordParticles called: entity=" + entity.getName().getString() + ", item=" + swordItem.getItem() + ", anim=" + animationName);
 
         if (!shouldSpawnParticles(entity, swordItem)) {
@@ -80,7 +85,7 @@ public class SwordParticleHandler {
 
         // Spawn radial ribbon particles directly - no more Vec3 arrays!
         // Pass sword item for model selection when using 3D models
-        BonePositionTracker.spawnRadialRibbonParticles(entity, swordItem, animationName, animationTick, particleType);
+        BonePositionTracker.spawnRadialRibbonParticles(entity, swordItem, baseAnimationName, animationTick, particleType);
 
         // Simple state tracking
         UUID entityId = entity.getUUID();
@@ -192,5 +197,47 @@ public class SwordParticleHandler {
      */
     public static void forceSpawnParticles(LivingEntity entity, ItemStack swordItem, String animationName) {
         spawnSwordParticles(entity, swordItem, animationName, -1);
+    }
+
+    private static String resolveBaseAnimationName(ItemStack swordItem, String animationName) {
+        if (animationName == null || swordItem == null || swordItem.isEmpty()) {
+            return animationName;
+        }
+
+        SwordRegistry.RegisteredSword sword = SwordRegistry.getSword(swordItem.getItem());
+        if (sword == null) {
+            return animationName;
+        }
+
+        Map<String, String> replaceAnimations = sword.getReplaceAnimations();
+        if (replaceAnimations == null || replaceAnimations.isEmpty()) {
+            return animationName;
+        }
+
+        String rawName = animationName;
+        String strippedName = normalizeAnimationName(animationName);
+
+        for (Map.Entry<String, String> entry : replaceAnimations.entrySet()) {
+            String replacement = entry.getValue();
+            if (replacement == null) {
+                continue;
+            }
+            String replacementStripped = normalizeAnimationName(replacement);
+            if (replacement.equals(rawName)
+                    || replacementStripped.equals(rawName)
+                    || replacementStripped.equals(strippedName)) {
+                return entry.getKey();
+            }
+        }
+
+        return animationName;
+    }
+
+    private static String normalizeAnimationName(String animationName) {
+        if (animationName == null) {
+            return null;
+        }
+        int namespaceIndex = animationName.indexOf(':');
+        return namespaceIndex >= 0 ? animationName.substring(namespaceIndex + 1) : animationName;
     }
 }

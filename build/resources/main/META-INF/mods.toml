@@ -20,7 +20,7 @@ license="All Rights Reserved"
 # The modid of the mod
 modId="kimetsunoyaibamultiplayer" #mandatory
 # The version number of the mod
-version="1.6.378" #mandatory
+version="1.6.384" #mandatory
 # A display name for the mod
 displayName="Kimetsunoyaiba Tweaks" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/
@@ -86,7 +86,7 @@ description='''Kimetsunoyaiba Tweaks modifies several elements in the Kimetsu No
 [[dependencies.kimetsunoyaibamultiplayer]]
     modId="geckolib"
     mandatory=true
-    versionRange="[4.4,)"
+    versionRange="[4.7,)"
     ordering="AFTER"
     side="BOTH"
 

@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Animal;
@@ -246,6 +247,7 @@ public class Damager {
 		return hurt(source, target, damage, false);
 	}
 
+
 	/**
 	 * Applies damage from a source entity to a target entity with optional invulnerability frame reset.
 	 *
@@ -253,6 +255,12 @@ public class Damager {
 	 * 1. Traditional isAngry() check (mob targeting)
 	 * 2. Damage history tracking (30-second window)
 	 * 3. If either indicates they are in combat, damage is allowed
+	 *
+	 * When the source is not a player, damage is scaled based on difficulty:
+	 * - Peaceful: 0.7x
+	 * - Easy: 1.0x
+	 * - Normal: 1.25x
+	 * - Hard: 1.5x
 	 *
 	 * @param source The entity dealing the damage
 	 * @param target The entity receiving the damage
@@ -272,6 +280,9 @@ public class Damager {
 			target.invulnerableTime = 0;
 		}
 
+		// Apply difficulty scaling if source is not a player
+		float scaledDamage = damage;
+
 		if (isDemonSlayer(source) && isDemonSlayer(target)) {
 			// Demon slayers shouldn't damage other demon slayers with their abilities by accident
 
@@ -282,7 +293,7 @@ public class Damager {
 			// If either check indicates combat, allow damage
 			if (traditionallyAngry || hasRecentCombat) {
 				// They are fighting - damage is allowed
-				target.hurt(DamageCalculator.getDamageSource(source), damage);
+				target.hurt(DamageCalculator.getDamageSource(source), scaledDamage);
 				return true;
 			} else {
 				// Not in combat - prevent friendly fire
@@ -290,7 +301,7 @@ public class Damager {
 			}
 		} else {
 			// Not both demon slayers - apply damage normally
-			target.hurt(DamageCalculator.getDamageSource(source), damage);
+			target.hurt(DamageCalculator.getDamageSource(source), scaledDamage);
 			return true;
 		}
 	}

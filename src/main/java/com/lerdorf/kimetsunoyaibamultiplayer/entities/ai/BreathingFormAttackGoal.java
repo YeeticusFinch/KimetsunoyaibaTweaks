@@ -1,12 +1,17 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities.ai;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * AI goal that makes breathing slayer entities use their breathing forms in combat
@@ -40,8 +45,13 @@ public class BreathingFormAttackGoal extends Goal {
             return false;
         }
 
-        // Muichiro should cast as soon as cooldown finishes
-        if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroEntity) {
+        // Muichiro-specific checks
+        if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroEntity muichiro) {
+            // Cannot use abilities during transformation
+            if (muichiro.isTransforming()) {
+                return false;
+            }
+            // Otherwise cast as soon as cooldown finishes
             return true;
         }
 
@@ -67,10 +77,35 @@ public class BreathingFormAttackGoal extends Goal {
             // Face the target immediately before executing the form
             faceTarget(target);
 
-            // Execute the breathing form (formId is auto-injected)
-            form.execute(this.entity, this.entity.level());
+            // Check if this form has variations for the equipped sword
+            BreathingFormVariation selectedVariation = null;
+            ItemStack swordStack = this.entity.getEquippedSword();
+            if (!swordStack.isEmpty()) {
+                SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(swordStack.getItem());
+                String swordId = registeredSword != null ? registeredSword.getSwordId() : null;
 
-            // Set cooldown
+                if (swordId != null) {
+                    List<BreathingFormVariation> variations = VariationRegistry.getVariations(form.getFormId(), swordId);
+
+                    // 50% chance to use a variation if available
+                    if (!variations.isEmpty() && this.entity.getRandom().nextDouble() < 0.5) {
+                        // Pick a random variation from the available ones
+                        int randomIndex = this.entity.getRandom().nextInt(variations.size());
+                        selectedVariation = variations.get(randomIndex);
+                    }
+                }
+            }
+
+            // Execute either the variation or the base form
+            if (selectedVariation != null) {
+                // Execute the variation's effect (formId is auto-injected)
+                selectedVariation.getEffect().execute(this.entity, this.entity.level(), form.getFormId());
+            } else {
+                // Execute the base breathing form (formId is auto-injected)
+                form.execute(this.entity, this.entity.level());
+            }
+
+            // Set cooldown (use base form's cooldown)
             int cooldownTicks;
             if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroEntity) {
                 // 30% faster: wait only 60% of original cooldown

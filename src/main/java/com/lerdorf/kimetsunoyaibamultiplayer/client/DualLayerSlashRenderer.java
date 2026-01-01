@@ -37,6 +37,9 @@ public class DualLayerSlashRenderer {
                 return;
             }
 
+            // Update animated texture frame based on current progress
+            model.setProgress(progress);
+
             poseStack.pushPose();
 
             // Translate to world position

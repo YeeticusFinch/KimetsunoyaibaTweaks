@@ -64,6 +64,12 @@ public class SwordDisplayTracker {
         // Track which slot the persisting sheath's sword came from
         private int leftSheathOriginalSlot = -1;
         private int rightSheathOriginalSlot = -1;
+        // Track the position where the sheath should be displayed (BACK/HIP)
+        private SwordDisplayConfig.SwordDisplayPosition leftSheathPosition = null;
+        private SwordDisplayConfig.SwordDisplayPosition rightSheathPosition = null;
+        // Track the original sword item for per-sword offsets
+        public Item leftSheathSwordItem = null;
+        public Item rightSheathSwordItem = null;
 
         public boolean hasLeftSword() {
             return leftDisplay != null && !leftDisplay.isEmpty();
@@ -82,11 +88,29 @@ public class SwordDisplayTracker {
         }
 
         public SwordDisplayConfig.SwordDisplayPosition getLeftPosition() {
-            return leftDisplay != null ? leftDisplay.displayPosition : SwordDisplayConfig.position;
+            // If sword is displayed, use its position
+            if (leftDisplay != null) {
+                return leftDisplay.displayPosition;
+            }
+            // If only sheath is displayed (sword drawn), use saved sheath position
+            if (leftSheathPosition != null) {
+                return leftSheathPosition;
+            }
+            // Fallback to default
+            return SwordDisplayConfig.position;
         }
 
         public SwordDisplayConfig.SwordDisplayPosition getRightPosition() {
-            return rightDisplay != null ? rightDisplay.displayPosition : SwordDisplayConfig.position;
+            // If sword is displayed, use its position
+            if (rightDisplay != null) {
+                return rightDisplay.displayPosition;
+            }
+            // If only sheath is displayed (sword drawn), use saved sheath position
+            if (rightSheathPosition != null) {
+                return rightSheathPosition;
+            }
+            // Fallback to default
+            return SwordDisplayConfig.position;
         }
 
         public boolean shouldShowLeftSheath() {
@@ -114,6 +138,8 @@ public class SwordDisplayTracker {
                 leftSheathItem = null;
                 leftSheathPersists = false;
                 leftSheathOriginalSlot = -1;
+                leftSheathPosition = null;
+                leftSheathSwordItem = null;
                 return true;
             }
             if (rightDisplay != null && rightDisplay.hotbarSlot == slot) {
@@ -121,6 +147,8 @@ public class SwordDisplayTracker {
                 rightSheathItem = null;
                 rightSheathPersists = false;
                 rightSheathOriginalSlot = -1;
+                rightSheathPosition = null;
+                rightSheathSwordItem = null;
                 return true;
             }
             return false;
@@ -141,11 +169,13 @@ public class SwordDisplayTracker {
                 leftDisplay = entry;
                 leftSheathItem = null;
                 leftSheathPersists = false;
+                leftSheathSwordItem = null;
                 return true;
             } else if (rightDisplay == null) {
                 rightDisplay = entry;
                 rightSheathItem = null;
                 rightSheathPersists = false;
+                rightSheathSwordItem = null;
                 return true;
             }
             return false;
@@ -160,6 +190,10 @@ public class SwordDisplayTracker {
             rightSheathPersists = false;
             leftSheathOriginalSlot = -1;
             rightSheathOriginalSlot = -1;
+            leftSheathPosition = null;
+            rightSheathPosition = null;
+            leftSheathSwordItem = null;
+            rightSheathSwordItem = null;
         }
     }
 
@@ -261,10 +295,14 @@ public class SwordDisplayTracker {
                         state.leftSheathItem = sheathToKeep;
                         state.leftSheathPersists = true;
                         state.leftSheathOriginalSlot = currentSlot;
+                        state.leftSheathPosition = sheathPosition; // Preserve the position!
+                        state.leftSheathSwordItem = heldItem.getItem(); // Save sword item for custom offsets
                     } else {
                         state.rightSheathItem = sheathToKeep;
                         state.rightSheathPersists = true;
                         state.rightSheathOriginalSlot = currentSlot;
+                        state.rightSheathPosition = sheathPosition; // Preserve the position!
+                        state.rightSheathSwordItem = heldItem.getItem(); // Save sword item for custom offsets
                     }
                 }
 
@@ -302,6 +340,8 @@ public class SwordDisplayTracker {
                 state.leftDisplay = null;
                 state.leftSheathItem = null;
                 state.leftSheathPersists = false;
+                state.leftSheathPosition = null;
+                state.leftSheathSwordItem = null;
                 stateChanged = true;
             }
         }
@@ -317,6 +357,8 @@ public class SwordDisplayTracker {
                 state.rightDisplay = null;
                 state.rightSheathItem = null;
                 state.rightSheathPersists = false;
+                state.rightSheathPosition = null;
+                state.rightSheathSwordItem = null;
                 stateChanged = true;
             }
         }
@@ -338,6 +380,8 @@ public class SwordDisplayTracker {
                 state.leftSheathItem = null;
                 state.leftSheathPersists = false;
                 state.leftSheathOriginalSlot = -1;
+                state.leftSheathPosition = null;
+                state.leftSheathSwordItem = null;
                 stateChanged = true;
             }
         }
@@ -358,6 +402,8 @@ public class SwordDisplayTracker {
                 state.rightSheathItem = null;
                 state.rightSheathPersists = false;
                 state.rightSheathOriginalSlot = -1;
+                state.rightSheathPosition = null;
+                state.rightSheathSwordItem = null;
                 stateChanged = true;
             }
         }

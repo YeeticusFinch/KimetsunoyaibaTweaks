@@ -25,6 +25,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.registries.ForgeRegistries;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
@@ -171,7 +172,8 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 				.add(Attributes.ATTACK_SPEED, 14.0D) // Extremely fast attack speed baseline
 				.add(Attributes.ARMOR, 12.0D) // From armor equipment
 				.add(Attributes.ARMOR_TOUGHNESS, 2.0D) // From armor equipment
-				.add(Attributes.FOLLOW_RANGE, 64.0D); // Same as base slayers
+				.add(Attributes.FOLLOW_RANGE, 64.0D) // Same as base slayers
+				.add(ForgeMod.ENTITY_REACH.get(), 15.0D); // Whip sword has 15 block reach
 	}
 
 	@Override

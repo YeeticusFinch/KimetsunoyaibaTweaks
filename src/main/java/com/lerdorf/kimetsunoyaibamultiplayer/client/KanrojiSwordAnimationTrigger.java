@@ -2,8 +2,6 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
-import net.minecraft.client.Minecraft;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -30,7 +28,7 @@ public class KanrojiSwordAnimationTrigger {
 
         ItemStack mainHandItem = entity.getItemInHand(InteractionHand.MAIN_HAND);
 
-        if (!(mainHandItem.getItem() instanceof NichirinSwordKanrojiAnimated sword)) {
+        if (!(mainHandItem.getItem() instanceof NichirinSwordKanrojiAnimated)) {
             return;
         }
 
@@ -41,15 +39,14 @@ public class KanrojiSwordAnimationTrigger {
 
     /**
      * Trigger a GeckoLib animation on a specific Kanroji sword ItemStack.
-     * Now uses per-entity animation tracking instead of per-ItemStack to avoid
-     * all swords sharing the same animation state.
+     * Stores animation state on the stack to keep each sword independent.
      *
      * @param entity The entity associated with the sword
      * @param itemStack The ItemStack containing the Kanroji sword
      * @param animationName The animation name to play
      */
     public static void triggerAnimationOnItemStack(LivingEntity entity, ItemStack itemStack, String animationName) {
-        if (!(itemStack.getItem() instanceof NichirinSwordKanrojiAnimated sword)) {
+        if (!(itemStack.getItem() instanceof NichirinSwordKanrojiAnimated)) {
             return;
         }
 
@@ -69,11 +66,10 @@ public class KanrojiSwordAnimationTrigger {
                   entity.getName().getString(), animationName, cleanAnimName, swordAnimName);
 
         if (swordAnimName != null) {
-            // Store animation in per-entity tracker
-            // The animation controller reads from this tracker during rendering
-            KanrojiSwordEntityAnimationTracker.setAnimation(entity.getUUID(), swordAnimName);
+            NichirinSwordKanrojiAnimated.ensureAnimatableId(itemStack, entity.level());
+            NichirinSwordKanrojiAnimated.setAnimationOnStack(itemStack, swordAnimName);
 
-            Log.debug("[KanrojiSwordAnimationTrigger] Set animation {} for entity {}",
+            Log.debug("[KanrojiSwordAnimationTrigger] Set animation {} on stack for entity {}",
                       swordAnimName, entity.getName().getString());
 
             // Notify the animation handler so it doesn't override with movement animations

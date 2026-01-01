@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,6 +12,30 @@ import net.minecraft.world.entity.player.Player;
  */
 public class DamageCalculator {
 
+	/**
+	 * Gets the damage multiplier based on world difficulty when the source is not a player.
+	 *
+	 * @param source The entity dealing the damage
+	 * @return The damage multiplier (0.7 for peaceful, 1.0 for easy, 1.25 for normal, 1.5 for hard)
+	 */
+	private static float getDifficultyMultiplier(LivingEntity source) {
+		// Players don't get difficulty scaling
+		if (source instanceof Player) {
+			return 1.0f;
+		}
+
+		// Get the world difficulty
+		Difficulty difficulty = source.level().getDifficulty();
+
+		// Apply difficulty-based scaling
+		return switch (difficulty) {
+			case PEACEFUL -> 0.7f;
+			case EASY -> 1.0f;
+			case NORMAL -> 1.25f;
+			case HARD -> 1.5f;
+		};
+	}
+	
     /**
      * Calculate damage with potion effect scaling (Strength/Weakness)
      *
@@ -32,6 +57,8 @@ public class DamageCalculator {
             int weaknessLevel = entity.getEffect(MobEffects.WEAKNESS).getAmplifier() + 1;
             damage -= 4.0F * weaknessLevel;
         }
+        
+        damage = damage * getDifficultyMultiplier(entity);
 
         // Ensure minimum damage of 0
         return Math.max(0.0F, damage);

@@ -208,44 +208,35 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
             int packedLight,
             int packedOverlay
     ) {
-        Log.debug("[GeoEquipmentLayer] Rendering Kanroji sword for entity: {}", animatable.getName().getString());
+        //Log.debug("[GeoEquipmentLayer] Rendering Kanroji sword for entity: {}", animatable.getName().getString());
+        // Get the custom renderer via IClientItemExtensions
+        IClientItemExtensions extensions = IClientItemExtensions.of(stack);
+        var customRenderer = extensions.getCustomRenderer();
 
-        // Set entity context so the animation controller knows which entity's animation to play
-        NichirinSwordKanrojiAnimated.setCurrentRenderingEntity(animatable);
-
-        try {
-            // Get the custom renderer via IClientItemExtensions
-            IClientItemExtensions extensions = IClientItemExtensions.of(stack);
-            var customRenderer = extensions.getCustomRenderer();
-
-            if (customRenderer != null) {
-                Log.debug("[GeoEquipmentLayer] Using custom renderer for Kanroji sword");
-                // Render using the custom GeckoLib renderer
-                customRenderer.renderByItem(
-                    stack,
-                    ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
-                    poseStack,
-                    bufferSource,
-                    packedLight,
-                    packedOverlay
-                );
-            } else {
-                Log.debug("[GeoEquipmentLayer] No custom renderer found, using vanilla rendering");
-                // Fallback to vanilla rendering
-                Minecraft.getInstance().getItemRenderer().renderStatic(
-                    stack,
-                    ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
-                    packedLight,
-                    packedOverlay,
-                    poseStack,
-                    bufferSource,
-                    animatable.level(),
-                    animatable.getId()
-                );
-            }
-        } finally {
-            // Always clear the entity context after rendering
-            NichirinSwordKanrojiAnimated.clearCurrentRenderingEntity();
+        if (customRenderer != null) {
+            //Log.debug("[GeoEquipmentLayer] Using custom renderer for Kanroji sword");
+            // Render using the custom GeckoLib renderer
+            customRenderer.renderByItem(
+                stack,
+                ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+                poseStack,
+                bufferSource,
+                packedLight,
+                packedOverlay
+            );
+        } else {
+            Log.debug("[GeoEquipmentLayer] No custom renderer found, using vanilla rendering");
+            // Fallback to vanilla rendering
+            Minecraft.getInstance().getItemRenderer().renderStatic(
+                stack,
+                ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+                packedLight,
+                packedOverlay,
+                poseStack,
+                bufferSource,
+                animatable.level(),
+                animatable.getId()
+            );
         }
     }
 }

@@ -78,63 +78,51 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
         //Log.debug("[KanrojiSwordRenderer] renderByItem() - displayContext={}, entity={}",
         //          displayContext, renderingEntity != null ? renderingEntity.getName().getString() : "null");
 
-        // Set the entity for the animation controller to read (used for hand offset calculations)
-        if (renderingEntity != null) {
-            //Log.debug("[KanrojiSwordRenderer] Setting current rendering entity: {} (UUID: {})",
-            //          renderingEntity.getName().getString(), renderingEntity.getUUID());
-            NichirinSwordKanrojiAnimated.setCurrentRenderingEntity(renderingEntity);
+        // For GUI contexts (inventory, hotbar), use the static item model instead of GeckoLib
+        if (displayContext == ItemDisplayContext.GUI ||
+            displayContext == ItemDisplayContext.FIXED ||
+            displayContext == ItemDisplayContext.GROUND) {
+
+            BakedModel staticModel = mc.getModelManager().getModel(STATIC_MODEL_LOCATION);
+
+            if (staticModel != null && staticModel != mc.getModelManager().getMissingModel()) {
+                // Render the static model using vanilla item renderer
+                mc.getItemRenderer().render(
+                    stack,
+                    displayContext,
+                    false, // leftHand
+                    poseStack,
+                    bufferSource,
+                    packedLight,
+                    packedOverlay,
+                    staticModel
+                );
+                return;
+            }
+            // Fallback to GeckoLib if static model not found
+            //Log.debug("[KanrojiSwordRenderer] Static model not found, falling back to GeckoLib");
         }
 
-        try {
-            // For GUI contexts (inventory, hotbar), use the static item model instead of GeckoLib
-            if (displayContext == ItemDisplayContext.GUI ||
-                displayContext == ItemDisplayContext.FIXED ||
-                displayContext == ItemDisplayContext.GROUND) {
+        // Apply translation offset for third person right hand to center the sword
+        if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
+            //Log.debug("Entering translation offset for third person right hand");
+            //Log.debug("RenderingEntity: " + (renderingEntity != null ? renderingEntity.getName().toString() : "null"));
+            poseStack.translate(1.25 / 16.0, 0.7 / 16.0, 1.25 / 16.0);
 
-                BakedModel staticModel = mc.getModelManager().getModel(STATIC_MODEL_LOCATION);
-
-                if (staticModel != null && staticModel != mc.getModelManager().getMissingModel()) {
-                    // Render the static model using vanilla item renderer
-                    mc.getItemRenderer().render(
-                        stack,
-                        displayContext,
-                        false, // leftHand
-                        poseStack,
-                        bufferSource,
-                        packedLight,
-                        packedOverlay,
-                        staticModel
-                    );
-                    return;
-                }
-                // Fallback to GeckoLib if static model not found
-                //Log.debug("[KanrojiSwordRenderer] Static model not found, falling back to GeckoLib");
+            // Only apply Kanroji entity hand offset when the entity is actually holding the sword (in combat)
+            // When out of combat, the sword is on the back/hip and shouldn't use hand offsets
+            if (renderingEntity instanceof KanrojiEntity &&
+                com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInCombat(renderingEntity)) {
+                //Log.debug("Entering translation offset for kanroji entity (in combat)");
+                // Extra hand offset for Kanroji entity to compensate for its model alignment.
+                poseStack.translate(Config.kanrojiEntityHandOffsetX / 16.0,
+                                   Config.kanrojiEntityHandOffsetY / 16.0,
+                                   Config.kanrojiEntityHandOffsetZ / 16.0);
             }
-
-            // Apply translation offset for third person right hand to center the sword
-            if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-                //Log.debug("Entering translation offset for third person right hand");
-                //Log.debug("RenderingEntity: " + (renderingEntity != null ? renderingEntity.getName().toString() : "null"));
-                poseStack.translate(1.25 / 16.0, 0.7 / 16.0, 1.25 / 16.0);
-
-                // Only apply Kanroji entity hand offset when the entity is actually holding the sword (in combat)
-                // When out of combat, the sword is on the back/hip and shouldn't use hand offsets
-                if (renderingEntity instanceof KanrojiEntity &&
-                    com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInCombat(renderingEntity)) {
-                    //Log.debug("Entering translation offset for kanroji entity (in combat)");
-                    // Extra hand offset for Kanroji entity to compensate for its model alignment.
-                    poseStack.translate(Config.kanrojiEntityHandOffsetX / 16.0,
-                                       Config.kanrojiEntityHandOffsetY / 16.0,
-                                       Config.kanrojiEntityHandOffsetZ / 16.0);
-                }
-            }
-
-            // For hand rendering and other contexts, use the animated GeckoLib model
-            super.renderByItem(stack, displayContext, poseStack, bufferSource, packedLight, packedOverlay);
-        } finally {
-            // Clear the entity after rendering
-            NichirinSwordKanrojiAnimated.clearCurrentRenderingEntity();
         }
+
+        // For hand rendering and other contexts, use the animated GeckoLib model
+        super.renderByItem(stack, displayContext, poseStack, bufferSource, packedLight, packedOverlay);
     }
 
     @Override
@@ -147,7 +135,7 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
                                int packedOverlay, float red, float green, float blue, float alpha) {
 
         // Entity is already set by renderByItem(), so animation controller can read it
-        Log.debug("[KanrojiSwordRenderer] actuallyRender() called, context={}", currentDisplayContext);
+        //Log.debug("[KanrojiSwordRenderer] actuallyRender() called, context={}", currentDisplayContext);
         super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer,
                            isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }

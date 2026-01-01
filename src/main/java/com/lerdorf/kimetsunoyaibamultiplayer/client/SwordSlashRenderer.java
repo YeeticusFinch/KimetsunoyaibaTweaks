@@ -58,6 +58,9 @@ public class SwordSlashRenderer {
                 return;
             }
 
+            // Update model's progress for animated textures
+            model.setProgress(progress);
+
             poseStack.pushPose();
 
             // Translate to world position
@@ -74,7 +77,7 @@ public class SwordSlashRenderer {
             // Calculate alpha based on progress for fade in/out
             float alpha = calculateAlpha(progress);
 
-            // Get the texture
+            // Get the texture (will use current progress for animated models)
             ResourceLocation texture = model.getTextureResource();
 
             // Render using GeckoLib's rendering system
@@ -132,7 +135,17 @@ public class SwordSlashRenderer {
     public static SwordSlashModel getModel(String modelKey) {
         return MODEL_CACHE.computeIfAbsent(modelKey, key -> {
             try {
-                return new SwordSlashModel(key);
+                SwordSlashModel model = new SwordSlashModel(key);
+
+                // Set frame count for animated textures
+                int frameCount = com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry.getFrameCount(key);
+                model.setFrameCount(frameCount);
+
+                if (frameCount > 1) {
+                    Log.info("Created animated sword slash model '" + key + "' with " + frameCount + " frames");
+                }
+
+                return model;
             } catch (Exception e) {
                 Log.error("Failed to create model for key " + key + ": " + e.getMessage());
                 return null;

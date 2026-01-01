@@ -103,6 +103,16 @@ public class KanrojiSwordAnimationHandler {
         boolean kanrojiOnRightHip = displayState.hasRightSword() &&
                                    displayState.getRightHipSword().getItem() instanceof NichirinSwordKanrojiAnimated;
 
+        if (isHoldingKanrojiSword) {
+            NichirinSwordKanrojiAnimated.ensureAnimatableId(mainHandItem, player.level());
+        }
+        if (kanrojiOnLeftHip) {
+            NichirinSwordKanrojiAnimated.ensureAnimatableId(displayState.getLeftHipSword(), player.level());
+        }
+        if (kanrojiOnRightHip) {
+            NichirinSwordKanrojiAnimated.ensureAnimatableId(displayState.getRightHipSword(), player.level());
+        }
+
         // If not holding AND not displayed, nothing to do
         if (!isHoldingKanrojiSword && !kanrojiOnLeftHip && !kanrojiOnRightHip) {
             return;
@@ -115,15 +125,19 @@ public class KanrojiSwordAnimationHandler {
         if ((kanrojiOnLeftHip || kanrojiOnRightHip) && !isHoldingKanrojiSword) {
             String targetAnimation = "sheath";
             boolean animationChanged = !targetAnimation.equals(state.currentAnimation);
+            boolean leftNeedsUpdate = kanrojiOnLeftHip &&
+                                      !targetAnimation.equals(NichirinSwordKanrojiAnimated.getAnimationFromStack(displayState.getLeftHipSword()));
+            boolean rightNeedsUpdate = kanrojiOnRightHip &&
+                                       !targetAnimation.equals(NichirinSwordKanrojiAnimated.getAnimationFromStack(displayState.getRightHipSword()));
 
-            if (animationChanged) {
+            if (animationChanged || leftNeedsUpdate || rightNeedsUpdate) {
                 Log.info("[KanrojiSwordAnimationHandler] Kanroji sword on hip/back - triggering sheath animation");
                 state.currentAnimation = targetAnimation;
                 // Trigger sheath animation on the displayed sword(s)
-                if (kanrojiOnLeftHip) {
+                if (kanrojiOnLeftHip && (animationChanged || leftNeedsUpdate)) {
                     KanrojiSwordAnimationTrigger.triggerAnimationOnItemStack(player, displayState.getLeftHipSword(), targetAnimation);
                 }
-                if (kanrojiOnRightHip) {
+                if (kanrojiOnRightHip && (animationChanged || rightNeedsUpdate)) {
                     KanrojiSwordAnimationTrigger.triggerAnimationOnItemStack(player, displayState.getRightHipSword(), targetAnimation);
                 }
             }
@@ -237,8 +251,11 @@ public class KanrojiSwordAnimationHandler {
         state.isSprinting = isSprinting;
         state.isWalking = isWalking;
 
-        // Only trigger the animation if it changed (don't spam triggers every tick)
-        if (animationChanged) {
+        boolean needsStackUpdate = animationChanged ||
+            !targetAnimation.equals(NichirinSwordKanrojiAnimated.getAnimationFromStack(mainHandItem));
+
+        // Only trigger the animation if needed (avoid spamming when already correct)
+        if (needsStackUpdate) {
             KanrojiSwordAnimationTrigger.triggerAnimation(player, targetAnimation);
         }
     }

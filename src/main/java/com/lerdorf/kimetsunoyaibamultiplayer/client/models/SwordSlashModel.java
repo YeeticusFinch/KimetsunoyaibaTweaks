@@ -3,7 +3,6 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.models;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordSwingConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -27,29 +26,79 @@ import software.bernie.geckolib.util.RenderUtils;
 public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 
 	private final String modelKey;
+	private int frameCount = 1; // Default to 1 frame (static texture)
+	private float currentProgress = 0.0f;
 
 	/**
 	 * Creates a sword slash model for a specific model key
-	 * 
+	 *
 	 * @param modelKey The model key (e.g., "mist", "generic")
 	 */
 	public SwordSlashModel(String modelKey) {
 		this.modelKey = modelKey;
 	}
 
+	/**
+	 * Sets the number of animation frames for this model
+	 *
+	 * @param frameCount Number of frames (1 for static, >1 for animated)
+	 */
+	public void setFrameCount(int frameCount) {
+		this.frameCount = Math.max(1, frameCount);
+	}
+
+	/**
+	 * Gets the frame count for this model
+	 */
+	public int getFrameCount() {
+		return frameCount;
+	}
+
+	/**
+	 * Sets the current animation progress
+	 *
+	 * @param progress Animation progress from 0.0 to 1.0
+	 */
+	public void setProgress(float progress) {
+		this.currentProgress = progress;
+	}
+
+	/**
+	 * Gets the current frame number based on progress
+	 */
+	public int getCurrentFrame() {
+		if (frameCount <= 1) {
+			return 0;
+		}
+		return (int)(currentProgress * frameCount) % frameCount;
+	}
+
+	private String getResourceNamespace() {
+		return SwordSlashModelRegistry.getNamespaceForModelKey(modelKey);
+	}
+
 	public ResourceLocation getModelResource() {
-		return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID,
+		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"geo/sword_slash_" + modelKey + ".geo.json");
 	}
 
 	public ResourceLocation getTextureResource() {
-		return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID,
-				"textures/entity/sword_slash_" + modelKey + ".png");
+		String namespace = getResourceNamespace();
+		if (frameCount <= 1) {
+			// Static texture
+			return ResourceLocation.fromNamespaceAndPath(namespace,
+					"textures/entity/sword_slash_" + modelKey + ".png");
+		} else {
+			// Animated texture - return frame based on progress
+			int frame = getCurrentFrame();
+			return ResourceLocation.fromNamespaceAndPath(namespace,
+					"textures/entity/sword_slash_" + modelKey + frame + ".png");
+		}
 	}
 
 	public ResourceLocation getAnimationResource() {
 		// Optional: If you add animations later
-		return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID,
+		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"animations/sword_slash.animation.json");
 	}
 
@@ -64,12 +113,13 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 
 	@Override
 	public ResourceLocation getModelResource(SwordSlashRenderState animatable) {
-		return new ResourceLocation(KimetsunoyaibaMultiplayer.MODID, "geo/sword_slash_" + modelKey + ".geo.json");
+		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
+				"geo/sword_slash_" + modelKey + ".geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(SwordSlashRenderState animatable) {
-		return new ResourceLocation(KimetsunoyaibaMultiplayer.MODID,
+		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"textures/entity/sword_slash_" + modelKey + ".png");
 	}
 

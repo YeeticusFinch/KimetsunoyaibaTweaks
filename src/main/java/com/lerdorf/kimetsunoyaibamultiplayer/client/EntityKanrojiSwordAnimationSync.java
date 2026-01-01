@@ -59,6 +59,8 @@ public class EntityKanrojiSwordAnimationSync {
             return;
         }
 
+        NichirinSwordKanrojiAnimated.ensureAnimatableId(mainHand, entity.level());
+
         // Check combat state - if not in combat, always use sheath animation
         boolean inCombat = EntityCombatStateTracker.isInCombat(entity);
         String targetAnimation;

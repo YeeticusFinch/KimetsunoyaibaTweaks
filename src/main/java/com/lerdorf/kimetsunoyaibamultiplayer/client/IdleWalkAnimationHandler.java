@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.SpeedControlledAnimation;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
@@ -49,6 +50,8 @@ public class IdleWalkAnimationHandler {
         ModifierLayer<IAnimation> idleLayer;
         ModifierLayer<IAnimation> walkLayer;
         ModifierLayer<IAnimation> sprintLayer;
+        float lastWalkSpeed = 1.0f;
+        boolean wasMoving = false;
 
         ActiveReplacements(String idleAnimationName, String walkAnimationName, String sprintAnimationName,
                           ModifierLayer<IAnimation> idleLayer, ModifierLayer<IAnimation> walkLayer,
@@ -72,6 +75,7 @@ public class IdleWalkAnimationHandler {
         }
 
         checkPlayerEquipment(mc.player);
+        updateAnimationStates(mc.player);
     }
 
     /**
@@ -160,39 +164,69 @@ public class IdleWalkAnimationHandler {
             return;
         }
 
+        // Check if player is currently moving to determine initial animation
+        boolean isMoving = player.getDeltaMovement().horizontalDistanceSqr() > 0.001;
+
         ModifierLayer<IAnimation> idleLayer = null;
         ModifierLayer<IAnimation> walkLayer = null;
 
-        // Apply idle replacement if specified
-        if (idleReplacement != null) {
-            KeyframeAnimation idleAnim = findAnimation(idleReplacement);
-            if (idleAnim != null) {
-                idleLayer = applyAnimationToLayer(animationStack, idleAnim, IDLE_LAYER_PRIORITY);
-                if (Config.logDebug && idleLayer != null) {
-                    Log.info("Applied idle replacement: {} on layer {}", idleReplacement, IDLE_LAYER_PRIORITY);
+        // Only apply the appropriate animation based on current state
+        if (isMoving) {
+            // Apply walk replacement if specified
+            if (walkReplacement != null) {
+                KeyframeAnimation walkAnim = findAnimation(walkReplacement);
+                if (walkAnim != null) {
+                    // Calculate initial walk speed
+                    double horizontalSpeed = Math.sqrt(player.getDeltaMovement().horizontalDistanceSqr());
+                    float animationSpeed = (float) Math.max(0.5, Math.min(2.0, horizontalSpeed * 10.0));
+
+                    try {
+                        // Create walk animation with speed control
+                        SpeedControlledAnimation animPlayer = new SpeedControlledAnimation(walkAnim, animationSpeed);
+                        ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
+                        modifierLayer.setAnimation(animPlayer);
+                        animationStack.addAnimLayer(WALK_LAYER_PRIORITY, modifierLayer);
+                        walkLayer = modifierLayer;
+
+                        if (Config.logDebug) {
+                            Log.info("Applied walk replacement (moving): {} on layer {} with speed {}",
+                                walkReplacement, WALK_LAYER_PRIORITY, animationSpeed);
+                        }
+                    } catch (Exception e) {
+                        Log.error("Failed to apply walk animation: {}", e.getMessage());
+                    }
+                } else {
+                    Log.warn("Walk animation not found: {}", walkReplacement);
                 }
-            } else {
-                Log.warn("Idle animation not found: {}", idleReplacement);
+            }
+        } else {
+            // Apply idle replacement if specified
+            if (idleReplacement != null) {
+                KeyframeAnimation idleAnim = findAnimation(idleReplacement);
+                if (idleAnim != null) {
+                    idleLayer = applyAnimationToLayer(animationStack, idleAnim, IDLE_LAYER_PRIORITY);
+                    if (Config.logDebug && idleLayer != null) {
+                        Log.info("Applied idle replacement (stationary): {} on layer {}",
+                            idleReplacement, IDLE_LAYER_PRIORITY);
+                    }
+                } else {
+                    Log.warn("Idle animation not found: {}", idleReplacement);
+                }
             }
         }
 
-        // Apply walk replacement if specified
-        if (walkReplacement != null) {
-            KeyframeAnimation walkAnim = findAnimation(walkReplacement);
-            if (walkAnim != null) {
-                walkLayer = applyAnimationToLayer(animationStack, walkAnim, WALK_LAYER_PRIORITY);
-                if (Config.logDebug && walkLayer != null) {
-                    Log.info("Applied walk replacement: {} on layer {}", walkReplacement, WALK_LAYER_PRIORITY);
-                }
-            } else {
-                Log.warn("Walk animation not found: {}", walkReplacement);
-            }
-        }
+        // Track the active replacements (store both names even if only one layer is active)
+        activeReplacements.put(player.getUUID(),
+            new ActiveReplacements(idleReplacement, walkReplacement, null, idleLayer, walkLayer, null));
 
-        // Track the active replacements
-        if (idleLayer != null || walkLayer != null) {
-            activeReplacements.put(player.getUUID(),
-                new ActiveReplacements(idleReplacement, walkReplacement, null, idleLayer, walkLayer, null));
+        // Set initial state for tracking
+        ActiveReplacements replacements = activeReplacements.get(player.getUUID());
+        if (replacements != null) {
+            replacements.wasMoving = isMoving;
+            if (isMoving) {
+                replacements.lastWalkSpeed = (float) Math.max(0.5, Math.min(2.0,
+                    Math.sqrt(player.getDeltaMovement().horizontalDistanceSqr()) * 10.0));
+            }
         }
     }
 
@@ -305,5 +339,90 @@ public class IdleWalkAnimationHandler {
     public static void clearPlayer(UUID playerUUID) {
         lastHeldItem.remove(playerUUID);
         activeReplacements.remove(playerUUID);
+    }
+
+    /**
+     * Update animation states based on player movement.
+     * Switches between idle/walk animations and adjusts walk speed.
+     */
+    private static void updateAnimationStates(AbstractClientPlayer player) {
+        UUID playerUUID = player.getUUID();
+        ActiveReplacements replacements = activeReplacements.get(playerUUID);
+
+        if (replacements == null) {
+            return; // No active replacements for this player
+        }
+
+        AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
+        if (animationStack == null) {
+            return;
+        }
+
+        // Determine if player is moving
+        boolean isMoving = player.getDeltaMovement().horizontalDistanceSqr() > 0.001;
+
+        // Calculate movement speed for animation speed scaling
+        double horizontalSpeed = Math.sqrt(player.getDeltaMovement().horizontalDistanceSqr());
+        // Normal walk speed is about 0.1, sprint is about 0.13
+        // Scale animation to match: 1.0 at walk speed, 1.3 at sprint speed
+        float animationSpeed = (float) Math.max(0.5, Math.min(2.0, horizontalSpeed * 10.0));
+
+        // Check if state changed or speed changed significantly
+        boolean stateChanged = isMoving != replacements.wasMoving;
+        boolean speedChanged = Math.abs(animationSpeed - replacements.lastWalkSpeed) > 0.15f;
+
+        if (isMoving) {
+            // Player is moving - show walk animation
+            // Remove idle layer if transitioning from idle to walk
+            if (stateChanged && replacements.idleLayer != null) {
+                try {
+                    animationStack.removeLayer(IDLE_LAYER_PRIORITY);
+                    replacements.idleLayer = null;
+                } catch (Exception ignored) {}
+            }
+
+            // Add/update walk layer when state changes or speed changes significantly
+            if ((stateChanged || speedChanged) && replacements.walkAnimationName != null) {
+                KeyframeAnimation walkAnim = findAnimation(replacements.walkAnimationName);
+                if (walkAnim != null) {
+                    try {
+                        // Remove old walk layer if exists
+                        animationStack.removeLayer(WALK_LAYER_PRIORITY);
+
+                        // Create new walk animation with current speed using SpeedControlledAnimation
+                        SpeedControlledAnimation animPlayer = new SpeedControlledAnimation(walkAnim, animationSpeed);
+                        ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
+                        modifierLayer.setAnimation(animPlayer);
+                        animationStack.addAnimLayer(WALK_LAYER_PRIORITY, modifierLayer);
+                        replacements.walkLayer = modifierLayer;
+                        replacements.lastWalkSpeed = animationSpeed;
+                    } catch (Exception e) {
+                        if (Config.logDebug) {
+                            Log.error("Failed to update walk animation: {}", e.getMessage());
+                        }
+                    }
+                }
+            }
+        } else {
+            // Player is stationary - show idle animation
+            // Remove walk layer if transitioning from walk to idle
+            if (stateChanged && replacements.walkLayer != null) {
+                try {
+                    animationStack.removeLayer(WALK_LAYER_PRIORITY);
+                    replacements.walkLayer = null;
+                } catch (Exception ignored) {}
+            }
+
+            // Add idle layer when transitioning to idle
+            if (stateChanged && replacements.idleLayer == null && replacements.idleAnimationName != null) {
+                KeyframeAnimation idleAnim = findAnimation(replacements.idleAnimationName);
+                if (idleAnim != null) {
+                    replacements.idleLayer = applyAnimationToLayer(animationStack, idleAnim, IDLE_LAYER_PRIORITY);
+                }
+            }
+        }
+
+        // Update state tracking
+        replacements.wasMoving = isMoving;
     }
 }

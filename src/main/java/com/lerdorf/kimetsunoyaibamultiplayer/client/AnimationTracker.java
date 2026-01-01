@@ -70,14 +70,14 @@ public class AnimationTracker {
 
     private static void checkPlayerAnimation(AbstractClientPlayer player) {
         try {
-            if (Config.logDebug) {
-                Log.debug("Checking animation for player: {}", player.getName().getString());
-            }
+            //if (Config.logDebug) {
+                //Log.debug("Checking animation for player: {}", player.getName().getString());
+            //}
             AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
             if (animationStack == null) {
-                if (Config.logDebug) {
-                    Log.debug("Animation stack is null for player {}", player.getName().getString());
-                }
+                //if (Config.logDebug) {
+                //    Log.debug("Animation stack is null for player {}", player.getName().getString());
+                //}
                 checkForStoppedAnimation(player.getUUID());
                 return;
             }
@@ -127,9 +127,9 @@ public class AnimationTracker {
                                     continue; // Skip sprint animation, check next layer
                                 }
                                 foundActiveAnimation = true;
-                                if (Config.logDebug) {
-                                    Log.info("Processing wrapped keyframe animation for player {}", player.getName().getString());
-                                }
+                                //if (Config.logDebug) {
+                                    //Log.info("Processing wrapped keyframe animation for player {}", player.getName().getString());
+                                //}
                                 processActiveAnimation(player, animPlayer, data);
                                 break;
                             }
