@@ -57,6 +57,11 @@ public class SwordDisplayConfig {
             .comment("Enable rendering sword sheaths on the hip/back")
             .define("render_sheaths", true);
 
+    // Enable/disable draw/sheath animations
+    private static final ForgeConfigSpec.BooleanValue DRAW_SHEATH_ANIMATIONS = BUILDER
+            .comment("Enable draw and sheath animations when swords are drawn from or returned to sheaths")
+            .define("draw_sheath_animations", true);
+
     // Hip position settings
     static {
         BUILDER.comment("Hip Display Position Configuration")
@@ -274,6 +279,7 @@ public class SwordDisplayConfig {
     public static double scale;
     public static double sheathScale;
     public static boolean renderSheaths;
+    public static boolean drawSheathAnimations;
 
     // Per-sword position overrides (parsed from config)
     public static Map<String, SwordDisplayPosition> swordPositionOverrides = new HashMap<>();
@@ -345,6 +351,7 @@ public class SwordDisplayConfig {
         scale = SCALE.get();
         sheathScale = SHEATH_SCALE.get();
         renderSheaths = RENDER_SHEATHS.get();
+        drawSheathAnimations = DRAW_SHEATH_ANIMATIONS.get();
 
         // Load hip position values
         hipLeftTranslateX = HIP_LEFT_TRANSLATE_X.get();

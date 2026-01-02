@@ -72,10 +72,19 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("7f3e5c6d-1a2b-4f9e-8d7c-6b5a4e3d2c1b");
     private static final UUID ATTACK_SPEED_MODIFIER_UUID = UUID.fromString("9a8b7c6d-5e4f-3d2c-1b0a-9f8e7d6c5b4a");
 
+    // Animation procedure field (required for base KnY mod compatibility)
+    // The base mod uses reflection to access this field for animation synchronization
+    public String animationprocedure = "empty";
+    public String prevAnim = "empty";
+
     public BreathingSlayerEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
         this.xpReward = 10; // Same as zombie
         this.setPersistenceRequired(); // Prevent despawning
+
+        // Initialize animation fields
+        this.animationprocedure = "empty";
+        this.prevAnim = "empty";
 
         // Set equipment immediately (will be re-set in finalizeSpawn)
         if (!level.isClientSide) {

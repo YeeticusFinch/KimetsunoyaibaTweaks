@@ -6,8 +6,14 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechniq
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedMistForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
+
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -25,6 +31,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.registries.ForgeRegistries;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -36,18 +43,28 @@ import javax.annotation.Nullable;
 /**
  * Mitsuri Kanroji - Love Hashira Wields nichirinsword_kanroji, uses Enhanced
  * Love Breathing (all 6 forms) 
- * Has 135 HP and enhanced stats based on Hashira-level
+ * Has 140 HP and enhanced stats based on Hashira-level
  * attributes
  *
- * Stats from NBT data: - HP: 135 (base) - Speed 2 (amplifier 0), Strength 11
+ * Stats from NBT data: - HP: 140 (base) - Speed 2 (amplifier 0), Strength 11
  * (amplifier 10), Resistance 4 (amplifier 3) - Movement speed: 0.32 + 60% from
- * Speed 2 - Attack damage: 1.0 + 36.0 from Strength 11 - Armor: 6.0, Armor
+ * Speed 2 - Attack damage: 1.0 + 36.0 from Strength 11 - Armor: 19.0, Armor
  * toughness: 2.0
  */
 public class KanrojiEntity extends BreathingSlayerEntity {
+	
+	private enum MarkState {
+        NORMAL,         // No mark
+        TRANSFORMING,   // Currently transforming (5 seconds)
+        TRANSFORMED     // Mark activated
+    }
+	
 	private int breathingFormUsageCounter = 0; // Track when to use breathing forms
-	private boolean markActivated = false; // Demon slayer mark state
 	private int lastDamageTick = -1000; // Server tick when last damaged
+	
+	private MarkState markState = MarkState.NORMAL; // Demon slayer mark state
+    private int transformationTimer = 0;            // Timer for transformation (100 ticks = 5 seconds)
+    private static final int TRANSFORMATION_DURATION = 100; // 5 seconds in ticks
 
 	public KanrojiEntity(EntityType<? extends BreathingSlayerEntity> entityType, Level level) {
 		super(entityType, level);
@@ -55,8 +72,8 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		// Force set max health immediately after parent constructor
 		if (!level.isClientSide) {
 			AttributeInstance maxHealth = this.getAttribute(Attributes.MAX_HEALTH);
-			if (maxHealth != null && maxHealth.getBaseValue() != 135.0D) {
-				maxHealth.setBaseValue(135.0D);
+			if (maxHealth != null && maxHealth.getBaseValue() != 140.0D) {
+				maxHealth.setBaseValue(140.0D);
 			}
 		}
 	}
@@ -68,10 +85,10 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		// Safety check: ensure health never drops below intended max
 		if (!this.level().isClientSide) {
 			AttributeInstance maxHealth = this.getAttribute(Attributes.MAX_HEALTH);
-			if (maxHealth != null && maxHealth.getBaseValue() != 135.0D) {
-				maxHealth.setBaseValue(135.0D);
-				this.setHealth(135.0F);
-				Log.debug("[Kanroji] WARNING: Max health was changed, forcing back to 135");
+			if (maxHealth != null && maxHealth.getBaseValue() != 140.0D) {
+				maxHealth.setBaseValue(140.0D);
+				this.setHealth(140.0F);
+				Log.debug("[Kanroji] WARNING: Max health was changed, forcing back to 140");
 			}
 		}
 
@@ -79,12 +96,35 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		if (!this.level().isClientSide) {
 			boolean hasTarget = this.getTarget() != null;
 
-			// Set sprinting flag for animation
-			this.setSprinting(hasTarget);
+			// Set sprinting flag for animation (unless transforming)
+			if (markState != MarkState.TRANSFORMING) {
+				this.setSprinting(hasTarget);
+			} else {
+				this.setSprinting(false); // No sprinting during transformation
+			}
 
 			// Activate Demon Slayer Mark when below 50% HP
-			if (!markActivated && this.getHealth() <= (this.getMaxHealth() * 0.5f)) {
+			if (markState == MarkState.NORMAL && this.getHealth() <= (this.getMaxHealth() * 0.5f)) {
 				activateDemonSlayerMark();
+			}
+
+			// Handle transformation timer
+			if (markState == MarkState.TRANSFORMING) {
+				transformationTimer++;
+
+				// Spawn particle effects during transformation
+				spawnTransformationParticles();
+
+				// Play guardian laser charging sound every 20 ticks during transformation
+				if (transformationTimer % 20 == 0) {
+					this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+						SoundEvents.GUARDIAN_ATTACK, SoundSource.HOSTILE, 1.0F, 1.5F);
+				}
+
+				// Complete transformation after 5 seconds
+				if (transformationTimer >= TRANSFORMATION_DURATION) {
+					completeDemonSlayerMark();
+				}
 			}
 
 			// Let BreathingFormAttackGoal handle ability usage; only manage sprint toggle
@@ -95,23 +135,35 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		}
 	}
 
-	private void activateDemonSlayerMark() {
-		markActivated = true;
+	/**
+     * Starts the demon slayer mark transformation.
+     * Kanroji kneels for 5 seconds with particle effects, then gains the mark.
+     */
+    private void activateDemonSlayerMark() {
+        markState = MarkState.TRANSFORMING;
+        transformationTimer = 0;
 
-		// Swap helmet to hair_kanroji_demon_slayer_mark_helmet (client-visible)
-		Item markHelmetItem = ForgeRegistries.ITEMS
-				.getValue(ResourceLocation.tryBuild("kimetsunoyaiba", "hair_kanroji_demon_slayer_mark_helmet"));
-		if (markHelmetItem != null) {
-			this.setItemSlot(EquipmentSlot.HEAD, new ItemStack(markHelmetItem));
-		}
+        Log.debug("[Kanroji] Starting demon slayer mark transformation at " + this.getHealth() + " HP");
 
-		// Apply potion_demon_slayer_mark with effectively infinite duration
-		net.minecraft.world.effect.MobEffect markEffect = ForgeRegistries.MOB_EFFECTS
-				.getValue(ResourceLocation.tryBuild("kimetsunoyaiba", "potion_demon_slayer_mark"));
-		if (markEffect != null) {
-			this.addEffect(new MobEffectInstance(markEffect, Integer.MAX_VALUE, 0, true, false));
-		}
-	}
+        // Force kneel animation for the full transformation duration
+        this.playGeckoAnimation("kneel", TRANSFORMATION_DURATION);
+
+        // Apply super resistance (level 100) for 5 seconds
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, TRANSFORMATION_DURATION, 99, false, false));
+
+        // Apply immovable effect (kimetsunoyaiba:immovable) for 5 seconds
+        net.minecraft.world.effect.MobEffect immovableEffect =
+                ForgeRegistries.MOB_EFFECTS.getValue(ResourceLocation.tryBuild("kimetsunoyaiba", "immovable"));
+        if (immovableEffect != null) {
+            this.addEffect(new MobEffectInstance(immovableEffect, TRANSFORMATION_DURATION, 0, false, false));
+        }
+
+        // Stop all current goals/movement
+        this.getNavigation().stop();
+        if (this.getTarget() != null) {
+            this.setTarget(null); // Temporarily clear target to prevent attacks
+        }
+    }
 
 	@Override
 	public BreathingTechnique getBreathingTechnique() {
@@ -167,13 +219,14 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 	 */
 	public static AttributeSupplier.Builder createAttributes() {
 		return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 140.0D) // Hashira health
-				.add(Attributes.ATTACK_DAMAGE, 1.0D) // Base damage (Strength effect adds the rest)
-				.add(Attributes.MOVEMENT_SPEED, 0.17D) // Fast movement (Speed effect multiplies this)
-				.add(Attributes.ATTACK_SPEED, 14.0D) // Extremely fast attack speed baseline
-				.add(Attributes.ARMOR, 12.0D) // From armor equipment
-				.add(Attributes.ARMOR_TOUGHNESS, 2.0D) // From armor equipment
+				.add(Attributes.ATTACK_DAMAGE, 1.4D) // Base damage (Strength effect adds the rest)
+				.add(Attributes.MOVEMENT_SPEED, 0.18D) // Fast movement (Speed effect multiplies this)
+				.add(Attributes.ATTACK_SPEED, 17.0D) // Extremely fast attack speed baseline
+				.add(Attributes.ARMOR, 19.0D) // From armor equipment
+				.add(Attributes.ARMOR_TOUGHNESS, 3.0D) // From armor equipment
 				.add(Attributes.FOLLOW_RANGE, 64.0D) // Same as base slayers
-				.add(ForgeMod.ENTITY_REACH.get(), 15.0D); // Whip sword has 15 block reach
+				.add(ForgeMod.ENTITY_REACH.get(), 15.0D) // Whip sword has 15 block reach
+				.add(ForgeMod.STEP_HEIGHT_ADDITION.get(), 0.6D); // Higher jumps for acrobatic combat
 	}
 
 	@Override
@@ -198,8 +251,8 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 			this.setDropChance(slot, 0.0F);
 		}
 
-		// Set to full health (135 HP)
-		this.setHealth(135.0F);
+		// Set to full health (140 HP)
+		this.setHealth(140.0F);
 
 		// Apply Hashira-level permanent effects (matching NBT data)
 		// Speed 2 (amplifier 0 = Speed I, which is Speed 2 in display)
@@ -234,17 +287,26 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		// Priority 1: Float in water
 		this.goalSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.FloatGoal(this));
 
-		// Priority 2: CUSTOM Kanroji melee attack with whip range
-		this.goalSelector.addGoal(2, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.KanrojiAnimatedMeleeAttackGoal(this, 1.0D, false));
+		// Priority 2: Side flip dodge (damage mitigation + counter-attack)
+		this.goalSelector.addGoal(2, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.KanrojiSideFlipDodgeGoal(this));
 
-		// Priority 3: Random stroll
-		this.goalSelector.addGoal(3, new net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal(this, 0.8D));
+		// Priority 3: Range management backstep (when too close to target)
+		this.goalSelector.addGoal(3, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.KanrojiBackstepGoal(this));
 
-		// Priority 4: Look at player
-		this.goalSelector.addGoal(4, new net.minecraft.world.entity.ai.goal.LookAtPlayerGoal(this, net.minecraft.world.entity.player.Player.class, 8.0F));
+		// Priority 4: Front flip (aggressive gap closer)
+		this.goalSelector.addGoal(4, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.KanrojiFrontFlipGoal(this));
 
-		// Priority 5: Random look around
-		this.goalSelector.addGoal(5, new net.minecraft.world.entity.ai.goal.RandomLookAroundGoal(this));
+		// Priority 5: CUSTOM Kanroji melee attack with whip range
+		this.goalSelector.addGoal(5, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.KanrojiAnimatedMeleeAttackGoal(this, 1.0D, false));
+
+		// Priority 6: Random stroll
+		this.goalSelector.addGoal(6, new net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal(this, 0.8D));
+
+		// Priority 7: Look at player
+		this.goalSelector.addGoal(7, new net.minecraft.world.entity.ai.goal.LookAtPlayerGoal(this, net.minecraft.world.entity.player.Player.class, 8.0F));
+
+		// Priority 8: Random look around
+		this.goalSelector.addGoal(8, new net.minecraft.world.entity.ai.goal.RandomLookAroundGoal(this));
 
 		// Target goals (same as base class)
 		this.targetSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal(this));
@@ -272,7 +334,7 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		super.addAdditionalSaveData(tag);
 		// Mark this as Kanroji so we can restore effects on load
 		tag.putBoolean("IsKanroji", true);
-		tag.putBoolean("KanrojiMark", markActivated);
+		tag.putBoolean("KanrojiMark", markState == MarkState.TRANSFORMED);
 	}
 
 	@Override
@@ -280,25 +342,144 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		super.readAdditionalSaveData(tag);
 		// Restore Hashira-level effects if this is Kanroji
 		if (tag.getBoolean("IsKanroji")) {
-			this.setHealth(135.0F);
+			this.setHealth(140.0F);
 			this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, 0, true, false));
 			this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 10, true, false));
 			this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 3, true, false));
 		}
-		this.markActivated = tag.getBoolean("KanrojiMark");
+		//this.markActivated = tag.getBoolean("KanrojiMark");
+		if (tag.getBoolean("KanrojiMark"))
+			markState = MarkState.TRANSFORMED;
 	}
 
 	/**
+     * Completes the demon slayer mark transformation.
+     * Activates the Love Breathing Demon Slayer Mark and applies permanent buffs.
+     */
+    private void completeDemonSlayerMark() {
+        markState = MarkState.TRANSFORMED;
+
+        Log.debug("[Kanroji] Demon slayer mark transformation complete!");
+
+        // Play dramatic wither spawn sound to signify transformation completion
+        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+            SoundEvents.WITHER_SPAWN, SoundSource.HOSTILE, 1.0F, 1.0F);
+
+        // Mark the entity's NBT so the render layer knows to show the mark
+        this.getPersistentData().putBoolean("KanrojiMark", true);
+
+        // Apply potion_demon_slayer_mark with effectively infinite duration
+        net.minecraft.world.effect.MobEffect markEffect =
+                ForgeRegistries.MOB_EFFECTS.getValue(ResourceLocation.tryBuild("kimetsunoyaiba", "potion_demon_slayer_mark"));
+        if (markEffect != null) {
+            this.addEffect(new MobEffectInstance(markEffect, Integer.MAX_VALUE, 0, true, false));
+        }
+
+        // Upgrade Strength from 11 to 12 (amplifier 10 -> 11)
+        this.removeEffect(MobEffects.DAMAGE_BOOST);
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 11, true, false));
+
+        // Upgrade Speed from 2 to 3 (amplifier 0 -> 1) - Love Breathing enhances agility
+        this.removeEffect(MobEffects.MOVEMENT_SPEED);
+        this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, 1, true, false));
+
+        // Restore base Resistance 4 (was temporarily boosted to 100 during transformation)
+        this.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 3, true, false));
+
+        // Animation will naturally transition back to idle when the kneel animation expires
+    }
+	
+	/**
+     * Spawns particle effects during the transformation:
+     * - Spiral of heart particles circling around Kanroji (Love Breathing theme)
+     * - Waves of pink particles traveling across the ground from her feet
+     */
+    private void spawnTransformationParticles() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        Vec3 pos = this.position();
+        double x = pos.x;
+        double y = pos.y;
+        double z = pos.z;
+
+        // Spawn spiral of heart particles every tick (Love Breathing theme)
+        double angle = (transformationTimer * 0.3) % (2 * Math.PI); // Rotate over time
+        double radius = 2.5;
+        double height = (transformationTimer % 40) * 0.1; // Spiral upward
+
+        for (int i = 0; i < 4; i++) {
+            double spiralAngle = angle + (i * 2 * Math.PI / 4);
+            double offsetX = Math.cos(spiralAngle) * radius;
+            double offsetZ = Math.sin(spiralAngle) * radius;
+
+            // Hearts from vanilla Minecraft
+            serverLevel.sendParticles(
+                ParticleTypes.HEART,
+                x + offsetX, y + height, z + offsetZ,
+                1, 0.1, 0.1, 0.1, 0.02
+            );
+        }
+
+        // Spawn ground wave pink particles every 10 ticks (multiple shockwaves)
+        if (transformationTimer % 10 == 0) {
+            double waveRadius = (transformationTimer % 40) * 0.15; // Expand from feet
+
+            for (int i = 0; i < 20; i++) {
+                double waveAngle = (i / 20.0) * 2 * Math.PI;
+                double waveX = x + Math.cos(waveAngle) * waveRadius;
+                double waveZ = z + Math.sin(waveAngle) * waveRadius;
+
+                // Use cherry leaves particles for pink effect (Love Breathing theme)
+                serverLevel.sendParticles(
+                    ParticleTypes.CHERRY_LEAVES,
+                    waveX, y + 0.1, waveZ,
+                    3, 0.1, 0.05, 0.1, 0.02
+                );
+
+                // Add some pink sparkles for extra flair (using witch particles)
+                serverLevel.sendParticles(
+                    ParticleTypes.WITCH,
+                    waveX, y + 0.1, waveZ,
+                    2, 0.15, 0.05, 0.15, 0.01
+                );
+            }
+        }
+
+        // Every 5 ticks, spawn some extra hearts floating upward for dramatic effect
+        if (transformationTimer % 5 == 0) {
+            for (int i = 0; i < 3; i++) {
+                double offsetX = (this.getRandom().nextDouble() - 0.5) * 2.0;
+                double offsetZ = (this.getRandom().nextDouble() - 0.5) * 2.0;
+
+                serverLevel.sendParticles(
+                    ParticleTypes.HEART,
+                    x + offsetX, y + 0.5, z + offsetZ,
+                    1, 0.1, 0.2, 0.1, 0.05
+                );
+            }
+        }
+    }
+
+	/**
 	 * Override animation controller to use sprint animation when in combat
+	 * and kneel animation during transformation
 	 */
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
 		// Main controller - handles ALL animations (walk, idle, sprint, attacks,
-		// abilities)
+		// abilities, transformation)
 		controllers.add(new AnimationController<>(this, "controller", 0, state -> {
 			// Death animation (highest priority)
 			if (this.isDeadOrDying()) {
 				return state.setAndContinue(RawAnimation.begin().thenPlay("death"));
+			}
+
+			// Transformation kneel animation (second highest priority)
+			if (markState == MarkState.TRANSFORMING) {
+				return state.setAndContinue(RawAnimation.begin().thenPlay("kneel"));
 			}
 
 			String anim = getCurrentAnimation();
@@ -374,6 +555,12 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
+		// Reduce fall damage to 30% (acrobatic fighting style)
+		if (source.is(net.minecraft.world.damagesource.DamageTypes.FALL)) {
+			amount *= 0.3f; // Only take 30% fall damage
+			Log.debug("[Kanroji] Reduced fall damage to 30%: {} damage", amount);
+		}
+
 		boolean result = super.hurt(source, amount);
 		if (result && !this.level().isClientSide) {
 			this.lastDamageTick = this.tickCount;
@@ -383,5 +570,19 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 
 	public boolean wasRecentlyDamaged(int withinTicks) {
 		return this.tickCount - this.lastDamageTick <= withinTicks;
+	}
+
+	/**
+	 * Checks if Kanroji is currently transforming (cannot move or use abilities)
+	 */
+	public boolean isTransforming() {
+		return markState == MarkState.TRANSFORMING;
+	}
+
+	/**
+	 * Checks if Kanroji has her demon slayer mark active
+	 */
+	public boolean hasMarkActivated() {
+		return markState == MarkState.TRANSFORMED;
 	}
 }

@@ -37,17 +37,27 @@ public class SwordDisplayTracker {
         public int hotbarSlot;
         public ItemStack sword;
         public SwordDisplayConfig.SwordDisplayPosition displayPosition;
+        public String swordItemId;
 
         public SlotSwordEntry(int slot, ItemStack sword) {
             this.hotbarSlot = slot;
             this.sword = sword.copy();
             // Get per-sword position
             ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(sword.getItem());
-            this.displayPosition = SwordDisplayConfig.getPositionForSword(itemId.toString());
+            this.swordItemId = itemId != null ? itemId.toString() : "";
+            this.displayPosition = SwordDisplayConfig.getPositionForSword(this.swordItemId);
         }
 
         public boolean isEmpty() {
-            return sword.isEmpty();
+            return sword.isEmpty() || swordItemId.isEmpty();
+        }
+
+        public boolean matchesItem(ItemStack stack) {
+            if (stack == null || stack.isEmpty()) {
+                return false;
+            }
+            ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+            return itemId != null && itemId.toString().equals(swordItemId);
         }
     }
 
@@ -289,6 +299,10 @@ public class SwordDisplayTracker {
                 // Remove sword from display
                 state.removeSlot(currentSlot);
 
+                // DRAW ANIMATION: Trigger when sword is drawn from sheath
+                DrawSheathAnimationHelper.playDrawAnimation(player, currentSlot,
+                    sheathPosition, isLeftSlot, heldItem);
+
                 // Restore sheath if it should persist
                 if (sheathToKeep != null) {
                     if (isLeftSlot) {
@@ -320,6 +334,15 @@ public class SwordDisplayTracker {
                         Log.debug("Adding sword from slot {} to display for player {}",
                             previousSlot, player.getName().getString());
                     }
+
+                    // SHEATH ANIMATION: Trigger when sword is sheathed (reverse draw animation)
+                    boolean isLeftSlotSheath = state.leftDisplay != null &&
+                        state.leftDisplay.hotbarSlot == previousSlot;
+                    SwordDisplayConfig.SwordDisplayPosition sheathPos = isLeftSlotSheath ?
+                        state.leftDisplay.displayPosition : state.rightDisplay.displayPosition;
+                    DrawSheathAnimationHelper.playSheathAnimation(player, previousSlot, currentSlot,
+                        sheathPos, isLeftSlotSheath);
+
                     stateChanged = true;
                 }
             }
@@ -332,7 +355,7 @@ public class SwordDisplayTracker {
         if (state.leftDisplay != null) {
             int slot = state.leftDisplay.hotbarSlot;
             ItemStack currentInSlot = player.getInventory().getItem(slot);
-            if (!ItemStack.isSameItemSameTags(currentInSlot, state.leftDisplay.sword)) {
+            if (!state.leftDisplay.matchesItem(currentInSlot)) {
                 if (Config.logDebug) {
                     Log.debug("Removing left display for player {} (slot {} contents changed)",
                         player.getName().getString(), slot);
@@ -343,13 +366,15 @@ public class SwordDisplayTracker {
                 state.leftSheathPosition = null;
                 state.leftSheathSwordItem = null;
                 stateChanged = true;
+            } else if (!ItemStack.isSameItemSameTags(currentInSlot, state.leftDisplay.sword)) {
+                state.leftDisplay.sword = currentInSlot.copy();
             }
         }
 
         if (state.rightDisplay != null) {
             int slot = state.rightDisplay.hotbarSlot;
             ItemStack currentInSlot = player.getInventory().getItem(slot);
-            if (!ItemStack.isSameItemSameTags(currentInSlot, state.rightDisplay.sword)) {
+            if (!state.rightDisplay.matchesItem(currentInSlot)) {
                 if (Config.logDebug) {
                     Log.debug("Removing right display for player {} (slot {} contents changed)",
                         player.getName().getString(), slot);
@@ -360,6 +385,8 @@ public class SwordDisplayTracker {
                 state.rightSheathPosition = null;
                 state.rightSheathSwordItem = null;
                 stateChanged = true;
+            } else if (!ItemStack.isSameItemSameTags(currentInSlot, state.rightDisplay.sword)) {
+                state.rightDisplay.sword = currentInSlot.copy();
             }
         }
 

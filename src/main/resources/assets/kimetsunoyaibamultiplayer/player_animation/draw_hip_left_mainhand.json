@@ -1,0 +1,49 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"draw_hip_left_mainhand": {
+					"animation_length": 0.2917,
+					"bones": {
+						"body": {
+							"rotation": {
+								"0.0": [0, -35, 0],
+								"0.25": {
+									"pre": [0, 0, 0],
+									"post": [0, 0, 0],
+									"lerp_mode": "catmullrom"
+								}
+							}
+						},
+						"right_arm": {
+							"rotation": {
+								"0.0": [-151.17937, 3.50106, 134.07896],
+								"0.25": {
+									"pre": [0, 0, 0],
+									"post": [0, 0, 0],
+									"lerp_mode": "catmullrom"
+								}
+							},
+							"position": {
+								"0.0": [2.59951, -2.35333, -1.92468],
+								"0.25": {
+									"pre": [0, 0, 0],
+									"post": [0, 0, 0],
+									"lerp_mode": "catmullrom"
+								}
+							}
+						},
+						"left_arm": {
+							"rotation": {
+								"0.0": [20, 0, -22.5],
+								"0.25": {
+									"pre": [0, 0, 0],
+									"post": [0, 0, 0],
+									"lerp_mode": "catmullrom"
+								}
+							}
+						}
+					}
+				}
+	},
+	"geckolib_format_version": 2
+}

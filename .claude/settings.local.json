@@ -49,7 +49,8 @@
       "Bash(echo:*)",
       "Bash(exit 0)",
       "Bash(del \"C:\\\\Users\\\\carlf\\\\eclipse-workspace-2\\\\Kimetsunoyaiba-Multiplayer\\\\src\\\\main\\\\resources\\\\data\\\\kimetsunoyaiba\\\\tags\\\\entity_types\\\\tag_hashira_addition.json\")",
-      "Bash(xargs jar:*)"
+      "Bash(xargs jar:*)",
+      "Bash(.gradlew.bat build:*)"
     ],
     "deny": [],
     "ask": []

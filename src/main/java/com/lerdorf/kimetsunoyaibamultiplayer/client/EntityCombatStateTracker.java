@@ -2,9 +2,12 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -59,8 +62,8 @@ public class EntityCombatStateTracker {
         // Check if recently damaged (within 1 second = 20 ticks)
         int timeSinceHurt = entity.tickCount - entity.getLastHurtByMobTimestamp();
         if (timeSinceHurt < 20) {
-            Log.debug("EntityCombatStateTracker: {} recently hurt ({} ticks ago), in combat",
-                entity.getType().getDescriptionId(), timeSinceHurt);
+            //Log.debug("EntityCombatStateTracker: {} recently hurt ({} ticks ago), in combat",
+            //    entity.getType().getDescriptionId(), timeSinceHurt);
             activelyFighting = true;
         }
 
@@ -68,8 +71,8 @@ public class EntityCombatStateTracker {
         if (entity instanceof BreathingSlayerEntity breathingEntity) {
             if (breathingEntity.getAnimationTicks() > 0 ||
                 breathingEntity.isBreathingFormOnCooldown()) {
-                Log.debug("EntityCombatStateTracker: {} is breathing/animating, in combat",
-                    entity.getType().getDescriptionId());
+                //Log.debug("EntityCombatStateTracker: {} is breathing/animating, in combat",
+                //    entity.getType().getDescriptionId());
                 activelyFighting = true;
             }
         }
@@ -121,23 +124,40 @@ public class EntityCombatStateTracker {
 
     /**
      * Handle transition between combat states.
-     * When entering combat, spawn particles for temporary sheaths.
+     * When entering combat, spawn particles for temporary sheaths and play draw animation.
+     * When exiting combat, play sheath animation (draw in reverse).
      */
     private static void onCombatStateChanged(LivingEntity entity, boolean nowInCombat) {
-        if (nowInCombat) {
-            // Entering combat: handle temporary sheath removal
-            ItemStack mainHand = entity.getItemBySlot(EquipmentSlot.MAINHAND);
-            if (SwordParticleMapping.isKimetsunoyaibaSword(mainHand)) {
-                SwordSheathRegistry.SheathInfo sheathInfo =
-                    SwordSheathRegistry.getSheathInfo(mainHand);
-
-                if (sheathInfo != null && !sheathInfo.persistsWhenDrawn()) {
-                    // Spawn poof particles for temporary sheath (Uzui, Inosuke style)
-                    spawnSheathDisappearParticles(entity);
-                }
-            }
+        ItemStack mainHand = entity.getItemBySlot(EquipmentSlot.MAINHAND);
+        if (!SwordParticleMapping.isKimetsunoyaibaSword(mainHand)) {
+            return;
         }
-        // Exiting combat: sword goes back to sheath (handled by renderer)
+
+        // Get sheath position from config
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(mainHand.getItem());
+        SwordDisplayConfig.SwordDisplayPosition position =
+            SwordDisplayConfig.getPositionForSword(itemId.toString());
+        if (position == null) {
+            position = SwordDisplayConfig.position; // Use default
+        }
+
+        if (nowInCombat) {
+            // Entering combat: draw sword
+            SwordSheathRegistry.SheathInfo sheathInfo =
+                SwordSheathRegistry.getSheathInfo(mainHand);
+
+            if (sheathInfo != null && !sheathInfo.persistsWhenDrawn()) {
+                // Spawn poof particles for temporary sheath (Uzui, Inosuke style)
+                spawnSheathDisappearParticles(entity);
+            }
+
+            // DRAW ANIMATION: Trigger when entity enters combat
+            DrawSheathAnimationHelper.playDrawAnimation(entity, position, mainHand);
+        } else {
+            // Exiting combat: sheath sword
+            // SHEATH ANIMATION: Trigger when entity exits combat (reverse draw)
+            DrawSheathAnimationHelper.playSheathAnimation(entity, position);
+        }
     }
 
     /**

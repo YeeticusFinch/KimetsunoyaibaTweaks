@@ -366,8 +366,10 @@ public class LoveVariations {
 								for (LivingEntity target : circleTargets) {
 									boolean success = Damager.hurt(entity, target, damage);
 									if (success) { // Knock the target into the air
+										float targetY = (float)entity.position().y() + 10 + (((float)currentTick[0])/(float)(firstFormStart));
 										Vec3 curVel =  target.getDeltaMovement();
-										MovementHelper.setVelocity(target, curVel.add(0, 0.8, 0));
+										if (target.position().y() < targetY)
+											MovementHelper.setVelocity(target, curVel.add(0, Math.min(Math.max(targetY-target.position().y(), 0.7), 1.1), 0));
 									}
 								}
 

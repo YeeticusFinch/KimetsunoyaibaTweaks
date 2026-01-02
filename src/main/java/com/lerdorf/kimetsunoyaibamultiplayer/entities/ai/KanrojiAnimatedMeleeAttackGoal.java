@@ -9,6 +9,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraftforge.fml.DistExecutor;
@@ -18,6 +19,7 @@ import net.minecraftforge.fml.DistExecutor;
  *
  * Features:
  * - Extended attack range (15 blocks, using entity's ENTITY_REACH attribute) for whip-style combat
+ * - Optimal range maintenance (stops pathfinding when within 15 blocks)
  * - Multi-target damage using WhipDamageHandler
  * - Synchronized sword animations via KanrojiSwordAnimationTrigger
  * - Attack animations match the GeckoLib sword animations
@@ -25,6 +27,7 @@ import net.minecraftforge.fml.DistExecutor;
 public class KanrojiAnimatedMeleeAttackGoal extends MeleeAttackGoal {
     private final KanrojiEntity entity;
     private int attackAnimationTick = 0;
+    private int guardStateClearTick = -1; // When to clear guard state
 
     // Kanroji-specific attack animations (mix of basic and special overhead attacks)
     private static final String[] ATTACK_ANIMATIONS = {
@@ -37,6 +40,10 @@ public class KanrojiAnimatedMeleeAttackGoal extends MeleeAttackGoal {
     // Whip attack configuration
     private static final double WHIP_DAMAGE_RADIUS = 1.5; // Hitbox radius for whip hits
 
+    // Range management - stop pathfinding when within optimal range
+    // This prevents Kanroji from running up to melee range
+    private static final double OPTIMAL_RANGE = 14.0; // Stop pathfinding at this distance
+
     public KanrojiAnimatedMeleeAttackGoal(KanrojiEntity entity, double speedModifier, boolean followingTargetEvenIfNotSeen) {
         super(entity, speedModifier, followingTargetEvenIfNotSeen);
         this.entity = entity;
@@ -46,6 +53,20 @@ public class KanrojiAnimatedMeleeAttackGoal extends MeleeAttackGoal {
     protected void checkAndPerformAttack(LivingEntity target, double distToTarget) {
         // Check if we can attack (within whip range)
         if (this.canPerformWhipAttack(target)) {
+            // CRITICAL: Face the target before attacking
+            // This ensures particles spawn in the right direction
+            entity.getLookControl().setLookAt(target, 30.0F, 30.0F);
+
+            // Force immediate rotation to target
+            Vec3 targetPos = target.position();
+            Vec3 entityPos = entity.position();
+            double dx = targetPos.x - entityPos.x;
+            double dz = targetPos.z - entityPos.z;
+            float targetYaw = (float) (Math.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0F;
+            entity.setYRot(targetYaw);
+            entity.yBodyRot = targetYaw;
+            entity.yHeadRot = targetYaw;
+
             // Reset attack cooldown
             this.resetAttackCooldown();
 
@@ -62,14 +83,26 @@ public class KanrojiAnimatedMeleeAttackGoal extends MeleeAttackGoal {
             // Note: Sword animation sync is handled by client-side tick handler
             // that watches the entity's current animation and triggers matching sword animations
 
-            // Perform whip-based attack (multi-target damage in arc)
+            // Perform whip-based attack using shared handler (handles damage + particles)
             ItemStack heldItem = entity.getItemInHand(InteractionHand.MAIN_HAND);
             if (heldItem.getItem() instanceof BreathingSwordItem) {
-                // Use WhipDamageHandler for radial multi-target damage
                 float damage = (float) entity.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
-                int hitCount = WhipDamageHandler.applyWhipDamage(entity, damage, WHIP_DAMAGE_RADIUS);
+
+                // Set sword clashing attack state (don't set guard state for basic attacks)
+                // Love breathing uses ID 400 (consistent with player forms)
+                com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper.setAttackState(entity, damage);
+
+                // Use shared KanrojiSwordAttackHandler for consistent behavior with players
+                int hitCount = com.lerdorf.kimetsunoyaibamultiplayer.combat.KanrojiSwordAttackHandler.performWhipAttack(
+                    entity,
+                    damage,
+                    animation
+                );
 
                 Log.debug("[KanrojiAnimatedMeleeAttackGoal] Whip attack hit {} targets with {} damage", hitCount, damage);
+
+                // Schedule guard state clear after 6 ticks
+                guardStateClearTick = entity.tickCount + 6;
 
                 // Trigger sword slash rendering for visual effect
                 if (!entity.level().isClientSide) {
@@ -140,5 +173,42 @@ public class KanrojiAnimatedMeleeAttackGoal extends MeleeAttackGoal {
     @Override
     protected boolean isTimeToAttack() {
         return super.isTimeToAttack();
+    }
+
+    /**
+     * Override tick to manage range - stop pathfinding when within optimal range.
+     * This prevents Kanroji from running right up to the target.
+     */
+    @Override
+    public void tick() {
+        // Clear guard state if scheduled
+        if (guardStateClearTick >= 0 && entity.tickCount >= guardStateClearTick) {
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper.clearGuardState(entity);
+            guardStateClearTick = -1;
+        }
+
+        LivingEntity target = this.mob.getTarget();
+        if (target == null) {
+            super.tick();
+            return;
+        }
+
+        double distSq = this.mob.distanceToSqr(target);
+        double optimalRangeSq = OPTIMAL_RANGE * OPTIMAL_RANGE;
+
+        // If we're within optimal range, stop pathfinding and just rotate to face target
+        if (distSq <= optimalRangeSq) {
+            // Stop movement
+            this.mob.getNavigation().stop();
+
+            // Look at target
+            this.mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+
+            // Check if we can attack
+            this.checkAndPerformAttack(target, distSq);
+        } else {
+            // Too far - continue normal pathfinding behavior
+            super.tick();
+        }
     }
 }

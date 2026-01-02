@@ -89,6 +89,12 @@ public class KanrojiRenderer extends GeoEntityRenderer<KanrojiEntity> {
         // Sword display on back/hip (GeoRenderLayer, matches player positioning)
         this.addRenderLayer(new GeoSwordDisplayLayer<>(this));
 
+        // Add demon slayer mark rendering layer - renders Love mark on torso when activated
+        this.addRenderLayer(new com.lerdorf.kimetsunoyaibamultiplayer.client.DemonSlayerMarkLayer<>(
+            this,
+            com.lerdorf.kimetsunoyaibamultiplayer.client.DemonSlayerMarkRegistry.LOVE_MARK
+        ));
+
         // Use 1.1 scale to match base mod's Kanroji (slightly larger than normal)
         this.scaleHeight = 1.1F;
         this.scaleWidth = 1.1F;

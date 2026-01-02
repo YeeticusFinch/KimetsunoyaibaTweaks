@@ -55,6 +55,9 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
         // First, try to get from EntityRenderContext (set during entity rendering)
         renderingEntity = com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext.getCurrentEntity();
 
+        Log.debug("[KanrojiSwordRenderer] renderByItem() - displayContext: {}, EntityRenderContext.getCurrentEntity(): {}",
+                  displayContext, renderingEntity != null ? renderingEntity.getName().getString() : "null");
+
         // If not rendering an entity, check if it's the player (first-person view)
         if (renderingEntity == null &&
             (displayContext == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND ||
@@ -71,7 +74,12 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
                 renderingEntity.getOffhandItem().getItem() instanceof NichirinSwordKanrojiAnimated;
 
             if (!isHoldingKanrojiSword) {
+                Log.debug("[KanrojiSwordRenderer] Entity {} is not holding Kanroji sword, setting to null",
+                          renderingEntity.getName().getString());
                 renderingEntity = null;
+            } else {
+                Log.debug("[KanrojiSwordRenderer] Entity {} IS holding Kanroji sword",
+                          renderingEntity.getName().getString());
             }
         }
 

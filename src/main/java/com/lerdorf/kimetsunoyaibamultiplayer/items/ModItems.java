@@ -46,6 +46,10 @@ public class ModItems {
             0xFFB6D9, 0x9FE88D, // Pink body (Mitsuri's hair), light green spots (hair gradient)
             new Item.Properties().stacksTo(64)));
 
+    // Demon Slayer Marks - decorative items that render on entity models
+    public static final RegistryObject<Item> DEMONSLAYERMARK_LOVE = ITEMS.register("demonslayermark_love",
+        () -> new Item(new Item.Properties().stacksTo(1)));
+
     // Omen Potion Items - Muzan (for demon slayer players)
     public static final RegistryObject<Item> OMEN_OF_MUZAN_POTION_1 = ITEMS.register("omen_of_muzan_potion_1",
         () -> new OmenPotionItem(new Item.Properties().stacksTo(16), OmenPotionItem.OmenType.MUZAN, 1));

@@ -39,7 +39,7 @@ public class KanrojiSwordAnimationTrigger {
 
     /**
      * Trigger a GeckoLib animation on a specific Kanroji sword ItemStack.
-     * Stores animation state on the stack to keep each sword independent.
+     * Uses GeckoLib's proper animation trigger system via AnimatableManager.
      *
      * @param entity The entity associated with the sword
      * @param itemStack The ItemStack containing the Kanroji sword
@@ -49,6 +49,8 @@ public class KanrojiSwordAnimationTrigger {
         if (!(itemStack.getItem() instanceof NichirinSwordKanrojiAnimated)) {
             return;
         }
+
+        NichirinSwordKanrojiAnimated swordItem = (NichirinSwordKanrojiAnimated) itemStack.getItem();
 
         // Extract just the animation name (remove namespace if present)
         String cleanAnimName = animationName;
@@ -67,9 +69,11 @@ public class KanrojiSwordAnimationTrigger {
 
         if (swordAnimName != null) {
             NichirinSwordKanrojiAnimated.ensureAnimatableId(itemStack, entity.level());
+
+            // Set the animation in NBT - the controller will read it and apply it
             NichirinSwordKanrojiAnimated.setAnimationOnStack(itemStack, swordAnimName);
 
-            Log.debug("[KanrojiSwordAnimationTrigger] Set animation {} on stack for entity {}",
+            Log.debug("[KanrojiSwordAnimationTrigger] Set animation {} on NBT for entity {}",
                       swordAnimName, entity.getName().getString());
 
             // Notify the animation handler so it doesn't override with movement animations
@@ -157,6 +161,14 @@ public class KanrojiSwordAnimationTrigger {
             case "sheath":
             case "sheathed":
                 return "sheath";
+
+            // Acrobatic animations
+            case "front_flip":
+                return "kanroji_sword_overhead"; // Overhead slash during front flip
+            case "side_flip":
+                return "sword_rotate"; // Spinning slash during side flip
+            case "backstep":
+                return "idle"; // Sword in ready position during backstep
 
             // Random transition animations
             case "random":

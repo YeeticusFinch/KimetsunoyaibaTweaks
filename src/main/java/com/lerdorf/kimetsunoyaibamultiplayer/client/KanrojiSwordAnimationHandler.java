@@ -170,7 +170,17 @@ public class KanrojiSwordAnimationHandler {
 
         // Check if sprinting or walking (use averaged horizontal movement)
         boolean isSprinting = player.isSprinting();
-        boolean isWalking = !isSprinting && avgSpeed > 0.003; // Use averaged speed
+        // Add hysteresis to prevent walk/idle flicker on small speed oscillations
+        double walkStartThreshold = 0.004;
+        double walkStopThreshold = 0.002;
+        boolean isWalking;
+        if (isSprinting) {
+            isWalking = false;
+        } else if (state.isWalking) {
+            isWalking = avgSpeed > walkStopThreshold;
+        } else {
+            isWalking = avgSpeed > walkStartThreshold;
+        }
 
         Log.debug("[KanrojiSwordAnimationHandler] Movement: instantSpeed={}, avgSpeed={}, sprinting={}, walking={}",
                   horizontalSpeed, avgSpeed, isSprinting, isWalking);

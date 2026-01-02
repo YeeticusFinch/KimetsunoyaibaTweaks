@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
@@ -216,14 +217,29 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
         if (customRenderer != null) {
             //Log.debug("[GeoEquipmentLayer] Using custom renderer for Kanroji sword");
             // Render using the custom GeckoLib renderer
-            customRenderer.renderByItem(
-                stack,
-                ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
-                poseStack,
-                bufferSource,
-                packedLight,
-                packedOverlay
-            );
+            LivingEntity previousEntity = EntityRenderContext.getCurrentEntity();
+            boolean shouldRestore = previousEntity != animatable;
+            if (shouldRestore) {
+                EntityRenderContext.setCurrentEntity(animatable);
+            }
+            try {
+                customRenderer.renderByItem(
+                    stack,
+                    ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+                    poseStack,
+                    bufferSource,
+                    packedLight,
+                    packedOverlay
+                );
+            } finally {
+                if (shouldRestore) {
+                    if (previousEntity != null) {
+                        EntityRenderContext.setCurrentEntity(previousEntity);
+                    } else {
+                        EntityRenderContext.clearCurrentEntity();
+                    }
+                }
+            }
         } else {
             Log.debug("[GeoEquipmentLayer] No custom renderer found, using vanilla rendering");
             // Fallback to vanilla rendering

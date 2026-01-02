@@ -1,0 +1,35 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"draw_back_mainhand": {
+					"animation_length": 0.25,
+					"bones": {
+						"head": {
+							"rotation": {
+								"0.0": {
+									"post": [27.5, 0, 17.5],
+									"lerp_mode": "catmullrom"
+								},
+								"0.25": {
+									"post": [0, 0, 0],
+									"lerp_mode": "catmullrom"
+								}
+							}
+						},
+						"right_arm": {
+							"rotation": {
+								"0.0": {
+									"post": [-219.26841, 42.07169, 11.80882],
+									"lerp_mode": "catmullrom"
+								},
+								"0.25": {
+									"post": [0, 0, 0],
+									"lerp_mode": "catmullrom"
+								}
+							}
+						}
+					}
+				}
+	},
+	"geckolib_format_version": 2
+}

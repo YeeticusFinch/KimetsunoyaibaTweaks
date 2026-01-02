@@ -55,7 +55,17 @@ public class BreathingFormAttackGoal extends Goal {
             return true;
         }
 
-        // Random chance to use form (checked every tick)
+        // Kanroji-specific checks (use forms aggressively like Muichiro)
+        if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.KanrojiEntity kanroji) {
+            // Cannot use abilities during transformation
+            if (kanroji.isTransforming()) {
+                return false;
+            }
+            // Otherwise cast as soon as cooldown finishes
+            return true;
+        }
+
+        // For other entities: Random chance to use form (checked every tick)
         return this.entity.getRandom().nextDouble() < (formUseChance / 20.0);
     }
 

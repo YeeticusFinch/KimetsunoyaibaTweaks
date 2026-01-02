@@ -73,8 +73,12 @@ public class EntityKanrojiSwordAnimationSync {
         } else {
             // In combat - use entity's current animation
             targetAnimation = entity.getCurrentAnimation();
-            Log.debug("[EntityKanrojiSwordAnimationSync] Entity {} in combat - using animation: {}",
-                      entity.getName().getString(), targetAnimation);
+
+            // CRITICAL FIX: Only log when not idle/walk to reduce spam
+            if (!targetAnimation.equals("idle") && !targetAnimation.equals("walk")) {
+                Log.debug("[EntityKanrojiSwordAnimationSync] Entity {} in combat - using animation: {}",
+                          entity.getName().getString(), targetAnimation);
+            }
         }
 
         // Check if animation changed
@@ -89,10 +93,18 @@ public class EntityKanrojiSwordAnimationSync {
         Log.debug("[EntityKanrojiSwordAnimationSync] Animation changed for entity {} from {} to {}",
                   entity.getName().getString(), lastAnimation, targetAnimation);
 
-        // Trigger matching sword animation
+        // CRITICAL FIX: Store animation in client-side cache for renderer to access
+        // We need to pass the sword item to ensure the controller exists
+        if (mainHand.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated) {
+            com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated swordItem =
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated) mainHand.getItem();
+            EntitySwordAnimationCache.setAnimationAndEnsureController(entity, targetAnimation, swordItem);
+        }
+
+        // Also trigger via the normal method (sets NBT as fallback)
         KanrojiSwordAnimationTrigger.triggerAnimation(entity, targetAnimation);
 
-        Log.debug("[EntityKanrojiSwordAnimationSync] Triggered sword animation: {}", targetAnimation);
+        Log.debug("[EntityKanrojiSwordAnimationSync] Set animation in cache and triggered: {}", targetAnimation);
     }
 
     /**
@@ -100,5 +112,6 @@ public class EntityKanrojiSwordAnimationSync {
      */
     public static void cleanup(UUID entityUUID) {
         lastKnownAnimation.remove(entityUUID);
+        EntitySwordAnimationCache.clearAnimation(entityUUID);
     }
 }

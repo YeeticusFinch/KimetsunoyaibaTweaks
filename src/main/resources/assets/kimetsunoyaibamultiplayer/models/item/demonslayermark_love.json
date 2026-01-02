@@ -1,0 +1,59 @@
+{
+	"format_version": "1.21.6",
+	"credit": "Made with Blockbench",
+	"parent": "aza",
+	"ambientocclusion": false,
+	"textures": {
+		"2": "kimetsunoyaibamultiplayer:block/demonslayermark_love"
+	},
+	"elements": [
+		{
+			"from": [4, 4, 4],
+			"to": [12, 12, 12],
+			"faces": {
+				"north": {"uv": [0, 0, 8, 8], "texture": "#2"},
+				"east": {"uv": [0, 8, 8, 16], "texture": "#2"},
+				"south": {"uv": [0, 8, 8, 16], "texture": "#2"},
+				"west": {"uv": [0, 8, 8, 16], "texture": "#2"},
+				"up": {"uv": [8, 16, 0, 8], "texture": "#2"},
+				"down": {"uv": [8, 8, 0, 16], "texture": "#2"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"scale": [0, 0, 0]
+		},
+		"thirdperson_lefthand": {
+			"scale": [0, 0, 0]
+		},
+		"firstperson_righthand": {
+			"scale": [0, 0, 0]
+		},
+		"firstperson_lefthand": {
+			"scale": [0, 0, 0]
+		},
+		"ground": {
+			"rotation": [90, 0, 0],
+			"translation": [0, -5.75, 0],
+			"scale": [0.5, 0.5, 0.5]
+		},
+		"gui": {
+			"rotation": [0, -180, 0]
+		},
+		"head": {
+			"scale": [1.61, 1.61, 1.61]
+		},
+		"fixed": {
+			"translation": [0, 0.75, 3.75]
+		}
+	},
+	"groups": [
+		{
+			"name": "group",
+			"origin": [8, 8, 8],
+			"color": 0,
+			"children": [0]
+		}
+	]
+}
