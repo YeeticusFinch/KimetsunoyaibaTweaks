@@ -17,6 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * This ensures that all renders of the same entity's sword use the same
  * controller instance, preventing the flickering issue where different
  * ItemStack instances have different animation states.
+ *
+ * Also handles player displayed swords (on hip/back) using UUID + slot keys.
  */
 public class EntitySwordAnimationCache {
 
@@ -60,6 +62,9 @@ public class EntitySwordAnimationCache {
     }
 
     private static final Map<UUID, EntityAnimationController> entityControllers = new ConcurrentHashMap<>();
+
+    // Cache for player displayed swords (key: "playerUUID:displaySlot")
+    private static final Map<String, String> playerDisplayedSwordAnimations = new ConcurrentHashMap<>();
 
     /**
      * Set the animation for an entity's sword.
@@ -156,5 +161,56 @@ public class EntitySwordAnimationCache {
      */
     public static void clearAnimation(LivingEntity entity) {
         clearAnimation(entity.getUUID());
+    }
+
+    // ==================== Player Displayed Sword Cache ====================
+
+    /**
+     * Set animation for a player's displayed sword (on hip/back).
+     * This uses a UUID + slot key to prevent ItemStack copy issues.
+     *
+     * @param playerUUID The player's UUID
+     * @param displaySlot "left" or "right" for which display slot
+     * @param animationName The animation to play
+     */
+    public static void setPlayerDisplayedSwordAnimation(UUID playerUUID, String displaySlot, String animationName) {
+        String key = playerUUID.toString() + ":" + displaySlot;
+        playerDisplayedSwordAnimations.put(key, animationName);
+        Log.debug("[EntitySwordAnimationCache] Set player displayed sword animation: {} -> {}", key, animationName);
+    }
+
+    /**
+     * Get animation for a player's displayed sword.
+     *
+     * @param playerUUID The player's UUID
+     * @param displaySlot "left" or "right" for which display slot
+     * @return The animation name, or null if not set
+     */
+    public static String getPlayerDisplayedSwordAnimation(UUID playerUUID, String displaySlot) {
+        String key = playerUUID.toString() + ":" + displaySlot;
+        String result = playerDisplayedSwordAnimations.get(key);
+        Log.debug("[EntitySwordAnimationCache] Get player displayed sword animation: {} -> {}", key, result);
+        return result;
+    }
+
+    /**
+     * Clear animation for a player's displayed sword.
+     *
+     * @param playerUUID The player's UUID
+     * @param displaySlot "left" or "right" for which display slot
+     */
+    public static void clearPlayerDisplayedSwordAnimation(UUID playerUUID, String displaySlot) {
+        String key = playerUUID.toString() + ":" + displaySlot;
+        playerDisplayedSwordAnimations.remove(key);
+        Log.debug("[EntitySwordAnimationCache] Cleared player displayed sword animation: {}", key);
+    }
+
+    /**
+     * Clear all displayed sword animations for a player (when disconnecting).
+     */
+    public static void clearAllPlayerDisplayedSwords(UUID playerUUID) {
+        String prefix = playerUUID.toString() + ":";
+        playerDisplayedSwordAnimations.keySet().removeIf(key -> key.startsWith(prefix));
+        Log.debug("[EntitySwordAnimationCache] Cleared all displayed sword animations for player {}", playerUUID);
     }
 }

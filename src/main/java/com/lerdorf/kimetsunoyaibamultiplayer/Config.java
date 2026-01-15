@@ -63,6 +63,10 @@ public class Config
             .comment("Enable custom sprint animation when holding a nichirin sword")
             .define("enable-nichirin-sprint-animation", true);
 
+    private static final ForgeConfigSpec.BooleanValue DISABLE_BASE_MOD_SWORD_SWING_PARTICLES = BUILDER
+            .comment("Disable sword swing particles from the base KimetsunoYaiba mod (left-click particles only, does not affect breathing form or right-click particles)")
+            .define("disable-base-mod-sword-swing-particles", false);
+
     // Networking / visuals radius
     private static final ForgeConfigSpec.DoubleValue MOB_SLASH_BROADCAST_RANGE = BUILDER
             .comment("Max distance in blocks to send mob sword slash packets to clients",
@@ -91,6 +95,9 @@ public class Config
     }
 
     static {
+        // Initialize first-person sword swing config
+        com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.init(BUILDER);
+
         BUILDER.pop(); // common
     }
 
@@ -108,10 +115,30 @@ public class Config
     public static boolean suppressFormCycleChat;
     public static boolean enableSwordClashing;
     public static boolean enableNichirinSprintAnimation;
+    public static boolean disableBaseModSwordSwingParticles;
     public static double mobSlashBroadcastRange;
     public static double kanrojiEntityHandOffsetX;
     public static double kanrojiEntityHandOffsetY;
     public static double kanrojiEntityHandOffsetZ;
+
+    // First-person sword swing config
+    public static boolean customFirstPersonSwingEnabled;
+    public static boolean counterVanillaSwing;
+    public static double counterSwingRotateX;
+    public static double counterSwingRotateY;
+    public static double counterSwingRotateZ;
+    public static double counterSwingTranslateX;
+    public static double counterSwingTranslateY;
+    public static double counterSwingTranslateZ;
+
+    public static double counterSwingRotateX2;
+    public static double counterSwingRotateY2;
+    public static double counterSwingRotateZ2;
+    public static double counterSwingTranslateX2;
+    public static double counterSwingTranslateY2;
+    public static double counterSwingTranslateZ2;
+    
+    public static double translateScale;
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event)
@@ -130,10 +157,30 @@ public class Config
         suppressFormCycleChat = SUPPRESS_FORM_CYCLE_CHAT.get();
         enableSwordClashing = ENABLE_SWORD_CLASHING.get();
         enableNichirinSprintAnimation = ENABLE_NICHIRIN_SPRINT_ANIMATION.get();
+        disableBaseModSwordSwingParticles = DISABLE_BASE_MOD_SWORD_SWING_PARTICLES.get();
+        System.out.println("[KnY-MP] Config loaded - disableBaseModSwordSwingParticles: " + disableBaseModSwordSwingParticles);
         mobSlashBroadcastRange = MOB_SLASH_BROADCAST_RANGE.get();
         kanrojiEntityHandOffsetX = KANROJI_ENTITY_HAND_OFFSET_X.get();
         kanrojiEntityHandOffsetY = KANROJI_ENTITY_HAND_OFFSET_Y.get();
         kanrojiEntityHandOffsetZ = KANROJI_ENTITY_HAND_OFFSET_Z.get();
+
+        // Load first-person sword swing config
+        customFirstPersonSwingEnabled = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.customSwingEnabled.get();
+        counterVanillaSwing = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterVanillaSwing.get();
+        counterSwingRotateX = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingRotateX.get();
+        counterSwingRotateY = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingRotateY.get();
+        counterSwingRotateZ = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingRotateZ.get();
+        counterSwingTranslateX = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingTranslateX.get();
+        counterSwingTranslateY = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingTranslateY.get();
+        counterSwingTranslateZ = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingTranslateZ.get();
+        counterSwingRotateX2 = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingRotateX2.get();
+        counterSwingRotateY2 = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingRotateY2.get();
+        counterSwingRotateZ2 = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingRotateZ2.get();
+        counterSwingTranslateX2 = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingTranslateX2.get();
+        counterSwingTranslateY2 = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingTranslateY2.get();
+        counterSwingTranslateZ2 = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingTranslateZ2.get();
+        translateScale = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.translateScale.get();
+        
         if (Config.logDebug)
         System.out.println("Common config loaded: logDebug=" + logDebug + ", onScreenDebug=" + onScreenDebug +
                 ", showBreathingDisplay=" + showBreathingDisplay + ", breathingDisplayPosition=" + breathingDisplayPosition +

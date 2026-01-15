@@ -27,8 +27,9 @@ public class DrawSheathAnimationHelper {
     // Animation layer priority (higher than breathing forms at 3000)
     private static final int DRAW_SHEATH_LAYER = 4000;
 
-    // Animation duration in ticks (0.25 seconds = 5 ticks to match animation files)
-    private static final int DRAW_ANIM_TICKS = 5;
+    // Animation duration in ticks
+    private static final int DRAW_ANIM_TICKS = 5;   // 0.25 seconds = 5 ticks for draw animations
+    private static final int SHEATH_ANIM_TICKS = 10; // 0.5 seconds = 10 ticks for sheath animations
 
     // Minimum time between animations (prevents spam from rapid slot switching)
     private static final long ANIMATION_COOLDOWN_MS = 500;
@@ -91,7 +92,7 @@ public class DrawSheathAnimationHelper {
 
     /**
      * Play sheath animation for a player when they sheath their sword.
-     * This plays the draw animation in reverse (negative speed).
+     * Uses dedicated sheath animations instead of playing draw animations in reverse.
      *
      * @param player The player sheathing the sword
      * @param slot The hotbar slot the sword WAS in (previous slot before switch)
@@ -122,19 +123,19 @@ public class DrawSheathAnimationHelper {
         // We can determine this by checking if the slot is NOT offhand (40)
         boolean isMainHand = (slot != 40);
 
-        // Get the same animation name as draw, but we'll play it in reverse
-        String animationName = getDrawAnimationName(isMainHand, sheathPosition, isLeft);
+        // Get the dedicated sheath animation (not reversed draw animation)
+        String animationName = getSheathAnimationName(isMainHand, sheathPosition, isLeft);
 
         if (animationName != null) {
-            Log.debug("Playing sheath animation for player {}: {} REVERSED (previousSlot={}, currentSlot={}, mainHand={}, position={}, left={})",
+            Log.debug("Playing sheath animation for player {}: {} (previousSlot={}, currentSlot={}, mainHand={}, position={}, left={})",
                 player.getName().getString(), animationName, slot, currentSlot, isMainHand, sheathPosition, isLeft);
 
-            // Play the animation with NEGATIVE speed (reverse)
+            // Play the animation with NORMAL speed (dedicated sheath animation)
             AnimationHelper.playAnimationOnLayer(
                 player,
                 animationName,
-                DRAW_ANIM_TICKS,
-                -1.0f,  // REVERSE SPEED
+                SHEATH_ANIM_TICKS,  // 10 ticks (0.5 seconds) for sheath animations
+                1.0f,  // NORMAL SPEED - using dedicated sheath animation
                 DRAW_SHEATH_LAYER
             );
 
@@ -194,7 +195,7 @@ public class DrawSheathAnimationHelper {
 
     /**
      * Play sheath animation for an entity when they exit combat.
-     * This plays the draw animation in reverse.
+     * Uses dedicated sheath animations instead of playing draw animations in reverse.
      *
      * @param entity The entity sheathing their sword
      * @param sheathPosition The position of the sheath
@@ -216,18 +217,18 @@ public class DrawSheathAnimationHelper {
         }
 
         // Entities always use mainhand, assume left position for default
-        String animationName = getDrawAnimationName(true, sheathPosition, true);
+        String animationName = getSheathAnimationName(true, sheathPosition, true);
 
         if (animationName != null) {
-            Log.debug("Playing sheath animation for entity {}: {} REVERSED (position={})",
+            Log.debug("Playing sheath animation for entity {}: {} (position={})",
                 entity.getType().getDescriptionId(), animationName, sheathPosition);
 
-            // Play the animation with NEGATIVE speed (reverse)
+            // Play the animation with NORMAL speed (dedicated sheath animation)
             AnimationHelper.playAnimationOnLayer(
                 entity,
                 animationName,
-                DRAW_ANIM_TICKS,
-                -1.0f,  // REVERSE SPEED
+                SHEATH_ANIM_TICKS,  // 10 ticks (0.5 seconds) for sheath animations
+                1.0f,  // NORMAL SPEED - using dedicated sheath animation
                 DRAW_SHEATH_LAYER
             );
 
@@ -270,6 +271,47 @@ public class DrawSheathAnimationHelper {
             case BACK:
                 // Back positions: both left and right use same animation
                 return "draw_back_" + hand;
+
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Determine the correct sheath animation name based on hand and sheath position.
+     * Uses dedicated sheath animations instead of playing draw animations in reverse.
+     *
+     * Animation mappings:
+     * - Mainhand + Left Hip → sheath_hip_left_mainhand
+     * - Offhand + Left Hip → sheath_hip_left_offhand
+     * - Mainhand + Right Hip → sheath_hip_right_mainhand
+     * - Offhand + Right Hip → sheath_hip_right_offhand
+     * - Mainhand + Back (left or right) → sheath_back_mainhand
+     * - Offhand + Back (left or right) → sheath_back_offhand
+     *
+     * @param isMainHand Whether the sword was in the main hand
+     * @param position The sheath position (HIP or BACK)
+     * @param isLeft Whether the sheath is on the left side
+     * @return The animation name, or null if invalid combination
+     */
+    private static String getSheathAnimationName(boolean isMainHand,
+                                                 SwordDisplayConfig.SwordDisplayPosition position,
+                                                 boolean isLeft) {
+        if (position == null) {
+            return null;
+        }
+
+        String hand = isMainHand ? "mainhand" : "offhand";
+
+        switch (position) {
+            case HIP:
+                // Hip positions: distinguish left vs right
+                String side = isLeft ? "left" : "right";
+                return "sheath_hip_" + side + "_" + hand;
+
+            case BACK:
+                // Back positions: both left and right use same animation
+                return "sheath_back_" + hand;
 
             default:
                 return null;

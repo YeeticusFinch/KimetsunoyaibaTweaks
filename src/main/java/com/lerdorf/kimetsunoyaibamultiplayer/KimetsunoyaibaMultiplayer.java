@@ -115,6 +115,7 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.class);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "kimetsunoyaibamultiplayer/common.toml");
@@ -129,6 +130,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_breathing.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig.SPEC, "kimetsunoyaibamultiplayer/customnpcs.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.SPEC, "kimetsunoyaibamultiplayer/variations.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.SPEC, "kimetsunoyaibamultiplayer/custom_progression.toml");
     }
 
     public static final Capability<ISwordWielderData> SWORD_WIELDER_DATA = CapabilityManager.get(new CapabilityToken<>() {});
@@ -343,6 +345,7 @@ public class KimetsunoyaibaMultiplayer
         // DebugParticlesCommand.register(event.getDispatcher()); // REMOVED: Uses client-only SwordParticleHandler and BonePositionTracker
         // TestAnimCommand.register(event.getDispatcher()); // REMOVED: Uses client-only SwordParticleHandler
         TestCrowQuestCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.TrainingSwordCommand.register(event.getDispatcher());
     }
 
     @SubscribeEvent

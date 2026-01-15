@@ -3,7 +3,9 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
@@ -37,6 +39,12 @@ public class CycleBreathingFormPacket {
             }
 
             ItemStack heldItem = player.getMainHandItem();
+
+            // Check if this is a training sword - training swords can only use first form
+            if (TrainingSwordHelper.isTrainingSword(heldItem)) {
+                handleTrainingSwordCycleAttempt(player, heldItem);
+                return;
+            }
 
             // Check if this is a custom breathing sword (from our API)
             if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem breathingSword) {
@@ -215,5 +223,94 @@ public class CycleBreathingFormPacket {
      */
     private static int[] getFormsForStyle(int style) {
         return BaseModStyleMapping.getFormsForStyle(style);
+    }
+
+    /**
+     * Handles when a player tries to cycle forms with a training sword.
+     * Training swords can only use the first form, so we reset to first form and notify the player.
+     */
+    private void handleTrainingSwordCycleAttempt(ServerPlayer player, ItemStack heldItem) {
+        // Get player breathing data
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
+
+        // Check if this is a custom breathing sword (from our API)
+        if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem breathingSword) {
+            // Handle custom breathing sword training restriction
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique technique =
+                breathingSword.getBreathingTechnique();
+
+            // Reset to first form (index 0)
+            if (data.getCurrentFormIndex() != 0) {
+                data.setCurrentFormIndex(0);
+
+                // Get the first form to update breathes value
+                com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm firstForm = technique.getForm(0);
+                if (firstForm != null) {
+                    double formId = firstForm.getFormId();
+                    player.getPersistentData().putDouble("breathes", formId);
+                    data.setBaseModBreathesValue(formId);
+
+                    // Sync breathes value
+                    com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+                        new BreathesValueSyncPacket(player.getUUID(), formId),
+                        player
+                    );
+
+                    // Sync form index
+                    com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
+                        new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket(
+                            player.getUUID(), 0)
+                    );
+                }
+            }
+        } else {
+            // Handle base mod sword training restriction
+            double currentBreathes = player.getPersistentData().getDouble("breathes");
+
+            if (currentBreathes == 0.0) {
+                // Send message anyway since they're trying to cycle
+                player.displayClientMessage(
+                    Component.literal("\u00A7e[Training Sword] \u00A7fOnly the 1st Form is available on a training sword."),
+                    true
+                );
+                return;
+            }
+
+            // Get the first form for this style
+            double firstForm = TrainingSwordHelper.getFirstFormForStyle(currentBreathes);
+
+            // Reset to first form if not already there
+            if (currentBreathes != firstForm) {
+                player.getPersistentData().putDouble("breathes", firstForm);
+
+                // Sync the breathes value to the client
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+                    new BreathesValueSyncPacket(player.getUUID(), firstForm),
+                    player
+                );
+            }
+        }
+
+        // Reset variation index for both sword types
+        data.setCurrentVariationIndex(0);
+        data.setBaseModFormName("");
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.saveToNBT(player);
+
+        // Sync variation reset
+        com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+            new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket(player.getUUID(), 0),
+            player
+        );
+
+        // Send message to player
+        player.displayClientMessage(
+            Component.literal("\u00A7e[Training Sword] \u00A7fOnly the 1st Form is available on a training sword."),
+            true // Display in action bar
+        );
+
+        if (Config.logDebug) {
+            Log.debug("Training sword form cycle blocked - player tried to cycle with training sword");
+        }
     }
 }

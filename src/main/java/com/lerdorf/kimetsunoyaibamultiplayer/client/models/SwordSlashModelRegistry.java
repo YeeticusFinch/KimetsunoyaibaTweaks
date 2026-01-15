@@ -27,6 +27,12 @@ public class SwordSlashModelRegistry {
     // Map model keys to frame counts for animated textures (e.g., "forest" -> 10)
     private static final Map<String, Integer> ANIMATED_TEXTURE_FRAMES = new HashMap<>();
 
+    // Map model keys to frame delay in ticks (e.g., "forest" -> 2 means change frame every 2 ticks)
+    private static final Map<String, Integer> ANIMATED_TEXTURE_FRAME_DELAY = new HashMap<>();
+
+    // Default frame delay in ticks
+    private static final int DEFAULT_FRAME_DELAY = 2;
+
     // Map model keys to resource namespaces (e.g., "forest" -> "knyextraadditions")
     private static final Map<String, String> MODEL_KEY_TO_NAMESPACE = new HashMap<>();
 
@@ -196,5 +202,42 @@ public class SwordSlashModelRegistry {
      */
     public static boolean isAnimated(String modelKey) {
         return ANIMATED_TEXTURE_FRAMES.containsKey(modelKey) && ANIMATED_TEXTURE_FRAMES.get(modelKey) > 1;
+    }
+
+    /**
+     * Registers an animated texture with both frame count and frame delay
+     * @param modelKey The model key (e.g., "forest")
+     * @param frameCount Number of texture frames (must be > 1)
+     * @param ticksPerFrame Ticks to wait before changing to next frame (default: 2)
+     */
+    public static void registerAnimatedTexture(String modelKey, int frameCount, int ticksPerFrame) {
+        registerAnimatedTexture(modelKey, frameCount);
+        if (ticksPerFrame > 0) {
+            ANIMATED_TEXTURE_FRAME_DELAY.put(modelKey, ticksPerFrame);
+            Log.info("Set frame delay for " + modelKey + ": " + ticksPerFrame + " ticks per frame");
+        }
+    }
+
+    /**
+     * Sets the frame delay for an animated texture model
+     * @param modelKey The model key
+     * @param ticksPerFrame Ticks to wait before changing to next frame
+     */
+    public static void setFrameDelay(String modelKey, int ticksPerFrame) {
+        if (ticksPerFrame > 0) {
+            ANIMATED_TEXTURE_FRAME_DELAY.put(modelKey, ticksPerFrame);
+            Log.info("Set frame delay for " + modelKey + ": " + ticksPerFrame + " ticks per frame");
+        } else {
+            Log.warn("Frame delay must be > 0. Ignoring for: " + modelKey);
+        }
+    }
+
+    /**
+     * Gets the frame delay for a model key (ticks per frame)
+     * @param modelKey The model key
+     * @return Ticks per frame (default: 2)
+     */
+    public static int getFrameDelay(String modelKey) {
+        return ANIMATED_TEXTURE_FRAME_DELAY.getOrDefault(modelKey, DEFAULT_FRAME_DELAY);
     }
 }

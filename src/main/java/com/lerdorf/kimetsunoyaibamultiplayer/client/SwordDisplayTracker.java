@@ -38,6 +38,7 @@ public class SwordDisplayTracker {
         public ItemStack sword;
         public SwordDisplayConfig.SwordDisplayPosition displayPosition;
         public String swordItemId;
+        public int transitionDelay = 0; // Ticks remaining before sword appears on hip/back
 
         public SlotSwordEntry(int slot, ItemStack sword) {
             this.hotbarSlot = slot;
@@ -58,6 +59,16 @@ public class SwordDisplayTracker {
             }
             ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
             return itemId != null && itemId.toString().equals(swordItemId);
+        }
+
+        public boolean isInTransition() {
+            return transitionDelay > 0;
+        }
+
+        public void tickTransition() {
+            if (transitionDelay > 0) {
+                transitionDelay--;
+            }
         }
     }
 
@@ -82,11 +93,19 @@ public class SwordDisplayTracker {
         public Item rightSheathSwordItem = null;
 
         public boolean hasLeftSword() {
-            return leftDisplay != null && !leftDisplay.isEmpty();
+            return leftDisplay != null && !leftDisplay.isEmpty() && !leftDisplay.isInTransition();
         }
 
         public boolean hasRightSword() {
-            return rightDisplay != null && !rightDisplay.isEmpty();
+            return rightDisplay != null && !rightDisplay.isEmpty() && !rightDisplay.isInTransition();
+        }
+
+        public boolean hasLeftSwordInTransition() {
+            return leftDisplay != null && !leftDisplay.isEmpty() && leftDisplay.isInTransition();
+        }
+
+        public boolean hasRightSwordInTransition() {
+            return rightDisplay != null && !rightDisplay.isEmpty() && rightDisplay.isInTransition();
         }
 
         public ItemStack getLeftHipSword() {
@@ -142,7 +161,38 @@ public class SwordDisplayTracker {
         /**
          * Removes display for a specific hotbar slot
          */
+        public boolean removeSlot(int slot, UUID playerUUID) {
+            if (leftDisplay != null && leftDisplay.hotbarSlot == slot) {
+                leftDisplay = null;
+                leftSheathItem = null;
+                leftSheathPersists = false;
+                leftSheathOriginalSlot = -1;
+                leftSheathPosition = null;
+                leftSheathSwordItem = null;
+                // Clear animation cache for this display slot
+                EntitySwordAnimationCache.clearPlayerDisplayedSwordAnimation(playerUUID, "left");
+                return true;
+            }
+            if (rightDisplay != null && rightDisplay.hotbarSlot == slot) {
+                rightDisplay = null;
+                rightSheathItem = null;
+                rightSheathPersists = false;
+                rightSheathOriginalSlot = -1;
+                rightSheathPosition = null;
+                rightSheathSwordItem = null;
+                // Clear animation cache for this display slot
+                EntitySwordAnimationCache.clearPlayerDisplayedSwordAnimation(playerUUID, "right");
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * Removes display for a specific hotbar slot (legacy method without playerUUID)
+         */
+        @Deprecated
         public boolean removeSlot(int slot) {
+            // This method is kept for backward compatibility, but won't clear cache
             if (leftDisplay != null && leftDisplay.hotbarSlot == slot) {
                 leftDisplay = null;
                 leftSheathItem = null;
@@ -166,14 +216,18 @@ public class SwordDisplayTracker {
 
         /**
          * Adds a sword to display from a specific slot
+         * @param withDelay If true, adds a 5-tick transition delay before showing on hip/back
          * @return true if added successfully
          */
-        public boolean addSword(int slot, ItemStack sword) {
+        public boolean addSword(int slot, ItemStack sword, boolean withDelay) {
             if (isSlotDisplayed(slot)) {
                 return false;
             }
 
             SlotSwordEntry entry = new SlotSwordEntry(slot, sword);
+            if (withDelay) {
+                entry.transitionDelay = 5; // 5 ticks delay (halfway through 10-tick sheath animation)
+            }
 
             if (leftDisplay == null) {
                 leftDisplay = entry;
@@ -189,6 +243,15 @@ public class SwordDisplayTracker {
                 return true;
             }
             return false;
+        }
+
+        /**
+         * Adds a sword to display from a specific slot (legacy method without delay)
+         * @return true if added successfully
+         */
+        @Deprecated
+        public boolean addSword(int slot, ItemStack sword) {
+            return addSword(slot, sword, false);
         }
 
         public void clear() {
@@ -223,6 +286,16 @@ public class SwordDisplayTracker {
         // Update for all players in view
         for (Player player : mc.level.players()) {
             updatePlayerSwordDisplay(player);
+        }
+
+        // Tick transition delays for all players
+        for (SwordDisplayState state : playerStates.values()) {
+            if (state.leftDisplay != null) {
+                state.leftDisplay.tickTransition();
+            }
+            if (state.rightDisplay != null) {
+                state.rightDisplay.tickTransition();
+            }
         }
     }
 
@@ -297,7 +370,7 @@ public class SwordDisplayTracker {
                 }
 
                 // Remove sword from display
-                state.removeSlot(currentSlot);
+                state.removeSlot(currentSlot, playerUUID);
 
                 // DRAW ANIMATION: Trigger when sword is drawn from sheath
                 DrawSheathAnimationHelper.playDrawAnimation(player, currentSlot,
@@ -329,13 +402,14 @@ public class SwordDisplayTracker {
                 !SwordParticleMapping.isSheathExempt(previousHeld) &&
                 !state.isSlotDisplayed(previousSlot)) {
 
-                if (state.addSword(previousSlot, previousHeld)) {
+                // Add with 5-tick transition delay (sword stays in hand during first half of sheath animation)
+                if (state.addSword(previousSlot, previousHeld, true)) {
                     if (Config.logDebug) {
-                        Log.debug("Adding sword from slot {} to display for player {}",
+                        Log.debug("Adding sword from slot {} to display for player {} (with 5-tick transition delay)",
                             previousSlot, player.getName().getString());
                     }
 
-                    // SHEATH ANIMATION: Trigger when sword is sheathed (reverse draw animation)
+                    // SHEATH ANIMATION: Trigger when sword is sheathed
                     boolean isLeftSlotSheath = state.leftDisplay != null &&
                         state.leftDisplay.hotbarSlot == previousSlot;
                     SwordDisplayConfig.SwordDisplayPosition sheathPos = isLeftSlotSheath ?
@@ -584,6 +658,8 @@ public class SwordDisplayTracker {
         playerStates.remove(playerUUID);
         previousHeldSlots.remove(playerUUID);
         previousHotbarContents.remove(playerUUID);
+        // Clear displayed sword animation cache for this player
+        EntitySwordAnimationCache.clearAllPlayerDisplayedSwords(playerUUID);
     }
 
     /**

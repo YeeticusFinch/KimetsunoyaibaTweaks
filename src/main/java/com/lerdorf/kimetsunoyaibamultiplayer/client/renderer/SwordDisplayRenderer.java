@@ -42,6 +42,16 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
 
         SwordDisplayTracker.SwordDisplayState state = SwordDisplayTracker.getDisplayState(player.getUUID());
 
+        // Check if any swords are in transition (being sheathed)
+        // During transition, render them in the player's hand
+        if (state.hasLeftSwordInTransition()) {
+            renderSwordInHand(poseStack, buffer, packedLight, player, state.getLeftHipSword(),
+                            limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
+        } else if (state.hasRightSwordInTransition()) {
+            renderSwordInHand(poseStack, buffer, packedLight, player, state.getRightHipSword(),
+                            limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
+        }
+
         // Render left hip/back sword (and sheath)
         if (state.hasLeftSword()) {
             renderSwordWithSheath(poseStack, buffer, packedLight, player, state.getLeftHipSword(),
@@ -135,6 +145,50 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
 
         // Render the sheath
         SheathModelRenderer.renderSheath(sheathItem, poseStack, buffer, packedLight, player.getId());
+
+        poseStack.popPose();
+    }
+
+    /**
+     * Renders a sword in the player's hand during transition (first 5 ticks of sheath animation).
+     * This keeps the sword visible in-hand before it moves to hip/back.
+     */
+    private void renderSwordInHand(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                   AbstractClientPlayer player, ItemStack sword,
+                                   float limbSwing, float limbSwingAmount,
+                                   float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
+        if (sword.isEmpty()) {
+            return;
+        }
+
+        poseStack.pushPose();
+
+        // Position the sword in the main hand
+        // Use the player model's right arm bone position
+        PlayerModel<AbstractClientPlayer> playerModel = this.getParentModel();
+
+        // Translate to the right arm position
+        playerModel.rightArm.translateAndRotate(poseStack);
+
+        // Additional positioning to align with hand
+        poseStack.translate(0.0625, 0.125, 0.0625); // Fine-tune position in hand
+
+        // Apply rotations for proper sword grip
+        poseStack.mulPose(Axis.XP.rotationDegrees(-90)); // Point sword forward
+        poseStack.mulPose(Axis.YP.rotationDegrees(0));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(0));
+
+        // Render the sword as if held
+        net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(
+            sword,
+            ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+            packedLight,
+            net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
+            poseStack,
+            buffer,
+            player.level(),
+            player.getId()
+        );
 
         poseStack.popPose();
     }

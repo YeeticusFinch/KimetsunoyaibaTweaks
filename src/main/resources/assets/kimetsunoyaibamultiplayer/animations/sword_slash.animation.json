@@ -1,0 +1,26 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"kimetsunoyaibamultiplayer.sword_slash.base": {
+			"loop": true,
+			"animation_length": 0.01
+		},
+		"kimetsunoyaibamultiplayer.sword_slash.reverse": {
+			"loop": true,
+			"animation_length": 0.01,
+			"bones": {
+				"bb_main": {
+					"scale": [-1, 1, 1]
+				}
+			}
+		},
+		"reverse": {
+			"loop": true,
+			"bones": {
+				"bb_main": {
+					"scale": [-1, 1, 1]
+				}
+			}
+		}
+	}
+}

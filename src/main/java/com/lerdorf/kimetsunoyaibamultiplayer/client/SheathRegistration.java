@@ -117,7 +117,7 @@ public class SheathRegistration {
             }
         }
 
-        // Register custom sheath scales
+        // Register custom sheath scales (legacy API)
         SheathModelRenderer.registerSheathScale(SheathItems.SWORD_SHEATH_IGURO.get(), 1.31f);
 
         if (Config.logDebug) {

@@ -1083,6 +1083,22 @@ public class EnhancedLoveForms {
 
                 // Prevent normal attack swing
                 setCancelAttackSwing(entity, true);
+                
+                final Vec3 mainTargetPos = entity.position().add(entity.getLookAngle().scale(15));
+                LivingEntity mainTargetEntity = null;
+                final net.minecraft.world.entity.Mob mob = entity instanceof net.minecraft.world.entity.Mob ? (net.minecraft.world.entity.Mob)entity : null;
+                
+                if (mob != null) {
+                    mainTargetEntity = mob.getTarget();
+                    if (mainTargetEntity == null || !mainTargetEntity.isAlive()) {
+                        return;
+                    }
+                    
+                    // Look at target's eye position for a natural head tilt
+                    MovementHelper.lookAt(entity, mainTargetEntity.getEyePosition());
+                }
+                
+                final LivingEntity mainTargetEntityFinal = mainTargetEntity;
 
                 final int totalDuration = 96; // 5.8 seconds
                 final int[] currentTick = {0};
@@ -1165,15 +1181,31 @@ public class EnhancedLoveForms {
                 	
                 	if (currentTick[0] < 14) {
                 		// Jump upwards and backwards (do the backflip)
-                		MovementHelper.lookAtTarget(entity);
+                		if (mob != null) {
+                    		if (mainTargetEntityFinal != null && mainTargetEntityFinal.isAlive())
+                    			MovementHelper.lookAt(entity, mainTargetEntityFinal.getEyePosition());
+                    		else
+                    			MovementHelper.lookAt(entity,  mainTargetPos);
+                    	}
                 		MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(-0.65).add(0, 1.5f, 0));
                 	}
                 	else if (currentTick[0] < 25) {
                 		// Hover and aim
                 		MovementHelper.setVelocity(entity, entity.getDeltaMovement().multiply(1, 0, 1));
-                		MovementHelper.lookAtTarget(entity);
+                		if (mob != null) {
+                    		if (mainTargetEntityFinal != null && mainTargetEntityFinal.isAlive())
+                    			MovementHelper.lookAt(entity, mainTargetEntityFinal.getEyePosition());
+                    		else
+                    			MovementHelper.lookAt(entity,  mainTargetPos);
+                    	}
                 	}
                 	else if (currentTick[0] == 26) {
+                		if (mob != null) {
+                    		if (mainTargetEntityFinal != null && mainTargetEntityFinal.isAlive())
+                    			MovementHelper.lookAt(entity, mainTargetEntityFinal.getEyePosition());
+                    		else
+                    			MovementHelper.lookAt(entity,  mainTargetPos);
+                    	}
                 		// Start the sword slashes and tornado
                 		LoveTornadoSpawner.spawnLoveTornado(
                 				level,
@@ -1192,6 +1224,12 @@ public class EnhancedLoveForms {
                 		entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, totalDuration+2-currentTick[0], 3)); // To stop the fall damage
                 	}
                 	else if (currentTick[0] < 31) {
+                		if (mob != null) {
+                    		if (mainTargetEntityFinal != null && mainTargetEntityFinal.isAlive())
+                    			MovementHelper.lookAt(entity, mainTargetEntityFinal.getEyePosition());
+                    		else
+                    			MovementHelper.lookAt(entity,  mainTargetPos);
+                    	}
                 		// Tornado is starting in the thin phase
                 		// Launch in the direction
                 		MovementHelper.setRotation(entity, yawPitch[0], yawPitch[1]);

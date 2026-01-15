@@ -2,22 +2,38 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.events;
 
 import java.util.List;
 
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.DualLayerSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker.SlashRenderRequest;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.MultiBufferSource.BufferSource;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -88,6 +104,46 @@ public class ClientRenderEvents {
             // Calculate scale (use sizeScaler for raw slashes, default 2.5f for standard slashes)
             float scale = (req.isRawSlash || req.isRawHorizontal || req.isRawVertical) ? (2.5f * req.sizeScaler) : 2.5f;
 
+            // Determine if we should flip the texture horizontally based on animation direction
+            // For animations that spin in the opposite direction, we flip the texture using the "reverse" animation
+            boolean flipHorizontal = false;
+            if (req.isHorizontal) {
+                // For horizontal slashes (sword_to_left vs sword_to_right):
+                // sword_to_right has leftToRight=false → flip texture
+                // sword_to_left has leftToRight=true → don't flip
+                flipHorizontal = !req.leftToRight;
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Horizontal slash: leftToRight=" + req.leftToRight + ", flipHorizontal=" + flipHorizontal + ", anim=" + req.animationName);
+            } else if (req.isVertical) {
+                // For vertical slashes (sword_overhead vs sword_to_upper):
+                // sword_overhead has upward=false → flip texture
+                // sword_to_upper has upward=true → don't flip
+                flipHorizontal = !req.upward;
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Vertical slash: upward=" + req.upward + ", flipHorizontal=" + flipHorizontal + ", anim=" + req.animationName);
+            } else if (req.isSpin) {
+                // For spin attacks (sword_rotate):
+                // Use reverse flag to determine flip
+                flipHorizontal = !req.reverse;
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Spin slash: reverse=" + req.reverse + ", flipHorizontal=" + flipHorizontal + ", anim=" + req.animationName);
+            } else if (req.isRawHorizontal) {
+                // For raw horizontal slashes:
+                // reverse=false → flip texture
+                // reverse=true → don't flip
+                flipHorizontal = !req.reverse;
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Raw horizontal slash: reverse=" + req.reverse + ", flipHorizontal=" + flipHorizontal + ", anim=" + req.animationName);
+            } else if (req.isRawVertical) {
+                // For raw vertical slashes:
+                // reverse=false → flip texture
+                // reverse=true → don't flip
+                flipHorizontal = !req.reverse;
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Raw vertical slash: reverse=" + req.reverse + ", flipHorizontal=" + flipHorizontal + ", anim=" + req.animationName);
+            } else if (req.isRawSlash) {
+                // For raw slashes with custom angle:
+                // reverse=false → flip texture
+                // reverse=true → don't flip
+                flipHorizontal = !req.reverse;
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Raw slash: reverse=" + req.reverse + ", flipHorizontal=" + flipHorizontal + ", anim=" + req.animationName);
+            }
+
             // Render model with dual-layer system (base + emissive)
             DualLayerSlashRenderer.renderDualLayer(
                 poseStack,
@@ -99,7 +155,10 @@ public class ClientRenderEvents {
                 scale,        // Scale (adjusted by sizeScaler for raw slashes)
                 progress,
                 req.modelKey,
-                packedLight
+                packedLight,
+                flipHorizontal,  // Pass flip flag to use "base" or "reverse" animation
+                req.startTime,   // Start time for animated texture frame calculation
+                req.duration     // Duration for animated texture frame calculation
             );
         }
 
@@ -110,5 +169,286 @@ public class ClientRenderEvents {
         queue.removeIf(req -> req.shouldRemove());
     }
 
+    /** 
+     * First-person sword animation rendering
+     * Uses keyframe-based animations that match the third-person player animations
+     */
+    /*
+    @SubscribeEvent
+    public static void onRenderHand(RenderHandEvent event) { // THIS IS THE OLD ONE, DO NOT USE!!!
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+
+        if (player == null) return;
+
+        // Check if custom first-person swing is enabled
+        if (!Config.customFirstPersonSwingEnabled) return;
+
+        // Only apply to main hand
+        //if (event.getHand() != InteractionHand.MAIN_HAND) return;
+        
+        float side = event.getHand() != InteractionHand.MAIN_HAND ? 1.0F : -1.0F;
+
+        ItemStack stack = event.getItemStack();
+
+        // Check if holding a nichirin sword (from this mod, base mod, or any addon)
+        boolean holdingNichirinSword = isNichirinSword(stack);
+
+        if (!holdingNichirinSword) return;
+
+        // Update animation tracking for the local player
+        com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker.updateCurrentAnimation(player);
+
+        // Get current animation
+        String currentAnimation = com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker.getCurrentAnimation();
+
+        // Only apply custom rendering if we have keyframes for this animation
+        if (currentAnimation == null || !com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes.hasKeyframes(currentAnimation)) {
+            return; // Let vanilla handle it
+        }
+
+        // Get animation progress
+        float animProgress = com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker.getCurrentAnimationProgress();
+
+        // Get keyframes for this animation
+        var keyframes = com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes.getKeyframes(currentAnimation);
+        if (keyframes == null) return;
+
+        // Find the keyframe pair to interpolate between
+        var framePair = com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes.findFramePair(keyframes, animProgress);
+        if (framePair == null) return;
+
+        // Interpolate between keyframes
+        Vec3[] transforms = com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes.interpolateKeyframes(framePair, animProgress);
+        Vec3 translation = transforms[0];
+        Vec3 rotation = transforms[1];
+
+        // DON'T cancel the event - let vanilla apply everything (hand position, item transforms)
+        // We'll just add transforms to counter vanilla swing and apply our custom animation
+        PoseStack poseStack = event.getPoseStack();
+        float swingProgress = event.getSwingProgress();
+
+        // Apply counter-swing transform to cancel out vanilla's swing animation (if enabled)
+        // This makes our keyframes the ONLY animation
+        if (Config.counterVanillaSwing) {
+            applyCounterSwing(poseStack, swingProgress, side);
+        }
+
+        // Apply our custom keyframe-based transforms
+        // These are now applied on top of: vanilla base + item model transforms + (canceled vanilla swing)
+        poseStack.translate(translation.x * Config.translateScale, translation.y * Config.translateScale, translation.z * Config.translateScale);
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) rotation.x));  // Pitch
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) rotation.y));  // Yaw
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) rotation.z));  // Roll
+
+        // Let vanilla continue - it will apply item model JSON transforms and render
+        // Final hierarchy: vanilla base → vanilla swing → counter-swing → our keyframes → item model JSON → render
+    }*/
+    
+    @SubscribeEvent
+    public static void onRenderHand(RenderHandEvent event) {
+        if (event.getHand() != InteractionHand.MAIN_HAND) return;
+
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null) return;
+
+        ItemStack stack = event.getItemStack();
+
+        // Check if holding a nichirin sword (from this mod, base mod, or any addon)
+        boolean holdingNichirinSword = isNichirinSword(stack);
+
+        if (!holdingNichirinSword) return;
+
+        event.setCanceled(true);
+
+        PoseStack poseStack = event.getPoseStack();
+        MultiBufferSource buffers = event.getMultiBufferSource();
+
+        poseStack.pushPose();
+
+        ItemInHandRenderer renderer = mc.gameRenderer.itemInHandRenderer;
+
+        // ✔ VANILLA BASE OFFSET
+        applyVanillaFirstPersonBaseTransform(
+            poseStack,
+            player.getMainArm(),
+            event.getEquipProgress()
+        );
+
+        // ❌ DO NOT call applyItemArmAttackTransform
+
+        // ✔ CUSTOM ANIMATION
+        applyCustomSwordAnimation(poseStack, player, event.getSwingProgress());
+
+        // ✔ RENDER
+        mc.getItemRenderer().renderStatic(
+        	    stack,
+        	    ItemDisplayContext.FIRST_PERSON_RIGHT_HAND,
+        	    event.getPackedLight(),
+        	    OverlayTexture.NO_OVERLAY,
+        	    poseStack,
+        	    buffers,
+        	    mc.level,
+        	    player.getId()
+        	);
+
+        poseStack.popPose();
+    }
+    
+    private static boolean handSwing = false;
+    
+    private static void applyCustomSwordAnimation(
+            PoseStack poseStack,
+            LocalPlayer player,
+            float swingProgress
+    ) {
+    	
+        // Update animation tracking
+        com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
+                .updateCurrentAnimation(player);
+
+        // Get current animation
+        String currentAnimation =
+                com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
+                        .getCurrentAnimation();
+
+        // No animation → do nothing
+        if (currentAnimation == null ||
+            !com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes
+                    .hasKeyframes(currentAnimation)) {
+            return;
+        }
+        
+        if (swingProgress > 0.01f) handSwing = true; // this is a hand swing, use hand swing progress
+        
+     // Get animation progress
+        float animProgress = com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker.getCurrentAnimationProgress();
+
+        if (!handSwing && swingProgress < 0.01 && animProgress > 0.01) swingProgress = animProgress; // not a hand swing, use animation progress
+        
+        if (handSwing && swingProgress < 0.01 && animProgress < 0.01) handSwing = false; // reset
+        
+        // Fetch keyframes
+        var keyframes =
+                com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes
+                        .getKeyframes(currentAnimation);
+        if (keyframes == null) return;
+
+        // Find interpolation pair using actual animation progress
+        var framePair =
+                com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes
+                        .findFramePair(keyframes, animProgress);
+        if (framePair == null) return;
+
+        // 🔹 Interpolate (translation + quaternion rotation)
+        Object[] transforms =
+                com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes
+                        .interpolateKeyframes(framePair, animProgress);
+
+        Vec3 translation = (Vec3) transforms[0];
+        Quaternionf rotation = (Quaternionf) transforms[1];
+
+        // 🔹 Apply translation (local-space offset from rest pose)
+        poseStack.translate(
+                translation.x * Config.translateScale,
+                translation.y * Config.translateScale,
+                translation.z * Config.translateScale
+        );
+
+        // 🔹 Apply rotation (single quaternion, correct order)
+        poseStack.mulPose(rotation);
+    }
+
+
+	private static void applyVanillaFirstPersonBaseTransform(
+            PoseStack poseStack,
+            HumanoidArm arm,
+            float equipProgress
+    ) {
+        int side = arm == HumanoidArm.RIGHT ? 1 : -1;
+
+        // Move hand to side
+        poseStack.translate(
+            side * 0.56F,
+            -0.52F + equipProgress * -0.6F,
+            -0.72F
+        );
+    }
+
+
+    /**
+     * Apply counter-swing transform to cancel out vanilla's swing animation
+     * Vanilla applies swing animation, we reverse it so our keyframes are the only animation
+     */
+    private static void applyCounterSwing(PoseStack poseStack, float swingProgress, float side) {
+        if (swingProgress <= 0.0f) return; // No swing, no counter needed
+
+        // Vanilla's swing animation uses these calculations:
+        // swingAngle = sin(swingProgress^2 * PI)
+        // swingAngle2 = sin(sqrt(swingProgress) * PI)
+
+        float swingAngle = Mth.sin(swingProgress * swingProgress * (float) Math.PI);
+        float swingAngle2 = Mth.sin(Mth.sqrt(swingProgress) * (float) Math.PI);
+
+        // Reverse vanilla's swing transforms
+        // Vanilla applies these (for right hand), so we apply the opposite
+        // Note: We need to apply in REVERSE order of vanilla's application
+
+     // Reverse vanilla's translation
+        poseStack.translate(
+        		// 0 - side * 1.2 * swingSqrt
+        	    side * Config.counterSwingTranslateX * swingAngle + side * Config.counterSwingTranslateX2 * swingAngle2,
+        	    // 0 - 1.05 * swingSqrt
+        	    Config.counterSwingTranslateY * swingAngle + Config.counterSwingTranslateY2 * swingAngle2,
+        	    // 0.5 * swing
+        	    Config.counterSwingTranslateZ * swingAngle + Config.counterSwingTranslateZ2 * swingAngle2
+        	);
+
+        // Reverse vanilla's Y rotation (yaw swing)
+        // swingSqrt * side * 85
+        poseStack.mulPose(Axis.YP.rotationDegrees(swingAngle * (float)Config.counterSwingRotateY * side + swingAngle2 * (float)Config.counterSwingRotateY2 * side));
+        
+        // Reverse vanilla's Z rotation (roll swing)
+        // swingSqrt * side * (-23)
+        poseStack.mulPose(Axis.ZP.rotationDegrees(swingAngle * (float)Config.counterSwingRotateZ * side + swingAngle2 * (float)Config.counterSwingRotateZ2 * side));
+
+        // Reverse vanilla's X rotation (pitch swing)
+        // swingSqrt * 25
+        poseStack.mulPose(Axis.XP.rotationDegrees(swingAngle * (float)Config.counterSwingRotateX + swingAngle2 * (float)Config.counterSwingRotateX2));
+        
+        
+    }
+
+    /**
+     * Check if an item is a nichirin sword (from this mod, base mod, or any addon)
+     */
+    private static boolean isNichirinSword(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+
+        // Check 1: Is it from our mod (BreathingSwordItem)?
+        if (stack.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
+            return true;
+        }
+
+        // Check 2: Is it registered in SwordRegistry (addon support)?
+        if (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getSword(stack.getItem()) != null) {
+            return true;
+        }
+
+        // Check 3: Is it from the base KnY mod?
+        net.minecraft.resources.ResourceLocation itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
+        if (itemId.getNamespace().equals("kimetsunoyaiba")) {
+            // Check if it's a nichirin sword based on the item name
+            String path = itemId.getPath();
+            if (path.startsWith("nichirinsword_") ||
+                path.contains("nichirintou") ||
+                path.equals("nichirinsword")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 }

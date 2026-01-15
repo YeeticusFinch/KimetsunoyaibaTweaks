@@ -125,20 +125,26 @@ public class KanrojiSwordAnimationHandler {
         if ((kanrojiOnLeftHip || kanrojiOnRightHip) && !isHoldingKanrojiSword) {
             String targetAnimation = "sheath";
             boolean animationChanged = !targetAnimation.equals(state.currentAnimation);
-            boolean leftNeedsUpdate = kanrojiOnLeftHip &&
-                                      !targetAnimation.equals(NichirinSwordKanrojiAnimated.getAnimationFromStack(displayState.getLeftHipSword()));
-            boolean rightNeedsUpdate = kanrojiOnRightHip &&
-                                       !targetAnimation.equals(NichirinSwordKanrojiAnimated.getAnimationFromStack(displayState.getRightHipSword()));
+
+            // Check cache instead of NBT for displayed swords
+            String leftCachedAnim = kanrojiOnLeftHip ?
+                EntitySwordAnimationCache.getPlayerDisplayedSwordAnimation(playerUUID, "left") : null;
+            String rightCachedAnim = kanrojiOnRightHip ?
+                EntitySwordAnimationCache.getPlayerDisplayedSwordAnimation(playerUUID, "right") : null;
+
+            boolean leftNeedsUpdate = kanrojiOnLeftHip && !targetAnimation.equals(leftCachedAnim);
+            boolean rightNeedsUpdate = kanrojiOnRightHip && !targetAnimation.equals(rightCachedAnim);
 
             if (animationChanged || leftNeedsUpdate || rightNeedsUpdate) {
                 Log.info("[KanrojiSwordAnimationHandler] Kanroji sword on hip/back - triggering sheath animation");
                 state.currentAnimation = targetAnimation;
-                // Trigger sheath animation on the displayed sword(s)
+
+                // Set animation in cache for displayed swords (bypasses ItemStack NBT issues)
                 if (kanrojiOnLeftHip && (animationChanged || leftNeedsUpdate)) {
-                    KanrojiSwordAnimationTrigger.triggerAnimationOnItemStack(player, displayState.getLeftHipSword(), targetAnimation);
+                    EntitySwordAnimationCache.setPlayerDisplayedSwordAnimation(playerUUID, "left", targetAnimation);
                 }
                 if (kanrojiOnRightHip && (animationChanged || rightNeedsUpdate)) {
-                    KanrojiSwordAnimationTrigger.triggerAnimationOnItemStack(player, displayState.getRightHipSword(), targetAnimation);
+                    EntitySwordAnimationCache.setPlayerDisplayedSwordAnimation(playerUUID, "right", targetAnimation);
                 }
             }
             return;
@@ -465,6 +471,8 @@ public class KanrojiSwordAnimationHandler {
      */
     public static void cleanup(UUID playerUUID) {
         entityStates.remove(playerUUID);
+        // Clear displayed sword animation cache for this player
+        EntitySwordAnimationCache.clearAllPlayerDisplayedSwords(playerUUID);
     }
 
     /**

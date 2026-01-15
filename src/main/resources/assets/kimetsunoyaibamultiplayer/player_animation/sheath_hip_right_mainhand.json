@@ -1,0 +1,31 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"sheath_hip_right_mainhand": {
+			"animation_length": 0.5,
+			"bones": {
+				"right_arm": {
+					"rotation": {
+						"0.0": {
+							"post": [359.95643, 1.10946, -357.50181],
+							"lerp_mode": "catmullrom"
+						},
+						"0.0833": {
+							"post": [286.35357, -21.15613, -240.75869],
+							"lerp_mode": "catmullrom"
+						},
+						"0.1667": {
+							"post": [236.32394, -11.52052, -158.21101],
+							"lerp_mode": "catmullrom"
+						},
+						"0.25": {
+							"post": [203.82394, -11.52052, -158.21101],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		}
+	},
+	"geckolib_format_version": 2
+}

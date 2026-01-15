@@ -219,7 +219,7 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 	 */
 	public static AttributeSupplier.Builder createAttributes() {
 		return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 140.0D) // Hashira health
-				.add(Attributes.ATTACK_DAMAGE, 1.4D) // Base damage (Strength effect adds the rest)
+				.add(Attributes.ATTACK_DAMAGE, 1.0D) // Base damage (Strength effect adds the rest)
 				.add(Attributes.MOVEMENT_SPEED, 0.18D) // Fast movement (Speed effect multiplies this)
 				.add(Attributes.ATTACK_SPEED, 17.0D) // Extremely fast attack speed baseline
 				.add(Attributes.ARMOR, 19.0D) // From armor equipment
@@ -262,7 +262,7 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 10, true, false));
 
 		// Resistance 4 (amplifier 3 = Resistance IV)
-		this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 3, true, false));
+		this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 2, true, false));
 
 		// Set persistence required (don't despawn)
 		this.setPersistenceRequired();

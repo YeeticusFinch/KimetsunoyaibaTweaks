@@ -31,6 +31,8 @@ public class ModEvents {
         PlayerBreathingData.saveToNBT(player);
         // Clean up in-memory cache
         PlayerBreathingData.clear(player.getUUID());
+        // Clean up demon slayer initiation tracking
+        DemonSlayerInitiationHandler.onPlayerLogout(player.getUUID());
     }
 
     @SubscribeEvent

@@ -3,11 +3,14 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
@@ -22,7 +25,7 @@ public class KeyInputHandler {
     private static long lastMouseCycleTime = 0;
     private static final long MOUSE_CYCLE_COOLDOWN_MS = 150; // 150ms cooldown
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onKeyInput(InputEvent.Key event) {
         System.out.println("[KeyInputHandler] onKeyInput() ENTERED - key=" + event.getKey());
         try {
@@ -170,6 +173,31 @@ public class KeyInputHandler {
 
             ItemStack mainHandItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
 
+            // TRAINING SWORD CHECK: Intercept cycling for base mod training swords
+            // This must be checked before letting the base mod handle cycling
+            if (TrainingSwordHelper.isTrainingSword(mainHandItem) &&
+                    !(mainHandItem.getItem() instanceof BreathingSwordItem) &&
+                    com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.isNichirinSword(mainHandItem)) {
+                // This is a base mod training sword - block the cycle and show message
+                // Cancel the event to prevent the base mod from receiving it
+                event.setCanceled(true);
+
+                // Also consume the base mod's keybind as a backup
+                net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART
+                        .consumeClick();
+
+                // Show training sword message
+                mc.player.displayClientMessage(
+                    Component.literal("\u00A7e[Training Sword] \u00A7fOnly the 1st Form is available on a training sword."),
+                    true
+                );
+
+                // Send packet to server to ensure first form is set (server will handle reset)
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
+                        new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBreathingFormPacket(1));
+                return;
+            }
+
             // Handle custom breathing swords
             if (mainHandItem.getItem() instanceof BreathingSwordItem) {
                 // Determine direction:
@@ -208,7 +236,7 @@ public class KeyInputHandler {
     }
 
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onMouseInput(InputEvent.MouseButton event) {
         try {
             Minecraft mc = Minecraft.getInstance();
@@ -300,6 +328,31 @@ public class KeyInputHandler {
 
             ItemStack mainHandItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
 
+            // TRAINING SWORD CHECK: Intercept cycling for base mod training swords (mouse input)
+            // This must be checked before letting the base mod handle cycling
+            if (TrainingSwordHelper.isTrainingSword(mainHandItem) &&
+                    !(mainHandItem.getItem() instanceof BreathingSwordItem) &&
+                    com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.isNichirinSword(mainHandItem)) {
+                // This is a base mod training sword - block the cycle and show message
+                // Cancel the event to prevent the base mod from receiving it
+                event.setCanceled(true);
+
+                // Also consume the base mod's keybind as a backup
+                net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART
+                        .consumeClick();
+
+                // Show training sword message
+                mc.player.displayClientMessage(
+                    Component.literal("\u00A7e[Training Sword] \u00A7fOnly the 1st Form is available on a training sword."),
+                    true
+                );
+
+                // Send packet to server to ensure first form is set (server will handle reset)
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
+                        new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBreathingFormPacket(1));
+                return;
+            }
+
             // Handle custom breathing swords
             if (mainHandItem.getItem() instanceof BreathingSwordItem) {
                 // Determine direction (same logic as keyboard)
@@ -308,7 +361,7 @@ public class KeyInputHandler {
                 // Consume base mod's keybind
                 net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART
                         .consumeClick();
-                
+
 
                 // Send packet to server to cycle the form (server-authoritative)
                 com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(

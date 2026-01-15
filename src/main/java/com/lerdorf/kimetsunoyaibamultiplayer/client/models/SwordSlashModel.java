@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.models;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordSwingConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -28,6 +29,9 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 	private final String modelKey;
 	private int frameCount = 1; // Default to 1 frame (static texture)
 	private float currentProgress = 0.0f;
+	private boolean flipHorizontal = false; // Default to no flip (base animation)
+	private long startTimeMillis = 0; // Time when rendering started (for tick-based frame calculation)
+	private int duration = 0; // Duration in milliseconds
 
 	/**
 	 * Creates a sword slash model for a specific model key
@@ -64,13 +68,53 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 	}
 
 	/**
-	 * Gets the current frame number based on progress
+	 * Sets the timing information for tick-based frame calculation
+	 * @param startTimeMillis Start time in milliseconds
+	 * @param durationMillis Duration in milliseconds
+	 */
+	public void setTiming(long startTimeMillis, int durationMillis) {
+		this.startTimeMillis = startTimeMillis;
+		this.duration = durationMillis;
+	}
+
+	/**
+	 * Sets whether to flip the model horizontally using the "reverse" animation
+	 *
+	 * @param flip true to use "reverse" animation (flip), false to use "base" animation (no flip)
+	 */
+	public void setFlipHorizontal(boolean flip) {
+		this.flipHorizontal = flip;
+	}
+
+	/**
+	 * Gets whether the model is flipped horizontally
+	 */
+	public boolean isFlippedHorizontal() {
+		return this.flipHorizontal;
+	}
+
+	/**
+	 * Gets the current frame number based on elapsed ticks and frame delay
 	 */
 	public int getCurrentFrame() {
 		if (frameCount <= 1) {
 			return 0;
 		}
-		return (int)(currentProgress * frameCount) % frameCount;
+
+		// Get frame delay from registry (ticks per frame)
+		int frameDelay = SwordSlashModelRegistry.getFrameDelay(modelKey);
+
+		// Calculate elapsed time
+		long elapsedMillis = System.currentTimeMillis() - startTimeMillis;
+
+		// Convert to ticks (1 tick = 50ms)
+		int elapsedTicks = (int)(elapsedMillis / 50);
+
+		// Calculate current frame based on frame delay
+		// Each frame stays visible for frameDelay ticks
+		int currentFrame = (elapsedTicks / frameDelay) % frameCount;
+
+		return currentFrame;
 	}
 
 	private String getResourceNamespace() {
@@ -130,16 +174,22 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 	}
 
 	/**
-	 * Renders the baked GeckoLib model to a buffer.
+	 * Renders the baked GeckoLib model to a buffer with manual flip transformation.
 	 */
 	public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int overlay, float red,
 			float green, float blue, float alpha) {
-		SwordSlashRenderState dummy = new SwordSlashRenderState();
+		SwordSlashRenderState renderState = new SwordSlashRenderState();
+
+		// Set the animation based on flip flag (for reference, but we apply manually)
+		renderState.setAnimation(flipHorizontal ? "reverse" : "base");
+
+		Log.info("[SwordSlashModel] renderToBuffer: modelKey=" + modelKey + ", flipHorizontal=" + flipHorizontal);
 
 		// Get the baked model from GeckoLib
-		BakedGeoModel baked = getBakedModel(getModelResource(dummy));
+		BakedGeoModel baked = getBakedModel(getModelResource(renderState));
 
 		// Render the baked geometry to the buffer
+		// The flip is applied in renderBone() for the bb_main bone
 		renderBakedModel(baked, poseStack, buffer, packedLight, overlay, red, green, blue, alpha);
 	}
 
@@ -159,8 +209,21 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 			float red, float green, float blue, float alpha) {
 
 		poseStack.pushPose();
+
+		// Apply horizontal flip for bb_main bone when flipHorizontal is set
+		// This is done by applying the scale BEFORE bone transforms to affect everything
+		if (flipHorizontal) {
+			if (bone.getName().equals("bb_main")) {
+				Log.info("[SwordSlashModel] FLIPPING bone: " + bone.getName() + " for modelKey: " + modelKey);
+				poseStack.scale(-1.0f, 1.0f, 1.0f);
+			} else {
+				Log.info("[SwordSlashModel] Skipping flip for bone: " + bone.getName() + " (not bb_main)");
+			}
+		}
+
 		RenderUtils.translateToPivotPoint(poseStack, bone);
 		RenderUtils.rotateMatrixAroundBone(poseStack, bone);
+		RenderUtils.scaleMatrixForBone(poseStack, bone);  // Apply bone scale from model
 		RenderUtils.translateAwayFromPivotPoint(poseStack, bone);
 
 		Matrix4f matrix = poseStack.last().pose();

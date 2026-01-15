@@ -22,10 +22,15 @@ public class DualLayerSlashRenderer {
     /**
      * Render sword slash with emissive rendering for colored glow effect
      * Uses the original colored texture with emissive render type for Shimmer bloom
+     *
+     * @param flipHorizontal true to use "reverse" animation (flip texture horizontally), false for "base" animation
+     * @param startTimeMillis Start time in milliseconds (for animated texture frame calculation)
+     * @param durationMillis Duration in milliseconds (for animated texture frame calculation)
      */
     public static void renderDualLayer(PoseStack poseStack, MultiBufferSource bufferSource, Vec3 position,
                                       float yaw, float pitch, float roll, float scale, float progress,
-                                      String modelKey, int packedLight) {
+                                      String modelKey, int packedLight, boolean flipHorizontal,
+                                      long startTimeMillis, int durationMillis) {
 
         if (!SwordSwingConfig.useSwordSwingModel) {
             return;
@@ -39,6 +44,12 @@ public class DualLayerSlashRenderer {
 
             // Update animated texture frame based on current progress
             model.setProgress(progress);
+
+            // Set timing for tick-based frame calculation
+            model.setTiming(startTimeMillis, durationMillis);
+
+            // Set flip flag for animation (base vs reverse)
+            model.setFlipHorizontal(flipHorizontal);
 
             poseStack.pushPose();
 
