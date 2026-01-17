@@ -17,13 +17,16 @@ This guide explains how to use the Kimetsu no Yaiba Multiplayer mod as a library
 3. [Creating Nichirin Swords](#creating-nichirin-swords)
 4. [Sword Levels](#sword-levels)
 5. [Style Metadata Registry](#style-metadata-registry)
-6. [Color Change System](#color-change-system)
-7. [Creating Breathing Styles](#creating-breathing-styles)
-8. [Registering Breathing Form Variations](#registering-breathing-form-variations)
-9. [Creating Custom Entities](#creating-custom-entities)
-10. [API Reference](#api-reference)
-11. [Best Practices](#best-practices)
-12. [Troubleshooting](#troubleshooting)
+6. [Sword Metadata Registry](#sword-metadata-registry)
+7. [Color Change System](#color-change-system)
+8. [Custom Progression Configuration](#custom-progression-configuration)
+9. [Training Sword System](#training-sword-system)
+10. [Creating Breathing Styles](#creating-breathing-styles)
+11. [Registering Breathing Form Variations](#registering-breathing-form-variations)
+12. [Creating Custom Entities](#creating-custom-entities)
+13. [API Reference](#api-reference)
+14. [Best Practices](#best-practices)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -204,6 +207,7 @@ public class ModSwords {
             .styleRange(6000)  // Use even thousands
             .defaultParticle(ParticleTypes.FLAME)
             .category(SwordRegistry.SwordCategory.NICHIRIN)
+            .swordLevel(0)     // REQUIRED: 0=base, 1=named, 2=hashira
             .durability(2000)
             .build(ITEMS);
 }
@@ -451,6 +455,90 @@ List<StyleMetadataRegistry.StyleMetadata> eligibleStyles = KnYAPI.getColorChange
 // Get all ore-selection-eligible styles (for future feature)
 List<StyleMetadataRegistry.StyleMetadata> oreStyles = KnYAPI.getOreSelectionEligibleStyles();
 ```
+
+---
+
+## Sword Metadata Registry
+
+The Sword Metadata Registry tracks base mod swords (from KimetsunoYaiba) that aren't created with our API but still need to be integrated with features like color change.
+
+### When to Use This
+
+Use `SwordMetadataRegistry` when:
+- Registering base mod swords for color change eligibility
+- Tracking swords that aren't `BreathingSwordItem` instances
+- Querying swords by style and level
+
+For swords created with `KnYAPI.createSword()`, use `SwordRegistry` instead (automatic registration).
+
+### Registering Base Mod Swords
+
+```java
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordMetadataRegistry;
+
+// In your mod's commonSetup
+event.enqueueWork(() -> {
+    // Register a base mod sword (lazy resolution - item looked up when accessed)
+    SwordMetadataRegistry.registerLazy(
+        "kimetsunoyaiba:nichirinsword_water",  // Full registry ID
+        "water_breathing",                      // Style ID
+        0                                       // Sword level (0=base, 1=named, 2=hashira)
+    );
+
+    // Or register with direct item reference
+    Item sword = ForgeRegistries.ITEMS.getValue(
+        new ResourceLocation("kimetsunoyaiba", "nichirinsword_flame"));
+    if (sword != null) {
+        SwordMetadataRegistry.register(
+            "kimetsunoyaiba:nichirinsword_flame",
+            sword,
+            "flame_breathing",
+            0
+        );
+    }
+});
+```
+
+### Querying Swords
+
+```java
+// Get metadata by ID
+SwordMetadataRegistry.SwordMetadata meta = SwordMetadataRegistry.getMetadata("kimetsunoyaiba:nichirinsword_water");
+if (meta != null) {
+    String style = meta.getStyleId();      // "water_breathing"
+    int level = meta.getSwordLevel();       // 0
+    Item item = meta.getSwordItem();        // The actual Item instance
+}
+
+// Get metadata by Item
+SwordMetadataRegistry.SwordMetadata meta2 = SwordMetadataRegistry.getMetadata(someItemStack.getItem());
+
+// Get all swords for a style and level
+List<SwordMetadataRegistry.SwordMetadata> waterBaseSwords =
+    SwordMetadataRegistry.getSwordsByStyleAndLevel("water_breathing", 0);
+
+// Get all color-change-eligible swords
+List<SwordMetadataRegistry.SwordMetadata> eligibleSwords =
+    SwordMetadataRegistry.getColorChangeEligibleSwords();
+```
+
+### Pre-Registered Base Mod Swords
+
+The following base mod swords are automatically registered by `BaseModRegistration`:
+
+**Level 0 (Base Swords - Color Change Eligible):**
+- `nichirinsword_water`, `nichirinsword_flame`, `nichirinsword_wind`
+- `nichirinsword_mist`, `nichirinsword_thunder`, `nichirinsword_stone`
+- `nichirinsword_love`, `nichirinsword_serpent`, `nichirinsword_sound`
+- `nichirinsword_insect`, `nichirinsword_flower`, `nichirinsword_black`
+
+**Level 1 (Named Character Swords):**
+- `nichirinsword_tanjiro`, `nichirinsword_inosuke`
+
+**Level 2 (Hashira Swords):**
+- `nichirinsword_rengoku`, `nichirinsword_uzui`, `nichirinsword_shinobu`
+- `nichirinsword_iguro`, `nichirinsword_sanemi`, `nichirinsword_tokito`
+- `nichirinsword_kanroji`, `nichirinsword_gyomei`
 
 ---
 
@@ -1239,6 +1327,12 @@ KnYAPI.scheduleRepeating(player, action, intervalTicks, durationTicks)
 
 // Damage calculation
 KnYAPI.calculateScaledDamage(player, baseDamage)
+
+// Style Metadata Registration
+KnYAPI.registerStyleMetadata(styleId, parentStyleId, colorChangeEligible, oreSelectionEligible)
+KnYAPI.getStyleMetadata(styleId)
+KnYAPI.getColorChangeEligibleStyles()
+KnYAPI.getOreSelectionEligibleStyles()
 ```
 
 ### NichirinSwordBuilder
@@ -1249,6 +1343,7 @@ Fluent builder for creating swords.
 NichirinSwordBuilder.create(swordId)
     .breathingStyle(styleId, technique)       // Required
     .styleRange(range)                        // Required, multiple of 100
+    .swordLevel(level)                        // Required: 0=base, 1=named, 2=hashira
     .defaultParticle(particle)                // Style default particle
     .swordParticle(particle)                  // Override for this sword
     .swingSound(soundEvent)                   // Custom hit sound
@@ -1257,6 +1352,13 @@ NichirinSwordBuilder.create(swordId)
     .registerToCreativeTab(boolean)           // Default: true
     .build(itemRegistry)
 ```
+
+**Sword Levels:**
+| Level | Name | Color Change Eligible |
+|-------|------|----------------------|
+| 0 | Base | Yes |
+| 1 | Named Character | No |
+| 2 | Hashira | No |
 
 ### Helper Classes
 
@@ -1637,6 +1739,14 @@ if (Config.logDebug) {
 ---
 
 ## Version History
+
+- **1.6.30+**: Style Metadata and Color Change System
+  - **StyleMetadataRegistry**: Track breathing style parent relationships and eligibility flags
+  - **SwordMetadataRegistry**: Track base mod swords for color change integration
+  - **Sword Levels**: Required `swordLevel()` parameter (0=base, 1=named, 2=hashira)
+  - **Color Change System**: Custom transformation using registered metadata
+  - **BaseModRegistration**: Auto-registration of base mod styles and swords
+  - New KnYAPI methods: `registerStyleMetadata()`, `getStyleMetadata()`, `getColorChangeEligibleStyles()`
 
 - **1.6.x**: Updated API with entity support
   - BreathingSlayerEntity base class
