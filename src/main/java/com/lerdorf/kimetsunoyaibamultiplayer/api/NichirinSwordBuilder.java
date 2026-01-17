@@ -41,6 +41,7 @@ public class NichirinSwordBuilder {
     private SwordRegistry.SwordCategory category = SwordRegistry.SwordCategory.NICHIRIN;
     private int durability = 2000;
     private boolean registerToCreativeTab = true;
+    private int swordLevel = -1; // Required - must be set via swordLevel()
 
     private NichirinSwordBuilder(String swordId) {
         this.swordId = swordId;
@@ -149,6 +150,30 @@ public class NichirinSwordBuilder {
     }
 
     /**
+     * Set the sword level (tier).
+     * This is REQUIRED - swords cannot be built without specifying a level.
+     *
+     * Sword Levels:
+     * - 0 = Base/generic swords (e.g., nichirinsword_water, nichirinsword_flame)
+     *       These are eligible for color change transformation.
+     * - 1 = Named character swords (e.g., nichirinsword_tanjiro, nichirinsword_inosuke)
+     *       These are NOT eligible for color change.
+     * - 2 = Hashira swords (e.g., nichirinsword_rengoku, nichirinsword_uzui)
+     *       These are NOT eligible for color change.
+     *
+     * @param level The sword tier (0, 1, or 2)
+     * @return This builder for chaining
+     * @throws IllegalArgumentException if level is not 0, 1, or 2
+     */
+    public NichirinSwordBuilder swordLevel(int level) {
+        if (level < 0 || level > 2) {
+            throw new IllegalArgumentException("Sword level must be 0 (base), 1 (named character), or 2 (hashira). Got: " + level);
+        }
+        this.swordLevel = level;
+        return this;
+    }
+
+    /**
      * Set whether this sword should be added to the creative tab.
      *
      * @param register true to add to creative tab (default), false to exclude
@@ -198,6 +223,7 @@ public class NichirinSwordBuilder {
         final BreathingTechnique finalTechnique = this.breathingTechnique;
         final int finalDurability = this.durability;
         final Map<String, String> finalReplaceAnimations = this.replaceAnimations;
+        final int finalSwordLevel = this.swordLevel;
 
         // Create the sword item
         RegistryObject<Item> swordRegistry = itemRegistry.register(swordId, () -> {
@@ -221,7 +247,8 @@ public class NichirinSwordBuilder {
                     finalSwordParticle,
                     finalSwingSound,
                     finalReplaceAnimations,
-                    registerToCreativeTab
+                    registerToCreativeTab,
+                    finalSwordLevel
                 );
 
                 // Register particle mapping
@@ -256,6 +283,10 @@ public class NichirinSwordBuilder {
         }
         if (defaultParticle == null && swordParticle == null) {
             throw new IllegalStateException("At least one of defaultParticle or swordParticle must be set");
+        }
+        if (swordLevel < 0) {
+            throw new IllegalStateException("Sword level must be set via swordLevel(0), swordLevel(1), or swordLevel(2). " +
+                "Level 0 = base swords (eligible for color change), Level 1 = named character swords, Level 2 = hashira swords.");
         }
     }
 

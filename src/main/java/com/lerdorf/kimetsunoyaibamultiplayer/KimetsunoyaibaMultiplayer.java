@@ -151,6 +151,10 @@ public class KimetsunoyaibaMultiplayer
 
         // Register our built-in swords in the SwordRegistry (must be done after items are registered)
         event.enqueueWork(() -> {
+            // Register base mod style metadata and sword metadata for color change system
+            com.lerdorf.kimetsunoyaibamultiplayer.api.BaseModRegistration.registerAll();
+
+
             // Cyan mist particle for mist breathing swords (RGB: 138, 195, 194)
             DustParticleOptions mistParticle = new DustParticleOptions(
                 new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),

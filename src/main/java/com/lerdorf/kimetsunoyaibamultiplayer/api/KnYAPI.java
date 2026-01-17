@@ -31,6 +31,55 @@ public final class KnYAPI {
         // Utility class, no instantiation
     }
 
+    // ==================== Style Metadata Registration ====================
+
+    /**
+     * Register metadata for a breathing style.
+     * This is separate from registerBreathingStyle() and tracks parent relationships
+     * and eligibility flags for color change and ore selection features.
+     *
+     * @param styleId Unique identifier for the style (e.g., "water_breathing")
+     * @param parentStyleId Parent style ID, or null for root styles
+     * @param colorChangeEligible Whether swords of this style can be obtained via color change
+     * @param oreSelectionEligible Whether this style appears in ore selection (future feature)
+     * @return The registered style metadata
+     */
+    public static StyleMetadataRegistry.StyleMetadata registerStyleMetadata(
+            String styleId,
+            String parentStyleId,
+            boolean colorChangeEligible,
+            boolean oreSelectionEligible) {
+        return StyleMetadataRegistry.register(styleId, parentStyleId, colorChangeEligible, oreSelectionEligible);
+    }
+
+    /**
+     * Get the metadata for a registered style.
+     *
+     * @param styleId The style identifier
+     * @return The style metadata, or null if not found
+     */
+    public static StyleMetadataRegistry.StyleMetadata getStyleMetadata(String styleId) {
+        return StyleMetadataRegistry.getMetadata(styleId);
+    }
+
+    /**
+     * Get all styles that are eligible for color change transformation.
+     *
+     * @return List of color-change-eligible style metadata
+     */
+    public static List<StyleMetadataRegistry.StyleMetadata> getColorChangeEligibleStyles() {
+        return StyleMetadataRegistry.getColorChangeEligibleStyles();
+    }
+
+    /**
+     * Get all styles that are eligible for ore selection (future feature).
+     *
+     * @return List of ore-selection-eligible style metadata
+     */
+    public static List<StyleMetadataRegistry.StyleMetadata> getOreSelectionEligibleStyles() {
+        return StyleMetadataRegistry.getOreSelectionEligibleStyles();
+    }
+
     // ==================== Breathing Style Registration ====================
 
     /**

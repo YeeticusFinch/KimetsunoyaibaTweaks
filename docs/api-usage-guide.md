@@ -15,12 +15,15 @@ This guide explains how to use the Kimetsu no Yaiba Multiplayer mod as a library
 1. [Getting Started](#getting-started)
 2. [Adding as a Dependency](#adding-as-a-dependency)
 3. [Creating Nichirin Swords](#creating-nichirin-swords)
-4. [Creating Breathing Styles](#creating-breathing-styles)
-5. [Registering Breathing Form Variations](#registering-breathing-form-variations)
-6. [Creating Custom Entities](#creating-custom-entities)
-7. [API Reference](#api-reference)
-8. [Best Practices](#best-practices)
-9. [Troubleshooting](#troubleshooting)
+4. [Sword Levels](#sword-levels)
+5. [Style Metadata Registry](#style-metadata-registry)
+6. [Color Change System](#color-change-system)
+7. [Creating Breathing Styles](#creating-breathing-styles)
+8. [Registering Breathing Form Variations](#registering-breathing-form-variations)
+9. [Creating Custom Entities](#creating-custom-entities)
+10. [API Reference](#api-reference)
+11. [Best Practices](#best-practices)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -262,17 +265,18 @@ public class ModItems {
     public static final DeferredRegister<Item> ITEMS =
         DeferredRegister.create(ForgeRegistries.ITEMS, "yourmodid");
 
-    // Standard nichirin sword
+    // Standard nichirin sword (level 0 - eligible for color change)
     public static final RegistryObject<Item> NICHIRINSWORD_FROST =
         KnYAPI.createSword("nichirinsword_frost")
             .breathingStyle("frost_breathing", MyBreathingForms.createFrostBreathing())
             .styleRange(4100)
             .defaultParticle(ParticleTypes.SNOWFLAKE)
             .category(SwordRegistry.SwordCategory.NICHIRIN)
+            .swordLevel(0)  // Base sword - eligible for color change
             .durability(2000)
             .build(ITEMS);
 
-    // Special sword with unique abilities (e.g., 7th form access)
+    // Named character sword (level 1 - NOT eligible for color change)
     public static final RegistryObject<Item> NICHIRINSWORD_KOMOREBI =
         KnYAPI.createSword("nichirinsword_komorebi")
             .breathingStyle("frost_breathing", MyBreathingForms.createFrostBreathingWithSeventh())
@@ -280,16 +284,18 @@ public class ModItems {
             .defaultParticle(ParticleTypes.SNOWFLAKE)
             .swordParticle(ParticleTypes.END_ROD)  // Override style default
             .category(SwordRegistry.SwordCategory.SPECIAL)
+            .swordLevel(1)  // Named character sword
             .durability(2500)
             .build(ITEMS);
 
-    // Hidden sword (not in creative tab - obtained through gameplay)
+    // Hashira-tier sword (level 2 - NOT eligible for color change)
     public static final RegistryObject<Item> NICHIRINSWORD_GOLDEN =
         KnYAPI.createSword("nichirinsword_golden")
             .breathingStyle("frost_breathing", MyBreathingForms.createGoldenBreathing())
             .styleRange(4100)
             .defaultParticle(ParticleTypes.END_ROD)
             .category(SwordRegistry.SwordCategory.SPECIAL)
+            .swordLevel(2)  // Hashira-tier sword
             .durability(3000)
             .registerToCreativeTab(false)  // Hidden from creative menu
             .build(ITEMS);
@@ -318,6 +324,194 @@ public class ModItems {
 | 22000 | KnY Tweaks: Enhanced Love Breathing |
 
 **Pattern:** Use even thousands (4000, 6000, 8000...) with hundreds for sub-styles (4100, 4200, 6100, 6200...).
+
+---
+
+## Sword Levels
+
+Sword levels categorize swords by their power tier and determine their eligibility for the color change system.
+
+### Level Definitions
+
+| Level | Name | Description | Color Change Eligible |
+|-------|------|-------------|----------------------|
+| **0** | Base | Generic breathing swords (e.g., `nichirinsword_water`) | Yes |
+| **1** | Named Character | Swords tied to specific characters (e.g., `nichirinsword_tanjiro`) | No |
+| **2** | Hashira | Elite swords from Hashira (e.g., `nichirinsword_rengoku`) | No |
+
+### Setting Sword Level
+
+The `swordLevel()` method is **required** when building swords:
+
+```java
+// Level 0 - Base sword (eligible for color change transformation)
+KnYAPI.createSword("nichirinsword_ice")
+    .breathingStyle("ice_breathing", IceBreathingForms.create())
+    .styleRange(4300)
+    .defaultParticle(ParticleTypes.SNOWFLAKE)
+    .category(SwordRegistry.SwordCategory.NICHIRIN)
+    .swordLevel(0)  // REQUIRED
+    .build(ITEMS);
+
+// Level 1 - Named character sword
+KnYAPI.createSword("nichirinsword_yukihiro")
+    .breathingStyle("ice_breathing", IceBreathingForms.createWithSeventh())
+    .styleRange(4300)
+    .defaultParticle(ParticleTypes.END_ROD)
+    .category(SwordRegistry.SwordCategory.SPECIAL)
+    .swordLevel(1)  // Named character
+    .build(ITEMS);
+
+// Level 2 - Hashira sword
+KnYAPI.createSword("nichirinsword_ice_hashira")
+    .breathingStyle("ice_breathing", IceBreathingForms.createHashiraVariant())
+    .styleRange(4300)
+    .defaultParticle(ParticleTypes.END_ROD)
+    .category(SwordRegistry.SwordCategory.SPECIAL)
+    .swordLevel(2)  // Hashira tier
+    .build(ITEMS);
+```
+
+### Guidelines
+
+- **Level 0**: Use for generic breathing swords that players can obtain through color change
+- **Level 1**: Use for swords that have a named character associated (like Tanjiro's or Inosuke's)
+- **Level 2**: Reserve for the most powerful swords (Hashira tier)
+
+---
+
+## Style Metadata Registry
+
+The Style Metadata Registry tracks breathing style parent relationships and eligibility flags for features like color change.
+
+### Registering Style Metadata
+
+If you're creating a new breathing style, register its metadata for color change integration:
+
+```java
+import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
+
+// In your mod's commonSetup
+event.enqueueWork(() -> {
+    // Root style (no parent)
+    KnYAPI.registerStyleMetadata(
+        "ice_breathing",     // styleId
+        null,                // parentStyleId (null for root styles)
+        true,                // colorChangeEligible
+        true                 // oreSelectionEligible (for future feature)
+    );
+
+    // Derived style (has parent)
+    KnYAPI.registerStyleMetadata(
+        "glacier_breathing",
+        "ice_breathing",     // derives from Ice Breathing
+        true,
+        true
+    );
+});
+```
+
+### Style Hierarchy
+
+The base mod's breathing styles form a hierarchy:
+
+```
+sun_breathing (root)
+├── water_breathing
+│   ├── flower_breathing
+│   │   └── insect_breathing
+│   └── serpent_breathing
+├── flame_breathing
+│   └── love_breathing
+├── wind_breathing
+│   ├── mist_breathing
+│   └── beast_breathing
+├── thunder_breathing
+│   └── sound_breathing
+└── stone_breathing
+
+black (root)
+```
+
+When creating derived styles, set the appropriate parent to maintain the hierarchy.
+
+### Querying Styles
+
+```java
+// Get metadata for a style
+StyleMetadataRegistry.StyleMetadata metadata = KnYAPI.getStyleMetadata("water_breathing");
+if (metadata != null) {
+    String parent = metadata.getParentStyleId(); // "sun_breathing"
+    boolean isRoot = metadata.isRootStyle();     // false
+}
+
+// Get all color-change-eligible styles
+List<StyleMetadataRegistry.StyleMetadata> eligibleStyles = KnYAPI.getColorChangeEligibleStyles();
+
+// Get all ore-selection-eligible styles (for future feature)
+List<StyleMetadataRegistry.StyleMetadata> oreStyles = KnYAPI.getOreSelectionEligibleStyles();
+```
+
+---
+
+## Color Change System
+
+The color change system transforms the generic `kimetsunoyaiba:nichirinsword` into a random breathing sword based on registered metadata.
+
+### How It Works
+
+1. When a player holds the generic nichirinsword for 30 ticks
+2. The system selects a random **color-change-eligible** style
+3. From that style, it selects a random **level-0** sword
+4. The sword transforms and the player receives a message
+
+### Enabling Color Change
+
+Color change must be enabled in the config (`config/kimetsunoyaibamultiplayer/custom_progression.toml`):
+
+```toml
+# Replace the base mod's color changing procedure with our custom one
+replaceColorChangingProcedure = true
+```
+
+### Making Your Swords Eligible
+
+For your swords to appear in the color change pool:
+
+1. **Register style metadata** with `colorChangeEligible = true`
+2. **Set sword level to 0** in the sword builder
+
+```java
+// 1. Register style metadata (in commonSetup)
+KnYAPI.registerStyleMetadata("ice_breathing", "water_breathing", true, true);
+
+// 2. Create level-0 sword
+KnYAPI.createSword("nichirinsword_ice")
+    .breathingStyle("ice_breathing", IceBreathingForms.create())
+    .styleRange(4300)
+    .defaultParticle(ParticleTypes.SNOWFLAKE)
+    .category(SwordRegistry.SwordCategory.NICHIRIN)
+    .swordLevel(0)  // Level 0 = eligible for color change
+    .build(ITEMS);
+```
+
+### Excluding Swords from Color Change
+
+To prevent a sword from appearing in color change:
+
+- **Option 1**: Set `swordLevel(1)` or `swordLevel(2)` (for named/hashira swords)
+- **Option 2**: Set `colorChangeEligible = false` in style metadata (excludes entire style)
+
+```java
+// This sword won't appear in color change (level 1)
+KnYAPI.createSword("nichirinsword_special")
+    .breathingStyle("ice_breathing", IceBreathingForms.createSpecial())
+    .styleRange(4300)
+    .defaultParticle(ParticleTypes.END_ROD)
+    .category(SwordRegistry.SwordCategory.SPECIAL)
+    .swordLevel(1)  // Named character sword - not in color change
+    .build(ITEMS);
+```
 
 ### Spawn Eggs
 

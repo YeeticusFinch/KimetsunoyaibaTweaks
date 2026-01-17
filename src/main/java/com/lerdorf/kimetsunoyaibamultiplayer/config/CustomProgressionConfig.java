@@ -14,6 +14,12 @@ public class CustomProgressionConfig {
     // Master switch for demon slayer initiation
     public static ForgeConfigSpec.BooleanValue disableBaseModDemonSlayerInitiation;
 
+    // Grant training sword when initiation is blocked
+    public static ForgeConfigSpec.BooleanValue grantTrainingSword;
+
+    // Replace the base mod's color changing procedure (sword transformation)
+    public static ForgeConfigSpec.BooleanValue replaceColorChangingProcedure;
+
     // Debug logging
     public static ForgeConfigSpec.BooleanValue enableDebugLogging;
 
@@ -44,7 +50,34 @@ public class CustomProgressionConfig {
                     "",
                     "NOTE: This blocks the base mod's SupplyProcedure, AdvancementRewardProcedure,",
                     "and CheckAdvancementDemonProcedure from granting these rewards.")
-            .define("disable_base_mod_demon_slayer_initiation", false);
+            .define("disable_base_mod_demon_slayer_initiation", true);
+
+        grantTrainingSword = builder
+            .comment("Grant a training sword when initiation is blocked",
+                    "",
+                    "When enabled (and disable_base_mod_demon_slayer_initiation is also enabled),",
+                    "the player will receive a nichirinsword that has been converted to a training sword.",
+                    "Training swords can only use the 1st Form and have reduced damage.",
+                    "",
+                    "This is useful for servers that want new demon slayers to start with a training sword",
+                    "and earn a real sword through gameplay.")
+            .define("grant_training_sword", true);
+
+        builder.pop();
+
+        // Sword transformation override
+        builder.comment("Sword Transformation Override").push("sword_transformation");
+
+        replaceColorChangingProcedure = builder
+            .comment("Replace the base mod's color changing procedure",
+                    "",
+                    "When enabled, this completely overrides the base mod's ColorChangeProcedure",
+                    "which transforms the basic nichirinsword into a colored breathing sword",
+                    "when the player holds it for a certain amount of time.",
+                    "",
+                    "Enable this if you want to implement custom sword transformation logic,",
+                    "or to prevent the automatic sword transformation entirely.")
+            .define("replace_color_changing_procedure", true);
 
         builder.pop();
 
@@ -54,7 +87,7 @@ public class CustomProgressionConfig {
         enableDebugLogging = builder
             .comment("Enable debug logging for progression overrides",
                     "Logs when advancements are blocked, items are removed, or crows are prevented from spawning")
-            .define("enable_debug_logging", false);
+            .define("enable_debug_logging", true);
 
         builder.pop();
 

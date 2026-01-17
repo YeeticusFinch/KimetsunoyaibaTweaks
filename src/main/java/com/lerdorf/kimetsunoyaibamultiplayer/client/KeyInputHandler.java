@@ -179,12 +179,14 @@ public class KeyInputHandler {
                     !(mainHandItem.getItem() instanceof BreathingSwordItem) &&
                     com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.isNichirinSword(mainHandItem)) {
                 // This is a base mod training sword - block the cycle and show message
-                // Cancel the event to prevent the base mod from receiving it
-                event.setCanceled(true);
-
-                // Also consume the base mod's keybind as a backup
-                net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART
-                        .consumeClick();
+                // Consume ALL pending clicks from the base mod's keybind to prevent it from cycling
+                // Note: InputEvent.Key is not cancelable, so we drain the click queue instead
+                var keyMapping = net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART;
+                while (keyMapping.consumeClick()) {
+                    // Drain all pending clicks
+                }
+                // Also set the key as not down to prevent isDown() checks
+                keyMapping.setDown(false);
 
                 // Show training sword message
                 mc.player.displayClientMessage(
@@ -334,12 +336,14 @@ public class KeyInputHandler {
                     !(mainHandItem.getItem() instanceof BreathingSwordItem) &&
                     com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.isNichirinSword(mainHandItem)) {
                 // This is a base mod training sword - block the cycle and show message
-                // Cancel the event to prevent the base mod from receiving it
-                event.setCanceled(true);
-
-                // Also consume the base mod's keybind as a backup
-                net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART
-                        .consumeClick();
+                // Consume ALL pending clicks from the base mod's keybind to prevent it from cycling
+                // Note: InputEvent.MouseButton is not cancelable, so we drain the click queue instead
+                var keyMapping = net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART;
+                while (keyMapping.consumeClick()) {
+                    // Drain all pending clicks
+                }
+                // Also set the key as not down to prevent isDown() checks
+                keyMapping.setDown(false);
 
                 // Show training sword message
                 mc.player.displayClientMessage(

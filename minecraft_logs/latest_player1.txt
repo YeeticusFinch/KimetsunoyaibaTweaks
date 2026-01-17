@@ -1,50 +1,12 @@
 [KeyInputHandler] onKeyInput() ENTERED - key=256
-[Kimetsunoyaiba Tweaks] [INFO] [KanrojiSwordAnimationHandler] Action finished, returning to: idle
-[Kimetsunoyaiba Tweaks] [INFO] [KanrojiSwordAnimationHandler] Animation changed: sword_overhead -> idle
-[BreathingSwordItem] Form ID: 22005, Sword ID: nichirinsword_kanroji, Current variation index: 0
-[BreathingSwordItem] Total variations found: 1
-[BreathingSwordItem] Form ID: 22005, Sword ID: nichirinsword_kanroji, Current variation index: 0
-[BreathingSwordItem] Total variations found: 1
-[11:07:16] [Server thread/ERROR] [minecraft/PacketUtils]: Failed to handle packet net.minecraft.network.protocol.game.ServerboundUseItemPacket@2fdd0b9b, suppressing error
-java.lang.ClassCastException: class net.minecraft.server.level.ServerPlayer cannot be cast to class net.minecraft.world.entity.Mob (net.minecraft.server.level.ServerPlayer and net.minecraft.world.entity.Mob are in module minecraft@1.20.1 of loader 'TRANSFORMER' @2932e15f)
-	at com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms.lambda$fifthForm$26(EnhancedLoveForms.java:1089) ~[reobf-kimetsunoyaibamultiplayer-1.6.39.jar%23236!/:1.6.39] {re:classloading}
-	at com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm.execute(BreathingForm.java:46) ~[reobf-kimetsunoyaibamultiplayer-1.6.39.jar%23236!/:1.6.39] {re:classloading}
-	at com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem.m_7203_(BreathingSwordItem.java:167) ~[reobf-kimetsunoyaibamultiplayer-1.6.39.jar%23236!/:1.6.39] {re:classloading}
-	at net.minecraft.world.item.ItemStack.m_41682_(ItemStack.java:275) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,xf:fml:forge:itemstack,pl:connector_pre_launch:A,re:classloading,xf:fml:forge:itemstack,pl:mixin:APP:connectormod.mixins.json:item.ItemStackMixin from mod connectormod,pl:mixin:APP:fabric-item-api-v1.mixins.json:ItemStackMixin from mod fabric_item_api_v1,pl:mixin:APP:kubejs-common.mixins.json:ItemStackMixin from mod kubejs,pl:mixin:APP:notenoughanimations.mixins.json:ItemStackRenderStateMixin from mod notenoughanimations,pl:mixin:APP:connectormod.mixins.json:item.LateItemStackMixin from mod connectormod,pl:mixin:A,pl:connector_pre_launch:A}
-	at net.minecraft.server.level.ServerPlayerGameMode.m_6261_(ServerPlayerGameMode.java:286) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:computing_frames,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:fabric-events-interaction-v0.mixins.json:ServerPlayerInteractionManagerMixin from mod fabric_events_interaction_v0,pl:mixin:A,pl:connector_pre_launch:A}
-	at net.minecraft.server.network.ServerGamePacketListenerImpl.m_5760_(ServerGamePacketListenerImpl.java:1085) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:APP:fabric-networking-api-v1.mixins.json:ServerPlayNetworkHandlerMixin from mod fabric_networking_api_v1,pl:mixin:APP:fabric-networking-api-v1.mixins.json:accessor.ServerPlayNetworkHandlerAccessor from mod fabric_networking_api_v1,pl:mixin:APP:c2me-opts-scheduling.mixins.json:ordering.player_move.MixinServerPlayNetworkHandler from mod c2me_opts_scheduling,pl:mixin:A,pl:connector_pre_launch:A}
-	at net.minecraft.network.protocol.game.ServerboundUseItemPacket.m_5797_(ServerboundUseItemPacket.java:29) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:classloading,pl:connector_pre_launch:A}
-	at net.minecraft.network.protocol.game.ServerboundUseItemPacket.m_5797_(ServerboundUseItemPacket.java:7) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:classloading,pl:connector_pre_launch:A}
-	at net.minecraft.network.protocol.PacketUtils.m_263899_(PacketUtils.java:22) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:classloading,pl:connector_pre_launch:A}
-	at net.minecraft.server.TickTask.run(TickTask.java:18) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:classloading,pl:connector_pre_launch:A}
-	at net.minecraft.util.thread.BlockableEventLoop.m_6367_(BlockableEventLoop.java:156) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:computing_frames,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:connector_pre_launch:A}
-	at net.minecraft.util.thread.ReentrantBlockableEventLoop.m_6367_(ReentrantBlockableEventLoop.java:23) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:connector_pre_launch:A,re:computing_frames,pl:connector_pre_launch:A,re:classloading,pl:connector_pre_launch:A}
-	at net.minecraft.server.MinecraftServer.m_6367_(MinecraftServer.java:770) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A}
-	at net.minecraft.server.MinecraftServer.m_6367_(MinecraftServer.java:161) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A}
-	at net.minecraft.util.thread.BlockableEventLoop.m_7245_(BlockableEventLoop.java:130) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:computing_frames,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:connector_pre_launch:A}
-	at net.minecraft.server.MinecraftServer.m_129961_(MinecraftServer.java:753) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A}
-	at net.minecraft.server.MinecraftServer.m_7245_(MinecraftServer.java:747) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A}
-	at net.minecraft.util.thread.BlockableEventLoop.m_18701_(BlockableEventLoop.java:139) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:computing_frames,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:connector_pre_launch:A}
-	at net.minecraft.server.MinecraftServer.m_130012_(MinecraftServer.java:733) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A}
-	at net.minecraft.server.MinecraftServer.m_130011_(MinecraftServer.java:665) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A}
-	at net.minecraft.server.MinecraftServer.m_206580_(MinecraftServer.java:251) ~[client-1.20.1-20230612.114412-srg.jar%23244!/:?] {re:mixin,pl:accesstransformer:B,pl:connector_pre_launch:A,re:classloading,pl:accesstransformer:B,pl:mixin:A,pl:connector_pre_launch:A}
-	at java.lang.Thread.run(Thread.java:833) ~[?:?] {re:mixin}
-[Kimetsunoyaiba Tweaks] [INFO] [KanrojiSwordAnimationHandler] External action animation notified: love_fifth_form for player e048e80f-aced-4884-82f8-ae2addffdce9
-[Kimetsunoyaiba Tweaks] [INFO] [KanrojiSwordAnimationHandler] External action animation notified: love_fifth_form for player e048e80f-aced-4884-82f8-ae2addffdce9
-[KeyInputHandler] onKeyInput() ENTERED - key=342
-[KeyInputHandler] onKeyInput() ENTERED - key=342
-[11:07:21] [Server thread/INFO] [minecraft/IntegratedServer]: Saving and pausing game...
-[11:07:21] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[New World]'/minecraft:overworld
-[Save-All] Saved [126, 108]
-[Save-All] Saved 1 chunks!
-[11:07:21] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[New World]'/minecraft:the_nether
-[Save-All] Saved 0 chunks!
-[11:07:21] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[New World]'/kimetsunoyaibamultiplayer:mt_fujikasane
-[Save-All] Saved 0 chunks!
-[11:07:21] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[New World]'/kimetsunoyaiba:enmu_dream
-[Save-All] Saved 0 chunks!
-[11:07:21] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[New World]'/minecraft:the_end
-[Save-All] Saved 0 chunks!
-[11:07:21] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[New World]'/kimetsunoyaiba:mugen_castle_dimension
-[Save-All] Saved 0 chunks!
-Clipboard copy at: 15 Jan 2026 11:07:23 -0500
+[19:03:18] [Server thread/INFO] [minecraft/MinecraftServer]: carl_alex has made the advancement [Best Friends Forever]
+[19:03:18] [Server thread/INFO] [minecraft/MinecraftServer]: [@: Revoked 1361 advancements from carl_alex]
+[19:03:18] [Server thread/INFO] [minecraft/MinecraftServer]: [Not Secure] [@] Resetting advancement
+[19:03:18] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] carl_alex has made the advancement [Best Friends Forever]
+[19:03:18] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [@: Revoked 1361 advancements from carl_alex]
+[19:03:18] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] [@] Resetting advancement
+[19:03:18] [Render thread/INFO] [minecraft/AdvancementList]: Forgot about advancement kimetsunoyaiba:mizunoe
+[19:03:18] [Render thread/INFO] [minecraft/AdvancementList]: Loaded 25 advancements
+[KeyInputHandler] onKeyInput() ENTERED - key=84
+[KeyInputHandler] onKeyInput() ENTERED - key=84
+Clipboard copy at: 15 Jan 2026 19:03:23 -0500

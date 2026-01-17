@@ -7,6 +7,7 @@ import net.minecraft.world.item.Item;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Registry for nichirin swords and special breathing swords.
@@ -54,12 +55,44 @@ public class SwordRegistry {
             SoundEvent swingSound,
             Map<String, String> replaceAnimations,
             boolean registerToCreativeTab) {
+        return register(swordId, swordItem, styleId, category, particle, swingSound, replaceAnimations, registerToCreativeTab, 0);
+    }
+
+    /**
+     * Register a breathing sword with the system, including sword level.
+     *
+     * @param swordId Unique identifier for this sword (e.g., "nichirinsword_frost")
+     * @param swordItem The sword item instance
+     * @param styleId The breathing style ID this sword uses
+     * @param category Whether this is a NICHIRIN or SPECIAL sword
+     * @param particle Default particle for sword swings (can be null to use style default)
+     * @param swingSound Custom sound effect for sword swings (can be null for no custom sound)
+     * @param replaceAnimations Map of animation replacements (can be null)
+     * @param registerToCreativeTab Whether to add this sword to the creative tab
+     * @param swordLevel The sword tier: 0=base, 1=named character, 2=hashira
+     * @return The registered sword object
+     * @throws IllegalArgumentException if swordId is already registered or swordLevel is invalid
+     */
+    public static RegisteredSword register(
+            String swordId,
+            BreathingSwordItem swordItem,
+            String styleId,
+            SwordCategory category,
+            ParticleOptions particle,
+            SoundEvent swingSound,
+            Map<String, String> replaceAnimations,
+            boolean registerToCreativeTab,
+            int swordLevel) {
 
         if (ALL_SWORDS.containsKey(swordId)) {
             throw new IllegalArgumentException("Sword already registered: " + swordId);
         }
 
-        RegisteredSword sword = new RegisteredSword(swordId, swordItem, styleId, category, particle, swingSound, replaceAnimations, registerToCreativeTab);
+        if (swordLevel < 0 || swordLevel > 2) {
+            throw new IllegalArgumentException("Invalid sword level: " + swordLevel + ". Must be 0, 1, or 2.");
+        }
+
+        RegisteredSword sword = new RegisteredSword(swordId, swordItem, styleId, category, particle, swingSound, replaceAnimations, registerToCreativeTab, swordLevel);
 
         ALL_SWORDS.put(swordId, sword);
         CATEGORY_SWORDS.get(category).add(swordId);
@@ -180,6 +213,39 @@ public class SwordRegistry {
     }
 
     /**
+     * Get all swords for a specific style and level.
+     *
+     * @param styleId The breathing style ID
+     * @param level The sword level (0=base, 1=named, 2=hashira)
+     * @return List of matching registered swords
+     */
+    public static List<RegisteredSword> getSwordsByStyleAndLevel(String styleId, int level) {
+        return ALL_SWORDS.values().stream()
+                .filter(s -> s.getStyleId().equals(styleId) && s.getSwordLevel() == level)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all swords that are eligible for color change transformation.
+     * These are level 0 swords with color-change-eligible styles.
+     *
+     * @return List of color-change-eligible registered swords
+     */
+    public static List<RegisteredSword> getColorChangeEligibleSwords() {
+        List<StyleMetadataRegistry.StyleMetadata> eligibleStyles =
+            StyleMetadataRegistry.getColorChangeEligibleStyles();
+
+        Set<String> eligibleStyleIds = eligibleStyles.stream()
+            .map(StyleMetadataRegistry.StyleMetadata::getStyleId)
+            .collect(Collectors.toSet());
+
+        return ALL_SWORDS.values().stream()
+                .filter(s -> s.getSwordLevel() == 0)
+                .filter(s -> eligibleStyleIds.contains(s.getStyleId()))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Check if a sword is registered.
      *
      * @param swordId The unique identifier of the sword
@@ -221,6 +287,7 @@ public class SwordRegistry {
         private final SoundEvent swingSound;
         private final Map<String, String> replaceAnimations;
         private final boolean registerToCreativeTab;
+        private final int swordLevel;
 
         private RegisteredSword(
                 String swordId,
@@ -230,7 +297,8 @@ public class SwordRegistry {
                 ParticleOptions particle,
                 SoundEvent swingSound,
                 Map<String, String> replaceAnimations,
-                boolean registerToCreativeTab) {
+                boolean registerToCreativeTab,
+                int swordLevel) {
             this.swordId = swordId;
             this.swordItem = swordItem;
             this.styleId = styleId;
@@ -239,6 +307,7 @@ public class SwordRegistry {
             this.swingSound = swingSound;
             this.replaceAnimations = replaceAnimations;
             this.registerToCreativeTab = registerToCreativeTab;
+            this.swordLevel = swordLevel;
         }
 
         public String getSwordId() {
@@ -268,7 +337,30 @@ public class SwordRegistry {
         public boolean shouldRegisterToCreativeTab() {
             return registerToCreativeTab;
         }
-        
+
+        /**
+         * Get the sword level.
+         *
+         * @return 0 for base, 1 for named character, 2 for hashira
+         */
+        public int getSwordLevel() {
+            return swordLevel;
+        }
+
+        /**
+         * Get a human-readable description of the sword level.
+         *
+         * @return "Base", "Named Character", or "Hashira"
+         */
+        public String getSwordLevelDescription() {
+            return switch (swordLevel) {
+                case 0 -> "Base";
+                case 1 -> "Named Character";
+                case 2 -> "Hashira";
+                default -> "Unknown";
+            };
+        }
+
         public String getAnim(String ogAnim) {
         	if (replaceAnimations == null || replaceAnimations.size() == 0)
         		return ogAnim;
@@ -325,8 +417,8 @@ public class SwordRegistry {
 
         @Override
         public String toString() {
-            return String.format("Sword{id=%s, style=%s, category=%s}",
-                swordId, styleId, category);
+            return String.format("Sword{id=%s, style=%s, category=%s, level=%d (%s)}",
+                swordId, styleId, category, swordLevel, getSwordLevelDescription());
         }
     }
 }
