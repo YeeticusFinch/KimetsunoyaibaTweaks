@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.combat.WhipDamageHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesEntity;
@@ -13,7 +14,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.DustParticleOptions;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.EnergyParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
@@ -36,6 +37,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.registries.ForgeRegistries;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.EnergyParticleOptions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -322,7 +324,7 @@ public class EnhancedLoveForms {
 
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
-                		            new DustParticleOptions(
+                		            new EnergyParticleOptions(
                 		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ),
@@ -332,7 +334,7 @@ public class EnhancedLoveForms {
                 			
                 			// Spawn white dust particle at pos
                 			serverLevel.sendParticles(
-                					new DustParticleOptions(
+                					new EnergyParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1f                           // scale
                     		            ),
@@ -537,7 +539,7 @@ public class EnhancedLoveForms {
 
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
-                		            new DustParticleOptions(
+                		            new EnergyParticleOptions(
                 		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ),
@@ -547,7 +549,7 @@ public class EnhancedLoveForms {
                 			
                 			// Spawn white dust particle at pos
                 			serverLevel.sendParticles(
-                					new DustParticleOptions(
+                					new EnergyParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1f                           // scale
                     		            ),
@@ -637,6 +639,10 @@ public class EnhancedLoveForms {
                 Vec3 lookVec = entity.getLookAngle();
 
                 final ServerLevel serverLevel = level instanceof ServerLevel ? (ServerLevel)level : null;
+                final String modelKey = "love";
+                final String[] slashAnimations = {
+                    "sword_to_left", "sword_to_right", "sword_to_upper", "sword_to_left_reverse", "sword_to_right_reverse"
+                };
 
                 
                 boolean[] spawnedLoveSlashes = {false};
@@ -748,7 +754,7 @@ public class EnhancedLoveForms {
 
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
-                		            new DustParticleOptions(
+                		            new EnergyParticleOptions(
                 		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ),
@@ -758,7 +764,7 @@ public class EnhancedLoveForms {
                 			
                 			// Spawn white dust particle at pos
                 			serverLevel.sendParticles(
-                					new DustParticleOptions(
+                					new EnergyParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1f                           // scale
                     		            ),
@@ -773,6 +779,7 @@ public class EnhancedLoveForms {
                 		MovementHelper.setVelocity(entity, entity.getDeltaMovement().x, Math.max(entity.getDeltaMovement().y, 0), entity.getDeltaMovement().z);
                 		if (serverLevel != null) {
                 			for (int i = 0; i < 5; i++) {
+                				String slashAnim = slashAnimations[(int) (Math.random() * slashAnimations.length)];
 	                			// Spawn a cloud of sword slashes at the target point
 	                			float x = (float)(vectors[2].x + (Math.random()-0.5)*15);
 	                			float y = (float)(vectors[2].y + (Math.random()-0.5)*15);
@@ -788,6 +795,51 @@ public class EnhancedLoveForms {
 		        				level.playSound(null, x, y, z,
 		                				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
 		                				    SoundSource.PLAYERS, 1.0f, 1.5f);
+
+                                double slashAngle = (Math.random() - 0.5) * 12.0;
+                                int arcLength = (int) (100 + Math.random() * 80);
+                                Vec3 posOffset = new Vec3(
+                                    (Math.random() - 0.5) * 1.2,
+                                    0.6 + Math.random() * 1.6,
+                                    (Math.random() - 0.5) * 1.2
+                                );
+                                if (Math.random() > 0.5) {
+                                    BonePositionTracker.sendRawHorizontalSlashToClients(
+                                        level,
+                                        posOffset.add(0, -1, 0),
+                                        modelKey,
+                                        (float) slashAngle,
+                                        Math.random() > 0.5,
+                                        arcLength,
+                                        100,
+                                        0,
+                                        0,
+                                        (float) slashAngle * 10,
+                                        1.5f,
+                                        2.1f,
+                                        15,
+                                        entity.getUUID(),
+                                        slashAnim
+                                    );
+                                } else {
+                                    BonePositionTracker.sendRawVerticalSlashToClients(
+                                        level,
+                                        posOffset.add(0, -1, 0),
+                                        modelKey,
+                                        (float) slashAngle,
+                                        false,
+                                        arcLength,
+                                        100,
+                                        0,
+                                        0,
+                                        (float) slashAngle * 10,
+                                        1.5f,
+                                        2.1f,
+                                        0,
+                                        entity.getUUID(),
+                                        slashAnim
+                                    );
+                                }
 		        				
 		        				x = (float)(vectors[2].x + (Math.random()-0.5)*15);
 	                			y = (float)(vectors[2].y + (Math.random()-0.5)*15);
@@ -975,7 +1027,7 @@ public class EnhancedLoveForms {
                     				for (float i = 0; i < Math.PI*2; i += 0.2f) {
                     					Vec3 pos = le.position().add(1.5f*Math.sin(i), 1, 1.5f*Math.cos(i));
                     					serverLevel.sendParticles(
-                            		            new DustParticleOptions(
+                            		            new EnergyParticleOptions(
                             		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                             		                1.8f                           // scale
                             		            ),
@@ -1022,7 +1074,7 @@ public class EnhancedLoveForms {
 
                     			// Spawn pink dust particle at pos
                     			serverLevel.sendParticles(
-                    		            new DustParticleOptions(
+                    		            new EnergyParticleOptions(
                     		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                     		                1.8f                           // scale
                     		            ),
@@ -1032,7 +1084,7 @@ public class EnhancedLoveForms {
                     			
                     			// Spawn white dust particle at pos
                     			serverLevel.sendParticles(
-                    					new DustParticleOptions(
+                    					new EnergyParticleOptions(
                         		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                         		                1.5f                           // scale
                         		            ),
@@ -1071,9 +1123,9 @@ public class EnhancedLoveForms {
             	ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
             	float [][][] particlePoints = ParticlePositions.fifth_form.get("point_a");
 
-				float damage = DamageCalculator.calculateScaledDamage(entity, 13.0F);
+				float damage = DamageCalculator.calculateScaledDamage(entity, 10.0F);
             	 // Set guard state (formId auto-injected as 22005)
-                GuardStateHelper.setGuardState(entity, damage, formId);
+                GuardStateHelper.setGuardState(entity, damage * 0.8f, formId);
 
                 // Play player animation
                 playEntityAnimation(entity, "love_fifth_form");
@@ -1159,7 +1211,7 @@ public class EnhancedLoveForms {
 
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
-                		            new DustParticleOptions(
+                		            new EnergyParticleOptions(
                 		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.8f                           // scale
                 		            ),
@@ -1169,7 +1221,7 @@ public class EnhancedLoveForms {
                 			
                 			// Spawn white dust particle at pos
                 			serverLevel.sendParticles(
-                					new DustParticleOptions(
+                					new EnergyParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1.5f                           // scale
                     		            ),
@@ -1350,7 +1402,7 @@ public class EnhancedLoveForms {
                 				
                 				if (Math.random() < 0.3) {
                 					serverLevel.sendParticles(
-                        		            new DustParticleOptions(
+                        		            new EnergyParticleOptions(
                         		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                         		                2.5f                           // scale
                         		            ),
@@ -1430,7 +1482,7 @@ public class EnhancedLoveForms {
             	ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
             	float [][][] particlePoints = ParticlePositions.sixth_form.get("point_a");
             	 // Set guard state (formId auto-injected as 22006)
-                GuardStateHelper.setGuardState(entity, damage*4, formId); // extra protection
+                GuardStateHelper.setGuardState(entity, damage*1.75f, formId); // extra protection
 
                 // Play player animation
                 playEntityAnimation(entity, "love_sixth_form");
@@ -1534,7 +1586,7 @@ public class EnhancedLoveForms {
 
                     			// Spawn pink dust particle at pos
                     			serverLevel.sendParticles(
-                    		            new DustParticleOptions(
+                    		            new EnergyParticleOptions(
                     		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                     		                1.2f                           // scale
                     		            ),
@@ -1544,7 +1596,7 @@ public class EnhancedLoveForms {
                     			
                     			// Spawn white dust particle at pos
                     			serverLevel.sendParticles(
-                    					new DustParticleOptions(
+                    					new EnergyParticleOptions(
                         		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                         		                1f                           // scale
                         		            ),
@@ -1568,6 +1620,20 @@ public class EnhancedLoveForms {
                 }, totalDuration+2);
             }
         );
+    }
+    
+    /**
+     * Create the base Love Breathing technique.
+     */
+    public static BreathingTechnique createLoveBreathingBase() {
+        List<BreathingForm> forms = new ArrayList<>();
+        forms.add(firstForm());
+        forms.add(secondForm());
+        forms.add(thirdForm());
+        forms.add(fourthForm());
+
+        // Pink colors for Love Breathing (§d = light purple/pink, §5 = dark purple)
+        return new BreathingTechnique("Love Breathing", forms, "§d", "§5");
     }
 
     /**

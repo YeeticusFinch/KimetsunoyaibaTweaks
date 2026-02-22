@@ -308,20 +308,13 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		// Priority 8: Random look around
 		this.goalSelector.addGoal(8, new net.minecraft.world.entity.ai.goal.RandomLookAroundGoal(this));
 
-		// Target goals (same as base class)
+		// Target goals
 		this.targetSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal(this));
 
-		// Target demons from kimetsunoyaiba mod (using entity tags)
-		net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> DEMON_TAG = net.minecraft.tags.TagKey.create(
-			net.minecraft.core.registries.Registries.ENTITY_TYPE,
-			ResourceLocation.tryBuild("kimetsunoyaiba", "demon"));
-		net.minecraft.tags.TagKey<net.minecraft.world.entity.EntityType<?>> TWELVE_KIZUKI_TAG = net.minecraft.tags.TagKey.create(
-			net.minecraft.core.registries.Registries.ENTITY_TYPE,
-			ResourceLocation.tryBuild("kimetsunoyaiba", "twelve_kizuki"));
-
+		// Target demons from kimetsunoyaiba mod (using comprehensive demon detection)
 		this.targetSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(
 			this, net.minecraft.world.entity.LivingEntity.class, 10, true, false,
-			(entity) -> entity.getType().is(DEMON_TAG) || entity.getType().is(TWELVE_KIZUKI_TAG)));
+			DemonSlayerAggroHandler::isDemonTarget));
 
 		// Target players who are demons (check NBT data)
 		this.targetSelector.addGoal(3, new net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal<>(

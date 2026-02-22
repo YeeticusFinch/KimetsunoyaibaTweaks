@@ -1,6 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
-// import net.minecraft.client.player.LocalPlayer; // REMOVED: Client-only, unused
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -13,12 +12,12 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
-
-import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -53,6 +52,22 @@ public class BreathingSwordSwingPacket {
 
     private static final float DEFAULT_BOX_SIZE = 5f;
     private static final float KANROJI_BOX_SIZE = 10f; // Increased range for Kanroji's whip sword
+    private static final float LOVE_BOX_SIZE = 8f;     // Love sword has slightly less range than Kanroji
+    
+    /**
+     * Checks if the animation name (sent from client) contains "sword".
+     * This is used to determine if the player is performing a sword-related animation.
+     *
+     * Note: Animation data is client-side only, so we use the animationName
+     * that was captured client-side and sent with this packet.
+     *
+     * @return true if the animation name contains "sword"
+     */
+    public boolean geckolibSwordSlashAnimation() {
+        return this.animationName != null &&
+               !this.animationName.isEmpty() &&
+               this.animationName.toLowerCase().contains("sword");
+    }
     
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context ctx = supplier.get();
@@ -61,7 +76,8 @@ public class BreathingSwordSwingPacket {
             if (player == null) return;
 
             ItemStack heldItem = player.getItemInHand(InteractionHand.MAIN_HAND);
-            if (!(heldItem.getItem() instanceof BreathingSwordItem)) return;
+            boolean fixBaseAnimation = BaseModBreathingExecutor.isBaseModNichirinSword(heldItem.getItem()) || geckolibSwordSlashAnimation();
+            if (!(heldItem.getItem() instanceof BreathingSwordItem) && !fixBaseAnimation) return;
 
             // Check if player has cool_time effect from KnY mod (prevents attacks)
             if (com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects.hasCoolTime(player)) {
@@ -85,7 +101,8 @@ public class BreathingSwordSwingPacket {
 
             // Determine box size based on sword type
             boolean isKanrojiSword = heldItem.getItem() instanceof NichirinSwordKanrojiAnimated;
-            float boxSize = isKanrojiSword ? KANROJI_BOX_SIZE : DEFAULT_BOX_SIZE;
+            boolean isLoveSword = heldItem.getItem() instanceof NichirinSwordLoveAnimated;
+            float boxSize = isKanrojiSword ? KANROJI_BOX_SIZE : isLoveSword ? LOVE_BOX_SIZE : DEFAULT_BOX_SIZE;
 
             // Perform AOE
             Vec3 attackerPos = player.position().add(0, player.getEyeHeight(), 0);
@@ -111,8 +128,8 @@ public class BreathingSwordSwingPacket {
 
                 Damager.hurt(player, target, damage);
 
-                // Spawn love_slash particle on hit for Kanroji sword
-                if (isKanrojiSword && player.level() instanceof ServerLevel serverLevel) {
+                // Spawn love_slash particle on hit for Kanroji/Love sword
+                if ((isKanrojiSword || isLoveSword) && player.level() instanceof ServerLevel serverLevel) {
                     double particleX = target.getX() + target.getBbHeight() * (Math.random() - 0.5);
                     double particleY = target.getY() + target.getBbHeight() * Math.random();
                     double particleZ = target.getZ() + target.getBbHeight() * (Math.random() - 0.5);
@@ -129,8 +146,8 @@ public class BreathingSwordSwingPacket {
                     targets.size(), boxSize, isKanrojiSword);
             }
 
-            // Spawn particle trail for Kanroji sword swings (sword_to_left and sword_to_right animations)
-            if (isKanrojiSword && player.level() instanceof ServerLevel serverLevel) {
+            // Spawn particle trail for Kanroji/Love sword swings (sword_to_left and sword_to_right animations)
+            if ((isKanrojiSword || isLoveSword) && player.level() instanceof ServerLevel serverLevel) {
                 spawnKanrojiSwordTrailParticles(player, serverLevel, animationName);
             }
         });
@@ -207,7 +224,7 @@ public class BreathingSwordSwingPacket {
 
                     // Spawn pink dust particle at pos
                     serverLevel.sendParticles(
-                        new net.minecraft.core.particles.DustParticleOptions(
+                        new com.lerdorf.kimetsunoyaibamultiplayer.particles.EnergyParticleOptions(
                             new org.joml.Vector3f(1.0f, 0.4f, 0.7f), // PINK
                             1.2f                                      // scale
                         ),
@@ -217,7 +234,7 @@ public class BreathingSwordSwingPacket {
 
                     // Spawn white dust particle at pos
                     serverLevel.sendParticles(
-                        new net.minecraft.core.particles.DustParticleOptions(
+                        new com.lerdorf.kimetsunoyaibamultiplayer.particles.EnergyParticleOptions(
                             new org.joml.Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                             1f                                        // scale
                         ),

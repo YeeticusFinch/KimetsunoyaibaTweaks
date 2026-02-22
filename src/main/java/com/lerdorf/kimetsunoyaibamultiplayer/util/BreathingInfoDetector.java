@@ -501,7 +501,7 @@ public class BreathingInfoDetector {
     }
 
     /**
-     * Checks if an item is a nichirin sword (from either mod).
+     * Checks if an item is a nichirin sword (from this mod, base mod, or any addon).
      */
     public static boolean isNichirinSword(ItemStack item) {
         if (item == null || item.isEmpty()) {
@@ -513,10 +513,15 @@ public class BreathingInfoDetector {
             return true;
         }
 
+        // Check if it's registered in SwordRegistry (addon support)
+        if (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getSword(item.getItem()) != null) {
+            return true;
+        }
+
         String itemId = item.getItem().toString().toLowerCase();
 
         // Check for kimetsunoyaiba mod swords
-        if (itemId.contains("nichirin") || itemId.contains("nitirintou")) {
+        if (itemId.contains("nichirin") || itemId.contains("nitirintou") || itemId.contains("sword_kokushibo")) {
             return true;
         }
 

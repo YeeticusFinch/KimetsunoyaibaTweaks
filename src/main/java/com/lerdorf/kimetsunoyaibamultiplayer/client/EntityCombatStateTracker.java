@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -33,6 +34,14 @@ public class EntityCombatStateTracker {
 
     // Combat cooldown in ticks (10 seconds = 200 ticks, only counts when game is running)
     private static final int COMBAT_COOLDOWN_TICKS = 200;
+    // Demon slayers should keep sword drawn briefly after combat ends.
+    private static final int DEMON_SLAYER_SHEATH_DELAY_TICKS = 80;
+    // Freshly spawned demon slayers wait briefly before first auto-sheath.
+    private static final int DEMON_SLAYER_INITIAL_DRAW_TICKS = 20;
+    // Sheath animation length for entity transition handling
+    private static final int ENTITY_SHEATH_ANIMATION_TICKS = 10;
+    // Track entity sheathing transitions: keep sword in hand until animation completes
+    private static final Map<LivingEntity, Integer> sheathingUntilTick = new WeakHashMap<>();
 
     /**
      * Check if entity is currently in combat.
@@ -69,8 +78,19 @@ public class EntityCombatStateTracker {
 
         // For BreathingSlayerEntity, check animation/cooldown
         if (entity instanceof BreathingSlayerEntity breathingEntity) {
-            if (breathingEntity.getAnimationTicks() > 0 ||
-                breathingEntity.isBreathingFormOnCooldown()) {
+            String currentAnimation = breathingEntity.getCurrentAnimation();
+            boolean isDrawSheathAnim = currentAnimation != null &&
+                (currentAnimation.startsWith("draw_") || currentAnimation.startsWith("sheath_"));
+            boolean hasCombatTarget = false;
+            if (entity instanceof Mob mob) {
+                LivingEntity target = mob.getTarget();
+                hasCombatTarget = target != null && target.isAlive() && !target.isRemoved();
+            }
+
+            // Do not treat draw/sheath transition animations as combat.
+            // Also require an active combat target for breathing-form cooldown to keep combat active.
+            if ((!isDrawSheathAnim && breathingEntity.getAnimationTicks() > 0) ||
+                (hasCombatTarget && breathingEntity.isBreathingFormOnCooldown())) {
                 //Log.debug("EntityCombatStateTracker: {} is breathing/animating, in combat",
                 //    entity.getType().getDescriptionId());
                 activelyFighting = true;
@@ -86,6 +106,24 @@ public class EntityCombatStateTracker {
         if (activelyFighting) {
             lastCombatTick.put(entity, currentTick);
             return true;
+        }
+
+        // Demon slayers have custom sheath timing:
+        // - Keep sword drawn for 80 ticks after combat ends
+        // - Before first combat, keep drawn for initial 20 ticks after spawn
+        if (entity instanceof DemonSlayerEntity) {
+            Integer lastCombat = lastCombatTick.get(entity);
+            if (lastCombat != null) {
+                int ticksSinceLastCombat = currentTick - lastCombat;
+                return ticksSinceLastCombat < DEMON_SLAYER_SHEATH_DELAY_TICKS;
+            }
+            return currentTick < DEMON_SLAYER_INITIAL_DRAW_TICKS;
+        }
+
+        // Other breathing slayers should sheath responsively when combat ends.
+        // Skip extended cooldown for these entities.
+        if (entity instanceof BreathingSlayerEntity) {
+            return false;
         }
 
         // Check cooldown period - remain "in combat" for 10 seconds (200 ticks) after last activity
@@ -130,6 +168,8 @@ public class EntityCombatStateTracker {
     private static void onCombatStateChanged(LivingEntity entity, boolean nowInCombat) {
         ItemStack mainHand = entity.getItemBySlot(EquipmentSlot.MAINHAND);
         if (!SwordParticleMapping.isKimetsunoyaibaSword(mainHand)) {
+            Log.debug("[EntityCombatStateTracker] Transition ignored for {}: main hand is not a KnY sword ({})",
+                entity.getType().getDescriptionId(), mainHand.isEmpty() ? "empty" : mainHand.getItem().toString());
             return;
         }
 
@@ -140,8 +180,25 @@ public class EntityCombatStateTracker {
         if (position == null) {
             position = SwordDisplayConfig.position; // Use default
         }
+        if (entity instanceof DemonSlayerEntity slayer) {
+            int level = slayer.getPowerLevel();
+            if (level >= 1 && level <= 4) {
+                position = slayer.isSheatheOnBack()
+                    ? SwordDisplayConfig.SwordDisplayPosition.BACK
+                    : SwordDisplayConfig.SwordDisplayPosition.HIP;
+            } else if (level >= 5) {
+                // Super seniors use hip as primary sheath anchor.
+                position = SwordDisplayConfig.SwordDisplayPosition.HIP;
+            }
+        }
+        // Primary entity sheath slot is always the LEFT slot.
+        boolean isLeft = true;
+        Log.debug("[EntityCombatStateTracker] Transition for {}: nowInCombat={}, sword={}, position={}, side={}",
+            entity.getType().getDescriptionId(), nowInCombat,
+            mainHand.getItem().toString(), position, isLeft ? "left" : "right");
 
         if (nowInCombat) {
+            sheathingUntilTick.remove(entity);
             // Entering combat: draw sword
             SwordSheathRegistry.SheathInfo sheathInfo =
                 SwordSheathRegistry.getSheathInfo(mainHand);
@@ -152,12 +209,34 @@ public class EntityCombatStateTracker {
             }
 
             // DRAW ANIMATION: Trigger when entity enters combat
-            DrawSheathAnimationHelper.playDrawAnimation(entity, position, mainHand);
+            DrawSheathAnimationHelper.playDrawAnimation(entity, position, isLeft, mainHand);
         } else {
             // Exiting combat: sheath sword
             // SHEATH ANIMATION: Trigger when entity exits combat (reverse draw)
-            DrawSheathAnimationHelper.playSheathAnimation(entity, position);
+            DrawSheathAnimationHelper.playSheathAnimation(entity, position, isLeft);
+            sheathingUntilTick.put(entity, entity.tickCount + ENTITY_SHEATH_ANIMATION_TICKS);
+            Log.debug("[EntityCombatStateTracker] Sheathing transition started for {}: tickNow={}, untilTick={}",
+                entity.getType().getDescriptionId(), entity.tickCount, entity.tickCount + ENTITY_SHEATH_ANIMATION_TICKS);
         }
+    }
+
+    /**
+     * Returns true while entity is in the sheath animation transition window.
+     * During this window, the sword should remain visible in hand.
+     */
+    public static boolean isInSheathingTransition(LivingEntity entity) {
+        if (entity == null) return false;
+        Integer until = sheathingUntilTick.get(entity);
+        if (until == null) {
+            return false;
+        }
+        if (entity.tickCount >= until) {
+            sheathingUntilTick.remove(entity);
+            Log.debug("[EntityCombatStateTracker] Sheathing transition finished for {} at tick {}",
+                entity.getType().getDescriptionId(), entity.tickCount);
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -188,5 +267,6 @@ public class EntityCombatStateTracker {
     public static void clearAll() {
         combatStates.clear();
         lastCombatTick.clear();
+        sheathingUntilTick.clear();
     }
 }

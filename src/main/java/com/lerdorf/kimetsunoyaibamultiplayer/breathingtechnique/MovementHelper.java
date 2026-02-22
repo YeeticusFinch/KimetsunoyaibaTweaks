@@ -118,6 +118,21 @@ public class MovementHelper {
         float pitch = (float) Math.toDegrees(-Math.asin(lookDir.y));
         setRotation(entity, yaw, pitch);
     }
+    
+    /**
+     * Make entity look at a specific position
+     * @param entity The entity to rotate
+     * @param target The position to look at
+     */
+    public static void lookAtNoY(LivingEntity entity, Vec3 target) {
+        Vec3 lookDir = target.subtract(entity.position()).normalize();
+        float yaw = (float) Math.toDegrees(Math.atan2(-lookDir.x, lookDir.z));
+        //float pitch = (float) Math.toDegrees(-Math.asin(lookDir.y));
+        Vec3 normalized = entity.getLookAngle();
+        float pitch = (float) Math.toDegrees(-Math.asin(normalized.y));
+        setRotation(entity, yaw, pitch);
+    }
+
 
     /**
      * Make entity look in a specific direction

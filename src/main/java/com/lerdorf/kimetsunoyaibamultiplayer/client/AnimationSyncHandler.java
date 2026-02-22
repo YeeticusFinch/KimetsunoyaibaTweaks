@@ -370,6 +370,22 @@ public class AnimationSyncHandler {
         }
     }
 
+    /**
+     * Check if a synchronized animation is currently active for a player.
+     */
+    public static boolean isAnimationActive(UUID playerUUID, String animationName) {
+        if (playerUUID == null || animationName == null || animationName.isEmpty()) {
+            return false;
+        }
+
+        ActiveAnimation activeAnimation = syncedAnimations.get(playerUUID);
+        if (activeAnimation == null || activeAnimation.animationId == null) {
+            return false;
+        }
+
+        return animationName.equals(activeAnimation.animationId.getPath());
+    }
+
     public static void clearAllAnimations() {
         for (Map.Entry<UUID, ActiveAnimation> entry : syncedAnimations.entrySet()) {
             ActiveAnimation activeAnim = entry.getValue();

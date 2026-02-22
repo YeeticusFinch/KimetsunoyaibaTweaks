@@ -9,7 +9,8 @@
     "CommandsMixin"
   ],
   "client": [
-    "GenericItemLayerMixin"
+    "GenericItemLayerMixin",
+    "EntityGlowingMixin"
   ],
   "injectors": {
     "defaultRequire": 1

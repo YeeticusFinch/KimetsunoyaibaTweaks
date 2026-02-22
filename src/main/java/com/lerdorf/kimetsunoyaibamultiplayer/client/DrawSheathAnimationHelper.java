@@ -3,8 +3,11 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
@@ -155,41 +158,62 @@ public class DrawSheathAnimationHelper {
     public static void playDrawAnimation(LivingEntity entity,
                                         SwordDisplayConfig.SwordDisplayPosition sheathPosition,
                                         ItemStack sword) {
+        boolean isLeft = entity != null && entity.getMainArm() == HumanoidArm.LEFT;
+        playDrawAnimation(entity, sheathPosition, isLeft, sword);
+    }
+
+    public static void playDrawAnimation(LivingEntity entity,
+                                        SwordDisplayConfig.SwordDisplayPosition sheathPosition,
+                                        boolean isLeft,
+                                        ItemStack sword) {
         if (entity == null || sheathPosition == null) {
+            Log.debug("[DrawSheath] Entity draw skipped: entity or sheathPosition null");
             return;
         }
 
         // Check if animations are enabled in config
         if (!SwordDisplayConfig.drawSheathAnimations) {
+            Log.debug("[DrawSheath] Entity draw skipped for {}: draw/sheath animations disabled",
+                entity.getType().getDescriptionId());
             return;
         }
 
         // Check cooldown
         if (!canPlayAnimation(entity)) {
+            Log.debug("[DrawSheath] Entity draw skipped for {}: cooldown active",
+                entity.getType().getDescriptionId());
             return;
         }
 
-        // Entities always use mainhand, assume left position for default
-        String animationName = getDrawAnimationName(true, sheathPosition, true);
+        String animationName = getDrawAnimationName(true, sheathPosition, isLeft);
 
         if (animationName != null) {
-            Log.debug("Playing draw animation for entity {}: {} (position={})",
-                entity.getType().getDescriptionId(), animationName, sheathPosition);
+            Log.debug("[DrawSheath] Entity draw: entity={}, anim={}, hand=mainhand, side={}, position={}, sword={}",
+                entity.getType().getDescriptionId(), animationName, isLeft ? "left" : "right",
+                sheathPosition, sword.isEmpty() ? "empty" : sword.getItem().toString());
 
-            // Play the animation with normal speed
-            AnimationHelper.playAnimationOnLayer(
-                entity,
-                animationName,
-                DRAW_ANIM_TICKS,
-                1.0f,  // Normal speed
-                DRAW_SHEATH_LAYER
-            );
+            if (entity instanceof DemonSlayerEntity demonSlayer) {
+                // Demon slayers are Gecko entities; drive draw/sheath through their synced Gecko animation state.
+                demonSlayer.playGeckoAnimation(animationName, DRAW_ANIM_TICKS);
+            } else {
+                // Non-Gecko entities continue using the MobPlayerAnimator path.
+                AnimationHelper.playAnimationOnLayer(
+                    entity,
+                    animationName,
+                    DRAW_ANIM_TICKS,
+                    1.0f,
+                    DRAW_SHEATH_LAYER
+                );
+            }
 
             // Trigger Kanroji sword special animation if applicable
             triggerKanrojiDrawAnimation(entity, sword);
 
             // Update cooldown
             lastAnimationTime.put(entity.getUUID(), System.currentTimeMillis());
+        } else {
+            Log.debug("[DrawSheath] Entity draw skipped for {}: no animation mapping (position={}, side={})",
+                entity.getType().getDescriptionId(), sheathPosition, isLeft ? "left" : "right");
         }
     }
 
@@ -202,38 +226,57 @@ public class DrawSheathAnimationHelper {
      */
     public static void playSheathAnimation(LivingEntity entity,
                                           SwordDisplayConfig.SwordDisplayPosition sheathPosition) {
+        boolean isLeft = entity != null && entity.getMainArm() == HumanoidArm.LEFT;
+        playSheathAnimation(entity, sheathPosition, isLeft);
+    }
+
+    public static void playSheathAnimation(LivingEntity entity,
+                                          SwordDisplayConfig.SwordDisplayPosition sheathPosition,
+                                          boolean isLeft) {
         if (entity == null || sheathPosition == null) {
+            Log.debug("[DrawSheath] Entity sheath skipped: entity or sheathPosition null");
             return;
         }
 
         // Check if animations are enabled in config
         if (!SwordDisplayConfig.drawSheathAnimations) {
+            Log.debug("[DrawSheath] Entity sheath skipped for {}: draw/sheath animations disabled",
+                entity.getType().getDescriptionId());
             return;
         }
 
         // Check cooldown
         if (!canPlayAnimation(entity)) {
+            Log.debug("[DrawSheath] Entity sheath skipped for {}: cooldown active",
+                entity.getType().getDescriptionId());
             return;
         }
 
-        // Entities always use mainhand, assume left position for default
-        String animationName = getSheathAnimationName(true, sheathPosition, true);
+        String animationName = getSheathAnimationName(true, sheathPosition, isLeft);
 
         if (animationName != null) {
-            Log.debug("Playing sheath animation for entity {}: {} (position={})",
-                entity.getType().getDescriptionId(), animationName, sheathPosition);
+            Log.debug("[DrawSheath] Entity sheath: entity={}, anim={}, hand=mainhand, side={}, position={}",
+                entity.getType().getDescriptionId(), animationName, isLeft ? "left" : "right", sheathPosition);
 
-            // Play the animation with NORMAL speed (dedicated sheath animation)
-            AnimationHelper.playAnimationOnLayer(
-                entity,
-                animationName,
-                SHEATH_ANIM_TICKS,  // 10 ticks (0.5 seconds) for sheath animations
-                1.0f,  // NORMAL SPEED - using dedicated sheath animation
-                DRAW_SHEATH_LAYER
-            );
+            if (entity instanceof DemonSlayerEntity demonSlayer) {
+                // Demon slayers are Gecko entities; drive draw/sheath through their synced Gecko animation state.
+                demonSlayer.playGeckoAnimation(animationName, SHEATH_ANIM_TICKS);
+            } else {
+                // Non-Gecko entities continue using the MobPlayerAnimator path.
+                AnimationHelper.playAnimationOnLayer(
+                    entity,
+                    animationName,
+                    SHEATH_ANIM_TICKS,
+                    1.0f,
+                    DRAW_SHEATH_LAYER
+                );
+            }
 
             // Update cooldown
             lastAnimationTime.put(entity.getUUID(), System.currentTimeMillis());
+        } else {
+            Log.debug("[DrawSheath] Entity sheath skipped for {}: no animation mapping (position={}, side={})",
+                entity.getType().getDescriptionId(), sheathPosition, isLeft ? "left" : "right");
         }
     }
 
@@ -318,6 +361,7 @@ public class DrawSheathAnimationHelper {
         }
     }
 
+
     /**
      * Check if a slot is the main hand slot.
      *
@@ -369,8 +413,9 @@ public class DrawSheathAnimationHelper {
             return;
         }
 
-        // Check if this is a Kanroji sword
-        if (!(sword.getItem() instanceof NichirinSwordKanrojiAnimated)) {
+        // Check if this is a Kanroji/Love sword
+        if (!(sword.getItem() instanceof NichirinSwordKanrojiAnimated) &&
+            !(sword.getItem() instanceof NichirinSwordLoveAnimated)) {
             return;
         }
 

@@ -556,6 +556,22 @@ public class AnimationTracker {
         leftClickAttackTimestamps.remove(playerUUID);
     }
 
+    /**
+     * Check if a tracked player animation is currently active for this client.
+     */
+    public static boolean isAnimationActive(UUID playerUUID, String animationName) {
+        if (playerUUID == null || animationName == null || animationName.isEmpty()) {
+            return false;
+        }
+
+        AnimationState state = activeAnimations.get(playerUUID);
+        if (state == null || state.animationId == null || !state.isActive) {
+            return false;
+        }
+
+        return animationName.equals(state.animationId.getPath());
+    }
+
     public static void clearTrackedAnimations() {
         activeAnimations.clear();
         leftClickAttackTimestamps.clear();

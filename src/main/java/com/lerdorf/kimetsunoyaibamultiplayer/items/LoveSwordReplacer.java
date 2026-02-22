@@ -25,34 +25,37 @@ import net.minecraftforge.registries.ForgeRegistries;
 @Mod.EventBusSubscriber(modid = "kimetsunoyaibamultiplayer")
 public class LoveSwordReplacer {
 
-    // Throttle checks to every 20 ticks (1 second) for performance
-    private static int tickCounter = 0;
+    // Track per-player tick counters to avoid shared state issues
+    private static final java.util.Map<java.util.UUID, Integer> playerTickCounters = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * Check player inventory periodically and replace base mod kanroji swords
      */
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        // Only replace if enhanced love breathing is enabled
-        if (!EnhancedBreathingConfig.enhancedLoveBreathing) {
-            return;
-        }
-
-        // Only check once per second (20 ticks)
+        // Only check at end of tick phase
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
-
-        tickCounter++;
-        if (tickCounter < 20) {
-            return;
-        }
-        tickCounter = 0;
 
         Player player = event.player;
         if (player.level().isClientSide) {
             return; // Only run on server
         }
+
+        // Only replace if enhanced love breathing is enabled
+        if (!EnhancedBreathingConfig.enhancedLoveBreathing) {
+            return;
+        }
+
+        // Per-player tick counter to check every 20 ticks (1 second)
+        java.util.UUID playerId = player.getUUID();
+        int currentCount = playerTickCounters.getOrDefault(playerId, 0) + 1;
+        if (currentCount < 20) {
+            playerTickCounters.put(playerId, currentCount);
+            return;
+        }
+        playerTickCounters.put(playerId, 0);
 
         // Check all inventory slots
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {

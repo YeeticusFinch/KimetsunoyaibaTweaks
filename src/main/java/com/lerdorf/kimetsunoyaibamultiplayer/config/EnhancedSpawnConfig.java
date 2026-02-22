@@ -35,6 +35,14 @@ public class EnhancedSpawnConfig {
                     "If false, falls back to simple spawn priority system.")
             .define("enhanced_spawning_rules", false);
 
+    private static final ForgeConfigSpec.BooleanValue REPLACE_BASE_GENERIC_DEMON_SLAYERS = BUILDER
+            .comment("Replace base mod generic demon slayers with kimetsunoyaibamultiplayer demon slayers.",
+                    "Replaces:",
+                    "- kimetsunoyaiba:demon_slayer -> multiplayer demon slayer (level 0-3)",
+                    "- kimetsunoyaiba:dice_steak_senior -> multiplayer demon slayer (level 4)",
+                    "- kimetsunoyaiba:dice_steak_senior_super -> multiplayer demon slayer (level 5)")
+            .define("replace_base_generic_demon_slayers", true);
+
     // ========== GENERIC SPAWN RATES ==========
     static {
         BUILDER.comment("Generic spawn rate reductions")
@@ -189,6 +197,7 @@ public class EnhancedSpawnConfig {
 
     // Runtime cache - Initialize with default values before config loads
     public static boolean enhancedSpawningRules = true;  // Default to true
+    public static boolean replaceBaseGenericDemonSlayers = true;
     public static double genericDemonSpawnRate = 0.4;
     public static double genericDemonSlayerSpawnRate = 0.1;
     public static int maxEntityCheckRadius = 500;
@@ -226,6 +235,7 @@ public class EnhancedSpawnConfig {
 
     private static void updateCache() {
         enhancedSpawningRules = ENHANCED_SPAWNING_RULES.get();
+        replaceBaseGenericDemonSlayers = REPLACE_BASE_GENERIC_DEMON_SLAYERS.get();
         genericDemonSpawnRate = GENERIC_DEMON_SPAWN_RATE.get();
         genericDemonSlayerSpawnRate = GENERIC_DEMON_SLAYER_SPAWN_RATE.get();
         maxEntityCheckRadius = MAX_ENTITY_CHECK_RADIUS.get();

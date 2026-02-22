@@ -431,6 +431,81 @@ public final class KnYAPI {
         return ParticleHelper.class;
     }
 
+    // ==================== Sword Slash Model Registration ====================
+
+    /**
+     * Register a sword to use a specific slash model.
+     * This maps a sword item path to a model key for visual slash effects.
+     * Client-side only - safe to call from common code but only executes on client.
+     *
+     * @param swordItemPath The item path (e.g., "nichirinsword_frost")
+     * @param modelKey The model key (e.g., "frost") - must have corresponding geo/texture files
+     */
+    public static void registerSlashModel(String swordItemPath, String modelKey) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry.registerModel(swordItemPath, modelKey);
+        }
+    }
+
+    /**
+     * Register an animated slash texture for a model key.
+     * Animated textures cycle through frames sequentially during the slash effect.
+     * Client-side only - safe to call from common code but only executes on client.
+     *
+     * @param modelKey The model key (e.g., "water")
+     * @param frameCount Number of texture frames (must be > 1)
+     * @param ticksPerFrame Ticks to wait before changing to next frame (default: 2)
+     */
+    public static void registerAnimatedSlashTexture(String modelKey, int frameCount, int ticksPerFrame) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry.registerAnimatedTexture(modelKey, frameCount, ticksPerFrame);
+        }
+    }
+
+    /**
+     * Register a slash model with random texture selection.
+     * Instead of animating through frames, a random texture is chosen at spawn time
+     * and remains fixed for the duration of the slash effect.
+     * Client-side only - safe to call from common code but only executes on client.
+     *
+     * @param modelKey The model key (e.g., "wind")
+     * @param textureCount Number of texture variants available
+     */
+    public static void registerRandomSlashTexture(String modelKey, int textureCount) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry.registerRandomTexture(modelKey, textureCount);
+        }
+    }
+
+    /**
+     * Set whether a model key uses random texture selection instead of animation.
+     * When true, a random frame is chosen at spawn time and remains fixed.
+     * When false (default), textures animate sequentially through frames.
+     * Client-side only - safe to call from common code but only executes on client.
+     *
+     * @param modelKey The model key
+     * @param useRandom true for random selection, false for animation (default)
+     */
+    public static void setSlashTextureRandomSelection(String modelKey, boolean useRandom) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry.setRandomTextureSelection(modelKey, useRandom);
+        }
+    }
+
+    /**
+     * Register a custom namespace for a model key's resources.
+     * Use this when your slash model files are in your own mod's assets folder.
+     * Client-side only - safe to call from common code but only executes on client.
+     *
+     * @param modelKey The model key (e.g., "frost")
+     * @param namespace The resource namespace where model/texture files live (e.g., "mymod")
+     */
+    public static void registerSlashModelNamespace(String modelKey, String namespace) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry.registerModelNamespace(modelKey, namespace);
+        }
+    }
+
     // ==================== Version Info ====================
 
     /**

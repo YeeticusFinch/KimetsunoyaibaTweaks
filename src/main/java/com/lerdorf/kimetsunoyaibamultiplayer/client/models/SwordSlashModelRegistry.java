@@ -33,6 +33,11 @@ public class SwordSlashModelRegistry {
     // Default frame delay in ticks
     private static final int DEFAULT_FRAME_DELAY = 2;
 
+    // Set of model keys that use random texture selection instead of animation
+    // When true: randomly select one frame at spawn time and stick with it
+    // When false (default): animate through frames sequentially
+    private static final java.util.Set<String> RANDOM_TEXTURE_SELECTION = new java.util.HashSet<>();
+
     // Map model keys to resource namespaces (e.g., "forest" -> "knyextraadditions")
     private static final Map<String, String> MODEL_KEY_TO_NAMESPACE = new HashMap<>();
 
@@ -46,6 +51,60 @@ public class SwordSlashModelRegistry {
 
         // Register sound breathing swords to use sound model
         SWORD_TO_MODEL_MAP.put("nichirinsword_uzui", "sound");
+
+        // Register water breathing swords to use water model (animated texture)
+        SWORD_TO_MODEL_MAP.put("nichirinsword_water", "water");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_tanjiro", "water");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_giyu", "water");
+
+        // Register animated texture for water breathing (5 frames, 2 ticks per frame)
+        ANIMATED_TEXTURE_FRAMES.put("water", 5);
+        ANIMATED_TEXTURE_FRAME_DELAY.put("water", 2);
+
+        // Register flame breathing swords to use flame model (animated texture)
+        SWORD_TO_MODEL_MAP.put("nichirinsword_flame", "flame");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_rengoku", "flame");
+
+        // Register animated texture for flame breathing (5 frames, 2 ticks per frame)
+        ANIMATED_TEXTURE_FRAMES.put("flame", 5);
+        ANIMATED_TEXTURE_FRAME_DELAY.put("flame", 2);
+
+        // Register wind breathing swords to use wind model (random texture selection)
+        SWORD_TO_MODEL_MAP.put("nichirinsword_wind", "wind");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_sanemi", "wind");
+
+        // Register wind with 3 texture variants, using random selection (not animated)
+        ANIMATED_TEXTURE_FRAMES.put("wind", 3);
+        RANDOM_TEXTURE_SELECTION.add("wind");
+
+        // Register beast breathing swords to use beast model (random texture selection)
+        SWORD_TO_MODEL_MAP.put("nichirinsword_beast", "beast");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_inosuke", "beast");
+
+        // Register beast with 3 texture variants, using random selection (not animated)
+        ANIMATED_TEXTURE_FRAMES.put("beast", 3);
+        RANDOM_TEXTURE_SELECTION.add("beast");
+
+        // Register flower breathing swords to use flower model (animated texture)
+        // Covers both base mod and our mod variants (registry matches by path, not namespace)
+        SWORD_TO_MODEL_MAP.put("nichirinsword_flower", "flower");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_kanawo", "flower");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_kanae", "flower");
+
+        // Register animated texture for flower breathing (5 frames, 2 ticks per frame)
+        ANIMATED_TEXTURE_FRAMES.put("flower", 5);
+        ANIMATED_TEXTURE_FRAME_DELAY.put("flower", 2);
+
+        // Register sound breathing sword to use sound model
+        SWORD_TO_MODEL_MAP.put("nichirinsword_sound", "sound");
+
+        // Register beast breathing sword to use beast model
+        SWORD_TO_MODEL_MAP.put("nichirinsword_beast", "beast");
+
+        // Register love breathing sword to use love model
+        SWORD_TO_MODEL_MAP.put("nichirinsword_love", "love");
+
+        // Snake, insect, stone swords fall back to generic model automatically
 
         // Other swords will automatically fall back to generic model
     }
@@ -239,5 +298,46 @@ public class SwordSlashModelRegistry {
      */
     public static int getFrameDelay(String modelKey) {
         return ANIMATED_TEXTURE_FRAME_DELAY.getOrDefault(modelKey, DEFAULT_FRAME_DELAY);
+    }
+
+    /**
+     * Registers a model key to use random texture selection instead of animation.
+     * When enabled, a random frame is chosen at spawn time and remains fixed.
+     * @param modelKey The model key (e.g., "wind")
+     * @param useRandom true to use random selection, false to animate (default)
+     */
+    public static void setRandomTextureSelection(String modelKey, boolean useRandom) {
+        if (useRandom) {
+            RANDOM_TEXTURE_SELECTION.add(modelKey);
+            Log.info("Enabled random texture selection for: " + modelKey);
+        } else {
+            RANDOM_TEXTURE_SELECTION.remove(modelKey);
+            Log.info("Disabled random texture selection for: " + modelKey);
+        }
+    }
+
+    /**
+     * Checks if a model key uses random texture selection instead of animation
+     * @param modelKey The model key
+     * @return true if random selection is used, false if animated (default)
+     */
+    public static boolean usesRandomTextureSelection(String modelKey) {
+        return RANDOM_TEXTURE_SELECTION.contains(modelKey);
+    }
+
+    /**
+     * Registers a multi-texture model with random selection (convenience method).
+     * Combines registerAnimatedTexture() + setRandomTextureSelection(true)
+     * @param modelKey The model key (e.g., "wind")
+     * @param textureCount Number of texture variants available
+     */
+    public static void registerRandomTexture(String modelKey, int textureCount) {
+        if (textureCount > 1) {
+            ANIMATED_TEXTURE_FRAMES.put(modelKey, textureCount);
+            RANDOM_TEXTURE_SELECTION.add(modelKey);
+            Log.info("Registered random texture: " + modelKey + " with " + textureCount + " variants");
+        } else {
+            Log.warn("Texture count must be > 1 for random textures. Ignoring registration for: " + modelKey);
+        }
     }
 }

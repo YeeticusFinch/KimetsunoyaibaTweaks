@@ -3,6 +3,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.renderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SheathModelRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -40,6 +42,10 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
             return;
         }
 
+        if (isInvisibilityAnimationActive(player)) {
+            return;
+        }
+
         SwordDisplayTracker.SwordDisplayState state = SwordDisplayTracker.getDisplayState(player.getUUID());
 
         // Check if any swords are in transition (being sheathed)
@@ -50,6 +56,25 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
         } else if (state.hasRightSwordInTransition()) {
             renderSwordInHand(poseStack, buffer, packedLight, player, state.getRightHipSword(),
                             limbSwing, limbSwingAmount, partialTicks, ageInTicks, netHeadYaw, headPitch);
+        }
+
+        // Keep sheath visible during sheathing transition so it doesn't flicker out.
+        if (state.hasLeftSwordInTransition()) {
+            ItemStack transitioningSword = state.getLeftHipSword();
+            Item transitionSheath = SwordSheathRegistry.getSheathItem(transitioningSword);
+            if (transitionSheath != null) {
+                renderSheathOnly(poseStack, buffer, packedLight, player, transitionSheath,
+                    transitioningSword.getItem(), true, state.getLeftPosition());
+            }
+        }
+
+        if (state.hasRightSwordInTransition()) {
+            ItemStack transitioningSword = state.getRightHipSword();
+            Item transitionSheath = SwordSheathRegistry.getSheathItem(transitioningSword);
+            if (transitionSheath != null) {
+                renderSheathOnly(poseStack, buffer, packedLight, player, transitionSheath,
+                    transitioningSword.getItem(), false, state.getRightPosition());
+            }
         }
 
         // Render left hip/back sword (and sheath)
@@ -71,6 +96,15 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
             renderSheathOnly(poseStack, buffer, packedLight, player, state.rightSheathItem,
                            state.rightSheathSwordItem, false, state.getRightPosition());
         }
+    }
+
+    private boolean isInvisibilityAnimationActive(AbstractClientPlayer player) {
+        if (player == null) {
+            return false;
+        }
+
+        return AnimationTracker.isAnimationActive(player.getUUID(), "invisibility")
+            || AnimationSyncHandler.isAnimationActive(player.getUUID(), "invisibility");
     }
 
     /**
@@ -101,9 +135,10 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
         	}
         }
 
-        // Render the sword
+        // Render the sword (apply display override if registered, e.g. kokushibo_2 -> kokushibo_1)
+        ItemStack displaySword = SwordSheathRegistry.getSheathDisplayItem(sword);
         net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(
-            sword,
+            displaySword,
             ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
             packedLight,
             net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,

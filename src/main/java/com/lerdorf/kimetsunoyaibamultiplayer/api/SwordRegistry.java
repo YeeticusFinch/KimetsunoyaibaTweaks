@@ -69,7 +69,7 @@ public class SwordRegistry {
      * @param swingSound Custom sound effect for sword swings (can be null for no custom sound)
      * @param replaceAnimations Map of animation replacements (can be null)
      * @param registerToCreativeTab Whether to add this sword to the creative tab
-     * @param swordLevel The sword tier: 0=base, 1=named character, 2=hashira
+     * @param swordLevel The sword tier: -1=unobtainable, 0=base, 1=named character, 2=hashira
      * @return The registered sword object
      * @throws IllegalArgumentException if swordId is already registered or swordLevel is invalid
      */
@@ -88,8 +88,8 @@ public class SwordRegistry {
             throw new IllegalArgumentException("Sword already registered: " + swordId);
         }
 
-        if (swordLevel < 0 || swordLevel > 2) {
-            throw new IllegalArgumentException("Invalid sword level: " + swordLevel + ". Must be 0, 1, or 2.");
+        if (swordLevel < -1 || swordLevel > 2) {
+            throw new IllegalArgumentException("Invalid sword level: " + swordLevel + ". Must be -1, 0, 1, or 2.");
         }
 
         RegisteredSword sword = new RegisteredSword(swordId, swordItem, styleId, category, particle, swingSound, replaceAnimations, registerToCreativeTab, swordLevel);
@@ -350,15 +350,26 @@ public class SwordRegistry {
         /**
          * Get a human-readable description of the sword level.
          *
-         * @return "Base", "Named Character", or "Hashira"
+         * @return "Unobtainable", "Base", "Named Character", or "Hashira"
          */
         public String getSwordLevelDescription() {
             return switch (swordLevel) {
+                case -1 -> "Unobtainable";
                 case 0 -> "Base";
                 case 1 -> "Named Character";
                 case 2 -> "Hashira";
                 default -> "Unknown";
             };
+        }
+
+        /**
+         * Check if this sword is obtainable in survival mode.
+         * Swords with level -1 are unobtainable (not in loot tables, random tables, etc.)
+         *
+         * @return true if the sword is obtainable in survival, false if unobtainable
+         */
+        public boolean isObtainableInSurvival() {
+            return swordLevel >= 0;
         }
 
         public String getAnim(String ogAnim) {

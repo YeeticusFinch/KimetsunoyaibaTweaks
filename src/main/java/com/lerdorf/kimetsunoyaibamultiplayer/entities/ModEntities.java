@@ -63,6 +63,17 @@ public class ModEntities {
                 .build("muichiro"));
 
     /**
+     * Muichiro Tokito (Full Potential) - starts in demon slayer mark state.
+     */
+    public static final RegistryObject<EntityType<MuichiroFullPotentialEntity>> MUICHIRO_FP =
+        ENTITY_TYPES.register("muichiro_fp",
+            () -> EntityType.Builder.of(MuichiroFullPotentialEntity::new, MobCategory.MISC)
+                .sized(0.54F, 1.62F) // Slightly larger than base Muichiro
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("muichiro_fp"));
+
+    /**
      * Mitsuri Kanroji - Love Hashira
      * Wields nichirinsword_kanroji (animated whip sword), uses Enhanced Love Breathing (all 6 forms)
      * Long-range whip attacks with multi-target damage
@@ -74,6 +85,30 @@ public class ModEntities {
                 .clientTrackingRange(10)
                 .updateInterval(3)
                 .build("kanroji"));
+
+    /**
+     * Kanae Kocho - Flower Hashira
+     * Wields nichirinsword_kanae and uses Hashira-tier Flower Breathing.
+     */
+    public static final RegistryObject<EntityType<KanaeEntity>> KANAE =
+        ENTITY_TYPES.register("kanae",
+            () -> EntityType.Builder.of(KanaeEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("kanae"));
+
+    /**
+     * Kanao Tsuyuri (Kanawo) - Kamaboko Flower Breathing user
+     * Wields nichirinsword_kanawo and uses Kamaboko-tier Flower Breathing.
+     */
+    public static final RegistryObject<EntityType<KanawoEntity>> KANAWO =
+        ENTITY_TYPES.register("kanawo",
+            () -> EntityType.Builder.of(KanawoEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("kanawo"));
 
     /**
      * Mugen Door - Decorative entity for kizuki demon spawns
@@ -119,6 +154,60 @@ public class ModEntities {
                 .build("love_tornado"));
 
     /**
+     * After Image - Visual effect for Flower Breathing 7th Form and other speed techniques
+     * Creates ghostly afterimages that fade out, giving the illusion of blinding speed
+     * Cannot be attacked or damaged, purely decorative
+     */
+    public static final RegistryObject<EntityType<AfterImageEntity>> AFTER_IMAGE =
+        ENTITY_TYPES.register("after_image",
+            () -> EntityType.Builder.<AfterImageEntity>of(AfterImageEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F) // Player-sized
+                .clientTrackingRange(64) // Visible from distance
+                .updateInterval(1) // Update every tick for smooth fade
+                .noSave() // Don't save to world (temporary entity)
+                .fireImmune()
+                .build("after_image"));
+
+    /**
+     * Generic Demon Slayer (male) - Spawns with random nichirin sword and power level.
+     * Can use any registered breathing style (base mod, this mod, or addons).
+     */
+    public static final RegistryObject<EntityType<DemonSlayerEntity>> DEMON_SLAYER =
+        ENTITY_TYPES.register("demon_slayer",
+            () -> EntityType.Builder.of(DemonSlayerEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("demon_slayer"));
+
+    /**
+     * Generic Demon Slayer (female) - Same behavior as demon_slayer but uses
+     * biped_female model and slayer_female textures. Tagged with forge:woman.
+     */
+    public static final RegistryObject<EntityType<DemonSlayerEntity>> DEMON_SLAYER_FEMALE =
+        ENTITY_TYPES.register("demon_slayer_female",
+            () -> EntityType.Builder.of(DemonSlayerEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("demon_slayer_female"));
+
+    /**
+     * Flower Petal Slash - Visual effect for Flower Breathing slash attacks
+     * Animated texture cycling through 18 frames (sword_loop_flower0-17.png)
+     * Despawns after one full animation loop (18 ticks)
+     */
+    public static final RegistryObject<EntityType<FlowerPetalSlashEntity>> FLOWER_PETAL_SLASH =
+        ENTITY_TYPES.register("flower_petal_slash",
+            () -> EntityType.Builder.<FlowerPetalSlashEntity>of(FlowerPetalSlashEntity::new, MobCategory.MISC)
+                .sized(2.0F, 2.0F) // Slash effect size
+                .clientTrackingRange(64) // Visible from distance
+                .updateInterval(1) // Update every tick for smooth animation
+                .noSave() // Don't save to world (temporary entity)
+                .fireImmune()
+                .build("flower_petal_slash"));
+
+    /**
      * Register entity types to the mod event bus
      */
     public static void register(IEventBus eventBus) {
@@ -143,9 +232,14 @@ public class ModEntities {
 
             // Register attributes for Muichiro Tokito
             event.put(MUICHIRO.get(), MuichiroEntity.createAttributes().build());
+            event.put(MUICHIRO_FP.get(), MuichiroFullPotentialEntity.createAttributes().build());
 
             // Register attributes for Mitsuri Kanroji
             event.put(KANROJI.get(), KanrojiEntity.createAttributes().build());
+
+            // Register attributes for Kanae and Kanawo
+            event.put(KANAE.get(), KanaeEntity.createAttributes().build());
+            event.put(KANAWO.get(), KanawoEntity.createAttributes().build());
 
             // Register attributes for Mugen Door (visual-only entity)
             event.put(MUGEN_DOOR.get(), MugenDoorEntity.createAttributes().build());
@@ -155,6 +249,16 @@ public class ModEntities {
 
             // Register attributes for Love Tornado (visual-only entity)
             event.put(LOVE_TORNADO.get(), LoveTornadoEntity.createAttributes().build());
+
+            // Register attributes for After Image (visual-only entity)
+            event.put(AFTER_IMAGE.get(), AfterImageEntity.createAttributes().build());
+
+            // Register attributes for Flower Petal Slash (visual-only entity)
+            event.put(FLOWER_PETAL_SLASH.get(), FlowerPetalSlashEntity.createAttributes().build());
+
+            // Register attributes for generic demon slayers (male and female)
+            event.put(DEMON_SLAYER.get(), DemonSlayerEntity.createAttributes().build());
+            event.put(DEMON_SLAYER_FEMALE.get(), DemonSlayerEntity.createAttributes().build());
 
             if (Config.logDebug)
             Log.info("Entity attributes registered successfully");

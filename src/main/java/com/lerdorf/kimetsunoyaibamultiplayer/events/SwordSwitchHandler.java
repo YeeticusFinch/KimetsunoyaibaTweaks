@@ -110,6 +110,7 @@ public class SwordSwitchHandler {
                 }
             }
         } else if (newSwordType.equals(SWORD_TYPE_BASE)) {
+            /*
             // Switching TO base mod sword - restore cached base mod breathes or default to Water 1st Form
             double cachedBaseBreathes = player.getPersistentData().getDouble(NBT_BASE_MOD_BREATHES);
 
@@ -143,6 +144,7 @@ public class SwordSwitchHandler {
                     Log.debug("[SwordSwitchHandler] No valid cached base breathes, defaulting to Water 1st Form (101)");
                 }
             }
+                */
         } else if (newSwordType.equals(SWORD_TYPE_NONE)) {
             // Switching to non-sword - don't change breathes, but clear skill/guard/attack states
             // This ensures clean state when re-equipping a sword
@@ -195,7 +197,7 @@ public class SwordSwitchHandler {
      * - Moon: 1101-1110, 1114, 1116
      * - Sun: 1201-1212
      * - Flower: 1301, 1304-1305
-     * - Insect: 1401-1402, 1404-1406
+     * - Insect: 1401-1402, 1404-1405
      * - Love: 1501-1502, 1505-1506
      * - Sakura: 1801-1802, 1805-1806
      */

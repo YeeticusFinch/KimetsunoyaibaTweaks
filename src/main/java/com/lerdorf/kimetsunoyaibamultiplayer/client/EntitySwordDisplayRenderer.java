@@ -168,9 +168,10 @@ public class EntitySwordDisplayRenderer {
             }
         }
 
-        // Render the sword
+        // Render the sword (apply display override if registered, e.g. kokushibo_2 -> kokushibo_1)
+        net.minecraft.world.item.ItemStack displaySword = SwordSheathRegistry.getSheathDisplayItem(sword);
         Minecraft.getInstance().getItemRenderer().renderStatic(
-            sword,
+            displaySword,
             ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
             packedLight,
             OverlayTexture.NO_OVERLAY,

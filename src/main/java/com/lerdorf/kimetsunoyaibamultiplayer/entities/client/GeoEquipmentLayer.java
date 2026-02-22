@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -52,8 +53,12 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
             // When entity is peaceful, sword will be displayed on their back/hip by GeoSwordDisplayLayer
             if (SwordDisplayConfig.enabled &&
                 SwordParticleMapping.isKimetsunoyaibaSword(mainHand) &&
-                !SwordParticleMapping.isSheathExempt(mainHand) &&
-                !EntityCombatStateTracker.isInCombat(animatable)) {
+                !EntityCombatStateTracker.isInCombat(animatable) &&
+                !EntityCombatStateTracker.isInSheathingTransition(animatable)) {
+                if (animatable.tickCount % 20 == 0) {
+                    Log.debug("[GeoEquipmentLayer] Hiding in-hand sword for {} (sheathed display mode)",
+                        animatable.getType().getDescriptionId());
+                }
                 return ItemStack.EMPTY; // Hide from hand (render-only)
             }
 
@@ -139,8 +144,9 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
             poseStack.mulPose(Axis.ZP.rotationDegrees(0f));
             poseStack.scale(1.0f, 1.0f, 1.0f);
 
-            // Special handling for Kanroji sword - use custom renderer for animations
-            if (stack.getItem() instanceof NichirinSwordKanrojiAnimated) {
+            // Special handling for Kanroji/Love swords - use custom renderer for animations
+            if (stack.getItem() instanceof NichirinSwordKanrojiAnimated ||
+                stack.getItem() instanceof NichirinSwordLoveAnimated) {
                 renderKanrojiSwordWithAnimation(poseStack, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);
             } else {
                 super.renderStackForBone(poseStack, bone, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);

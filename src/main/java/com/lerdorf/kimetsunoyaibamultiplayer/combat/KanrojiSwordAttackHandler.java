@@ -4,10 +4,13 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
-import net.minecraft.core.particles.DustParticleOptions;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.EnergyParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
@@ -26,17 +29,61 @@ import java.util.Map;
  */
 public class KanrojiSwordAttackHandler {
 
-    private static final float KANROJI_BOX_SIZE = 10f; // Extended range for whip sword
+    public static final float KANROJI_BOX_SIZE = 10f; // Extended range for whip sword
+    public static final float LOVE_BOX_SIZE = 8f;    // Love sword has slightly less range
+    public static final double KANROJI_ENTITY_REACH = 15.0;
+    public static final double LOVE_ENTITY_REACH = 13.0;
 
     /**
-     * Perform a Kanroji whip AOE attack.
+     * Check if an item is a whip-style sword (Kanroji or Love).
+     */
+    public static boolean isWhipSword(ItemStack stack) {
+        return stack.getItem() instanceof NichirinSwordKanrojiAnimated
+            || stack.getItem() instanceof NichirinSwordLoveAnimated;
+    }
+
+    /**
+     * Check if an item is specifically the Kanroji sword (not Love).
+     */
+    public static boolean isKanrojiSword(ItemStack stack) {
+        return stack.getItem() instanceof NichirinSwordKanrojiAnimated;
+    }
+
+    /**
+     * Get the appropriate AOE box size for a whip sword.
+     */
+    public static float getBoxSizeForSword(ItemStack stack) {
+        if (stack.getItem() instanceof NichirinSwordKanrojiAnimated) return KANROJI_BOX_SIZE;
+        if (stack.getItem() instanceof NichirinSwordLoveAnimated) return LOVE_BOX_SIZE;
+        return KANROJI_BOX_SIZE; // fallback
+    }
+
+    /**
+     * Get the appropriate ENTITY_REACH for a whip sword.
+     */
+    public static double getEntityReachForSword(ItemStack stack) {
+        if (stack.getItem() instanceof NichirinSwordKanrojiAnimated) return KANROJI_ENTITY_REACH;
+        if (stack.getItem() instanceof NichirinSwordLoveAnimated) return LOVE_ENTITY_REACH;
+        return KANROJI_ENTITY_REACH; // fallback
+    }
+
+    /**
+     * Perform a Kanroji whip AOE attack with default (Kanroji) box size.
+     */
+    public static int performWhipAttack(LivingEntity attacker, float damage, String animationName) {
+        return performWhipAttack(attacker, damage, animationName, KANROJI_BOX_SIZE);
+    }
+
+    /**
+     * Perform a whip AOE attack with a specified box size.
      *
      * @param attacker The entity performing the attack
      * @param damage Damage to deal
      * @param animationName Animation being played (for particles)
+     * @param boxSize The AOE box size (10 for Kanroji, 8 for Love)
      * @return Number of entities hit
      */
-    public static int performWhipAttack(LivingEntity attacker, float damage, String animationName) {
+    public static int performWhipAttack(LivingEntity attacker, float damage, String animationName, float boxSize) {
         if (!(attacker.level() instanceof ServerLevel serverLevel)) {
             return 0;
         }
@@ -44,11 +91,11 @@ public class KanrojiSwordAttackHandler {
         // Determine attack box based on attacker's look direction
         Vec3 attackerPos = attacker.position().add(0, attacker.getEyeHeight(), 0);
         Vec3 lookVec = attacker.getLookAngle().normalize();
-        Vec3 frontPos = attackerPos.add(lookVec.scale(KANROJI_BOX_SIZE / 1.5f));
+        Vec3 frontPos = attackerPos.add(lookVec.scale(boxSize / 1.5f));
 
         AABB attackBox = new AABB(
-            frontPos.add(-KANROJI_BOX_SIZE / 2, -KANROJI_BOX_SIZE / 2, -KANROJI_BOX_SIZE / 2),
-            frontPos.add(KANROJI_BOX_SIZE / 2, KANROJI_BOX_SIZE / 2, KANROJI_BOX_SIZE / 2)
+            frontPos.add(-boxSize / 2, -boxSize / 2, -boxSize / 2),
+            frontPos.add(boxSize / 2, boxSize / 2, boxSize / 2)
         );
 
         // Find all living entities in attack box
@@ -192,7 +239,7 @@ public class KanrojiSwordAttackHandler {
 
                 // Spawn pink dust particle
                 serverLevel.sendParticles(
-                    new DustParticleOptions(
+                    new EnergyParticleOptions(
                         new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                         1.2f                             // scale
                     ),
@@ -202,7 +249,7 @@ public class KanrojiSwordAttackHandler {
 
                 // Spawn white dust particle
                 serverLevel.sendParticles(
-                    new DustParticleOptions(
+                    new EnergyParticleOptions(
                         new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                         1f                               // scale
                     ),

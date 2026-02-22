@@ -131,6 +131,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig.SPEC, "kimetsunoyaibamultiplayer/customnpcs.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.SPEC, "kimetsunoyaibamultiplayer/variations.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.SPEC, "kimetsunoyaibamultiplayer/custom_progression.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.DemonSlayerConfig.SPEC, "kimetsunoyaibamultiplayer/demon_slayer.toml");
     }
 
     public static final Capability<ISwordWielderData> SWORD_WIELDER_DATA = CapabilityManager.get(new CapabilityToken<>() {});
@@ -176,11 +177,13 @@ public class KimetsunoyaibaMultiplayer
             com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
                 "nichirinsword_muichiro",
                 (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_MUICHIRO.get(),
-                "muichiro_mist_breathing",
+                "mist_breathing",
                 com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
                 mistParticle,
                 SoundEvents.AMBIENT_CAVE.value(),
-                null
+                null,
+                true,
+                2 // Hashira level
             );
 
             // Register Mitsuri Kanroji's Love Breathing sword (special, whip sword with 5 forms)
@@ -191,7 +194,46 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
                 ParticleTypes.HEART,
                 SoundEvents.AMETHYST_BLOCK_CHIME,
-                null
+                null,
+                true,
+                2 // Hashira level
+            );
+
+            // Register Flower Breathing swords (base, Kanawo, Kanae)
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                "nichirinsword_flower",
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_FLOWER.get(),
+                "flower_breathing",
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+                null,
+                null,
+                null,
+                true,
+                0 // Base sword level
+            );
+
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                "nichirinsword_kanawo",
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KANAWO.get(),
+                "flower_breathing",
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
+                null,
+                null,
+                null,
+                true,
+                1 // Named character level
+            );
+
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                "nichirinsword_kanae",
+                (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KANAE.get(),
+                "flower_breathing",
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
+                null,
+                null,
+                null,
+                true,
+                2 // Hashira level
             );
 
             // Register breathing styles if not already registered
@@ -206,17 +248,6 @@ public class KimetsunoyaibaMultiplayer
                 );
             }
 
-            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("muichiro_mist_breathing")) {
-                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
-                    "muichiro_mist_breathing",
-                    "Mist Breathing",
-                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedMistForms.createMuichiroMistBreathing(),
-                    20000,
-                    mistParticle,
-                    null
-                );
-            }
-
             if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("love_breathing")) {
                 com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
                     "love_breathing",
@@ -224,6 +255,29 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms.createLoveBreathing(),
                     21000,
                     ParticleTypes.HEART,
+                    null
+                );
+            }
+
+            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("flower_breathing")) {
+                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
+                    "flower_breathing",
+                    "Flower Breathing",
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedFlowerForms.createGenericFlowerBreathing(),
+                    24000,
+                    null,
+                    null
+                );
+            }
+
+            // Also register for base mod's 1300 range (for compatibility with base mod swords)
+            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("flower_breathing_base")) {
+                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
+                    "flower_breathing_base",
+                    "Flower Breathing",
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedFlowerForms.createGenericFlowerBreathing(),
+                    1300,
+                    null,
                     null
                 );
             }
@@ -350,6 +404,7 @@ public class KimetsunoyaibaMultiplayer
         // TestAnimCommand.register(event.getDispatcher()); // REMOVED: Uses client-only SwordParticleHandler
         TestCrowQuestCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TrainingSwordCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.SpawnDemonSlayerCommand.register(event.getDispatcher());
     }
 
     @SubscribeEvent
@@ -392,6 +447,32 @@ public class KimetsunoyaibaMultiplayer
                     new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket(player.getUUID(), 0),
                     sp
                 );
+            }
+        }
+
+        // TRAINING SWORD FAILSAFE: If player is holding a training sword and the form is not first form, reset it
+        // This catches cases where the base mod's form cycling slips through (e.g., when holding down the cycle key)
+        if (!main.isEmpty() && com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.isTrainingSword(main)) {
+            // Use getFirstFormForTrainingSword which handles black swords specially (uses water breathing)
+            double firstForm = com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.getFirstFormForTrainingSword(main, currentBreathes);
+
+            // Check if the current form is not the first form (allow for encoding - compare base form IDs)
+            double currentFormId = currentBreathes;
+            if (com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.isEncoded(currentBreathes)) {
+                currentFormId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(currentBreathes);
+            }
+
+            if (currentBreathes > 0 && currentFormId != firstForm) {
+                System.out.println("[TrainingSword] Detected non-first form on training sword! Current: " + currentBreathes +
+                                   " (formId=" + currentFormId + "), First form: " + firstForm + " - RESETTING");
+
+                // Reset to first form using the helper
+                com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.resetToFirstForm(main, player);
+
+                // Also update the select NBT on the sword to 0 if present
+                if (main.getOrCreateTag().contains("select")) {
+                    main.getOrCreateTag().putDouble("select", 0.0);
+                }
             }
         }
 
@@ -544,6 +625,11 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.LOVE_SLASH.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.particles.LoveSlashParticle.Provider::new
             );
+
+            event.registerSpriteSet(
+                com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.ENERGY.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.EnergyParticle.Provider::new
+            );
         }
 
         @SubscribeEvent
@@ -579,6 +665,14 @@ public class KimetsunoyaibaMultiplayer
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.LOVE_TORNADO.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.LoveTornadoRenderer::new);
 
+            // Register renderers for generic demon slayers
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER_FEMALE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerFemaleRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MUICHIRO_FP.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroFPRenderer::new);
+
             if (Config.logDebug)
             Log.info("Registered entity renderers");
         }
@@ -588,9 +682,11 @@ public class KimetsunoyaibaMultiplayer
         {
             // Register the static GUI model for Kanroji sword
             event.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "item/kanroji_sword_static"));
+            // Register the static GUI model for Love sword
+            event.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "item/nichirinsword_love_static"));
 
             if (Config.logDebug)
-            Log.info("Registered additional models (kanroji_sword_static)");
+            Log.info("Registered additional models (kanroji_sword_static, nichirinsword_love_static)");
         }
     }
 

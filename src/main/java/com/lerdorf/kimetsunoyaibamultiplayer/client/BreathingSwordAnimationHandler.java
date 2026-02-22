@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -23,7 +24,11 @@ public class BreathingSwordAnimationHandler {
         try {
             ItemStack mainHand = player.getItemInHand(InteractionHand.MAIN_HAND);
 
-            if (mainHand.getItem() instanceof BreathingSwordItem) {
+            // Check if this is our mod's sword or a base mod sword
+            boolean isOurSword = mainHand.getItem() instanceof BreathingSwordItem;
+            boolean isBaseModSword = !isOurSword && SwordParticleMapping.isKimetsunoyaibaSword(mainHand);
+
+            if (isOurSword || isBaseModSword) {
                 long currentTime = System.currentTimeMillis();
 
                 try {
@@ -39,12 +44,21 @@ public class BreathingSwordAnimationHandler {
                 if (currentTime - lastAttackTime < 100) {
                     return null;
                 }
+
+                // For base mod swords, check if the base mod is already playing an animation
+                // Only intervene if no sword animation is currently playing
+                if (isBaseModSword && isPlayerPlayingSwordAnimation(player)) {
+                    // Base mod animation is working, don't interfere
+                    return null;
+                }
+
                 lastAttackTime = currentTime;
 
                 String animationName;
 
-                // Special handling for Kanroji sword - uses both sword_overhead and kanroji_sword_overhead
-                if (mainHand.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated) {
+                // Special handling for Kanroji/Love sword - uses whip-style attack animation set
+                if (mainHand.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated ||
+                    mainHand.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated) {
                     int roll = RANDOM.nextInt(100);
                     if (roll < 10) {
                         // 10% chance for sword_overhead
@@ -60,7 +74,7 @@ public class BreathingSwordAnimationHandler {
                         lastWasLeft = !lastWasLeft;
                     }
                 } else {
-                    // Default behavior for other breathing swords
+                    // Default behavior for other breathing swords (and base mod swords as fallback)
                     // 8% chance for overhead animation, otherwise alternate left/right
                     if (RANDOM.nextInt(100) < 8) {
                         animationName = "sword_overhead";
@@ -89,16 +103,97 @@ public class BreathingSwordAnimationHandler {
                 );
 
                 if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingSwordAnimationHandler] onAttack -> requested player animation '{}' and triggered sword mapping", animationName);
+                    String swordType = isBaseModSword ? "base mod sword (fallback)" : "our sword";
+                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingSwordAnimationHandler] onAttack -> requested player animation '{}' for {} and triggered sword mapping", animationName, swordType);
                 }
 
                 return animationName;
             }
-        }catch(
-
-    Exception e)
-    {
+        } catch (Exception e) {
             // Silently catch all exceptions to prevent crashes
+        }
+        return null;
+    }
+
+    /**
+     * Check if the player is currently playing a sword-related animation.
+     * Used to detect if the base mod's animation system is working.
+     *
+     * @param player The player to check
+     * @return true if a sword animation is currently playing
+     */
+    private static boolean isPlayerPlayingSwordAnimation(AbstractClientPlayer player) {
+        return true; // HACK
+        /*
+        try {
+            dev.kosmx.playerAnim.api.layered.AnimationStack animationStack =
+                dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess.getPlayerAnimLayer(player);
+
+            if (animationStack == null) {
+                return false;
+            }
+
+            // Use reflection to get layers
+            java.lang.reflect.Field layersField = dev.kosmx.playerAnim.api.layered.AnimationStack.class.getDeclaredField("layers");
+            layersField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.List<dev.kosmx.playerAnim.core.util.Pair<Integer, dev.kosmx.playerAnim.api.layered.IAnimation>> layers =
+                (java.util.List<dev.kosmx.playerAnim.core.util.Pair<Integer, dev.kosmx.playerAnim.api.layered.IAnimation>>) layersField.get(animationStack);
+
+            for (dev.kosmx.playerAnim.core.util.Pair<Integer, dev.kosmx.playerAnim.api.layered.IAnimation> pair : layers) {
+                dev.kosmx.playerAnim.api.layered.IAnimation anim = pair.getRight();
+
+                if (anim != null && anim.isActive()) {
+                    // Try to extract animation name
+                    String animName = extractAnimationName(anim);
+                    if (animName != null && animName.toLowerCase().contains("sword")) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Silently fail - assume no animation is playing
+        }
+        return false;
+        */
+    }
+
+    /**
+     * Extract the animation name from an IAnimation.
+     */
+    private static String extractAnimationName(dev.kosmx.playerAnim.api.layered.IAnimation anim) {
+        try {
+            // Check if it's a ModifierLayer wrapping another animation
+            if (anim instanceof dev.kosmx.playerAnim.api.layered.ModifierLayer) {
+                dev.kosmx.playerAnim.api.layered.ModifierLayer<?> modLayer = (dev.kosmx.playerAnim.api.layered.ModifierLayer<?>) anim;
+                dev.kosmx.playerAnim.api.layered.IAnimation innerAnim = modLayer.getAnimation();
+                if (innerAnim != null) {
+                    return extractAnimationName(innerAnim);
+                }
+            }
+
+            // Check if it's a KeyframeAnimationPlayer
+            if (anim instanceof dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer) {
+                dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer animPlayer =
+                    (dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer) anim;
+                dev.kosmx.playerAnim.core.data.KeyframeAnimation data = animPlayer.getData();
+
+                if (data != null) {
+                    // Try to get name from extraData
+                    java.lang.reflect.Field extraDataField = dev.kosmx.playerAnim.core.data.KeyframeAnimation.class.getDeclaredField("extraData");
+                    extraDataField.setAccessible(true);
+                    @SuppressWarnings("unchecked")
+                    java.util.Map<String, Object> extraData = (java.util.Map<String, Object>) extraDataField.get(data);
+                    if (extraData != null) {
+                        Object name = extraData.get("name");
+                        if (name instanceof String) {
+                            return (String) name;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Silently fail
         }
         return null;
     }

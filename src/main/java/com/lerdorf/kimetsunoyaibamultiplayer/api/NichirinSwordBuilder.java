@@ -41,7 +41,7 @@ public class NichirinSwordBuilder {
     private SwordRegistry.SwordCategory category = SwordRegistry.SwordCategory.NICHIRIN;
     private int durability = 2000;
     private boolean registerToCreativeTab = true;
-    private int swordLevel = -1; // Required - must be set via swordLevel()
+    private int swordLevel = Integer.MIN_VALUE; // Required - must be set via swordLevel()
 
     private NichirinSwordBuilder(String swordId) {
         this.swordId = swordId;
@@ -154,6 +154,8 @@ public class NichirinSwordBuilder {
      * This is REQUIRED - swords cannot be built without specifying a level.
      *
      * Sword Levels:
+     * - -1 = Unobtainable/unlisted swords (not in random tables, loot tables, etc.)
+     *        Use for debug, test, or special event swords.
      * - 0 = Base/generic swords (e.g., nichirinsword_water, nichirinsword_flame)
      *       These are eligible for color change transformation.
      * - 1 = Named character swords (e.g., nichirinsword_tanjiro, nichirinsword_inosuke)
@@ -161,13 +163,13 @@ public class NichirinSwordBuilder {
      * - 2 = Hashira swords (e.g., nichirinsword_rengoku, nichirinsword_uzui)
      *       These are NOT eligible for color change.
      *
-     * @param level The sword tier (0, 1, or 2)
+     * @param level The sword tier (-1, 0, 1, or 2)
      * @return This builder for chaining
-     * @throws IllegalArgumentException if level is not 0, 1, or 2
+     * @throws IllegalArgumentException if level is not -1, 0, 1, or 2
      */
     public NichirinSwordBuilder swordLevel(int level) {
-        if (level < 0 || level > 2) {
-            throw new IllegalArgumentException("Sword level must be 0 (base), 1 (named character), or 2 (hashira). Got: " + level);
+        if (level < -1 || level > 2) {
+            throw new IllegalArgumentException("Sword level must be -1 (unobtainable), 0 (base), 1 (named character), or 2 (hashira). Got: " + level);
         }
         this.swordLevel = level;
         return this;
@@ -284,9 +286,9 @@ public class NichirinSwordBuilder {
         if (defaultParticle == null && swordParticle == null) {
             throw new IllegalStateException("At least one of defaultParticle or swordParticle must be set");
         }
-        if (swordLevel < 0) {
-            throw new IllegalStateException("Sword level must be set via swordLevel(0), swordLevel(1), or swordLevel(2). " +
-                "Level 0 = base swords (eligible for color change), Level 1 = named character swords, Level 2 = hashira swords.");
+        if (swordLevel == Integer.MIN_VALUE) {
+            throw new IllegalStateException("Sword level must be set via swordLevel(-1), swordLevel(0), swordLevel(1), or swordLevel(2). " +
+                "Level -1 = unobtainable, Level 0 = base swords (eligible for color change), Level 1 = named character swords, Level 2 = hashira swords.");
         }
     }
 

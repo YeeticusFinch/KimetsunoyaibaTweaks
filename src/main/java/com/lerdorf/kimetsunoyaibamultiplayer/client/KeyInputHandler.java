@@ -27,7 +27,7 @@ public class KeyInputHandler {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onKeyInput(InputEvent.Key event) {
-        System.out.println("[KeyInputHandler] onKeyInput() ENTERED - key=" + event.getKey());
+      //  System.out.println("[KeyInputHandler] onKeyInput() ENTERED - key=" + event.getKey());
         try {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null)
@@ -38,12 +38,13 @@ public class KeyInputHandler {
                 return;
 
             // DEBUG: Log that we're in the key handler
+            /*
             if (event.getKey() == GLFW.GLFW_KEY_G) {
                 System.out.println("[KeyInputHandler] onKeyInput() called for G key!");
                 if (Config.logDebug) {
                     Log.debug("[KeyInputHandler] onKeyInput() called for G key!");
                 }
-            }
+            }*/
 
             // IMPORTANT: Skip this handler if the keybinding is bound to a mouse button!
             // Check if the base mod's key is bound to a mouse button

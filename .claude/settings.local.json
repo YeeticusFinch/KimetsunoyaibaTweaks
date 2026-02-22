@@ -50,7 +50,14 @@
       "Bash(exit 0)",
       "Bash(del \"C:\\\\Users\\\\carlf\\\\eclipse-workspace-2\\\\Kimetsunoyaiba-Multiplayer\\\\src\\\\main\\\\resources\\\\data\\\\kimetsunoyaiba\\\\tags\\\\entity_types\\\\tag_hashira_addition.json\")",
       "Bash(xargs jar:*)",
-      "Bash(.gradlew.bat build:*)"
+      "Bash(.gradlew.bat build:*)",
+      "Read(//c/Users/carlf/eclipse-workspace-2/KnY-Extra-Additions/**)",
+      "Bash(gradlew.bat compileJava:*)",
+      "Bash(cmd /c:*)",
+      "Bash(.gradlew.bat:*)",
+      "Bash(python3:*)",
+      "Bash(node -e:*)",
+      "Bash(jar tf:*)"
     ],
     "deny": [],
     "ask": []

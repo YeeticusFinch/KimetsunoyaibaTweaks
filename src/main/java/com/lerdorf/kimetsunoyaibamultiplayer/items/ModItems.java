@@ -33,6 +33,37 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_KANROJI = ITEMS.register("nichirinsword_kanroji",
         () -> new NichirinSwordKanrojiAnimated(new Item.Properties().stacksTo(1).durability(2000)));
 
+    public static final RegistryObject<Item> NICHIRINSWORD_FLOWER = ITEMS.register("nichirinsword_flower",
+        () -> new NichirinSwordFlower(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_KANAWO = ITEMS.register("nichirinsword_kanawo",
+        () -> new NichirinSwordKanawo(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_KANAE = ITEMS.register("nichirinsword_kanae",
+        () -> new NichirinSwordKanae(new Item.Properties().stacksTo(1).durability(2000)));
+
+    // New nichirin swords
+    public static final RegistryObject<Item> NICHIRINSWORD_SOUND = ITEMS.register("nichirinsword_sound",
+        () -> new NichirinSwordSound(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_SNAKE = ITEMS.register("nichirinsword_snake",
+        () -> new NichirinSwordSnake(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_INSECT = ITEMS.register("nichirinsword_insect",
+        () -> new NichirinSwordInsect(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_STONE1 = ITEMS.register("nichirinsword_stone1",
+        () -> new NichirinSwordStone1(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_STONE2 = ITEMS.register("nichirinsword_stone2",
+        () -> new NichirinSwordStone2(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_BEAST = ITEMS.register("nichirinsword_beast",
+        () -> new NichirinSwordBeast(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_LOVE = ITEMS.register("nichirinsword_love",
+        () -> new NichirinSwordLoveAnimated(new Item.Properties().stacksTo(1).durability(2000)));
+
     // Spawn eggs
     public static final RegistryObject<Item> MUICHIRO_SPAWN_EGG = ITEMS.register("muichiro_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
@@ -40,11 +71,82 @@ public class ModItems {
             0x8ABED4, 0xFFFFFF, // Light blue-gray body (Muichiro's hair color), white spots
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> MUICHIRO_FP_SPAWN_EGG = ITEMS.register("muichiro_fp_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MUICHIRO_FP,
+            0x6FA2B7, 0xDAF1F8, // Deeper mist-blue body, pale cyan spots
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> KANROJI_SPAWN_EGG = ITEMS.register("kanroji_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KANROJI,
             0xFFB6D9, 0x9FE88D, // Pink body (Mitsuri's hair), light green spots (hair gradient)
             new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> KANAE_SPAWN_EGG = ITEMS.register("kanae_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KANAE,
+            0xD6C2F5, 0xFFFFFF, // Lavender body, white spots
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> KANAWO_SPAWN_EGG = ITEMS.register("kanawo_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KANAWO,
+            0xB892D6, 0x7BCFA0, // Purple body, mint spots
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_SLAYER_SPAWN_EGG = ITEMS.register("demon_slayer_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER,
+            0x2F4F5F, 0xD8D8D8, // Slate-blue body, light gray spots
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_SLAYER_FEMALE_SPAWN_EGG = ITEMS.register("demon_slayer_female_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER_FEMALE,
+            0xC08AA8, 0xF1E6EE, // Soft pink body, pale pink spots
+            new Item.Properties().stacksTo(64)));
+
+    // Armor pieces
+    public static final RegistryObject<Item> ANDON_BAKAMA = ITEMS.register("andon_bakama",
+        () -> new AndonBakamaItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
+            net.minecraft.world.item.ArmorItem.Type.LEGGINGS,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> SLAYER_UNIFORM_2_CHESTPLATE = ITEMS.register("slayer_uniform_2_chestplate",
+        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+            net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> SLAYER_UNIFORM_2_LEGGINGS = ITEMS.register("slayer_uniform_2_leggings",
+        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+            net.minecraft.world.item.ArmorItem.Type.LEGGINGS,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> SLAYER_UNIFORM_2_BOOTS = ITEMS.register("slayer_uniform_2_boots",
+        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+            net.minecraft.world.item.ArmorItem.Type.BOOTS,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> CLOTHES_MUICHIRO_FP_CHESTPLATE = ITEMS.register("clothes_muichiro_fp_chestplate",
+        () -> new MuichiroHaoriItem(CosmeticArmorMaterial.MUICHIRO_HAORI,
+            net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> UNIFORM_MUICHIRO_FP_CHESTPLATE = ITEMS.register("uniform_muichiro_fp_chestplate",
+        () -> new MuichiroUniformHaoriItem(CosmeticArmorMaterial.MUICHIRO_HAORI_UNIFORM,
+            net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> HAIR_MUICHIRO_FP = ITEMS.register("hair_muichiro_fp",
+        () -> new HairMuichiroFpItem(CosmeticArmorMaterial.MUICHIRO_FP_HAIR,
+            net.minecraft.world.item.ArmorItem.Type.HELMET,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> HANAFUDA = ITEMS.register("hanafuda",
+        () -> new HanafudaItem(CosmeticArmorMaterial.COSMETIC,
+            net.minecraft.world.item.ArmorItem.Type.HELMET,
+            new Item.Properties().stacksTo(1)));
 
     // Demon Slayer Marks - decorative items that render on entity models
     public static final RegistryObject<Item> DEMONSLAYERMARK_LOVE = ITEMS.register("demonslayermark_love",
@@ -106,6 +208,15 @@ public class ModItems {
                     }
                 }
 
+                // Ensure new swords are always present even if SwordRegistry registration timing changes.
+                addIfNotRegistryManaged(output, NICHIRINSWORD_BEAST.get());
+                addIfNotRegistryManaged(output, NICHIRINSWORD_STONE1.get());
+                addIfNotRegistryManaged(output, NICHIRINSWORD_STONE2.get());
+                addIfNotRegistryManaged(output, NICHIRINSWORD_INSECT.get());
+                addIfNotRegistryManaged(output, NICHIRINSWORD_SNAKE.get());
+                addIfNotRegistryManaged(output, NICHIRINSWORD_LOVE.get());
+                addIfNotRegistryManaged(output, NICHIRINSWORD_SOUND.get());
+
                 // Wisteria blocks
                 output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LOG.get());
                 output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_WISTERIA_LOG.get());
@@ -137,9 +248,24 @@ public class ModItems {
                 output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_LAVENDER.get());
                 output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_CREAM.get());
 
+                // Armor
+                output.accept(ANDON_BAKAMA.get());
+                output.accept(SLAYER_UNIFORM_2_CHESTPLATE.get());
+                output.accept(SLAYER_UNIFORM_2_LEGGINGS.get());
+                output.accept(SLAYER_UNIFORM_2_BOOTS.get());
+                output.accept(CLOTHES_MUICHIRO_FP_CHESTPLATE.get());
+                output.accept(UNIFORM_MUICHIRO_FP_CHESTPLATE.get());
+                output.accept(HAIR_MUICHIRO_FP.get());
+                output.accept(HANAFUDA.get());
+
                 // Spawn eggs
                 output.accept(MUICHIRO_SPAWN_EGG.get());
+                output.accept(MUICHIRO_FP_SPAWN_EGG.get());
                 output.accept(KANROJI_SPAWN_EGG.get());
+                output.accept(KANAE_SPAWN_EGG.get());
+                output.accept(KANAWO_SPAWN_EGG.get());
+                output.accept(DEMON_SLAYER_SPAWN_EGG.get());
+                output.accept(DEMON_SLAYER_FEMALE_SPAWN_EGG.get());
 
                 // Omen Potions
                 output.accept(OMEN_OF_MUZAN_POTION_1.get());
@@ -193,23 +319,95 @@ public class ModItems {
         CREATIVE_MODE_TABS.register(eventBus);
     }
 
+    private static void addIfNotRegistryManaged(CreativeModeTab.Output output, Item item) {
+        if (!com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.isRegistered(item)) {
+            output.accept(item);
+        }
+    }
+
     /**
      * Register swords with the SwordRegistry after items are created
      */
     public static void registerSwords() {
         // Register Kanroji sword with animation replacements
+        // Sword level 2 = Hashira level (not eligible for color change transformation)
         java.util.Map<String, String> kanrojiAnimReplacements = new java.util.HashMap<>();
         kanrojiAnimReplacements.put("sword_overhead", "kanroji_sword_overhead");
 
         com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
             "nichirinsword_kanroji",
             (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_KANROJI.get(),
-            "love", // Love breathing style
+            "love_breathing", // Love breathing style
             com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
             net.minecraft.core.particles.ParticleTypes.HEART, // Pink heart particles for love breathing
             null, // No custom sound
             kanrojiAnimReplacements,
-            true // Show in creative tab
+            true, // Show in creative tab
+            2 // Sword level 2 = Hashira level
+        );
+
+        // Sound Breathing sword
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_sound",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_SOUND.get(),
+            "sound_breathing",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            null, null, null, true, 0
+        );
+
+        // Serpent Breathing sword
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_snake",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_SNAKE.get(),
+            "serpent_breathing",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            null, null, null, true, 0
+        );
+
+        // Insect Breathing sword
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_insect",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_INSECT.get(),
+            "insect_breathing",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            null, null, null, true, 0
+        );
+
+        // Stone Breathing sword (variant 1)
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_stone1",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_STONE1.get(),
+            "stone_breathing",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            null, null, null, true, 0
+        );
+
+        // Stone Breathing sword (variant 2)
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_stone2",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_STONE2.get(),
+            "stone_breathing",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            null, null, null, true, 0
+        );
+
+        // Beast Breathing sword (enhanced)
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_beast",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_BEAST.get(),
+            "beast_breathing",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            null, null, null, true, 0
+        );
+
+        // Love Breathing animated sword
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_love",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_LOVE.get(),
+            "love_breathing",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            net.minecraft.core.particles.ParticleTypes.HEART,
+            null, null, true, 0
         );
     }
 }

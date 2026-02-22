@@ -32,34 +32,34 @@ public class FirstPersonSwordKeyframes {
 
     static {
     	// sword_to_left - exported from Blender
-    	ANIMATION_KEYFRAMES.put("sword_to_left", List.of(
-    	            new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-    	            new FPKeyframe(0.10f, new Vec3(0.53249, 0.55914, -0.28072), new Quaternionf(0.090265f, -0.033582f, -0.614437f, 0.783065f)),
-    	            new FPKeyframe(0.20f, new Vec3(-0.23376, 0.36206, -0.88560), new Quaternionf(-0.486240f, 0.420532f, -0.411318f, 0.646174f)),
-    	            new FPKeyframe(0.30f, new Vec3(-0.89767, 0.16084, -0.89622), new Quaternionf(-0.624629f, 0.570294f, -0.234764f, 0.479051f)),
-    	            new FPKeyframe(0.40f, new Vec3(-1.29195, 0.01829, -0.83739), new Quaternionf(-0.667937f, 0.618534f, -0.183027f, 0.371184f)),
-    	            new FPKeyframe(0.50f, new Vec3(-1.48405, -0.04167, -0.75982), new Quaternionf(-0.681327f, 0.632224f, -0.176607f, 0.323877f)),
-    	            new FPKeyframe(0.60f, new Vec3(-1.55576, -0.04221, -0.68635), new Quaternionf(-0.681438f, 0.632329f, -0.176629f, 0.323426f)),
-    	            new FPKeyframe(0.70f, new Vec3(-1.57473, -0.04221, -0.63516), new Quaternionf(-0.681438f, 0.632329f, -0.176629f, 0.323426f)),
-    	            new FPKeyframe(0.80f, new Vec3(-1.46312, -0.31312, -0.61270), new Quaternionf(-0.692267f, 0.585289f, -0.161088f, 0.390198f)),
-    	            new FPKeyframe(0.90f, new Vec3(-0.66667, -0.53662, -0.37679), new Quaternionf(-0.415699f, 0.248399f, -0.063609f, 0.872609f)),
-    	            new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
-    	));
+        ANIMATION_KEYFRAMES.put("sword_to_left", List.of(
+                    new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.10f, new Vec3(0.02676, 0.43142, -0.74701), new Quaternionf(-0.348336f, 0.306236f, -0.516152f, 0.720047f)),
+                    new FPKeyframe(0.20f, new Vec3(-1.08186, 0.09552, -0.87348), new Quaternionf(-0.646784f, 0.595343f, -0.205401f, 0.430171f)),
+                    new FPKeyframe(0.30f, new Vec3(-1.49478, -0.04221, -0.75194), new Quaternionf(-0.681438f, 0.632329f, -0.176629f, 0.323426f)),
+                    new FPKeyframe(0.40f, new Vec3(-1.57447, -0.04221, -0.65439), new Quaternionf(-0.681438f, 0.632329f, -0.176629f, 0.323426f)),
+                    new FPKeyframe(0.50f, new Vec3(-1.05898, -0.66932, -0.53272), new Quaternionf(-0.622809f, 0.418807f, -0.110294f, 0.651571f)),
+                    new FPKeyframe(0.60f, new Vec3(-0.54220, -0.59971, -0.38754), new Quaternionf(-0.343195f, 0.208052f, -0.054791f, 0.914292f)),
+                    new FPKeyframe(0.70f, new Vec3(-0.22874, -0.43372, -0.24420), new Quaternionf(-0.152929f, 0.079637f, -0.020972f, 0.984800f)),
+                    new FPKeyframe(0.80f, new Vec3(-0.06778, -0.23560, -0.12018), new Quaternionf(-0.054474f, 0.022127f, -0.005827f, 0.998253f)),
+                    new FPKeyframe(0.90f, new Vec3(-0.00847, -0.06961, -0.03296), new Quaternionf(-0.011018f, 0.002696f, -0.000710f, 0.999935f)),
+                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+        ));
     	
     	// sword_to_right - exported from Blender
-    	ANIMATION_KEYFRAMES.put("sword_to_right", List.of(
-    	            new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-    	            new FPKeyframe(0.10f, new Vec3(-1.02901, -0.00803, -0.60758), new Quaternionf(-0.261334f, -0.380741f, 0.713635f, 0.526750f)),
-    	            new FPKeyframe(0.20f, new Vec3(-0.63018, 0.07587, -0.73025), new Quaternionf(-0.371529f, -0.507900f, 0.626137f, 0.460387f)),
-    	            new FPKeyframe(0.30f, new Vec3(-0.15029, 0.18232, -0.69913), new Quaternionf(-0.468403f, -0.624830f, 0.472087f, 0.409047f)),
-    	            new FPKeyframe(0.40f, new Vec3(0.25569, 0.27374, -0.51171), new Quaternionf(-0.542865f, -0.702151f, 0.303970f, 0.346242f)),
-    	            new FPKeyframe(0.50f, new Vec3(0.47952, 0.31256, -0.39043), new Quaternionf(-0.569297f, -0.725598f, 0.225181f, 0.314168f)),
-    	            new FPKeyframe(0.60f, new Vec3(0.53631, 0.31256, -0.39043), new Quaternionf(-0.569297f, -0.725598f, 0.225181f, 0.314168f)),
-    	            new FPKeyframe(0.70f, new Vec3(0.54442, 0.31256, -0.39043), new Quaternionf(-0.569297f, -0.725598f, 0.225181f, 0.314168f)),
-    	            new FPKeyframe(0.80f, new Vec3(0.35520, -0.22473, -0.28921), new Quaternionf(-0.491355f, -0.626257f, 0.194352f, 0.573237f)),
-    	            new FPKeyframe(0.90f, new Vec3(0.10810, -0.11237, -0.10122), new Quaternionf(-0.171974f, -0.219190f, 0.068023f, 0.957995f)),
-    	            new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
-    	));
+        ANIMATION_KEYFRAMES.put("sword_to_right", List.of(
+                    new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.10f, new Vec3(-0.89961, 0.22056, -0.41600), new Quaternionf(-0.188875f, -0.311717f, 0.690602f, 0.624682f)),
+                    new FPKeyframe(0.20f, new Vec3(-0.76362, 0.28783, -0.80604), new Quaternionf(-0.224597f, -0.412749f, 0.667038f, 0.578148f)),
+                    new FPKeyframe(0.30f, new Vec3(-0.39844, 0.39560, -0.79449), new Quaternionf(-0.333398f, -0.631805f, 0.525928f, 0.461592f)),
+                    new FPKeyframe(0.40f, new Vec3(-0.15568, 0.42763, -0.65744), new Quaternionf(-0.425458f, -0.736859f, 0.411532f, 0.326598f)),
+                    new FPKeyframe(0.50f, new Vec3(0.87736, 0.42926, -0.59879), new Quaternionf(-0.560846f, -0.784671f, 0.243435f, 0.102390f)),
+                    new FPKeyframe(0.60f, new Vec3(0.84728, 0.41454, -0.57826), new Quaternionf(-0.558468f, -0.781344f, 0.242403f, 0.137316f)),
+                    new FPKeyframe(0.70f, new Vec3(0.64990, 0.31797, -0.44355), new Quaternionf(-0.513227f, -0.718048f, 0.222766f, 0.413980f)),
+                    new FPKeyframe(0.80f, new Vec3(0.36587, 0.17901, -0.24970), new Quaternionf(-0.311544f, -0.435877f, 0.135226f, 0.833466f)),
+                    new FPKeyframe(0.90f, new Vec3(0.11072, 0.05417, -0.07557), new Quaternionf(-0.079033f, -0.110574f, 0.034304f, 0.990127f)),
+                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+        ));
     	
     	// sword_overhead - exported from Blender
     	ANIMATION_KEYFRAMES.put("sword_overhead", List.of(

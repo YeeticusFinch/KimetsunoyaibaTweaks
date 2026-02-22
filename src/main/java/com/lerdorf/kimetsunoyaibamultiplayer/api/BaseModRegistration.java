@@ -43,30 +43,33 @@ public class BaseModRegistration {
         }
 
         // Root styles
-        StyleMetadataRegistry.register("sun_breathing", null, true, true);
+        StyleMetadataRegistry.register("sun_breathing", null, false, false);
         StyleMetadataRegistry.register("black", null, true, true);
 
         // Water breathing and derivatives
         StyleMetadataRegistry.register("water_breathing", "sun_breathing", true, true);
-        StyleMetadataRegistry.register("flower_breathing", "water_breathing", true, true);
-        StyleMetadataRegistry.register("insect_breathing", "flower_breathing", true, true);
-        StyleMetadataRegistry.register("serpent_breathing", "water_breathing", true, true);
+        StyleMetadataRegistry.register("flower_breathing", "water_breathing", false, true);
+        StyleMetadataRegistry.register("insect_breathing", "flower_breathing", false, true);
+        StyleMetadataRegistry.register("serpent_breathing", "water_breathing", false, true);
 
         // Flame breathing and derivatives
         StyleMetadataRegistry.register("flame_breathing", "sun_breathing", true, true);
-        StyleMetadataRegistry.register("love_breathing", "flame_breathing", true, true);
+        StyleMetadataRegistry.register("love_breathing", "flame_breathing", false, true);
 
         // Wind breathing and derivatives
         StyleMetadataRegistry.register("wind_breathing", "sun_breathing", true, true);
-        StyleMetadataRegistry.register("mist_breathing", "wind_breathing", true, true);
+        StyleMetadataRegistry.register("mist_breathing", "wind_breathing", false, true);
         StyleMetadataRegistry.register("beast_breathing", "wind_breathing", true, true);
 
         // Thunder breathing and derivatives
         StyleMetadataRegistry.register("thunder_breathing", "sun_breathing", true, true);
-        StyleMetadataRegistry.register("sound_breathing", "thunder_breathing", true, true);
+        StyleMetadataRegistry.register("sound_breathing", "thunder_breathing", false, true);
 
         // Stone breathing (no derivatives)
         StyleMetadataRegistry.register("stone_breathing", "sun_breathing", true, true);
+
+        // Moon breathing (no known derivatives)
+        StyleMetadataRegistry.register("moon_breathing", "sun_breathing", false, false);
 
         stylesRegistered = true;
         Log.info("Registered {} base mod style metadata entries", StyleMetadataRegistry.getAllStyles().size());
@@ -87,6 +90,7 @@ public class BaseModRegistration {
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_flame", "flame_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_wind", "wind_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_mist", "mist_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_mist", "mist_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_thunder", "thunder_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_stone", "stone_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_love", "love_breathing", 0);
@@ -107,8 +111,23 @@ public class BaseModRegistration {
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_iguro", "serpent_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_sanemi", "wind_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_tokito", "mist_breathing", 2);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_muichiro", "mist_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_kanroji", "love_breathing", 2);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_kanroji", "love_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_gyomei", "stone_breathing", 2);
+
+        // Our mod's generic swords (level 0 = eligible for color change)
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_sound", "sound_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_snake", "serpent_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_insect", "insect_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_stone1", "stone_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_stone2", "stone_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_beast", "beast_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_love", "love_breathing", 0);
+
+        // Level -1 - Unobtainable swords (boss/NPC only)
+        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:sword_kokushibo_1", "moon_breathing", -1);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:sword_kokushibo_2", "moon_breathing", -1);
 
         swordsRegistered = true;
         Log.info("Registered {} base mod sword metadata entries", SwordMetadataRegistry.getAllSwords().size());

@@ -20,7 +20,6 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Adds custom biomes to the overworld and optionally replaces vanilla biome occurrences.
@@ -69,7 +68,7 @@ public class KnYBiomeSpawnFixer {
                         int replacedMain = 0;
                         int replacedCyan = 0;
                         int replacedCream = 0;
-                        int clusterSize = com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestClusterSize;
+                        int configuredClusterSize = com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestClusterSize;
 
                         for (int i = 0; i < parameters.size(); i++) {
                             Pair<Climate.ParameterPoint, Holder<Biome>> pair = parameters.get(i);
@@ -87,24 +86,54 @@ public class KnYBiomeSpawnFixer {
                             boolean isTargetBiome = isTargetBiomeForReplacement(biomeLoc);
 
                             if (isTargetBiome) {
-                                // Use deterministic replacement based on climate parameter hashcode
-                                // This ensures same seed = same biome distribution (multiplayer compatible)
-                                int hash = parameterPointHash(point);
-                                double random = ((hash & 0x7FFFFFFF) % 10000) / 10000.0; // 0.0 to 1.0
+                                // Strongly scale replacement chances so wisteria forests remain rare,
+                                // especially in plains where over-replacement is most noticeable.
+                                double biomeMultiplier = getBiomeReplacementMultiplier(biomeLoc);
+                                double mainChance = wisteriaForest == null
+                                    ? 0.0
+                                    : capChance(
+                                        com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestReplacementChance * biomeMultiplier,
+                                        0.012
+                                    );
+                                double cyanChance = wisteriaForestCyan == null
+                                    ? 0.0
+                                    : capChance(
+                                        com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestCyanReplacementChance * biomeMultiplier,
+                                        0.006
+                                    );
+                                double creamChance = wisteriaForestCream == null
+                                    ? 0.0
+                                    : capChance(
+                                        com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestCreamReplacementChance * biomeMultiplier,
+                                        0.006
+                                    );
 
-                                // Determine which wisteria forest variant to use (if any)
+                                double totalChance = mainChance + cyanChance + creamChance;
+                                double maxTotalChance = getMaxTotalStartChance(biomeLoc);
+                                if (totalChance > maxTotalChance && totalChance > 0.0) {
+                                    double scale = maxTotalChance / totalChance;
+                                    mainChance *= scale;
+                                    cyanChance *= scale;
+                                    creamChance *= scale;
+                                    totalChance = maxTotalChance;
+                                }
+
                                 Holder<Biome> replacementBiome = null;
-
-                                if (wisteriaForest != null && random < com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestReplacementChance) {
-                                    replacementBiome = wisteriaForest;
-                                } else if (wisteriaForestCyan != null && random >= 0.5 && random < (0.5 + com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestCyanReplacementChance)) {
-                                    replacementBiome = wisteriaForestCyan;
-                                } else if (wisteriaForestCream != null && random >= 0.75 && random < (0.75 + com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestCreamReplacementChance)) {
-                                    replacementBiome = wisteriaForestCream;
+                                if (totalChance > 0.0 && deterministicRoll(point, 0x1F123BB5) < totalChance) {
+                                    double variantRoll = deterministicRoll(point, 0x5F356495) * totalChance;
+                                    if (variantRoll < mainChance) {
+                                        replacementBiome = wisteriaForest;
+                                    } else if (variantRoll < (mainChance + cyanChance)) {
+                                        replacementBiome = wisteriaForestCyan;
+                                    } else {
+                                        replacementBiome = wisteriaForestCream;
+                                    }
                                 }
 
                                 // If we decided to replace, create a CLUSTER of replacements for larger forests
                                 if (replacementBiome != null) {
+                                    int clusterSize = getEffectiveClusterSize(biomeLoc, configuredClusterSize);
+
                                     // Replace this point
                                     parameters.set(i, new Pair<>(point, replacementBiome));
 
@@ -169,6 +198,47 @@ public class KnYBiomeSpawnFixer {
                biomeLoc.equals(ResourceLocation.fromNamespaceAndPath("minecraft", "plains")) ||
                biomeLoc.equals(ResourceLocation.fromNamespaceAndPath("minecraft", "birch_forest")) ||
                biomeLoc.equals(ResourceLocation.fromNamespaceAndPath("minecraft", "flower_forest"));
+    }
+
+    private static double getBiomeReplacementMultiplier(ResourceLocation biomeLoc) {
+        String path = biomeLoc.getPath();
+        if ("plains".equals(path)) {
+            return 0.08;
+        }
+        if ("flower_forest".equals(path)) {
+            return 0.24;
+        }
+        if ("birch_forest".equals(path)) {
+            return 0.18;
+        }
+        return 0.22; // forest
+    }
+
+    private static double getMaxTotalStartChance(ResourceLocation biomeLoc) {
+        return "plains".equals(biomeLoc.getPath()) ? 0.004 : 0.02;
+    }
+
+    private static int getEffectiveClusterSize(ResourceLocation biomeLoc, int configuredClusterSize) {
+        int clamped = Math.max(1, Math.min(configuredClusterSize, 8));
+        if ("plains".equals(biomeLoc.getPath())) {
+            return Math.min(clamped, 2);
+        }
+        return clamped;
+    }
+
+    private static double capChance(double chance, double max) {
+        return Math.max(0.0, Math.min(chance, max));
+    }
+
+    private static double deterministicRoll(Climate.ParameterPoint point, int salt) {
+        int hash = parameterPointHash(point) ^ salt;
+        hash ^= (hash >>> 16);
+        hash *= 0x7feb352d;
+        hash ^= (hash >>> 15);
+        hash *= 0x846ca68b;
+        hash ^= (hash >>> 16);
+        long positive = hash & 0x7FFFFFFFL;
+        return positive / (double) Integer.MAX_VALUE;
     }
 
     /**

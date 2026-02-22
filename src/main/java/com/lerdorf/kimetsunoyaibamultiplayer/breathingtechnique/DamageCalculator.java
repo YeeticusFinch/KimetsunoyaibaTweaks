@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
+
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffects;
@@ -45,6 +47,7 @@ public class DamageCalculator {
      */
     public static float calculateScaledDamage(LivingEntity entity, float baseDamage) {
         float damage = baseDamage;
+        float damageScaler = 1;
 
         // Strength effect: +3 damage per level
         if (entity.hasEffect(MobEffects.DAMAGE_BOOST)) {
@@ -58,10 +61,15 @@ public class DamageCalculator {
             damage -= 4.0F * weaknessLevel;
         }
         
-        damage = damage * getDifficultyMultiplier(entity);
+        // Vermilion Eye effect: +30% damage
+        if (entity.hasEffect(ModEffects.VERMILION_EYE.get())) {
+        	damageScaler = 1.3f; 
+        }
+        
+        damageScaler = damageScaler * getDifficultyMultiplier(entity);
 
         // Ensure minimum damage of 0
-        return Math.max(0.0F, damage);
+        return Math.max(0.0F, damage * damageScaler);
     }
 
     /**

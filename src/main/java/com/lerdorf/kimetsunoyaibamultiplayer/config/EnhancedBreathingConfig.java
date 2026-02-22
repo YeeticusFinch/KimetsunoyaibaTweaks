@@ -40,6 +40,21 @@ public class EnhancedBreathingConfig {
             .define("enhancedMistBreathing", true);
     
 
+    // Flower Breathing Enhancement
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_FLOWER_BREATHING = BUILDER
+            .comment("Enable enhanced Flower Breathing sword replacement",
+                    "When true, automatically replaces base mod flower swords with enhanced versions:",
+                    "  - kimetsunoyaiba:nichirinsword_kanawo -> kimetsunoyaibamultiplayer:nichirinsword_kanawo",
+                    "  - kimetsunoyaiba:nichirinsword_kanae -> kimetsunoyaibamultiplayer:nichirinsword_kanae",
+                    "",
+                    "Enhanced features:",
+                    "  - Hashira-exclusive forms (7th, 8th, 9th for Kanae's sword)",
+                    "  - Final Form: Equinoctial Vermillion Eye",
+                    "  - Improved particle effects and animations",
+                    "",
+                    "Default: true")
+            .define("enhancedFlowerBreathing", true);
+
     // Love Breathing Enhancement
     private static final ForgeConfigSpec.BooleanValue ENHANCED_LOVE_BREATHING = BUILDER
             .comment("Enable enhanced Love Breathing forms",
@@ -155,6 +170,7 @@ public class EnhancedBreathingConfig {
 
     // Public static fields for easy access
     public static boolean enhancedMistBreathing;
+    public static boolean enhancedFlowerBreathing;
     public static boolean enhancedLoveBreathing;
 
     // Whip Physics Settings
@@ -183,6 +199,7 @@ public class EnhancedBreathingConfig {
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
         enhancedMistBreathing = ENHANCED_MIST_BREATHING.get();
+        enhancedFlowerBreathing = ENHANCED_FLOWER_BREATHING.get();
         enhancedLoveBreathing = ENHANCED_LOVE_BREATHING.get();
 
         // Load whip physics settings
@@ -210,6 +227,7 @@ public class EnhancedBreathingConfig {
 
         Log.debug("[Enhanced Breathing Config] Loaded:");
         Log.debug("  - Enhanced Mist Breathing: " + enhancedMistBreathing);
+        Log.debug("  - Enhanced Flower Breathing: " + enhancedFlowerBreathing);
         Log.debug("  - Enhanced Love Breathing: " + enhancedLoveBreathing);
         Log.debug("  - Whip Segments: " + whipSegmentCount);
         Log.debug("  - Whip Extended Length: " + whipExtendedLength);

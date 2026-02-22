@@ -4,6 +4,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SheathModelRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -16,7 +19,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -47,6 +49,10 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
             return;
         }
 
+        if (isInvisibilityAnimationActive(animatable)) {
+            return;
+        }
+
         ItemStack mainHand = animatable.getItemBySlot(EquipmentSlot.MAINHAND);
         if (!SwordParticleMapping.isKimetsunoyaibaSword(mainHand) || SwordParticleMapping.isSheathExempt(mainHand)) {
             return;
@@ -59,24 +65,105 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
 
         EntityCombatStateTracker.updateCombatState(animatable);
         boolean inCombat = EntityCombatStateTracker.isInCombat(animatable);
+        boolean sheathingTransition = EntityCombatStateTracker.isInSheathingTransition(animatable);
 
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(mainHand.getItem());
         SwordDisplayConfig.SwordDisplayPosition position =
             SwordDisplayConfig.getPositionForSword(itemId.toString());
-        boolean isLeft = animatable.getMainArm() == HumanoidArm.LEFT;
+        if (position == null) {
+            position = SwordDisplayConfig.position;
+        }
+        if (animatable instanceof DemonSlayerEntity slayer) {
+            int level = slayer.getPowerLevel();
+            if (level >= 1 && level <= 4) {
+                position = slayer.isSheatheOnBack()
+                    ? SwordDisplayConfig.SwordDisplayPosition.BACK
+                    : SwordDisplayConfig.SwordDisplayPosition.HIP;
+            } else if (level >= 5) {
+                position = SwordDisplayConfig.SwordDisplayPosition.HIP;
+            }
+        }
+        // Primary entity sheath slot is always left; secondary (when present) is right.
+        boolean isLeft = true;
+        if (animatable instanceof DemonSlayerEntity && animatable.tickCount % 20 == 0) {
+            Log.debug("[GeoSwordDisplayLayer] {} render mode: inCombat={}, sheathingTransition={}, position={}, side={}",
+                animatable.getType().getDescriptionId(), inCombat, sheathingTransition, position, isLeft ? "left" : "right");
+        }
 
         poseStack.pushPose();
         applyEntityYawRotation(poseStack, animatable, partialTick);
         poseStack.translate(0, 0.01f, 0);
         RenderUtils.prepMatrixForBone(poseStack, anchorBone);
 
-        if (inCombat) {
+        if (inCombat || sheathingTransition) {
             renderSheathOnly(poseStack, bufferSource, packedLight, animatable, mainHand, position, isLeft);
         } else {
             renderSwordWithSheath(poseStack, bufferSource, packedLight, animatable, mainHand, position, isLeft);
         }
 
+        renderSuperSeniorExtraSheaths(poseStack, bufferSource, packedLight, animatable);
+
         poseStack.popPose();
+    }
+
+    private static void renderSuperSeniorExtraSheaths(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                                      LivingEntity entity) {
+        if (!SwordDisplayConfig.renderSheaths || !(entity instanceof DemonSlayerEntity slayer) || slayer.getPowerLevel() < 5) {
+            return;
+        }
+
+        String alt1 = slayer.getAltSwordId1();
+        String alt2 = slayer.getAltSwordId2();
+        if (alt1.isEmpty() && alt2.isEmpty()) {
+            return;
+        }
+
+        // Super senior layout: primary sheath on left hip (main path), plus one right hip and one back.
+        renderSheathForSwordId(poseStack, buffer, packedLight, entity, slayer, alt1, false, false);
+        renderSheathForSwordId(poseStack, buffer, packedLight, entity, slayer, alt2, true, true);
+    }
+
+    private static void renderSheathForSwordId(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
+                                               LivingEntity entity, DemonSlayerEntity slayer,
+                                               String swordId, boolean isLeft, boolean backPosition) {
+        if (swordId == null || swordId.isEmpty()) {
+            return;
+        }
+
+        ItemStack swordStack = slayer.getSwordStackById(swordId);
+        if (swordStack.isEmpty()) {
+            return;
+        }
+
+        Item sheathItem = SwordSheathRegistry.getSheathItem(swordStack);
+        if (sheathItem == null) {
+            return;
+        }
+
+        poseStack.pushPose();
+
+        if (backPosition) {
+            applyBackPosition(poseStack, isLeft);
+            poseStack.translate(0.10D, -0.05D, 0.04D);
+        } else {
+            applyHipPosition(poseStack, isLeft);
+            poseStack.translate(0.06D, -0.03D, 0.02D);
+        }
+
+        float scale = (float) SwordDisplayConfig.scale;
+        poseStack.scale(scale, scale, scale);
+        SheathModelRenderer.renderSheath(sheathItem, poseStack, buffer, packedLight, entity.getId());
+        poseStack.popPose();
+    }
+
+    private static boolean isInvisibilityAnimationActive(LivingEntity entity) {
+        if (entity instanceof BreathingSlayerEntity slayer) {
+            String currentAnimation = slayer.getCurrentAnimation();
+            return currentAnimation != null
+                && "invisibility".equals(currentAnimation)
+                && slayer.getAnimationTicks() > 0;
+        }
+        return false;
     }
 
     private static void applyEntityYawRotation(PoseStack poseStack, LivingEntity entity, float partialTick) {

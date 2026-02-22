@@ -228,11 +228,9 @@ public class ClientRenderEvents {
         PoseStack poseStack = event.getPoseStack();
         float swingProgress = event.getSwingProgress();
 
-        // Apply counter-swing transform to cancel out vanilla's swing animation (if enabled)
+        // Apply counter-swing transform to cancel out vanilla's swing animation
         // This makes our keyframes the ONLY animation
-        if (Config.counterVanillaSwing) {
-            applyCounterSwing(poseStack, swingProgress, side);
-        }
+        applyCounterSwing(poseStack, swingProgress, side);
 
         // Apply our custom keyframe-based transforms
         // These are now applied on top of: vanilla base + item model transforms + (canceled vanilla swing)
@@ -249,6 +247,8 @@ public class ClientRenderEvents {
     public static void onRenderHand(RenderHandEvent event) {
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
 
+        if (!Config.customFirstPersonSwingEnabled) return;
+
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) return;
@@ -259,6 +259,22 @@ public class ClientRenderEvents {
         boolean holdingNichirinSword = isNichirinSword(stack);
 
         if (!holdingNichirinSword) return;
+        
+        // Update animation tracking
+        com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
+                .updateCurrentAnimation(player);
+
+        // Get current animation
+        String currentAnimation =
+                com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
+                        .getCurrentAnimation();
+
+        // No animation → do nothing
+        if (currentAnimation == null ||
+            !com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes
+                    .hasKeyframes(currentAnimation)) {
+            return;
+        }
 
         event.setCanceled(true);
 
@@ -279,7 +295,7 @@ public class ClientRenderEvents {
         // ❌ DO NOT call applyItemArmAttackTransform
 
         // ✔ CUSTOM ANIMATION
-        applyCustomSwordAnimation(poseStack, player, event.getSwingProgress());
+        applyCustomSwordAnimation(poseStack, player, event.getSwingProgress(), currentAnimation);
 
         // ✔ RENDER
         mc.getItemRenderer().renderStatic(
@@ -301,9 +317,10 @@ public class ClientRenderEvents {
     private static void applyCustomSwordAnimation(
             PoseStack poseStack,
             LocalPlayer player,
-            float swingProgress
+            float swingProgress,
+            String currentAnimation
     ) {
-    	
+    	/*
         // Update animation tracking
         com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
                 .updateCurrentAnimation(player);
@@ -318,7 +335,7 @@ public class ClientRenderEvents {
             !com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes
                     .hasKeyframes(currentAnimation)) {
             return;
-        }
+        }*/
         
         if (swingProgress > 0.01f) handSwing = true; // this is a hand swing, use hand swing progress
         
@@ -421,34 +438,11 @@ public class ClientRenderEvents {
     }
 
     /**
-     * Check if an item is a nichirin sword (from this mod, base mod, or any addon)
+     * Check if an item is a nichirin sword (from this mod, base mod, or any addon).
+     * Delegates to the centralized check in BreathingInfoDetector.
      */
     private static boolean isNichirinSword(ItemStack stack) {
-        if (stack.isEmpty()) return false;
-
-        // Check 1: Is it from our mod (BreathingSwordItem)?
-        if (stack.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
-            return true;
-        }
-
-        // Check 2: Is it registered in SwordRegistry (addon support)?
-        if (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getSword(stack.getItem()) != null) {
-            return true;
-        }
-
-        // Check 3: Is it from the base KnY mod?
-        net.minecraft.resources.ResourceLocation itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
-        if (itemId.getNamespace().equals("kimetsunoyaiba")) {
-            // Check if it's a nichirin sword based on the item name
-            String path = itemId.getPath();
-            if (path.startsWith("nichirinsword_") ||
-                path.contains("nichirintou") ||
-                path.equals("nichirinsword")) {
-                return true;
-            }
-        }
-
-        return false;
+        return com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.isNichirinSword(stack);
     }
 
 }

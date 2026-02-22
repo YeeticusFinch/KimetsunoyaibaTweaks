@@ -1,10 +1,12 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.DemonSlayerConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
@@ -106,11 +108,6 @@ public class EntityReplacerHandler {
             return;
         }
 
-        // Check if kimetsu mod is loaded
-        if (!kimetsuModLoaded) {
-            return;
-        }
-
         Entity entity = event.getEntity();
         if (entity == null) {
             return;
@@ -129,6 +126,15 @@ public class EntityReplacerHandler {
             if (spawnReason.equals("COMMAND") || spawnReason.equals("SPAWN_EGG")) {
                 return;
             }
+        }
+
+        if (EnhancedSpawnConfig.replaceBaseGenericDemonSlayers && tryReplaceWithOurDemonSlayer(event, entity, entityTypeId)) {
+            return;
+        }
+
+        // kimetsu replacements are only available when kimetsu is loaded.
+        if (!kimetsuModLoaded) {
+            return;
         }
 
         // Determine which replacement map to use
@@ -246,10 +252,117 @@ public class EntityReplacerHandler {
         }
     }
 
+    private static boolean tryReplaceWithOurDemonSlayer(EntityJoinLevelEvent event, Entity original, ResourceLocation originalId) {
+        int forcedLevel;
+        String path = originalId.getPath();
+        if ("demon_slayer".equals(path)) {
+            forcedLevel = event.getLevel().getRandom().nextInt(4); // 0-3
+        } else if ("dice_steak_senior".equals(path)) {
+            forcedLevel = 4;
+        } else if ("dice_steak_senior_super".equals(path)) {
+            forcedLevel = 5;
+        } else {
+            return false;
+        }
+
+        if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+
+        boolean female = serverLevel.random.nextDouble() < DemonSlayerConfig.getFemaleSpawnChance();
+        EntityType<DemonSlayerEntity> replacementType = female
+            ? ModEntities.DEMON_SLAYER_FEMALE.get()
+            : ModEntities.DEMON_SLAYER.get();
+
+        DemonSlayerEntity replacement = replacementType.create(serverLevel);
+        if (replacement == null) {
+            return false;
+        }
+
+        replacement.moveTo(original.getX(), original.getY(), original.getZ(), original.getYRot(), original.getXRot());
+        replacement.setDeltaMovement(original.getDeltaMovement());
+
+        try {
+            replacement.finalizeSpawn(
+                serverLevel,
+                serverLevel.getCurrentDifficultyAt(replacement.blockPosition()),
+                MobSpawnType.CONVERSION,
+                null,
+                null
+            );
+            replacement.configurePowerLevelLoadout(forcedLevel);
+            replacement.applyAttackSpeedBonus();
+
+            transferRaidMetadataAndTracking(serverLevel, original, replacement);
+
+            event.getLevel().addFreshEntity(replacement);
+            original.discard();
+            event.setCanceled(true);
+
+            if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                Log.debug("[Entity Replacer] Replaced {} with {} level {}",
+                    originalId, EntityType.getKey(replacement.getType()), forcedLevel);
+            }
+            return true;
+        } catch (Exception e) {
+            System.err.println("[Entity Replacer] Error replacing base demon slayer: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static void transferRaidMetadataAndTracking(ServerLevel level, Entity oldEntity, Entity replacementEntity) {
+        CompoundTag oldPersistentData = oldEntity.getPersistentData();
+        if (!oldPersistentData.contains("RaidId")) {
+            return;
+        }
+
+        UUID raidId = oldPersistentData.getUUID("RaidId");
+        String raidType = oldPersistentData.getString("RaidType");
+
+        CompoundTag newPersistentData = replacementEntity.getPersistentData();
+        newPersistentData.putUUID("RaidId", raidId);
+        newPersistentData.putString("RaidType", raidType);
+
+        float newMaxHealth = replacementEntity instanceof net.minecraft.world.entity.LivingEntity living
+            ? living.getMaxHealth()
+            : 100f;
+
+        com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidRegistry registry =
+            com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidRegistry.get(level);
+        registry.replaceRaidEntity(raidId, oldEntity.getUUID(), replacementEntity.getUUID(), newMaxHealth);
+
+        if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+            Log.debug("[Entity Replacer] Transferred raid tracking from {} to {}",
+                oldEntity.getUUID(), replacementEntity.getUUID());
+        }
+    }
+
     /**
      * Get the replacement entity type ID for a given entity type ID (if any)
      */
     public static ResourceLocation getReplacementId(ResourceLocation entityTypeId) {
+        if (entityTypeId == null) {
+            return null;
+        }
+
+        if (EnhancedSpawnConfig.replaceBaseGenericDemonSlayers) {
+            String ns = entityTypeId.getNamespace();
+            String path = entityTypeId.getPath();
+
+            if ("kimetsunoyaiba".equals(ns) && (
+                "demon_slayer".equals(path)
+                || "dice_steak_senior".equals(path)
+                || "dice_steak_senior_super".equals(path))) {
+                return EntityType.getKey(ModEntities.DEMON_SLAYER.get());
+            }
+
+            if ("kimetsunoyaibamultiplayer".equals(ns) && (
+                "demon_slayer".equals(path) || "demon_slayer_female".equals(path))) {
+                return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "demon_slayer");
+            }
+        }
+
         if (!kimetsuModLoaded) {
             return null;
         }

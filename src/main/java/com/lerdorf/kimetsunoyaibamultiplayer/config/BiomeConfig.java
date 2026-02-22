@@ -28,21 +28,21 @@ public class BiomeConfig {
         .comment("Chance to START replacing vanilla forest/plains/birch_forest/flower_forest with main wisteria_forest (0.0 - 1.0)")
         .comment("When replacement starts, it creates large continuous forests via cluster expansion")
         .comment("This uses deterministic replacement - same world seed = same biome distribution")
-        .comment("0.05 = 5% chance to start a wisteria forest, but forest will be large when it spawns")
-        .comment("RECOMMENDED: 0.03-0.05 for rare but large, impressive wisteria forests")
-        .defineInRange("wisteriaForestReplacementChance", 0.05, 0.0, 1.0);
+        .comment("0.025 = 2.5% chance to start a wisteria forest, but forest will be large when it spawns")
+        .comment("RECOMMENDED: 0.02-0.03 for rare but large, impressive wisteria forests")
+        .defineInRange("wisteriaForestReplacementChance", 0.025, 0.0, 1.0);
 
     private static final ForgeConfigSpec.DoubleValue WISTERIA_FOREST_CYAN_REPLACEMENT_CHANCE = BUILDER
         .comment("Chance to START replacing vanilla forests with cyan wisteria_forest (0.0 - 1.0)")
         .comment("Creates large continuous cyan forests when replacement starts")
-        .comment("RECOMMENDED: 0.02-0.03 for rare, impressive cyan forests")
-        .defineInRange("wisteriaForestCyanReplacementChance", 0.02, 0.0, 1.0);
+        .comment("RECOMMENDED: 0.01-0.015 for rare, impressive cyan forests")
+        .defineInRange("wisteriaForestCyanReplacementChance", 0.01, 0.0, 1.0);
 
     private static final ForgeConfigSpec.DoubleValue WISTERIA_FOREST_CREAM_REPLACEMENT_CHANCE = BUILDER
         .comment("Chance to START replacing vanilla forests with cream wisteria_forest (0.0 - 1.0)")
         .comment("Creates large continuous cream forests when replacement starts")
-        .comment("RECOMMENDED: 0.02-0.03 for rare, impressive cream forests")
-        .defineInRange("wisteriaForestCreamReplacementChance", 0.02, 0.0, 1.0);
+        .comment("RECOMMENDED: 0.01-0.015 for rare, impressive cream forests")
+        .defineInRange("wisteriaForestCreamReplacementChance", 0.01, 0.0, 1.0);
 
     private static final ForgeConfigSpec.IntValue WISTERIA_FOREST_CLUSTER_SIZE = BUILDER
         .comment("Cluster size for wisteria forest biome replacement (1-10)")

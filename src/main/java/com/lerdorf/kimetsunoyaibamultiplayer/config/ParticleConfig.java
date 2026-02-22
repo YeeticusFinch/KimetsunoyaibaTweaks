@@ -90,9 +90,11 @@ public class ParticleConfig {
     // Default particle mappings - these can be overridden in config
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> PARTICLE_MAPPINGS = BUILDER
             .comment("Particle mappings in format 'item_id:particle_type[:size:red:green:blue]'",
-                    "For dust particles, add size (0.1-2.0) and RGB values (0.0-1.0)",
+                    "For dust and energy particles, add size (0.1-2.0) and RGB values (0.0-1.0)",
+                    "Energy particles drift in random direction and shrink before despawning",
                     "Examples:",
                     "  'kimetsunoyaiba:nichirinsword_thunder:minecraft:dust:1.2:1.0:1.0:0.2'",
+                    "  'kimetsunoyaiba:nichirinsword_kanroji:kimetsunoyaibamultiplayer:energy:0.9:1.0:0.9:0.9'",
                     "  'kimetsunoyaiba:nichirinsword_water:kimetsunoyaiba:particle_blue_smoke'",
                     "  'minecraft:diamond_sword:minecraft:enchanted_hit'")
             .defineListAllowEmpty("particle-mappings", () -> {
@@ -124,7 +126,7 @@ public class ParticleConfig {
                     "kimetsunoyaiba:nichirinsword_rengoku:minecraft:dust:0.9:1.0:0.8:0.1",
                     "kimetsunoyaiba:nichirinsword_uzui:minecraft:firework",
                     "kimetsunoyaiba:nichirinsword_tokito:minecraft:dust:1.0:1.0:1.0:1.0",
-                    "kimetsunoyaiba:nichirinsword_kanroji:minecraft:dust:0.9:1.0:0.9:0.9",
+                    "kimetsunoyaiba:nichirinsword_kanroji:kimetsunoyaibamultiplayer:energy:0.9:1.0:0.9:0.9",
                     "kimetsunoyaiba:nichirinsword_iguro:minecraft:dust:1.0:1.0:1.0:1.0",
                     "kimetsunoyaiba:nichirinsword_shinazugawa:minecraft:dust:0.8:0.1:1.0:0.1",
                     "kimetsunoyaiba:nichirinsword_kanae:minecraft:dust:0.7:1.0:0.9:0.9",
@@ -175,6 +177,7 @@ public class ParticleConfig {
         public final float green;
         public final float blue;
         public final boolean isDust;
+        public final boolean isEnergy;
 
         public ParticleMapping(String itemId, String particleType, float size, float red, float green, float blue) {
             this.itemId = itemId;
@@ -184,6 +187,7 @@ public class ParticleConfig {
             this.green = green;
             this.blue = blue;
             this.isDust = particleType.equals("minecraft:dust");
+            this.isEnergy = particleType.equals("kimetsunoyaibamultiplayer:energy");
         }
 
         public ParticleMapping(String itemId, String particleType) {
@@ -241,8 +245,12 @@ public class ParticleConfig {
         String itemId = parts[0] + ":" + parts[1];
         String particleType = parts[2] + ":" + parts[3];
 
-        if (parts.length >= 8 && particleType.equals("minecraft:dust")) {
-            // Dust particle with size and color
+        // Check for particles with size and color parameters (dust or energy)
+        boolean hasSizeAndColor = particleType.equals("minecraft:dust") ||
+                                  particleType.equals("kimetsunoyaibamultiplayer:energy");
+
+        if (parts.length >= 8 && hasSizeAndColor) {
+            // Particle with size and color (dust or energy)
             try {
                 float size = Float.parseFloat(parts[4]);
                 float red = Float.parseFloat(parts[5]);
@@ -250,7 +258,7 @@ public class ParticleConfig {
                 float blue = Float.parseFloat(parts[7]);
                 return new ParticleMapping(itemId, particleType, size, red, green, blue);
             } catch (NumberFormatException e) {
-                System.err.println("Invalid dust particle parameters in mapping: " + mapping);
+                System.err.println("Invalid particle parameters in mapping: " + mapping);
                 return new ParticleMapping(itemId, particleType);
             }
         } else {
@@ -278,7 +286,9 @@ public class ParticleConfig {
 
             // Create the new mapping string
             String newMapping;
-            if (particleType.equals("minecraft:dust")) {
+            boolean hasSizeAndColor = particleType.equals("minecraft:dust") ||
+                                      particleType.equals("kimetsunoyaibamultiplayer:energy");
+            if (hasSizeAndColor) {
                 newMapping = String.format("%s:%s:%.1f:%.1f:%.1f:%.1f", itemId, particleType, size, red, green, blue);
             } else {
                 newMapping = String.format("%s:%s", itemId, particleType);

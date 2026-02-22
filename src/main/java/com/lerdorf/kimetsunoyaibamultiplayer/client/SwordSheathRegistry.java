@@ -18,6 +18,12 @@ public class SwordSheathRegistry {
     private static final Map<Item, SheathInfo> swordSheathMap = new HashMap<>();
 
     /**
+     * Maps sword items to alternate display items when sheathed.
+     * e.g., sword_kokushibo_2 displays as sword_kokushibo_1 when on hip/back.
+     */
+    private static final Map<Item, Item> sheathDisplayOverrides = new HashMap<>();
+
+    /**
      * The default sheath item used for swords without a specific sheath defined
      */
     private static Item defaultSheathItem = null;
@@ -108,10 +114,42 @@ public class SwordSheathRegistry {
     }
 
     /**
+     * Registers a display override so that when a sword is sheathed, it renders
+     * as a different item model. For example, sword_kokushibo_2 can display as
+     * sword_kokushibo_1 when on the player's hip/back.
+     *
+     * @param sword The sword item that should be overridden
+     * @param displayAs The item whose model should be rendered instead
+     */
+    public static void registerSheathDisplayOverride(Item sword, Item displayAs) {
+        sheathDisplayOverrides.put(sword, displayAs);
+        Log.debug("Registered sheath display override: {} displays as {}", sword, displayAs);
+    }
+
+    /**
+     * Gets the display override item for a sword when sheathed.
+     * If no override is registered, returns the original sword's item.
+     *
+     * @param swordStack The sword being displayed
+     * @return An ItemStack with the display override item, or the original stack if no override
+     */
+    public static ItemStack getSheathDisplayItem(ItemStack swordStack) {
+        if (swordStack.isEmpty()) {
+            return swordStack;
+        }
+        Item override = sheathDisplayOverrides.get(swordStack.getItem());
+        if (override != null) {
+            return new ItemStack(override);
+        }
+        return swordStack;
+    }
+
+    /**
      * Clears all registered sheaths (for cleanup)
      */
     public static void clear() {
         swordSheathMap.clear();
+        sheathDisplayOverrides.clear();
         defaultSheathItem = null;
         //Log.debug("Cleared all sword sheath registrations");
     }

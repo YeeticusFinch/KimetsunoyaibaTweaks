@@ -4,7 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.models.KanrojiSwordModel;
-import com.lerdorf.kimetsunoyaibamultiplayer.entities.KanrojiEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -119,7 +119,7 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
 
             // Only apply Kanroji entity hand offset when the entity is actually holding the sword (in combat)
             // When out of combat, the sword is on the back/hip and shouldn't use hand offsets
-            if (renderingEntity instanceof KanrojiEntity &&
+            if (renderingEntity instanceof BreathingSlayerEntity &&
                 com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInCombat(renderingEntity)) {
                 //Log.debug("Entering translation offset for kanroji entity (in combat)");
                 // Extra hand offset for Kanroji entity to compensate for its model alignment.

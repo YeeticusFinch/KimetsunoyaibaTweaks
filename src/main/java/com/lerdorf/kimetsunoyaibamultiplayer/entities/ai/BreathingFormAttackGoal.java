@@ -1,11 +1,15 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities.ai;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordMetadataRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
@@ -29,6 +33,15 @@ public class BreathingFormAttackGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (!this.entity.isAlive() || this.entity.isDeadOrDying()) {
+            return false;
+        }
+
+        if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity demonSlayer
+            && demonSlayer.isActionLocked()) {
+            return false;
+        }
+
         LivingEntity target = this.entity.getTarget();
         if (target == null || !target.isAlive()) {
             return false;
@@ -76,20 +89,34 @@ public class BreathingFormAttackGoal extends Goal {
 
     @Override
     public void start() {
-        LivingEntity target = this.entity.getTarget();
-        if (target == null) return;
+        if (!this.entity.isAlive() || this.entity.isDeadOrDying()) {
+            return;
+        }
 
-        // Pick a breathing form, weighted to favor smaller cooldowns
+        LivingEntity target = this.entity.getTarget();
+        if (target == null || !target.isAlive()) return;
+
+        // IMPORTANT: Use the actual held stack first so TrainingSword NBT is visible.
+        ItemStack swordStack = this.entity.getMainHandItem();
+        if (swordStack.isEmpty()) {
+            swordStack = this.entity.getEquippedSword();
+        }
+
+        // Pick a breathing form, weighted to favor smaller cooldowns.
+        // Training swords at level 0 are restricted to the first form only.
         BreathingTechnique technique = this.entity.getBreathingTechnique();
-        BreathingForm form = pickWeightedFormConstrained(technique, target);
+        BreathingForm form = pickFormForCurrentState(technique, target, swordStack);
 
         if (form != null) {
+            if (!this.entity.isAlive() || this.entity.isDeadOrDying()) {
+                return;
+            }
+
             // Face the target immediately before executing the form
             faceTarget(target);
 
             // Check if this form has variations for the equipped sword
             BreathingFormVariation selectedVariation = null;
-            ItemStack swordStack = this.entity.getEquippedSword();
             if (!swordStack.isEmpty()) {
                 SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(swordStack.getItem());
                 String swordId = registeredSword != null ? registeredSword.getSwordId() : null;
@@ -124,7 +151,69 @@ public class BreathingFormAttackGoal extends Goal {
                 cooldownTicks = Math.max(form.getCooldownSeconds() * 20, minCooldownTicks);
             }
             this.entity.setBreathingFormCooldown(cooldownTicks);
+            return;
         }
+
+        // Fallback path: base-mod style execution for swords whose style is known but has no registered technique object.
+        String styleId = resolveCurrentStyleId(swordStack);
+        if (styleId == null) {
+            return;
+        }
+        int styleRange = BaseModStyleMapping.getBreathesRange(styleId);
+        if (styleRange <= 0) {
+            return;
+        }
+
+        int[] forms = BaseModStyleMapping.getFormsForStyle(styleRange);
+        if (forms.length == 0) {
+            return;
+        }
+
+        faceTarget(target);
+
+        int formId;
+        if (isTrainingSwordRestricted(swordStack)) {
+            formId = forms[0];
+        } else {
+            formId = forms[this.entity.getRandom().nextInt(forms.length)];
+        }
+
+        BaseModFormExecutionHelper.executeBaseModForm(this.entity, this.entity.level(), formId);
+        this.entity.setBreathingFormCooldown(Math.max(minCooldownTicks, 60));
+    }
+
+    private BreathingForm pickFormForCurrentState(BreathingTechnique technique, LivingEntity target, ItemStack swordStack) {
+        if (technique == null || technique.getForms() == null || technique.getForms().isEmpty()) {
+            return null;
+        }
+
+        if (isTrainingSwordRestricted(swordStack)) {
+            return technique.getForm(0);
+        }
+
+        return pickWeightedFormConstrained(technique, target);
+    }
+
+    private boolean isTrainingSwordRestricted(ItemStack swordStack) {
+        return this.entity.getPowerLevel() == 0 && TrainingSwordHelper.isTrainingSword(swordStack);
+    }
+
+    private String resolveCurrentStyleId(ItemStack swordStack) {
+        if (swordStack.isEmpty()) {
+            return null;
+        }
+
+        SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(swordStack.getItem());
+        if (registeredSword != null) {
+            return registeredSword.getStyleId();
+        }
+
+        SwordMetadataRegistry.SwordMetadata metadata = SwordMetadataRegistry.getMetadata(swordStack.getItem());
+        if (metadata != null) {
+            return metadata.getStyleId();
+        }
+
+        return null;
     }
 
     private BreathingForm pickWeightedFormConstrained(BreathingTechnique technique, LivingEntity target) {

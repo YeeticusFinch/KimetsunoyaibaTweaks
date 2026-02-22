@@ -115,7 +115,7 @@ public class CycleFormVariationPacket {
                     String displayName = getVariationDisplayName(formId, newVariation, swordId, breathingSword, baseFormIndex);
                     // Use one color: base form color (from technique formColor) for the entire line
                     String color = technique.getFormColor() != null ? technique.getFormColor() : "§f";
-                    String message = color + technique.getName() + " - " + color + displayName;
+                    String message = color + technique.getName() + " " + color + displayName;
                     player.sendSystemMessage(Component.literal(message));
                 }
 

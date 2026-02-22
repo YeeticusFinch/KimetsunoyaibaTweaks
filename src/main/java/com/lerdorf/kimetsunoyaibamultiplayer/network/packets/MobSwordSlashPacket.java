@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientPacketHandler;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -72,7 +73,13 @@ public class MobSwordSlashPacket {
         // Use the entity's main-hand item to determine particles/model
         ItemStack swordItem = living.getMainHandItem();
         ParticleOptions particleType = SwordParticleMapping.getParticleForSword(swordItem);
-        if (particleType == null) return;
+        if (particleType == null) {
+            if (!SwordParticleMapping.isKimetsunoyaibaSword(swordItem)) {
+                return;
+            }
+            // Keep slash rendering active even if a sword has no explicit mapping.
+            particleType = ParticleTypes.CLOUD;
+        }
 
         // Delegate to BonePositionTracker which will select model vs particles
         BonePositionTracker.spawnRadialRibbonParticles(living, swordItem, animationName, animationTick, particleType);

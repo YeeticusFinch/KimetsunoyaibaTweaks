@@ -67,7 +67,7 @@ public class StructureSpawnHandler {
         // Debug logging
         ResourceLocation entityId = EntityTagHelper.getEntityTypeId(entity);
         if (entityId != null) {
-            Log.debug("[Structure Spawn] Checking spawn for: " + entityId + " at " + pos);
+            //Log.debug("[Structure Spawn] Checking spawn for: " + entityId + " at " + pos);
         }
 
         try {
@@ -89,16 +89,16 @@ public class StructureSpawnHandler {
                     continue;
                 }
 
-                Log.debug("[Structure Spawn] Found structure: " + structureId);
+                //Log.debug("[Structure Spawn] Found structure: " + structureId);
 
                 // Apply structure-specific rules
                 if (shouldDenySpawnInStructure(entity, serverLevel, pos, structureId)) {
-                    Log.debug("[Structure Spawn] DENIED spawn for: " + entityId + " in structure: " + structureId);
+                    //Log.debug("[Structure Spawn] DENIED spawn for: " + entityId + " in structure: " + structureId);
                     event.setSpawnCancelled(true);
                     event.setCanceled(true);
                     return;
                 } else {
-                    Log.debug("[Structure Spawn] ALLOWED spawn for: " + entityId + " in structure: " + structureId);
+                    //Log.debug("[Structure Spawn] ALLOWED spawn for: " + entityId + " in structure: " + structureId);
                 }
             }
 

@@ -26,12 +26,16 @@ import software.bernie.geckolib.util.RenderUtils;
 @OnlyIn(Dist.CLIENT)
 public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 
+	private static final java.util.Random RANDOM = new java.util.Random();
+
 	private final String modelKey;
 	private int frameCount = 1; // Default to 1 frame (static texture)
 	private float currentProgress = 0.0f;
 	private boolean flipHorizontal = false; // Default to no flip (base animation)
 	private long startTimeMillis = 0; // Time when rendering started (for tick-based frame calculation)
 	private int duration = 0; // Duration in milliseconds
+	private final int randomFrame; // Fixed random frame for models using random texture selection
+	private final boolean usesRandomSelection; // Whether this model uses random texture selection
 
 	/**
 	 * Creates a sword slash model for a specific model key
@@ -40,6 +44,10 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 	 */
 	public SwordSlashModel(String modelKey) {
 		this.modelKey = modelKey;
+		this.usesRandomSelection = SwordSlashModelRegistry.usesRandomTextureSelection(modelKey);
+		// Pre-select random frame at construction time (only used if usesRandomSelection is true)
+		int registeredFrameCount = SwordSlashModelRegistry.getFrameCount(modelKey);
+		this.randomFrame = registeredFrameCount > 1 ? RANDOM.nextInt(registeredFrameCount) : 0;
 	}
 
 	/**
@@ -94,11 +102,17 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 	}
 
 	/**
-	 * Gets the current frame number based on elapsed ticks and frame delay
+	 * Gets the current frame number based on elapsed ticks and frame delay,
+	 * or returns the fixed random frame if using random texture selection.
 	 */
 	public int getCurrentFrame() {
 		if (frameCount <= 1) {
 			return 0;
+		}
+
+		// If using random texture selection, return the pre-selected random frame
+		if (usesRandomSelection) {
+			return randomFrame;
 		}
 
 		// Get frame delay from registry (ticks per frame)
@@ -115,6 +129,20 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 		int currentFrame = (elapsedTicks / frameDelay) % frameCount;
 
 		return currentFrame;
+	}
+
+	/**
+	 * Gets the randomly selected frame (only meaningful if usesRandomSelection is true)
+	 */
+	public int getRandomFrame() {
+		return randomFrame;
+	}
+
+	/**
+	 * Checks if this model uses random texture selection
+	 */
+	public boolean usesRandomTextureSelection() {
+		return usesRandomSelection;
 	}
 
 	private String getResourceNamespace() {

@@ -147,6 +147,7 @@ For base mod swords:
 - `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/commands/TrainingSwordCommand.java` - /trainingsword command
 - `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/network/packets/CycleBreathingFormPacket.java` - Server-side form cycling restriction logic
 - `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/client/KeyInputHandler.java` - Client-side key input interception for base mod swords
+- `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/KimetsunoyaibaMultiplayer.java` - Server-side failsafe in `onPlayerTick()`
 
 ## Technical Details: Base Mod Sword Interception
 
@@ -163,6 +164,16 @@ For base mod swords, the cycling is normally handled by the base mod directly (K
 This dual approach ensures training swords work for both:
 - Base mod swords (intercepted on client side before base mod processes the key)
 - Custom mod swords (handled on server side in the packet handler)
+
+## Server-Side Failsafe
+
+In addition to client-side key interception, there is a server-side failsafe in `KimetsunoyaibaMultiplayer.onPlayerTick()` that catches any form cycling that slips through (e.g., when the player holds down the cycle key):
+
+1. Every server tick, check if the player is holding a training sword
+2. If the current `breathes` value is not the first form for that breathing style, reset it
+3. Update the sword's `select` NBT to 0 and sync to clients
+
+This ensures that even if the base mod manages to cycle the form before our key interception runs, the server will immediately reset it back to the first form.
 
 ## Future Enhancements
 

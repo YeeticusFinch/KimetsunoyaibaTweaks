@@ -5,9 +5,16 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CrowGeoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.AfterImageRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerFemaleRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.FlowerPetalSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.GhostlyCloneRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanaeRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanawoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanrojiRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroFPRenderer;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.entity.EntityType;
@@ -35,9 +42,24 @@ public class CrowRendererManager {
 
         // Register renderer for Muichiro Tokito
         event.registerEntityRenderer(ModEntities.MUICHIRO.get(), MuichiroRenderer::new);
+        event.registerEntityRenderer(ModEntities.MUICHIRO_FP.get(), MuichiroFPRenderer::new);
 
         // Register renderer for Mitsuri Kanroji
         event.registerEntityRenderer(ModEntities.KANROJI.get(), KanrojiRenderer::new);
+
+        // Register renderers for Kanae and Kanawo (Flower Breathing)
+        event.registerEntityRenderer(ModEntities.KANAE.get(), KanaeRenderer::new);
+        event.registerEntityRenderer(ModEntities.KANAWO.get(), KanawoRenderer::new);
+
+        // Register renderer for after image entity (Flower Breathing 7th Form effect)
+        event.registerEntityRenderer(ModEntities.AFTER_IMAGE.get(), AfterImageRenderer::new);
+
+        // Register renderer for flower petal slash entity (Flower Breathing slash effect)
+        event.registerEntityRenderer(ModEntities.FLOWER_PETAL_SLASH.get(), FlowerPetalSlashRenderer::new);
+
+        // Register renderers for generic demon slayers
+        event.registerEntityRenderer(ModEntities.DEMON_SLAYER.get(), DemonSlayerRenderer::new);
+        event.registerEntityRenderer(ModEntities.DEMON_SLAYER_FEMALE.get(), DemonSlayerFemaleRenderer::new);
 
         if (Config.logDebug)
         	Log.info("Entity renderers registered successfully");

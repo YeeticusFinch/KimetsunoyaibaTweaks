@@ -18,6 +18,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -109,31 +111,39 @@ public class ColorChangeProcedureOverride {
         double cntX = tag.getDouble(CNT_X_TAG);
 
         // Check if we've reached the transformation threshold
+        // We transform at THRESHOLD - 1 (29) to beat the base mod which transforms at 30
         if (cntX >= TRANSFORM_THRESHOLD - 1) {
             // Perform the custom transformation
             performCustomTransformation(player, sword);
 
-            // Reset counter after transformation
-            tag.putDouble(CNT_X_TAG, 0.0);
-        } else if (cntX > 0) {
-            // Reset the counter to block the base mod's transformation
-            // This happens every tick to ensure the base mod doesn't get a chance to transform
+            // Reset counter after transformation to prevent base mod from also transforming
             tag.putDouble(CNT_X_TAG, 0.0);
 
             if (CustomProgressionConfig.enableDebugLogging.get()) {
-                System.out.println("[KnY-MP ColorChangeOverride] Reset cnt_x from " + cntX + " to 0 for " +
-                    player.getName().getString());
+                System.out.println("[KnY-MP ColorChangeOverride] Performed custom transformation for " +
+                    player.getName().getString() + " at cnt_x=" + cntX);
             }
         }
+        // Note: We intentionally do NOT reset cnt_x every tick anymore.
+        // The previous code was resetting cnt_x to 0 every tick, which prevented
+        // the counter from ever reaching 29 for custom transformation.
+        // Now we let the base mod increment cnt_x naturally, and intercept at 29.
     }
 
     /**
      * Perform the custom sword transformation using registered style and sword metadata.
      */
     private static void performCustomTransformation(Player player, ItemStack originalSword) {
+        // Check if original sword was a training sword BEFORE we do anything else
+        boolean wasTrainingSword = TrainingSwordHelper.isTrainingSword(originalSword);
+
         // Get all color-change-eligible styles
         List<StyleMetadataRegistry.StyleMetadata> eligibleStyles =
-            StyleMetadataRegistry.getColorChangeEligibleStyles();
+                StyleMetadataRegistry.getColorChangeEligibleStyles();
+
+        if (Config.logDebug)
+            for (StyleMetadataRegistry.StyleMetadata style : eligibleStyles)
+                System.out.println("[Eligible Style] " + style.getStyleId());
 
         if (eligibleStyles.isEmpty()) {
             System.out.println("[KnY-MP ColorChangeOverride] No color-change-eligible styles registered!");
@@ -159,33 +169,17 @@ public class ColorChangeProcedureOverride {
 
         System.out.println("[KnY-MP ColorChangeOverride] Transforming sword for " +
             player.getName().getString() + " -> " + swordId +
-            " (style: " + chosenStyle.getStyleId() + ")");
+            " (style: " + chosenStyle.getStyleId() + ")" +
+            (wasTrainingSword ? " [Training Sword]" : ""));
 
-        // Create the new sword item stack
+        // Create the new sword item stack - DO NOT copy metadata from original sword
+        // The new sword should start fresh with its default properties
         ItemStack newSword = new ItemStack(chosenSword);
 
-        // Copy relevant NBT (except cnt_x)
-        CompoundTag originalTag = originalSword.getTag();
-        if (originalTag != null) {
-            CompoundTag newTag = originalTag.copy();
-            // Remove cnt_x to prevent immediate re-transformation
-            newTag.remove(CNT_X_TAG);
-            // Remove any custom name from the generic nichirinsword
-            if (newTag.contains("display")) {
-                CompoundTag display = newTag.getCompound("display");
-                if (display.contains("Name")) {
-                    // Only remove if it's the default generic name
-                    // Keep custom names like "Training Sword"
-                    String name = display.getString("Name");
-                    if (!name.contains("Training")) {
-                        display.remove("Name");
-                    }
-                }
-                if (display.isEmpty()) {
-                    newTag.remove("display");
-                }
-            }
-            newSword.setTag(newTag);
+        // If the original sword was a training sword, apply training sword modifications to the new one
+        if (wasTrainingSword) {
+            TrainingSwordHelper.makeTrainingSword(newSword, player);
+            System.out.println("[KnY-MP ColorChangeOverride] Applied training sword tag to new sword");
         }
 
         // Replace the sword in the player's hand
@@ -197,16 +191,32 @@ public class ColorChangeProcedureOverride {
 
         // Send transformation message to player
         String styleName = formatStyleName(chosenStyle.getStyleId());
-        player.displayClientMessage(
-            Component.literal("Your blade has awakened as a " + styleName + " sword!"),
-            true);
+        Component message = Component.literal("Your blade has awakened as a " + styleName + " sword!");
+        player.displayClientMessage(message, true);  // Action bar message
+        player.sendSystemMessage(message);           // Chat message
     }
 
     /**
      * Get all level-0 swords for a given style from both registries.
+     * When enhanced breathing is enabled for a style, prefer our enhanced swords.
      */
     private static List<Item> getEligibleSwordsForStyle(String styleId) {
         List<Item> swords = new ArrayList<>();
+
+        // Check if we should prefer enhanced swords for this style
+        boolean preferEnhanced = shouldPreferEnhancedSwords(styleId);
+
+        // Get from SwordRegistry first (addon swords using BreathingSwordItem - our enhanced versions)
+        List<SwordRegistry.RegisteredSword> addonSwords =
+            SwordRegistry.getSwordsByStyleAndLevel(styleId, 0);
+        for (SwordRegistry.RegisteredSword registered : addonSwords) {
+            swords.add(registered.getSwordItem());
+        }
+
+        // If we found enhanced swords and should prefer them, return early
+        if (!swords.isEmpty() && preferEnhanced) {
+            return swords;
+        }
 
         // Get from SwordMetadataRegistry (base mod swords)
         List<SwordMetadataRegistry.SwordMetadata> baseSwords =
@@ -218,14 +228,19 @@ public class ColorChangeProcedureOverride {
             }
         }
 
-        // Get from SwordRegistry (addon swords using BreathingSwordItem)
-        List<SwordRegistry.RegisteredSword> addonSwords =
-            SwordRegistry.getSwordsByStyleAndLevel(styleId, 0);
-        for (SwordRegistry.RegisteredSword registered : addonSwords) {
-            swords.add(registered.getSwordItem());
-        }
-
         return swords;
+    }
+
+    /**
+     * Check if we should prefer enhanced swords for a given style.
+     * This is based on the enhanced breathing config.
+     */
+    private static boolean shouldPreferEnhancedSwords(String styleId) {
+        return switch (styleId) {
+            case "mist_breathing" -> com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.enhancedMistBreathing;
+            case "love_breathing" -> com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.enhancedLoveBreathing;
+            default -> false;
+        };
     }
 
     /**

@@ -8,7 +8,6 @@ import net.minecraftforge.common.ForgeConfigSpec;
 public class FirstPersonSwordSwingConfig {
 
     public static ForgeConfigSpec.BooleanValue customSwingEnabled;
-    public static ForgeConfigSpec.BooleanValue counterVanillaSwing;
 
     // Counter Vanilla Swing settings
     public static ForgeConfigSpec.DoubleValue counterSwingRotateX;
@@ -33,12 +32,6 @@ public class FirstPersonSwordSwingConfig {
             .comment("Enable custom first-person swing animations for nichirin swords",
                      "Default: true")
             .define("customSwingEnabled", true);
-
-        counterVanillaSwing = builder
-            .comment("Counter vanilla's swing animation to prevent double animation",
-                     "When enabled, vanilla swing is canceled so only custom keyframes animate the sword",
-                     "Default: true")
-            .define("counterVanillaSwing", true);
 
         builder.comment("Counter Vanilla Swing - Adjusts how vanilla swing animation is reversed")
                .push("counter_vanilla_swing");

@@ -2,14 +2,10 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
-import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -55,18 +51,12 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     private static final EntityDataAccessor<Integer> ANIMATION_TICKS =
         SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
 
-    // Synced data for power level (1-4)
-    private static final EntityDataAccessor<Integer> POWER_LEVEL =
+    // Synced data for power level (0-4 for generic slayers, 1-4 for named slayers)
+    protected static final EntityDataAccessor<Integer> POWER_LEVEL =
         SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
 
     // Cooldown tracking for breathing forms (in ticks)
     private int breathingFormCooldown = 0;
-
-    // Entity tags for targeting demons
-    private static final TagKey<EntityType<?>> DEMON_TAG = TagKey.create(Registries.ENTITY_TYPE,
-        ResourceLocation.tryBuild("kimetsunoyaiba", "demon"));
-    private static final TagKey<EntityType<?>> TWELVE_KIZUKI_TAG = TagKey.create(Registries.ENTITY_TYPE,
-        ResourceLocation.tryBuild("kimetsunoyaiba", "twelve_kizuki"));
 
     // UUID for attribute modifiers (must be unique per attribute)
     private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("7f3e5c6d-1a2b-4f9e-8d7c-6b5a4e3d2c1b");
@@ -169,19 +159,13 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         // Target goals
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
 
-        // Target demons from kimetsunoyaiba mod (using entity tags)
+        // Target demons from kimetsunoyaiba mod (using comprehensive demon detection)
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
-            (entity) -> {
-                // Target entities with demon or twelve_kizuki tags
-                return entity.getType().is(DEMON_TAG) || entity.getType().is(TWELVE_KIZUKI_TAG);
-            }));
+            DemonSlayerAggroHandler::isDemonTarget));
 
         // Target players who are demons (check NBT data)
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-            (player) -> {
-                // Check if player has "oni" (demon) NBT tag
-                return player.getPersistentData().getBoolean("oni");
-            }));
+            (player) -> player.getPersistentData().getBoolean("oni")));
     }
 
     /**

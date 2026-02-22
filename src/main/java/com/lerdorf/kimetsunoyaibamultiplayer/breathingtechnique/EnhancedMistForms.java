@@ -548,7 +548,7 @@ public class EnhancedMistForms {
 	                        Damager.hurt(entity, livingTarget, damage);
 	
 	                        // Brief confusion
-	                        //livingTarget.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0));
+	                        //livingTarget.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 40, 0));
                     	}
                     	// Knockback away from center
                         Vec3 knockbackDir = target.position().subtract(centerPos).normalize();
@@ -1311,7 +1311,7 @@ public class EnhancedMistForms {
 
                 }, 1, formDuration);
 
-                // Apply blindness to all living entities within 20 blocks of the cloud origin
+                // Apply darkness to all living entities within 20 blocks of the cloud origin
                 // every second during the form. Excludes the caster.
                 if (level instanceof ServerLevel) {
                     final Vec3 cloudOrigin = entity.position();
@@ -1324,9 +1324,9 @@ public class EnhancedMistForms {
                             e -> e != entity && e.isAlive()
                         );
                         for (LivingEntity le : nearby) {
-                            // 3 seconds of blindness, reapplied every second while inside the cloud
+                            // 3 seconds of darkness, reapplied every second while inside the cloud
                         	if (!(le instanceof Player p && (p.isCreative() || p.isSpectator())))
-                        		le.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0));
+                        		le.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 60, 0));
                         }
                     }, tickInterval, formDuration);
                 }

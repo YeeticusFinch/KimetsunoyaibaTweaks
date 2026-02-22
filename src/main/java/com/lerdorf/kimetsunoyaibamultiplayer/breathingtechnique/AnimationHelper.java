@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.SpeedControlledAnimation;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.AfterImageEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobAnimationSyncPacket;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
@@ -39,6 +40,11 @@ public class AnimationHelper {
         // Trigger GeckoLib sword animation if holding Kanroji sword
         triggerKanrojiSwordAnimation(entity, animationName);
 
+        if (entity instanceof AfterImageEntity afterImage) {
+            afterImage.playGeckoAnimation(animationName, 10);
+            return;
+        }
+
         if (entity instanceof Player player) {
             playAnimation(player, animationName, -1, 1.0f);
         } else {
@@ -59,6 +65,12 @@ public class AnimationHelper {
         if (sword != null) {
             animationName = sword.getAnim(animationName);
         }
+
+        if (entity instanceof AfterImageEntity afterImage) {
+            afterImage.playGeckoAnimation(animationName, Math.max(1, maxDurationTicks > 0 ? maxDurationTicks : 10));
+            return;
+        }
+
         if (entity instanceof Player player) {
             playAnimation(player, animationName, maxDurationTicks, 1.0f);
         } else {
@@ -79,6 +91,12 @@ public class AnimationHelper {
         if (sword != null) {
             animationName = sword.getAnim(animationName);
         }
+
+        if (entity instanceof AfterImageEntity afterImage) {
+            afterImage.playGeckoAnimation(animationName, Math.max(1, maxDurationTicks > 0 ? maxDurationTicks : 10));
+            return;
+        }
+
         if (entity instanceof Player player) {
             playAnimationOnLayer(player, animationName, maxDurationTicks, speed, layerPriority);
         } else {

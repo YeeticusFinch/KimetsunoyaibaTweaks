@@ -79,53 +79,63 @@ public class DemonSlayerInitiationHandler {
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)  // Run BEFORE base mod handlers
     public static void onAdvancement(AdvancementEvent.AdvancementEarnEvent event) {
-        if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
-            return;
-        }
-
-        Player player = event.getEntity();
-        if (!(player instanceof ServerPlayer serverPlayer)) {
-            return;
-        }
-
-        Level level = player.level();
-        if (level.getServer() == null) {
-            return;
-        }
-
-        // Get the advancement from the event and compare with known advancements
-        Advancement eventAdvancement = event.getAdvancement();
-        if (eventAdvancement == null) {
-            return;
-        }
-
-        // Get advancements from the manager to compare
-        Advancement demonSlayerCorpsAdv = level.getServer().getAdvancements().getAdvancement(DEMON_SLAYER_CORPS);
-        Advancement mizunotoAdv = level.getServer().getAdvancements().getAdvancement(MIZUNOTO);
-
-        // When demon_slayer_corps is granted, schedule item removal and block mizunoto
-        if (demonSlayerCorpsAdv != null && eventAdvancement.equals(demonSlayerCorpsAdv)) {
-            long currentTick = serverPlayer.level().getGameTime();
-            pendingItemRemoval.put(player.getUUID(), currentTick);
-            pendingCrowBlock.put(player.getUUID(), currentTick);
-            blockMizunoto.add(player.getUUID());
-
-            if (CustomProgressionConfig.enableDebugLogging.get()) {
-                System.out.println("[KnY-MP Progression] Player " + player.getName().getString() +
-                    " earned demon_slayer_corps - scheduling item removal and blocking crows/mizunoto for " + BLOCKING_DURATION_TICKS + " ticks");
+        try {
+            if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
+                return;
             }
-        }
 
-        // When mizunoto is granted and this player is in blockMizunoto, revoke it immediately
-        if (mizunotoAdv != null && eventAdvancement.equals(mizunotoAdv) && blockMizunoto.contains(player.getUUID())) {
-            // Schedule revocation for next tick (can't revoke in same event)
-            serverPlayer.getServer().execute(() -> {
-                revokeAdvancement(serverPlayer, MIZUNOTO);
+            Player player = event.getEntity();
+            if (!(player instanceof ServerPlayer serverPlayer)) {
+                return;
+            }
+
+            Level level = player.level();
+            if (level.getServer() == null) {
+                return;
+            }
+
+            // Get the advancement from the event and compare with known advancements
+            Advancement eventAdvancement = event.getAdvancement();
+            if (eventAdvancement == null) {
+                return;
+            }
+
+            // Get advancements from the manager to compare
+            Advancement demonSlayerCorpsAdv = level.getServer().getAdvancements().getAdvancement(DEMON_SLAYER_CORPS);
+            Advancement mizunotoAdv = level.getServer().getAdvancements().getAdvancement(MIZUNOTO);
+
+            // When demon_slayer_corps is granted, schedule item removal and block mizunoto
+            if (demonSlayerCorpsAdv != null && eventAdvancement.equals(demonSlayerCorpsAdv)) {
+                long currentTick = serverPlayer.level().getGameTime();
+                pendingItemRemoval.put(player.getUUID(), currentTick);
+                pendingCrowBlock.put(player.getUUID(), currentTick);
+                blockMizunoto.add(player.getUUID());
+
                 if (CustomProgressionConfig.enableDebugLogging.get()) {
-                    System.out.println("[KnY-MP Progression] Revoked mizunoto advancement from " +
-                        player.getName().getString());
+                    System.out.println("[KnY-MP Progression] Player " + player.getName().getString() +
+                        " earned demon_slayer_corps - scheduling item removal and blocking crows/mizunoto for " + BLOCKING_DURATION_TICKS + " ticks");
                 }
-            });
+            }
+
+            // When mizunoto is granted and this player is in blockMizunoto, revoke it immediately
+            if (mizunotoAdv != null && eventAdvancement.equals(mizunotoAdv) && blockMizunoto.contains(player.getUUID())) {
+                // Schedule revocation for next tick (can't revoke in same event)
+                serverPlayer.getServer().execute(() -> {
+                    try {
+                        revokeAdvancement(serverPlayer, MIZUNOTO);
+                        if (CustomProgressionConfig.enableDebugLogging.get()) {
+                            System.out.println("[KnY-MP Progression] Revoked mizunoto advancement from " +
+                                player.getName().getString());
+                        }
+                    } catch (Exception e) {
+                        System.err.println("[KnY-MP Progression] Error revoking mizunoto: " + e.getMessage());
+                    }
+                });
+            }
+        } catch (Exception e) {
+            // CRITICAL: Never use log4j in exception handlers - causes LinkageError crashes
+            System.err.println("[KnY-MP Progression] Error in onAdvancement: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -135,117 +145,148 @@ public class DemonSlayerInitiationHandler {
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
-        if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
-            return;
-        }
+        try {
+            if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
+                return;
+            }
 
-        Entity entity = event.getEntity();
-        if (entity.level().isClientSide()) {
-            return;
-        }
+            Entity entity = event.getEntity();
+            if (entity.level().isClientSide()) {
+                return;
+            }
 
-        // Check if this is a kasugai_crow
-        ResourceLocation entityType = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
-        if (entityType == null || !entityType.toString().equals(KASUGAI_CROW)) {
-            return;
-        }
+            // Check if this is a kasugai_crow
+            ResourceLocation entityType = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+            if (entityType == null || !entityType.toString().equals(KASUGAI_CROW)) {
+                return;
+            }
 
-        // Check if any player is in the crow block window (means they just got demon_slayer_corps)
-        // The crow spawns near the player, so check distance
-        if (!pendingCrowBlock.isEmpty()) {
-            for (UUID playerUuid : pendingCrowBlock.keySet()) {
-                Player player = entity.level().getPlayerByUUID(playerUuid);
-                if (player != null && entity.distanceToSqr(player) < 400) { // Within 20 blocks (increased range)
-                    // Cancel the spawn
-                    event.setCanceled(true);
+            // Check if any player is in the crow block window (means they just got demon_slayer_corps)
+            // The crow spawns near the player, so check distance
+            if (!pendingCrowBlock.isEmpty()) {
+                for (UUID playerUuid : pendingCrowBlock.keySet()) {
+                    Player player = entity.level().getPlayerByUUID(playerUuid);
+                    if (player != null && entity.distanceToSqr(player) < 400) { // Within 20 blocks (increased range)
+                        // Cancel the spawn
+                        event.setCanceled(true);
 
-                    if (CustomProgressionConfig.enableDebugLogging.get()) {
-                        System.out.println("[KnY-MP Progression] Prevented kasugai_crow spawn near " +
-                            player.getName().getString() + " (distance: " + Math.sqrt(entity.distanceToSqr(player)) + " blocks)");
+                        if (CustomProgressionConfig.enableDebugLogging.get()) {
+                            System.out.println("[KnY-MP Progression] Prevented kasugai_crow spawn near " +
+                                player.getName().getString() + " (distance: " + Math.sqrt(entity.distanceToSqr(player)) + " blocks)");
+                        }
+                        return;
                     }
-                    return;
                 }
             }
+        } catch (Exception e) {
+            // CRITICAL: Never use log4j in exception handlers - causes LinkageError crashes
+            System.err.println("[KnY-MP Progression] Error in onEntityJoinWorld: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     /**
      * On server tick, process pending item removals and crow removals.
      * We check every tick during the blocking window to catch items given at different times.
+     *
+     * IMPORTANT: This method is wrapped in try-catch to prevent log4j LinkageError crashes.
+     * Never use log4j/LOGGER in exception handlers - use System.err.println() instead.
      */
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
-            return;
-        }
+        try {
+            if (event.phase != TickEvent.Phase.END) {
+                return;
+            }
 
-        if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
-            // Clear any pending operations if config was disabled
-            pendingItemRemoval.clear();
-            pendingCrowBlock.clear();
-            pendingCrowRemoval.clear();
-            return;
-        }
+            if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
+                // Clear any pending operations if config was disabled
+                pendingItemRemoval.clear();
+                pendingCrowBlock.clear();
+                pendingCrowRemoval.clear();
+                return;
+            }
 
-        if (event.getServer() == null) {
-            return;
-        }
+            if (event.getServer() == null) {
+                return;
+            }
 
-        long currentTick = event.getServer().overworld().getGameTime();
+            long currentTick = event.getServer().overworld().getGameTime();
 
-        // Process pending item removals every tick during the blocking window
-        Iterator<Map.Entry<UUID, Long>> itemIter = pendingItemRemoval.entrySet().iterator();
-        while (itemIter.hasNext()) {
-            Map.Entry<UUID, Long> entry = itemIter.next();
-            long ticksSinceGrant = currentTick - entry.getValue();
-            UUID playerUuid = entry.getKey();
-            ServerPlayer player = event.getServer().getPlayerList().getPlayer(playerUuid);
+            // Process pending item removals every tick during the blocking window
+            Iterator<Map.Entry<UUID, Long>> itemIter = pendingItemRemoval.entrySet().iterator();
+            while (itemIter.hasNext()) {
+                Map.Entry<UUID, Long> entry = itemIter.next();
+                long ticksSinceGrant = currentTick - entry.getValue();
+                UUID playerUuid = entry.getKey();
+                ServerPlayer player = event.getServer().getPlayerList().getPlayer(playerUuid);
 
-            if (player != null) {
-                // Remove items every tick during the blocking window
-                int itemsRemoved = removeInitiationItems(player);
+                if (player != null) {
+                    // Remove items every tick during the blocking window
+                    int itemsRemoved = removeInitiationItems(player);
 
-                // Also try to remove any crows that slipped through
-                removeRecentlyTamedCrows(player);
+                    // Also try to remove any crows that slipped through
+                    removeRecentlyTamedCrows(player);
 
-                if (ticksSinceGrant >= 1) {
-                    // Revoke mizunoto advancement
-                    revokeAdvancement(player, MIZUNOTO);
+                    if (ticksSinceGrant >= 1) {
+                        // Revoke mizunoto advancement
+                        revokeAdvancement(player, MIZUNOTO);
+                    }
+
+                    if (CustomProgressionConfig.enableDebugLogging.get() && itemsRemoved > 0) {
+                        System.out.println("[KnY-MP Progression] Tick " + ticksSinceGrant + "/" + BLOCKING_DURATION_TICKS +
+                            ": Removed " + itemsRemoved + " initiation items from " + player.getName().getString());
+                    }
                 }
 
-                if (CustomProgressionConfig.enableDebugLogging.get() && itemsRemoved > 0) {
-                    System.out.println("[KnY-MP Progression] Tick " + ticksSinceGrant + "/" + BLOCKING_DURATION_TICKS +
-                        ": Removed " + itemsRemoved + " initiation items from " + player.getName().getString());
+                // Remove from tracking after the blocking window
+                if (ticksSinceGrant >= BLOCKING_DURATION_TICKS) {
+                    itemIter.remove();
+
+                    // Grant training sword if enabled
+                    if (player != null && CustomProgressionConfig.grantTrainingSword.get()) {
+                        grantTrainingSword(player);
+                    }
+
+                    if (CustomProgressionConfig.enableDebugLogging.get()) {
+                        System.out.println("[KnY-MP Progression] Finished blocking initiation for " +
+                            (player != null ? player.getName().getString() : playerUuid));
+                    }
                 }
             }
 
-            // Remove from tracking after the blocking window
-            if (ticksSinceGrant >= BLOCKING_DURATION_TICKS) {
-                itemIter.remove();
+            // Explicitly try to remove crows at 10, 20, and 30 ticks after advancement
+            // This catches crows that might spawn with a delay
+            Iterator<Map.Entry<UUID, Long>> crowIter = pendingCrowBlock.entrySet().iterator();
+            while (crowIter.hasNext()) {
+                Map.Entry<UUID, Long> entry = crowIter.next();
+                long ticksSinceGrant = currentTick - entry.getValue();
+                UUID playerUuid = entry.getKey();
+                ServerPlayer player = event.getServer().getPlayerList().getPlayer(playerUuid);
 
-                // Grant training sword if enabled
-                if (player != null && CustomProgressionConfig.grantTrainingSword.get()) {
-                    grantTrainingSword(player);
+                // Try removing crows at specific intervals: 10, 20, and 30 ticks
+                if (player != null && (ticksSinceGrant == 10 || ticksSinceGrant == 20 || ticksSinceGrant == 30)) {
+                    removeRecentlyTamedCrows(player);
+                    if (CustomProgressionConfig.enableDebugLogging.get()) {
+                        System.out.println("[KnY-MP Progression] Crow removal attempt at tick " + ticksSinceGrant +
+                            " for " + player.getName().getString());
+                    }
                 }
 
-                if (CustomProgressionConfig.enableDebugLogging.get()) {
-                    System.out.println("[KnY-MP Progression] Finished blocking initiation for " +
-                        (player != null ? player.getName().getString() : playerUuid));
+                // Clean up after the blocking window
+                if (ticksSinceGrant >= BLOCKING_DURATION_TICKS) {
+                    crowIter.remove();
                 }
             }
-        }
 
-        // Clean up pendingCrowBlock after the blocking window
-        Iterator<Map.Entry<UUID, Long>> crowIter = pendingCrowBlock.entrySet().iterator();
-        while (crowIter.hasNext()) {
-            Map.Entry<UUID, Long> entry = crowIter.next();
-            if (currentTick - entry.getValue() >= BLOCKING_DURATION_TICKS) {
-                crowIter.remove();
-            }
+            // Clean up blockMizunoto after 10 seconds (200 ticks) to prevent memory leak
+            // Note: For a full implementation, we'd track the grant time per player
+        } catch (Exception e) {
+            // CRITICAL: Never use log4j in exception handlers - causes LinkageError crashes
+            // Always use System.err.println() instead
+            System.err.println("[KnY-MP Progression] Error in onServerTick: " + e.getMessage());
+            e.printStackTrace();
         }
-
-        // Clean up blockMizunoto after 10 seconds (200 ticks) to prevent memory leak
-        // Note: For a full implementation, we'd track the grant time per player
     }
 
     /**
@@ -291,44 +332,52 @@ public class DemonSlayerInitiationHandler {
     /**
      * Grant a training sword to the player.
      * Called when grantTrainingSword config is enabled and initiation blocking finishes.
+     *
+     * IMPORTANT: This method catches all exceptions to prevent log4j LinkageError crashes.
      */
     private static void grantTrainingSword(ServerPlayer player) {
-        if (CustomProgressionConfig.enableDebugLogging.get()) {
-            System.out.println("[KnY-MP Progression] Attempting to grant training sword to " + player.getName().getString());
-        }
-
-        // Get the nichirinsword item from the base mod
-        Item nichirinsword = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(NICHIRINSWORD));
-        if (nichirinsword == null) {
-            System.err.println("[KnY-MP Progression] Could not find nichirinsword item (" + NICHIRINSWORD + ") to grant training sword");
-            return;
-        }
-
-        if (CustomProgressionConfig.enableDebugLogging.get()) {
-            System.out.println("[KnY-MP Progression] Found nichirinsword item: " + ForgeRegistries.ITEMS.getKey(nichirinsword));
-        }
-
-        // Create a new nichirinsword and convert it to a training sword
-        ItemStack trainingSword = new ItemStack(nichirinsword);
-
-        if (CustomProgressionConfig.enableDebugLogging.get()) {
-            System.out.println("[KnY-MP Progression] Created ItemStack, checking if it's a valid sword...");
-            System.out.println("[KnY-MP Progression] isNichirinOrBreathingSword: " + TrainingSwordHelper.isNichirinOrBreathingSword(trainingSword));
-        }
-
-        boolean success = TrainingSwordHelper.makeTrainingSword(trainingSword, player);
-
-        if (success) {
-            // Give the training sword to the player
-            if (!player.getInventory().add(trainingSword)) {
-                // If inventory is full, drop it at player's feet
-                player.drop(trainingSword, false);
+        try {
+            if (CustomProgressionConfig.enableDebugLogging.get()) {
+                System.out.println("[KnY-MP Progression] Attempting to grant training sword to " + player.getName().getString());
             }
 
-            System.out.println("[KnY-MP Progression] Granted training sword to " + player.getName().getString());
-        } else {
-            System.err.println("[KnY-MP Progression] Failed to create training sword for " + player.getName().getString());
-            System.err.println("[KnY-MP Progression] ItemStack: " + trainingSword + ", Item: " + trainingSword.getItem());
+            // Get the nichirinsword item from the base mod
+            Item nichirinsword = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(NICHIRINSWORD));
+            if (nichirinsword == null) {
+                System.err.println("[KnY-MP Progression] Could not find nichirinsword item (" + NICHIRINSWORD + ") to grant training sword");
+                return;
+            }
+
+            if (CustomProgressionConfig.enableDebugLogging.get()) {
+                System.out.println("[KnY-MP Progression] Found nichirinsword item: " + ForgeRegistries.ITEMS.getKey(nichirinsword));
+            }
+
+            // Create a new nichirinsword and convert it to a training sword
+            ItemStack trainingSword = new ItemStack(nichirinsword);
+
+            if (CustomProgressionConfig.enableDebugLogging.get()) {
+                System.out.println("[KnY-MP Progression] Created ItemStack, checking if it's a valid sword...");
+                System.out.println("[KnY-MP Progression] isNichirinOrBreathingSword: " + TrainingSwordHelper.isNichirinOrBreathingSword(trainingSword));
+            }
+
+            boolean success = TrainingSwordHelper.makeTrainingSword(trainingSword, player);
+
+            if (success) {
+                // Give the training sword to the player
+                if (!player.getInventory().add(trainingSword)) {
+                    // If inventory is full, drop it at player's feet
+                    player.drop(trainingSword, false);
+                }
+
+                System.out.println("[KnY-MP Progression] Granted training sword to " + player.getName().getString());
+            } else {
+                System.err.println("[KnY-MP Progression] Failed to create training sword for " + player.getName().getString());
+                System.err.println("[KnY-MP Progression] ItemStack: " + trainingSword + ", Item: " + trainingSword.getItem());
+            }
+        } catch (Exception e) {
+            // CRITICAL: Never use log4j in exception handlers - causes LinkageError crashes
+            System.err.println("[KnY-MP Progression] Error in grantTrainingSword: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -360,35 +409,66 @@ public class DemonSlayerInitiationHandler {
     }
 
     /**
-     * Clean up any tamed crows near a player that were spawned by the base mod.
+     * Clean up any crows near a player that were spawned by the base mod.
      * Call this if a crow slipped through the EntityJoinLevelEvent check.
+     *
+     * This removes BOTH tamed and untamed crows near the player, because:
+     * - The base mod spawns the crow first, then tames it a few ticks later
+     * - If we only check for tamed crows, we miss the window before taming completes
      */
     public static void removeRecentlyTamedCrows(ServerPlayer player) {
-        if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
-            return;
-        }
+        try {
+            if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
+                return;
+            }
 
-        ServerLevel level = player.serverLevel();
-        ResourceLocation crowType = ResourceLocation.parse(KASUGAI_CROW);
+            ServerLevel level = player.serverLevel();
+            ResourceLocation crowType = ResourceLocation.parse(KASUGAI_CROW);
 
-        // Find all kasugai_crow entities near the player that are tamed to them
-        level.getEntities().getAll().forEach(entity -> {
-            ResourceLocation entityType = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
-            if (entityType != null && entityType.equals(crowType)) {
-                if (entity instanceof TamableAnimal tamable) {
-                    if (tamable.getOwnerUUID() != null &&
-                        tamable.getOwnerUUID().equals(player.getUUID()) &&
-                        entity.distanceToSqr(player) < 400) { // Within 20 blocks
+            // Find all kasugai_crow entities near the player
+            // Remove if: tamed to this player OR untamed and very close (within 10 blocks)
+            level.getEntities().getAll().forEach(entity -> {
+                try {
+                    ResourceLocation entityType = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+                    if (entityType != null && entityType.equals(crowType)) {
+                        double distanceSq = entity.distanceToSqr(player);
 
-                        entity.discard();
+                        // Check if this crow should be removed
+                        boolean shouldRemove = false;
+                        String reason = "";
 
-                        if (CustomProgressionConfig.enableDebugLogging.get()) {
-                            System.out.println("[KnY-MP Progression] Removed tamed kasugai_crow from " +
-                                player.getName().getString());
+                        if (entity instanceof TamableAnimal tamable) {
+                            // Remove if tamed to this player (within 20 blocks)
+                            if (tamable.getOwnerUUID() != null &&
+                                tamable.getOwnerUUID().equals(player.getUUID()) &&
+                                distanceSq < 400) {
+                                shouldRemove = true;
+                                reason = "tamed to player";
+                            }
+                            // Also remove untamed crows very close to the player (within 10 blocks)
+                            // These are likely just-spawned crows that haven't been tamed yet
+                            else if (tamable.getOwnerUUID() == null && distanceSq < 100) {
+                                shouldRemove = true;
+                                reason = "untamed near player";
+                            }
+                        }
+
+                        if (shouldRemove) {
+                            entity.discard();
+
+                            if (CustomProgressionConfig.enableDebugLogging.get()) {
+                                System.out.println("[KnY-MP Progression] Removed kasugai_crow (" + reason + ") from " +
+                                    player.getName().getString() + " at distance " + Math.sqrt(distanceSq));
+                            }
                         }
                     }
+                } catch (Exception e) {
+                    // Silent fail for individual entities
                 }
-            }
-        });
+            });
+        } catch (Exception e) {
+            // CRITICAL: Never use log4j in exception handlers - causes LinkageError crashes
+            System.err.println("[KnY-MP Progression] Error in removeRecentlyTamedCrows: " + e.getMessage());
+        }
     }
 }

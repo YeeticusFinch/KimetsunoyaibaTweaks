@@ -3,11 +3,9 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
-import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
-import org.slf4j.Logger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -15,9 +13,10 @@ import java.lang.reflect.Method;
 /**
  * Client-side handler to attempt to trigger flying animations on kasugai crows
  * This uses reflection to try to set animation states on the crow entity
+ *
+ * NOTE: Uses System.out.println instead of log4j LOGGER to prevent LinkageError crashes
  */
 public class CrowAnimationHandler {
-    private static final Logger LOGGER = LogUtils.getLogger();
     private static boolean reflectionFailed = false;
 
     /**
@@ -58,9 +57,7 @@ public class CrowAnimationHandler {
             }
 
         } catch (Exception e) {
-            if (Config.logDebug) {
-                LOGGER.warn("Could not set flying animation via reflection: {}", e.getMessage());
-            }
+            Log.warn("Could not set flying animation via reflection: {}", e.getMessage());
             reflectionFailed = true;
         }
     }
@@ -74,8 +71,7 @@ public class CrowAnimationHandler {
             for (Object pose : poses) {
                 if (pose.toString().contains("FALL_FLYING") || pose.toString().contains("FLYING")) {
                     tryInvokeMethod(entity, "setPose", pose);
-                    if (Config.logDebug)
-                    	LOGGER.info("Set entity pose to: {}", pose);
+                    Log.info("Set entity pose to: {}", pose);
                     break;
                 }
             }
@@ -112,8 +108,7 @@ public class CrowAnimationHandler {
                 } else {
                     method.invoke(obj, args);
                 }
-                if (Config.logDebug)
-                	LOGGER.info("Successfully invoked method: {}", methodName);
+                Log.info("Successfully invoked method: {}", methodName);
             }
         } catch (Exception e) {
             // Silent fail - this is expected if method doesn't exist
@@ -140,8 +135,7 @@ public class CrowAnimationHandler {
             if (field != null) {
                 field.setAccessible(true);
                 field.set(obj, value);
-                if (Config.logDebug)
-                	LOGGER.info("Successfully set field: {}", fieldName);
+                Log.info("Successfully set field: {}", fieldName);
             }
         } catch (Exception e) {
             // Silent fail - this is expected if field doesn't exist
@@ -174,27 +168,27 @@ public class CrowAnimationHandler {
         if (!Config.logDebug) {
             return;
         }
-        
-        LOGGER.info("=== CROW ENTITY DEBUG ===");
-        LOGGER.info("Entity type: {}", entity.getType());
-        LOGGER.info("Entity class: {}", entity.getClass().getName());
 
-        LOGGER.info("Available methods:");
+        Log.info("=== CROW ENTITY DEBUG ===");
+        Log.info("Entity type: {}", entity.getType());
+        Log.info("Entity class: {}", entity.getClass().getName());
+
+        Log.info("Available methods:");
         for (Method method : entity.getClass().getMethods()) {
             if (method.getName().toLowerCase().contains("fly") ||
                 method.getName().toLowerCase().contains("anim") ||
                 method.getName().toLowerCase().contains("wing")) {
-                LOGGER.info("  - {} ({})", method.getName(), method.getParameterCount());
+                Log.info("  - {} ({})", method.getName(), method.getParameterCount());
             }
         }
 
-        LOGGER.info("Available fields:");
+        Log.info("Available fields:");
         Class<?> current = entity.getClass();
         while (current != null && !current.equals(Object.class)) {
             for (Field field : current.getDeclaredFields()) {
                 String name = field.getName().toLowerCase();
                 if (name.contains("fly") || name.contains("anim") || name.contains("wing")) {
-                    LOGGER.info("  - {} ({})", field.getName(), field.getType().getSimpleName());
+                    Log.info("  - {} ({})", field.getName(), field.getType().getSimpleName());
                 }
             }
             current = current.getSuperclass();

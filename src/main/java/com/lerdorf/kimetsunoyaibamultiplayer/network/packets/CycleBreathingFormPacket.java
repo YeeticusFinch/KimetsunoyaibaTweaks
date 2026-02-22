@@ -277,8 +277,8 @@ public class CycleBreathingFormPacket {
                 return;
             }
 
-            // Get the first form for this style
-            double firstForm = TrainingSwordHelper.getFirstFormForStyle(currentBreathes);
+            // Get the first form for this style (handles black swords specially)
+            double firstForm = TrainingSwordHelper.getFirstFormForTrainingSword(heldItem, currentBreathes);
 
             // Reset to first form if not already there
             if (currentBreathes != firstForm) {

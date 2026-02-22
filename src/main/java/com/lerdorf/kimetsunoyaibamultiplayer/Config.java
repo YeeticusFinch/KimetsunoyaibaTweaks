@@ -123,7 +123,6 @@ public class Config
 
     // First-person sword swing config
     public static boolean customFirstPersonSwingEnabled;
-    public static boolean counterVanillaSwing;
     public static double counterSwingRotateX;
     public static double counterSwingRotateY;
     public static double counterSwingRotateZ;
@@ -166,7 +165,6 @@ public class Config
 
         // Load first-person sword swing config
         customFirstPersonSwingEnabled = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.customSwingEnabled.get();
-        counterVanillaSwing = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterVanillaSwing.get();
         counterSwingRotateX = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingRotateX.get();
         counterSwingRotateY = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingRotateY.get();
         counterSwingRotateZ = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingRotateZ.get();

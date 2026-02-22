@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -28,11 +29,11 @@ public class KanrojiSwordAnimationTrigger {
 
         ItemStack mainHandItem = entity.getItemInHand(InteractionHand.MAIN_HAND);
 
-        if (!(mainHandItem.getItem() instanceof NichirinSwordKanrojiAnimated)) {
+        if (!isKanrojiStyleSword(mainHandItem)) {
             return;
         }
 
-        Log.debug("[KanrojiSwordAnimationTrigger] Entity IS holding Kanroji sword!");
+        Log.debug("[KanrojiSwordAnimationTrigger] Entity is holding Kanroji/Love sword");
 
         triggerAnimationOnItemStack(entity, mainHandItem, animationName);
     }
@@ -46,11 +47,9 @@ public class KanrojiSwordAnimationTrigger {
      * @param animationName The animation name to play
      */
     public static void triggerAnimationOnItemStack(LivingEntity entity, ItemStack itemStack, String animationName) {
-        if (!(itemStack.getItem() instanceof NichirinSwordKanrojiAnimated)) {
+        if (!isKanrojiStyleSword(itemStack)) {
             return;
         }
-
-        NichirinSwordKanrojiAnimated swordItem = (NichirinSwordKanrojiAnimated) itemStack.getItem();
 
         // Extract just the animation name (remove namespace if present)
         String cleanAnimName = animationName;
@@ -68,10 +67,10 @@ public class KanrojiSwordAnimationTrigger {
                   entity.getName().getString(), animationName, cleanAnimName, swordAnimName);
 
         if (swordAnimName != null) {
-            NichirinSwordKanrojiAnimated.ensureAnimatableId(itemStack, entity.level());
+            ensureAnimatableId(itemStack, entity);
 
             // Set the animation in NBT - the controller will read it and apply it
-            NichirinSwordKanrojiAnimated.setAnimationOnStack(itemStack, swordAnimName);
+            setAnimationOnStack(itemStack, swordAnimName);
 
             Log.debug("[KanrojiSwordAnimationTrigger] Set animation {} on NBT for entity {}",
                       swordAnimName, entity.getName().getString());
@@ -193,6 +192,30 @@ public class KanrojiSwordAnimationTrigger {
                 if (entityAnimationName.contains("sheath")) return "sheath";
 
                 return null; // No corresponding sword animation
+        }
+    }
+
+    private static boolean isKanrojiStyleSword(ItemStack itemStack) {
+        if (itemStack == null || itemStack.isEmpty()) {
+            return false;
+        }
+        return itemStack.getItem() instanceof NichirinSwordKanrojiAnimated ||
+               itemStack.getItem() instanceof NichirinSwordLoveAnimated;
+    }
+
+    private static void ensureAnimatableId(ItemStack itemStack, LivingEntity entity) {
+        if (itemStack.getItem() instanceof NichirinSwordKanrojiAnimated) {
+            NichirinSwordKanrojiAnimated.ensureAnimatableId(itemStack, entity.level());
+        } else if (itemStack.getItem() instanceof NichirinSwordLoveAnimated) {
+            NichirinSwordLoveAnimated.ensureAnimatableId(itemStack, entity.level());
+        }
+    }
+
+    private static void setAnimationOnStack(ItemStack itemStack, String animationName) {
+        if (itemStack.getItem() instanceof NichirinSwordKanrojiAnimated) {
+            NichirinSwordKanrojiAnimated.setAnimationOnStack(itemStack, animationName);
+        } else if (itemStack.getItem() instanceof NichirinSwordLoveAnimated) {
+            NichirinSwordLoveAnimated.setAnimationOnStack(itemStack, animationName);
         }
     }
 }

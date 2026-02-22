@@ -292,7 +292,9 @@ public class BonePositionTracker {
 
 		// Check if 3D sword slash models should be used instead of particles
 		// Exception: Kanroji sword uses GeckoLib for item model, so skip the swing model but still show particles
-		boolean isKanrojiSword = swordItem != null && swordItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+		boolean isKanrojiSword = swordItem != null &&
+				(swordItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated ||
+				 swordItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated);
 
 		if (SwordSwingConfig.useSwordSwingModel && !isKanrojiSword) {
 			Log.debug("Using 3D sword slash model rendering");
@@ -334,7 +336,8 @@ public class BonePositionTracker {
 
 		// Check if entity is holding Kanroji sword
 		net.minecraft.world.item.ItemStack heldItem = entity.getMainHandItem();
-		boolean isKanrojiSword = heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+		boolean isKanrojiSword = heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated ||
+				heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
 
 		float yaw = entity.getYRot();
 		double entityHeight = entity.getBbHeight();

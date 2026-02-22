@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.*;
@@ -64,6 +65,12 @@ public class AbilityScheduler {
         List<UUID> emptyEntities = new ArrayList<>();
 
         for (Map.Entry<UUID, List<ScheduledTask>> entry : entityTasks.entrySet()) {
+            Entity owner = level.getEntity(entry.getKey());
+            if (!(owner instanceof LivingEntity livingOwner) || !livingOwner.isAlive() || livingOwner.isDeadOrDying()) {
+                emptyEntities.add(entry.getKey());
+                continue;
+            }
+
             List<ScheduledTask> tasks = entry.getValue();
             List<ScheduledTask> tasksToKeep = new ArrayList<>();
 

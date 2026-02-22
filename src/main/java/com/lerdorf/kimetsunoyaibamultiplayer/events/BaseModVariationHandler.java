@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -130,11 +131,20 @@ public class BaseModVariationHandler {
 
             // CRITICAL: Set Minecraft item cooldown so the sword shows cooldown bar and can't be used
             int cooldownSeconds = variation.getCooldownSeconds();
-            int cooldownTicks = cooldownSeconds * 20; // Convert seconds to ticks (20 ticks = 1 second)
+            int baseCooldownTicks = cooldownSeconds * 20; // Convert seconds to ticks (20 ticks = 1 second)
+
+            // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
+            int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, baseCooldownTicks);
+
             player.getCooldowns().addCooldown(heldItem.getItem(), cooldownTicks);
 
             if (Config.logDebug) {
-                Log.debug("Set " + cooldownSeconds + "s (" + cooldownTicks + " ticks) cooldown on item " + heldItem.getItem());
+                if (cooldownTicks != baseCooldownTicks) {
+                    Log.debug("Set " + (cooldownTicks / 20.0f) + "s (" + cooldownTicks + " ticks) cooldown on item " +
+                             heldItem.getItem() + " (reduced from " + cooldownSeconds + "s by Vermilion Eye)");
+                } else {
+                    Log.debug("Set " + cooldownSeconds + "s (" + cooldownTicks + " ticks) cooldown on item " + heldItem.getItem());
+                }
             }
 
             // CRITICAL: Cancel to prevent the base mod from also executing the base form

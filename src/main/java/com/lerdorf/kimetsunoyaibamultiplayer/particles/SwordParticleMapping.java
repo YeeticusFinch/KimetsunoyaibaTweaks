@@ -26,6 +26,9 @@ public class SwordParticleMapping {
         // Himejima's weapons should not render in sword sheath
         SHEATH_EXEMPT_ITEMS.add("nichirinsword_himejima_1");
         SHEATH_EXEMPT_ITEMS.add("nichirinsword_himejima_2");
+        // Our stone variants should behave the same way (no sheath / no hip-back display)
+        SHEATH_EXEMPT_ITEMS.add("nichirinsword_stone1");
+        SHEATH_EXEMPT_ITEMS.add("nichirinsword_stone2");
     }
     //private static final Log Log = LogUtils.getLog();
 
@@ -107,6 +110,11 @@ public class SwordParticleMapping {
         // Moon Breathing (moon is missing an underscore, not a typo!!!)
         ResourceLocation moonParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_blue_smoke");
         SWORD_TO_PARTICLE_MAP.put("nichirinswordmoon", moonParticle);
+
+        // Our mod's variant swords (map to same particles as base mod equivalents)
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_snake", serpentParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_stone1", stoneParticle);
+        SWORD_TO_PARTICLE_MAP.put("nichirinsword_stone2", stoneParticle);
 
         // Generic/Basic swords
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_basic", ResourceLocation.fromNamespaceAndPath("minecraft", "crit"));
@@ -201,7 +209,7 @@ public class SwordParticleMapping {
      */
     private static ParticleOptions createParticleFromMapping(ParticleConfig.ParticleMapping mapping) {
         try {
-            Log.debug("Creating particle from mapping: " + mapping.particleType + " (isDust: " + mapping.isDust + ")");
+            Log.debug("Creating particle from mapping: " + mapping.particleType + " (isDust: " + mapping.isDust + ", isEnergy: " + mapping.isEnergy + ")");
             ResourceLocation particleId = ResourceLocation.parse(mapping.particleType);
 
             if (mapping.isDust) {
@@ -211,6 +219,13 @@ public class SwordParticleMapping {
                 DustParticleOptions dustOptions = new DustParticleOptions(color, mapping.size);
                 Log.debug("Successfully created dust particle options");
                 return dustOptions;
+            } else if (mapping.isEnergy) {
+                // Create energy particle with custom size and color
+                Vector3f color = new Vector3f(mapping.red, mapping.green, mapping.blue);
+                Log.debug("Creating energy particle with color (" + mapping.red + ", " + mapping.green + ", " + mapping.blue + ") size " + mapping.size);
+                EnergyParticleOptions energyOptions = new EnergyParticleOptions(color, mapping.size);
+                Log.debug("Successfully created energy particle options");
+                return energyOptions;
             } else {
                 // Try to get the particle from the registry
                 Log.debug("Looking for particle in registry: " + particleId);
@@ -256,7 +271,7 @@ public class SwordParticleMapping {
         // Check if this is a kimetsunoyaiba nichirin sword or our mod's breathing swords
         // Note: "nichirinsword" (base, no suffix) is also a valid sword
         String path = itemId.getPath();
-        return (itemId.getNamespace().equals("kimetsunoyaiba") && (path.equals("nichirinsword") || path.startsWith("nichirinsword_"))) ||
+        return (itemId.getNamespace().equals("kimetsunoyaiba") && (path.equals("nichirinsword") || path.startsWith("nichirinsword_") || path.startsWith("sword_kokushibo"))) ||
                (itemId.getNamespace().equals("kimetsunoyaibamultiplayer") && path.startsWith("nichirinsword_"));
     }
 

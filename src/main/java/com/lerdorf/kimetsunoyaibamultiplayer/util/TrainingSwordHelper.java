@@ -172,7 +172,8 @@ public class TrainingSwordHelper {
             double currentBreathes = player.getPersistentData().getDouble("breathes");
 
             if (currentBreathes > 0) {
-                double firstForm = getFirstFormForStyle(currentBreathes);
+                // Use getFirstFormForTrainingSword which handles black swords specially
+                double firstForm = getFirstFormForTrainingSword(stack, currentBreathes);
 
                 if (currentBreathes != firstForm) {
                     player.getPersistentData().putDouble("breathes", firstForm);
@@ -334,5 +335,46 @@ public class TrainingSwordHelper {
 
         // Fallback: return style base + 1 (e.g., 100 -> 101)
         return breathingStyle + 1;
+    }
+
+    /**
+     * Gets the first form ID for a training sword, taking into account the sword type.
+     * Black swords use water breathing for training purposes.
+     *
+     * @param sword The sword ItemStack
+     * @param currentBreathes The current breathing form value
+     * @return The first form ID for training
+     */
+    public static double getFirstFormForTrainingSword(ItemStack sword, double currentBreathes) {
+        // Check if this is a black sword - black swords should use water breathing (100s) for training
+        if (isBlackSword(sword)) {
+            Log.debug("Black sword detected for training - using water breathing first form (101)");
+            return 101; // Water breathing first form
+        }
+
+        return getFirstFormForStyle(currentBreathes);
+    }
+
+    /**
+     * Check if the given sword is a black nichirin sword.
+     *
+     * @param sword The sword ItemStack
+     * @return true if this is a black nichirin sword
+     */
+    public static boolean isBlackSword(ItemStack sword) {
+        if (sword == null || sword.isEmpty()) {
+            return false;
+        }
+
+        net.minecraft.resources.ResourceLocation itemId =
+            net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(sword.getItem());
+        if (itemId == null) {
+            return false;
+        }
+
+        String itemIdString = itemId.toString().toLowerCase();
+        return itemIdString.contains("nichirinsword_black") ||
+               itemIdString.contains("black_nichirin") ||
+               (itemIdString.contains("black") && itemIdString.contains("sword"));
     }
 }

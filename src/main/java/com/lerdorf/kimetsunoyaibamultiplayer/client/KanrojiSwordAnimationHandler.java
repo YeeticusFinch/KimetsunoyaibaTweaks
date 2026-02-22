@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
 import dev.kosmx.playerAnim.api.layered.ModifierLayer;
@@ -92,25 +93,25 @@ public class KanrojiSwordAnimationHandler {
         UUID playerUUID = player.getUUID();
         AnimationState state = entityStates.computeIfAbsent(playerUUID, id -> new AnimationState());
 
-        // Check if player is holding Kanroji sword
+        // Check if player is holding Kanroji/Love sword
         ItemStack mainHandItem = player.getItemInHand(InteractionHand.MAIN_HAND);
-        boolean isHoldingKanrojiSword = mainHandItem.getItem() instanceof NichirinSwordKanrojiAnimated;
+        boolean isHoldingKanrojiSword = isKanrojiStyleSword(mainHandItem);
 
-        // Check if Kanroji sword is displayed on hip/back
+        // Check if Kanroji/Love sword is displayed on hip/back
         SwordDisplayTracker.SwordDisplayState displayState = SwordDisplayTracker.getDisplayState(playerUUID);
         boolean kanrojiOnLeftHip = displayState.hasLeftSword() &&
-                                  displayState.getLeftHipSword().getItem() instanceof NichirinSwordKanrojiAnimated;
+                                  isKanrojiStyleSword(displayState.getLeftHipSword());
         boolean kanrojiOnRightHip = displayState.hasRightSword() &&
-                                   displayState.getRightHipSword().getItem() instanceof NichirinSwordKanrojiAnimated;
+                                   isKanrojiStyleSword(displayState.getRightHipSword());
 
         if (isHoldingKanrojiSword) {
-            NichirinSwordKanrojiAnimated.ensureAnimatableId(mainHandItem, player.level());
+            ensureAnimatableId(mainHandItem, player);
         }
         if (kanrojiOnLeftHip) {
-            NichirinSwordKanrojiAnimated.ensureAnimatableId(displayState.getLeftHipSword(), player.level());
+            ensureAnimatableId(displayState.getLeftHipSword(), player);
         }
         if (kanrojiOnRightHip) {
-            NichirinSwordKanrojiAnimated.ensureAnimatableId(displayState.getRightHipSword(), player.level());
+            ensureAnimatableId(displayState.getRightHipSword(), player);
         }
 
         // If not holding AND not displayed, nothing to do
@@ -268,7 +269,7 @@ public class KanrojiSwordAnimationHandler {
         state.isWalking = isWalking;
 
         boolean needsStackUpdate = animationChanged ||
-            !targetAnimation.equals(NichirinSwordKanrojiAnimated.getAnimationFromStack(mainHandItem));
+            !targetAnimation.equals(getAnimationFromStack(mainHandItem));
 
         // Only trigger the animation if needed (avoid spamming when already correct)
         if (needsStackUpdate) {
@@ -464,6 +465,32 @@ public class KanrojiSwordAnimationHandler {
 
         Log.info("[KanrojiSwordAnimationHandler] External action animation notified: {} for player {}",
             animationName, playerUUID);
+    }
+
+    private static boolean isKanrojiStyleSword(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        return stack.getItem() instanceof NichirinSwordKanrojiAnimated ||
+               stack.getItem() instanceof NichirinSwordLoveAnimated;
+    }
+
+    private static void ensureAnimatableId(ItemStack stack, LivingEntity entity) {
+        if (stack.getItem() instanceof NichirinSwordKanrojiAnimated) {
+            NichirinSwordKanrojiAnimated.ensureAnimatableId(stack, entity.level());
+        } else if (stack.getItem() instanceof NichirinSwordLoveAnimated) {
+            NichirinSwordLoveAnimated.ensureAnimatableId(stack, entity.level());
+        }
+    }
+
+    private static String getAnimationFromStack(ItemStack stack) {
+        if (stack.getItem() instanceof NichirinSwordKanrojiAnimated) {
+            return NichirinSwordKanrojiAnimated.getAnimationFromStack(stack);
+        }
+        if (stack.getItem() instanceof NichirinSwordLoveAnimated) {
+            return NichirinSwordLoveAnimated.getAnimationFromStack(stack);
+        }
+        return "idle";
     }
 
     /**

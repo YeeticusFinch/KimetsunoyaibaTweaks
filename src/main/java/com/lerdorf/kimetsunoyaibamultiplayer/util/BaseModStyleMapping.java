@@ -33,6 +33,7 @@ public class BaseModStyleMapping {
     // NOTE: Only includes base mod breathing styles (0-2000 range)
     // Addon breathing styles like Ice (4300), Frost (4200) are NOT included
     private static final Map<Integer, String> RANGE_TO_STYLE = Map.ofEntries(
+        Map.entry(0, "bamboo_breathing"),
         Map.entry(100, "water_breathing"),
         Map.entry(200, "beast_breathing"),
         Map.entry(300, "thunder_breathing"),
@@ -77,7 +78,7 @@ public class BaseModStyleMapping {
             Map.entry(1100, new int[]{1101, 1102, 1103, 1105, 1106, 1107, 1108, 1109, 1110, 1114, 1116}), // Moon
             Map.entry(1200, new int[]{1201, 1202, 1203, 1204, 1205, 1206, 1207, 1208, 1209, 1210, 1211, 1212}), // Sun
             Map.entry(1300, new int[]{1301, 1304, 1305}), // Flower
-            Map.entry(1400, new int[]{1401, 1402, 1404, 1405, 1406}), // Insect
+            Map.entry(1400, new int[]{1401, 1402, 1404, 1405}), // Insect
             Map.entry(1500, new int[]{1501, 1502, 1505, 1506}), // Love
             Map.entry(1600, new int[]{1601, 1602, 1603, 1604, 1605, 1606, 1607}) // Frost
         );

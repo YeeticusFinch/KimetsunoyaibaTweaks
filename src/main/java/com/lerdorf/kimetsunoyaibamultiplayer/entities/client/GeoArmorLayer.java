@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities.client;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.items.AndonBakamaItem;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -43,8 +44,15 @@ public class GeoArmorLayer<T extends LivingEntity & GeoAnimatable> extends ItemA
             case "armorRightLeg":
                 return this.leggingsStack;
 
-            // Chestplate (body + arms)
+            // Body bone can belong to chestplate or leggings depending on armor item.
+            // Andon Bakama is leg-slot armor that uses armorBody in its geo.
             case "armorBody":
+                if (!this.leggingsStack.isEmpty() && this.leggingsStack.getItem() instanceof AndonBakamaItem) {
+                    return this.leggingsStack;
+                }
+                return this.chestplateStack;
+
+            // Chestplate arms
             case "armorLeftArm":
             case "armorRightArm":
                 return this.chestplateStack;
@@ -76,6 +84,11 @@ public class GeoArmorLayer<T extends LivingEntity & GeoAnimatable> extends ItemA
                 return EquipmentSlot.LEGS;
 
             case "armorBody":
+                if (stack.getItem() instanceof AndonBakamaItem) {
+                    return EquipmentSlot.LEGS;
+                }
+                return EquipmentSlot.CHEST;
+
             case "armorLeftArm":
             case "armorRightArm":
                 return EquipmentSlot.CHEST;

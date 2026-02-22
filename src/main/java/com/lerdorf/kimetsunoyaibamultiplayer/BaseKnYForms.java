@@ -72,11 +72,11 @@ public class BaseKnYForms {
 			entry(509, new BaseForm("Wind Breathing 9th Form: Idaten Typhoon", "§2")),
 
 			// Stone
-			entry(601, new BaseForm("Stone Breathing 1st Form", "§7")),
-			entry(602, new BaseForm("Stone Breathing 2nd Form", "§7")),
-			entry(603, new BaseForm("Stone Breathing 3rd Form", "§7")),
-			entry(604, new BaseForm("Stone Breathing 4th Form", "§7")),
-			entry(605, new BaseForm("Stone Breathing 5th Form", "§7")),
+			entry(601, new BaseForm("First Form: Serpentinite Bipolar", "§7")),
+			entry(602, new BaseForm("Second Form: Upper Smash", "§7")),
+			entry(603, new BaseForm("Third Form: Stone Skin", "§7")),
+			entry(604, new BaseForm("Fourth Form: Volcanic Rock, Rapid Conquest", "§7")),
+			entry(605, new BaseForm("Fifth Form: Arcs of Justice", "§7")),
 			entry(606, new BaseForm("Stone Breathing 6th Form", "§7")),
 			entry(607, new BaseForm("Stone Breathing 7th Form", "§7")),
 			entry(608, new BaseForm("Stone Breathing 8th Form", "§7")),
@@ -93,17 +93,17 @@ public class BaseKnYForms {
 			entry(707, new BaseForm("Mist Breathing 7th Form", "§b")),
 
 			// Serpent
-			entry(801, new BaseForm("Serpent Breathing 1st Form", "§f")),
-			entry(802, new BaseForm("Serpent Breathing 2nd Form", "§f")),
-			entry(803, new BaseForm("Serpent Breathing 3rd Form", "§f")),
-			entry(804, new BaseForm("Serpent Breathing 4th Form", "§f")),
-			entry(805, new BaseForm("Serpent Breathing 5th Form", "§f")),
+			entry(801, new BaseForm("First Form: Winding Serpent Slash", "§5")),
+			entry(802, new BaseForm("Second Form: Venom Fangs of the Narrow Head", "§5")),
+			entry(803, new BaseForm("Third Form: Coil Choke", "§5")),
+			entry(804, new BaseForm("Fourth Form: Twin-Headed Reptile", "§5")),
+			entry(805, new BaseForm("Fifth Form: Slithering Serpent", "§5")),
 
 			// Sound
-			entry(901, new BaseForm("Sound Breathing 1st Form", "§6")),
-			entry(902, new BaseForm("Sound Breathing 2nd Form", "§6")),
-			entry(903, new BaseForm("Sound Breathing 3rd Form", "§6")),
-			entry(904, new BaseForm("Sound Breathing 4th Form", "§6")),
+			entry(901, new BaseForm("First Form: Roar", "§6")),
+			entry(902, new BaseForm("Fourth Form: Constant Resounding Slashes", "§6")),
+			entry(903, new BaseForm("Fifth Form: String Performance", "§6")),
+			entry(904, new BaseForm("Final Score", "§6")),
 
 			// Moon
 			entry(1101, new BaseForm("Moon Breathing 1st Form", "§d")),
@@ -133,16 +133,22 @@ public class BaseKnYForms {
 			entry(1212, new BaseForm("Sun Breathing 12th Form", "§4")),
 
 			// Flower
-			entry(1301, new BaseForm("Flower Breathing 1st Form", "§5")),
-			entry(1304, new BaseForm("Flower Breathing 4th Form", "§5")),
-			entry(1305, new BaseForm("Flower Breathing 5th Form", "§5")),
+			entry(1301, new BaseForm("Flower Breathing 1st Form: Flowing Tiger Lily Petals", "§5")),
+			entry(1302, new BaseForm("Flower Breathing 2nd Form: Honorable Shadow Plum", "§5")),
+			entry(1303, new BaseForm("Flower Breathing 3rd Form: Scattering Rose-Peach Thorns", "§5")),
+			entry(1304, new BaseForm("Flower Breathing 4th Form: Crimson Hanagoromo", "§5")),
+			entry(1305, new BaseForm("Flower Breathing 5th Form: Peonies of Futility", "§5")),
+			entry(1306, new BaseForm("Flower Breathing 6th Form: Whirling Peach", "§5")),
+			entry(1307, new BaseForm("Flower Breathing 7th Form: Bellowing Peach Shockwave", "§5")),
+			entry(1308, new BaseForm("Flower Breathing 8th Form: Flowing Sakura Petal Onslaught", "§5")),
+			entry(1309, new BaseForm("Flower Breathing 9th Form: Sudden Bamboo Entrapment", "§5")),
+			entry(1310, new BaseForm("Flower Breathing Final Form: Equinoctial Vermillion Eye", "§5")),
 
 			// Insect
-			entry(1401, new BaseForm("Insect Breathing 1st Form", "§5")),
-			entry(1402, new BaseForm("Insect Breathing 2nd Form", "§5")),
-			entry(1404, new BaseForm("Insect Breathing 4th Form", "§5")),
-			entry(1405, new BaseForm("Insect Breathing 5th Form", "§5")),
-			entry(1406, new BaseForm("Insect Breathing 6th Form", "§5")),
+			entry(1401, new BaseForm("Butterfly Dance: Caprice", "§5")),
+			entry(1402, new BaseForm("Dance of the Bee Sting: True Flutter", "§5")),
+			entry(1404, new BaseForm("Dance of the Dragonfly: Compound Eye Hexagon", "§5")),
+			entry(1405, new BaseForm("Dance of the Centipede: Hundred-Legged Zigzag", "§5")),
 
 			// Love
 			entry(1501, new BaseForm("Love Breathing 1st Form", "§d")),
