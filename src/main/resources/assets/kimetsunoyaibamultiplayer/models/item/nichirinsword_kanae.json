@@ -1,0 +1,8 @@
+{
+  "parent": "kimetsunoyaiba:custom/nitirintou_kanae",
+  "textures": {
+    "0": "kimetsunoyaiba:block/nitirintou_kanae",
+    "2": "kimetsunoyaiba:block/akkimessatsu_white",
+    "particle": "kimetsunoyaiba:item/icon_sword"
+  }
+}

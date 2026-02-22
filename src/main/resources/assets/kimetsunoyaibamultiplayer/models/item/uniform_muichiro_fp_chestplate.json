@@ -1,0 +1,9 @@
+{
+	"format_version": "1.21.6",
+	"credit": "Made with Blockbench",
+	"parent": "item/generated",
+	"textures": {
+		"layer0": "kimetsunoyaibamultiplayer:item/uniform_muichiro_fp",
+		"particle": "kimetsunoyaibamultiplayer:item/uniform_muichiro_fp"
+	}
+}

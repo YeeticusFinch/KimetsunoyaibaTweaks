@@ -1,0 +1,7 @@
+{
+	"parent": "item/generated",
+	"textures": {
+		"layer0": "kimetsunoyaibamultiplayer:item/icon_hanafuda",
+		"particle": "kimetsunoyaibamultiplayer:item/icon_hanafuda"
+	}
+}

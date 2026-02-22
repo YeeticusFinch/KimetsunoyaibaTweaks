@@ -1,0 +1,110 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Made with Blockbench",
+	"parent": "kimetsunoyaibamultiplayer:custom/sword_sheath",
+	"textures": {
+		"0": "kimetsunoyaibamultiplayer:block/sword_sheath_kokushibo",
+		"particle": "kimetsunoyaibamultiplayer:block/sword_sheath_kokushibo"
+	},
+	"elements": [
+		{
+			"from": [6.85, -5, 7.75],
+			"to": [8.85, 1.25, 8.25],
+			"rotation": {"angle": 0, "axis": "y", "origin": [-0.25, 0, 0]},
+			"faces": {
+				"north": {"uv": [4, 0, 6, 6.25], "texture": "#0"},
+				"east": {"uv": [6, 7, 7, 13.25], "texture": "#0"},
+				"south": {"uv": [6, 0, 8, 6.25], "texture": "#0"},
+				"west": {"uv": [7, 7, 8, 13.25], "texture": "#0"},
+				"up": {"uv": [11, 1, 9, 0], "texture": "#0"},
+				"down": {"uv": [11, 1, 9, 2], "texture": "#0"}
+			}
+		},
+		{
+			"from": [6.7, 1.25, 7.75],
+			"to": [8.7, 7.75, 8.25],
+			"rotation": {"angle": 0, "axis": "y", "origin": [-0.4, 0, 0]},
+			"faces": {
+				"north": {"uv": [0, 0, 2, 6.5], "texture": "#0"},
+				"east": {"uv": [4, 7, 5, 13.5], "texture": "#0"},
+				"south": {"uv": [2, 0, 4, 6.5], "texture": "#0"},
+				"west": {"uv": [5, 7, 6, 13.5], "texture": "#0"},
+				"up": {"uv": [11, 3, 9, 2], "texture": "#0"},
+				"down": {"uv": [11, 3, 9, 4], "texture": "#0"}
+			}
+		},
+		{
+			"from": [6.57674, 7.74208, 7.75],
+			"to": [8.57674, 13.84208, 8.25],
+			"rotation": {"angle": 0, "axis": "y", "origin": [-0.25, 0, 0]},
+			"faces": {
+				"north": {"uv": [0, 7, 2, 13], "texture": "#0"},
+				"east": {"uv": [8, 0, 9, 6], "texture": "#0"},
+				"south": {"uv": [2, 7, 4, 13], "texture": "#0"},
+				"west": {"uv": [8, 6, 9, 12], "texture": "#0"},
+				"up": {"uv": [11, 5, 9, 4], "texture": "#0"},
+				"down": {"uv": [11, 5, 9, 6], "texture": "#0"}
+			}
+		},
+		{
+			"from": [6.83372, 13.84184, 7.75],
+			"to": [8.08372, 15.06684, 8.25],
+			"rotation": {"angle": 0, "axis": "y", "origin": [-0.75, 0, 0]},
+			"faces": {
+				"north": {"uv": [9, 6, 10.25, 7.25], "texture": "#0"},
+				"east": {"uv": [11, 0, 12, 1.25], "texture": "#0"},
+				"south": {"uv": [9, 8, 10.25, 9.25], "texture": "#0"},
+				"west": {"uv": [11, 2, 12, 3.25], "texture": "#0"},
+				"up": {"uv": [12.25, 5, 11, 4], "texture": "#0"},
+				"down": {"uv": [12.25, 5, 11, 6], "texture": "#0"}
+			}
+		},
+		{
+			"from": [6.55228, 13.69837, 7.75],
+			"to": [7.07728, 14.94837, 8.25],
+			"rotation": {"angle": 0, "axis": "y", "origin": [6.81478, 14.37337, 8]},
+			"faces": {
+				"north": {"uv": [12, 2, 12.5, 3.75], "texture": "#0"},
+				"east": {"uv": [11, 6, 12, 7.25], "texture": "#0"},
+				"south": {"uv": [12, 6, 12.5, 7.75], "texture": "#0"},
+				"west": {"uv": [11, 8, 12, 9.75], "texture": "#0"},
+				"up": {"uv": [8.5, 13, 8, 12], "texture": "#0"},
+				"down": {"uv": [12.5, 8, 12, 9], "texture": "#0"}
+			}
+		},
+		{
+			"from": [6.57728, 14.79837, 7.75],
+			"to": [6.87728, 15.04837, 8.25],
+			"rotation": {"angle": 22.5, "axis": "z", "origin": [6.81478, 14.92337, 8]},
+			"faces": {
+				"north": {"uv": [12, 2, 12.5, 2.5], "texture": "#0"},
+				"east": {"uv": [11, 6, 12, 7.25], "texture": "#0"},
+				"south": {"uv": [12, 6, 12.5, 6.5], "texture": "#0"},
+				"west": {"uv": [11, 8, 12, 8.5], "texture": "#0"},
+				"up": {"uv": [8.5, 13, 8.25, 12], "texture": "#0"},
+				"down": {"uv": [12.5, 8, 12, 8.5], "texture": "#0"}
+			}
+		},
+		{
+			"from": [12.8553, 12.71448, 7.75],
+			"to": [13.3803, 14.08948, 8.25],
+			"rotation": {"angle": 22.5, "axis": "z", "origin": [8.29049, 1.23125, 8]},
+			"faces": {
+				"north": {"uv": [11, 10, 11.5, 11.5], "texture": "#0"},
+				"east": {"uv": [9, 10, 10, 11.5], "texture": "#0"},
+				"south": {"uv": [12, 0, 12.5, 1.5], "texture": "#0"},
+				"west": {"uv": [10, 10, 11, 11.5], "texture": "#0"},
+				"up": {"uv": [9.5, 13, 9, 12], "texture": "#0"},
+				"down": {"uv": [12.5, 9, 12, 10], "texture": "#0"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "sheath",
+			"origin": [0, 0, 0],
+			"color": 0,
+			"children": [0, 1, 2, 3, 4, 5, 6]
+		}
+	]
+}

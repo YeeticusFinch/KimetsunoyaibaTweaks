@@ -1,0 +1,9 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Made with Blockbench",
+	"parent": "item/generated",
+	"textures": {
+		"1": "kimetsunoyaibamultiplayer:item/icon_hair_muichiro_fp",
+		"particle": "kimetsunoyaibamultiplayer:item/icon_hair_muichiro_fp"
+	}
+}

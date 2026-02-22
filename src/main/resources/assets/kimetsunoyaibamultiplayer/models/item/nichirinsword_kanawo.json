@@ -1,0 +1,7 @@
+{
+  "parent": "kimetsunoyaiba:custom/nitirintou_kanawo",
+  "textures": {
+    "0": "kimetsunoyaiba:block/nitirintou_kanawo",
+    "particle": "kimetsunoyaiba:item/icon_sword"
+  }
+}

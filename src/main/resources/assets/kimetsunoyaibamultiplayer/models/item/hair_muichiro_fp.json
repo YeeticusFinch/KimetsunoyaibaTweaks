@@ -1,0 +1,7 @@
+{
+	"parent": "item/generated",
+	"textures": {
+		"layer0": "kimetsunoyaibamultiplayer:item/icon_hair_muichiro_fp",
+		"particle": "kimetsunoyaibamultiplayer:item/icon_hair_muichiro_fp"
+	}
+}
