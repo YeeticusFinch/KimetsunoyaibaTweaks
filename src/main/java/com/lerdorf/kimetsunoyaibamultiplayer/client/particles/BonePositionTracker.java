@@ -46,6 +46,7 @@ public class BonePositionTracker {
 	    public final boolean isSpin;
 	    public final boolean leftToRight;
 	    public final boolean upward;
+	    public final boolean leftHand;
 	    public final float angle;
 	    public final boolean isRawSlash;
 	    public final float arcRange;
@@ -65,7 +66,7 @@ public class BonePositionTracker {
 
 	    public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
 	                             boolean isHorizontal, boolean isVertical, boolean isSpin,
-	                             boolean leftToRight, boolean upward) {
+	                             boolean leftToRight, boolean upward, boolean leftHand) {
 	        this.modelKey = modelKey;
 	        this.entityId = entityId;
 	        this.animationName = animationName;
@@ -75,6 +76,7 @@ public class BonePositionTracker {
 	        this.isSpin = isSpin;
 	        this.leftToRight = leftToRight;
 	        this.upward = upward;
+	        this.leftHand = leftHand;
 	        this.startTime = System.currentTimeMillis();
 	        this.angle = 0;
 	        this.isRawSlash = false;
@@ -107,6 +109,7 @@ public class BonePositionTracker {
 			this.angle = angle;
 			this.upward = upward;
 			this.leftToRight = false;
+			this.leftHand = false;
 			this.startTime = System.currentTimeMillis();
 			this.isRawSlash = true;
 			this.arcRange = 180f;
@@ -126,10 +129,10 @@ public class BonePositionTracker {
 		}
 
 		// Full constructor with all raw slash parameters
-		public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
-				float angle, float arcRange, int duration,
-				float yawOffset, float pitchOffset, float rollOffset,
-				float radiusScaler, float sizeScaler, float angleOffset, boolean reverse) {
+	public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
+			float angle, float arcRange, int duration,
+			float yawOffset, float pitchOffset, float rollOffset,
+			float radiusScaler, float sizeScaler, float angleOffset, boolean reverse) {
 			this.modelKey = modelKey;
 			this.entityId = entityId;
 			this.animationName = animationName;
@@ -140,6 +143,7 @@ public class BonePositionTracker {
 			this.angle = angle;
 			this.upward = false;
 			this.leftToRight = false;
+			this.leftHand = false;
 			this.startTime = System.currentTimeMillis();
 			this.isRawSlash = true;
 			this.arcRange = arcRange;
@@ -173,6 +177,7 @@ public class BonePositionTracker {
 		this.angle = 0;
 		this.upward = false;
 		this.leftToRight = false;
+		this.leftHand = false;
 		this.startTime = System.currentTimeMillis();
 		this.isRawSlash = false;
 		this.arcRange = arcRange;
@@ -206,6 +211,7 @@ public class BonePositionTracker {
 		this.angle = 0;
 		this.upward = false;
 		this.leftToRight = false;
+		this.leftHand = false;
 		this.startTime = System.currentTimeMillis();
 		this.isRawSlash = false;
 		this.arcRange = arcRange;
@@ -234,8 +240,8 @@ public class BonePositionTracker {
 	        return getCurrentProgress() >= 1.0f;
 	    }
 
-	    public boolean matches(UUID entityId, String animationName) {
-	        return this.entityId.equals(entityId) && this.animationName.equals(animationName);
+	    public boolean matches(UUID entityId, String animationName, boolean leftHand) {
+	        return this.entityId.equals(entityId) && this.animationName.equals(animationName) && this.leftHand == leftHand;
 	    }
 	}
 	
@@ -358,6 +364,34 @@ public class BonePositionTracker {
 			}
 			break;
 		case "sword_overhead":
+			// Use custom particle positions from ParticlePositions.sword_overhead
+			spawnSwordOverheadParticles(level, entity, particleType, animationTick);
+			break;
+		case "left_sword_to_right":
+			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
+			if (!isKanrojiSword) {
+				spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
+			}
+			break;
+		case "left_sword_to_left":
+			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
+			if (!isKanrojiSword) {
+				spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+			}
+			break;
+		case "beast2":
+			spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
+			spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+			break;
+		case "breath_beast2":
+			spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+			spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
+			break;
+		case "left_sword_overhead":
+			// Use custom particle positions from ParticlePositions.sword_overhead
+			spawnSwordOverheadParticles(level, entity, particleType, animationTick);
+			break;
+		case "double_sword_overhead":
 			// Use custom particle positions from ParticlePositions.sword_overhead
 			spawnSwordOverheadParticles(level, entity, particleType, animationTick);
 			break;
@@ -719,16 +753,45 @@ public class BonePositionTracker {
 		// Create model once - it will self-animate based on animation type
 		switch (animationName) {
 		case "sword_to_right":
-			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, entityId, animationName, entity);
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, false, entityId, animationName, entity);
 			break;
 		case "sword_to_left":
-			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, entityId, animationName, entity);
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, false, entityId, animationName, entity);
 			break;
 		case "sword_overhead":
-			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, entityId, animationName, entity);
+			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, false, entityId, animationName, entity);
+			break;
+		case "left_sword_to_right":
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, true, entityId, animationName, entity);
+			break;
+		case "left_sword_to_left":
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, true, entityId, animationName, entity);
+			break;
+		case "left_sword_overhead":
+			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, true, entityId, animationName, entity);
+			break;
+		case "double_sword_overhead":
+			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, false, entityId, animationName, entity);
+			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, true, entityId, animationName, entity);
+			break;
+		case "beast2":
+			// mainhand sword to right
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, false, entityId, "sword_to_right", entity);
+			
+			// offhand sword to left
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, true, entityId, "left_sword_to_left", entity);
+			
+			break;
+		case "breath_beast2":
+			// mainhand sword to left
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, false, entityId, "sword_to_left", entity);
+			
+			// offhand sword to right
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, true, entityId, "left_sword_to_right", entity);
+			
 			break;
 		case "sword_to_upper":
-			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, entityId, animationName, entity);
+			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, false, entityId, animationName, entity);
 			break;
 		case "sword_rotate":
 			renderSpinSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, entityId, animationName, entity);
@@ -891,18 +954,18 @@ public class BonePositionTracker {
 
 	private static void renderHorizontalSlashModel(ClientLevel level, Vec3 entityPos, double yawRad,
 			double entityHeight, float progress, String modelKey, boolean leftToRight,
-			UUID entityId, String animationName, LivingEntity entity) {
+			boolean leftHand, UUID entityId, String animationName, LivingEntity entity) {
 
 		// Create slash model (calculation will be done during rendering)
-		createSlashModel(modelKey, entityId, animationName, entity, true, false, false, leftToRight, false);
+		createSlashModel(modelKey, entityId, animationName, entity, true, false, false, leftToRight, false, leftHand);
 	}
 
 	private static void renderVerticalSlashModel(ClientLevel level, Vec3 entityPos, double yawRad,
 			double entityHeight, float progress, String modelKey, boolean upward,
-			UUID entityId, String animationName, LivingEntity entity) {
+			boolean leftHand, UUID entityId, String animationName, LivingEntity entity) {
 
 		// Create slash model (calculation will be done during rendering)
-		createSlashModel(modelKey, entityId, animationName, entity, false, true, false, false, upward);
+		createSlashModel(modelKey, entityId, animationName, entity, false, true, false, false, upward, leftHand);
 	}
 
 	private static void renderSpinSlashModel(ClientLevel level, Vec3 entityPos, double yawRad,
@@ -910,7 +973,7 @@ public class BonePositionTracker {
 			LivingEntity entity) {
 
 		// Create slash model (calculation will be done during rendering)
-		createSlashModel(modelKey, entityId, animationName, entity, false, false, true, false, false);
+		createSlashModel(modelKey, entityId, animationName, entity, false, false, true, false, false, false);
 	}
 
 	private static void createSlashModel(String modelKey, UUID entityId, String animationName,
@@ -920,7 +983,7 @@ public class BonePositionTracker {
 
 		// Check if we already have a model for this entity+animation
 				for (SlashRenderRequest req : renderQueue) {
-					if (req.matches(entityId, animationName)) {
+					if (req.matches(entityId, animationName, false)) {
 						return; // Model already exists, don't create another
 					}
 				}
@@ -932,20 +995,20 @@ public class BonePositionTracker {
 	
 	private static void createSlashModel(String modelKey, UUID entityId, String animationName,
 			LivingEntity entity, boolean isHorizontal, boolean isVertical, boolean isSpin,
-			boolean leftToRight, boolean upward) {
+			boolean leftToRight, boolean upward, boolean leftHand) {
 
 		// All swords now use slash models (old whip rendering removed)
 
 		// Check if we already have a model for this entity+animation
 		for (SlashRenderRequest req : renderQueue) {
-			if (req.matches(entityId, animationName)) {
+			if (req.matches(entityId, animationName, leftHand)) {
 				return; // Model already exists, don't create another
 			}
 		}
 
 		// Create new model - it will self-animate based on elapsed time
 		renderQueue.add(new SlashRenderRequest(modelKey, entityId, animationName, entity,
-				isHorizontal, isVertical, isSpin, leftToRight, upward));
+				isHorizontal, isVertical, isSpin, leftToRight, upward, leftHand));
 	}
 
 	private static void createRawSlashModel(String modelKey, UUID entityId, String animationName,
@@ -957,7 +1020,7 @@ public class BonePositionTracker {
 
 		// Check if we already have a model for this entity+animation
 		for (SlashRenderRequest req : renderQueue) {
-			if (req.matches(entityId, animationName)) {
+			if (req.matches(entityId, animationName, false)) {
 				return; // Model already exists, don't create another
 			}
 		}
@@ -977,7 +1040,7 @@ public class BonePositionTracker {
 
 		// Check if we already have a model for this entity+animation
 		for (SlashRenderRequest req : renderQueue) {
-			if (req.matches(entityId, animationName)) {
+			if (req.matches(entityId, animationName, false)) {
 				return; // Model already exists, don't create another
 			}
 		}
@@ -997,7 +1060,7 @@ public class BonePositionTracker {
 
 		// Check if we already have a model for this entity+animation
 		for (SlashRenderRequest req : renderQueue) {
-			if (req.matches(entityId, animationName)) {
+			if (req.matches(entityId, animationName, false)) {
 				return; // Model already exists, don't create another
 			}
 		}
@@ -1009,7 +1072,7 @@ public class BonePositionTracker {
 	}
 
 	// Helper methods to calculate position based on animation type and progress
-	public static Vec3 calculateHorizontalPosition(LivingEntity entity, float progress, boolean leftToRight) {
+	public static Vec3 calculateHorizontalPosition(LivingEntity entity, float progress, boolean leftToRight, boolean leftHand) {
 		Vec3 entityPos = entity.position();
 		float yaw = entity.getYRot();
 		double entityHeight = entity.getBbHeight();
@@ -1017,12 +1080,18 @@ public class BonePositionTracker {
 		double centerY = entityHeight * 0.75;
 
 		double totalArcDegrees = ParticleConfig.particleArcDegrees;
-		double arcAngle = progress * totalArcDegrees + (leftToRight ? SwordSwingConfig.rightArcOffset : SwordSwingConfig.leftArcOffset);
+		double arcOffset = leftToRight
+				? (leftHand ? SwordSwingConfig.rightArcOffsetOffhand : SwordSwingConfig.rightArcOffset)
+				: (leftHand ? SwordSwingConfig.leftArcOffsetOffhand : SwordSwingConfig.leftArcOffset);
+		double arcAngle = progress * totalArcDegrees + arcOffset;
 
-		double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * (leftToRight ? SwordSwingConfig.rightRadiusMult : SwordSwingConfig.leftRadiusMult);
+		double radiusMult = leftToRight
+				? (leftHand ? SwordSwingConfig.rightRadiusMultOffhand : SwordSwingConfig.rightRadiusMult)
+				: (leftHand ? SwordSwingConfig.leftRadiusMultOffhand : SwordSwingConfig.leftRadiusMult);
+		double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * radiusMult;
 		double localX = radius * Math.cos(Math.toRadians(arcAngle)) * (leftToRight ? -1 : 1);
 		double localZ = radius * Math.sin(Math.toRadians(arcAngle));
-		double localY = (leftToRight ? -0.5 : 1.2) * Math.sin(Math.toRadians(arcAngle - totalArcDegrees / 2));
+		double localY = ((!leftHand && leftToRight) || (leftHand && !leftToRight) ? -0.5 : 1.2) * Math.sin(Math.toRadians(arcAngle - totalArcDegrees / 2));
 
 		double worldX = entityPos.x + (localX * Math.cos(yawRad) - localZ * Math.sin(yawRad));
 		double worldY = entityPos.y + centerY + localY;
@@ -1031,25 +1100,35 @@ public class BonePositionTracker {
 		return new Vec3(worldX, worldY, worldZ);
 	}
 
-	public static float[] calculateHorizontalRotation(LivingEntity entity, float progress, boolean leftToRight) {
+	public static float[] calculateHorizontalRotation(LivingEntity entity, float progress, boolean leftToRight, boolean leftHand) {
 		float yaw = entity.getYRot();
 		double totalArcDegrees = ParticleConfig.particleArcDegrees;
-		double arcAngle = progress * totalArcDegrees + (leftToRight ? SwordSwingConfig.rightArcOffset : SwordSwingConfig.leftArcOffset);
+		double arcOffset = leftToRight
+				? (leftHand ? SwordSwingConfig.rightArcOffsetOffhand : SwordSwingConfig.rightArcOffset)
+				: (leftHand ? SwordSwingConfig.leftArcOffsetOffhand : SwordSwingConfig.leftArcOffset);
+		double arcAngle = progress * totalArcDegrees + arcOffset;
 
 		// Model should rotate around the player as it sweeps
 		// Yaw rotates the model around the vertical axis to follow the arc
-		float modelYaw = yaw + (float) arcAngle * (leftToRight ? -1 : 1) + (float)(leftToRight ? SwordSwingConfig.rightYawOffset : SwordSwingConfig.leftYawOffset);
+		double yawOffset = leftToRight
+				? (leftHand ? SwordSwingConfig.rightYawOffsetOffhand : SwordSwingConfig.rightYawOffset)
+				: (leftHand ? SwordSwingConfig.leftYawOffsetOffhand : SwordSwingConfig.leftYawOffset);
+		float modelYaw = yaw + (float) arcAngle * (leftToRight ? -1 : 1) + (float) yawOffset;
 
 		// Pitch tilts the slash plane slightly for visual effect
-		float modelPitch = leftToRight ? SwordSwingConfig.rightPitch : SwordSwingConfig.leftPitch;
+		float modelPitch = leftToRight
+				? (leftHand ? SwordSwingConfig.rightPitchOffhand : SwordSwingConfig.rightPitch)
+				: (leftHand ? SwordSwingConfig.leftPitchOffhand : SwordSwingConfig.leftPitch);
 
 		// Roll rotates the slash around its own forward axis
-		float modelRoll = leftToRight ? SwordSwingConfig.rightRoll : SwordSwingConfig.leftRoll;
+		float modelRoll = leftToRight
+				? (leftHand ? SwordSwingConfig.rightRollOffhand : SwordSwingConfig.rightRoll)
+				: (leftHand ? SwordSwingConfig.leftRollOffhand : SwordSwingConfig.leftRoll);
 
 		return new float[]{modelYaw, modelPitch, modelRoll};
 	}
 
-	public static Vec3 calculateVerticalPosition(LivingEntity entity, float progress, boolean upward) {
+	public static Vec3 calculateVerticalPosition(LivingEntity entity, float progress, boolean upward, boolean leftHand) {
 		Vec3 entityPos = entity.position();
 		float yaw = entity.getYRot();
 		double entityHeight = entity.getBbHeight();
@@ -1057,9 +1136,15 @@ public class BonePositionTracker {
 		double centerY = entityHeight * 0.9;
 
 		double totalArcDegrees = ParticleConfig.particleArcDegrees;
-		double arcAngle = progress * totalArcDegrees + (float)(upward ? SwordSwingConfig.upperArcOffset : SwordSwingConfig.overheadArcOffset);
+		double arcOffset = upward
+				? SwordSwingConfig.upperArcOffset
+				: (leftHand ? SwordSwingConfig.overheadArcOffsetOffhand : SwordSwingConfig.overheadArcOffset);
+		double arcAngle = progress * totalArcDegrees + arcOffset;
 
-		double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * (upward ? SwordSwingConfig.upperRadiusMult : SwordSwingConfig.overheadRadiusMult);
+		double radiusMult = upward
+				? SwordSwingConfig.upperRadiusMult
+				: (leftHand ? SwordSwingConfig.overheadRadiusMultOffhand : SwordSwingConfig.overheadRadiusMult);
+		double radius = ParticleConfig.baseRadius * SwordSwingConfig.globalRadiusMult * radiusMult;
 		double localY = radius * Math.cos(Math.toRadians(arcAngle));
 		double localForward = radius * Math.sin(Math.toRadians(arcAngle));
 
@@ -1070,15 +1155,24 @@ public class BonePositionTracker {
 		return new Vec3(worldX, worldY, worldZ);
 	}
 
-	public static float[] calculateVerticalRotation(LivingEntity entity, float progress, boolean upward) {
+	public static float[] calculateVerticalRotation(LivingEntity entity, float progress, boolean upward, boolean leftHand) {
 		float yaw = entity.getYRot();
 		double totalArcDegrees = ParticleConfig.particleArcDegrees;
-		double arcAngle = progress * totalArcDegrees + (float)(upward ? SwordSwingConfig.upperArcOffset : SwordSwingConfig.overheadArcOffset);
+		double arcOffset = upward
+				? SwordSwingConfig.upperArcOffset
+				: (leftHand ? SwordSwingConfig.overheadArcOffsetOffhand : SwordSwingConfig.overheadArcOffset);
+		double arcAngle = progress * totalArcDegrees + arcOffset;
 
 		// Model rotates around player in vertical plane
-		float modelYaw = yaw + (float)(upward ? SwordSwingConfig.upperYawOffset : SwordSwingConfig.overheadYawOffset);
-		float modelPitch = (float) arcAngle * (upward ? -1 : 1) + (float)(upward ? SwordSwingConfig.upperPitch : SwordSwingConfig.overheadPitch);
-		float modelRoll = (float)(upward ? SwordSwingConfig.upperRoll : SwordSwingConfig.overheadRoll);;
+		double yawOffset = upward
+				? SwordSwingConfig.upperYawOffset
+				: (leftHand ? SwordSwingConfig.overheadYawOffsetOffhand : SwordSwingConfig.overheadYawOffset);
+		float modelYaw = yaw + (float) yawOffset;
+		float modelPitch = (float) arcAngle * (upward ? -1 : 1)
+				+ (float) (upward ? SwordSwingConfig.upperPitch
+						: (leftHand ? SwordSwingConfig.overheadPitchOffhand : SwordSwingConfig.overheadPitch));
+		float modelRoll = (float) (upward ? SwordSwingConfig.upperRoll
+				: (leftHand ? SwordSwingConfig.overheadRollOffhand : SwordSwingConfig.overheadRoll));
 
 		return new float[]{modelYaw, modelPitch, modelRoll};
 	}

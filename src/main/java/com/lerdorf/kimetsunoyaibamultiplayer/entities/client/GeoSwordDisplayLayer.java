@@ -68,19 +68,21 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         boolean sheathingTransition = EntityCombatStateTracker.isInSheathingTransition(animatable);
 
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(mainHand.getItem());
+        boolean hasPerSwordOverride = SwordDisplayConfig.swordPositionOverrides.containsKey(itemId.toString());
         SwordDisplayConfig.SwordDisplayPosition position =
             SwordDisplayConfig.getPositionForSword(itemId.toString());
-        if (position == null) {
-            position = SwordDisplayConfig.position;
-        }
         if (animatable instanceof DemonSlayerEntity slayer) {
-            int level = slayer.getPowerLevel();
-            if (level >= 1 && level <= 4) {
-                position = slayer.isSheatheOnBack()
-                    ? SwordDisplayConfig.SwordDisplayPosition.BACK
-                    : SwordDisplayConfig.SwordDisplayPosition.HIP;
-            } else if (level >= 5) {
-                position = SwordDisplayConfig.SwordDisplayPosition.HIP;
+            // Respect explicit per-sword config placement for demon slayers first.
+            // Entity behavior only provides fallback placement when no override exists.
+            if (!hasPerSwordOverride) {
+                int level = slayer.getPowerLevel();
+                if (level >= 1 && level <= 4) {
+                    position = slayer.isSheatheOnBack()
+                        ? SwordDisplayConfig.SwordDisplayPosition.BACK
+                        : SwordDisplayConfig.SwordDisplayPosition.HIP;
+                } else if (level >= 5) {
+                    position = SwordDisplayConfig.SwordDisplayPosition.HIP;
+                }
             }
         }
         // Primary entity sheath slot is always left; secondary (when present) is right.
@@ -125,7 +127,7 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
 
     private static void renderSheathForSwordId(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                                                LivingEntity entity, DemonSlayerEntity slayer,
-                                               String swordId, boolean isLeft, boolean backPosition) {
+                                               String swordId, boolean isLeft, boolean fallbackBackPosition) {
         if (swordId == null || swordId.isEmpty()) {
             return;
         }
@@ -140,13 +142,21 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
             return;
         }
 
+        ResourceLocation swordItemId = BuiltInRegistries.ITEM.getKey(swordStack.getItem());
+        boolean hasPerSwordOverride = SwordDisplayConfig.swordPositionOverrides.containsKey(swordItemId.toString());
+        boolean backPosition = hasPerSwordOverride
+            ? SwordDisplayConfig.getPositionForSword(swordItemId.toString()) == SwordDisplayConfig.SwordDisplayPosition.BACK
+            : fallbackBackPosition;
+
         poseStack.pushPose();
 
         if (backPosition) {
-            applyBackPosition(poseStack, isLeft);
+            // Gecko entity body-space is mirrored relative to player layer-space.
+            // Invert side at the final transform so requested logical side renders correctly.
+            applyBackPosition(poseStack, !isLeft);
             poseStack.translate(0.10D, -0.05D, 0.04D);
         } else {
-            applyHipPosition(poseStack, isLeft);
+            applyHipPosition(poseStack, !isLeft);
             poseStack.translate(0.06D, -0.03D, 0.02D);
         }
 
@@ -177,9 +187,11 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         poseStack.pushPose();
 
         if (position == SwordDisplayConfig.SwordDisplayPosition.HIP) {
-            applyHipPosition(poseStack, isLeft);
+            // Gecko entity body-space is mirrored relative to player layer-space.
+            // Invert side at the final transform so requested logical side renders correctly.
+            applyHipPosition(poseStack, !isLeft);
         } else {
-            applyBackPosition(poseStack, isLeft);
+            applyBackPosition(poseStack, !isLeft);
         }
 
         float scale = (float) SwordDisplayConfig.scale;
@@ -226,9 +238,10 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         poseStack.pushPose();
 
         if (position == SwordDisplayConfig.SwordDisplayPosition.HIP) {
-            applyHipPosition(poseStack, isLeft);
+            // Keep sheath-only render aligned with the same mirrored side mapping.
+            applyHipPosition(poseStack, !isLeft);
         } else {
-            applyBackPosition(poseStack, isLeft);
+            applyBackPosition(poseStack, !isLeft);
         }
 
         float scale = (float) SwordDisplayConfig.scale;

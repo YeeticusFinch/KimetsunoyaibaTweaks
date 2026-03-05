@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.raids.FinalSelectionProcedure;
+import com.lerdorf.kimetsunoyaibamultiplayer.raids.MtFujikasaneDaylightController;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -7,8 +9,12 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.border.WorldBorder;
+import net.minecraftforge.event.TickEvent;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -494,5 +500,63 @@ public class MtFujikasaneDimensionDataHandler {
         } finally {
             worldCopyInProgress.set(false);
         }
+    }
+
+    // ===== Mt Fujikasane dimension-specific event handlers =====
+
+    /**
+     * Deny all natural mob spawn placement checks in Mt Fujikasane.
+     * Fires before the entity is even created — most efficient prevention.
+     * Programmatic spawns via level.addFreshEntity() bypass this event entirely.
+     */
+    @SubscribeEvent
+    public static void onMtFujikasaneSpawnPlacement(MobSpawnEvent.SpawnPlacementCheck event) {
+        if (event.getSpawnType() != MobSpawnType.NATURAL
+                && event.getSpawnType() != MobSpawnType.CHUNK_GENERATION) {
+            return;
+        }
+        if (event.getLevel() instanceof ServerLevel serverLevel) {
+            if (serverLevel.dimension().location().equals(MT_FUJIKASANE_DIM_ID)) {
+                event.setResult(net.minecraftforge.eventbus.api.Event.Result.DENY);
+            }
+        }
+    }
+
+    /**
+     * Prevent all natural mob spawning in the Mt Fujikasane dimension (late-stage safety net).
+     * Only entities spawned programmatically (e.g., by raids or commands) are allowed.
+     */
+    @SubscribeEvent
+    public static void onMobSpawnCheck(MobSpawnEvent.FinalizeSpawn event) {
+        if (event.getLevel() instanceof ServerLevel serverLevel) {
+            if (serverLevel.dimension().location().equals(MT_FUJIKASANE_DIM_ID)) {
+                // Deny natural spawns - this blocks vanilla mob spawning
+                // Programmatic spawns (level.addFreshEntity) bypass this event
+                event.setSpawnCancelled(true);
+            }
+        }
+    }
+
+    /**
+     * Tick the Mt Fujikasane daylight controller and final selection procedure.
+     */
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        if (event.getServer() == null) return;
+
+        // Get the Mt Fujikasane dimension if loaded
+        ResourceKey<Level> mtFujikasaneKey = ResourceKey.create(
+            net.minecraft.core.registries.Registries.DIMENSION,
+            MT_FUJIKASANE_DIM_ID
+        );
+        ServerLevel mtFujikasane = event.getServer().getLevel(mtFujikasaneKey);
+        if (mtFujikasane == null) return;
+
+        // Tick daylight controller
+        MtFujikasaneDaylightController.tick(mtFujikasane);
+
+        // Tick final selection procedure
+        FinalSelectionProcedure.tickActive();
     }
 }

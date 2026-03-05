@@ -181,6 +181,14 @@ public class ModNetworking {
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket::encode)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket::handle)
                 .add();
+
+        // Register survival raid boss arrow packet (server -> client)
+        int bossArrowPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BossArrowPacket.class, bossArrowPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BossArrowPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BossArrowPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BossArrowPacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

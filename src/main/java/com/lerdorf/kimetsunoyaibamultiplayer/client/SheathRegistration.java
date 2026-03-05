@@ -121,6 +121,12 @@ public class SheathRegistration {
             }
         }
 
+        // Register inosuke sheath for our enhanced Inosuke sword
+        SwordSheathRegistry.registerTemporarySheath(
+            ModItems.NICHIRINSWORD_INOSUKE.get(),
+            SheathItems.SWORD_SHEATH_INOSUKE.get()
+        );
+
         // Register kokushibo sheaths and display override
         net.minecraft.world.item.Item kokushiboSword1 =
             net.minecraftforge.registries.ForgeRegistries.ITEMS

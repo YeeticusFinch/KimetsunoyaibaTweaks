@@ -407,7 +407,8 @@ public class AnimationTracker {
             "kamusari1", "kamusari2", "kamusari3", "togen_totsuka1", "togen_totsuka2", "breath1",
             "breath2", "rashin", "kick_akaza1", "kick_akaza2", "sword_to_right_reverse",
             "sword_to_left_reverse", "breath_sun2_1", "breath_sun2_2", "breath_sound5", "breath_sound5_p",
-            "breath_beast1", "breath_beast2", "sword_to_upper"
+            "breath_beast1", "breath_beast2", "beast2", "sword_to_upper",
+            "left_sword_to_left", "left_sword_to_right", "left_sword_overhead", "double_sword_overhead"
         };
 
         for (String known : knownNames) {
@@ -446,13 +447,17 @@ public class AnimationTracker {
 
         // Check trigger mode configuration
         if (ParticleConfig.particleTriggerMode == ParticleConfig.ParticleTriggerMode.ATTACK_ONLY) {
-            // In ATTACK_ONLY mode, only spawn particles if the player has the left-click attack flag set
-            if (!hasRecentLeftClickAttack(player.getUUID())) {
+            // In ATTACK_ONLY mode, form-driven slash animations are still allowed even without left-click flags.
+            boolean bypassAttackFlag = isFormSlashAnimation(animationName);
+            if (!bypassAttackFlag && !hasRecentLeftClickAttack(player.getUUID())) {
                 return;
             }
-            // Flag is set, so we'll spawn particles and then clear it
             if (Config.logDebug) {
-                Log.debug("ATTACK_ONLY mode: Spawning particles for player {} with sticky bit set", player.getName().getString());
+                if (bypassAttackFlag) {
+                    Log.debug("ATTACK_ONLY mode: Spawning particles for form animation {} without sticky bit", animationName);
+                } else {
+                    Log.debug("ATTACK_ONLY mode: Spawning particles for player {} with sticky bit set", player.getName().getString());
+                }
             }
         }
 
@@ -488,8 +493,17 @@ public class AnimationTracker {
             return false;
         }
 
-        // Only sword_to_right and sword_to_left are basic left-click attacks
-        return animationName.equals("sword_to_right") || animationName.equals("sword_to_left");
+        return animationName.equals("sword_to_right") ||
+               animationName.equals("sword_to_left") ||
+               animationName.equals("left_sword_to_right") ||
+               animationName.equals("left_sword_to_left");
+    }
+
+    private static boolean isFormSlashAnimation(String animationName) {
+        if (animationName == null) {
+            return false;
+        }
+        return animationName.equals("breath_beast2") || animationName.equals("beast2");
     }
 
     /**

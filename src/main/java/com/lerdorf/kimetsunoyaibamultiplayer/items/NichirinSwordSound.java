@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * Sound Breathing nichirin sword.
- * Wraps base mod forms while skipping Sound Breathing form 5.
+ * Wraps base mod forms while excluding hashira-exclusive Final Score.
  */
 public class NichirinSwordSound extends BreathingSwordItem {
     private static final BreathingTechnique SOUND_BREATHING = createSoundBreathing();
@@ -26,7 +26,7 @@ public class NichirinSwordSound extends BreathingSwordItem {
 
     private static BreathingTechnique createSoundBreathing() {
         List<BreathingForm> forms = new ArrayList<>();
-        int[] formIds = {901, 902, 904};
+        int[] formIds = {901, 902, 903};
         for (int id : formIds) {
             BaseKnYForms.BaseForm base = BaseKnYForms.forms.get(id);
             if (base != null) {

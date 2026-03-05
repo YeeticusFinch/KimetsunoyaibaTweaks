@@ -9,7 +9,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistr
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.SunBreathingLevelHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
@@ -75,6 +77,13 @@ public class BreathingFormAttackGoal extends Goal {
                 return false;
             }
             // Otherwise cast as soon as cooldown finishes
+            return true;
+        }
+
+        // Demon slayer senior tiers (level 4+) should cast immediately when cooldown ends,
+        // as long as they are in combat (already guaranteed by target/range checks above).
+        if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity demonSlayer
+            && demonSlayer.getPowerLevel() >= 4) {
             return true;
         }
 
@@ -164,8 +173,20 @@ public class BreathingFormAttackGoal extends Goal {
             return;
         }
 
-        int[] forms = BaseModStyleMapping.getFormsForStyle(styleRange);
-        if (forms.length == 0) {
+        int[] baseForms = BaseModStyleMapping.getFormsForStyle(styleRange);
+        java.util.List<Integer> forms = new java.util.ArrayList<>();
+        for (int formId : baseForms) {
+            forms.add(formId);
+        }
+
+        if (swordStack.getItem() instanceof NichirinSwordBlack) {
+            for (com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm sunForm :
+                SunBreathingLevelHelper.createUnlockedSunForms(SunBreathingLevelHelper.getSunBreathingLevel(this.entity))) {
+                forms.add(sunForm.getFormId());
+            }
+        }
+
+        if (forms.isEmpty()) {
             return;
         }
 
@@ -173,9 +194,9 @@ public class BreathingFormAttackGoal extends Goal {
 
         int formId;
         if (isTrainingSwordRestricted(swordStack)) {
-            formId = forms[0];
+            formId = forms.get(0);
         } else {
-            formId = forms[this.entity.getRandom().nextInt(forms.length)];
+            formId = forms.get(this.entity.getRandom().nextInt(forms.size()));
         }
 
         BaseModFormExecutionHelper.executeBaseModForm(this.entity, this.entity.level(), formId);
@@ -201,6 +222,13 @@ public class BreathingFormAttackGoal extends Goal {
     private String resolveCurrentStyleId(ItemStack swordStack) {
         if (swordStack.isEmpty()) {
             return null;
+        }
+
+        if (swordStack.getItem() instanceof NichirinSwordBlack) {
+            String assigned = NichirinSwordBlack.ensureStyleAssigned(swordStack, this.entity.getRandom());
+            if (assigned != null && !assigned.isEmpty()) {
+                return assigned;
+            }
         }
 
         SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(swordStack.getItem());

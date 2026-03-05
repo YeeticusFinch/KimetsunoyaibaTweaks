@@ -42,6 +42,7 @@ public class CustomProgressionConfig {
                     "  - Automatic granting of nichirinsword",
                     "  - Automatic spawning and taming of kasugai_crow",
                     "  - Automatic granting of mizunoto advancement",
+                    "  - Retention of base rank advancements (mizunoto through strongest)",
                     "",
                     "This is useful if:",
                     "  - The base mod is bugging out and giving items multiple times",
@@ -49,7 +50,9 @@ public class CustomProgressionConfig {
                     "  - You want to use your own rewards system",
                     "",
                     "NOTE: This blocks the base mod's SupplyProcedure, AdvancementRewardProcedure,",
-                    "and CheckAdvancementDemonProcedure from granting these rewards.")
+                    "CheckAdvancementDemonProcedure, Advanvement1Procedure, and ColorChangeProcedure",
+                    "from granting these rewards and progression advancements.",
+                    "It also enables a managed datapack that hides related base advancement chat/toast.")
             .define("disable_base_mod_demon_slayer_initiation", true);
 
         grantTrainingSword = builder

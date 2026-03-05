@@ -92,21 +92,23 @@ public class BaseModRegistration {
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_mist", "mist_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_mist", "mist_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_thunder", "thunder_breathing", 0);
-        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_stone", "stone_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_stone", "stone_breathing", 0, true);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_love", "love_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_serpent", "serpent_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_sound", "sound_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_insect", "insect_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_flower", "flower_breathing", 0);
-        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_black", "black", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_black", "black", -1); // the old black sword isn't eligible
+        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinswordmoon", "moon_breathing", 0);
 
         // Level 1 - Named character swords (NOT eligible for color change)
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_tanjiro", "water_breathing", 1);
-        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_inosuke", "beast_breathing", 1);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_inosuke", "beast_breathing", 1, true);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_inosuke", "beast_breathing", 1, true);
 
         // Level 2 - Hashira swords (NOT eligible for color change)
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_rengoku", "flame_breathing", 2);
-        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_uzui", "sound_breathing", 2);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_uzui", "sound_breathing", 2, true);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_shinobu", "insect_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_iguro", "serpent_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_sanemi", "wind_breathing", 2);
@@ -114,16 +116,17 @@ public class BaseModRegistration {
         SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_muichiro", "mist_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_kanroji", "love_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_kanroji", "love_breathing", 2);
-        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_gyomei", "stone_breathing", 2);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_gyomei", "stone_breathing", 2, true);
 
         // Our mod's generic swords (level 0 = eligible for color change)
-        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_sound", "sound_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_sound", "sound_breathing", 0, true);
         SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_snake", "serpent_breathing", 0);
         SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_insect", "insect_breathing", 0);
-        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_stone1", "stone_breathing", 0);
-        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_stone2", "stone_breathing", 0);
-        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_beast", "beast_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_stone1", "stone_breathing", 0, true);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_stone2", "stone_breathing", 0, true);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_beast", "beast_breathing", 0, true);
         SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_love", "love_breathing", 0);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_black", "black", 0);
 
         // Level -1 - Unobtainable swords (boss/NPC only)
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:sword_kokushibo_1", "moon_breathing", -1);

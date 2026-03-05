@@ -20,6 +20,9 @@ public class DemonSlayerFemaleRenderer extends GeoEntityRenderer<DemonSlayerEnti
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "textures/entity/slayer_female_4.png"),
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "textures/entity/slayer_female_5.png"),
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "textures/entity/slayer_female_6.png"),
+        ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "textures/entity/slayer_female_7.png"),
+        ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "textures/entity/slayer_female_8.png"),
+        ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "textures/entity/slayer_female_9.png"),
     };
 
     public DemonSlayerFemaleRenderer(EntityRendererProvider.Context context) {

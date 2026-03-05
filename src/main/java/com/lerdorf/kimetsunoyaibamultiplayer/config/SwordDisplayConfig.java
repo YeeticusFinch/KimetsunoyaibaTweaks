@@ -38,6 +38,7 @@ public class SwordDisplayConfig {
                     defaults.add("kimetsunoyaiba:nichirinsword_uzui=BACK");
                     defaults.add("kimetsunoyaibamultiplayer:nichirinsword_sound=BACK");
                     defaults.add("kimetsunoyaiba:nichirinsword_inosuke=HIP");
+                    defaults.add("kimetsunoyaibamultiplayer:nichirinsword_inosuke=HIP");
                     return defaults;
                 },
                 obj -> obj instanceof String && ((String) obj).contains("="));

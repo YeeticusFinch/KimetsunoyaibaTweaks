@@ -1,13 +1,13 @@
 {
 	"format_version": "1.21.11",
 	"credit": "Made with Blockbench",
-	"parent": "item/rushia",
+	"parent": "item/generated",
 	"textures": {
-		"0": "kimetsunoyaibamultiplayer:armor/hanafuda1",
-		"1": "kimetsunoyaibamultiplayer:armor/hanafuda2",
-		"2": "kimetsunoyaibamultiplayer:armor/hanafuda3",
-		"3": "kimetsunoyaibamultiplayer:armor/hanafuda4",
-		"particle": "kimetsunoyaibamultiplayer:armor/hanafuda1"
+		"0": "kimetsunoyaibamultiplayer:item/hanafuda1",
+		"1": "kimetsunoyaibamultiplayer:item/hanafuda2",
+		"2": "kimetsunoyaibamultiplayer:item/hanafuda3",
+		"3": "kimetsunoyaibamultiplayer:item/hanafuda4",
+		"particle": "kimetsunoyaibamultiplayer:item/hanafuda1"
 	},
 	"elements": [
 		{
@@ -3244,9 +3244,6 @@
 				"down": {"uv": [0, 1, 1, 0], "texture": "#2"}
 			}
 		}
-	],
-	"overrides": [
-		{"predicate": {"blocking": 1}, "model": "item/rushia_pettan"}
 	],
 	"display": {
 		"thirdperson_righthand": {

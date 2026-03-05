@@ -134,7 +134,13 @@ public class ClientCommandHandler {
                name.equals("sword_to_right") ||
                name.equals("sword_to_upper") ||
                name.equals("sword_overhead") ||
-               name.equals("sword_rotate");
+               name.equals("sword_rotate") ||
+               name.equals("left_sword_to_left") ||
+               name.equals("left_sword_to_right") ||
+               name.equals("left_sword_overhead") ||
+               name.equals("double_sword_overhead") ||
+               name.equals("beast2") ||
+               name.equals("breath_beast2");
     }
 
     /**
@@ -172,7 +178,13 @@ public class ClientCommandHandler {
             String[] parts = animationName.split(":", 2);
             return ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
         }
-        // Otherwise, default to kimetsunoyaiba namespace
+
+        // Our dual-wield animation assets live in kimetsunoyaibamultiplayer namespace.
+        if (animationName.startsWith("left_sword_") || animationName.equals("double_sword_overhead") || animationName.equals("beast2") || animationName.equals("breath_beast2")) {
+            return ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", animationName);
+        }
+
+        // Otherwise, default to kimetsunoyaiba namespace.
         return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", animationName);
     }
 
@@ -189,6 +201,7 @@ public class ClientCommandHandler {
         // Try alternative namespaces
         String path = animationLocation.getPath();
         ResourceLocation[] alternativeLocations = {
+            ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", path),
             ResourceLocation.fromNamespaceAndPath("playeranimator", path),
             ResourceLocation.fromNamespaceAndPath("minecraft", path),
             ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "animations/" + path)

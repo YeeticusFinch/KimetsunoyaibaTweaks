@@ -111,6 +111,28 @@ public class ModEntities {
                 .build("kanawo"));
 
     /**
+     * Kanata Ubuyashiki - passive child civilian.
+     */
+    public static final RegistryObject<EntityType<KanataEntity>> KANATA =
+        ENTITY_TYPES.register("kanata",
+            () -> EntityType.Builder.of(KanataEntity::new, MobCategory.MISC)
+                .sized(0.42F, 1.26F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("kanata"));
+
+    /**
+     * Kiriya Ubuyashiki - passive child civilian.
+     */
+    public static final RegistryObject<EntityType<KiriyaEntity>> KIRIYA =
+        ENTITY_TYPES.register("kiriya",
+            () -> EntityType.Builder.of(KiriyaEntity::new, MobCategory.MISC)
+                .sized(0.42F, 1.26F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("kiriya"));
+
+    /**
      * Mugen Door - Decorative entity for kizuki demon spawns
      * Plays an opening animation and sound, then disappears
      */
@@ -240,6 +262,8 @@ public class ModEntities {
             // Register attributes for Kanae and Kanawo
             event.put(KANAE.get(), KanaeEntity.createAttributes().build());
             event.put(KANAWO.get(), KanawoEntity.createAttributes().build());
+            event.put(KANATA.get(), KanataEntity.createAttributes().build());
+            event.put(KIRIYA.get(), KiriyaEntity.createAttributes().build());
 
             // Register attributes for Mugen Door (visual-only entity)
             event.put(MUGEN_DOOR.get(), MugenDoorEntity.createAttributes().build());

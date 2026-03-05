@@ -61,8 +61,14 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_BEAST = ITEMS.register("nichirinsword_beast",
         () -> new NichirinSwordBeast(new Item.Properties().stacksTo(1).durability(2000)));
 
+    public static final RegistryObject<Item> NICHIRINSWORD_INOSUKE = ITEMS.register("nichirinsword_inosuke",
+        () -> new NichirinSwordInosuke(new Item.Properties().stacksTo(1).durability(2000)));
+
     public static final RegistryObject<Item> NICHIRINSWORD_LOVE = ITEMS.register("nichirinsword_love",
         () -> new NichirinSwordLoveAnimated(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_BLACK = ITEMS.register("nichirinsword_black",
+        () -> new NichirinSwordBlack(new Item.Properties().stacksTo(1).durability(2000)));
 
     // Spawn eggs
     public static final RegistryObject<Item> MUICHIRO_SPAWN_EGG = ITEMS.register("muichiro_spawn_egg",
@@ -95,6 +101,18 @@ public class ModItems {
             0xB892D6, 0x7BCFA0, // Purple body, mint spots
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> KANATA_SPAWN_EGG = ITEMS.register("kanata_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KANATA,
+            0xF2EAD8, 0xC8B9A2, // Light cream body, tan spots
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> KIRIYA_SPAWN_EGG = ITEMS.register("kiriya_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KIRIYA,
+            0xDEE4EE, 0xA7B2C2, // Cool pale body, muted blue-gray spots
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> DEMON_SLAYER_SPAWN_EGG = ITEMS.register("demon_slayer_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER,
@@ -113,6 +131,36 @@ public class ModItems {
             net.minecraft.world.item.ArmorItem.Type.LEGGINGS,
             new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> PURPLE_ANDON_BAKAMA = ITEMS.register("purple_andon_bakama",
+        () -> new AndonBakamaItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
+            net.minecraft.world.item.ArmorItem.Type.LEGGINGS,
+            new Item.Properties().stacksTo(1),
+            "textures/armor/purple_andon_bakama.png"));
+
+    public static final RegistryObject<Item> PURPLE_DEMON_SLAYER_UNIFORM_CHESTPLATE = ITEMS.register("purple_demon_slayer_uniform_chestplate",
+        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+            net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
+            new Item.Properties().stacksTo(1),
+            "textures/armor/purple_demonslayer_uniform_chestplate.png",
+            "textures/armor/purple_uniform_pants.png",
+            "textures/armor/purple_uniform_boots.png"));
+
+    public static final RegistryObject<Item> PURPLE_DEMON_SLAYER_UNIFORM_LEGGINGS = ITEMS.register("purple_demon_slayer_uniform_leggings",
+        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+            net.minecraft.world.item.ArmorItem.Type.LEGGINGS,
+            new Item.Properties().stacksTo(1),
+            "textures/armor/purple_demonslayer_uniform_chestplate.png",
+            "textures/armor/purple_uniform_pants.png",
+            "textures/armor/purple_uniform_boots.png"));
+
+    public static final RegistryObject<Item> PURPLE_DEMON_SLAYER_UNIFORM_BOOTS = ITEMS.register("purple_demon_slayer_uniform_boots",
+        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+            net.minecraft.world.item.ArmorItem.Type.BOOTS,
+            new Item.Properties().stacksTo(1),
+            "textures/armor/purple_demonslayer_uniform_chestplate.png",
+            "textures/armor/purple_uniform_pants.png",
+            "textures/armor/purple_uniform_boots.png"));
+
     public static final RegistryObject<Item> SLAYER_UNIFORM_2_CHESTPLATE = ITEMS.register("slayer_uniform_2_chestplate",
         () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
             net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
@@ -127,6 +175,30 @@ public class ModItems {
         () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
             net.minecraft.world.item.ArmorItem.Type.BOOTS,
             new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> SLAYER_UNIFORM_2_CHESTPLATE_PURPLE = ITEMS.register("slayer_uniform_2_chestplate_purple",
+        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+            net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
+            new Item.Properties().stacksTo(1),
+            "textures/armor/slayer_uniform_2_purple.png",
+            "textures/armor/slayer_uniform_2_purple.png",
+            "textures/armor/slayer_uniform_2_purple.png"));
+
+    public static final RegistryObject<Item> SLAYER_UNIFORM_2_LEGGINGS_PURPLE = ITEMS.register("slayer_uniform_2_leggings_purple",
+        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+            net.minecraft.world.item.ArmorItem.Type.LEGGINGS,
+            new Item.Properties().stacksTo(1),
+            "textures/armor/slayer_uniform_2_purple.png",
+            "textures/armor/slayer_uniform_2_purple.png",
+            "textures/armor/slayer_uniform_2_purple.png"));
+
+    public static final RegistryObject<Item> SLAYER_UNIFORM_2_BOOTS_PURPLE = ITEMS.register("slayer_uniform_2_boots_purple",
+        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+            net.minecraft.world.item.ArmorItem.Type.BOOTS,
+            new Item.Properties().stacksTo(1),
+            "textures/armor/slayer_uniform_2_purple.png",
+            "textures/armor/slayer_uniform_2_purple.png",
+            "textures/armor/slayer_uniform_2_purple.png"));
 
     public static final RegistryObject<Item> CLOTHES_MUICHIRO_FP_CHESTPLATE = ITEMS.register("clothes_muichiro_fp_chestplate",
         () -> new MuichiroHaoriItem(CosmeticArmorMaterial.MUICHIRO_HAORI,
@@ -147,6 +219,12 @@ public class ModItems {
         () -> new HanafudaItem(CosmeticArmorMaterial.COSMETIC,
             net.minecraft.world.item.ArmorItem.Type.HELMET,
             new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> HANAFUDA_CLASSIC = ITEMS.register("hanafuda_classic",
+        () -> new HanafudaClassicItem(new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> HAHNAFUDA_SIMPLE = ITEMS.register("hahnafuda_simple",
+        () -> new HanafudaClassicItem(new Item.Properties().stacksTo(1)));
 
     // Demon Slayer Marks - decorative items that render on entity models
     public static final RegistryObject<Item> DEMONSLAYERMARK_LOVE = ITEMS.register("demonslayermark_love",
@@ -184,6 +262,10 @@ public class ModItems {
     public static final RegistryObject<Item> FAVOR_OF_MUZAN_POTION_3 = ITEMS.register("favor_of_muzan_potion_3",
         () -> new FavorPotionItem(new Item.Properties().stacksTo(16), FavorPotionItem.FavorType.MUZAN, 3));
 
+    // Ubuyashiki's Invitation - locates nearest toril gate
+    public static final RegistryObject<Item> UBUYASHIKI_INVITATION = ITEMS.register("ubuyashiki_invitation",
+        () -> new UbuyashikiInvitationItem(new Item.Properties().stacksTo(1)));
+
     // Favor Potion Items - Ubuyashiki (slayer protection - spawns slayers when attacked by demons/players)
     public static final RegistryObject<Item> FAVOR_OF_UBUYASHIKI_POTION_1 = ITEMS.register("favor_of_ubuyashiki_potion_1",
         () -> new FavorPotionItem(new Item.Properties().stacksTo(16), FavorPotionItem.FavorType.UBUYASHIKI, 1));
@@ -210,12 +292,14 @@ public class ModItems {
 
                 // Ensure new swords are always present even if SwordRegistry registration timing changes.
                 addIfNotRegistryManaged(output, NICHIRINSWORD_BEAST.get());
+                addIfNotRegistryManaged(output, NICHIRINSWORD_INOSUKE.get());
                 addIfNotRegistryManaged(output, NICHIRINSWORD_STONE1.get());
                 addIfNotRegistryManaged(output, NICHIRINSWORD_STONE2.get());
                 addIfNotRegistryManaged(output, NICHIRINSWORD_INSECT.get());
                 addIfNotRegistryManaged(output, NICHIRINSWORD_SNAKE.get());
                 addIfNotRegistryManaged(output, NICHIRINSWORD_LOVE.get());
                 addIfNotRegistryManaged(output, NICHIRINSWORD_SOUND.get());
+                addIfNotRegistryManaged(output, NICHIRINSWORD_BLACK.get());
 
                 // Wisteria blocks
                 output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LOG.get());
@@ -250,13 +334,22 @@ public class ModItems {
 
                 // Armor
                 output.accept(ANDON_BAKAMA.get());
+                output.accept(PURPLE_ANDON_BAKAMA.get());
+                output.accept(PURPLE_DEMON_SLAYER_UNIFORM_CHESTPLATE.get());
+                output.accept(PURPLE_DEMON_SLAYER_UNIFORM_LEGGINGS.get());
+                output.accept(PURPLE_DEMON_SLAYER_UNIFORM_BOOTS.get());
                 output.accept(SLAYER_UNIFORM_2_CHESTPLATE.get());
                 output.accept(SLAYER_UNIFORM_2_LEGGINGS.get());
                 output.accept(SLAYER_UNIFORM_2_BOOTS.get());
+                output.accept(SLAYER_UNIFORM_2_CHESTPLATE_PURPLE.get());
+                output.accept(SLAYER_UNIFORM_2_LEGGINGS_PURPLE.get());
+                output.accept(SLAYER_UNIFORM_2_BOOTS_PURPLE.get());
                 output.accept(CLOTHES_MUICHIRO_FP_CHESTPLATE.get());
                 output.accept(UNIFORM_MUICHIRO_FP_CHESTPLATE.get());
                 output.accept(HAIR_MUICHIRO_FP.get());
                 output.accept(HANAFUDA.get());
+                output.accept(HANAFUDA_CLASSIC.get());
+                output.accept(HAHNAFUDA_SIMPLE.get());
 
                 // Spawn eggs
                 output.accept(MUICHIRO_SPAWN_EGG.get());
@@ -264,6 +357,8 @@ public class ModItems {
                 output.accept(KANROJI_SPAWN_EGG.get());
                 output.accept(KANAE_SPAWN_EGG.get());
                 output.accept(KANAWO_SPAWN_EGG.get());
+                output.accept(KANATA_SPAWN_EGG.get());
+                output.accept(KIRIYA_SPAWN_EGG.get());
                 output.accept(DEMON_SLAYER_SPAWN_EGG.get());
                 output.accept(DEMON_SLAYER_FEMALE_SPAWN_EGG.get());
 
@@ -286,6 +381,9 @@ public class ModItems {
                 output.accept(FAVOR_OF_UBUYASHIKI_POTION_1.get());
                 output.accept(FAVOR_OF_UBUYASHIKI_POTION_2.get());
                 output.accept(FAVOR_OF_UBUYASHIKI_POTION_3.get());
+
+                // Miscellaneous items
+                output.accept(UBUYASHIKI_INVITATION.get());
 
                 // Add spawn eggs from KnY Extra Additions (if mod is loaded)
                 try {
@@ -400,6 +498,15 @@ public class ModItems {
             null, null, null, true, 0
         );
 
+        // Beast Breathing named sword (Inosuke, level 1)
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_inosuke",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_INOSUKE.get(),
+            "beast_breathing",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            null, null, null, true, 1
+        );
+
         // Love Breathing animated sword
         com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
             "nichirinsword_love",
@@ -408,6 +515,15 @@ public class ModItems {
             com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
             net.minecraft.core.particles.ParticleTypes.HEART,
             null, null, true, 0
+        );
+
+        // Black nichirin sword (style assigned per-item stack at use time)
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_black",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_BLACK.get(),
+            "black",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            null, null, null, true, 0
         );
     }
 }

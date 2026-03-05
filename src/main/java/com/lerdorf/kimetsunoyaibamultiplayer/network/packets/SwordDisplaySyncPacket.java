@@ -24,11 +24,33 @@ public class SwordDisplaySyncPacket {
     private final SwordDisplayConfig.SwordDisplayPosition rightPosition;
     private final int leftSlot;
     private final int rightSlot;
+    private final ItemStack leftSheath;
+    private final ItemStack rightSheath;
+    private final ItemStack leftSheathSword;
+    private final ItemStack rightSheathSword;
+    private final boolean leftSheathVisible;
+    private final boolean rightSheathVisible;
+    private final SwordDisplayConfig.SwordDisplayPosition leftSheathPosition;
+    private final SwordDisplayConfig.SwordDisplayPosition rightSheathPosition;
 
     public SwordDisplaySyncPacket(UUID playerUUID, ItemStack leftHipSword, ItemStack rightHipSword,
                                   SwordDisplayConfig.SwordDisplayPosition leftPosition,
                                   SwordDisplayConfig.SwordDisplayPosition rightPosition,
                                   int leftSlot, int rightSlot) {
+        this(playerUUID, leftHipSword, rightHipSword, leftPosition, rightPosition, leftSlot, rightSlot,
+            ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, false, false,
+            leftPosition, rightPosition);
+    }
+
+    public SwordDisplaySyncPacket(UUID playerUUID, ItemStack leftHipSword, ItemStack rightHipSword,
+                                  SwordDisplayConfig.SwordDisplayPosition leftPosition,
+                                  SwordDisplayConfig.SwordDisplayPosition rightPosition,
+                                  int leftSlot, int rightSlot,
+                                  ItemStack leftSheath, ItemStack rightSheath,
+                                  ItemStack leftSheathSword, ItemStack rightSheathSword,
+                                  boolean leftSheathVisible, boolean rightSheathVisible,
+                                  SwordDisplayConfig.SwordDisplayPosition leftSheathPosition,
+                                  SwordDisplayConfig.SwordDisplayPosition rightSheathPosition) {
         this.playerUUID = playerUUID;
         this.leftHipSword = leftHipSword != null ? leftHipSword : ItemStack.EMPTY;
         this.rightHipSword = rightHipSword != null ? rightHipSword : ItemStack.EMPTY;
@@ -36,6 +58,14 @@ public class SwordDisplaySyncPacket {
         this.rightPosition = rightPosition != null ? rightPosition : SwordDisplayConfig.SwordDisplayPosition.HIP;
         this.leftSlot = leftSlot;
         this.rightSlot = rightSlot;
+        this.leftSheath = leftSheath != null ? leftSheath : ItemStack.EMPTY;
+        this.rightSheath = rightSheath != null ? rightSheath : ItemStack.EMPTY;
+        this.leftSheathSword = leftSheathSword != null ? leftSheathSword : ItemStack.EMPTY;
+        this.rightSheathSword = rightSheathSword != null ? rightSheathSword : ItemStack.EMPTY;
+        this.leftSheathVisible = leftSheathVisible;
+        this.rightSheathVisible = rightSheathVisible;
+        this.leftSheathPosition = leftSheathPosition != null ? leftSheathPosition : this.leftPosition;
+        this.rightSheathPosition = rightSheathPosition != null ? rightSheathPosition : this.rightPosition;
     }
 
     public SwordDisplaySyncPacket(FriendlyByteBuf buf) {
@@ -46,6 +76,14 @@ public class SwordDisplaySyncPacket {
         this.rightPosition = buf.readEnum(SwordDisplayConfig.SwordDisplayPosition.class);
         this.leftSlot = buf.readInt();
         this.rightSlot = buf.readInt();
+        this.leftSheath = buf.readItem();
+        this.rightSheath = buf.readItem();
+        this.leftSheathSword = buf.readItem();
+        this.rightSheathSword = buf.readItem();
+        this.leftSheathVisible = buf.readBoolean();
+        this.rightSheathVisible = buf.readBoolean();
+        this.leftSheathPosition = buf.readEnum(SwordDisplayConfig.SwordDisplayPosition.class);
+        this.rightSheathPosition = buf.readEnum(SwordDisplayConfig.SwordDisplayPosition.class);
     }
 
     public void toBytes(FriendlyByteBuf buf) {
@@ -56,6 +94,14 @@ public class SwordDisplaySyncPacket {
         buf.writeEnum(rightPosition);
         buf.writeInt(leftSlot);
         buf.writeInt(rightSlot);
+        buf.writeItem(leftSheath);
+        buf.writeItem(rightSheath);
+        buf.writeItem(leftSheathSword);
+        buf.writeItem(rightSheathSword);
+        buf.writeBoolean(leftSheathVisible);
+        buf.writeBoolean(rightSheathVisible);
+        buf.writeEnum(leftSheathPosition);
+        buf.writeEnum(rightSheathPosition);
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
@@ -77,7 +123,9 @@ public class SwordDisplaySyncPacket {
                     // Relay to all other clients
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClientsExcept(
                         new SwordDisplaySyncPacket(playerUUID, leftHipSword, rightHipSword,
-                            leftPosition, rightPosition, leftSlot, rightSlot),
+                            leftPosition, rightPosition, leftSlot, rightSlot,
+                            leftSheath, rightSheath, leftSheathSword, rightSheathSword,
+                            leftSheathVisible, rightSheathVisible, leftSheathPosition, rightSheathPosition),
                         sender
                     );
 
@@ -91,7 +139,9 @@ public class SwordDisplaySyncPacket {
                 net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(clientDist, () -> () -> {
                     com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.updateRemotePlayerDisplay(
                         playerUUID, leftHipSword, rightHipSword,
-                        leftPosition, rightPosition, leftSlot, rightSlot
+                        leftPosition, rightPosition, leftSlot, rightSlot,
+                        leftSheath, rightSheath, leftSheathSword, rightSheathSword,
+                        leftSheathVisible, rightSheathVisible, leftSheathPosition, rightSheathPosition
                     );
                 });
             }

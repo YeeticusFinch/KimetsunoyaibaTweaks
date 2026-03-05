@@ -126,6 +126,27 @@ public class SwordSwingConfig {
     private static final ForgeConfigSpec.DoubleValue RIGHT_RADIUS_MULT = BUILDER
             .comment("Radius multiplier for right slash", "Default: 1")
             .defineInRange("right_radius_mult", 1.0, -5.0, 5.0);
+            
+            
+    private static final ForgeConfigSpec.DoubleValue RIGHT_YAW_OFFSET_OFFHAND = BUILDER
+            .comment("Yaw offset for right slash (degrees)", "Default: 90")
+            .defineInRange("yaw_offset_offhand", 90.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue RIGHT_PITCH_OFFHAND = BUILDER
+            .comment("Pitch angle for right slash (degrees)", "Default: 0")
+            .defineInRange("pitch_offhand", 0.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue RIGHT_ROLL_OFFHAND = BUILDER
+            .comment("Roll angle for right slash (degrees)", "Default: -20")
+            .defineInRange("roll_offhand", 20.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue RIGHT_ARC_OFFSET_OFFHAND = BUILDER
+            .comment("Arc angle offset for right slash (degrees)", "Default: -50")
+            .defineInRange("arc_offset_offhand", -50.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue RIGHT_RADIUS_MULT_OFFHAND = BUILDER
+            .comment("Radius multiplier for right slash", "Default: 1")
+            .defineInRange("right_radius_mult_offhand", 1.0, -5.0, 5.0);
 
     static {
         BUILDER.pop(); // sword_to_right
@@ -160,6 +181,27 @@ public class SwordSwingConfig {
             .comment("Radius multiplier for left slash", "Default: 1")
             .defineInRange("left_radius_mult", 1.0, -5.0, 5.0);
 
+
+    private static final ForgeConfigSpec.DoubleValue LEFT_YAW_OFFSET_OFFHAND = BUILDER
+            .comment("Yaw offset for left slash (degrees)", "Default: -90")
+            .defineInRange("yaw_offset_offhand", -90.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue LEFT_PITCH_OFFHAND = BUILDER
+            .comment("Pitch angle for left slash (degrees)", "Default: 0")
+            .defineInRange("pitch_offhand", 0.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue LEFT_ROLL_OFFHAND = BUILDER
+            .comment("Roll angle for left slash (degrees)", "Default: -20")
+            .defineInRange("roll_offhand", 20.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue LEFT_ARC_OFFSET_OFFHAND = BUILDER
+            .comment("Arc angle offset for left slash (degrees)", "Default: -50")
+            .defineInRange("arc_offset_offhand", -50.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue LEFT_RADIUS_MULT_OFFHAND = BUILDER
+            .comment("Radius multiplier for left slash", "Default: 1")
+            .defineInRange("left_radius_mult_offhand", 1.0, -5.0, 5.0);
+
     static {
         BUILDER.pop(); // sword_to_left
     }
@@ -192,6 +234,27 @@ public class SwordSwingConfig {
     private static final ForgeConfigSpec.DoubleValue OVERHEAD_RADIUS_MULT = BUILDER
             .comment("Radius multiplier for overhead slash", "Default: 1")
             .defineInRange("overhead_radius_mult", 1.0, -5.0, 5.0);
+
+
+    private static final ForgeConfigSpec.DoubleValue OVERHEAD_YAW_OFFSET_OFFHAND = BUILDER
+            .comment("Yaw offset for overhead slash (degrees)", "Default: 0")
+            .defineInRange("yaw_offset_offhand", 0.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue OVERHEAD_PITCH_OFFHAND = BUILDER
+            .comment("Pitch angle for overhead slash (degrees)", "Default: -90")
+            .defineInRange("pitch_offhand", -90.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue OVERHEAD_ROLL_OFFHAND = BUILDER
+            .comment("Roll angle for overhead slash (degrees)", "Default: 110")
+            .defineInRange("roll_offhand", 70.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue OVERHEAD_ARC_OFFSET_OFFHAND = BUILDER
+            .comment("Arc angle offset for overhead slash (degrees)", "Default: -20")
+            .defineInRange("arc_offset_offhand", -20.0, -180.0, 180.0);
+
+    private static final ForgeConfigSpec.DoubleValue OVERHEAD_RADIUS_MULT_OFFHAND = BUILDER
+            .comment("Radius multiplier for overhead slash", "Default: 1")
+            .defineInRange("overhead_radius_mult_offhand", 1.0, -5.0, 5.0);
     
     static {
         BUILDER.pop(); // sword_overhead
@@ -289,12 +352,24 @@ public class SwordSwingConfig {
     public static double rightArcOffset;
     public static float rightRadiusMult;
 
+    public static double rightYawOffsetOffhand;
+    public static float rightPitchOffhand;
+    public static float rightRollOffhand;
+    public static double rightArcOffsetOffhand;
+    public static float rightRadiusMultOffhand;
+
     // Sword to Left
     public static double leftYawOffset;
     public static float leftPitch;
     public static float leftRoll;
     public static double leftArcOffset;
     public static float leftRadiusMult;
+    
+    public static double leftYawOffsetOffhand;
+    public static float leftPitchOffhand;
+    public static float leftRollOffhand;
+    public static double leftArcOffsetOffhand;
+    public static float leftRadiusMultOffhand;
 
     // Sword Overhead
     public static double overheadYawOffset;
@@ -302,6 +377,12 @@ public class SwordSwingConfig {
     public static float overheadRoll;
     public static double overheadArcOffset;
     public static float overheadRadiusMult;
+    
+    public static double overheadYawOffsetOffhand;
+    public static float overheadPitchOffhand;
+    public static float overheadRollOffhand;
+    public static double overheadArcOffsetOffhand;
+    public static float overheadRadiusMultOffhand;
 
     // Sword to Upper
     public static double upperYawOffset;
@@ -337,6 +418,12 @@ public class SwordSwingConfig {
         rightRoll = (float) (double) RIGHT_ROLL.get();
         rightArcOffset = RIGHT_ARC_OFFSET.get();
         rightRadiusMult = (float)(double)RIGHT_RADIUS_MULT.get();
+        
+        rightYawOffsetOffhand = RIGHT_YAW_OFFSET_OFFHAND.get();
+        rightPitchOffhand = (float) (double) RIGHT_PITCH_OFFHAND.get();
+        rightRollOffhand = (float) (double) RIGHT_ROLL_OFFHAND.get();
+        rightArcOffsetOffhand = RIGHT_ARC_OFFSET_OFFHAND.get();
+        rightRadiusMultOffhand = (float)(double)RIGHT_RADIUS_MULT_OFFHAND.get();
 
         // Sword to Left
         leftYawOffset = LEFT_YAW_OFFSET.get();
@@ -344,6 +431,12 @@ public class SwordSwingConfig {
         leftRoll = (float) (double) LEFT_ROLL.get();
         leftArcOffset = LEFT_ARC_OFFSET.get();
         leftRadiusMult = (float)(double)LEFT_RADIUS_MULT.get();
+        
+        leftYawOffsetOffhand = LEFT_YAW_OFFSET_OFFHAND.get();
+        leftPitchOffhand = (float) (double) LEFT_PITCH_OFFHAND.get();
+        leftRollOffhand = (float) (double) LEFT_ROLL_OFFHAND.get();
+        leftArcOffsetOffhand = LEFT_ARC_OFFSET_OFFHAND.get();
+        leftRadiusMultOffhand = (float)(double)LEFT_RADIUS_MULT_OFFHAND.get();
 
         // Sword Overhead
         overheadYawOffset = OVERHEAD_YAW_OFFSET.get();
@@ -351,6 +444,12 @@ public class SwordSwingConfig {
         overheadRoll = (float) (double) OVERHEAD_ROLL.get();
         overheadArcOffset = OVERHEAD_ARC_OFFSET.get();
         overheadRadiusMult = (float)(double)OVERHEAD_RADIUS_MULT.get();
+        
+        overheadYawOffsetOffhand = OVERHEAD_YAW_OFFSET_OFFHAND.get();
+        overheadPitchOffhand = (float) (double) OVERHEAD_PITCH_OFFHAND.get();
+        overheadRollOffhand = (float) (double) OVERHEAD_ROLL_OFFHAND.get();
+        overheadArcOffsetOffhand = OVERHEAD_ARC_OFFSET_OFFHAND.get();
+        overheadRadiusMultOffhand = (float)(double)OVERHEAD_RADIUS_MULT_OFFHAND.get();
 
         // Sword to Upper
         upperYawOffset = UPPER_YAW_OFFSET.get();

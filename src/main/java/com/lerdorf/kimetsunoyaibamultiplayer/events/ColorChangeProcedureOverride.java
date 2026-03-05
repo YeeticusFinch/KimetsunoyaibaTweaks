@@ -50,6 +50,8 @@ public class ColorChangeProcedureOverride {
 
     // Threshold at which base mod transforms the sword
     private static final double TRANSFORM_THRESHOLD = 30.0;
+    // Persisted per-player color-change style so players keep the same breathing style after first roll.
+    private static final String PLAYER_COLOR_CHANGE_STYLE_TAG = "KnYMPColorChangeStyleId";
 
     /**
      * On player tick, handle:
@@ -150,9 +152,12 @@ public class ColorChangeProcedureOverride {
             return;
         }
 
-        // Pick a random eligible style
-        StyleMetadataRegistry.StyleMetadata chosenStyle =
-            eligibleStyles.get(RANDOM.nextInt(eligibleStyles.size()));
+        // Reuse player's previously assigned style if valid; otherwise roll once and persist.
+        StyleMetadataRegistry.StyleMetadata chosenStyle = resolveOrAssignPlayerStyle(player, eligibleStyles);
+        if (chosenStyle == null) {
+            System.out.println("[KnY-MP ColorChangeOverride] Failed to resolve player style for color change");
+            return;
+        }
 
         // Get all level-0 swords for that style (from both registries)
         List<Item> eligibleSwords = getEligibleSwordsForStyle(chosenStyle.getStyleId());
@@ -238,9 +243,40 @@ public class ColorChangeProcedureOverride {
     private static boolean shouldPreferEnhancedSwords(String styleId) {
         return switch (styleId) {
             case "mist_breathing" -> com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.enhancedMistBreathing;
+            case "beast_breathing" -> com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.enhancedBeastBreathing;
             case "love_breathing" -> com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.enhancedLoveBreathing;
             default -> false;
         };
+    }
+
+    /**
+     * Resolve the player's persistent color-change style.
+     * If none is set (or it's no longer eligible), assign a random eligible style and persist it.
+     */
+    private static StyleMetadataRegistry.StyleMetadata resolveOrAssignPlayerStyle(
+            Player player,
+            List<StyleMetadataRegistry.StyleMetadata> eligibleStyles) {
+
+        CompoundTag persistentData = player.getPersistentData();
+        String savedStyleId = persistentData.getString(PLAYER_COLOR_CHANGE_STYLE_TAG);
+
+        if (savedStyleId != null && !savedStyleId.isEmpty()) {
+            for (StyleMetadataRegistry.StyleMetadata style : eligibleStyles) {
+                if (savedStyleId.equals(style.getStyleId())) {
+                    return style;
+                }
+            }
+        }
+
+        StyleMetadataRegistry.StyleMetadata chosen = eligibleStyles.get(RANDOM.nextInt(eligibleStyles.size()));
+        persistentData.putString(PLAYER_COLOR_CHANGE_STYLE_TAG, chosen.getStyleId());
+
+        if (CustomProgressionConfig.enableDebugLogging.get()) {
+            System.out.println("[KnY-MP ColorChangeOverride] Assigned persistent style for " +
+                player.getName().getString() + ": " + chosen.getStyleId());
+        }
+
+        return chosen;
     }
 
     /**

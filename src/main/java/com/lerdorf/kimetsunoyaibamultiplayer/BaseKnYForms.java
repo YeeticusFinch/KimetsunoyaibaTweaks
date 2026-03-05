@@ -103,7 +103,6 @@ public class BaseKnYForms {
 			entry(901, new BaseForm("First Form: Roar", "§6")),
 			entry(902, new BaseForm("Fourth Form: Constant Resounding Slashes", "§6")),
 			entry(903, new BaseForm("Fifth Form: String Performance", "§6")),
-			entry(904, new BaseForm("Final Score", "§6")),
 
 			// Moon
 			entry(1101, new BaseForm("Moon Breathing 1st Form", "§d")),

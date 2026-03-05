@@ -31,6 +31,10 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> VERMILION_EYE = MOB_EFFECTS.register("vermilion_eye",
             VermilionEyeEffect::new);
 
+    // Spatial Awareness effect - detached free camera, movement lock, kneel pose, and monochrome vision
+    public static final RegistryObject<MobEffect> SPATIAL_AWARENESS = MOB_EFFECTS.register("spatial_awareness",
+            SpatialAwarenessEffect::new);
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

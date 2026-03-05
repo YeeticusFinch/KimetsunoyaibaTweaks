@@ -24,7 +24,7 @@ public class AndonBakamaRenderer extends GeoArmorRenderer<AndonBakamaItem> {
 
         @Override
         public ResourceLocation getTextureResource(AndonBakamaItem item) {
-            return new ResourceLocation("kimetsunoyaibamultiplayer", "textures/armor/andon_bakama.png");
+            return new ResourceLocation("kimetsunoyaibamultiplayer", item.getTexturePath());
         }
 
         @Override

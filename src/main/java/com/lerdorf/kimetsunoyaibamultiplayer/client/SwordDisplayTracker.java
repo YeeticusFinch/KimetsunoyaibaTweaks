@@ -279,14 +279,13 @@ public class SwordDisplayTracker {
         }
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
+        if (mc.level == null || mc.player == null) {
             return;
         }
 
-        // Update for all players in view
-        for (Player player : mc.level.players()) {
-            updatePlayerSwordDisplay(player);
-        }
+        // Only the local client has authoritative inventory/slot data for itself.
+        // Remote players are updated via SwordDisplaySyncPacket to avoid client-side desync.
+        updatePlayerSwordDisplay(mc.player);
 
         // Tick transition delays for all players
         for (SwordDisplayState state : playerStates.values()) {
@@ -591,7 +590,15 @@ public class SwordDisplayTracker {
                     state.getLeftPosition(),
                     state.getRightPosition(),
                     state.leftDisplay != null ? state.leftDisplay.hotbarSlot : -1,
-                    state.rightDisplay != null ? state.rightDisplay.hotbarSlot : -1
+                    state.rightDisplay != null ? state.rightDisplay.hotbarSlot : -1,
+                    state.shouldShowLeftSheath() ? new ItemStack(state.leftSheathItem) : ItemStack.EMPTY,
+                    state.shouldShowRightSheath() ? new ItemStack(state.rightSheathItem) : ItemStack.EMPTY,
+                    (state.shouldShowLeftSheath() && state.leftSheathSwordItem != null) ? new ItemStack(state.leftSheathSwordItem) : ItemStack.EMPTY,
+                    (state.shouldShowRightSheath() && state.rightSheathSwordItem != null) ? new ItemStack(state.rightSheathSwordItem) : ItemStack.EMPTY,
+                    state.shouldShowLeftSheath(),
+                    state.shouldShowRightSheath(),
+                    state.leftSheathPosition,
+                    state.rightSheathPosition
                 )
             );
 
@@ -608,6 +615,20 @@ public class SwordDisplayTracker {
                                                   SwordDisplayConfig.SwordDisplayPosition leftPos,
                                                   SwordDisplayConfig.SwordDisplayPosition rightPos,
                                                   int leftSlot, int rightSlot) {
+        updateRemotePlayerDisplay(playerUUID, leftSword, rightSword, leftPos, rightPos, leftSlot, rightSlot,
+            ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY, ItemStack.EMPTY,
+            false, false, leftPos, rightPos);
+    }
+
+    public static void updateRemotePlayerDisplay(UUID playerUUID, ItemStack leftSword, ItemStack rightSword,
+                                                  SwordDisplayConfig.SwordDisplayPosition leftPos,
+                                                  SwordDisplayConfig.SwordDisplayPosition rightPos,
+                                                  int leftSlot, int rightSlot,
+                                                  ItemStack leftSheath, ItemStack rightSheath,
+                                                  ItemStack leftSheathSword, ItemStack rightSheathSword,
+                                                  boolean leftSheathVisible, boolean rightSheathVisible,
+                                                  SwordDisplayConfig.SwordDisplayPosition leftSheathPosition,
+                                                  SwordDisplayConfig.SwordDisplayPosition rightSheathPosition) {
         SwordDisplayState state = playerStates.computeIfAbsent(playerUUID, k -> new SwordDisplayState());
 
         // Update left display
@@ -626,11 +647,21 @@ public class SwordDisplayTracker {
             state.rightDisplay = null;
         }
 
+        state.leftSheathItem = leftSheathVisible && !leftSheath.isEmpty() ? leftSheath.getItem() : null;
+        state.rightSheathItem = rightSheathVisible && !rightSheath.isEmpty() ? rightSheath.getItem() : null;
+        state.leftSheathSwordItem = leftSheathVisible && !leftSheathSword.isEmpty() ? leftSheathSword.getItem() : null;
+        state.rightSheathSwordItem = rightSheathVisible && !rightSheathSword.isEmpty() ? rightSheathSword.getItem() : null;
+        state.leftSheathPersists = leftSheathVisible;
+        state.rightSheathPersists = rightSheathVisible;
+        state.leftSheathPosition = leftSheathPosition;
+        state.rightSheathPosition = rightSheathPosition;
+
         if (Config.logDebug) {
-            Log.debug("Updated remote player display: UUID={}, left={}@{} ({}), right={}@{} ({})",
+            Log.debug("Updated remote player display: UUID={}, left={}@{} ({}), right={}@{} ({}), leftSheath={}, rightSheath={}",
                 playerUUID,
                 leftSword.isEmpty() ? "empty" : leftSword.getItem().toString(), leftSlot, leftPos,
-                rightSword.isEmpty() ? "empty" : rightSword.getItem().toString(), rightSlot, rightPos);
+                rightSword.isEmpty() ? "empty" : rightSword.getItem().toString(), rightSlot, rightPos,
+                leftSheathVisible, rightSheathVisible);
         }
     }
 

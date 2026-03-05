@@ -1,10 +1,13 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities.ai;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.combat.KanrojiSwordAttackHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.AttackDamageHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.DualWieldHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
@@ -27,6 +30,7 @@ public class AnimatedMeleeAttackGoal extends MeleeAttackGoal {
         "sword_to_right",
         "sword_overhead"
     };
+    private boolean useOffhandDamageNext = false;
 
     public AnimatedMeleeAttackGoal(BreathingSlayerEntity entity, double speedModifier, boolean followingTargetEvenIfNotSeen) {
         super(entity, speedModifier, followingTargetEvenIfNotSeen);
@@ -57,9 +61,21 @@ public class AnimatedMeleeAttackGoal extends MeleeAttackGoal {
             // Reset attack cooldown
             this.resetAttackCooldown();
 
+            boolean dualWield = DualWieldHelper.isDualWielding(entity);
+            InteractionHand attackHand = InteractionHand.MAIN_HAND;
+            if (dualWield) {
+                attackHand = useOffhandDamageNext ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+                useOffhandDamageNext = !useOffhandDamageNext;
+            }
+
             // Play random attack animation
-            int animIndex = entity.getRandom().nextInt(ATTACK_ANIMATIONS.length);
-            String animation = ATTACK_ANIMATIONS[animIndex];
+            String animation;
+            if (dualWield) {
+                animation = entity.getRandom().nextBoolean() ? "sword_to_left" : "sword_to_right";
+            } else {
+                int animIndex = entity.getRandom().nextInt(ATTACK_ANIMATIONS.length);
+                animation = ATTACK_ANIMATIONS[animIndex];
+            }
             int duration = 10;
             // For Muichiro, play faster (double/triple speed effect via shorter duration)
             if (entity instanceof MuichiroEntity) {
@@ -71,21 +87,27 @@ public class AnimatedMeleeAttackGoal extends MeleeAttackGoal {
             if (!entity.level().isClientSide) {
                 ItemStack heldItem = entity.getItemInHand(InteractionHand.MAIN_HAND);
                 if (SwordParticleMapping.isKimetsunoyaibaSword(heldItem)) {
-                    triggerSwordSlash(animIndex);
+                    triggerSwordSlash(animation);
                 }
             }
 
             // Check if holding a whip sword (love/kanroji) — use AOE whip attack instead
             ItemStack heldItem = entity.getItemInHand(InteractionHand.MAIN_HAND);
             if (KanrojiSwordAttackHandler.isWhipSword(heldItem) && heldItem.getItem() instanceof BreathingSwordItem) {
-                float damage = (float) entity.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+                float damage = AttackDamageHelper.getAttackDamageForHand(entity, attackHand);
                 float boxSize = KanrojiSwordAttackHandler.getBoxSizeForSword(heldItem);
                 GuardStateHelper.setAttackState(entity, damage);
                 KanrojiSwordAttackHandler.performWhipAttack(entity, damage, animation, boxSize);
                 AbilityScheduler.scheduleOnce(entity, () -> GuardStateHelper.clearGuardState(entity), 6);
             } else {
-                // Perform the standard melee attack
-                this.mob.doHurtTarget(target);
+                // For dual-wield beast attacks, use hand-specific damage instead of main-hand-only damage.
+                if (dualWield) {
+                    float handDamage = AttackDamageHelper.getAttackDamageForHand(entity, attackHand);
+                    Damager.hurt(entity, target, handDamage);
+                } else {
+                    // Perform the standard melee attack
+                    this.mob.doHurtTarget(target);
+                }
             }
 
             // Basic sword clash window for Muichiro's regular swings
@@ -101,13 +123,7 @@ public class AnimatedMeleeAttackGoal extends MeleeAttackGoal {
      * Trigger sword slash visual based on animation type
      * Uses BonePositionTracker to spawn slash models directly
      */
-    private void triggerSwordSlash(int animIndex) {
-        // Map animation index to animation name
-        // 0 = sword_to_left (horizontal right->left), 1 = sword_to_right (horizontal left->right), 2 = sword_overhead (vertical down)
-        String animName = "sword_to_left";
-        if (animIndex == 1) animName = "sword_to_right";
-        else if (animIndex == 2) animName = "sword_overhead";
-
+    private void triggerSwordSlash(String animName) {
         // Only execute on server: send a simple slash spawn instruction; clients will choose model/particles automatically
         if (!entity.level().isClientSide) {
             // Send only to nearby players within configured range
@@ -129,6 +145,15 @@ public class AnimatedMeleeAttackGoal extends MeleeAttackGoal {
     protected void resetAttackCooldown() {
         super.resetAttackCooldown();
         this.attackAnimationTick = 0;
+    }
+
+    @Override
+    protected int getAttackInterval() {
+        int base = super.getAttackInterval();
+        if (DualWieldHelper.isDualWielding(entity)) {
+            return Math.max(1, base / 2);
+        }
+        return base;
     }
 
     @Override

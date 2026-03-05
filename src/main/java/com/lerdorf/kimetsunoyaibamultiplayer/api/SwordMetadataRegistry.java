@@ -71,6 +71,15 @@ public class SwordMetadataRegistry {
             String styleId,
             int swordLevel) {
 
+        return registerLazy(swordId, styleId, swordLevel, false);
+    }
+
+    public static SwordMetadata registerLazy(
+            String swordId,
+            String styleId,
+            int swordLevel,
+            boolean dualWielding) {
+
         if (SWORDS_BY_ID.containsKey(swordId)) {
             throw new IllegalArgumentException("Sword already registered: " + swordId);
         }
@@ -79,7 +88,7 @@ public class SwordMetadataRegistry {
             throw new IllegalArgumentException("Invalid sword level: " + swordLevel + ". Must be -1, 0, 1, or 2.");
         }
 
-        SwordMetadata metadata = new SwordMetadata(swordId, null, styleId, swordLevel);
+        SwordMetadata metadata = new SwordMetadata(swordId, null, styleId, swordLevel, dualWielding);
         SWORDS_BY_ID.put(swordId, metadata);
 
         return metadata;
@@ -186,6 +195,20 @@ public class SwordMetadataRegistry {
         private Item swordItem;
         private final String styleId;
         private final int swordLevel;
+        private final boolean dualWielding;
+
+        private SwordMetadata(
+                String swordId,
+                Item swordItem,
+                String styleId,
+                int swordLevel,
+                boolean dualWielding) {
+            this.swordId = swordId;
+            this.swordItem = swordItem;
+            this.styleId = styleId;
+            this.swordLevel = swordLevel;
+            this.dualWielding = dualWielding;
+        }
 
         private SwordMetadata(
                 String swordId,
@@ -196,6 +219,7 @@ public class SwordMetadataRegistry {
             this.swordItem = swordItem;
             this.styleId = styleId;
             this.swordLevel = swordLevel;
+            this.dualWielding = false;
         }
 
         /**
@@ -225,6 +249,10 @@ public class SwordMetadataRegistry {
                 }
             }
             return swordItem;
+        }
+
+        public boolean isDualWielding() {
+            return dualWielding;
         }
 
         /**

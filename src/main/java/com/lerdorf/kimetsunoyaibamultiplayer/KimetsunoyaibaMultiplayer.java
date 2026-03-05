@@ -112,6 +112,8 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SurvivalRaidConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.FinalSelectionRaidConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.class);
@@ -127,6 +129,8 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.SPEC, "kimetsunoyaibamultiplayer/spawn_rates.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_spawning.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.SPEC, "kimetsunoyaibamultiplayer/raids.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SurvivalRaidConfig.SPEC, "kimetsunoyaibamultiplayer/survival_raids.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.FinalSelectionRaidConfig.SPEC, "kimetsunoyaibamultiplayer/final_selection_raids.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_breathing.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig.SPEC, "kimetsunoyaibamultiplayer/customnpcs.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.SPEC, "kimetsunoyaibamultiplayer/variations.toml");
@@ -404,7 +408,11 @@ public class KimetsunoyaibaMultiplayer
         // TestAnimCommand.register(event.getDispatcher()); // REMOVED: Uses client-only SwordParticleHandler
         TestCrowQuestCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TrainingSwordCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.GiveBlackSwordCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.SunBreathingLevelCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SpawnDemonSlayerCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.TorilGateCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.SurvivalRaidCommand.register(event.getDispatcher());
     }
 
     @SubscribeEvent
@@ -416,6 +424,7 @@ public class KimetsunoyaibaMultiplayer
             return;
         }
         net.minecraft.world.entity.player.Player player = event.player;
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedBeastForms.syncDualWieldAttackSpeed(player);
         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
 
@@ -453,6 +462,10 @@ public class KimetsunoyaibaMultiplayer
         // TRAINING SWORD FAILSAFE: If player is holding a training sword and the form is not first form, reset it
         // This catches cases where the base mod's form cycling slips through (e.g., when holding down the cycle key)
         if (!main.isEmpty() && com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.isTrainingSword(main)) {
+            // Keep training sword combat profile valid (fixes legacy -1 damage training swords in-place).
+            com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.ensureTrainingCombatProfile(main);
+            com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.sanitizeBaseModTrainingSwordState(player, main);
+
             // Use getFirstFormForTrainingSword which handles black swords specially (uses water breathing)
             double firstForm = com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.getFirstFormForTrainingSword(main, currentBreathes);
 
@@ -462,17 +475,16 @@ public class KimetsunoyaibaMultiplayer
                 currentFormId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(currentBreathes);
             }
 
-            if (currentBreathes > 0 && currentFormId != firstForm) {
+            boolean transientBaseCombatState =
+                com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper
+                    .isTransientBaseModCombatBreathes(currentFormId, firstForm);
+
+            if (currentBreathes > 0 && currentFormId != firstForm && !transientBaseCombatState) {
                 System.out.println("[TrainingSword] Detected non-first form on training sword! Current: " + currentBreathes +
                                    " (formId=" + currentFormId + "), First form: " + firstForm + " - RESETTING");
 
                 // Reset to first form using the helper
                 com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.resetToFirstForm(main, player);
-
-                // Also update the select NBT on the sword to 0 if present
-                if (main.getOrCreateTag().contains("select")) {
-                    main.getOrCreateTag().putDouble("select", 0.0);
-                }
             }
         }
 
@@ -783,6 +795,9 @@ public class KimetsunoyaibaMultiplayer
                     }
 
                     ItemStack weapon = attacker.getItemInHand(InteractionHand.MAIN_HAND);
+                    boolean isBaseTrainingSword =
+                        com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.isTrainingSword(weapon) &&
+                        !(weapon.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem);
 
                     // Check for gun attacks by LOCAL PLAYER ONLY
                     if (com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.isGun(weapon)) {
@@ -801,11 +816,22 @@ public class KimetsunoyaibaMultiplayer
 
                     // Check for breathing sword attacks (entity hit)
                     if (attacker instanceof net.minecraft.client.player.AbstractClientPlayer clientAttacker) {
+                        // Base-mod training swords should never trigger breathing-form execution on left-click.
+                        if (isBaseTrainingSword) {
+                            return;
+                        }
+
                         // Play attack animation for breathing swords (both our mod and kimetsunoyaiba)
                         String animationName = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(clientAttacker);
+                        boolean isKimetsuSword = SwordParticleMapping.isKimetsunoyaibaSword(weapon);
+
+                        if (isKimetsuSword) {
+                            String slashAnimation = (animationName != null && !animationName.isEmpty()) ? animationName : "sword_to_left";
+                            ModNetworking.sendToServer(new BreathingSwordSwingPacket(slashAnimation));
+                        }
 
                         // Set the left-click attack flag (sticky bit) for ATTACK_ONLY mode
-                        if (animationName != null && SwordParticleMapping.isKimetsunoyaibaSword(weapon)) {
+                        if (animationName != null && isKimetsuSword) {
                             com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker.markLeftClickAttack(clientAttacker.getUUID());
 
                             if (Config.logDebug) {
@@ -933,6 +959,9 @@ public class KimetsunoyaibaMultiplayer
                 }
 
                 ItemStack heldItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
+                boolean isBaseTrainingSword =
+                    com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.isTrainingSword(heldItem) &&
+                    !(heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem);
 
                 // Check for Fifth Form attack detection (CheckForAttack tag)
                 if (mc.player.getTags().contains("CheckForAttack")) {
@@ -969,10 +998,15 @@ public class KimetsunoyaibaMultiplayer
                 }
                 // Check if holding nichirinsword from kimetsunoyaiba mod - only handle particles, no AOE
                 else if (SwordParticleMapping.isKimetsunoyaibaSword(heldItem) &&
+                         !isBaseTrainingSword &&
                          heldItem.getItem().toString().contains("nichirinsword")) {
 
                     // Play similar attack animation for kimetsunoyaiba swords
                     String animationName = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(mc.player);
+                    String slashAnimation = (animationName != null && !animationName.isEmpty()) ? animationName : "sword_to_left";
+
+                    // Send packet so nearby clients can render this player's slash.
+                    ModNetworking.sendToServer(new BreathingSwordSwingPacket(slashAnimation));
 
                     // Set the left-click attack flag (sticky bit) so AnimationTracker will spawn particles
                     if (animationName != null) {

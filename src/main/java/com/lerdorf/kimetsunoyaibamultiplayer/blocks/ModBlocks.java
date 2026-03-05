@@ -285,6 +285,15 @@ public class ModBlocks {
     // Legacy name - points to pink variant
     public static final RegistryObject<Block> WISTERIA_SAPLING = WISTERIA_SAPLING_PINK;
 
+    // Toril Gate marker block - invisible, placed inside gate structures to detect players
+    public static final RegistryObject<Block> TORIL_GATE_MARKER = registerBlock("toril_gate_marker",
+        () -> new TorilGateMarkerBlock(BlockBehaviour.Properties.copy(Blocks.AIR)
+            .noCollission()
+            .noOcclusion()
+            .noLootTable()
+            .strength(-1.0f, 3600000.0f)
+            .noParticlesOnBreak()));
+
     /**
      * Helper method to register a block and its corresponding BlockItem
      */

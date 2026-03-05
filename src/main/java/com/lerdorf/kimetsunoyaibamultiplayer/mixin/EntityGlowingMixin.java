@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.mixin;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.client.VermilionEyeEntityRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.SpatialAwarenessEntityRenderer;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -69,6 +70,11 @@ public class EntityGlowingMixin {
             return;
         }
 
+        if (SpatialAwarenessEntityRenderer.shouldEntityGlow(self)) {
+            cir.setReturnValue(true);
+            return;
+        }
+
         if (VermilionEyeEntityRenderer.shouldEntityGlow(self)) {
             cir.setReturnValue(true);
         }
@@ -106,6 +112,10 @@ public class EntityGlowingMixin {
      */
     private void handleTeamColorCheck(CallbackInfoReturnable<Integer> cir) {
         Entity self = (Entity) (Object) this;
+        if (SpatialAwarenessEntityRenderer.shouldEntityGlow(self)) {
+            cir.setReturnValue(SpatialAwarenessEntityRenderer.getGlowColor());
+            return;
+        }
         if (VermilionEyeEntityRenderer.shouldEntityGlow(self)) {
             // Override with our threat-based color
             int color = VermilionEyeEntityRenderer.getGlowColor(self);

@@ -134,6 +134,25 @@ public class FirstPersonAnimationTracker {
     }
 
     /**
+     * Check if the current animation should be rendered on the offhand in first person.
+     */
+    public static boolean isOffhandAnimation() {
+        return isOffhandAnimation(currentAnimation);
+    }
+
+    /**
+     * Check if a specific animation should be rendered on the offhand in first person.
+     */
+    public static boolean isOffhandAnimation(String animationName) {
+        if (animationName == null) {
+            return false;
+        }
+        return animationName.equals("left_sword_to_left")
+                || animationName.equals("left_sword_to_right")
+                || animationName.equals("left_sword_overhead");
+    }
+
+    /**
      * Check if any sword attack animation is playing
      */
     public static boolean isPlayingSwordAttack() {
@@ -141,11 +160,17 @@ public class FirstPersonAnimationTracker {
 
         return currentAnimation.equals("sword_to_left") ||
                currentAnimation.equals("sword_to_right") ||
+               currentAnimation.equals("left_sword_to_left") ||
+               currentAnimation.equals("left_sword_to_right") ||
                currentAnimation.equals("sword_rotate") ||
                currentAnimation.equals("sword_overhead") ||
+               currentAnimation.equals("left_sword_overhead") ||
+               currentAnimation.equals("double_sword_overhead") ||
                currentAnimation.equals("sword_to_left_reverse") ||
                currentAnimation.equals("sword_to_right_reverse") ||
-               currentAnimation.equals("sword_to_upper");
+               currentAnimation.equals("sword_to_upper") ||
+               currentAnimation.equals("beast2") ||
+               currentAnimation.equals("breath_beast2");
     }
 
     // Helper methods to extract animation info
@@ -223,9 +248,10 @@ public class FirstPersonAnimationTracker {
     private static boolean isKnownAnimationName(String name) {
         String[] knownNames = {
             "sword_to_right", "sword_to_left", "sword_rotate", "sword_overhead",
+            "left_sword_to_right", "left_sword_to_left", "left_sword_overhead", "double_sword_overhead",
             "sword_to_right_reverse", "sword_to_left_reverse", "sword_to_upper",
             "punch_right", "punch_left", "kick_right", "kick_left",
-            "backstep", "guard", "iai1", "speed_attack_sword"
+            "backstep", "guard", "iai1", "speed_attack_sword", "beast2", "breath_beast2"
         };
 
         for (String known : knownNames) {

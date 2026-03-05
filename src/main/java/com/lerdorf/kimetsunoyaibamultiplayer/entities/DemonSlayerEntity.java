@@ -92,6 +92,8 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> SHEATHE_ON_BACK =
         SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> PURPLE_UNIFORM_VARIANT =
+        SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.BOOLEAN);
     // Synced data: level-5 additional sword ids (for extra sheaths/sword switching)
     private static final EntityDataAccessor<String> ALT_SWORD_ID_1 =
         SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.STRING);
@@ -160,6 +162,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         this.entityData.define(TEXTURE_INDEX, 0);
         this.entityData.define(LOW_LEVEL_FLEEING, false);
         this.entityData.define(SHEATHE_ON_BACK, false);
+        this.entityData.define(PURPLE_UNIFORM_VARIANT, false);
         this.entityData.define(ALT_SWORD_ID_1, "");
         this.entityData.define(ALT_SWORD_ID_2, "");
     }
@@ -226,6 +229,14 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     private void setSheatheOnBack(boolean value) {
         this.entityData.set(SHEATHE_ON_BACK, value);
         this.sheathPreferenceInitialized = true;
+    }
+
+    public boolean isPurpleUniformVariant() {
+        return this.entityData.get(PURPLE_UNIFORM_VARIANT);
+    }
+
+    private void setPurpleUniformVariant(boolean value) {
+        this.entityData.set(PURPLE_UNIFORM_VARIANT, value);
     }
 
     // --- Power level override to allow 0 ---
@@ -342,25 +353,41 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         // Male slayers with texture index 0/1 (mob_slayer_1 or mob_slayer_2)
         // wear slayer_uniform_2 set when power level is 1+.
         if (!isFemale() && (getTextureIndex() == 0 || getTextureIndex() == 1)) {
+            boolean usePurpleUniform2 = isPurpleUniformVariant();
             return new ItemStack[]{
                 ItemStack.EMPTY, // No helmet
-                new ItemStack(ModItems.SLAYER_UNIFORM_2_CHESTPLATE.get()),
-                new ItemStack(ModItems.SLAYER_UNIFORM_2_LEGGINGS.get()),
-                new ItemStack(ModItems.SLAYER_UNIFORM_2_BOOTS.get())
+                new ItemStack(usePurpleUniform2 ? ModItems.SLAYER_UNIFORM_2_CHESTPLATE_PURPLE.get() : ModItems.SLAYER_UNIFORM_2_CHESTPLATE.get()),
+                new ItemStack(usePurpleUniform2 ? ModItems.SLAYER_UNIFORM_2_LEGGINGS_PURPLE.get() : ModItems.SLAYER_UNIFORM_2_LEGGINGS.get()),
+                new ItemStack(usePurpleUniform2 ? ModItems.SLAYER_UNIFORM_2_BOOTS_PURPLE.get() : ModItems.SLAYER_UNIFORM_2_BOOTS.get())
             };
         }
 
-        // Female slayers with texture index 0 (slayer_female_1), 3 (slayer_female_4), or 5 (slayer_female_6)
+        boolean usePurpleUniform = isPurpleUniformVariant();
+        ItemStack chestStack = usePurpleUniform
+            ? new ItemStack(ModItems.PURPLE_DEMON_SLAYER_UNIFORM_CHESTPLATE.get())
+            : (uniformChest != null ? new ItemStack(uniformChest) : ItemStack.EMPTY);
+        ItemStack bootsStack = usePurpleUniform
+            ? new ItemStack(ModItems.PURPLE_DEMON_SLAYER_UNIFORM_BOOTS.get())
+            : (uniformBoots != null ? new ItemStack(uniformBoots) : ItemStack.EMPTY);
+
+        // Female slayers with texture index 0 (slayer_female_1), 3 (slayer_female_4), or 5 (slayer_female_6), or 8 (slayer_female_9)
         // wear andon_bakama instead of uniform leggings.
-        ItemStack legsStack = (isFemale() && (getTextureIndex() == 0 || getTextureIndex() == 3 || getTextureIndex() == 5))
-            ? new ItemStack(ModItems.ANDON_BAKAMA.get())
-            : (uniformLegs != null ? new ItemStack(uniformLegs) : ItemStack.EMPTY);
+        ItemStack legsStack;
+        if (isFemale() && (getTextureIndex() == 0 || getTextureIndex() == 3 || getTextureIndex() == 5 || getTextureIndex() == 8)) {
+            legsStack = usePurpleUniform
+                ? new ItemStack(ModItems.PURPLE_ANDON_BAKAMA.get())
+                : new ItemStack(ModItems.ANDON_BAKAMA.get());
+        } else {
+            legsStack = usePurpleUniform
+                ? new ItemStack(ModItems.PURPLE_DEMON_SLAYER_UNIFORM_LEGGINGS.get())
+                : (uniformLegs != null ? new ItemStack(uniformLegs) : ItemStack.EMPTY);
+        }
 
         return new ItemStack[]{
             ItemStack.EMPTY, // No helmet
-            uniformChest != null ? new ItemStack(uniformChest) : ItemStack.EMPTY,
+            chestStack,
             legsStack,
-            uniformBoots != null ? new ItemStack(uniformBoots) : ItemStack.EMPTY
+            bootsStack
         };
     }
 
@@ -369,8 +396,8 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return PathfinderMob.createMobAttributes()
             .add(Attributes.MAX_HEALTH, 20.0D)       // Default for level 0; overridden in finalizeSpawn
-            .add(Attributes.ATTACK_DAMAGE, 7.5D)
-            .add(Attributes.MOVEMENT_SPEED, 0.3D)
+            .add(Attributes.ATTACK_DAMAGE, 5.5D)
+            .add(Attributes.MOVEMENT_SPEED, 0.2D)
             .add(Attributes.ARMOR, 0.0D)
             .add(Attributes.FOLLOW_RANGE, 32.0D)
             .add(net.minecraftforge.common.ForgeMod.ENTITY_REACH.get(), 3.0D); // Default; increased for whip swords
@@ -396,6 +423,8 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
         // 3. Assign random power level 0-5
         int powerLevel = this.random.nextInt(MAX_POWER_LEVEL + 1); // 0-5
+        // Keep equipment set deterministic per-entity and avoid mixing regular/purple pieces.
+        setPurpleUniformVariant(this.random.nextFloat() < 0.25F);
         configurePowerLevelLoadout(powerLevel);
 
         // 4. Apply 2x attack speed
@@ -560,14 +589,15 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
             this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, speedLevel, true, false));
 
         // Resistance (level 1+)
-        if (powerLevel >= 1) {
-            int resistanceLevel = powerLevel - 1;
+        if (powerLevel >= 2) {
+            int resistanceLevel = powerLevel - 2;
+            if (resistanceLevel > 4) resistanceLevel = 4;
             this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, resistanceLevel, true, false));
         }
 
-        // Strength (level 2+)
-        if (powerLevel >= 2) {
-            int strengthLevel = (powerLevel >= 5) ? 2 : (powerLevel >= 4 ? 1 : 0);
+        // Strength (level 1+)
+        if (powerLevel >= 1) {
+            int strengthLevel = (powerLevel - 1) * 2;
             this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, strengthLevel, true, false));
         }
     }
@@ -575,6 +605,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     public void configurePowerLevelLoadout(int powerLevel) {
         setPowerLevel(powerLevel);
         applyDemonSlayerPowerBonuses(powerLevel);
+        applyAttackSpeedBonus();
 
         if (powerLevel >= 1 && powerLevel <= 4) {
             if (!this.sheathPreferenceInitialized) {
@@ -757,16 +788,25 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     }
 
     /**
-     * Apply 2x attack speed bonus.
+     * Apply power-level-based attack speed bonus.
      */
     public void applyAttackSpeedBonus() {
         AttributeInstance attackSpeed = this.getAttribute(Attributes.ATTACK_SPEED);
         if (attackSpeed != null) {
             attackSpeed.removeModifier(DEMON_SLAYER_ATTACK_SPEED_UUID);
+            double bonusMultiplier = switch (getPowerLevel()) {
+                case 0 -> 0.0D;
+                case 1 -> 0.20D;
+                case 2 -> 0.40D;
+                case 3 -> 0.65D;
+                case 4 -> 1.00D;
+                case 5 -> 1.25D;
+                default -> 0.0D;
+            };
             attackSpeed.addPermanentModifier(new AttributeModifier(
                 DEMON_SLAYER_ATTACK_SPEED_UUID,
                 "Demon slayer attack speed",
-                1.0,
+                bonusMultiplier,
                 AttributeModifier.Operation.MULTIPLY_TOTAL
             ));
         }
@@ -787,6 +827,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         tag.putString("AltSwordId2", getAltSwordId2());
         tag.putInt("SuperSeniorSwordSwitchTicks", this.superSeniorSwordSwitchTicks);
         tag.putInt("FleeRepathTicks", this.fleeRepathTicks);
+        tag.putBoolean("PurpleUniformVariant", isPurpleUniformVariant());
     }
 
     @Override
@@ -822,6 +863,9 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         }
         if (tag.contains("FleeRepathTicks")) {
             this.fleeRepathTicks = Math.max(0, tag.getInt("FleeRepathTicks"));
+        }
+        if (tag.contains("PurpleUniformVariant")) {
+            setPurpleUniformVariant(tag.getBoolean("PurpleUniformVariant"));
         }
 
         // Re-apply power level bonuses on load
@@ -925,7 +969,8 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
             }
 
             double moveSq = this.getDeltaMovement().horizontalDistanceSqr();
-            boolean isMoving = moveSq > 0.0025;
+            // Prefer GeckoLib's movement signal; keep a low-velocity fallback for edge cases.
+            boolean isMoving = state.isMoving() || moveSq > 0.0001D;
             boolean seniorSwordDrawnInCombat = isSeniorSwordDrawnInCombat();
 
             if (!isMoving) {
@@ -1025,13 +1070,15 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         if (this.getPowerLevel() >= 4 || this.getPowerLevel() < 0) {
             return;
         }
-        if (this.getAnimationTicks() > 0 || this.kickCooldownTicks > 0) {
+        String currentAnim = getCurrentAnimation();
+        if ((this.getAnimationTicks() > 0 && !isBaseMovementAnimation(currentAnim)) || this.kickCooldownTicks > 0) {
             return;
         }
-        if (this.distanceToSqr(target) > 4.0D) {
+        // Give kicks a bit more practical reach so they can trigger during melee footwork.
+        if (this.distanceToSqr(target) > 9.0D) {
             return;
         }
-        if (this.random.nextFloat() > 0.04F) {
+        if (this.random.nextFloat() > 0.06F) {
             return;
         }
 
@@ -1065,6 +1112,9 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         if (powerLevel > 1) {
             return false;
         }
+        if (!isActivelyInCombatWith(target)) {
+            return false;
+        }
 
         double selfHealth = this.getHealth();
         double targetHealth = target.getHealth();
@@ -1073,6 +1123,26 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         }
         // Level 1
         return selfHealth * 2.0D < targetHealth;
+    }
+
+    private boolean isActivelyInCombatWith(LivingEntity target) {
+        // Must be the entity this slayer is currently aggroed on.
+        if (this.getTarget() != target) {
+            return false;
+        }
+
+        // If the opponent is directly aggroed back on this slayer, this is active combat.
+        if (target instanceof Mob mobTarget && mobTarget.getTarget() == this) {
+            return true;
+        }
+
+        // Otherwise require a recent damage exchange to treat it as actual combat.
+        boolean slayerWasHitByTarget = this.getLastHurtByMob() == target
+            && (this.tickCount - this.getLastHurtByMobTimestamp()) <= 200;
+        boolean targetWasHitBySlayer = target.getLastHurtByMob() == this
+            && (target.tickCount - target.getLastHurtByMobTimestamp()) <= 200;
+
+        return slayerWasHitByTarget || targetWasHitBySlayer;
     }
 
     private void tickLowLevelFlee(@Nullable LivingEntity target) {

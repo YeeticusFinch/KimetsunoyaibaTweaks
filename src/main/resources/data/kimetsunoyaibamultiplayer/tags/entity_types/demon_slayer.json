@@ -7,12 +7,14 @@
     "kimetsunoyaibamultiplayer:kanroji",
     "kimetsunoyaibamultiplayer:kanae",
     "kimetsunoyaibamultiplayer:kanawo",
+    "kimetsunoyaibamultiplayer:kanata",
+    "kimetsunoyaibamultiplayer:kiriya",
     "kimetsunoyaibamultiplayer:muichiro",
     "kimetsunoyaibamultiplayer:muichiro_fp",
     "kimetsunoyaibamultiplayer:demon_slayer",
     "kimetsunoyaibamultiplayer:demon_slayer_female",
-    "kimetsu:slayer_kocho",
-    "kimetsu:slayer_kocho_kakusei",
-    "kimetsu:himejima"
+    { "id": "kimetsu:slayer_kocho", "required": false },
+    { "id": "kimetsu:slayer_kocho_kakusei", "required": false },
+    { "id": "kimetsu:himejima", "required": false }
   ]
 }

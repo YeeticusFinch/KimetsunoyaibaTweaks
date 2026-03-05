@@ -73,7 +73,7 @@ public class BaseModStyleMapping {
             Map.entry(600, new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 611}), // Stone
             Map.entry(700, new int[]{701, 702, 703, 704, 705, 707}), // Mist
             Map.entry(800, new int[]{801, 802, 803, 804, 805}), // Serpent
-            Map.entry(900, new int[]{901, 902, 903, 904}), // Sound
+            Map.entry(900, new int[]{901, 902, 903}), // Sound (Final Score is hashira-exclusive)
             Map.entry(1000, new int[]{1001, 1002, 1003, 1004, 1005, 1006, 1007}), // Ice
             Map.entry(1100, new int[]{1101, 1102, 1103, 1105, 1106, 1107, 1108, 1109, 1110, 1114, 1116}), // Moon
             Map.entry(1200, new int[]{1201, 1202, 1203, 1204, 1205, 1206, 1207, 1208, 1209, 1210, 1211, 1212}), // Sun
@@ -203,7 +203,7 @@ public class BaseModStyleMapping {
 
         // Match base mod sword naming patterns
         if (itemId.contains("water")) return 100;
-        if (itemId.contains("beast")) return 200;
+        if (itemId.contains("beast") || itemId.contains("inosuke")) return 200;
         if (itemId.contains("thunder") || itemId.contains("zenitsu")) return 300;
         if (itemId.contains("flame") || itemId.contains("rengoku")) return 400;
         if (itemId.contains("wind") || itemId.contains("sanemi")) return 500;

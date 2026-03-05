@@ -15,10 +15,10 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
-import net.minecraft.resources.ResourceLocation;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.AttackDamageHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -28,7 +28,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraftforge.network.NetworkEvent;
 
 public class BreathingSwordSwingPacket {
@@ -54,21 +53,6 @@ public class BreathingSwordSwingPacket {
     private static final float KANROJI_BOX_SIZE = 10f; // Increased range for Kanroji's whip sword
     private static final float LOVE_BOX_SIZE = 8f;     // Love sword has slightly less range than Kanroji
     
-    /**
-     * Checks if the animation name (sent from client) contains "sword".
-     * This is used to determine if the player is performing a sword-related animation.
-     *
-     * Note: Animation data is client-side only, so we use the animationName
-     * that was captured client-side and sent with this packet.
-     *
-     * @return true if the animation name contains "sword"
-     */
-    public boolean geckolibSwordSlashAnimation() {
-        return this.animationName != null &&
-               !this.animationName.isEmpty() &&
-               this.animationName.toLowerCase().contains("sword");
-    }
-    
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context ctx = supplier.get();
         ctx.enqueueWork(() -> {
@@ -76,14 +60,28 @@ public class BreathingSwordSwingPacket {
             if (player == null) return;
 
             ItemStack heldItem = player.getItemInHand(InteractionHand.MAIN_HAND);
-            boolean fixBaseAnimation = BaseModBreathingExecutor.isBaseModNichirinSword(heldItem.getItem()) || geckolibSwordSlashAnimation();
-            if (!(heldItem.getItem() instanceof BreathingSwordItem) && !fixBaseAnimation) return;
+            boolean isCustomSword = heldItem.getItem() instanceof BreathingSwordItem;
+            boolean isBaseModNichirinSword = BaseModBreathingExecutor.isBaseModNichirinSword(heldItem.getItem());
+            if (!isCustomSword && !isBaseModNichirinSword) return;
+
+            // Base-mod training swords should only do normal melee damage, never form execution side effects.
+            if (isBaseModNichirinSword && TrainingSwordHelper.isTrainingSword(heldItem)) {
+                return;
+            }
 
             // Check if player has cool_time effect from KnY mod (prevents attacks)
             if (com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects.hasCoolTime(player)) {
                 if (Config.logDebug) {
                     Log.debug("Sword swing blocked by cool_time effect for player {}", player.getName().getString());
                 }
+                return;
+            }
+
+            // Broadcast slash rendering to nearby players so left-click slashes are visible in multiplayer.
+            broadcastSlashToNearbyPlayers(player, animationName);
+
+            // Base mod swords only need slash sync; AOE/combat state override is custom-sword behavior.
+            if (!isCustomSword) {
                 return;
             }
 
@@ -119,7 +117,19 @@ public class BreathingSwordSwingPacket {
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                     SoundSource.PLAYERS, 1.0F, 1.0F);
 
-            float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE);
+            boolean isOffhandSwing = animationName.equals("left_sword_to_left")
+                    || animationName.equals("left_sword_to_right")
+                    || animationName.equals("left_sword_overhead");
+            boolean isDoubleOverheadSwing = animationName.equals("double_sword_overhead");
+
+            float damage;
+            if (isDoubleOverheadSwing) {
+                damage = AttackDamageHelper.getAverageDualWieldDamage(player);
+            } else if (isOffhandSwing) {
+                damage = AttackDamageHelper.getAttackDamageForHand(player, InteractionHand.OFF_HAND);
+            } else {
+                damage = AttackDamageHelper.getAttackDamageForHand(player, InteractionHand.MAIN_HAND);
+            }
             for (LivingEntity target : targets) {
                 // Use smart targeting system to prevent friendly fire
                 if (!EnhancedLoveForms.isTargetable(player, target)) {
@@ -155,11 +165,57 @@ public class BreathingSwordSwingPacket {
         return true;
     }
 
+    private void broadcastSlashToNearbyPlayers(ServerPlayer attacker, String animName) {
+        if (!(attacker.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        String slashAnimation = normalizeSlashAnimation(animName);
+        MobSwordSlashPacket packet = new MobSwordSlashPacket(attacker.getUUID(), slashAnimation, 0);
+
+        for (ServerPlayer other : serverLevel.players()) {
+            if (other.equals(attacker)) {
+                continue;
+            }
+            if (other.distanceToSqr(attacker) <= (64.0 * 64.0)) {
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(packet, other);
+            }
+        }
+    }
+
+    private String normalizeSlashAnimation(String animName) {
+        if (animName == null || animName.isEmpty()) {
+            return "sword_to_left";
+        }
+
+        // Offhand dual-wield animations share the same slash path as their main-hand counterparts.
+        if (animName.equals("left_sword_to_left")) {
+            return "sword_to_left";
+        }
+        if (animName.equals("left_sword_to_right")) {
+            return "sword_to_right";
+        }
+        if (animName.equals("left_sword_overhead") || animName.equals("double_sword_overhead")) {
+            return "sword_overhead";
+        }
+        if (animName.equals("beast2")) {
+            return "sword_to_left";
+        }
+        if (animName.equals("breath_beast2")) {
+            return "sword_to_right";
+        }
+        return animName;
+    }
+
     /**
      * Spawn particle trail for Kanroji sword swing animations (sword_to_left and sword_to_right)
      */
     private void spawnKanrojiSwordTrailParticles(ServerPlayer player, ServerLevel serverLevel, String animName) {
-        // Only spawn particles for sword_to_left and sword_to_right animations
+        
+        if (com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.disableLoveM1TrailParticles)
+            return;
+        
+        // Only spawn particles for sword_to_left and sword_to_right and sword_overhead and kanroji_sword_overhead animations
         if (!animName.equals("sword_to_left") && !animName.equals("sword_to_right") && !animName.equals("sword_overhead") && !animName.equals("kanroji_sword_overhead") && !animName.equals("sword_overhead_kanroji") && !animName.equals("sword_rotate")) {
             return;
         }

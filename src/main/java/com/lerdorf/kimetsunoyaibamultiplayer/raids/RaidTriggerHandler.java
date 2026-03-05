@@ -47,7 +47,8 @@ public class RaidTriggerHandler {
         if (!hasMuzan && !hasUbuyashiki) return;
 
         // Check if player is already near an active raid - don't trigger new raids
-        if (RaidRegistry.hasRaidNearby(level, player.blockPosition(), RAID_PROXIMITY_CHECK_RADIUS)) {
+        if (RaidRegistry.hasRaidNearby(level, player.blockPosition(), RAID_PROXIMITY_CHECK_RADIUS)
+            || SurvivalRaidRegistry.hasRaidNearby(level, player.blockPosition(), RAID_PROXIMITY_CHECK_RADIUS)) {
             Log.debug("Player is near active raid, not triggering new raid");
             return;
         }
@@ -111,6 +112,7 @@ public class RaidTriggerHandler {
         // Tick all raids in all dimensions
         for (ServerLevel level : event.getServer().getAllLevels()) {
             RaidRegistry.tickAll(level);
+            SurvivalRaidRegistry.tickAll(level);
         }
     }
 
@@ -124,6 +126,8 @@ public class RaidTriggerHandler {
 
         // Notify raid registry of entity death
         RaidRegistry.get(level).onEntityKilled(entity.getUUID());
+        SurvivalRaidRegistry.onEntityKilled(level, entity.getUUID());
+        FinalSelectionProcedure.onEntityKilledStatic(entity.getUUID());
     }
 
     /**
@@ -144,7 +148,8 @@ public class RaidTriggerHandler {
      */
     public static boolean isPlayerNearRaid(Player player) {
         if (!(player.level() instanceof ServerLevel level)) return false;
-        return RaidRegistry.hasRaidNearby(level, player.blockPosition(), RAID_PROXIMITY_CHECK_RADIUS);
+        return RaidRegistry.hasRaidNearby(level, player.blockPosition(), RAID_PROXIMITY_CHECK_RADIUS)
+            || SurvivalRaidRegistry.hasRaidNearby(level, player.blockPosition(), RAID_PROXIMITY_CHECK_RADIUS);
     }
 
     /**
@@ -153,6 +158,8 @@ public class RaidTriggerHandler {
      */
     public static boolean isRaidEntity(LivingEntity entity) {
         if (!(entity.level() instanceof ServerLevel level)) return false;
-        return RaidRegistry.get(level).isRaidEntity(entity.getUUID());
+        return RaidRegistry.get(level).isRaidEntity(entity.getUUID())
+            || SurvivalRaidRegistry.isRaidEntity(level, entity.getUUID())
+            || FinalSelectionProcedure.isRaidEntityStatic(entity.getUUID());
     }
 }

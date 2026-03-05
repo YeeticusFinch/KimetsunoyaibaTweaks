@@ -28,8 +28,19 @@ public class TrainingSwordHelper {
     private static final UUID TRAINING_SWORD_DAMAGE_MODIFIER_UUID =
         UUID.fromString("a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d");
 
-    /** Damage reduction amount for training swords (-1 damage) */
-    private static final double TRAINING_SWORD_DAMAGE_REDUCTION = -1.0;
+    /** UUID for the training sword attack speed modifier */
+    private static final UUID TRAINING_SWORD_ATTACK_SPEED_MODIFIER_UUID =
+        UUID.fromString("b2c3d4e5-f6a1-4b5c-8d9e-1f2a3b4c5d6e");
+
+    /** Training swords should deal 3.5 total attack damage */
+    private static final double TRAINING_SWORD_TARGET_ATTACK_DAMAGE = 3.5;
+
+    /** Player base attack damage is 1.0, so item modifier should be 2.5 to total 3.5 */
+    private static final double TRAINING_SWORD_ATTACK_DAMAGE_MODIFIER =
+        TRAINING_SWORD_TARGET_ATTACK_DAMAGE - 1.0;
+
+    /** Preserve standard sword attack speed profile when overriding item attributes */
+    private static final double TRAINING_SWORD_ATTACK_SPEED_MODIFIER = -2.4;
 
     /**
      * Checks if the given ItemStack is a training sword.
@@ -81,24 +92,15 @@ public class TrainingSwordHelper {
         CompoundTag tag = stack.getOrCreateTag();
         tag.putBoolean(TRAINING_SWORD_TAG, true);
 
-        // Add damage reduction attribute modifier (-1 damage)
-        stack.addAttributeModifier(
-            Attributes.ATTACK_DAMAGE,
-            new AttributeModifier(
-                TRAINING_SWORD_DAMAGE_MODIFIER_UUID,
-                "Training sword damage reduction",
-                TRAINING_SWORD_DAMAGE_REDUCTION,
-                AttributeModifier.Operation.ADDITION
-            ),
-            EquipmentSlot.MAINHAND
-        );
+        // Apply fixed training combat profile (handles legacy/broken modifiers as well).
+        ensureTrainingCombatProfile(stack);
 
         // Modify the display name (use withStyle to prevent italic text)
         String currentName = stack.getHoverName().getString();
         String newName = generateTrainingSwordName(currentName);
         stack.setHoverName(Component.literal(newName).withStyle(style -> style.withItalic(false)));
 
-        Log.debug("Converted sword to training sword: " + currentName + " -> " + newName + " (damage reduced by 1)");
+        Log.debug("Converted sword to training sword: " + currentName + " -> " + newName + " (damage set to 3.5)");
         return true;
     }
 
@@ -190,6 +192,8 @@ public class TrainingSwordHelper {
                     Log.debug("Reset base mod sword to first form: " + firstForm);
                 }
             }
+
+            sanitizeBaseModTrainingSwordState(player, stack);
         }
 
         // Reset variation index for both sword types
@@ -224,7 +228,7 @@ public class TrainingSwordHelper {
         if (tag != null) {
             tag.remove(TRAINING_SWORD_TAG);
 
-            // Remove the damage reduction attribute modifier
+            // Remove the training sword combat profile modifiers
             // The attribute modifiers are stored in the "AttributeModifiers" tag
             if (tag.contains("AttributeModifiers")) {
                 net.minecraft.nbt.ListTag modifiers = tag.getList("AttributeModifiers", 10); // 10 = CompoundTag
@@ -232,9 +236,10 @@ public class TrainingSwordHelper {
                     CompoundTag modifier = modifiers.getCompound(i);
                     if (modifier.hasUUID("UUID")) {
                         UUID modifierUUID = modifier.getUUID("UUID");
-                        if (TRAINING_SWORD_DAMAGE_MODIFIER_UUID.equals(modifierUUID)) {
+                        if (TRAINING_SWORD_DAMAGE_MODIFIER_UUID.equals(modifierUUID) ||
+                            TRAINING_SWORD_ATTACK_SPEED_MODIFIER_UUID.equals(modifierUUID)) {
                             modifiers.remove(i);
-                            Log.debug("Removed training sword damage modifier");
+                            Log.debug("Removed training sword attribute modifier");
                         }
                     }
                 }
@@ -251,6 +256,59 @@ public class TrainingSwordHelper {
 
         Log.debug("Removed training sword tag from item");
         return true;
+    }
+
+    /**
+     * Ensure the training sword has the expected damage/speed attribute profile.
+     * This also fixes legacy broken swords that only had a -1 damage modifier.
+     */
+    public static void ensureTrainingCombatProfile(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return;
+        }
+
+        // Remove any existing training modifiers first to avoid duplicates/mismatched legacy values.
+        CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains("AttributeModifiers")) {
+            net.minecraft.nbt.ListTag modifiers = tag.getList("AttributeModifiers", 10); // 10 = CompoundTag
+            for (int i = modifiers.size() - 1; i >= 0; i--) {
+                CompoundTag modifier = modifiers.getCompound(i);
+                if (modifier.hasUUID("UUID")) {
+                    UUID modifierUUID = modifier.getUUID("UUID");
+                    if (TRAINING_SWORD_DAMAGE_MODIFIER_UUID.equals(modifierUUID) ||
+                        TRAINING_SWORD_ATTACK_SPEED_MODIFIER_UUID.equals(modifierUUID)) {
+                        modifiers.remove(i);
+                    }
+                }
+            }
+            if (modifiers.isEmpty()) {
+                tag.remove("AttributeModifiers");
+            }
+        }
+
+        // Add explicit attack damage modifier (2.5 -> total 3.5 damage with player base damage).
+        stack.addAttributeModifier(
+            Attributes.ATTACK_DAMAGE,
+            new AttributeModifier(
+                TRAINING_SWORD_DAMAGE_MODIFIER_UUID,
+                "Training sword attack damage",
+                TRAINING_SWORD_ATTACK_DAMAGE_MODIFIER,
+                AttributeModifier.Operation.ADDITION
+            ),
+            EquipmentSlot.MAINHAND
+        );
+
+        // Add explicit attack speed so overriding item attributes doesn't remove sword swing timing.
+        stack.addAttributeModifier(
+            Attributes.ATTACK_SPEED,
+            new AttributeModifier(
+                TRAINING_SWORD_ATTACK_SPEED_MODIFIER_UUID,
+                "Training sword attack speed",
+                TRAINING_SWORD_ATTACK_SPEED_MODIFIER,
+                AttributeModifier.Operation.ADDITION
+            ),
+            EquipmentSlot.MAINHAND
+        );
     }
 
     /**
@@ -376,5 +434,50 @@ public class TrainingSwordHelper {
         return itemIdString.contains("nichirinsword_black") ||
                itemIdString.contains("black_nichirin") ||
                (itemIdString.contains("black") && itemIdString.contains("sword"));
+    }
+
+    /**
+     * Clears base-mod runtime tags that can force unintended form execution.
+     * This is only for base-mod training swords (not custom BreathingSwordItem).
+     */
+    public static void sanitizeBaseModTrainingSwordState(Player player, ItemStack stack) {
+        if (player == null || stack.isEmpty() || stack.getItem() instanceof BreathingSwordItem) {
+            return;
+        }
+
+        CompoundTag swordTag = stack.getTag();
+        if (swordTag != null && swordTag.contains("select")) {
+            swordTag.remove("select");
+        }
+
+        CompoundTag playerTag = player.getPersistentData();
+        if (playerTag.contains("skill")) {
+            playerTag.remove("skill");
+        }
+
+        // Keep normal melee behavior while preventing carried-over ability state.
+        playerTag.putBoolean("guard", false);
+        playerTag.putBoolean("attack", false);
+        playerTag.putDouble("Damage", 0.0);
+    }
+
+    /**
+     * Some base-mod left-click states temporarily set breathes to style-specific x20 values
+     * (e.g. 620 for stone). These are transient combat states, not form selection.
+     * Training-sword failsafe should not force-reset during these transient states.
+     */
+    public static boolean isTransientBaseModCombatBreathes(double currentFormId, double expectedFirstFormId) {
+        if (currentFormId <= 0 || expectedFirstFormId <= 0) {
+            return false;
+        }
+
+        int current = (int) currentFormId;
+        int expected = (int) expectedFirstFormId;
+
+        int currentStyle = (current / 100) * 100;
+        int expectedStyle = (expected / 100) * 100;
+
+        // Only treat as transient if it's within the same style and matches the known x20 combat slot.
+        return currentStyle == expectedStyle && (current % 100) == 20;
     }
 }

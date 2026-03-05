@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.DualWieldHelper;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -15,6 +16,8 @@ public class BreathingSwordAnimationHandler {
     private static final Random RANDOM = new Random();
     private static long lastAttackTime = 0;
     private static boolean lastWasLeft = false;
+    private static boolean useOffhandAnimationNext = false;
+    private static final int DUAL_WIELD_DOUBLE_OVERHEAD_CHANCE_PERCENT = 10;
 
     /**
      * Play attack animation when player attacks with breathing sword
@@ -55,9 +58,39 @@ public class BreathingSwordAnimationHandler {
                 lastAttackTime = currentTime;
 
                 String animationName;
+                boolean isDualWielding = DualWieldHelper.isDualWielding(player);
 
+                // Dual-wielding beast swords: alternate between main-hand and left-hand swing animations.
+                if (isDualWielding) {
+                    // Occasionally perform a double overhead slash that uses both swords.
+                    if (RANDOM.nextInt(100) < DUAL_WIELD_DOUBLE_OVERHEAD_CHANCE_PERCENT) {
+                        animationName = "double_sword_overhead";
+                    } else {
+                        boolean useOffhand = useOffhandAnimationNext;
+                        int roll = RANDOM.nextInt(3); // 0=left, 1=right, 2=overhead
+                        if (useOffhand) {
+                            if (roll == 0) {
+                                animationName = "left_sword_to_left";
+                            } else if (roll == 1) {
+                                animationName = "left_sword_to_right";
+                            } else {
+                                animationName = "left_sword_overhead";
+                            }
+                        } else {
+                            if (roll == 0) {
+                                animationName = "sword_to_left";
+                            } else if (roll == 1) {
+                                animationName = "sword_to_right";
+                            } else {
+                                animationName = "sword_overhead";
+                            }
+                        }
+                        // Alternate hand usage on each normal dual-wield swing.
+                        useOffhandAnimationNext = !useOffhandAnimationNext;
+                    }
+                }
                 // Special handling for Kanroji/Love sword - uses whip-style attack animation set
-                if (mainHand.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated ||
+                else if (mainHand.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated ||
                     mainHand.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated) {
                     int roll = RANDOM.nextInt(100);
                     if (roll < 10) {
@@ -101,6 +134,16 @@ public class BreathingSwordAnimationHandler {
                 com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper.playAnimation(
                     player, animationName, maxDurationTicks
                 );
+
+                // Make the swung hand match the selected animation for first-person and third-person feedback.
+                if (animationName.equals("left_sword_to_left")
+                        || animationName.equals("left_sword_to_right")
+                        || animationName.equals("left_sword_overhead")) {
+                    player.swing(InteractionHand.OFF_HAND, true);
+                } else if (animationName.equals("double_sword_overhead")) {
+                    player.swing(InteractionHand.MAIN_HAND, true);
+                    player.swing(InteractionHand.OFF_HAND, true);
+                }
 
                 if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
                     String swordType = isBaseModSword ? "base mod sword (fallback)" : "our sword";

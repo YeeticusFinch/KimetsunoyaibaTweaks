@@ -4,8 +4,11 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -34,6 +37,11 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class DemonSlayerAggroHandler {
     private static final String DEMON_AGGRO_ADDED_TAG = "knymp_added_demon_aggro_goal";
+    private static final String DEMON_TARGET_SLAYER_GOAL_TAG = "knymp_added_demon_target_slayer_goal";
+    private static final TagKey<EntityType<?>> FORGE_WOMAN_TAG = TagKey.create(
+        Registries.ENTITY_TYPE,
+        ResourceLocation.fromNamespaceAndPath("forge", "woman")
+    );
 
     // How often to scan for demons (in ticks). 20 ticks = 1 second
     private static final int SCAN_INTERVAL = 20;
@@ -55,10 +63,18 @@ public class DemonSlayerAggroHandler {
             return;
         }
 
-        if (!isDemonSlayerOrHashira(mob)) {
+        if (isDemonSlayerOrHashira(mob)) {
+            addSlayerAggroGoals(mob);
             return;
         }
 
+        // Demon-tagged entities should automatically target our DemonSlayerEntity.
+        if (EntityTagHelper.isDemon(mob)) {
+            addDemonVsSlayerGoal(mob);
+        }
+    }
+
+    private static void addSlayerAggroGoals(Mob mob) {
         CompoundTag data = mob.getPersistentData();
         if (data.getBoolean(DEMON_AGGRO_ADDED_TAG)) {
             return;
@@ -89,6 +105,25 @@ public class DemonSlayerAggroHandler {
         Log.debug("[DemonSlayerAggro] Added demon targeting goals to: " + mob.getType().getDescriptionId());
     }
 
+    private static void addDemonVsSlayerGoal(Mob mob) {
+        CompoundTag data = mob.getPersistentData();
+        if (data.getBoolean(DEMON_TARGET_SLAYER_GOAL_TAG)) {
+            return;
+        }
+
+        mob.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(
+            mob,
+            DemonSlayerEntity.class,
+            10,
+            true,
+            false,
+            target -> canDemonTargetSlayer(mob, target)
+        ));
+
+        data.putBoolean(DEMON_TARGET_SLAYER_GOAL_TAG, true);
+        Log.debug("[DemonSlayerAggro] Added demon->slayer targeting goal to: {}", mob.getType().getDescriptionId());
+    }
+
     /**
      * Periodically scan for nearby demons and set as target if needed.
      * This ensures targeting works continuously, not just relying on AI goals.
@@ -103,11 +138,18 @@ public class DemonSlayerAggroHandler {
             return;
         }
 
-        // Only process demon slayers and hashira
-        if (!isDemonSlayerOrHashira(mob)) {
+        if (isDemonSlayerOrHashira(mob)) {
+            tickSlayerAggro(mob);
             return;
         }
 
+        // Keep demon-tagged mobs focused on nearby DemonSlayerEntity targets.
+        if (EntityTagHelper.isDemon(mob)) {
+            tickDemonVsSlayerAggro(mob);
+        }
+    }
+
+    private static void tickSlayerAggro(Mob mob) {
         // Only scan periodically to reduce performance impact
         if (mob.tickCount % SCAN_INTERVAL != 0) {
             return;
@@ -125,6 +167,24 @@ public class DemonSlayerAggroHandler {
             mob.setTarget(nearestDemon);
             Log.debug("[DemonSlayerAggro] " + mob.getType().getDescriptionId() +
                 " targeting demon: " + nearestDemon.getType().getDescriptionId());
+        }
+    }
+
+    private static void tickDemonVsSlayerAggro(Mob mob) {
+        if (mob.tickCount % SCAN_INTERVAL != 0) {
+            return;
+        }
+
+        LivingEntity currentTarget = mob.getTarget();
+        if (currentTarget != null && currentTarget.isAlive() && canDemonTargetSlayer(mob, currentTarget)) {
+            return;
+        }
+
+        LivingEntity nearestSlayer = findNearestTargetableDemonSlayer(mob);
+        if (nearestSlayer != null) {
+            mob.setTarget(nearestSlayer);
+            Log.debug("[DemonSlayerAggro] {} targeting demon slayer: {}",
+                mob.getType().getDescriptionId(), nearestSlayer.getType().getDescriptionId());
         }
     }
 
@@ -150,11 +210,35 @@ public class DemonSlayerAggroHandler {
             .orElse(null);
     }
 
+    private static LivingEntity findNearestTargetableDemonSlayer(Mob demon) {
+        AABB searchBox = demon.getBoundingBox().inflate(SCAN_RANGE);
+
+        List<DemonSlayerEntity> nearbySlayers = demon.level().getEntitiesOfClass(
+            DemonSlayerEntity.class,
+            searchBox,
+            slayer -> slayer != demon && slayer.isAlive() && canDemonTargetSlayer(demon, slayer)
+        );
+
+        if (nearbySlayers.isEmpty()) {
+            return null;
+        }
+
+        return nearbySlayers.stream()
+            .min(Comparator.comparingDouble(e -> demon.distanceToSqr(e)))
+            .orElse(null);
+    }
+
     /**
      * Check if an entity is a demon slayer or hashira.
      * Includes both tag-based checks and class-based checks.
      */
     private static boolean isDemonSlayerOrHashira(Mob mob) {
+        // Ubuyashiki children intentionally share the demon_slayer tag for systems,
+        // but should remain passive and never run slayer aggro logic.
+        if (mob instanceof UbuyashikiKidEntity) {
+            return false;
+        }
+
         // Check our custom tags
         if (EntityTagHelper.isDemonSlayer(mob) || EntityTagHelper.isHashira(mob)) {
             return true;
@@ -192,6 +276,64 @@ public class DemonSlayerAggroHandler {
         }
 
         return false;
+    }
+
+    /**
+     * Immediately retarget nearby demon slayers to attack an aggressor.
+     */
+    public static void alertNearbySlayersToAttacker(LivingEntity protectedEntity, LivingEntity attacker, double range) {
+        if (protectedEntity == null || attacker == null || !attacker.isAlive() || protectedEntity.level().isClientSide()) {
+            return;
+        }
+
+        AABB searchBox = protectedEntity.getBoundingBox().inflate(range);
+        List<Mob> nearby = protectedEntity.level().getEntitiesOfClass(
+            Mob.class,
+            searchBox,
+            mob -> mob.isAlive() && mob != protectedEntity && mob != attacker && isDemonSlayerOrHashira(mob)
+        );
+
+        for (Mob mob : nearby) {
+            mob.setTarget(attacker);
+            mob.setLastHurtByMob(attacker);
+        }
+    }
+
+    private static boolean canDemonTargetSlayer(Mob demon, LivingEntity target) {
+        if (!(target instanceof DemonSlayerEntity) || !target.isAlive()) {
+            return false;
+        }
+
+        ResourceLocation demonId = EntityTagHelper.getEntityTypeId(demon);
+        String path = demonId != null ? demonId.getPath().toLowerCase() : "";
+
+        // Akaza variants never target forge:woman entities.
+        if (path.contains("akaza")) {
+            return !isWoman(target);
+        }
+
+        // Doma/Douma variants only target forge:woman unless attacked first.
+        if (path.contains("doma") || path.contains("douma")) {
+            if (isWoman(target)) {
+                return true;
+            }
+            return wasRecentlyAttackedBy(demon, target);
+        }
+
+        return true;
+    }
+
+    private static boolean isWoman(LivingEntity entity) {
+        return entity.getType().is(FORGE_WOMAN_TAG);
+    }
+
+    private static boolean wasRecentlyAttackedBy(Mob demon, LivingEntity attacker) {
+        LivingEntity lastHurtBy = demon.getLastHurtByMob();
+        if (lastHurtBy != attacker) {
+            return false;
+        }
+        int ticksSinceAttack = demon.tickCount - demon.getLastHurtByMobTimestamp();
+        return ticksSinceAttack >= 0 && ticksSinceAttack <= 200;
     }
 
     /**

@@ -123,7 +123,13 @@ public class NichirinSwordLoveAnimated extends BreathingSwordItem implements Geo
                 com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext.getCurrentEntity();
 
             if (currentEntity != null && !(currentEntity instanceof net.minecraft.world.entity.player.Player)) {
-                String entityAnim = com.lerdorf.kimetsunoyaibamultiplayer.client.EntitySwordAnimationCache.getAnimation(currentEntity);
+                String entityAnim;
+                if (!com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInCombat(currentEntity)
+                    && !com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInSheathingTransition(currentEntity)) {
+                    entityAnim = "sheath";
+                } else {
+                    entityAnim = com.lerdorf.kimetsunoyaibamultiplayer.client.EntitySwordAnimationCache.getAnimation(currentEntity);
+                }
                 boolean isLooping = entityAnim.equals("idle") || entityAnim.equals("walk") ||
                                    entityAnim.equals("sprint") || entityAnim.equals("sheath");
                 if (isLooping) {

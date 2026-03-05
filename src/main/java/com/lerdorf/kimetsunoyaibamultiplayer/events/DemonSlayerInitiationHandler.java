@@ -3,7 +3,6 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,12 +17,14 @@ import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * When disableBaseModDemonSlayerInitiation is enabled, this handler:
  * 1. Removes uniform items and nichirinsword after they're given
  * 2. Prevents kasugai_crow from spawning
- * 3. Revokes the mizunoto advancement
+ * 3. Unregisters base advancement handlers that auto-grant rank progression
  *
  * We can't prevent the base mod's event handlers from firing, but we can
  * undo what they did immediately after.
@@ -47,9 +48,6 @@ public class DemonSlayerInitiationHandler {
     // Track players who need crow spawning blocked (player UUID -> tick when demon_slayer_corps was granted)
     // This is separate from pendingItemRemoval because we need to block crows for the full 10 ticks
     private static final Map<UUID, Long> pendingCrowBlock = new ConcurrentHashMap<>();
-
-    // Track players who need mizunoto revoked
-    private static final Set<UUID> blockMizunoto = ConcurrentHashMap.newKeySet();
 
     // Track recently spawned crows that should be removed (entity ID -> spawn tick)
     private static final Map<Integer, Long> pendingCrowRemoval = new ConcurrentHashMap<>();
@@ -66,13 +64,22 @@ public class DemonSlayerInitiationHandler {
     // Base mod entity type
     private static final String KASUGAI_CROW = "kimetsunoyaiba:kasugai_crow";
 
-    // Base mod advancements
+    // Base mod advancement that triggers initiation rewards
     private static final ResourceLocation DEMON_SLAYER_CORPS = ResourceLocation.parse("kimetsunoyaiba:demon_slayer_corps");
-    private static final ResourceLocation MIZUNOTO = ResourceLocation.parse("kimetsunoyaiba:mizunoto");
+    private static final ResourceLocation KINOE = ResourceLocation.parse("kimetsunoyaiba:kinoe");
+    private static final ResourceLocation KILL_12_MOONS = ResourceLocation.parse("kimetsunoyaiba:kill_12_moons");
+    private static boolean baseAdvancementHandlersDisabled = false;
+    private static final String[] BASE_ADVANCEMENT_HANDLER_CLASSES = new String[] {
+        "net.mcreator.kimetsunoyaiba.procedures.SupplyProcedure",
+        "net.mcreator.kimetsunoyaiba.procedures.AdvancementRewardProcedure",
+        "net.mcreator.kimetsunoyaiba.procedures.CheckAdvancementDemonProcedure",
+        "net.mcreator.kimetsunoyaiba.procedures.Advanvement1Procedure",
+        "net.mcreator.kimetsunoyaiba.procedures.ColorChangeProcedure"
+    };
 
     /**
      * Listen for advancement grants. When demon_slayer_corps is granted and config is enabled,
-     * schedule cleanup to remove the items and block mizunoto.
+     * schedule cleanup to remove base initiation rewards.
      *
      * IMPORTANT: Uses HIGHEST priority to run BEFORE the base mod's handlers.
      * This ensures we add the player to pendingCrowBlock BEFORE the base mod spawns the crow.
@@ -100,38 +107,29 @@ public class DemonSlayerInitiationHandler {
                 return;
             }
 
-            // Get advancements from the manager to compare
-            Advancement demonSlayerCorpsAdv = level.getServer().getAdvancements().getAdvancement(DEMON_SLAYER_CORPS);
-            Advancement mizunotoAdv = level.getServer().getAdvancements().getAdvancement(MIZUNOTO);
+            ResourceLocation advancementId = eventAdvancement.getId();
+            if (advancementId == null) {
+                return;
+            }
 
-            // When demon_slayer_corps is granted, schedule item removal and block mizunoto
-            if (demonSlayerCorpsAdv != null && eventAdvancement.equals(demonSlayerCorpsAdv)) {
+            // When demon_slayer_corps is granted, schedule item/crow cleanup.
+            if (advancementId.equals(DEMON_SLAYER_CORPS)) {
                 long currentTick = serverPlayer.level().getGameTime();
                 pendingItemRemoval.put(player.getUUID(), currentTick);
                 pendingCrowBlock.put(player.getUUID(), currentTick);
-                blockMizunoto.add(player.getUUID());
 
                 if (CustomProgressionConfig.enableDebugLogging.get()) {
                     System.out.println("[KnY-MP Progression] Player " + player.getName().getString() +
-                        " earned demon_slayer_corps - scheduling item removal and blocking crows/mizunoto for " + BLOCKING_DURATION_TICKS + " ticks");
+                        " earned demon_slayer_corps - scheduling item removal and crow blocking for " + BLOCKING_DURATION_TICKS + " ticks");
                 }
             }
 
-            // When mizunoto is granted and this player is in blockMizunoto, revoke it immediately
-            if (mizunotoAdv != null && eventAdvancement.equals(mizunotoAdv) && blockMizunoto.contains(player.getUUID())) {
-                // Schedule revocation for next tick (can't revoke in same event)
-                serverPlayer.getServer().execute(() -> {
-                    try {
-                        revokeAdvancement(serverPlayer, MIZUNOTO);
-                        if (CustomProgressionConfig.enableDebugLogging.get()) {
-                            System.out.println("[KnY-MP Progression] Revoked mizunoto advancement from " +
-                                player.getName().getString());
-                        }
-                    } catch (Exception e) {
-                        System.err.println("[KnY-MP Progression] Error revoking mizunoto: " + e.getMessage());
-                    }
-                });
+            // If kizuki progression goals fire first, ensure demon_slayer_corps is awarded so
+            // custom initiation flow still executes.
+            if (advancementId.equals(KINOE) || advancementId.equals(KILL_12_MOONS)) {
+                ensureDemonSlayerCorpsAdvancement(serverPlayer);
             }
+
         } catch (Exception e) {
             // CRITICAL: Never use log4j in exception handlers - causes LinkageError crashes
             System.err.println("[KnY-MP Progression] Error in onAdvancement: " + e.getMessage());
@@ -204,12 +202,16 @@ public class DemonSlayerInitiationHandler {
                 pendingItemRemoval.clear();
                 pendingCrowBlock.clear();
                 pendingCrowRemoval.clear();
+                baseAdvancementHandlersDisabled = false;
                 return;
             }
 
             if (event.getServer() == null) {
                 return;
             }
+
+            // Disable the base mod's advancement handlers once per server run when enabled.
+            disableBaseAdvancementHandlers();
 
             long currentTick = event.getServer().overworld().getGameTime();
 
@@ -227,11 +229,6 @@ public class DemonSlayerInitiationHandler {
 
                     // Also try to remove any crows that slipped through
                     removeRecentlyTamedCrows(player);
-
-                    if (ticksSinceGrant >= 1) {
-                        // Revoke mizunoto advancement
-                        revokeAdvancement(player, MIZUNOTO);
-                    }
 
                     if (CustomProgressionConfig.enableDebugLogging.get() && itemsRemoved > 0) {
                         System.out.println("[KnY-MP Progression] Tick " + ticksSinceGrant + "/" + BLOCKING_DURATION_TICKS +
@@ -279,8 +276,6 @@ public class DemonSlayerInitiationHandler {
                 }
             }
 
-            // Clean up blockMizunoto after 10 seconds (200 ticks) to prevent memory leak
-            // Note: For a full implementation, we'd track the grant time per player
         } catch (Exception e) {
             // CRITICAL: Never use log4j in exception handlers - causes LinkageError crashes
             // Always use System.err.println() instead
@@ -370,6 +365,17 @@ public class DemonSlayerInitiationHandler {
                 }
 
                 System.out.println("[KnY-MP Progression] Granted training sword to " + player.getName().getString());
+
+                // Also grant Ubuyashiki's Invitation to guide them to the Toril Gate
+                try {
+                    ItemStack invitation = new ItemStack(com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems.UBUYASHIKI_INVITATION.get());
+                    if (!player.getInventory().add(invitation)) {
+                        player.drop(invitation, false);
+                    }
+                    System.out.println("[KnY-MP Progression] Granted Ubuyashiki's Invitation to " + player.getName().getString());
+                } catch (Exception ex) {
+                    System.err.println("[KnY-MP Progression] Failed to grant Ubuyashiki's Invitation: " + ex.getMessage());
+                }
             } else {
                 System.err.println("[KnY-MP Progression] Failed to create training sword for " + player.getName().getString());
                 System.err.println("[KnY-MP Progression] ItemStack: " + trainingSword + ", Item: " + trainingSword.getItem());
@@ -381,21 +387,62 @@ public class DemonSlayerInitiationHandler {
         }
     }
 
-    /**
-     * Revoke an advancement from a player.
-     */
-    private static void revokeAdvancement(ServerPlayer player, ResourceLocation advancementId) {
-        if (player.getServer() == null) return;
+    private static void disableBaseAdvancementHandlers() {
+        if (baseAdvancementHandlersDisabled) {
+            return;
+        }
 
-        Advancement advancement = player.server.getAdvancements().getAdvancement(advancementId);
-        if (advancement == null) return;
+        int disabledCount = 0;
 
-        AdvancementProgress progress = player.getAdvancements().getOrStartProgress(advancement);
-        if (progress.isDone()) {
-            // Revoke all criteria
-            for (String criterion : progress.getCompletedCriteria()) {
-                player.getAdvancements().revoke(advancement, criterion);
+        for (String className : BASE_ADVANCEMENT_HANDLER_CLASSES) {
+            try {
+                Class<?> clazz = Class.forName(className);
+                MinecraftForge.EVENT_BUS.unregister(clazz);
+                disabledCount++;
+
+                if (CustomProgressionConfig.enableDebugLogging.get()) {
+                    System.out.println("[KnY-MP Progression] Disabled base advancement handler: " + className);
+                }
+            } catch (ClassNotFoundException ignored) {
+                // Different base-mod version; ignore missing classes.
+            } catch (Exception e) {
+                System.err.println("[KnY-MP Progression] Failed to disable base advancement handler '" +
+                    className + "': " + e.getMessage());
             }
+        }
+
+        baseAdvancementHandlersDisabled = true;
+
+        if (CustomProgressionConfig.enableDebugLogging.get()) {
+            System.out.println("[KnY-MP Progression] Base advancement handlers disabled: " + disabledCount);
+        }
+    }
+
+    private static void ensureDemonSlayerCorpsAdvancement(ServerPlayer player) {
+        if (player.getServer() == null) {
+            return;
+        }
+
+        Advancement demonSlayerCorpsAdv = player.server.getAdvancements().getAdvancement(DEMON_SLAYER_CORPS);
+        if (demonSlayerCorpsAdv == null) {
+            return;
+        }
+
+        if (player.getAdvancements().getOrStartProgress(demonSlayerCorpsAdv).isDone()) {
+            return;
+        }
+
+        List<String> remainingCriteria = new ArrayList<String>();
+        for (String criterion : player.getAdvancements().getOrStartProgress(demonSlayerCorpsAdv).getRemainingCriteria()) {
+            remainingCriteria.add(criterion);
+        }
+        for (String criterion : remainingCriteria) {
+            player.getAdvancements().award(demonSlayerCorpsAdv, criterion);
+        }
+
+        if (CustomProgressionConfig.enableDebugLogging.get()) {
+            System.out.println("[KnY-MP Progression] Awarded demon_slayer_corps to " +
+                player.getName().getString() + " after kizuki progression advancement");
         }
     }
 
@@ -405,7 +452,6 @@ public class DemonSlayerInitiationHandler {
     public static void onPlayerLogout(UUID playerUuid) {
         pendingItemRemoval.remove(playerUuid);
         pendingCrowBlock.remove(playerUuid);
-        blockMizunoto.remove(playerUuid);
     }
 
     /**

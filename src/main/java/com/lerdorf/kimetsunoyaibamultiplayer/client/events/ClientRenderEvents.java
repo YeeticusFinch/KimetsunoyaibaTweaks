@@ -86,11 +86,11 @@ public class ClientRenderEvents {
                 worldPos = BonePositionTracker.calculateRawVerticalPosition(req.entity, progress, req);
                 rotation = BonePositionTracker.calculateRawVerticalRotation(req.entity, progress, req);
             } else if (req.isHorizontal) {
-                worldPos = BonePositionTracker.calculateHorizontalPosition(req.entity, progress, req.leftToRight);
-                rotation = BonePositionTracker.calculateHorizontalRotation(req.entity, progress, req.leftToRight);
+                worldPos = BonePositionTracker.calculateHorizontalPosition(req.entity, progress, req.leftToRight, req.leftHand);
+                rotation = BonePositionTracker.calculateHorizontalRotation(req.entity, progress, req.leftToRight, req.leftHand);
             } else if (req.isVertical) {
-                worldPos = BonePositionTracker.calculateVerticalPosition(req.entity, progress, req.upward);
-                rotation = BonePositionTracker.calculateVerticalRotation(req.entity, progress, req.upward);
+                worldPos = BonePositionTracker.calculateVerticalPosition(req.entity, progress, req.upward, req.leftHand);
+                rotation = BonePositionTracker.calculateVerticalRotation(req.entity, progress, req.upward, req.leftHand);
             } else if (req.isSpin) {
                 worldPos = BonePositionTracker.calculateSpinPosition(req.entity, progress);
                 rotation = BonePositionTracker.calculateSpinRotation(req.entity, progress);
@@ -245,8 +245,6 @@ public class ClientRenderEvents {
     
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
-        if (event.getHand() != InteractionHand.MAIN_HAND) return;
-
         if (!Config.customFirstPersonSwingEnabled) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -269,11 +267,37 @@ public class ClientRenderEvents {
                 com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
                         .getCurrentAnimation();
 
-        // No animation → do nothing
-        if (currentAnimation == null ||
-            !com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes
-                    .hasKeyframes(currentAnimation)) {
+        // No tracked animation -> let vanilla render.
+        if (currentAnimation == null) {
             return;
+        }
+
+        // Route left_sword_* animations to offhand render.
+        // double_sword_overhead renders custom animation on BOTH hands.
+        boolean shouldRenderOffhandOnly = com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
+                .isOffhandAnimation(currentAnimation);
+        boolean isDoubleOverhead = currentAnimation.equals("double_sword_overhead");
+
+        // Determine the animation used for this hand.
+        // During offhand-only swings, main hand plays sword_none to stay visible and stable.
+        String animationForThisHand = currentAnimation;
+        if (shouldRenderOffhandOnly && event.getHand() == InteractionHand.MAIN_HAND) {
+            animationForThisHand = "sword_none";
+        }
+
+        // No keyframes for this hand's animation -> fall back to vanilla.
+        if (animationForThisHand == null ||
+            !com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonSwordKeyframes
+                    .hasKeyframes(animationForThisHand)) {
+            return;
+        }
+
+        if (!isDoubleOverhead) {
+            if (shouldRenderOffhandOnly) {
+                if (event.getHand() != InteractionHand.OFF_HAND && event.getHand() != InteractionHand.MAIN_HAND) return;
+            } else if (event.getHand() != InteractionHand.MAIN_HAND) {
+                return;
+            }
         }
 
         event.setCanceled(true);
@@ -286,21 +310,28 @@ public class ClientRenderEvents {
         ItemInHandRenderer renderer = mc.gameRenderer.itemInHandRenderer;
 
         // ✔ VANILLA BASE OFFSET
+        HumanoidArm renderArm = event.getHand() == InteractionHand.MAIN_HAND
+                ? player.getMainArm()
+                : player.getMainArm().getOpposite();
         applyVanillaFirstPersonBaseTransform(
             poseStack,
-            player.getMainArm(),
+            renderArm,
             event.getEquipProgress()
         );
 
         // ❌ DO NOT call applyItemArmAttackTransform
 
         // ✔ CUSTOM ANIMATION
-        applyCustomSwordAnimation(poseStack, player, event.getSwingProgress(), currentAnimation);
+        boolean applyOffhandZOffset = event.getHand() == InteractionHand.OFF_HAND
+                && (shouldRenderOffhandOnly || isDoubleOverhead);
+        applyCustomSwordAnimation(poseStack, player, event.getSwingProgress(), animationForThisHand, applyOffhandZOffset);
 
         // ✔ RENDER
         mc.getItemRenderer().renderStatic(
         	    stack,
-        	    ItemDisplayContext.FIRST_PERSON_RIGHT_HAND,
+        	    event.getHand() == InteractionHand.MAIN_HAND
+        	            ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+        	            : ItemDisplayContext.FIRST_PERSON_LEFT_HAND,
         	    event.getPackedLight(),
         	    OverlayTexture.NO_OVERLAY,
         	    poseStack,
@@ -318,7 +349,8 @@ public class ClientRenderEvents {
             PoseStack poseStack,
             LocalPlayer player,
             float swingProgress,
-            String currentAnimation
+            String currentAnimation,
+            boolean applyOffhandZOffset
     ) {
     	/*
         // Update animation tracking
@@ -375,6 +407,12 @@ public class ClientRenderEvents {
 
         // 🔹 Apply rotation (single quaternion, correct order)
         poseStack.mulPose(rotation);
+
+        // Offhand first-person fix:
+        // Blender exporter uses mc_rot=(w, x, z, -y), so a +180deg on source rot_delta.z maps to MC +Y axis.
+        if (applyOffhandZOffset) {
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
+        }
     }
 
 

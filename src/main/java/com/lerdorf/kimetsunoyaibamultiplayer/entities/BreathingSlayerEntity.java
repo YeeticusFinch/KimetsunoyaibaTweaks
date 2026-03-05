@@ -184,6 +184,11 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     public void aiStep() {
         super.aiStep();
 
+        if (!this.level().isClientSide) {
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedBeastForms
+                .syncDualWieldAttackSpeed(this);
+        }
+
         // Tick down breathing form cooldown
         if (this.breathingFormCooldown > 0) {
             this.breathingFormCooldown--;

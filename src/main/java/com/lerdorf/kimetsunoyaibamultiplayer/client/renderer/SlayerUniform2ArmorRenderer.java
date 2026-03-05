@@ -22,10 +22,10 @@ public class SlayerUniform2ArmorRenderer extends GeoArmorRenderer<SlayerUniform2
         @Override
         public ResourceLocation getTextureResource(SlayerUniform2ArmorItem item) {
             return switch (item.getType()) {
-                case CHESTPLATE -> ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/armor/slayer_uniform_2_chestplate.png");
-                case LEGGINGS -> ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/armor/slayer_uniform_2_leggings.png");
-                case BOOTS -> ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/armor/slayer_uniform_2_boots.png");
-                default -> ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/armor/slayer_uniform_2_chestplate.png");
+                case CHESTPLATE -> ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", item.getChestTexturePath());
+                case LEGGINGS -> ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", item.getLeggingsTexturePath());
+                case BOOTS -> ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", item.getBootsTexturePath());
+                default -> ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", item.getChestTexturePath());
             };
         }
 

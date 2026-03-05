@@ -66,23 +66,37 @@ public abstract class BreathingSwordItem extends SwordItem {
         SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(this);
         String swordId = registeredSword != null ? registeredSword.getSwordId() : this.toString();
 
-        System.out.println("[BreathingSwordItem] Form ID: " + form.getFormId() + ", Sword ID: " + swordId + ", Current variation index: " + variationIndex);
+        if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug(
+                "[BreathingSwordItem] Form ID: " + form.getFormId() +
+                ", Sword ID: " + swordId +
+                ", Current variation index: " + variationIndex
+            );
+        }
 
         // Clamp variation to available variations
         int totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
             .getVariationCount(form.getFormId(), swordId);
-        System.out.println("[BreathingSwordItem] Total variations found: " + totalVariations);
+        if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingSwordItem] Total variations found: " + totalVariations);
+        }
 
-        if (totalVariations == 0) {
-            System.out.println("[BreathingSwordItem] No variations found, resetting variation index to 0");
-            System.out.println("[BreathingSwordItem] STACK TRACE:");
-            new Exception().printStackTrace();
+        if (totalVariations == 0 && variationIndex != 0) {
+            if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug(
+                    "[BreathingSwordItem] No variations found for this form/sword. Resetting variation index to 0."
+                );
+            }
             variationIndex = 0;
             data.setCurrentVariationIndex(0);
         } else if (variationIndex > totalVariations) {
-            System.out.println("[BreathingSwordItem] Variation index " + variationIndex + " exceeds total " + totalVariations + ", resetting to 0");
-            System.out.println("[BreathingSwordItem] STACK TRACE:");
-            new Exception().printStackTrace();
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.warn(
+                "[BreathingSwordItem] Variation index " + variationIndex +
+                " exceeds total " + totalVariations +
+                " for form " + form.getFormId() +
+                " and sword " + swordId +
+                ". Resetting to 0."
+            );
             variationIndex = 0;
             data.setCurrentVariationIndex(0);
         }
@@ -309,7 +323,22 @@ public abstract class BreathingSwordItem extends SwordItem {
      */
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        boolean result = super.hurtEnemy(stack, target, attacker);
+        // Vanilla SwordItem always damages mainhand. For Beast/Inosuke dual-wielding,
+        // split durability loss 50/50 between mainhand and offhand swords.
+        ItemStack mainHand = attacker.getMainHandItem();
+        ItemStack offHand = attacker.getOffhandItem();
+
+        boolean dualWieldBeastSwords = isBeastOrInosukeSword(mainHand) && isBeastOrInosukeSword(offHand);
+
+        if (dualWieldBeastSwords) {
+            boolean damageOffhand = attacker.getRandom().nextBoolean();
+            ItemStack durabilityTarget = damageOffhand ? offHand : mainHand;
+            EquipmentSlot breakSlot = damageOffhand ? EquipmentSlot.OFFHAND : EquipmentSlot.MAINHAND;
+
+            durabilityTarget.hurtAndBreak(1, attacker, entity -> entity.broadcastBreakEvent(breakSlot));
+        } else {
+            stack.hurtAndBreak(1, attacker, entity -> entity.broadcastBreakEvent(EquipmentSlot.MAINHAND));
+        }
 
         if (!attacker.level().isClientSide) {
             // Play sweep attack sound (default for all nichirin swords)
@@ -324,6 +353,23 @@ public abstract class BreathingSwordItem extends SwordItem {
             }
         }
 
-        return result;
+        return true;
+    }
+
+    private static boolean isBeastOrInosukeSword(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        if (!(stack.getItem() instanceof BreathingSwordItem breathingSword)) {
+            return false;
+        }
+
+        SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(breathingSword);
+        if (registeredSword == null || registeredSword.getSwordId() == null) {
+            return false;
+        }
+
+        String swordId = registeredSword.getSwordId();
+        return "nichirinsword_beast".equals(swordId) || "nichirinsword_inosuke".equals(swordId);
     }
 }

@@ -10,8 +10,10 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerFemaleRe
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.FlowerPetalSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.GhostlyCloneRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanataRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanaeRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanawoRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KiriyaRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanrojiRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroFPRenderer;
@@ -50,6 +52,8 @@ public class CrowRendererManager {
         // Register renderers for Kanae and Kanawo (Flower Breathing)
         event.registerEntityRenderer(ModEntities.KANAE.get(), KanaeRenderer::new);
         event.registerEntityRenderer(ModEntities.KANAWO.get(), KanawoRenderer::new);
+        event.registerEntityRenderer(ModEntities.KANATA.get(), KanataRenderer::new);
+        event.registerEntityRenderer(ModEntities.KIRIYA.get(), KiriyaRenderer::new);
 
         // Register renderer for after image entity (Flower Breathing 7th Form effect)
         event.registerEntityRenderer(ModEntities.AFTER_IMAGE.get(), AfterImageRenderer::new);

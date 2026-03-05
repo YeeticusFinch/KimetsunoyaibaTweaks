@@ -55,6 +55,19 @@ public class EnhancedBreathingConfig {
                     "Default: true")
             .define("enhancedFlowerBreathing", true);
 
+    // Beast Breathing Enhancement
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_BEAST_BREATHING = BUILDER
+            .comment("Enable enhanced Beast Breathing forms",
+                    "When true, automatically replaces base mod Inosuke swords with enhanced versions:",
+                    "  - kimetsunoyaiba:nichirinsword_inosuke -> kimetsunoyaibamultiplayer:nichirinsword_inosuke",
+                    "",
+                    "Enhanced features:",
+                    "  - Uses Enhanced Beast Breathing technique implementation",
+                    "  - Integrates with dual-wield behavior when paired in offhand",
+                    "",
+                    "Default: true")
+            .define("enhancedBeastBreathing", true);
+
     // Love Breathing Enhancement
     private static final ForgeConfigSpec.BooleanValue ENHANCED_LOVE_BREATHING = BUILDER
             .comment("Enable enhanced Love Breathing forms",
@@ -78,6 +91,12 @@ public class EnhancedBreathingConfig {
                        "Controls the visual and physics behavior of Mitsuri's whip sword")
                .push("love_whip_physics");
     }
+
+    // Love Sword Configuration
+    private static final ForgeConfigSpec.BooleanValue DISABLE_LOVE_M1_TRAIL_PARTICLES = BUILDER
+            .comment("Whether or not to disable the love sword swing particles",
+            "Default: false")
+            .define("disableLoveM1TrailParticles", false);
 
     // Whip Segment Configuration
     private static final ForgeConfigSpec.IntValue WHIP_SEGMENT_COUNT = BUILDER
@@ -171,7 +190,9 @@ public class EnhancedBreathingConfig {
     // Public static fields for easy access
     public static boolean enhancedMistBreathing;
     public static boolean enhancedFlowerBreathing;
+    public static boolean enhancedBeastBreathing;
     public static boolean enhancedLoveBreathing;
+    public static boolean disableLoveM1TrailParticles;
 
     // Whip Physics Settings
     public static int whipSegmentCount;
@@ -200,7 +221,9 @@ public class EnhancedBreathingConfig {
     public static void onLoad(final ModConfigEvent event) {
         enhancedMistBreathing = ENHANCED_MIST_BREATHING.get();
         enhancedFlowerBreathing = ENHANCED_FLOWER_BREATHING.get();
+        enhancedBeastBreathing = ENHANCED_BEAST_BREATHING.get();
         enhancedLoveBreathing = ENHANCED_LOVE_BREATHING.get();
+        disableLoveM1TrailParticles = DISABLE_LOVE_M1_TRAIL_PARTICLES.get();
 
         // Load whip physics settings
         whipSegmentCount = WHIP_SEGMENT_COUNT.get();
@@ -228,7 +251,9 @@ public class EnhancedBreathingConfig {
         Log.debug("[Enhanced Breathing Config] Loaded:");
         Log.debug("  - Enhanced Mist Breathing: " + enhancedMistBreathing);
         Log.debug("  - Enhanced Flower Breathing: " + enhancedFlowerBreathing);
+        Log.debug("  - Enhanced Beast Breathing: " + enhancedBeastBreathing);
         Log.debug("  - Enhanced Love Breathing: " + enhancedLoveBreathing);
+        Log.debug("  - Disable Love/Kanroji M1 Trail Particles: " + disableLoveM1TrailParticles);
         Log.debug("  - Whip Segments: " + whipSegmentCount);
         Log.debug("  - Whip Extended Length: " + whipExtendedLength);
     }

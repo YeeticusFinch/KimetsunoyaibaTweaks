@@ -178,8 +178,14 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
                 com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext.getCurrentEntity();
 
             if (currentEntity != null && !(currentEntity instanceof net.minecraft.world.entity.player.Player)) {
-                // CRITICAL FIX: For entities, read the animation directly from the cache
-                String entityAnim = com.lerdorf.kimetsunoyaibamultiplayer.client.EntitySwordAnimationCache.getAnimation(currentEntity);
+                String entityAnim;
+                if (!com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInCombat(currentEntity)
+                    && !com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInSheathingTransition(currentEntity)) {
+                    entityAnim = "sheath";
+                } else {
+                    // For in-combat entity rendering, read animation from entity cache
+                    entityAnim = com.lerdorf.kimetsunoyaibamultiplayer.client.EntitySwordAnimationCache.getAnimation(currentEntity);
+                }
 
                 // Determine if it's a looping animation
                 boolean isLooping = entityAnim.equals("idle") || entityAnim.equals("walk") ||

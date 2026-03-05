@@ -21,9 +21,19 @@ import java.util.function.Consumer;
  */
 public class AndonBakamaItem extends ArmorItem implements GeoItem {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final String texturePath;
 
     public AndonBakamaItem(ArmorMaterial material, Type type, Properties properties) {
+        this(material, type, properties, "textures/armor/andon_bakama.png");
+    }
+
+    public AndonBakamaItem(ArmorMaterial material, Type type, Properties properties, String texturePath) {
         super(material, type, properties);
+        this.texturePath = texturePath;
+    }
+
+    public String getTexturePath() {
+        return texturePath;
     }
 
     @Override

@@ -1,18 +1,18 @@
 {
   "replace": false,
   "values": [
-    "kimetsu:akaza",
-    "kimetsu:daki",
-    "kimetsu:demon_nakime",
-    "kimetsu:doma",
-    "kimetsu:gyokko",
-    "kimetsu:gyutaro",
-    "kimetsu:kaigaku",
-    "kimetsu:kokushibo",
-    "kimetsu:nakime_real",
-    "kimetsu:kocho",
-    "kimetsu:tomioka",
-    "kimetsu:zohakuten",
-    "kimetsu:yoriichi"
+    { "id": "kimetsu:akaza", "required": false },
+    { "id": "kimetsu:daki", "required": false },
+    { "id": "kimetsu:demon_nakime", "required": false },
+    { "id": "kimetsu:doma", "required": false },
+    { "id": "kimetsu:gyokko", "required": false },
+    { "id": "kimetsu:gyutaro", "required": false },
+    { "id": "kimetsu:kaigaku", "required": false },
+    { "id": "kimetsu:kokushibo", "required": false },
+    { "id": "kimetsu:nakime_real", "required": false },
+    { "id": "kimetsu:kocho", "required": false },
+    { "id": "kimetsu:tomioka", "required": false },
+    { "id": "kimetsu:zohakuten", "required": false },
+    { "id": "kimetsu:yoriichi", "required": false }
   ]
 }

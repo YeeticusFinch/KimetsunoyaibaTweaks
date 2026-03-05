@@ -20,9 +20,35 @@ import java.util.function.Consumer;
  */
 public class SlayerUniform2ArmorItem extends ArmorItem implements GeoItem {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final String chestTexturePath;
+    private final String leggingsTexturePath;
+    private final String bootsTexturePath;
 
     public SlayerUniform2ArmorItem(ArmorMaterial material, Type type, Properties properties) {
+        this(material, type, properties,
+            "textures/armor/slayer_uniform_2_chestplate.png",
+            "textures/armor/slayer_uniform_2_leggings.png",
+            "textures/armor/slayer_uniform_2_boots.png");
+    }
+
+    public SlayerUniform2ArmorItem(ArmorMaterial material, Type type, Properties properties,
+                                   String chestTexturePath, String leggingsTexturePath, String bootsTexturePath) {
         super(material, type, properties);
+        this.chestTexturePath = chestTexturePath;
+        this.leggingsTexturePath = leggingsTexturePath;
+        this.bootsTexturePath = bootsTexturePath;
+    }
+
+    public String getChestTexturePath() {
+        return chestTexturePath;
+    }
+
+    public String getLeggingsTexturePath() {
+        return leggingsTexturePath;
+    }
+
+    public String getBootsTexturePath() {
+        return bootsTexturePath;
     }
 
     @Override
@@ -52,4 +78,3 @@ public class SlayerUniform2ArmorItem extends ArmorItem implements GeoItem {
         });
     }
 }
-
