@@ -64,14 +64,14 @@ public class MtFujikasaneDimensionDataHandler {
     // GitHub repository download URL
     // Downloads the entire repository as a zip and extracts .mca files from the region/ folder
     private static final String GITHUB_DOWNLOAD_URL =
-        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.25/region.zip";
+        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.43/region.zip";
 
     // Version tracking: a small text file hosted alongside the region files
     // Prefer the release asset version file; fallback to raw main branch
     private static final String VERSION_FILE_NAME = "mt_fujikasane.version";
     // Primary version URL (release asset)
     private static final String RELEASE_VERSION_URL =
-        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.25/mt_fujikasane.version";
+        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.43/mt_fujikasane.version";
     // Fallback raw URL to fetch the version text quickly without downloading the whole zip
     private static final String RAW_VERSION_URL =
         "https://raw.githubusercontent.com/YeeticusFinch/KimetsunoyaibaTweaks/main/region/" + VERSION_FILE_NAME;
