@@ -1,8 +1,10 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.raids;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.ModGameRules;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -24,6 +26,9 @@ import java.util.Optional;
 public class RaidTriggerHandler {
 
     private static final int RAID_PROXIMITY_CHECK_RADIUS = 200;
+    private static final int KILLING_INTENT_MIN_SECONDS = 20;
+    private static final int KILLING_INTENT_MAX_SECONDS = 40;
+    private static final int KILLING_INTENT_MAX_LEVEL = 200;
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -128,6 +133,9 @@ public class RaidTriggerHandler {
         RaidRegistry.get(level).onEntityKilled(entity.getUUID());
         SurvivalRaidRegistry.onEntityKilled(level, entity.getUUID());
         FinalSelectionProcedure.onEntityKilledStatic(entity.getUUID());
+
+        if (!(event.getSource().getEntity() instanceof LivingEntity killer)) return;
+        tryApplyKillingIntentFromRaidKill(killer, entity);
     }
 
     /**
@@ -161,5 +169,47 @@ public class RaidTriggerHandler {
         return RaidRegistry.get(level).isRaidEntity(entity.getUUID())
             || SurvivalRaidRegistry.isRaidEntity(level, entity.getUUID())
             || FinalSelectionProcedure.isRaidEntityStatic(entity.getUUID());
+    }
+
+    private static void tryApplyKillingIntentFromRaidKill(LivingEntity killer, LivingEntity target) {
+        if (!(killer instanceof Player) && !(killer instanceof DemonSlayerEntity)) {
+            return;
+        }
+
+        boolean targetIsDemon = Damager.isDemon(target);
+        boolean targetIsDemonSlayer = Damager.isDemonSlayer(target);
+
+        boolean inFinalSelectionRaid = target.getPersistentData().hasUUID("FinalSelectionRaidId");
+        String raidType = target.getPersistentData().getString("RaidType");
+        boolean inDemonRaid = "DEMON".equals(raidType);
+        boolean inSlayerRaid = "SLAYER".equals(raidType);
+
+        boolean qualifies =
+            (inFinalSelectionRaid && targetIsDemon)
+                || (inDemonRaid && targetIsDemon)
+                || (inSlayerRaid && targetIsDemonSlayer && killer instanceof Player);
+
+        if (!qualifies) {
+            return;
+        }
+
+        MobEffectInstance current = killer.getEffect(ModEffects.KILLING_INTENT.get());
+        int nextAmplifier = current == null ? 0 : Math.min(KILLING_INTENT_MAX_LEVEL - 1, current.getAmplifier() + 1);
+
+        int bonusSeconds = KILLING_INTENT_MIN_SECONDS + killer.level().random.nextInt(KILLING_INTENT_MAX_SECONDS - KILLING_INTENT_MIN_SECONDS + 1);
+        int totalDuration = bonusSeconds * 20;
+        if (current != null) {
+            totalDuration += current.getDuration();
+        }
+
+        // No bubbles/particles. Keep icon visible for the custom bone icon.
+        killer.addEffect(new MobEffectInstance(
+            ModEffects.KILLING_INTENT.get(),
+            totalDuration,
+            nextAmplifier,
+            false,
+            false,
+            true
+        ));
     }
 }

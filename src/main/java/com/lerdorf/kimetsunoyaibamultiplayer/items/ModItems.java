@@ -70,6 +70,9 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_BLACK = ITEMS.register("nichirinsword_black",
         () -> new NichirinSwordBlack(new Item.Properties().stacksTo(1).durability(2000)));
 
+    public static final RegistryObject<Item> NICHIRIN_ORE = ITEMS.register("nichirin_ore",
+        () -> new NichirinOreItem(new Item.Properties().stacksTo(1)));
+
     // Spawn eggs
     public static final RegistryObject<Item> MUICHIRO_SPAWN_EGG = ITEMS.register("muichiro_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
@@ -138,7 +141,7 @@ public class ModItems {
             "textures/armor/purple_andon_bakama.png"));
 
     public static final RegistryObject<Item> PURPLE_DEMON_SLAYER_UNIFORM_CHESTPLATE = ITEMS.register("purple_demon_slayer_uniform_chestplate",
-        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
             net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
             new Item.Properties().stacksTo(1),
             "textures/armor/purple_demonslayer_uniform_chestplate.png",
@@ -146,7 +149,7 @@ public class ModItems {
             "textures/armor/purple_uniform_boots.png"));
 
     public static final RegistryObject<Item> PURPLE_DEMON_SLAYER_UNIFORM_LEGGINGS = ITEMS.register("purple_demon_slayer_uniform_leggings",
-        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
             net.minecraft.world.item.ArmorItem.Type.LEGGINGS,
             new Item.Properties().stacksTo(1),
             "textures/armor/purple_demonslayer_uniform_chestplate.png",
@@ -154,12 +157,30 @@ public class ModItems {
             "textures/armor/purple_uniform_boots.png"));
 
     public static final RegistryObject<Item> PURPLE_DEMON_SLAYER_UNIFORM_BOOTS = ITEMS.register("purple_demon_slayer_uniform_boots",
-        () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
             net.minecraft.world.item.ArmorItem.Type.BOOTS,
             new Item.Properties().stacksTo(1),
             "textures/armor/purple_demonslayer_uniform_chestplate.png",
             "textures/armor/purple_uniform_pants.png",
             "textures/armor/purple_uniform_boots.png"));
+
+    public static final RegistryObject<Item> UNIFORM_BOOTS_CHERRY = ITEMS.register("uniform_boots_cherry",
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
+            net.minecraft.world.item.ArmorItem.Type.BOOTS,
+            new Item.Properties().stacksTo(1),
+            "geo/boots.geo.json",
+            "textures/armor/uniform_boots_cherry.png",
+            "textures/armor/uniform_boots_cherry.png",
+            "textures/armor/uniform_boots_cherry.png"));
+
+    public static final RegistryObject<Item> UNIFORM_BOOTS_GOLD = ITEMS.register("uniform_boots_gold",
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
+            net.minecraft.world.item.ArmorItem.Type.BOOTS,
+            new Item.Properties().stacksTo(1),
+            "geo/boots.geo.json",
+            "textures/armor/uniform_boots_gold.png",
+            "textures/armor/uniform_boots_gold.png",
+            "textures/armor/uniform_boots_gold.png"));
 
     public static final RegistryObject<Item> SLAYER_UNIFORM_2_CHESTPLATE = ITEMS.register("slayer_uniform_2_chestplate",
         () -> new SlayerUniform2ArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM_2,
@@ -214,14 +235,6 @@ public class ModItems {
         () -> new HairMuichiroFpItem(CosmeticArmorMaterial.MUICHIRO_FP_HAIR,
             net.minecraft.world.item.ArmorItem.Type.HELMET,
             new Item.Properties().stacksTo(1)));
-
-    public static final RegistryObject<Item> HANAFUDA = ITEMS.register("hanafuda",
-        () -> new HanafudaItem(CosmeticArmorMaterial.COSMETIC,
-            net.minecraft.world.item.ArmorItem.Type.HELMET,
-            new Item.Properties().stacksTo(1)));
-
-    public static final RegistryObject<Item> HANAFUDA_CLASSIC = ITEMS.register("hanafuda_classic",
-        () -> new HanafudaClassicItem(new Item.Properties().stacksTo(1)));
 
     public static final RegistryObject<Item> HAHNAFUDA_SIMPLE = ITEMS.register("hahnafuda_simple",
         () -> new HanafudaClassicItem(new Item.Properties().stacksTo(1)));
@@ -338,6 +351,8 @@ public class ModItems {
                 output.accept(PURPLE_DEMON_SLAYER_UNIFORM_CHESTPLATE.get());
                 output.accept(PURPLE_DEMON_SLAYER_UNIFORM_LEGGINGS.get());
                 output.accept(PURPLE_DEMON_SLAYER_UNIFORM_BOOTS.get());
+                output.accept(UNIFORM_BOOTS_CHERRY.get());
+                output.accept(UNIFORM_BOOTS_GOLD.get());
                 output.accept(SLAYER_UNIFORM_2_CHESTPLATE.get());
                 output.accept(SLAYER_UNIFORM_2_LEGGINGS.get());
                 output.accept(SLAYER_UNIFORM_2_BOOTS.get());
@@ -347,8 +362,6 @@ public class ModItems {
                 output.accept(CLOTHES_MUICHIRO_FP_CHESTPLATE.get());
                 output.accept(UNIFORM_MUICHIRO_FP_CHESTPLATE.get());
                 output.accept(HAIR_MUICHIRO_FP.get());
-                output.accept(HANAFUDA.get());
-                output.accept(HANAFUDA_CLASSIC.get());
                 output.accept(HAHNAFUDA_SIMPLE.get());
 
                 // Spawn eggs
@@ -384,6 +397,7 @@ public class ModItems {
 
                 // Miscellaneous items
                 output.accept(UBUYASHIKI_INVITATION.get());
+                output.accept(NICHIRIN_ORE.get());
 
                 // Add spawn eggs from KnY Extra Additions (if mod is loaded)
                 try {

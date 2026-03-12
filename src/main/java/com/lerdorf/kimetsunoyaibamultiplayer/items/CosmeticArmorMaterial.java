@@ -11,11 +11,12 @@ import net.minecraft.world.item.crafting.Ingredient;
  */
 public enum CosmeticArmorMaterial implements ArmorMaterial {
     COSMETIC("cosmetic", 0, new int[]{0, 0, 0, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, 0.0F, () -> Ingredient.EMPTY),
-    SLAYER_UNIFORM("slayer_uniform", 25, new int[]{0, 6, 0, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, 0.0F, () -> Ingredient.EMPTY),
-    SLAYER_UNIFORM_2("slayer_uniform_2", 25, new int[]{0, 8, 6, 4}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 1.0F, 0.0F, () -> Ingredient.EMPTY),
-    MUICHIRO_HAORI("muichiro_haori", 25, new int[]{0, 6, 0, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, 0.0F, () -> Ingredient.EMPTY),
-    MUICHIRO_HAORI_UNIFORM("muichiro_haori_uniform", 25, new int[]{0, 8, 0, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, 0.0F, () -> Ingredient.EMPTY),
-    MUICHIRO_FP_HAIR("muichiro_fp_hair", 25, new int[]{0, 0, 0, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 0.0F, 0.0F, () -> Ingredient.EMPTY);
+    SLAYER_UNIFORM("slayer_uniform", 25, new int[]{5, 6, 8, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY),
+    SLAYER_UNIFORM_2("slayer_uniform_2", 25, new int[]{5, 10, 8, 4}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY),
+    MUICHIRO_HAORI("muichiro_haori", 25, new int[]{0, 12, 0, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY),
+    MUICHIRO_HAORI_UNIFORM("muichiro_haori_uniform", 25, new int[]{0, 0, 12, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY),
+    MUICHIRO_FP_HAIR("muichiro_fp_hair", 25, new int[]{0, 0, 0, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY),
+    MUICHIRO_HAKAMA("muichiro_hakama", 25, new int[]{0, 0, 10, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY);
 
     private final String name;
     private final int durabilityMultiplier;

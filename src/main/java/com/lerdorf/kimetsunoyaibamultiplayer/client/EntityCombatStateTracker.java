@@ -151,6 +151,14 @@ public class EntityCombatStateTracker {
         boolean inCombat = isInCombat(entity);
         Boolean previousState = combatStates.get(entity);
 
+        // Draw/sheath transitions should not be interrupted by rapid combat-state oscillation.
+        if (isDrawSheathAnimationActive(entity)) {
+            if (previousState == null) {
+                combatStates.put(entity, inCombat);
+            }
+            return;
+        }
+
         // State changed?
         if (previousState == null || previousState != inCombat) {
             Log.debug("EntityCombatStateTracker: {} combat state changed: {} -> {}",
@@ -166,6 +174,12 @@ public class EntityCombatStateTracker {
      * When exiting combat, play sheath animation (draw in reverse).
      */
     private static void onCombatStateChanged(LivingEntity entity, boolean nowInCombat) {
+        if (isDrawSheathAnimationActive(entity)) {
+            Log.debug("[EntityCombatStateTracker] Transition ignored for {}: draw/sheath animation in progress",
+                entity.getType().getDescriptionId());
+            return;
+        }
+
         ItemStack mainHand = entity.getItemBySlot(EquipmentSlot.MAINHAND);
         if (!SwordParticleMapping.isKimetsunoyaibaSword(mainHand)) {
             Log.debug("[EntityCombatStateTracker] Transition ignored for {}: main hand is not a KnY sword ({})",
@@ -237,6 +251,18 @@ public class EntityCombatStateTracker {
             return false;
         }
         return true;
+    }
+
+    private static boolean isDrawSheathAnimationActive(LivingEntity entity) {
+        if (!(entity instanceof BreathingSlayerEntity breathingEntity)) {
+            return false;
+        }
+        if (breathingEntity.getAnimationTicks() <= 0) {
+            return false;
+        }
+        String currentAnimation = breathingEntity.getCurrentAnimation();
+        return currentAnimation != null
+            && (currentAnimation.startsWith("draw_") || currentAnimation.startsWith("sheath_"));
     }
 
     /**

@@ -111,11 +111,13 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
             //Log.debug("[KanrojiSwordRenderer] Static model not found, falling back to GeckoLib");
         }
 
-        // Apply translation offset for third person right hand to center the sword
-        if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
+        // Apply translation offset for third-person hand contexts to center the sword.
+        if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+            || displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
             //Log.debug("Entering translation offset for third person right hand");
             //Log.debug("RenderingEntity: " + (renderingEntity != null ? renderingEntity.getName().toString() : "null"));
-            poseStack.translate(1.25 / 16.0, 0.7 / 16.0, 1.25 / 16.0);
+            double handSign = displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND ? -1.0 : 1.0;
+            poseStack.translate((1.25 * handSign) / 16.0, 0.7 / 16.0, (1.25 * handSign) / 16.0);
 
             // Only apply Kanroji entity hand offset when the entity is actually holding the sword (in combat)
             // When out of combat, the sword is on the back/hip and shouldn't use hand offsets
@@ -123,9 +125,9 @@ public class KanrojiSwordRenderer extends GeoItemRenderer<NichirinSwordKanrojiAn
                 com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInCombat(renderingEntity)) {
                 //Log.debug("Entering translation offset for kanroji entity (in combat)");
                 // Extra hand offset for Kanroji entity to compensate for its model alignment.
-                poseStack.translate(Config.kanrojiEntityHandOffsetX / 16.0,
+                poseStack.translate((Config.kanrojiEntityHandOffsetX * handSign) / 16.0,
                                    Config.kanrojiEntityHandOffsetY / 16.0,
-                                   Config.kanrojiEntityHandOffsetZ / 16.0);
+                                   (Config.kanrojiEntityHandOffsetZ * handSign) / 16.0);
             }
         }
 

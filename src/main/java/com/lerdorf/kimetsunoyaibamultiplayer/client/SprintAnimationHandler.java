@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
 import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
@@ -25,10 +26,14 @@ import java.util.UUID;
  */
 public class SprintAnimationHandler {
     private static final int SPRINT_LAYER_PRIORITY = 200;
+    private static final long TRAINING_SWORD_REFRESH_TICKS = 26L;
+    private static final long NICHIRIN_REFRESH_TICKS = 4L;
     private static final Map<UUID, ModifierLayer<IAnimation>> activeSprintLayers = new HashMap<>();
-    private static final Map<UUID, Long> sprintAnimationStartTime = new HashMap<>();
+    private static final Map<UUID, Long> lastSprintApplyTick = new HashMap<>();
     private static KeyframeAnimation cachedSprintAnimation = null;
+    private static KeyframeAnimation cachedSprintNoobAnimation = null;
     private static int cachedSprintDurationMs = 2000; // Default 2 seconds, will be updated from actual animation
+    private static int cachedSprintNoobDurationMs = 2000;
 
     /**
      * Called every client tick to check if player is sprinting with a nichirin sword
@@ -44,7 +49,7 @@ public class SprintAnimationHandler {
             // Remove any active sprint animations if config is disabled
             if (activeSprintLayers.containsKey(mc.player.getUUID())) {
                 removeSprintAnimation(mc.player);
-                sprintAnimationStartTime.remove(mc.player.getUUID());
+                lastSprintApplyTick.remove(mc.player.getUUID());
             }
             return;
         }
@@ -58,6 +63,7 @@ public class SprintAnimationHandler {
 
         // Check if player is holding a nichirin sword (custom or base mod)
         ItemStack mainHandItem = player.getItemInHand(InteractionHand.MAIN_HAND);
+        boolean isTrainingSword = TrainingSwordHelper.isTrainingSword(mainHandItem);
         boolean holdingNichirinSword = mainHandItem.getItem() instanceof BreathingSwordItem ||
                                       (SwordRegistry.getSword(mainHandItem.getItem()) != null) ||
                                       BaseModBreathingExecutor.isBaseModNichirinSword(mainHandItem.getItem());
@@ -68,32 +74,30 @@ public class SprintAnimationHandler {
             if (activeSprintLayers.containsKey(playerUUID)) {
                 removeSprintAnimation(player);
             }
-            sprintAnimationStartTime.remove(playerUUID);
+            lastSprintApplyTick.remove(playerUUID);
             return;
         }
 
         // Player is sprinting with a nichirin sword - manage the looping animation
-        long currentTime = System.currentTimeMillis();
-        Long animStartTime = sprintAnimationStartTime.get(playerUUID);
+        long currentTick = player.level().getGameTime();
+        long refreshIntervalTicks = isTrainingSword ? TRAINING_SWORD_REFRESH_TICKS : NICHIRIN_REFRESH_TICKS;
+        Long lastApply = lastSprintApplyTick.get(playerUUID);
 
-        if (animStartTime == null) {
+        if (lastApply == null) {
             // Start the sprint animation
-            applySprintAnimation(player);
-            sprintAnimationStartTime.put(playerUUID, currentTime);
+            applySprintAnimation(player, isTrainingSword);
+            lastSprintApplyTick.put(playerUUID, currentTick);
         } else {
-            long elapsed = currentTime - animStartTime;
-            // Trigger 4 times per second (every 250ms / 5 ticks) to force sprint animation
-            int refreshInterval = 250;
-            if (elapsed >= refreshInterval) {
+            if ((currentTick - lastApply) >= refreshIntervalTicks) {
                 // Force refresh the sprint animation to prevent walk from overriding
-                applySprintAnimation(player);
-                sprintAnimationStartTime.put(playerUUID, currentTime);
+                applySprintAnimation(player, isTrainingSword);
+                lastSprintApplyTick.put(playerUUID, currentTick);
             }
             // Otherwise animation is still playing - do nothing
         }
     }
 
-    private static void applySprintAnimation(AbstractClientPlayer player) {
+    private static void applySprintAnimation(AbstractClientPlayer player, boolean useNoobSprint) {
         // Remove existing sprint layer if any
         removeSprintAnimation(player);
 
@@ -102,32 +106,10 @@ public class SprintAnimationHandler {
             return;
         }
 
-        // Find sprint animation from PlayerAnimationRegistry (cache it)
-        if (cachedSprintAnimation == null) {
-            // The base mod has the sprint animation at "player_animation/sprint2.json"
-            cachedSprintAnimation = PlayerAnimationRegistry.getAnimation(
-                ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint2"));
-
-            if (cachedSprintAnimation == null) {
-                // Fallback to try "sprint" without the 2
-                cachedSprintAnimation = PlayerAnimationRegistry.getAnimation(
-                    ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint"));
-            }
-
-            if (cachedSprintAnimation == null) {
-                System.err.println("[SprintAnimationHandler] Could not find sprint animation (tried sprint2 and sprint)");
-                return;
-            }
-
-            // Get actual animation duration in milliseconds
-            int lengthTicks = cachedSprintAnimation.getLength();
-            cachedSprintDurationMs = lengthTicks * 50; // 20 tps = 50ms per tick
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.info(
-                "[SprintAnimationHandler] Sprint animation duration: {} ticks = {} ms",
-                lengthTicks, cachedSprintDurationMs);
+        KeyframeAnimation sprintAnim = useNoobSprint ? getSprintNoobAnimation() : getSprintAnimation();
+        if (sprintAnim == null) {
+            return;
         }
-
-        KeyframeAnimation sprintAnim = cachedSprintAnimation;
 
         // Create a new layer for sprint animation
         ModifierLayer<IAnimation> sprintLayer = new ModifierLayer<>();
@@ -140,6 +122,64 @@ public class SprintAnimationHandler {
 
         // Track the active layer
         activeSprintLayers.put(player.getUUID(), sprintLayer);
+    }
+
+    private static KeyframeAnimation getSprintAnimation() {
+        if (cachedSprintAnimation != null) {
+            return cachedSprintAnimation;
+        }
+
+        cachedSprintAnimation = PlayerAnimationRegistry.getAnimation(
+            ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint2"));
+        if (cachedSprintAnimation == null) {
+            cachedSprintAnimation = PlayerAnimationRegistry.getAnimation(
+                ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint"));
+        }
+
+        if (cachedSprintAnimation == null) {
+            System.err.println("[SprintAnimationHandler] Could not find sprint animation (tried sprint2 and sprint)");
+            return null;
+        }
+
+        int lengthTicks = cachedSprintAnimation.getLength();
+        cachedSprintDurationMs = lengthTicks * 50;
+        com.lerdorf.kimetsunoyaibamultiplayer.Log.info(
+            "[SprintAnimationHandler] Sprint animation duration: {} ticks = {} ms",
+            lengthTicks, cachedSprintDurationMs);
+        return cachedSprintAnimation;
+    }
+
+    private static KeyframeAnimation getSprintNoobAnimation() {
+        if (cachedSprintNoobAnimation != null) {
+            return cachedSprintNoobAnimation;
+        }
+
+        // Prefer this mod's noob sprint, then compatibility fallbacks.
+        cachedSprintNoobAnimation = PlayerAnimationRegistry.getAnimation(
+            ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "sprint_noob"));
+        if (cachedSprintNoobAnimation == null) {
+            cachedSprintNoobAnimation = PlayerAnimationRegistry.getAnimation(
+            ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint_noob"));
+        }
+        if (cachedSprintNoobAnimation == null) {
+            cachedSprintNoobAnimation = PlayerAnimationRegistry.getAnimation(
+                ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint_noob2"));
+        }
+        if (cachedSprintNoobAnimation == null) {
+            cachedSprintNoobAnimation = getSprintAnimation();
+        }
+
+        if (cachedSprintNoobAnimation == null) {
+            System.err.println("[SprintAnimationHandler] Could not find sprint_noob animation; no fallback available");
+            return null;
+        }
+
+        int lengthTicks = cachedSprintNoobAnimation.getLength();
+        cachedSprintNoobDurationMs = lengthTicks * 50;
+        com.lerdorf.kimetsunoyaibamultiplayer.Log.info(
+            "[SprintAnimationHandler] Sprint noob animation duration: {} ticks = {} ms",
+            lengthTicks, cachedSprintNoobDurationMs);
+        return cachedSprintNoobAnimation;
     }
 
     private static void removeSprintAnimation(AbstractClientPlayer player) {
@@ -160,6 +200,6 @@ public class SprintAnimationHandler {
      */
     public static void cleanup(UUID playerUUID) {
         activeSprintLayers.remove(playerUUID);
-        sprintAnimationStartTime.remove(playerUUID);
+        lastSprintApplyTick.remove(playerUUID);
     }
 }

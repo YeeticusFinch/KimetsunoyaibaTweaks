@@ -306,8 +306,8 @@ public class MuichiroFullPotentialEntity extends BreathingSlayerEntity {
             .add(Attributes.ATTACK_DAMAGE, 1.6D)     // Base damage (Strength effect adds the rest)
             .add(Attributes.MOVEMENT_SPEED, 0.25D)   // Moderate base movement (Speed effect multiplies this)
             .add(Attributes.ATTACK_SPEED, 15.0D)     // Extremely fast attack speed baseline
-            .add(Attributes.ARMOR, 12.0D)             // From armor equipment (FP chestplate + base pieces)
-            .add(Attributes.ARMOR_TOUGHNESS, 6.0D)   // From armor equipment
+            .add(Attributes.ARMOR, 16.0D)             // From armor equipment (FP chestplate + base pieces)
+            .add(Attributes.ARMOR_TOUGHNESS, 7.0D)   // From armor equipment
             .add(Attributes.FOLLOW_RANGE, 72.0D);    // Higher than base slayers
     }
 
@@ -329,12 +329,12 @@ public class MuichiroFullPotentialEntity extends BreathingSlayerEntity {
         this.setItemSlot(EquipmentSlot.LEGS, armor[2]);
         this.setItemSlot(EquipmentSlot.FEET, armor[3]);
 
-        // Prevent equipment from dropping
+        // Equipment drop chance
         for (EquipmentSlot slot : EquipmentSlot.values()) {
-            this.setDropChance(slot, 0.0F);
+            this.setDropChance(slot, 0.2F);
         }
 
-        // Set to full health (155 HP)
+        // Set to full health (165 HP)
         this.setHealth(165.0F);
 
         // Apply Hashira-level permanent effects (matching NBT data)

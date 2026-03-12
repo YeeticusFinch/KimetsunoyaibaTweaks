@@ -44,6 +44,11 @@ public class SheathRegistration {
             SheathItems.SWORD_SHEATH.get()
         );
 
+        SwordSheathRegistry.registerTemporarySheath(
+                ModItems.NICHIRINSWORD_BEAST.get(),
+                SheathItems.SWORD_SHEATH_INOSUKE.get()
+            );
+
         // Register kanroji sheath for the base mod's kanroji sword (if it exists)
         net.minecraft.world.item.Item baseModKanrojiSword =
             net.minecraftforge.registries.ForgeRegistries.ITEMS

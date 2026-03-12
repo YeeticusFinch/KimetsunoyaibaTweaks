@@ -22,6 +22,9 @@ public class CustomProgressionConfig {
 
     // Debug logging
     public static ForgeConfigSpec.BooleanValue enableDebugLogging;
+    
+    // Toril gate worldgen guarantees
+    public static ForgeConfigSpec.BooleanValue guaranteeTorilGateNearOrigin;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -81,6 +84,19 @@ public class CustomProgressionConfig {
                     "Enable this if you want to implement custom sword transformation logic,",
                     "or to prevent the automatic sword transformation entirely.")
             .define("replace_color_changing_procedure", true);
+
+        builder.pop();
+
+        // Toril gate generation guarantees
+        builder.comment("Toril Gate Guarantees").push("toril_gate");
+
+        guaranteeTorilGateNearOrigin = builder
+            .comment("Guarantee at least one toril gate exists between 800 and 1600 blocks of (0, 0) in the overworld.",
+                    "",
+                    "On server start, if no existing toril gate is found in that distance band,",
+                    "the mod will choose a random non-ocean location in that band, paint a wisteria biome patch,",
+                    "and place a toril gate structure there.")
+            .define("guarantee_toril_gate_within_1000_of_origin", true);
 
         builder.pop();
 

@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.util;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization;
+import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -68,7 +70,16 @@ public class EntityTagHelper {
      */
     public static boolean isDemonSlayer(Entity entity) {
         if (entity == null) return false;
-        return entity.getType().is(DEMON_SLAYER);
+        if (entity.getType().is(DEMON_SLAYER)) {
+            return true;
+        }
+
+        if (entity.getType().is(FORMER_HASHIRA)) {
+            return true;
+        }
+
+        EntityPowerScale scale = getPowerScale(entity);
+        return scale != null && scale.isSlayerScale();
     }
 
     /**
@@ -76,7 +87,12 @@ public class EntityTagHelper {
      */
     public static boolean isHashira(Entity entity) {
         if (entity == null) return false;
-        return entity.getType().is(TAG_HASHIRA);
+        if (entity.getType().is(TAG_HASHIRA)) {
+            return true;
+        }
+
+        EntityPowerScale scale = getPowerScale(entity);
+        return scale == EntityPowerScale.HASHIRA || scale == EntityPowerScale.SUPER_HASHIRA;
     }
 
     /**
@@ -92,7 +108,31 @@ public class EntityTagHelper {
      */
     public static boolean isKamaboko(Entity entity) {
         if (entity == null) return false;
-        return entity.getType().is(KAMABOKO);
+        if (entity.getType().is(KAMABOKO)) {
+            return true;
+        }
+
+        ResourceLocation entityId = getEntityTypeId(entity);
+        if (entityId == null) {
+            return false;
+        }
+
+        String namespace = entityId.getNamespace();
+        String path = entityId.getPath();
+        return ("kimetsunoyaiba".equals(namespace) || "kimetsunoyaibamultiplayer".equals(namespace)) &&
+            (path.equals("genya") || path.equals("tanjiro") || path.equals("zennitsu") ||
+                path.equals("kanawo") || path.equals("inosuke"));
+    }
+
+    /**
+     * Check if an entity is a named demon slayer that should not naturally spawn
+     * outside of its designated biome/structure rules.
+     */
+    public static boolean isNamedDemonSlayer(Entity entity) {
+        if (entity == null) return false;
+
+        EntityPowerScale scale = getPowerScale(entity);
+        return scale == EntityPowerScale.NAMED_SLAYER;
     }
 
     /**
@@ -207,5 +247,14 @@ public class EntityTagHelper {
         }
 
         return false;
+    }
+
+    private static EntityPowerScale getPowerScale(Entity entity) {
+        ResourceLocation entityId = getEntityTypeId(entity);
+        if (entityId == null) {
+            return null;
+        }
+
+        return EntityCategorization.getEntityPowerScale(entityId);
     }
 }

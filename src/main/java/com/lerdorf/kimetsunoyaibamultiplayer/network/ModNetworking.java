@@ -189,6 +189,13 @@ public class ModNetworking {
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BossArrowPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BossArrowPacket::handle)
                 .add();
+
+        int bleedingFlashPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BleedingFlashPacket.class, bleedingFlashPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BleedingFlashPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BleedingFlashPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BleedingFlashPacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {

@@ -1,6 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinOreItem;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.world.level.FoliageColor;
 import net.minecraftforge.api.distmarker.Dist;
@@ -150,5 +152,8 @@ public class WisteriaColorHandler {
 
         event.register((stack, tintIndex) -> PETAL_CREAM,
             ModBlocks.GLOWING_WISTERIA_PETALS_CREAM.get());
+
+        event.register((stack, tintIndex) -> tintIndex == 1 ? NichirinOreItem.getStyleColor(stack) : 0xFFFFFF,
+            ModItems.NICHIRIN_ORE.get());
     }
 }

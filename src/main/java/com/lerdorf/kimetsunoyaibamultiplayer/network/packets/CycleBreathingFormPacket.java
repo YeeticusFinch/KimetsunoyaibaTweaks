@@ -71,8 +71,9 @@ public class CycleBreathingFormPacket {
             } else {
                 // Handle base mod (kimetsunoyaiba) breathing form cycling
                 // CRITICAL: Check if this is a multi-style sword - if so, let base mod handle it
-                if (heldItem.getOrCreateTag().contains("select")) {
-                    double selectOffset = heldItem.getOrCreateTag().getDouble("select");
+                net.minecraft.nbt.CompoundTag heldTag = heldItem.getTag();
+                if (heldTag != null && heldTag.contains("select")) {
+                    double selectOffset = heldTag.getDouble("select");
                     // Reset variation selection AND form name cache even when deferring form cycling to the base mod
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
                         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());

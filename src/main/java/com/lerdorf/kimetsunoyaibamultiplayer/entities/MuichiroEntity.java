@@ -335,7 +335,7 @@ public class MuichiroEntity extends BreathingSlayerEntity {
 
         // Prevent equipment from dropping
         for (EquipmentSlot slot : EquipmentSlot.values()) {
-            this.setDropChance(slot, 0.0F);
+            this.setDropChance(slot, 0.2F);
         }
 
         // Set to full health (135 HP)

@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client.models;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordMetadataRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -9,6 +10,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,6 +45,7 @@ public class SwordSlashModelRegistry {
 
     // Generic fallback model key
     private static final String GENERIC_MODEL = "generic";
+    private static final String BLACK_SWORD_STYLE_TAG = "KnYMPBlackSwordStyleId";
 
     static {
         // Register mist breathing swords to use mist model
@@ -150,6 +153,15 @@ public class SwordSlashModelRegistry {
             return override;
         }
 
+        // Black sword uses the model of its assigned style's level-0 sword.
+        if ("nichirinsword_black".equals(itemPath)) {
+            String styleModel = getBlackSwordStyleModelKey(swordItem);
+            if (styleModel != null && !styleModel.isEmpty()) {
+                Log.debug("Using black sword style model for " + fullId + ": " + styleModel);
+                return styleModel;
+            }
+        }
+
         // Check registered models
         if (SWORD_TO_MODEL_MAP.containsKey(itemPath)) {
             String modelKey = SWORD_TO_MODEL_MAP.get(itemPath);
@@ -160,6 +172,67 @@ public class SwordSlashModelRegistry {
         // Fall back to generic
         Log.debug("Using generic model for " + itemPath);
         return GENERIC_MODEL;
+    }
+
+    private static String getBlackSwordStyleModelKey(ItemStack swordItem) {
+        if (swordItem.getTag() == null) {
+            return null;
+        }
+        String styleId = swordItem.getTag().getString(BLACK_SWORD_STYLE_TAG);
+        if (styleId == null || styleId.isEmpty() || "black".equals(styleId)) {
+            return null;
+        }
+
+        List<SwordMetadataRegistry.SwordMetadata> levelZero = SwordMetadataRegistry.getSwordsByStyleAndLevel(styleId, 0);
+        if (levelZero.isEmpty()) {
+            return null;
+        }
+
+        levelZero.sort((a, b) -> {
+            int pa = swordPriority(a.getSwordId());
+            int pb = swordPriority(b.getSwordId());
+            if (pa != pb) {
+                return Integer.compare(pa, pb);
+            }
+            return a.getSwordId().compareTo(b.getSwordId());
+        });
+
+        for (SwordMetadataRegistry.SwordMetadata metadata : levelZero) {
+            String swordId = metadata.getSwordId();
+            if (swordId == null || swordId.isEmpty() || swordId.endsWith(":nichirinsword_black")) {
+                continue;
+            }
+
+            if (MODEL_OVERRIDES.containsKey(swordId)) {
+                return MODEL_OVERRIDES.get(swordId);
+            }
+
+            ResourceLocation id = ResourceLocation.tryParse(swordId);
+            if (id == null) {
+                continue;
+            }
+            String path = id.getPath();
+            String modelKey = SWORD_TO_MODEL_MAP.get(path);
+            if (modelKey != null && !modelKey.isEmpty()) {
+                return modelKey;
+            }
+        }
+
+        // Level-0 sword exists but no explicit model mapping means it would use generic.
+        return GENERIC_MODEL;
+    }
+
+    private static int swordPriority(String swordId) {
+        if (swordId == null) {
+            return 3;
+        }
+        if (swordId.startsWith("kimetsunoyaiba:")) {
+            return 0;
+        }
+        if (swordId.startsWith("kimetsunoyaibamultiplayer:")) {
+            return 1;
+        }
+        return 2;
     }
 
     /**

@@ -46,9 +46,9 @@ import javax.annotation.Nullable;
  * Has 140 HP and enhanced stats based on Hashira-level
  * attributes
  *
- * Stats from NBT data: - HP: 140 (base) - Speed 2 (amplifier 0), Strength 11
+ * Stats from NBT data: - HP: 140 (base) - Speed 2 (amplifier 0), Strength 9
  * (amplifier 10), Resistance 4 (amplifier 3) - Movement speed: 0.32 + 60% from
- * Speed 2 - Attack damage: 1.0 + 36.0 from Strength 11 - Armor: 19.0, Armor
+ * Speed 2 - Attack damage: 1.0 + 36.0 from Strength 9 - Armor: 19.0, Armor
  * toughness: 2.0
  */
 public class KanrojiEntity extends BreathingSlayerEntity {
@@ -221,12 +221,12 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 140.0D) // Hashira health
 				.add(Attributes.ATTACK_DAMAGE, 1.0D) // Base damage (Strength effect adds the rest)
 				.add(Attributes.MOVEMENT_SPEED, 0.18D) // Fast movement (Speed effect multiplies this)
-				.add(Attributes.ATTACK_SPEED, 17.0D) // Extremely fast attack speed baseline
-				.add(Attributes.ARMOR, 19.0D) // From armor equipment
+				.add(Attributes.ATTACK_SPEED, 16.0D) // Extremely fast attack speed baseline
+				.add(Attributes.ARMOR, 16.0D) // From armor equipment
 				.add(Attributes.ARMOR_TOUGHNESS, 3.0D) // From armor equipment
 				.add(Attributes.FOLLOW_RANGE, 64.0D) // Same as base slayers
 				.add(ForgeMod.ENTITY_REACH.get(), 15.0D) // Whip sword has 15 block reach
-				.add(ForgeMod.STEP_HEIGHT_ADDITION.get(), 0.6D); // Higher jumps for acrobatic combat
+				.add(ForgeMod.STEP_HEIGHT_ADDITION.get(), 0.8D); // Higher jumps for acrobatic combat
 	}
 
 	@Override
@@ -248,7 +248,7 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 
 		// Prevent equipment from dropping
 		for (EquipmentSlot slot : EquipmentSlot.values()) {
-			this.setDropChance(slot, 0.0F);
+			this.setDropChance(slot, 0.2F);
 		}
 
 		// Set to full health (140 HP)
@@ -258,8 +258,8 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 		// Speed 2 (amplifier 0 = Speed I, which is Speed 2 in display)
 		this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, 0, true, false));
 
-		// Strength 11 (amplifier 10 = Strength XI)
-		this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 10, true, false));
+		// Strength 9 (amplifier 8 = Strength IX)
+		this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 8, true, false));
 
 		// Resistance 4 (amplifier 3 = Resistance IV)
 		this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 2, true, false));
@@ -368,9 +368,9 @@ public class KanrojiEntity extends BreathingSlayerEntity {
             this.addEffect(new MobEffectInstance(markEffect, Integer.MAX_VALUE, 0, true, false));
         }
 
-        // Upgrade Strength from 11 to 12 (amplifier 10 -> 11)
+        // Upgrade Strength from 9 to 10 (amplifier 8 -> 9)
         this.removeEffect(MobEffects.DAMAGE_BOOST);
-        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 11, true, false));
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 9, true, false));
 
         // Upgrade Speed from 2 to 3 (amplifier 0 -> 1) - Love Breathing enhances agility
         this.removeEffect(MobEffects.MOVEMENT_SPEED);

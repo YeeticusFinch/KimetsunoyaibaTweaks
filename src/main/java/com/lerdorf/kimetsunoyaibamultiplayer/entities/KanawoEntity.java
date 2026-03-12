@@ -83,7 +83,7 @@ public class KanawoEntity extends BreathingSlayerEntity {
         this.setItemSlot(EquipmentSlot.FEET, armor[3]);
 
         for (EquipmentSlot slot : EquipmentSlot.values()) {
-            this.setDropChance(slot, 0.0F);
+            this.setDropChance(slot, 0.2F);
         }
 
         this.setHealth(MAX_HP);

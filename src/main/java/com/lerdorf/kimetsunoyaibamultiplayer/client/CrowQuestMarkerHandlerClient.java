@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -22,6 +23,9 @@ import java.util.UUID;
  */
 @OnlyIn(Dist.CLIENT)
 public class CrowQuestMarkerHandlerClient {
+    private static final int DEFAULT_QUEST_Y = 70;
+    private static final long INVITATION_WAYPOINT_MAX_DURATION_TICKS = 300L; // 15 seconds
+
 
     /**
      * Client-only: Set quest marker and play sound
@@ -72,11 +76,12 @@ public class CrowQuestMarkerHandlerClient {
         if (questLocation != null) {
             int x = (int) Math.floor(questLocation.x);
             int z = (int) Math.floor(questLocation.z);
-            int surfaceY = mc.level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
-            questLocation = new Vec3(questLocation.x, surfaceY + 1, questLocation.z);
+            int targetY = resolveQuestTargetY(mc, x, z);
+            questLocation = new Vec3(questLocation.x, targetY, questLocation.z);
 
             long currentTime = mc.level.getGameTime();
-            setQuestMarker(mc.player.getUUID(), questLocation, currentTime, EntityConfig.crowWaypointDuration);
+            long duration = Math.min((long) EntityConfig.crowWaypointDuration, INVITATION_WAYPOINT_MAX_DURATION_TICKS);
+            setQuestMarker(mc.player.getUUID(), questLocation, currentTime, duration);
             if (Config.logDebug)
                 Log.info("Auto-detected crow quest, set waypoint at {}", questLocation);
         }
@@ -151,5 +156,26 @@ public class CrowQuestMarkerHandlerClient {
      */
     public static void clearQuestMarker(UUID playerId) {
         CrowQuestMarkerHandler.clearQuestMarker(playerId);
+    }
+
+    private static int resolveQuestTargetY(Minecraft mc, int x, int z) {
+        if (mc.level == null) {
+            return DEFAULT_QUEST_Y;
+        }
+
+        BlockPos probe = new BlockPos(x, DEFAULT_QUEST_Y, z);
+        if (!mc.level.hasChunkAt(probe)) {
+            return DEFAULT_QUEST_Y;
+        }
+
+        int surfaceY = mc.level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
+        int minY = mc.level.getMinBuildHeight();
+        int maxY = mc.level.getMaxBuildHeight() - 1;
+
+        if (surfaceY <= minY + 1 || surfaceY > maxY) {
+            return DEFAULT_QUEST_Y;
+        }
+
+        return surfaceY + 1;
     }
 }

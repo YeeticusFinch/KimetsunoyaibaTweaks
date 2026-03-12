@@ -2,16 +2,29 @@ package com.lerdorf.kimetsunoyaibamultiplayer;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.FinalSelectionProcedure;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.MtFujikasaneDaylightController;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.TickEvent;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
+import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -27,6 +40,7 @@ import java.nio.file.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -60,6 +74,12 @@ public class MtFujikasaneDimensionDataHandler {
     private static final double WORLD_BORDER_SIZE = 1000.0;
     private static final double WORLD_BORDER_CENTER_X = 0.0;
     private static final double WORLD_BORDER_CENTER_Z = 0.0;
+    private static final java.util.List<ResourceLocation> FINAL_SELECTION_EASY_DEMON_REPLACEMENTS = java.util.List.of(
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "demon"),
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "demon_2"),
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "demon_3"),
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "spider_demon")
+    );
 
     // GitHub repository download URL
     // Downloads the entire repository as a zip and extracts .mca files from the region/ folder
@@ -511,14 +531,21 @@ public class MtFujikasaneDimensionDataHandler {
      */
     @SubscribeEvent
     public static void onMtFujikasaneSpawnPlacement(MobSpawnEvent.SpawnPlacementCheck event) {
-        if (event.getSpawnType() != MobSpawnType.NATURAL
-                && event.getSpawnType() != MobSpawnType.CHUNK_GENERATION) {
-            return;
-        }
         if (event.getLevel() instanceof ServerLevel serverLevel) {
-            if (serverLevel.dimension().location().equals(MT_FUJIKASANE_DIM_ID)) {
-                event.setResult(net.minecraftforge.eventbus.api.Event.Result.DENY);
+            if (!serverLevel.dimension().location().equals(MT_FUJIKASANE_DIM_ID)) {
+                return;
             }
+
+            if (!isNaturalLikeSpawn(event.getSpawnType())) {
+                return;
+            }
+
+            if (event.getPos() != null
+                && shouldAllowFinalSelectionNaturalHostileSpawn(serverLevel, event.getEntityType(), event.getPos().getX(), event.getPos().getZ(), true)) {
+                return;
+            }
+
+            event.setResult(net.minecraftforge.eventbus.api.Event.Result.DENY);
         }
     }
 
@@ -529,12 +556,295 @@ public class MtFujikasaneDimensionDataHandler {
     @SubscribeEvent
     public static void onMobSpawnCheck(MobSpawnEvent.FinalizeSpawn event) {
         if (event.getLevel() instanceof ServerLevel serverLevel) {
-            if (serverLevel.dimension().location().equals(MT_FUJIKASANE_DIM_ID)) {
-                // Deny natural spawns - this blocks vanilla mob spawning
-                // Programmatic spawns (level.addFreshEntity) bypass this event
+            if (!serverLevel.dimension().location().equals(MT_FUJIKASANE_DIM_ID)) {
+                return;
+            }
+
+            if (!isNaturalLikeSpawn(event.getSpawnType())) {
+                return;
+            }
+
+            if (tryReplaceVanillaHostileWithEasyDemon(serverLevel, event)) {
+                // Cancel original vanilla hostile spawn after successful replacement.
                 event.setSpawnCancelled(true);
+                return;
+            }
+
+            if (shouldAllowFinalSelectionNaturalHostileSpawn(
+                serverLevel,
+                event.getEntity() != null ? event.getEntity().getType() : null,
+                event.getEntity() != null ? event.getEntity().getX() : 0.0D,
+                event.getEntity() != null ? event.getEntity().getZ() : 0.0D,
+                true
+            )) {
+                return;
+            }
+
+            // Deny all other natural spawns in Mt Fujikasane.
+            event.setSpawnCancelled(true);
+        }
+    }
+
+    private static boolean tryReplaceVanillaHostileWithEasyDemon(ServerLevel level, MobSpawnEvent.FinalizeSpawn event) {
+        if (event.getEntity() == null) {
+            return false;
+        }
+
+        EntityType<?> originalType = event.getEntity().getType();
+        if (!isHostileEntityType(originalType) || isDemonEntityType(originalType)) {
+            return false;
+        }
+
+        ResourceLocation originalId = BuiltInRegistries.ENTITY_TYPE.getKey(originalType);
+        if (originalId == null || !"minecraft".equals(originalId.getNamespace())) {
+            return false; // Only replace vanilla hostile mobs.
+        }
+
+        double x = event.getEntity().getX();
+        double z = event.getEntity().getZ();
+        if (!FinalSelectionProcedure.isInsideActiveRaidArea(level, x, z)) {
+            return false;
+        }
+
+        int night = FinalSelectionProcedure.getActiveRaidNight(level);
+        double replaceChance = getVanillaHostileReplacementChanceForNight(night);
+        if (replaceChance <= 0.0D || level.random.nextDouble() >= replaceChance) {
+            return false;
+        }
+
+        // Cap non-boss demon population during Final Selection.
+        // Returning true here still cancels the original hostile spawn.
+        if (!FinalSelectionProcedure.canSpawnAdditionalNonBossDemon(level)) {
+            return true;
+        }
+
+        ResourceLocation demonId = FINAL_SELECTION_EASY_DEMON_REPLACEMENTS.get(level.random.nextInt(FINAL_SELECTION_EASY_DEMON_REPLACEMENTS.size()));
+        EntityType<?> demonType = BuiltInRegistries.ENTITY_TYPE.get(demonId);
+        if (demonType == null) {
+            return false;
+        }
+
+        net.minecraft.world.entity.Entity created = demonType.create(level);
+        if (!(created instanceof Mob demonMob)) {
+            return false;
+        }
+
+        demonMob.moveTo(
+            event.getEntity().getX(),
+            event.getEntity().getY(),
+            event.getEntity().getZ(),
+            level.random.nextFloat() * 360.0F,
+            0.0F
+        );
+        demonMob.setPersistenceRequired();
+        level.addFreshEntity(demonMob);
+
+        return true;
+    }
+
+    private static boolean shouldAllowFinalSelectionNaturalHostileSpawn(ServerLevel level, EntityType<?> entityType, double x, double z, boolean applyNightReduction) {
+        if (!isHostileEntityType(entityType)) {
+            return false;
+        }
+        if (!FinalSelectionProcedure.isInsideActiveRaidArea(level, x, z)) {
+            return false;
+        }
+
+        // During Final Selection, reduce natural non-demon hostile spawning by night.
+        if (!applyNightReduction) {
+            return true;
+        }
+        if (isDemonEntityType(entityType)) {
+            return FinalSelectionProcedure.canSpawnAdditionalNonBossDemon(level);
+        }
+
+        int night = FinalSelectionProcedure.getActiveRaidNight(level);
+        double allowChance = getNonDemonHostileAllowChanceForNight(night);
+        return level.random.nextDouble() < allowChance;
+    }
+
+    private static boolean isHostileEntityType(EntityType<?> entityType) {
+        return entityType != null && entityType.getCategory() == MobCategory.MONSTER;
+    }
+
+    private static boolean isDemonEntityType(EntityType<?> entityType) {
+        if (entityType == null) {
+            return false;
+        }
+        ResourceLocation entityId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
+        return entityId != null && com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization.isDemon(entityId);
+    }
+
+    private static double getNonDemonHostileAllowChanceForNight(int night) {
+        return switch (night) {
+            case 1 -> 0.10D; // 90% reduction
+            case 2 -> 0.40D; // 60% reduction
+            case 3 -> 0.60D; // 40% reduction
+            case 4 -> 0.70D; // 30% reduction
+            case 5 -> 0.80D; // 20% reduction
+            case 6 -> 0.90D; // 10% reduction
+            default -> 1.00D; // Night 7+ no reduction
+        };
+    }
+
+    private static double getVanillaHostileReplacementChanceForNight(int night) {
+        return switch (night) {
+            case 3 -> 0.20D;
+            case 4 -> 0.30D;
+            case 5 -> 0.40D;
+            case 6, 7 -> 0.50D;
+            default -> 0.0D;
+        };
+    }
+
+    private static boolean isNaturalLikeSpawn(MobSpawnType spawnType) {
+        return spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION;
+    }
+
+    /**
+     * If a chunk unloads during an active Final Selection raid, preserve trainee movement by
+     * relocating some DemonSlayerEntity mobs to a nearby loaded surface chunk.
+     */
+    @SubscribeEvent
+    public static void onChunkUnload(ChunkEvent.Unload event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+        if (!level.dimension().location().equals(MT_FUJIKASANE_DIM_ID)) {
+            return;
+        }
+        if (!FinalSelectionProcedure.shouldRelocateDemonSlayersOnChunkUnload(level)) {
+            return;
+        }
+        if (level.players().isEmpty()) {
+            return;
+        }
+        if (!(event.getChunk() instanceof LevelChunk chunk)) {
+            return;
+        }
+
+        ChunkPos unloadingChunkPos = chunk.getPos();
+        AABB bounds = new AABB(
+            unloadingChunkPos.getMinBlockX(),
+            level.getMinBuildHeight(),
+            unloadingChunkPos.getMinBlockZ(),
+            unloadingChunkPos.getMaxBlockX() + 1,
+            level.getMaxBuildHeight(),
+            unloadingChunkPos.getMaxBlockZ() + 1
+        );
+
+        for (DemonSlayerEntity slayer : level.getEntitiesOfClass(DemonSlayerEntity.class, bounds, EntitySelector.ENTITY_STILL_ALIVE)) {
+            // 50% chance to relocate.
+            if (ThreadLocalRandom.current().nextBoolean()) {
+                continue;
+            }
+
+            BlockPos safePos = findNearestLoadedSafeSurface(level, unloadingChunkPos, slayer.blockPosition());
+            if (safePos == null) {
+                // Safeguard: if there are no suitable loaded chunks, skip safely.
+                continue;
+            }
+
+            slayer.teleportTo(safePos.getX() + 0.5D, safePos.getY(), safePos.getZ() + 0.5D);
+            slayer.setDeltaMovement(0.0D, 0.0D, 0.0D);
+            PathNavigation navigation = slayer.getNavigation();
+            if (navigation != null) {
+                navigation.stop();
             }
         }
+    }
+
+    private static BlockPos findNearestLoadedSafeSurface(ServerLevel level, ChunkPos sourceChunk, BlockPos origin) {
+        final int maxSearchRadiusChunks = 16;
+        BlockPos nearest = null;
+        double nearestDistSq = Double.MAX_VALUE;
+
+        for (int radius = 1; radius <= maxSearchRadiusChunks; radius++) {
+            boolean foundAnyLoadedAtRadius = false;
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue;
+                    }
+
+                    int chunkX = sourceChunk.x + dx;
+                    int chunkZ = sourceChunk.z + dz;
+
+                    if (chunkX == sourceChunk.x && chunkZ == sourceChunk.z) {
+                        continue;
+                    }
+                    if (!level.getChunkSource().hasChunk(chunkX, chunkZ)) {
+                        continue;
+                    }
+
+                    foundAnyLoadedAtRadius = true;
+                    BlockPos candidate = findSafeSurfaceInChunk(level, chunkX, chunkZ, origin.getY());
+                    if (candidate == null) {
+                        continue;
+                    }
+
+                    double distSq = candidate.distSqr(origin);
+                    if (distSq < nearestDistSq) {
+                        nearest = candidate;
+                        nearestDistSq = distSq;
+                    }
+                }
+            }
+
+            // Since this is a ring search, first ring with a valid position is the nearest loaded area.
+            if (nearest != null) {
+                return nearest;
+            }
+
+            // Continue searching outer rings even if no loaded chunks in this ring.
+            if (!foundAnyLoadedAtRadius) {
+                continue;
+            }
+        }
+
+        return nearest;
+    }
+
+    private static BlockPos findSafeSurfaceInChunk(ServerLevel level, int chunkX, int chunkZ, int anchorY) {
+        int minX = chunkX << 4;
+        int minZ = chunkZ << 4;
+
+        // Probe center + random points inside chunk for a valid standing location.
+        BlockPos centerCandidate = level.getHeightmapPos(
+            Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+            new BlockPos(minX + 8, anchorY, minZ + 8)
+        );
+        if (isSafeSurface(level, centerCandidate)) {
+            return centerCandidate;
+        }
+
+        for (int i = 0; i < 6; i++) {
+            int x = minX + ThreadLocalRandom.current().nextInt(16);
+            int z = minZ + ThreadLocalRandom.current().nextInt(16);
+            BlockPos candidate = level.getHeightmapPos(
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                new BlockPos(x, anchorY, z)
+            );
+            if (isSafeSurface(level, candidate)) {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private static boolean isSafeSurface(ServerLevel level, BlockPos pos) {
+        BlockPos below = pos.below();
+        if (!level.getBlockState(below).isSolidRender(level, below)) {
+            return false;
+        }
+        if (!level.getBlockState(pos).isAir()) {
+            return false;
+        }
+        if (!level.getBlockState(pos.above()).isAir()) {
+            return false;
+        }
+        return !level.getFluidState(pos).isSource();
     }
 
     /**
@@ -557,6 +867,6 @@ public class MtFujikasaneDimensionDataHandler {
         MtFujikasaneDaylightController.tick(mtFujikasane);
 
         // Tick final selection procedure
-        FinalSelectionProcedure.tickActive();
+        FinalSelectionProcedure.tickActive(mtFujikasane);
     }
 }

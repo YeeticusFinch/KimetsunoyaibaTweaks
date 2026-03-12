@@ -69,7 +69,7 @@ public class BaseModRegistration {
         StyleMetadataRegistry.register("stone_breathing", "sun_breathing", true, true);
 
         // Moon breathing (no known derivatives)
-        StyleMetadataRegistry.register("moon_breathing", "sun_breathing", false, false);
+        StyleMetadataRegistry.register("moon_breathing", "sun_breathing", true, true);
 
         stylesRegistered = true;
         Log.info("Registered {} base mod style metadata entries", StyleMetadataRegistry.getAllStyles().size());

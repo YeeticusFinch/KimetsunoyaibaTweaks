@@ -1,12 +1,15 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Animal;
@@ -274,6 +277,10 @@ public class Damager {
 			return false;
 		}
 
+		if (source instanceof DemonSlayerEntity demonSlayer && !canDemonSlayerDamageTarget(demonSlayer, target)) {
+			return false;
+		}
+
 		// Reset invulnerability frames if requested
 		// This allows the target to take damage even if they were recently damaged
 		if (resetInvulnerability) {
@@ -281,7 +288,7 @@ public class Damager {
 		}
 
 		// Apply difficulty scaling if source is not a player
-		float scaledDamage = damage;
+		float scaledDamage = calculateScaledDamage(source, damage);
 
 		if (isDemonSlayer(source) && isDemonSlayer(target)) {
 			// Demon slayers shouldn't damage other demon slayers with their abilities by accident
@@ -304,5 +311,47 @@ public class Damager {
 			target.hurt(DamageCalculator.getDamageSource(source), scaledDamage);
 			return true;
 		}
+	}
+
+	/**
+	 * Apply shared damage scaling for Damager-driven hits.
+	 * Killing Intent grants +2% damage per level.
+	 */
+	public static float calculateScaledDamage(LivingEntity source, float baseDamage) {
+		if (source == null) {
+			return baseDamage;
+		}
+
+		float scaled = baseDamage;
+		MobEffectInstance killingIntent = source.getEffect(ModEffects.KILLING_INTENT.get());
+		if (killingIntent != null) {
+			int level = killingIntent.getAmplifier() + 1;
+			scaled *= 1.0f + (0.02f * level);
+		}
+
+		return scaled;
+	}
+
+	private static boolean canDemonSlayerDamageTarget(DemonSlayerEntity source, LivingEntity target) {
+		if (source == null || target == null) {
+			return false;
+		}
+
+		if (source == target) {
+			return false;
+		}
+
+		// Primary aggro checks: either side is actively targeting the other.
+		if (isAngry(source, target) || isAngry(target, source)) {
+			return true;
+		}
+
+		// Explicit target/revenge references are treated as active combat intent.
+		if (source.getTarget() == target || source.getLastHurtByMob() == target || target.getLastHurtByMob() == source) {
+			return true;
+		}
+
+		// Fallback combat memory for AoE/ability overlap cases.
+		return DamageTracker.hasDamageHistory(source, target);
 	}
 }

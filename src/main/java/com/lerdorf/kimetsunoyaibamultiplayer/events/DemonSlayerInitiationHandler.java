@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -66,8 +67,28 @@ public class DemonSlayerInitiationHandler {
 
     // Base mod advancement that triggers initiation rewards
     private static final ResourceLocation DEMON_SLAYER_CORPS = ResourceLocation.parse("kimetsunoyaiba:demon_slayer_corps");
+    private static final ResourceLocation MIZUNOTO = ResourceLocation.parse("kimetsunoyaiba:mizunoto");
     private static final ResourceLocation KINOE = ResourceLocation.parse("kimetsunoyaiba:kinoe");
     private static final ResourceLocation KILL_12_MOONS = ResourceLocation.parse("kimetsunoyaiba:kill_12_moons");
+    private static final ResourceLocation COMPLETED_FINAL_SELECTION = ResourceLocation.parse("kimetsunoyaibamultiplayer:completed_final_selectioni");
+    private static final Set<ResourceLocation> GATED_RANK_AND_KILL_ADVANCEMENTS = Set.of(
+        MIZUNOTO,
+        ResourceLocation.parse("kimetsunoyaiba:mizunoe"),
+        ResourceLocation.parse("kimetsunoyaiba:kanoto"),
+        ResourceLocation.parse("kimetsunoyaiba:kanoe"),
+        ResourceLocation.parse("kimetsunoyaiba:tsuchinoto"),
+        ResourceLocation.parse("kimetsunoyaiba:tsuchinoe"),
+        ResourceLocation.parse("kimetsunoyaiba:hinoto"),
+        ResourceLocation.parse("kimetsunoyaiba:hinoe"),
+        ResourceLocation.parse("kimetsunoyaiba:kinoto"),
+        ResourceLocation.parse("kimetsunoyaiba:kinoe"),
+        ResourceLocation.parse("kimetsunoyaiba:hashira"),
+        ResourceLocation.parse("kimetsunoyaiba:demon_kill_count_10"),
+        ResourceLocation.parse("kimetsunoyaiba:demon_kill_count_20"),
+        ResourceLocation.parse("kimetsunoyaiba:demon_kill_count_30"),
+        ResourceLocation.parse("kimetsunoyaiba:demon_kill_count_40"),
+        ResourceLocation.parse("kimetsunoyaiba:demon_kill_count_50")
+    );
     private static boolean baseAdvancementHandlersDisabled = false;
     private static final String[] BASE_ADVANCEMENT_HANDLER_CLASSES = new String[] {
         "net.mcreator.kimetsunoyaiba.procedures.SupplyProcedure",
@@ -109,6 +130,19 @@ public class DemonSlayerInitiationHandler {
 
             ResourceLocation advancementId = eventAdvancement.getId();
             if (advancementId == null) {
+                return;
+            }
+
+            // Rank and demon kill count progression is gated behind our custom
+            // "completed_final_selectioni" advancement.
+            if (GATED_RANK_AND_KILL_ADVANCEMENTS.contains(advancementId) &&
+                !hasAdvancement(serverPlayer, COMPLETED_FINAL_SELECTION)) {
+                revokeAdvancement(serverPlayer, eventAdvancement);
+
+                if (CustomProgressionConfig.enableDebugLogging.get()) {
+                    System.out.println("[KnY-MP Progression] Revoked gated advancement '" + advancementId +
+                        "' from " + player.getName().getString() + " (missing completed_final_selectioni)");
+                }
                 return;
             }
 
@@ -443,6 +477,29 @@ public class DemonSlayerInitiationHandler {
         if (CustomProgressionConfig.enableDebugLogging.get()) {
             System.out.println("[KnY-MP Progression] Awarded demon_slayer_corps to " +
                 player.getName().getString() + " after kizuki progression advancement");
+        }
+    }
+
+    private static boolean hasAdvancement(ServerPlayer player, ResourceLocation advancementId) {
+        if (player.getServer() == null) {
+            return false;
+        }
+
+        Advancement advancement = player.server.getAdvancements().getAdvancement(advancementId);
+        if (advancement == null) {
+            return false;
+        }
+
+        return player.getAdvancements().getOrStartProgress(advancement).isDone();
+    }
+
+    private static void revokeAdvancement(ServerPlayer player, Advancement advancement) {
+        List<String> completedCriteria = new ArrayList<String>();
+        for (String criterion : player.getAdvancements().getOrStartProgress(advancement).getCompletedCriteria()) {
+            completedCriteria.add(criterion);
+        }
+        for (String criterion : completedCriteria) {
+            player.getAdvancements().revoke(advancement, criterion);
         }
     }
 

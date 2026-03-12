@@ -50,18 +50,20 @@ public class LoveSwordRenderer extends GeoItemRenderer<NichirinSwordLoveAnimated
             }
         }
 
-        // Apply third person hand offset
-        if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) {
-            poseStack.translate(1.25 / 16.0, 0.7 / 16.0, 1.25 / 16.0);
+        // Apply third-person hand offset for both hand contexts.
+        if (displayContext == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+            || displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
+            double handSign = displayContext == ItemDisplayContext.THIRD_PERSON_LEFT_HAND ? -1.0 : 1.0;
+            poseStack.translate((1.25 * handSign) / 16.0, 0.7 / 16.0, (1.25 * handSign) / 16.0);
 
             // Apply entity hand offset for GeckoLib entities (BreathingSlayerEntity) in combat
             // Same offset as KanrojiSwordRenderer to compensate for biped model alignment
             LivingEntity renderingEntity = EntityRenderContext.getCurrentEntity();
             if (renderingEntity instanceof BreathingSlayerEntity &&
                 EntityCombatStateTracker.isInCombat(renderingEntity)) {
-                poseStack.translate(Config.kanrojiEntityHandOffsetX / 16.0,
+                poseStack.translate((Config.kanrojiEntityHandOffsetX * handSign) / 16.0,
                                    Config.kanrojiEntityHandOffsetY / 16.0,
-                                   Config.kanrojiEntityHandOffsetZ / 16.0);
+                                   (Config.kanrojiEntityHandOffsetZ * handSign) / 16.0);
             }
         }
 

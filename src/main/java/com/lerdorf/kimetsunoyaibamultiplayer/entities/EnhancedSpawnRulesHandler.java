@@ -159,7 +159,32 @@ public class EnhancedSpawnRulesHandler {
             return true;
         }
 
+        // Named slayers and retired hashira should only appear through their base mod
+        // biome/structure rules, not through generic natural spawning.
+        if ((EntityTagHelper.isNamedDemonSlayer(entity) || EntityTagHelper.isFormerHashira(entity)) &&
+            !isAllowedNamedSlayerBiomeSpawn(entity, biomeId)) {
+            return true;
+        }
+
         return false;
+    }
+
+    private static boolean isAllowedNamedSlayerBiomeSpawn(Mob entity, ResourceLocation biomeId) {
+        if (biomeId == null) {
+            return false;
+        }
+
+        if (!biomeId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mt_sagiri"))) {
+            return false;
+        }
+
+        ResourceLocation entityId = EntityTagHelper.getEntityTypeId(entity);
+        if (entityId == null) {
+            return false;
+        }
+
+        String path = entityId.getPath();
+        return path.equals("sabito") || path.equals("makomo") || path.equals("urokodaki");
     }
 
     /**
@@ -413,7 +438,9 @@ public class EnhancedSpawnRulesHandler {
         // Reduce demon slayer spawning (not hashira or kamaboko)
         if (EntityTagHelper.isDemonSlayer(entity) &&
             !EntityTagHelper.isHashira(entity) &&
-            !EntityTagHelper.isKamaboko(entity)) {
+            !EntityTagHelper.isKamaboko(entity) &&
+            !EntityTagHelper.isNamedDemonSlayer(entity) &&
+            !EntityTagHelper.isFormerHashira(entity)) {
             double spawnChance = EnhancedSpawnConfig.genericDemonSlayerSpawnRate;
             if (RANDOM.nextDouble() >= spawnChance) {
                 return true; // Deny spawn

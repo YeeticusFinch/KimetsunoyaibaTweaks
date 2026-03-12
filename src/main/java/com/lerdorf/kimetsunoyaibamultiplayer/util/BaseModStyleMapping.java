@@ -83,7 +83,7 @@ public class BaseModStyleMapping {
             Map.entry(1600, new int[]{1601, 1602, 1603, 1604, 1605, 1606, 1607}) // Frost
         );
     }
-
+    
     /**
      * Get style ID from base mod breathes value.
      *

@@ -124,8 +124,8 @@ public class NichirinSwordLoveAnimated extends BreathingSwordItem implements Geo
 
             if (currentEntity != null && !(currentEntity instanceof net.minecraft.world.entity.player.Player)) {
                 String entityAnim;
-                if (!com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInCombat(currentEntity)
-                    && !com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInSheathingTransition(currentEntity)) {
+                if (!com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.isInCombat(currentEntity)) {
+                    // Love sword should always stay in sheath pose whenever the entity is sheathed.
                     entityAnim = "sheath";
                 } else {
                     entityAnim = com.lerdorf.kimetsunoyaibamultiplayer.client.EntitySwordAnimationCache.getAnimation(currentEntity);

@@ -38,7 +38,11 @@ public class DemonSlayerRenderer extends GeoEntityRenderer<DemonSlayerEntity> {
 
             @Override
             public ResourceLocation getAnimationResource(DemonSlayerEntity entity) {
-                return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "animations/biped.animation.json");
+                String namespace = entity.getCurrentAnimationNamespace();
+                if (namespace == null || namespace.isEmpty()) {
+                    namespace = KimetsunoyaibaMultiplayer.MODID;
+                }
+                return ResourceLocation.fromNamespaceAndPath(namespace, "animations/biped.animation.json");
             }
         });
 

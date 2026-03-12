@@ -83,6 +83,19 @@ public class EnhancedBreathingConfig {
                     "Default: true")
             .define("enhancedLoveBreathing", true);
 
+    // Black Sword Enhancement
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_BLACK_SWORD = BUILDER
+            .comment("Enable enhanced Black Sword replacement",
+                    "When true, automatically replaces base mod black sword with enhanced version:",
+                    "  - kimetsunoyaiba:nichirinsword_black -> kimetsunoyaibamultiplayer:nichirinsword_black",
+                    "",
+                    "Enhanced features:",
+                    "  - Uses enhanced Black Sword technique implementation",
+                    "  - Improved particle effects and animations",
+                    "",
+                    "Default: true")
+            .define("enhancedBlackSword", true);
+
     static {
         BUILDER.pop(); // enhanced_breathing
 
@@ -192,6 +205,7 @@ public class EnhancedBreathingConfig {
     public static boolean enhancedFlowerBreathing;
     public static boolean enhancedBeastBreathing;
     public static boolean enhancedLoveBreathing;
+    public static boolean enhancedBlackSword;
     public static boolean disableLoveM1TrailParticles;
 
     // Whip Physics Settings
@@ -223,6 +237,7 @@ public class EnhancedBreathingConfig {
         enhancedFlowerBreathing = ENHANCED_FLOWER_BREATHING.get();
         enhancedBeastBreathing = ENHANCED_BEAST_BREATHING.get();
         enhancedLoveBreathing = ENHANCED_LOVE_BREATHING.get();
+        enhancedBlackSword = ENHANCED_BLACK_SWORD.get();
         disableLoveM1TrailParticles = DISABLE_LOVE_M1_TRAIL_PARTICLES.get();
 
         // Load whip physics settings
@@ -253,6 +268,7 @@ public class EnhancedBreathingConfig {
         Log.debug("  - Enhanced Flower Breathing: " + enhancedFlowerBreathing);
         Log.debug("  - Enhanced Beast Breathing: " + enhancedBeastBreathing);
         Log.debug("  - Enhanced Love Breathing: " + enhancedLoveBreathing);
+        Log.debug("  - Enhanced Black Sword: " + enhancedBlackSword);
         Log.debug("  - Disable Love/Kanroji M1 Trail Particles: " + disableLoveM1TrailParticles);
         Log.debug("  - Whip Segments: " + whipSegmentCount);
         Log.debug("  - Whip Extended Length: " + whipExtendedLength);

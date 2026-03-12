@@ -2,10 +2,14 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordWielderSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -152,8 +156,16 @@ public class SwordSwitchHandler {
             player.getPersistentData().putBoolean("attack", false);
             player.getPersistentData().putDouble("Damage", 0.0);
 
+            // Safety reset: unsheathing/re-equipping should never inherit a stuck swing-cancel state.
+            player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(data -> {
+                data.setCancelAttackSwing(false);
+            });
+            if (player instanceof ServerPlayer serverPlayer) {
+                ModNetworking.sendToPlayer(new SwordWielderSyncPacket(player.getUUID(), false), serverPlayer);
+            }
+
             if (Config.logDebug) {
-                Log.debug("[SwordSwitchHandler] Cleared combat states (guard/attack/Damage)");
+                Log.debug("[SwordSwitchHandler] Cleared combat states (guard/attack/Damage) and reset cancelAttackSwing");
             }
         }
 

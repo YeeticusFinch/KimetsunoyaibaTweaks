@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -140,6 +141,8 @@ public abstract class BreathingSwordItem extends SwordItem {
                 // Execute variation effect ONLY on server
                 if (!level.isClientSide) {
                     variation.getEffect().execute(player, level, form.getFormId());
+                    BreathingFormAnnouncementHelper.announceCustomForm(
+                        player, technique.getName(), technique.getTechniqueColor(), displayName);
                     // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
                     player.getCooldowns().addCooldown(this, cooldownTicks);
@@ -182,6 +185,8 @@ public abstract class BreathingSwordItem extends SwordItem {
                 // Execute the form effect ONLY on server
                 if (!level.isClientSide) {
                     form.execute(player, level);
+                    BreathingFormAnnouncementHelper.announceCustomForm(
+                        player, technique.getName(), technique.getTechniqueColor(), displayName);
                     // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
                     player.getCooldowns().addCooldown(this, cooldownTicks);

@@ -8,16 +8,22 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechniq
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SunBreathingLevelHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * AI goal that makes breathing slayer entities use their breathing forms in combat
@@ -111,9 +117,9 @@ public class BreathingFormAttackGoal extends Goal {
             swordStack = this.entity.getEquippedSword();
         }
 
-        // Pick a breathing form, weighted to favor smaller cooldowns.
-        // Training swords at level 0 are restricted to the first form only.
-        BreathingTechnique technique = this.entity.getBreathingTechnique();
+        // Pick a breathing form from the currently equipped sword's own technique (if available),
+        // not from the broad style technique on the entity.
+        BreathingTechnique technique = resolveTechniqueForSword(swordStack);
         BreathingForm form = pickFormForCurrentState(technique, target, swordStack);
 
         if (form != null) {
@@ -146,9 +152,13 @@ public class BreathingFormAttackGoal extends Goal {
             if (selectedVariation != null) {
                 // Execute the variation's effect (formId is auto-injected)
                 selectedVariation.getEffect().execute(this.entity, this.entity.level(), form.getFormId());
+                BreathingFormAnnouncementHelper.announceCustomForm(
+                    this.entity, technique.getName(), technique.getTechniqueColor(), selectedVariation.getName());
             } else {
                 // Execute the base breathing form (formId is auto-injected)
                 form.execute(this.entity, this.entity.level());
+                BreathingFormAnnouncementHelper.announceCustomForm(
+                    this.entity, technique.getName(), technique.getTechniqueColor(), form.getName());
             }
 
             // Set cooldown (use base form's cooldown)
@@ -163,6 +173,12 @@ public class BreathingFormAttackGoal extends Goal {
             return;
         }
 
+        // If we had a sword-specific technique but no form was valid right now (distance constraints, etc.),
+        // do not fall back to style-wide/base-mod form pools.
+        if (technique != null && technique.getForms() != null && !technique.getForms().isEmpty()) {
+            return;
+        }
+
         // Fallback path: base-mod style execution for swords whose style is known but has no registered technique object.
         String styleId = resolveCurrentStyleId(swordStack);
         if (styleId == null) {
@@ -173,11 +189,7 @@ public class BreathingFormAttackGoal extends Goal {
             return;
         }
 
-        int[] baseForms = BaseModStyleMapping.getFormsForStyle(styleRange);
-        java.util.List<Integer> forms = new java.util.ArrayList<>();
-        for (int formId : baseForms) {
-            forms.add(formId);
-        }
+        java.util.List<Integer> forms = resolveAllowedBaseModForms(swordStack, styleId, styleRange);
 
         if (swordStack.getItem() instanceof NichirinSwordBlack) {
             for (com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm sunForm :
@@ -193,12 +205,13 @@ public class BreathingFormAttackGoal extends Goal {
         faceTarget(target);
 
         int formId;
-        if (isTrainingSwordRestricted(swordStack)) {
+        if (isFirstFormOnlyRestricted(swordStack)) {
             formId = forms.get(0);
         } else {
             formId = forms.get(this.entity.getRandom().nextInt(forms.size()));
         }
 
+        BreathingFormAnnouncementHelper.announceBaseModForm(this.entity, formId);
         BaseModFormExecutionHelper.executeBaseModForm(this.entity, this.entity.level(), formId);
         this.entity.setBreathingFormCooldown(Math.max(minCooldownTicks, 60));
     }
@@ -208,15 +221,70 @@ public class BreathingFormAttackGoal extends Goal {
             return null;
         }
 
-        if (isTrainingSwordRestricted(swordStack)) {
+        if (isFirstFormOnlyRestricted(swordStack)) {
             return technique.getForm(0);
         }
 
         return pickWeightedFormConstrained(technique, target);
     }
 
-    private boolean isTrainingSwordRestricted(ItemStack swordStack) {
-        return this.entity.getPowerLevel() == 0 && TrainingSwordHelper.isTrainingSword(swordStack);
+    private boolean isFirstFormOnlyRestricted(ItemStack swordStack) {
+        return this.entity.getPowerLevel() == 0 || TrainingSwordHelper.isTrainingSword(swordStack);
+    }
+
+    private BreathingTechnique resolveTechniqueForSword(ItemStack swordStack) {
+        if (swordStack != null && !swordStack.isEmpty()) {
+            if (swordStack.getItem() instanceof NichirinSwordBlack blackSword) {
+                BreathingTechnique effective = blackSword.getEffectiveTechnique(swordStack, this.entity);
+                if (effective != null) {
+                    return effective;
+                }
+            }
+
+            if (swordStack.getItem() instanceof BreathingSwordItem breathingSword) {
+                BreathingTechnique swordTechnique = breathingSword.getBreathingTechnique();
+                if (swordTechnique != null) {
+                    return swordTechnique;
+                }
+            }
+        }
+
+        return this.entity.getBreathingTechnique();
+    }
+
+    private java.util.List<Integer> resolveAllowedBaseModForms(ItemStack swordStack, String styleId, int styleRange) {
+        Set<Integer> forms = new LinkedHashSet<>();
+        for (int formId : BaseModStyleMapping.getFormsForStyle(styleRange)) {
+            if (isBaseModFormAllowedForSword(swordStack, styleId, formId)) {
+                forms.add(formId);
+            }
+        }
+        return new java.util.ArrayList<>(forms);
+    }
+
+    private boolean isBaseModFormAllowedForSword(ItemStack swordStack, String styleId, int formId) {
+        if (swordStack == null || swordStack.isEmpty()) {
+            return true;
+        }
+
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(swordStack.getItem());
+        String itemPath = itemId != null ? itemId.getPath().toLowerCase() : "";
+
+        if ("flame_breathing".equals(styleId)
+                && (itemPath.equals("nichirinsword_flame") || itemPath.equals("nichirinsword_flame"))) {
+            return formId >= 401 && formId <= 405;
+        }
+
+        if ("water_breathing".equals(styleId)
+            && (itemPath.equals("nichirinsword_water") || itemPath.equals("nichirinsword_black"))) {
+            return formId >= 101 && formId <= 110;
+        }
+
+        if ("moon_breathing".equals(styleId) && itemPath.equals("nichirinswordmoon")) {
+            return formId == 1101 || formId == 1102 || formId == 1103 || formId == 1105 || formId == 1106;
+        }
+
+        return true;
     }
 
     private String resolveCurrentStyleId(ItemStack swordStack) {

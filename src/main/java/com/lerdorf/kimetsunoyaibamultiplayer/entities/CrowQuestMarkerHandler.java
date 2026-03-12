@@ -152,7 +152,9 @@ public class CrowQuestMarkerHandler {
      */
     public static void drawQuestArrow(Player player, Vec3 target, Level level) {
         Vec3 playerPos = player.position().add(0, player.getEyeHeight(), 0);
-        Vec3 direction = target.subtract(playerPos).normalize();
+        // Arrow guidance is X/Z-only so it never points underground/skyward due to target Y.
+        Vec3 adjustedTarget = new Vec3(target.x, playerPos.y, target.z);
+        Vec3 direction = adjustedTarget.subtract(playerPos).normalize();
 
         // Draw arrow particles in front of the player
         double arrowLength = EntityConfig.crowArrowLength;

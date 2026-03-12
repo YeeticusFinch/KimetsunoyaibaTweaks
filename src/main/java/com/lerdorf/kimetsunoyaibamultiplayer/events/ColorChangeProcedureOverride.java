@@ -4,6 +4,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.StyleMetadataRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordMetadataRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerColorChangeStyleHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -50,8 +52,6 @@ public class ColorChangeProcedureOverride {
 
     // Threshold at which base mod transforms the sword
     private static final double TRANSFORM_THRESHOLD = 30.0;
-    // Persisted per-player color-change style so players keep the same breathing style after first roll.
-    private static final String PLAYER_COLOR_CHANGE_STYLE_TAG = "KnYMPColorChangeStyleId";
 
     /**
      * On player tick, handle:
@@ -153,7 +153,8 @@ public class ColorChangeProcedureOverride {
         }
 
         // Reuse player's previously assigned style if valid; otherwise roll once and persist.
-        StyleMetadataRegistry.StyleMetadata chosenStyle = resolveOrAssignPlayerStyle(player, eligibleStyles);
+        StyleMetadataRegistry.StyleMetadata chosenStyle =
+            PlayerColorChangeStyleHelper.resolveOrAssignColorChangeStyle(player, eligibleStyles);
         if (chosenStyle == null) {
             System.out.println("[KnY-MP ColorChangeOverride] Failed to resolve player style for color change");
             return;
@@ -181,6 +182,14 @@ public class ColorChangeProcedureOverride {
         // The new sword should start fresh with its default properties
         ItemStack newSword = new ItemStack(chosenSword);
 
+        if (newSword.getItem() instanceof NichirinSwordBlack) {
+            String blackSwordStyle = NichirinSwordBlack.assignRememberedStyle(newSword, player, player.getRandom());
+            if (blackSwordStyle != null) {
+                System.out.println("[KnY-MP ColorChangeOverride] Applied black sword style for " +
+                    player.getName().getString() + ": " + blackSwordStyle);
+            }
+        }
+
         // If the original sword was a training sword, apply training sword modifications to the new one
         if (wasTrainingSword) {
             TrainingSwordHelper.makeTrainingSword(newSword, player);
@@ -195,7 +204,7 @@ public class ColorChangeProcedureOverride {
             SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.0F, 1.0F);
 
         // Send transformation message to player
-        String styleName = formatStyleName(chosenStyle.getStyleId());
+        String styleName = PlayerColorChangeStyleHelper.formatStyleName(chosenStyle.getStyleId());
         Component message = Component.literal("Your blade has awakened as a " + styleName + " sword!");
         player.displayClientMessage(message, true);  // Action bar message
         player.sendSystemMessage(message);           // Chat message
@@ -247,46 +256,6 @@ public class ColorChangeProcedureOverride {
             case "love_breathing" -> com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.enhancedLoveBreathing;
             default -> false;
         };
-    }
-
-    /**
-     * Resolve the player's persistent color-change style.
-     * If none is set (or it's no longer eligible), assign a random eligible style and persist it.
-     */
-    private static StyleMetadataRegistry.StyleMetadata resolveOrAssignPlayerStyle(
-            Player player,
-            List<StyleMetadataRegistry.StyleMetadata> eligibleStyles) {
-
-        CompoundTag persistentData = player.getPersistentData();
-        String savedStyleId = persistentData.getString(PLAYER_COLOR_CHANGE_STYLE_TAG);
-
-        if (savedStyleId != null && !savedStyleId.isEmpty()) {
-            for (StyleMetadataRegistry.StyleMetadata style : eligibleStyles) {
-                if (savedStyleId.equals(style.getStyleId())) {
-                    return style;
-                }
-            }
-        }
-
-        StyleMetadataRegistry.StyleMetadata chosen = eligibleStyles.get(RANDOM.nextInt(eligibleStyles.size()));
-        persistentData.putString(PLAYER_COLOR_CHANGE_STYLE_TAG, chosen.getStyleId());
-
-        if (CustomProgressionConfig.enableDebugLogging.get()) {
-            System.out.println("[KnY-MP ColorChangeOverride] Assigned persistent style for " +
-                player.getName().getString() + ": " + chosen.getStyleId());
-        }
-
-        return chosen;
-    }
-
-    /**
-     * Format a style ID into a readable name.
-     */
-    private static String formatStyleName(String styleId) {
-        // water_breathing -> Water Breathing
-        return styleId.replace("_", " ")
-            .substring(0, 1).toUpperCase() +
-            styleId.replace("_", " ").substring(1);
     }
 
     /**

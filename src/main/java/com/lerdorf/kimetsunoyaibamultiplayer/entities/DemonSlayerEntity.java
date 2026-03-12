@@ -34,6 +34,8 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -45,6 +47,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -78,8 +81,21 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     private static final double FLEE_SPEED_MULTIPLIER = 1.35D;
     private static final int FLEE_AWAY_RANGE = 20;
     private static final int FLEE_AWAY_VERTICAL_RANGE = 8;
+    private static final String FINAL_SELECTION_PATHING_TAG = "FinalSelectionPathing";
     private static final double KICK_DAMAGE = 2.5D;
     private static final double KICK_KNOCKBACK = 0.6D;
+    private static final String[] DICE_STEAK_DROPS = {
+        "dice_steak_arm",
+        "dice_steak_body",
+        "dice_steak_head_1",
+        "dice_steak_head_2",
+        "dice_steak_head_3",
+        "dice_steak_head_4",
+        "dice_steak_leg"
+    };
+    private static final Set<String> DISALLOWED_RANDOM_SWORD_PATH_KEYS = Set.of(
+        "ice_shirasaya"
+    );
 
     // Synced data: sword registry ID (e.g., "nichirinsword_water" or "kimetsunoyaiba:nichirinsword_water")
     private static final EntityDataAccessor<String> SWORD_ID =
@@ -94,6 +110,10 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> PURPLE_UNIFORM_VARIANT =
         SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> FINAL_SELECTION_PATHING_ACTIVE =
+        SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> FINAL_SELECTION_PATH_SPEED =
+        SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.FLOAT);
     // Synced data: level-5 additional sword ids (for extra sheaths/sword switching)
     private static final EntityDataAccessor<String> ALT_SWORD_ID_1 =
         SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.STRING);
@@ -113,6 +133,16 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     private int superSeniorSwordSwitchTicks = 0;
     private int fleeRepathTicks = 0;
     private boolean sheathPreferenceInitialized = false;
+    private int movementAnimationGraceTicks = 0;
+    private boolean movementAnimationLatched = false;
+    private int sprintAnimationGraceTicks = 0;
+    private double smoothedHorizontalSpeed = 0.0D;
+    private String latchedMovementAnimation = "idle";
+    private int movementAnimationSwitchCooldownTicks = 0;
+    private int movementStateHoldTicks = 0;
+    private int sprintStateHoldTicks = 0;
+    private double smoothedAnimationSpeed = 1.0D;
+    private static final java.util.Map<String, RawAnimation> LOOPING_MOVEMENT_ANIMATIONS = new java.util.HashMap<>();
 
     /**
      * Holds info about an eligible sword for random selection.
@@ -150,9 +180,11 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
-            DemonSlayerAggroHandler::isDemonTarget));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-            (player) -> player.getPersistentData().getBoolean("oni")));
+            target -> !this.isFinalSelectionPathingActive() && DemonSlayerAggroHandler.isDemonTarget(target)));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Monster.class, 10, true, false,
+            monster -> !this.isFinalSelectionPathingActive() && !DemonSlayerAggroHandler.isDemonTarget(monster)));
+        this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+            (player) -> !this.isFinalSelectionPathingActive() && player.getPersistentData().getBoolean("oni")));
     }
 
     @Override
@@ -163,6 +195,8 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         this.entityData.define(LOW_LEVEL_FLEEING, false);
         this.entityData.define(SHEATHE_ON_BACK, false);
         this.entityData.define(PURPLE_UNIFORM_VARIANT, false);
+        this.entityData.define(FINAL_SELECTION_PATHING_ACTIVE, false);
+        this.entityData.define(FINAL_SELECTION_PATH_SPEED, 0.0F);
         this.entityData.define(ALT_SWORD_ID_1, "");
         this.entityData.define(ALT_SWORD_ID_2, "");
     }
@@ -237,6 +271,24 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
     private void setPurpleUniformVariant(boolean value) {
         this.entityData.set(PURPLE_UNIFORM_VARIANT, value);
+    }
+
+    public void setFinalSelectionPathingActive(boolean active) {
+        this.getPersistentData().putBoolean(FINAL_SELECTION_PATHING_TAG, active);
+        this.entityData.set(FINAL_SELECTION_PATHING_ACTIVE, active);
+    }
+
+    public boolean isFinalSelectionPathingActive() {
+        return this.entityData.get(FINAL_SELECTION_PATHING_ACTIVE)
+            || this.getPersistentData().getBoolean(FINAL_SELECTION_PATHING_TAG);
+    }
+
+    public void setFinalSelectionPathSpeed(double speed) {
+        this.entityData.set(FINAL_SELECTION_PATH_SPEED, (float) Math.max(0.0D, speed));
+    }
+
+    public double getFinalSelectionPathSpeed() {
+        return this.entityData.get(FINAL_SELECTION_PATH_SPEED);
     }
 
     // --- Power level override to allow 0 ---
@@ -455,7 +507,10 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
                 }
                 String itemIdStr = itemId.toString();
                 if (seenItemIds.add(itemIdStr)) {
-                    eligible.add(new EligibleSword(sword.getSwordId(), sword.getStyleId(), swordItem));
+                    if (sword.getCategory() == SwordRegistry.SwordCategory.NICHIRIN
+                        && isAllowedForRandomSpawn(sword.getSwordId(), itemIdStr)) {
+                        eligible.add(new EligibleSword(sword.getSwordId(), sword.getStyleId(), swordItem));
+                    }
                 }
             }
         }
@@ -470,7 +525,9 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
                     if (!seenItemIds.add(itemIdStr)) {
                         continue;
                     }
-                    eligible.add(new EligibleSword(meta.getSwordId(), meta.getStyleId(), item));
+                    if (isAllowedForRandomSpawn(meta.getSwordId(), itemIdStr)) {
+                        eligible.add(new EligibleSword(meta.getSwordId(), meta.getStyleId(), item));
+                    }
                 }
             }
         }
@@ -480,6 +537,17 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
     private boolean isUsableSwordItem(Item item) {
         return item != null && !new ItemStack(item).isEmpty();
+    }
+
+    private boolean isAllowedForRandomSpawn(String swordId, String itemIdStr) {
+        String swordKey = swordId == null ? "" : swordId.toLowerCase();
+        String itemKey = itemIdStr == null ? "" : itemIdStr.toLowerCase();
+        for (String banned : DISALLOWED_RANDOM_SWORD_PATH_KEYS) {
+            if (swordKey.contains(banned) || itemKey.contains(banned)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private EligibleSword chooseRandomLevelZeroSwordByStyle() {
@@ -941,6 +1009,31 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     }
 
     @Override
+    protected void dropCustomDeathLoot(DamageSource source, int lootingLevel, boolean recentlyHit) {
+        super.dropCustomDeathLoot(source, lootingLevel, recentlyHit);
+
+        if (!recentlyHit || DICE_STEAK_DROPS.length == 0) {
+            return;
+        }
+
+        double dropChance = Math.min(0.90D, 0.12D + (0.06D * Math.max(0, lootingLevel)));
+        if (this.random.nextDouble() >= dropChance) {
+            return;
+        }
+
+        String selectedDropId = DICE_STEAK_DROPS[this.random.nextInt(DICE_STEAK_DROPS.length)];
+        Item dropItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", selectedDropId));
+        if (dropItem != null && dropItem != Items.AIR) {
+            this.spawnAtLocation(new ItemStack(dropItem));
+        }
+    }
+
+    @Override
+    public int getExperienceReward() {
+        return Math.max(0, getPowerLevel()) * 2;
+    }
+
+    @Override
     public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
         boolean result = super.hurt(source, amount);
         if (result && !this.level().isClientSide) {
@@ -968,27 +1061,156 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
                 return state.setAndContinue(RawAnimation.begin().thenPlay(anim));
             }
 
-            double moveSq = this.getDeltaMovement().horizontalDistanceSqr();
-            // Prefer GeckoLib's movement signal; keep a low-velocity fallback for edge cases.
-            boolean isMoving = state.isMoving() || moveSq > 0.0001D;
+            // Draw/sheath transitions should always win over movement locomotion.
+            if (anim != null && (anim.startsWith("draw_") || anim.startsWith("sheath_"))) {
+                state.getController().setAnimationSpeed(1.0D);
+                return state.setAndContinue(RawAnimation.begin().thenPlay(anim));
+            }
+
+            boolean hasActivePath = !this.getNavigation().isDone();
+            double travelSpeed = getHorizontalTravelSpeed();
+            double velocitySq = this.getDeltaMovement().horizontalDistanceSqr();
+            this.smoothedHorizontalSpeed = (this.smoothedHorizontalSpeed * 0.65D) + (travelSpeed * 0.35D);
+            double speedNow = this.smoothedHorizontalSpeed;
+
+            // Movement hysteresis to avoid idle/walk flicker at low speeds.
+            boolean movementEnter = speedNow > 0.014D
+                || velocitySq > 0.00002D
+                || hasActivePath
+                || state.isMoving();
+            boolean movementExit = speedNow < 0.0025D
+                && velocitySq < 0.000002D
+                && !hasActivePath;
+
+            if (movementEnter) {
+                this.movementAnimationLatched = true;
+                this.movementAnimationGraceTicks = 28;
+            } else if (this.movementAnimationGraceTicks > 0) {
+                this.movementAnimationGraceTicks--;
+            } else if (movementExit) {
+                this.movementAnimationLatched = false;
+            }
+
+            boolean isMoving = this.movementAnimationLatched || this.movementAnimationGraceTicks > 0;
+            // Hard guard: if the entity is physically moving or still has a path, never show idle.
+            if (!isMoving && (hasActivePath || speedNow > 0.003D || velocitySq > 0.00001D)) {
+                isMoving = true;
+                this.movementAnimationLatched = true;
+                this.movementAnimationGraceTicks = Math.max(this.movementAnimationGraceTicks, 16);
+            }
             boolean seniorSwordDrawnInCombat = isSeniorSwordDrawnInCombat();
 
+            String desiredMovementAnim;
+            double desiredAnimSpeed;
+
             if (!isMoving) {
-                state.getController().setAnimationSpeed(1.0D);
-                return state.setAndContinue(RawAnimation.begin().thenLoop(resolveIdleAnimation(seniorSwordDrawnInCombat)));
+                if (this.movementStateHoldTicks > 0) {
+                    this.movementStateHoldTicks--;
+                    desiredMovementAnim = resolveWalkAnimation(seniorSwordDrawnInCombat);
+                    double walkFactor = speedNow / 0.085D;
+                    desiredAnimSpeed = clamp(walkFactor, 1.05D, 2.1D);
+                } else {
+                desiredMovementAnim = resolveIdleAnimation(seniorSwordDrawnInCombat);
+                desiredAnimSpeed = 1.0D;
+                }
+            } else {
+                // Keep walk active briefly to absorb tiny movement/path jitters.
+                this.movementStateHoldTicks = 28;
+
+                // Sprint selection is speed-driven with strong hysteresis + hold lock.
+                boolean currentlySprintingAnim = isSprintAnimation(this.latchedMovementAnimation);
+                double sprintEnterSpeed = 0.155D;
+                double sprintExitSpeed = 0.105D;
+                boolean speedWantsSprint = speedNow >= (currentlySprintingAnim ? sprintExitSpeed : sprintEnterSpeed);
+                boolean mountainPathSprint = this.isFinalSelectionPathingActive()
+                    && this.getFinalSelectionPathSpeed() > 2.3D;
+                boolean mountainPathSpeedSprint = this.isFinalSelectionPathingActive()
+                    && hasActivePath
+                    && (this.getFinalSelectionPathSpeed() > 1.8D || speedNow > 0.045D);
+                boolean wantsSprint = this.isLowLevelFleeing()
+                    || mountainPathSprint
+                    || mountainPathSpeedSprint
+                    || this.isSprinting()
+                    || speedWantsSprint;
+
+                if (wantsSprint) {
+                    this.sprintAnimationGraceTicks = 20;
+                    this.sprintStateHoldTicks = this.isFinalSelectionPathingActive() ? 45 : 28;
+                } else if (this.sprintAnimationGraceTicks > 0) {
+                    this.sprintAnimationGraceTicks--;
+                }
+                if (this.sprintStateHoldTicks > 0) {
+                    this.sprintStateHoldTicks--;
+                }
+
+                boolean shouldSprint = this.sprintAnimationGraceTicks > 0
+                    || this.sprintStateHoldTicks > 0
+                    || (mountainPathSprint && speedNow > 0.04D);
+                if (shouldSprint) {
+                    desiredMovementAnim = resolveSprintAnimation(seniorSwordDrawnInCombat);
+                    double sprintFactor = speedNow / 0.11D;
+                    desiredAnimSpeed = clamp(sprintFactor, 1.0D, 2.8D);
+                } else {
+                    desiredMovementAnim = resolveWalkAnimation(seniorSwordDrawnInCombat);
+                    double walkFactor = speedNow / 0.085D;
+                    desiredAnimSpeed = clamp(walkFactor, 1.05D, 2.2D);
+                }
             }
 
-            boolean shouldSprint = this.isSprinting() || (this.getTarget() != null && moveSq > 0.01);
-            double moveSpeed = Math.sqrt(moveSq);
-            double animSpeed = Math.max(0.75D, Math.min(2.0D, moveSpeed * 7.5D));
-            state.getController().setAnimationSpeed(animSpeed);
-
-            if (shouldSprint) {
-                return state.setAndContinue(RawAnimation.begin().thenLoop(resolveSprintAnimation(seniorSwordDrawnInCombat)));
+            if (!desiredMovementAnim.equals(this.latchedMovementAnimation)) {
+                boolean classChanged = movementAnimClass(desiredMovementAnim) != movementAnimClass(this.latchedMovementAnimation);
+                if (this.movementAnimationSwitchCooldownTicks <= 0 || classChanged) {
+                    this.latchedMovementAnimation = desiredMovementAnim;
+                    this.movementAnimationSwitchCooldownTicks = 6;
+                } else {
+                    this.movementAnimationSwitchCooldownTicks--;
+                }
+            } else if (this.movementAnimationSwitchCooldownTicks > 0) {
+                this.movementAnimationSwitchCooldownTicks--;
             }
 
-            return state.setAndContinue(RawAnimation.begin().thenLoop(resolveWalkAnimation(seniorSwordDrawnInCombat)));
+            this.smoothedAnimationSpeed = (this.smoothedAnimationSpeed * 0.70D) + (desiredAnimSpeed * 0.30D);
+            state.getController().setAnimationSpeed(clamp(this.smoothedAnimationSpeed, 0.9D, 2.8D));
+            String currentLoop = null;
+            if (state.getController().getCurrentAnimation() != null) {
+                currentLoop = state.getController().getCurrentAnimation().animation().name();
+            }
+            if (this.latchedMovementAnimation.equals(currentLoop)) {
+                return PlayState.CONTINUE;
+            }
+            RawAnimation loop = LOOPING_MOVEMENT_ANIMATIONS.computeIfAbsent(this.latchedMovementAnimation,
+                key -> RawAnimation.begin().thenLoop(key));
+            return state.setAndContinue(loop);
         }));
+    }
+
+    private double getHorizontalTravelSpeed() {
+        double dx = this.getX() - this.xo;
+        double dz = this.getZ() - this.zo;
+        return Math.sqrt((dx * dx) + (dz * dz));
+    }
+
+    private static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static boolean isSprintAnimation(String animation) {
+        return "sprint".equals(animation)
+            || "sprint_noob".equals(animation)
+            || "sprint_senior".equals(animation);
+    }
+
+    private static int movementAnimClass(String animation) {
+        if (animation == null || animation.isEmpty() || animation.startsWith("idle")) {
+            return 0;
+        }
+        if (animation.startsWith("walk")) {
+            return 1;
+        }
+        if (isSprintAnimation(animation)) {
+            return 2;
+        }
+        return 3;
     }
 
     private boolean isBaseMovementAnimation(String animation) {
@@ -1109,6 +1331,9 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
             return false;
         }
         int powerLevel = this.getPowerLevel();
+        if (powerLevel == 0 && target instanceof Creeper) {
+            return true;
+        }
         if (powerLevel > 1) {
             return false;
         }

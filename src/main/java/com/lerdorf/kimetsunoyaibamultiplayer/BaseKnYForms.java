@@ -105,11 +105,11 @@ public class BaseKnYForms {
 			entry(903, new BaseForm("Fifth Form: String Performance", "§6")),
 
 			// Moon
-			entry(1101, new BaseForm("Moon Breathing 1st Form", "§d")),
-			entry(1102, new BaseForm("Moon Breathing 2nd Form", "§d")),
-			entry(1103, new BaseForm("Moon Breathing 3rd Form", "§d")),
-			entry(1105, new BaseForm("Moon Breathing 5th Form", "§d")),
-			entry(1106, new BaseForm("Moon Breathing 6th Form", "§d")),
+			entry(1101, new BaseForm("Moon Breathing 1st Form: Dark Moon - Evening Palace", "§d")),
+			entry(1102, new BaseForm("Moon Breathing 2nd Form: Pearl Flowers Moongazing", "§d")),
+			entry(1103, new BaseForm("Moon Breathing 3rd Form: Loathsome Moon - Chains", "§d")),
+			entry(1105, new BaseForm("Moon Breathing 5th Form: Moon Spirit Calamitous Eddy", "§d")),
+			entry(1106, new BaseForm("Moon Breathing 6th Form: Perpetual Night, Lonely Moon - Incessant", "§d")),
 			entry(1107, new BaseForm("Moon Breathing 7th Form", "§d")),
 			entry(1108, new BaseForm("Moon Breathing 8th Form", "§d")),
 			entry(1109, new BaseForm("Moon Breathing 9th Form", "§d")),

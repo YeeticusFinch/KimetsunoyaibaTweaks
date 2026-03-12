@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
 import net.minecraft.nbt.CompoundTag;
@@ -38,6 +39,8 @@ import java.util.UUID;
  * Uses PlayerAnimator/MobPlayerAnimator for breathing technique animations
  */
 public abstract class BreathingSlayerEntity extends PathfinderMob implements GeoEntity {
+    private static final int NATURAL_REGEN_INTERVAL_TICKS = 100;
+    private static final float NATURAL_REGEN_AMOUNT = 1.0F;
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     // Synced data for current breathing form index
@@ -50,6 +53,8 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
 
     private static final EntityDataAccessor<Integer> ANIMATION_TICKS =
         SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<String> ANIMATION_NAMESPACE =
+        SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.STRING);
 
     // Synced data for power level (0-4 for generic slayers, 1-4 for named slayers)
     protected static final EntityDataAccessor<Integer> POWER_LEVEL =
@@ -108,6 +113,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         this.entityData.define(CURRENT_FORM_INDEX, 0);
         this.entityData.define(CURRENT_ANIMATION, "idle");
         this.entityData.define(ANIMATION_TICKS, 0);
+        this.entityData.define(ANIMATION_NAMESPACE, KimetsunoyaibaMultiplayer.MODID);
         this.entityData.define(POWER_LEVEL, 1); // Default to power level 1
     }
 
@@ -187,12 +193,24 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         if (!this.level().isClientSide) {
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedBeastForms
                 .syncDualWieldAttackSpeed(this);
+
+            if (shouldApplyNaturalRegen()) {
+                this.heal(NATURAL_REGEN_AMOUNT);
+            }
         }
 
         // Tick down breathing form cooldown
         if (this.breathingFormCooldown > 0) {
             this.breathingFormCooldown--;
         }
+    }
+
+    protected boolean shouldApplyNaturalRegen() {
+        return this.isAlive()
+            && !this.isDeadOrDying()
+            && this.tickCount % NATURAL_REGEN_INTERVAL_TICKS == 0
+            && this.getHealth() > 0.0F
+            && this.getHealth() < this.getMaxHealth();
     }
 
     public boolean isBreathingFormOnCooldown() {
@@ -236,7 +254,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
 
         // Prevent equipment from dropping and make it permanent
         for (EquipmentSlot slot : EquipmentSlot.values()) {
-            this.setDropChance(slot, 0.0F);
+            this.setDropChance(slot, 0.2F);
         }
 
         return spawnData;
@@ -341,13 +359,25 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
      * @param durationTicks How long to play the animation (in ticks)
      */
     public void playGeckoAnimation(String animationName, int durationTicks) {
+        String resolvedNamespace = KimetsunoyaibaMultiplayer.MODID;
+        String resolvedAnimation = animationName;
+        int namespaceSplit = animationName != null ? animationName.indexOf(':') : -1;
+        if (namespaceSplit > 0 && namespaceSplit < animationName.length() - 1) {
+            resolvedNamespace = animationName.substring(0, namespaceSplit);
+            resolvedAnimation = animationName.substring(namespaceSplit + 1);
+        }
+        if (resolvedAnimation == null || resolvedAnimation.isEmpty()) {
+            resolvedAnimation = "idle";
+        }
+
         // Sync to client via entity data
-        this.entityData.set(CURRENT_ANIMATION, animationName);
+        this.entityData.set(CURRENT_ANIMATION, resolvedAnimation);
+        this.entityData.set(ANIMATION_NAMESPACE, resolvedNamespace);
         this.entityData.set(ANIMATION_TICKS, durationTicks);
 
         // Debug logging
         if (!this.level().isClientSide) {
-            Log.debug("[BreathingSlayerEntity] Playing animation: " + animationName + " for " + durationTicks + " ticks");
+            Log.debug("[BreathingSlayerEntity] Playing animation: " + resolvedNamespace + ":" + resolvedAnimation + " for " + durationTicks + " ticks");
         }
     }
 
@@ -367,6 +397,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
                 // Animation finished, return to idle/walk
                 String newAnim = this.getDeltaMovement().horizontalDistanceSqr() > 0.0001 ? "walk" : "idle";
                 this.entityData.set(CURRENT_ANIMATION, newAnim);
+                this.entityData.set(ANIMATION_NAMESPACE, KimetsunoyaibaMultiplayer.MODID);
             }
         } else {
             // No special animation playing, update based on movement
@@ -374,6 +405,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
             String currentAnim = this.entityData.get(CURRENT_ANIMATION);
             if (!currentAnim.equals(newAnim)) {
                 this.entityData.set(CURRENT_ANIMATION, newAnim);
+                this.entityData.set(ANIMATION_NAMESPACE, KimetsunoyaibaMultiplayer.MODID);
             }
         }
     }
@@ -384,6 +416,14 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
 
     public int getAnimationTicks() {
         return this.entityData.get(ANIMATION_TICKS);
+    }
+
+    public String getCurrentAnimationNamespace() {
+        String namespace = this.entityData.get(ANIMATION_NAMESPACE);
+        if (namespace == null || namespace.isEmpty()) {
+            return KimetsunoyaibaMultiplayer.MODID;
+        }
+        return namespace;
     }
 
     // GeckoLib animation methods

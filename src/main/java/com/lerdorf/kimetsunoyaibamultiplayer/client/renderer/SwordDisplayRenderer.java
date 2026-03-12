@@ -234,7 +234,10 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
     private void renderSwordOnHip(PoseStack poseStack, Player player, boolean isLeft, ItemStack sword) {
         // Get per-sword custom offsets if they exist
         ResourceLocation itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(sword.getItem());
-        SwordDisplayConfig.SwordOffsets customOffsets = SwordDisplayConfig.getSwordOffsets(itemId.toString());
+        SwordDisplayConfig.SwordOffsets customOffsets = itemId == null ? null : SwordDisplayConfig.getSwordOffsets(
+            itemId.toString(),
+            isLeft ? SwordDisplayConfig.SwordDisplaySlot.HIP_LEFT : SwordDisplayConfig.SwordDisplaySlot.HIP_RIGHT
+        );
 
         if (isLeft) {
             // Left hip - use config values + custom offsets
@@ -265,7 +268,10 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
     private void renderSwordOnBack(PoseStack poseStack, Player player, boolean isLeft, ItemStack sword) {
         // Get per-sword custom offsets if they exist
         ResourceLocation itemId = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(sword.getItem());
-        SwordDisplayConfig.SwordOffsets customOffsets = SwordDisplayConfig.getSwordOffsets(itemId.toString());
+        SwordDisplayConfig.SwordOffsets customOffsets = itemId == null ? null : SwordDisplayConfig.getSwordOffsets(
+            itemId.toString(),
+            isLeft ? SwordDisplayConfig.SwordDisplaySlot.BACK_LEFT : SwordDisplayConfig.SwordDisplaySlot.BACK_RIGHT
+        );
 
         if (isLeft) {
             // Left side of back - use config values + custom offsets
@@ -289,4 +295,5 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
             poseStack.mulPose(Axis.XP.rotationDegrees((float) (SwordDisplayConfig.backRightRotateX + (customOffsets != null ? customOffsets.rotateX : 0.0))));
         }
     }
+
 }

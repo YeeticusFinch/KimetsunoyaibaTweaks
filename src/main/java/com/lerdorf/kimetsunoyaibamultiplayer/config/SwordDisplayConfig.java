@@ -7,6 +7,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -479,8 +480,17 @@ public class SwordDisplayConfig {
         }
     }
 
-    // Per-sword custom offsets (added to base position offsets)
-    private static Map<String, SwordOffsets> swordOffsets = new HashMap<>();
+    public enum SwordDisplaySlot {
+        HIP_LEFT,
+        HIP_RIGHT,
+        BACK_LEFT,
+        BACK_RIGHT
+    }
+
+    // Legacy per-sword custom offsets (added to all base position offsets)
+    private static final Map<String, SwordOffsets> swordOffsets = new HashMap<>();
+    // Per-sword, per-slot custom offsets
+    private static final Map<String, EnumMap<SwordDisplaySlot, SwordOffsets>> swordOffsetsBySlot = new HashMap<>();
 
     /**
      * Registers custom position/rotation offsets for a specific sword
@@ -493,11 +503,61 @@ public class SwordDisplayConfig {
     }
 
     /**
+     * Registers custom position/rotation offsets for a specific sword and display slot.
+     * @param itemId The full item ID (e.g., "knyextraadditions:nichirinsword_forest")
+     * @param slot The display slot (HIP_LEFT, HIP_RIGHT, BACK_LEFT, BACK_RIGHT)
+     * @param offsets The custom offsets to apply
+     */
+    public static void registerSwordOffsets(String itemId, SwordDisplaySlot slot, SwordOffsets offsets) {
+        registerOffsetsBySlot(itemId, slot, offsets);
+    }
+
+    private static void registerOffsetsBySlot(String itemId, SwordDisplaySlot slot, SwordOffsets offsets) {
+        if (itemId == null || slot == null) {
+            return;
+        }
+        EnumMap<SwordDisplaySlot, SwordOffsets> slotMap =
+            swordOffsetsBySlot.computeIfAbsent(itemId, ignored -> new EnumMap<>(SwordDisplaySlot.class));
+        if (offsets == null) {
+            slotMap.remove(slot);
+            if (slotMap.isEmpty()) {
+                swordOffsetsBySlot.remove(itemId);
+            }
+        } else {
+            slotMap.put(slot, offsets);
+        }
+        Log.info("Registered custom offsets for sword: {} slot={}", itemId, slot);
+    }
+
+    /**
      * Gets the custom offsets for a specific sword, or null if none are registered
      * @param itemId The full item ID
      * @return The custom offsets, or null if not registered
      */
     public static SwordOffsets getSwordOffsets(String itemId) {
+        return swordOffsets.get(itemId);
+    }
+
+    /**
+     * Gets custom offsets for a sword in a specific display slot.
+     * Fallback order:
+     * 1) Per-slot offset
+     * 2) Legacy per-sword offset (applies to all slots)
+     * @param itemId The full item ID
+     * @param slot The display slot
+     * @return The resolved offsets, or null if none are registered
+     */
+    public static SwordOffsets getSwordOffsets(String itemId, SwordDisplaySlot slot) {
+        if (itemId == null || slot == null) {
+            return null;
+        }
+        EnumMap<SwordDisplaySlot, SwordOffsets> slotMap = swordOffsetsBySlot.get(itemId);
+        if (slotMap != null) {
+            SwordOffsets slotOffsets = slotMap.get(slot);
+            if (slotOffsets != null) {
+                return slotOffsets;
+            }
+        }
         return swordOffsets.get(itemId);
     }
 
@@ -508,5 +568,19 @@ public class SwordDisplayConfig {
      */
     public static boolean hasSwordOffsets(String itemId) {
         return swordOffsets.containsKey(itemId);
+    }
+
+    /**
+     * Checks if a sword has per-slot custom offsets registered.
+     * @param itemId The full item ID
+     * @param slot The display slot
+     * @return true if custom per-slot offsets exist
+     */
+    public static boolean hasSwordOffsets(String itemId, SwordDisplaySlot slot) {
+        if (itemId == null || slot == null) {
+            return false;
+        }
+        EnumMap<SwordDisplaySlot, SwordOffsets> slotMap = swordOffsetsBySlot.get(itemId);
+        return slotMap != null && slotMap.containsKey(slot);
     }
 }

@@ -38,7 +38,7 @@ public class ServerLevelParticleMixin {
             CallbackInfoReturnable<Integer> cir) {
 
         // Debug: Log every particle spawn attempt
-        Log.debug("ServerLevelParticleMixin called - Config disabled: {}", Config.disableBaseModSwordSwingParticles);
+        //Log.debug("ServerLevelParticleMixin called - Config disabled: {}", Config.disableBaseModSwordSwingParticles);
 
         // Only process if config option is enabled
         if (!Config.disableBaseModSwordSwingParticles) {
@@ -48,7 +48,7 @@ public class ServerLevelParticleMixin {
         // Check stack trace to see if this is called from base mod's swing procedures
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
 
-        Log.debug("Checking stack trace for swing procedures...");
+        //Log.debug("Checking stack trace for swing procedures...");
 
         for (StackTraceElement element : stackTrace) {
             String className = element.getClassName();

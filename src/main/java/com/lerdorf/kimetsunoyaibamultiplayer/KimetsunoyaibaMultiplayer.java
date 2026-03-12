@@ -274,6 +274,17 @@ public class KimetsunoyaibaMultiplayer
                 );
             }
 
+            if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("beast_breathing")) {
+                com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
+                    "beast_breathing",
+                    "Beast Breathing",
+                    com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedBeastForms.createBeastBreathing(),
+                    200,
+                    null,
+                    null
+                );
+            }
+
             // Also register for base mod's 1300 range (for compatibility with base mod swords)
             if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("flower_breathing_base")) {
                 com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
@@ -412,6 +423,8 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SunBreathingLevelCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SpawnDemonSlayerCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TorilGateCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.FinalSelectionCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.OreSelectCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SurvivalRaidCommand.register(event.getDispatcher());
     }
 
@@ -433,7 +446,8 @@ public class KimetsunoyaibaMultiplayer
         if (currentBreathes > 0 && currentBreathes != data.getLastBreathesValue()) {
             if (Config.logDebug) {
                 var main = player.getMainHandItem();
-                double selectOffset = main.isEmpty() ? 0 : (main.getOrCreateTag().contains("select") ? main.getOrCreateTag().getDouble("select") : 0);
+                net.minecraft.nbt.CompoundTag mainTag = main.getTag();
+                double selectOffset = (main.isEmpty() || mainTag == null) ? 0 : (mainTag.contains("select") ? mainTag.getDouble("select") : 0);
                 Log.debug("[PlayerTick] Breathes changed: " + data.getLastBreathesValue() + " -> " + currentBreathes +
                          " (sword: " + (main.isEmpty() ? "none" : main.getItem()) + ", select: " + selectOffset + ")");
             }
@@ -442,8 +456,9 @@ public class KimetsunoyaibaMultiplayer
 
         var main = player.getMainHandItem();
         String key = main.isEmpty() ? "" : main.getItem().toString();
-        if (!main.isEmpty() && main.getOrCreateTag().contains("select")) {
-            key += "#select_" + main.getOrCreateTag().getDouble("select");
+        net.minecraft.nbt.CompoundTag mainTag = main.getTag();
+        if (!main.isEmpty() && mainTag != null && mainTag.contains("select")) {
+            key += "#select_" + mainTag.getDouble("select");
         }
 
         if (!key.equals(data.getLastSwordKey())) {
@@ -492,6 +507,7 @@ public class KimetsunoyaibaMultiplayer
         if (Config.enableNichirinSprintAnimation && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             boolean holdingNichirinSword = main.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem ||
                                           (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getSword(main.getItem()) != null);
+            boolean isTrainingSword = com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.isTrainingSword(main);
             boolean isSprintingWithSword = player.isSprinting() && holdingNichirinSword;
             boolean wasSprintingWithSword = data.wasSprintingWithSword();
 
@@ -499,13 +515,17 @@ public class KimetsunoyaibaMultiplayer
                 data.setWasSprintingWithSword(isSprintingWithSword);
 
                 if (isSprintingWithSword) {
+                    net.minecraft.resources.ResourceLocation sprintAnimationId = isTrainingSword
+                        ? net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "sprint_noob")
+                        : net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint2");
+
                     // Player started sprinting with sword - send looping sprint animation to nearby players
                     // NOTE: Server doesn't need to look up animation length - client will handle it
                     // Using a safe default length estimate (40 ticks = 2 seconds)
                     com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket packet =
                         new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket(
                             player.getUUID(),
-                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sprint2"),
+                            sprintAnimationId,
                             0,
                             40, // Default animation length
                             true, // looping
@@ -514,11 +534,17 @@ public class KimetsunoyaibaMultiplayer
                             1.0f, // normal speed
                             200 // sprint layer priority
                         );
-                    // Send to all nearby players (including self) within 64 blocks
-                    ModNetworking.sendToNearby(packet, (net.minecraft.server.level.ServerLevel) player.level(),
-                        player.getX(), player.getY(), player.getZ(), 64.0);
-                    // Also send to the player themselves
-                    ModNetworking.sendToPlayer(packet, serverPlayer);
+                    // Send only to nearby OTHER players. The local player uses SprintAnimationHandler
+                    // and should not receive a server-side sprint override packet.
+                    net.minecraft.server.level.ServerLevel level = (net.minecraft.server.level.ServerLevel) player.level();
+                    for (net.minecraft.server.level.ServerPlayer nearbyPlayer : level.players()) {
+                        if (nearbyPlayer.getUUID().equals(serverPlayer.getUUID())) {
+                            continue;
+                        }
+                        if (nearbyPlayer.distanceToSqr(player) <= (64.0 * 64.0)) {
+                            ModNetworking.sendToPlayer(packet, nearbyPlayer);
+                        }
+                    }
                 } else {
                     // Player stopped sprinting or switched items - send stop packet
                     com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket stopPacket =
@@ -530,11 +556,16 @@ public class KimetsunoyaibaMultiplayer
                             false,
                             true // stopping
                         );
-                    // Send to all nearby players (including self) within 64 blocks
-                    ModNetworking.sendToNearby(stopPacket, (net.minecraft.server.level.ServerLevel) player.level(),
-                        player.getX(), player.getY(), player.getZ(), 64.0);
-                    // Also send to the player themselves
-                    ModNetworking.sendToPlayer(stopPacket, serverPlayer);
+                    // Send only to nearby OTHER players.
+                    net.minecraft.server.level.ServerLevel level = (net.minecraft.server.level.ServerLevel) player.level();
+                    for (net.minecraft.server.level.ServerPlayer nearbyPlayer : level.players()) {
+                        if (nearbyPlayer.getUUID().equals(serverPlayer.getUUID())) {
+                            continue;
+                        }
+                        if (nearbyPlayer.distanceToSqr(player) <= (64.0 * 64.0)) {
+                            ModNetworking.sendToPlayer(stopPacket, nearbyPlayer);
+                        }
+                    }
                 }
             }
         }
@@ -585,8 +616,8 @@ public class KimetsunoyaibaMultiplayer
                 // Update flying crows ONCE per tick (not per dimension)
                 CrowEnhancementHandler.tick(overworld);
 
-                // Tick breathing technique ability scheduler
-                com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler.tick(overworld);
+                // Tick breathing technique ability scheduler in every loaded dimension.
+                com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler.tickAll(event.getServer());
 
                 // Scan for unmirrored crows every 5 seconds (100 ticks)
                 // Uses batching internally to avoid freezing the server
@@ -636,6 +667,11 @@ public class KimetsunoyaibaMultiplayer
             event.registerSpriteSet(
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.LOVE_SLASH.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.particles.LoveSlashParticle.Provider::new
+            );
+
+            event.registerSpriteSet(
+                com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.BLOOD.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BloodParticle.Provider::new
             );
 
             event.registerSpriteSet(

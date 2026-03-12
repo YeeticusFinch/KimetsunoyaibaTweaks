@@ -10,6 +10,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.BleedingHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 
 import net.minecraft.core.particles.DustParticleOptions;
@@ -147,6 +148,22 @@ public class EnhancedBeastForms {
     			|| key.equals("kimetsunoyaibamultiplayer:nichirinsword_inosuke")
     			|| key.equals("kimetsunoyaibamultiplayer:nichirinsword_beast");
     }
+
+    private static boolean hurtWithBeastBleeding(LivingEntity attacker, LivingEntity target, float damage, boolean dualWield) {
+        boolean hurt = Damager.hurt(attacker, target, damage);
+        if (hurt) {
+            BleedingHandler.applyBeastBleeding(target, dualWield);
+        }
+        return hurt;
+    }
+
+    private static boolean hurtWithBeastBleeding(LivingEntity attacker, LivingEntity target, float damage, boolean resetInvulnerability, boolean dualWield) {
+        boolean hurt = Damager.hurt(attacker, target, damage, resetInvulnerability);
+        if (hurt) {
+            BleedingHandler.applyBeastBleeding(target, dualWield);
+        }
+        return hurt;
+    }
     
 	public static BreathingForm firstForm() {
         return new BreathingForm(
@@ -195,7 +212,7 @@ public class EnhancedBeastForms {
                 	AABB hitBox = new AABB(pos.add(0, -1, 0), pos.add(0, 1, 0)).inflate(3);
                 	targets.addAll(level.getEntitiesOfClass(LivingEntity.class, hitBox, e -> e != entity && e.isAlive()));
                 	for (LivingEntity target : targets) {
-                		if (Damager.hurt(entity, target, damage) && twoSwords) MovementHelper.addVelocity(target, forward.multiply(1, forward.y < 0 ? 0 : 1, 1).add(0, 0.1, 0).scale(0.1));
+                		if (hurtWithBeastBleeding(entity, target, damage, twoSwords) && twoSwords) MovementHelper.addVelocity(target, forward.multiply(1, forward.y < 0 ? 0 : 1, 1).add(0, 0.1, 0).scale(0.1));
                 	}
 
                 }, 2);
@@ -290,7 +307,7 @@ public class EnhancedBeastForms {
                 	AABB hitBox = new AABB(pos.add(0, -1, 0), pos.add(0, 1, 0)).inflate(3);
                 	targets.addAll(level.getEntitiesOfClass(LivingEntity.class, hitBox, e -> e != entity && e.isAlive()));
                 	for (LivingEntity target : targets) {
-                		if (Damager.hurt(entity, target, damage)) MovementHelper.addVelocity(target, forward.multiply(1, forward.y < 0 ? 0 : 1, 1).add(0, 0.1, 0).scale(twoSwords ? 0.2 : 0.1));
+                		if (hurtWithBeastBleeding(entity, target, damage, twoSwords)) MovementHelper.addVelocity(target, forward.multiply(1, forward.y < 0 ? 0 : 1, 1).add(0, 0.1, 0).scale(twoSwords ? 0.2 : 0.1));
                 	}
 
                 }, 2);
@@ -385,7 +402,7 @@ public class EnhancedBeastForms {
                 	AABB hitBox = new AABB(pos.add(0, -1, 0), pos.add(0, 1, 0)).inflate(3);
                 	targets.addAll(level.getEntitiesOfClass(LivingEntity.class, hitBox, e -> e != entity && e.isAlive()));
                 	for (LivingEntity target : targets) {
-                		if (Damager.hurt(entity, target, damage)) MovementHelper.addVelocity(target, forward.multiply(1, forward.y < 0 ? 0 : 1, 1).add(0, 0.1, 0).scale(twoSwords ? 2 : 1));
+                		if (hurtWithBeastBleeding(entity, target, damage, twoSwords)) MovementHelper.addVelocity(target, forward.multiply(1, forward.y < 0 ? 0 : 1, 1).add(0, 0.1, 0).scale(twoSwords ? 2 : 1));
                 	}
 
                 }, 2);
@@ -455,7 +472,7 @@ public class EnhancedBeastForms {
                     	AABB hitBox = new AABB(tpos.add(0, -1, 0), tpos.add(0, 1, 0)).inflate(5);
                     	targets.addAll(level.getEntitiesOfClass(LivingEntity.class, hitBox, e -> e != entity && e.isAlive()));
                     	for (LivingEntity target : targets) {
-                    		if (Damager.hurt(entity, target, damage)) MovementHelper.addVelocity(target, forward.multiply(1, forward.y < 0 ? 0 : 1, 1).add(0, 0.1, 0).scale(twoSwords ? 2 : 1));
+                    		if (hurtWithBeastBleeding(entity, target, damage, twoSwords)) MovementHelper.addVelocity(target, forward.multiply(1, forward.y < 0 ? 0 : 1, 1).add(0, 0.1, 0).scale(twoSwords ? 2 : 1));
                     	}
                 		
                 		for (int i = 0; i < (twoSwords ? 4 : 2); i++)
@@ -594,7 +611,7 @@ public class EnhancedBeastForms {
 
                             // Deal moderate damage on contact
                                 //float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
-                                Damager.hurt(entity, target, damage, true);
+                                hurtWithBeastBleeding(entity, target, damage, true, twoSwords);
                         }
                     }
                     

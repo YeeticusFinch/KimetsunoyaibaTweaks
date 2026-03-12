@@ -147,7 +147,10 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
             // Special handling for Kanroji/Love swords - use custom renderer for animations
             if (stack.getItem() instanceof NichirinSwordKanrojiAnimated ||
                 stack.getItem() instanceof NichirinSwordLoveAnimated) {
-                renderKanrojiSwordWithAnimation(poseStack, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);
+                renderKanrojiSwordWithAnimation(
+                    poseStack, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay,
+                    ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+                );
             } else {
                 super.renderStackForBone(poseStack, bone, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);
             }
@@ -183,7 +186,15 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
                 poseStack.mulPose(Axis.YP.rotationDegrees(180f));
             }
 
-            super.renderStackForBone(poseStack, bone, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);
+            if (stack.getItem() instanceof NichirinSwordKanrojiAnimated ||
+                stack.getItem() instanceof NichirinSwordLoveAnimated) {
+                renderKanrojiSwordWithAnimation(
+                    poseStack, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay,
+                    ItemDisplayContext.THIRD_PERSON_LEFT_HAND
+                );
+            } else {
+                super.renderStackForBone(poseStack, bone, stack, animatable, bufferSource, partialTick, packedLight, packedOverlay);
+            }
             poseStack.popPose();
             return;
         }
@@ -213,7 +224,8 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
             MultiBufferSource bufferSource,
             float partialTick,
             int packedLight,
-            int packedOverlay
+            int packedOverlay,
+            ItemDisplayContext displayContext
     ) {
         //Log.debug("[GeoEquipmentLayer] Rendering Kanroji sword for entity: {}", animatable.getName().getString());
         // Get the custom renderer via IClientItemExtensions
@@ -231,7 +243,7 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
             try {
                 customRenderer.renderByItem(
                     stack,
-                    ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+                    displayContext,
                     poseStack,
                     bufferSource,
                     packedLight,
@@ -251,7 +263,7 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
             // Fallback to vanilla rendering
             Minecraft.getInstance().getItemRenderer().renderStatic(
                 stack,
-                ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+                displayContext,
                 packedLight,
                 packedOverlay,
                 poseStack,

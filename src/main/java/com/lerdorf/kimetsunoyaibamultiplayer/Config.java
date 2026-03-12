@@ -67,6 +67,27 @@ public class Config
             .comment("Disable sword swing particles from the base KimetsunoYaiba mod (left-click particles only, does not affect breathing form or right-click particles)")
             .define("disable-base-mod-sword-swing-particles", false);
 
+    static {
+        BUILDER.comment("Breathing form announcements")
+                .push("breathing-form-announcements");
+    }
+
+    private static final ForgeConfigSpec.BooleanValue PLAYERS_ANNOUNCE_BREATHING_FORMS = BUILDER
+            .comment("Announce breathing forms used by players in chat to nearby players")
+            .define("players-announce-breathing-forms", false);
+
+    private static final ForgeConfigSpec.BooleanValue ENTITIES_ANNOUNCE_BREATHING_FORMS = BUILDER
+            .comment("Announce breathing forms used by entities in chat to nearby players")
+            .define("entities-announce-breathing-forms", false);
+
+    private static final ForgeConfigSpec.DoubleValue BREATHING_FORM_ANNOUNCEMENT_RADIUS = BUILDER
+            .comment("Radius in blocks for breathing form chat announcements")
+            .defineInRange("breathing-form-announcement-radius", 20.0, 1.0, 256.0);
+
+    static {
+        BUILDER.pop();
+    }
+
     // Networking / visuals radius
     private static final ForgeConfigSpec.DoubleValue MOB_SLASH_BROADCAST_RANGE = BUILDER
             .comment("Max distance in blocks to send mob sword slash packets to clients",
@@ -116,6 +137,9 @@ public class Config
     public static boolean enableSwordClashing;
     public static boolean enableNichirinSprintAnimation;
     public static boolean disableBaseModSwordSwingParticles;
+    public static boolean playersAnnounceBreathingForms;
+    public static boolean entitiesAnnounceBreathingForms;
+    public static double breathingFormAnnouncementRadius;
     public static double mobSlashBroadcastRange;
     public static double kanrojiEntityHandOffsetX;
     public static double kanrojiEntityHandOffsetY;
@@ -157,6 +181,9 @@ public class Config
         enableSwordClashing = ENABLE_SWORD_CLASHING.get();
         enableNichirinSprintAnimation = ENABLE_NICHIRIN_SPRINT_ANIMATION.get();
         disableBaseModSwordSwingParticles = DISABLE_BASE_MOD_SWORD_SWING_PARTICLES.get();
+        playersAnnounceBreathingForms = PLAYERS_ANNOUNCE_BREATHING_FORMS.get();
+        entitiesAnnounceBreathingForms = ENTITIES_ANNOUNCE_BREATHING_FORMS.get();
+        breathingFormAnnouncementRadius = BREATHING_FORM_ANNOUNCEMENT_RADIUS.get();
         System.out.println("[KnY-MP] Config loaded - disableBaseModSwordSwingParticles: " + disableBaseModSwordSwingParticles);
         mobSlashBroadcastRange = MOB_SLASH_BROADCAST_RANGE.get();
         kanrojiEntityHandOffsetX = KANROJI_ENTITY_HAND_OFFSET_X.get();
@@ -184,6 +211,9 @@ public class Config
                 ", showBreathingDisplay=" + showBreathingDisplay + ", breathingDisplayPosition=" + breathingDisplayPosition +
                 ", breathingDisplayScale=" + breathingDisplayScale + ", suppressFormCycleChat=" + suppressFormCycleChat +
                 ", enableSwordClashing=" + enableSwordClashing + ", enableNichirinSprintAnimation=" + enableNichirinSprintAnimation +
+                ", playersAnnounceBreathingForms=" + playersAnnounceBreathingForms +
+                ", entitiesAnnounceBreathingForms=" + entitiesAnnounceBreathingForms +
+                ", breathingFormAnnouncementRadius=" + breathingFormAnnouncementRadius +
                 ", mobSlashBroadcastRange=" + mobSlashBroadcastRange);
     }
 }

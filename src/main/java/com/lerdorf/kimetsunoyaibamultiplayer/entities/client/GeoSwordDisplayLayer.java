@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SheathModelRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
@@ -153,10 +154,10 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         if (backPosition) {
             // Gecko entity body-space is mirrored relative to player layer-space.
             // Invert side at the final transform so requested logical side renders correctly.
-            applyBackPosition(poseStack, !isLeft);
+            applyBackPosition(poseStack, !isLeft, swordStack);
             poseStack.translate(0.10D, -0.05D, 0.04D);
         } else {
-            applyHipPosition(poseStack, !isLeft);
+            applyHipPosition(poseStack, !isLeft, swordStack);
             poseStack.translate(0.06D, -0.03D, 0.02D);
         }
 
@@ -189,9 +190,9 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         if (position == SwordDisplayConfig.SwordDisplayPosition.HIP) {
             // Gecko entity body-space is mirrored relative to player layer-space.
             // Invert side at the final transform so requested logical side renders correctly.
-            applyHipPosition(poseStack, !isLeft);
+            applyHipPosition(poseStack, !isLeft, sword);
         } else {
-            applyBackPosition(poseStack, !isLeft);
+            applyBackPosition(poseStack, !isLeft, sword);
         }
 
         float scale = (float) SwordDisplayConfig.scale;
@@ -204,16 +205,33 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
             }
         }
 
-        Minecraft.getInstance().getItemRenderer().renderStatic(
-            sword,
-            ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
-            packedLight,
-            OverlayTexture.NO_OVERLAY,
-            poseStack,
-            buffer,
-            entity.level(),
-            entity.getId()
-        );
+        // Ensure GeoItem sword renderers (e.g. love/kanroji) can resolve non-player entity context.
+        // Without this, displayed sheathed swords may fall back to stack NBT idle animation.
+        LivingEntity previousEntity = EntityRenderContext.getCurrentEntity();
+        boolean shouldRestoreContext = previousEntity != entity;
+        if (shouldRestoreContext) {
+            EntityRenderContext.setCurrentEntity(entity);
+        }
+        try {
+            Minecraft.getInstance().getItemRenderer().renderStatic(
+                sword,
+                ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+                packedLight,
+                OverlayTexture.NO_OVERLAY,
+                poseStack,
+                buffer,
+                entity.level(),
+                entity.getId()
+            );
+        } finally {
+            if (shouldRestoreContext) {
+                if (previousEntity != null) {
+                    EntityRenderContext.setCurrentEntity(previousEntity);
+                } else {
+                    EntityRenderContext.clearCurrentEntity();
+                }
+            }
+        }
 
         poseStack.popPose();
     }
@@ -239,9 +257,9 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
 
         if (position == SwordDisplayConfig.SwordDisplayPosition.HIP) {
             // Keep sheath-only render aligned with the same mirrored side mapping.
-            applyHipPosition(poseStack, !isLeft);
+            applyHipPosition(poseStack, !isLeft, sword);
         } else {
-            applyBackPosition(poseStack, !isLeft);
+            applyBackPosition(poseStack, !isLeft, sword);
         }
 
         float scale = (float) SwordDisplayConfig.scale;
@@ -261,10 +279,18 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         return (flip ? -base : base) + offset;
     }
 
-    private static void applyHipPosition(PoseStack poseStack, boolean isLeft) {
+    private static void applyHipPosition(PoseStack poseStack, boolean isLeft, ItemStack sword) {
+        SwordDisplayConfig.SwordOffsets customOffsets = resolveSwordOffsets(
+            sword,
+            isLeft ? SwordDisplayConfig.SwordDisplaySlot.HIP_LEFT : SwordDisplayConfig.SwordDisplaySlot.HIP_RIGHT
+        );
         double translateX = isLeft ? SwordDisplayConfig.hipLeftTranslateX : SwordDisplayConfig.hipRightTranslateX;
         double translateY = isLeft ? SwordDisplayConfig.hipLeftTranslateY : SwordDisplayConfig.hipRightTranslateY;
         double translateZ = isLeft ? SwordDisplayConfig.hipLeftTranslateZ : SwordDisplayConfig.hipRightTranslateZ;
+
+        translateX += customOffsets != null ? customOffsets.translateX : 0.0D;
+        translateY += customOffsets != null ? customOffsets.translateY : 0.0D;
+        translateZ += customOffsets != null ? customOffsets.translateZ : 0.0D;
 
         translateX = resolveEntityTranslation(translateX, SwordDisplayConfig.entityHipTranslateOffsetX,
             SwordDisplayConfig.entityHipTranslateFlipX);
@@ -276,6 +302,10 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         double rotateZ = isLeft ? SwordDisplayConfig.hipLeftRotateZ : SwordDisplayConfig.hipRightRotateZ;
         double rotateY = isLeft ? SwordDisplayConfig.hipLeftRotateY : SwordDisplayConfig.hipRightRotateY;
         double rotateX = isLeft ? SwordDisplayConfig.hipLeftRotateX : SwordDisplayConfig.hipRightRotateX;
+
+        rotateZ += customOffsets != null ? customOffsets.rotateZ : 0.0D;
+        rotateY += customOffsets != null ? customOffsets.rotateY : 0.0D;
+        rotateX += customOffsets != null ? customOffsets.rotateX : 0.0D;
 
         rotateZ = resolveEntityRotation(rotateZ, SwordDisplayConfig.entityHipRotateOffsetZ,
             SwordDisplayConfig.entityHipRotateFlipZ);
@@ -290,10 +320,18 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         poseStack.mulPose(Axis.XP.rotationDegrees((float) rotateX));
     }
 
-    private static void applyBackPosition(PoseStack poseStack, boolean isLeft) {
+    private static void applyBackPosition(PoseStack poseStack, boolean isLeft, ItemStack sword) {
+        SwordDisplayConfig.SwordOffsets customOffsets = resolveSwordOffsets(
+            sword,
+            isLeft ? SwordDisplayConfig.SwordDisplaySlot.BACK_LEFT : SwordDisplayConfig.SwordDisplaySlot.BACK_RIGHT
+        );
         double translateX = isLeft ? SwordDisplayConfig.backLeftTranslateX : SwordDisplayConfig.backRightTranslateX;
         double translateY = isLeft ? SwordDisplayConfig.backLeftTranslateY : SwordDisplayConfig.backRightTranslateY;
         double translateZ = isLeft ? SwordDisplayConfig.backLeftTranslateZ : SwordDisplayConfig.backRightTranslateZ;
+
+        translateX += customOffsets != null ? customOffsets.translateX : 0.0D;
+        translateY += customOffsets != null ? customOffsets.translateY : 0.0D;
+        translateZ += customOffsets != null ? customOffsets.translateZ : 0.0D;
 
         translateX = resolveEntityTranslation(translateX, SwordDisplayConfig.entityBackTranslateOffsetX,
             SwordDisplayConfig.entityBackTranslateFlipX);
@@ -306,6 +344,10 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         double rotateY = isLeft ? SwordDisplayConfig.backLeftRotateY : SwordDisplayConfig.backRightRotateY;
         double rotateX = isLeft ? SwordDisplayConfig.backLeftRotateX : SwordDisplayConfig.backRightRotateX;
 
+        rotateZ += customOffsets != null ? customOffsets.rotateZ : 0.0D;
+        rotateY += customOffsets != null ? customOffsets.rotateY : 0.0D;
+        rotateX += customOffsets != null ? customOffsets.rotateX : 0.0D;
+
         rotateZ = resolveEntityRotation(rotateZ, SwordDisplayConfig.entityBackRotateOffsetZ,
             SwordDisplayConfig.entityBackRotateFlipZ);
         rotateY = resolveEntityRotation(rotateY, SwordDisplayConfig.entityBackRotateOffsetY,
@@ -317,6 +359,17 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         poseStack.mulPose(Axis.ZP.rotationDegrees((float) rotateZ));
         poseStack.mulPose(Axis.YP.rotationDegrees((float) rotateY));
         poseStack.mulPose(Axis.XP.rotationDegrees((float) rotateX));
+    }
+
+    private static SwordDisplayConfig.SwordOffsets resolveSwordOffsets(ItemStack sword, SwordDisplayConfig.SwordDisplaySlot slot) {
+        if (sword == null || sword.isEmpty()) {
+            return null;
+        }
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(sword.getItem());
+        if (itemId == null) {
+            return null;
+        }
+        return SwordDisplayConfig.getSwordOffsets(itemId.toString(), slot);
     }
 
 }

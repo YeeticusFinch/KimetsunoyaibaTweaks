@@ -24,7 +24,7 @@ public class BreathingInfoDetector {
 
         // Check if this is our mod's breathing sword
         if (heldSword.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem breathingSword) {
-            return getOurModBreathingInfo(player, breathingSword);
+            return getOurModBreathingInfo(player, heldSword, breathingSword);
         }
 
         // For kimetsunoyaiba mod swords: Try to get display text from cache first
@@ -296,9 +296,8 @@ public class BreathingInfoDetector {
         double selectOffset = 0.0;
 
         if (heldSword != null && !heldSword.isEmpty()) {
-            CompoundTag tag = heldSword.getOrCreateTag();
-
-            if (tag.contains("select")) {
+            CompoundTag tag = heldSword.getTag();
+            if (tag != null && tag.contains("select")) {
                 selectOffset = tag.getDouble("select");
                 if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
                     com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] Sword has selectOffset: " + selectOffset);
@@ -369,9 +368,15 @@ public class BreathingInfoDetector {
     /**
      * Gets breathing information for our mod's breathing swords.
      */
-    private static BreathingInfo getOurModBreathingInfo(Player player, com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem breathingSword) {
+    private static BreathingInfo getOurModBreathingInfo(Player player, ItemStack heldSword,
+                                                        com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem breathingSword) {
         // Get the breathing technique from the sword
-        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique technique = breathingSword.getBreathingTechnique();
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique technique;
+        if (breathingSword instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack blackSword) {
+            technique = blackSword.getEffectiveTechnique(heldSword, player);
+        } else {
+            technique = breathingSword.getBreathingTechnique();
+        }
         if (technique == null) {
             return null;
         }
@@ -436,7 +441,13 @@ public class BreathingInfoDetector {
         // Construct colored display text using technique's colors
         String techniqueColor = technique.getTechniqueColor();
         String formColor = technique.getFormColor();
-        String coloredDisplayText = techniqueColor + techniqueName + " - " + formColor + displayFormName;
+        String coloredDisplayText;
+        if (startsWithTechniqueName(displayFormName, techniqueName)) {
+            // Form already includes style name (e.g., "Thunder Breathing 1st Form..."), avoid duplicating it.
+            coloredDisplayText = formColor + displayFormName;
+        } else {
+            coloredDisplayText = techniqueColor + techniqueName + " - " + formColor + displayFormName;
+        }
 
         return new BreathingInfo(techniqueName, displayFormName, formNumber, styleRange, displayBreathes,
                                 coloredDisplayText, variationIndex, totalVariations, variationName);
@@ -461,6 +472,15 @@ public class BreathingInfoDetector {
         if (techniqueName.contains("Sakura")) return 18;
         // Add more as techniques are added
         return 0;
+    }
+
+    private static boolean startsWithTechniqueName(String formName, String techniqueName) {
+        if (formName == null || techniqueName == null) {
+            return false;
+        }
+        String normalizedForm = formName.toLowerCase().trim();
+        String normalizedTechnique = techniqueName.toLowerCase().trim();
+        return !normalizedTechnique.isEmpty() && normalizedForm.startsWith(normalizedTechnique);
     }
 
     /**

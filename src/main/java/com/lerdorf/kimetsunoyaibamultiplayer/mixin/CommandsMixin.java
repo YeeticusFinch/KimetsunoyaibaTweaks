@@ -33,16 +33,16 @@ public class CommandsMixin {
             String command,
             CallbackInfoReturnable<Integer> cir) {
 
-        // Debug: Log every command execution
-        Log.debug("CommandsMixin called - Command: {} - Config disabled: {}", command, Config.disableBaseModSwordSwingParticles);
-
-        // Only process if config option is enabled
-        if (!Config.disableBaseModSwordSwingParticles) {
+        // Check if this is a particle command
+        if (command == null || !command.trim().startsWith("particle")) {
             return;
         }
 
-        // Check if this is a particle command
-        if (command == null || !command.trim().startsWith("particle")) {
+        Log.debug("CommandsMixin particle command - disableBaseModSwordSwingParticles={} - command={}",
+            Config.disableBaseModSwordSwingParticles, command);
+
+        // Only process if config option is enabled
+        if (!Config.disableBaseModSwordSwingParticles) {
             return;
         }
 

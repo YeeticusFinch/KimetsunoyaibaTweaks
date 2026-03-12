@@ -12,6 +12,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -38,6 +39,7 @@ import java.util.List;
 public class DemonSlayerAggroHandler {
     private static final String DEMON_AGGRO_ADDED_TAG = "knymp_added_demon_aggro_goal";
     private static final String DEMON_TARGET_SLAYER_GOAL_TAG = "knymp_added_demon_target_slayer_goal";
+    private static final String HOSTILE_TARGET_SLAYER_GOAL_TAG = "knymp_added_hostile_target_slayer_goal";
     private static final TagKey<EntityType<?>> FORGE_WOMAN_TAG = TagKey.create(
         Registries.ENTITY_TYPE,
         ResourceLocation.fromNamespaceAndPath("forge", "woman")
@@ -48,6 +50,8 @@ public class DemonSlayerAggroHandler {
 
     // Maximum range to scan for demons
     private static final double SCAN_RANGE = 32.0;
+    // Hostile non-demon mobs should use a tighter slayer aggro radius.
+    private static final double HOSTILE_SLAYER_SCAN_RANGE = 24.0;
 
     /**
      * Add targeting goals when a demon slayer entity joins the level.
@@ -70,7 +74,17 @@ public class DemonSlayerAggroHandler {
 
         // Demon-tagged entities should automatically target our DemonSlayerEntity.
         if (EntityTagHelper.isDemon(mob)) {
-            addDemonVsSlayerGoal(mob);
+            if (findNearestTargetableDemonSlayer(mob, SCAN_RANGE) != null) {
+                addDemonVsSlayerGoal(mob);
+            }
+            return;
+        }
+
+        // Other hostile mobs should also be able to target DemonSlayerEntity.
+        if (isHostileMobForSlayer(mob)) {
+            if (findNearestTargetableDemonSlayer(mob, HOSTILE_SLAYER_SCAN_RANGE) != null) {
+                addHostileVsSlayerGoal(mob);
+            }
         }
     }
 
@@ -117,11 +131,31 @@ public class DemonSlayerAggroHandler {
             10,
             true,
             false,
-            target -> canDemonTargetSlayer(mob, target)
+            target -> canDemonTargetSlayer(mob, target) && mob.distanceToSqr(target) <= (SCAN_RANGE * SCAN_RANGE)
         ));
 
         data.putBoolean(DEMON_TARGET_SLAYER_GOAL_TAG, true);
         Log.debug("[DemonSlayerAggro] Added demon->slayer targeting goal to: {}", mob.getType().getDescriptionId());
+    }
+
+    private static void addHostileVsSlayerGoal(Mob mob) {
+        CompoundTag data = mob.getPersistentData();
+        if (data.getBoolean(HOSTILE_TARGET_SLAYER_GOAL_TAG)) {
+            return;
+        }
+
+        mob.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(
+            mob,
+            DemonSlayerEntity.class,
+            10,
+            true,
+            false,
+            target -> target != null && target.isAlive()
+                && mob.distanceToSqr(target) <= (HOSTILE_SLAYER_SCAN_RANGE * HOSTILE_SLAYER_SCAN_RANGE)
+        ));
+
+        data.putBoolean(HOSTILE_TARGET_SLAYER_GOAL_TAG, true);
+        Log.debug("[DemonSlayerAggro] Added hostile->slayer targeting goal to: {}", mob.getType().getDescriptionId());
     }
 
     /**
@@ -146,6 +180,11 @@ public class DemonSlayerAggroHandler {
         // Keep demon-tagged mobs focused on nearby DemonSlayerEntity targets.
         if (EntityTagHelper.isDemon(mob)) {
             tickDemonVsSlayerAggro(mob);
+            return;
+        }
+
+        if (isHostileMobForSlayer(mob)) {
+            tickHostileVsSlayerAggro(mob);
         }
     }
 
@@ -175,16 +214,52 @@ public class DemonSlayerAggroHandler {
             return;
         }
 
+        // Only add this targeting goal when a slayer is actually nearby.
+        if (!mob.getPersistentData().getBoolean(DEMON_TARGET_SLAYER_GOAL_TAG)
+            && findNearestTargetableDemonSlayer(mob, SCAN_RANGE) != null) {
+            addDemonVsSlayerGoal(mob);
+        }
+
         LivingEntity currentTarget = mob.getTarget();
-        if (currentTarget != null && currentTarget.isAlive() && canDemonTargetSlayer(mob, currentTarget)) {
+        if (currentTarget != null && currentTarget.isAlive()
+            && canDemonTargetSlayer(mob, currentTarget)
+            && mob.distanceToSqr(currentTarget) <= (SCAN_RANGE * SCAN_RANGE)) {
             return;
         }
 
-        LivingEntity nearestSlayer = findNearestTargetableDemonSlayer(mob);
+        LivingEntity nearestSlayer = findNearestTargetableDemonSlayer(mob, SCAN_RANGE);
         if (nearestSlayer != null) {
             mob.setTarget(nearestSlayer);
             Log.debug("[DemonSlayerAggro] {} targeting demon slayer: {}",
                 mob.getType().getDescriptionId(), nearestSlayer.getType().getDescriptionId());
+        } else if (currentTarget instanceof DemonSlayerEntity) {
+            mob.setTarget(null);
+        }
+    }
+
+    private static void tickHostileVsSlayerAggro(Mob mob) {
+        if (mob.tickCount % SCAN_INTERVAL != 0) {
+            return;
+        }
+
+        // Only add this targeting goal when a slayer is nearby.
+        if (!mob.getPersistentData().getBoolean(HOSTILE_TARGET_SLAYER_GOAL_TAG)
+            && findNearestTargetableDemonSlayer(mob, HOSTILE_SLAYER_SCAN_RANGE) != null) {
+            addHostileVsSlayerGoal(mob);
+        }
+
+        LivingEntity currentTarget = mob.getTarget();
+        if (currentTarget instanceof DemonSlayerEntity slayer
+            && slayer.isAlive()
+            && mob.distanceToSqr(slayer) <= (HOSTILE_SLAYER_SCAN_RANGE * HOSTILE_SLAYER_SCAN_RANGE)) {
+            return;
+        }
+
+        LivingEntity nearestSlayer = findNearestTargetableDemonSlayer(mob, HOSTILE_SLAYER_SCAN_RANGE);
+        if (nearestSlayer != null) {
+            mob.setTarget(nearestSlayer);
+        } else if (currentTarget instanceof DemonSlayerEntity) {
+            mob.setTarget(null);
         }
     }
 
@@ -210,13 +285,16 @@ public class DemonSlayerAggroHandler {
             .orElse(null);
     }
 
-    private static LivingEntity findNearestTargetableDemonSlayer(Mob demon) {
-        AABB searchBox = demon.getBoundingBox().inflate(SCAN_RANGE);
+    private static LivingEntity findNearestTargetableDemonSlayer(Mob demon, double range) {
+        AABB searchBox = demon.getBoundingBox().inflate(range);
 
         List<DemonSlayerEntity> nearbySlayers = demon.level().getEntitiesOfClass(
             DemonSlayerEntity.class,
             searchBox,
-            slayer -> slayer != demon && slayer.isAlive() && canDemonTargetSlayer(demon, slayer)
+            slayer -> slayer != demon
+                && slayer.isAlive()
+                && canDemonTargetSlayer(demon, slayer)
+                && demon.distanceToSqr(slayer) <= (range * range)
         );
 
         if (nearbySlayers.isEmpty()) {
@@ -321,6 +399,10 @@ public class DemonSlayerAggroHandler {
         }
 
         return true;
+    }
+
+    private static boolean isHostileMobForSlayer(Mob mob) {
+        return mob instanceof Monster && !EntityTagHelper.isDemon(mob);
     }
 
     private static boolean isWoman(LivingEntity entity) {

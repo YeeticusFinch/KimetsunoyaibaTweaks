@@ -35,6 +35,14 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> SPATIAL_AWARENESS = MOB_EFFECTS.register("spatial_awareness",
             SpatialAwarenessEffect::new);
 
+    // Killing Intent effect - stacking raid kill buff (+2% attack damage per level)
+    public static final RegistryObject<MobEffect> KILLING_INTENT = MOB_EFFECTS.register("killing_intent",
+            KillingIntentEffect::new);
+
+    // Bleeding effect - causes extra attack damage and movement-triggered blood loss
+    public static final RegistryObject<MobEffect> BLEEDING = MOB_EFFECTS.register("bleeding",
+            BleedingEffect::new);
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

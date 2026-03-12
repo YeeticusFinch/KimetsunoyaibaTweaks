@@ -58,7 +58,7 @@ public class EntityConfig {
 
     private static final ForgeConfigSpec.IntValue CROW_WAYPOINT_DURATION = BUILDER
             .comment("How long waypoint markers last in ticks (20 ticks = 1 second)")
-            .defineInRange("waypoint-duration", 1200, 200, 6000);
+            .defineInRange("waypoint-duration", 300, 200, 6000);
 
     private static final ForgeConfigSpec.DoubleValue CROW_WAYPOINT_COMPLETE_DISTANCE = BUILDER
             .comment("Distance in blocks (X/Z only, Y is ignored) to complete waypoint")
@@ -85,7 +85,7 @@ public class EntityConfig {
     public static boolean crowWaypointEnabled = true;
     public static int crowArrowUpdateInterval = 5;
     public static double crowArrowLength = 3.0;
-    public static int crowWaypointDuration = 1200;
+    public static int crowWaypointDuration = 300;
     public static double crowWaypointCompleteDistance = 2.0;
     public static boolean crowAutoDetectQuests = true;
 

@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.api;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.*;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -178,6 +179,29 @@ public final class KnYAPI {
      */
     public static Collection<SwordRegistry.RegisteredSword> getAllSwords() {
         return SwordRegistry.getAllSwords();
+    }
+
+    /**
+     * Register a per-sword display position override (HIP/BACK).
+     */
+    public static void addSwordPositionOverride(String itemId, SwordDisplayConfig.SwordDisplayPosition position) {
+        SwordDisplayConfig.addSwordPositionOverride(itemId, position);
+    }
+
+    /**
+     * Register a legacy offset that applies to both sword and sheath in all positions.
+     */
+    public static void registerSwordOffsets(String itemId, SwordDisplayConfig.SwordOffsets offsets) {
+        SwordDisplayConfig.registerSwordOffsets(itemId, offsets);
+    }
+
+    /**
+     * Register position-specific sword offsets for a sword item.
+     */
+    public static void registerSwordOffsets(String itemId,
+                                            SwordDisplayConfig.SwordDisplaySlot slot,
+                                            SwordDisplayConfig.SwordOffsets offsets) {
+        SwordDisplayConfig.registerSwordOffsets(itemId, slot, offsets);
     }
 
     // ==================== Helper Utilities ====================
