@@ -206,7 +206,7 @@ public class BaseModStyleMapping {
         if (itemId.contains("beast") || itemId.contains("inosuke")) return 200;
         if (itemId.contains("thunder") || itemId.contains("zenitsu")) return 300;
         if (itemId.contains("flame") || itemId.contains("rengoku")) return 400;
-        if (itemId.contains("wind") || itemId.contains("sanemi")) return 500;
+        if (itemId.contains("wind") || itemId.contains("sanemi") || itemId.contains("shinazugawa")) return 500;
         if (itemId.contains("stone") || itemId.contains("gyomei")) return 600;
         if (itemId.contains("mist") || itemId.contains("muichiro") || itemId.contains("tokito")) return 700;
         if (itemId.contains("serpent") || itemId.contains("iguro")) return 800;

@@ -1,10 +1,13 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidTriggerHandler;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -55,6 +58,14 @@ public class ModEvents {
         }
         if (source instanceof Player && RaidTriggerHandler.isPlayerNearRaid((Player) source)) {
             return;
+        }
+
+        if (source instanceof net.minecraft.server.level.ServerPlayer serverPlayer &&
+            CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
+            ResourceLocation targetId = net.minecraft.world.entity.EntityType.getKey(target.getType());
+            if (targetId != null && DemonRegistry.isRegistered(targetId)) {
+                DemonSlayerInitiationHandler.triggerCustomInitiation(serverPlayer, "killed addon demon " + targetId);
+            }
         }
 
         // Check if the target was a demon slayer and the source is a demon

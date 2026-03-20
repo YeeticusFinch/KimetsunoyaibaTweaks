@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerColorChangeStyleHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordAdvancementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -13,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
@@ -193,6 +195,9 @@ public class ColorChangeProcedureOverride {
         // If the original sword was a training sword, apply training sword modifications to the new one
         if (wasTrainingSword) {
             TrainingSwordHelper.makeTrainingSword(newSword, player);
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                TrainingSwordAdvancementHelper.awardTrainingSwordAdvancement(serverPlayer, chosenStyle.getStyleId());
+            }
             System.out.println("[KnY-MP ColorChangeOverride] Applied training sword tag to new sword");
         }
 
@@ -224,7 +229,10 @@ public class ColorChangeProcedureOverride {
         List<SwordRegistry.RegisteredSword> addonSwords =
             SwordRegistry.getSwordsByStyleAndLevel(styleId, 0);
         for (SwordRegistry.RegisteredSword registered : addonSwords) {
-            swords.add(registered.getSwordItem());
+            Item item = registered.getSwordItem();
+            if (isValidColorChangeSword(item)) {
+                swords.add(item);
+            }
         }
 
         // If we found enhanced swords and should prefer them, return early
@@ -237,7 +245,7 @@ public class ColorChangeProcedureOverride {
             SwordMetadataRegistry.getSwordsByStyleAndLevel(styleId, 0);
         for (SwordMetadataRegistry.SwordMetadata meta : baseSwords) {
             Item item = meta.getSwordItem();
-            if (item != null) {
+            if (isValidColorChangeSword(item)) {
                 swords.add(item);
             }
         }
@@ -256,6 +264,10 @@ public class ColorChangeProcedureOverride {
             case "love_breathing" -> com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.enhancedLoveBreathing;
             default -> false;
         };
+    }
+
+    private static boolean isValidColorChangeSword(Item item) {
+        return item != null && item != Items.AIR;
     }
 
     /**

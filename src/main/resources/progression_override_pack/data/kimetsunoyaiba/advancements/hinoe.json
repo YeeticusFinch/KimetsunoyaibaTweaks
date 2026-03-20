@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaiba:nichirinsword_flame"
+    },
+    "title": {
+      "translate": "advancements.hinoe.title"
+    },
+    "description": {
+      "translate": "advancements.hinoe.descr"
+    },
+    "frame": "goal",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": {
+    "hinoe_0": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "kimetsunoyaiba:hinoto"
+}

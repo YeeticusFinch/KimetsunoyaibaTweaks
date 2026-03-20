@@ -42,12 +42,6 @@ public class BreathingDisplayOverlay {
         // Get the item in the player's main hand
         ItemStack heldItem = player.getMainHandItem();
 
-        // Check if it's a nichirin sword
-        if (!BreathingInfoDetector.isNichirinSword(heldItem)) {
-            return;
-        }
-
-        // Get breathing information
         BreathingInfoDetector.BreathingInfo info = BreathingInfoDetector.getBreathingInfo(player, heldItem);
         if (info == null) {
             return;

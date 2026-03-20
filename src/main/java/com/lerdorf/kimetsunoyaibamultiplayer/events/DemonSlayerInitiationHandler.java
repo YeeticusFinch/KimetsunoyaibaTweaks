@@ -67,6 +67,7 @@ public class DemonSlayerInitiationHandler {
 
     // Base mod advancement that triggers initiation rewards
     private static final ResourceLocation DEMON_SLAYER_CORPS = ResourceLocation.parse("kimetsunoyaiba:demon_slayer_corps");
+    private static final ResourceLocation CUSTOM_DEMON_SLAYER_CORPS = ResourceLocation.parse("kimetsunoyaibamultiplayer:demon_slayer_corps");
     private static final ResourceLocation MIZUNOTO = ResourceLocation.parse("kimetsunoyaiba:mizunoto");
     private static final ResourceLocation KINOE = ResourceLocation.parse("kimetsunoyaiba:kinoe");
     private static final ResourceLocation KILL_12_MOONS = ResourceLocation.parse("kimetsunoyaiba:kill_12_moons");
@@ -151,6 +152,7 @@ public class DemonSlayerInitiationHandler {
                 long currentTick = serverPlayer.level().getGameTime();
                 pendingItemRemoval.put(player.getUUID(), currentTick);
                 pendingCrowBlock.put(player.getUUID(), currentTick);
+                awardCustomAdvancement(serverPlayer, CUSTOM_DEMON_SLAYER_CORPS);
 
                 if (CustomProgressionConfig.enableDebugLogging.get()) {
                     System.out.println("[KnY-MP Progression] Player " + player.getName().getString() +
@@ -480,6 +482,29 @@ public class DemonSlayerInitiationHandler {
         }
     }
 
+    /**
+     * Trigger the same custom initiation flow used by the base progression path.
+     * Safe to call when a player satisfies an alternate first-demon-kill condition.
+     */
+    public static void triggerCustomInitiation(ServerPlayer player, String reason) {
+        if (player == null || player.getServer() == null) {
+            return;
+        }
+        if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
+            return;
+        }
+        if (hasAdvancement(player, DEMON_SLAYER_CORPS)) {
+            return;
+        }
+
+        ensureDemonSlayerCorpsAdvancement(player);
+
+        if (CustomProgressionConfig.enableDebugLogging.get()) {
+            System.out.println("[KnY-MP Progression] Triggered custom initiation for " +
+                player.getName().getString() + " (" + reason + ")");
+        }
+    }
+
     private static boolean hasAdvancement(ServerPlayer player, ResourceLocation advancementId) {
         if (player.getServer() == null) {
             return false;
@@ -491,6 +516,25 @@ public class DemonSlayerInitiationHandler {
         }
 
         return player.getAdvancements().getOrStartProgress(advancement).isDone();
+    }
+
+    private static void awardCustomAdvancement(ServerPlayer player, ResourceLocation advancementId) {
+        if (player == null || player.getServer() == null) {
+            return;
+        }
+
+        Advancement advancement = player.server.getAdvancements().getAdvancement(advancementId);
+        if (advancement == null || player.getAdvancements().getOrStartProgress(advancement).isDone()) {
+            return;
+        }
+
+        List<String> remainingCriteria = new ArrayList<String>();
+        for (String criterion : player.getAdvancements().getOrStartProgress(advancement).getRemainingCriteria()) {
+            remainingCriteria.add(criterion);
+        }
+        for (String criterion : remainingCriteria) {
+            player.getAdvancements().award(advancement, criterion);
+        }
     }
 
     private static void revokeAdvancement(ServerPlayer player, Advancement advancement) {

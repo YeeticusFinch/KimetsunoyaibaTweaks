@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "kimetsunoyaibamultiplayer:item/purple_uniform_pants_icon"
+  }
+}

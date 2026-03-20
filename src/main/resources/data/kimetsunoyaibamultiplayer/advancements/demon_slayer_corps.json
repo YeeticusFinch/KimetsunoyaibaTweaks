@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaiba:nichirinsword"
+    },
+    "title": {
+      "translate": "advancement.kimetsunoyaibamultiplayer.demon_slayer_corps.title"
+    },
+    "description": {
+      "translate": "advancement.kimetsunoyaibamultiplayer.demon_slayer_corps.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "minecraft:adventure/root",
+  "criteria": {
+    "demon_slayer_corps_0": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

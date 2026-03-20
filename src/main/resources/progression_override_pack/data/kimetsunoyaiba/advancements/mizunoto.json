@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaiba:nichirinsword_water"
+    },
+    "title": {
+      "translate": "advancements.mizunoto.title"
+    },
+    "description": {
+      "translate": "advancements.mizunoto.descr"
+    },
+    "frame": "goal",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": {
+    "mizunoto_0": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "kimetsunoyaiba:demon_slayer_corps"
+}

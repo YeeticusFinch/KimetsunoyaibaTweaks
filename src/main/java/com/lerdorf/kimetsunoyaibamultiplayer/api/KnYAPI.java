@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.*;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.DeferredRegister;
@@ -120,6 +121,44 @@ public final class KnYAPI {
      */
     public static Collection<BreathingStyleRegistry.RegisteredBreathingStyle> getAllBreathingStyles() {
         return BreathingStyleRegistry.getAllStyles();
+    }
+
+    // ==================== Blood Demon Art Registration ====================
+
+    public static BloodDemonArtRegistry.RegisteredBloodDemonArt registerBloodDemonArt(
+            String artId,
+            String artName,
+            BloodDemonArtTechnique technique) {
+        return BloodDemonArtRegistry.register(artId, artName, technique);
+    }
+
+    public static BloodDemonArtRegistry.RegisteredBloodDemonArt getBloodDemonArt(String artId) {
+        return BloodDemonArtRegistry.getArt(artId);
+    }
+
+    public static Collection<BloodDemonArtRegistry.RegisteredBloodDemonArt> getAllBloodDemonArts() {
+        return BloodDemonArtRegistry.getAllArts();
+    }
+
+    // ==================== Demon Registration ====================
+
+    public static DemonRegistry.RegisteredDemon registerDemon(String entityId, com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale scale) {
+        return DemonRegistry.register(ResourceLocation.parse(entityId), scale);
+    }
+
+    public static DemonRegistry.RegisteredDemon registerDemon(
+            String entityId,
+            com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale scale,
+            boolean sunlightImmune) {
+        return DemonRegistry.register(ResourceLocation.parse(entityId), scale, sunlightImmune);
+    }
+
+    public static DemonRegistry.RegisteredDemon registerDemon(
+            String entityId,
+            com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale scale,
+            boolean sunlightImmune,
+            String bloodDemonArtId) {
+        return DemonRegistry.register(ResourceLocation.parse(entityId), scale, sunlightImmune, bloodDemonArtId);
     }
 
     // ==================== Sword Registration ====================

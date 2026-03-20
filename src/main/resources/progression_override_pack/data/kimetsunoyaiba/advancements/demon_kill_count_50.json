@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:diamond_sword"
+    },
+    "title": {
+      "translate": "advancements.demon_kill_count_50.title"
+    },
+    "description": {
+      "translate": "advancements.demon_kill_count_50.descr"
+    },
+    "frame": "goal",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": {
+    "demon_kill_count_50_0": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "kimetsunoyaiba:demon_kill_count_40"
+}

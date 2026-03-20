@@ -1,0 +1,10 @@
+{
+  "parent": "kimetsunoyaibamultiplayer:custom/hanafuda",
+  "textures": {
+    "0": "kimetsunoyaibamultiplayer:item/hanafuda",
+    "1": "kimetsunoyaibamultiplayer:item/hanafuda",
+    "2": "kimetsunoyaibamultiplayer:item/hanafuda",
+    "3": "kimetsunoyaibamultiplayer:item/hanafuda",
+    "particle": "kimetsunoyaibamultiplayer:item/icon_hanafuda"
+  }
+}

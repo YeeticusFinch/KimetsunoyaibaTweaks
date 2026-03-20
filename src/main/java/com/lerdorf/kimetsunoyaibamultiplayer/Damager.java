@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
@@ -76,6 +77,9 @@ public class Damager {
 			ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "demon"))
 		);
 
+        ResourceLocation entityId = entity.getType() == null ? null : net.minecraft.world.entity.EntityType.getKey(entity.getType());
+        boolean isRegisteredAddonDemon = entityId != null && DemonRegistry.isRegistered(entityId);
+
 		// Check if entity is tagged as a twelve kizuki (upper/lower moon demon)
 		boolean isTwelveKizuki = entity.getType().is(
 			TagKey.create(Registries.ENTITY_TYPE,
@@ -85,7 +89,7 @@ public class Damager {
 		// Also check via NBT tag as fallback
 		boolean hasOniTag = entity.getPersistentData().getBoolean("oni");
 
-		return isDemonTagged || isTwelveKizuki || hasOniTag;
+		return isDemonTagged || isTwelveKizuki || hasOniTag || isRegisteredAddonDemon;
 	}
 
 	public static boolean isNeutral(LivingEntity entity) {

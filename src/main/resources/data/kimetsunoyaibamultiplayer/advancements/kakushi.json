@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaibamultiplayer:kakushi_uniform_helmet"
+    },
+    "title": {
+      "translate": "advancement.kimetsunoyaibamultiplayer.kakushi.title"
+    },
+    "description": {
+      "translate": "advancement.kimetsunoyaibamultiplayer.kakushi.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "kimetsunoyaibamultiplayer:demon_slayer_corps",
+  "criteria": {
+    "kakushi_0": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

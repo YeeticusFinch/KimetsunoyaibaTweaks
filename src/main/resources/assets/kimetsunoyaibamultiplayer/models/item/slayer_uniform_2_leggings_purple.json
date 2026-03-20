@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "kimetsunoyaibamultiplayer:item/slayer_uniform_2_leggings_purple_icon"
+  }
+}

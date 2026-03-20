@@ -1,11 +1,14 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.items;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CreepingRuin;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.VindicatorsBane;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Tiers;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -71,7 +74,7 @@ public class ModItems {
         () -> new NichirinSwordBlack(new Item.Properties().stacksTo(1).durability(2000)));
 
     public static final RegistryObject<Item> NICHIRIN_ORE = ITEMS.register("nichirin_ore",
-        () -> new NichirinOreItem(new Item.Properties().stacksTo(1)));
+        () -> new NichirinOreItem(new Item.Properties().stacksTo(64)));
 
     // Spawn eggs
     public static final RegistryObject<Item> MUICHIRO_SPAWN_EGG = ITEMS.register("muichiro_spawn_egg",
@@ -116,6 +119,12 @@ public class ModItems {
             0xDEE4EE, 0xA7B2C2, // Cool pale body, muted blue-gray spots
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> PRINCESS_SPAWN_EGG = ITEMS.register("princess_spawn_egg",
+        () -> new PrincessSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.PRINCESS,
+            0xE9D9D0, 0xB68563,
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> DEMON_SLAYER_SPAWN_EGG = ITEMS.register("demon_slayer_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER,
@@ -127,6 +136,36 @@ public class ModItems {
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER_FEMALE,
             0xC08AA8, 0xF1E6EE, // Soft pink body, pale pink spots
             new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_CREEPER_SPAWN_EGG = ITEMS.register("demon_creeper_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_CREEPER,
+            0x2C6B35, 0x8DE15C,
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_VILLAGER_SPAWN_EGG = ITEMS.register("demon_villager_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_VILLAGER,
+            0x6A5441, 0xC43D2F,
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_PILLAGER_SPAWN_EGG = ITEMS.register("demon_pillager_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_PILLAGER,
+            0x4E5A5F, 0xB83C2A,
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_VINDICATOR_SPAWN_EGG = ITEMS.register("demon_vindicator_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_VINDICATOR,
+            0x4A565B, 0x9B2B21,
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> CREEPER_DEMON_ART = ITEMS.register("creeper_demon_art",
+        () -> new BloodDemonArtItem(CreepingRuin.ART_ID, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> VINDICATOR_DEMON_ART = ITEMS.register("vindicator_demon_art",
+        () -> new BloodDemonArtAxeItem(VindicatorsBane.ART_ID, Tiers.IRON, 9.0F, 0.9F,
+            new Item.Properties().stacksTo(1)));
 
     // Armor pieces
     public static final RegistryObject<Item> ANDON_BAKAMA = ITEMS.register("andon_bakama",
@@ -221,6 +260,42 @@ public class ModItems {
             "textures/armor/slayer_uniform_2_purple.png",
             "textures/armor/slayer_uniform_2_purple.png"));
 
+    public static final RegistryObject<Item> KAKUSHI_UNIFORM_HELMET = ITEMS.register("kakushi_uniform_helmet",
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.KAKUSHI,
+            net.minecraft.world.item.ArmorItem.Type.HELMET,
+            new Item.Properties().stacksTo(1),
+            "geo/kakushi_uniform.geo.json",
+            "textures/armor/kakushi_uniform_helmet.png",
+            "textures/armor/kakushi_uniform_leggings.png",
+            "textures/armor/kakushi_uniform_boots.png"));
+
+    public static final RegistryObject<Item> KAKUSHI_UNIFORM_CHESTPLATE = ITEMS.register("kakushi_uniform_chestplate",
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.KAKUSHI,
+            net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
+            new Item.Properties().stacksTo(1),
+            "geo/kakushi_uniform.geo.json",
+            "textures/armor/kakushi_uniform_chestplate.png",
+            "textures/armor/kakushi_uniform_leggings.png",
+            "textures/armor/kakushi_uniform_boots.png"));
+
+    public static final RegistryObject<Item> KAKUSHI_UNIFORM_LEGGINGS = ITEMS.register("kakushi_uniform_leggings",
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.KAKUSHI,
+            net.minecraft.world.item.ArmorItem.Type.LEGGINGS,
+            new Item.Properties().stacksTo(1),
+            "geo/kakushi_uniform.geo.json",
+            "textures/armor/kakushi_uniform_chestplate.png",
+            "textures/armor/kakushi_uniform_leggings.png",
+            "textures/armor/kakushi_uniform_boots.png"));
+
+    public static final RegistryObject<Item> KAKUSHI_UNIFORM_BOOTS = ITEMS.register("kakushi_uniform_boots",
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.KAKUSHI,
+            net.minecraft.world.item.ArmorItem.Type.BOOTS,
+            new Item.Properties().stacksTo(1),
+            "geo/kakushi_uniform.geo.json",
+            "textures/armor/kakushi_uniform_chestplate.png",
+            "textures/armor/kakushi_uniform_leggings.png",
+            "textures/armor/kakushi_uniform_boots.png"));
+
     public static final RegistryObject<Item> CLOTHES_MUICHIRO_FP_CHESTPLATE = ITEMS.register("clothes_muichiro_fp_chestplate",
         () -> new MuichiroHaoriItem(CosmeticArmorMaterial.MUICHIRO_HAORI,
             net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
@@ -233,6 +308,11 @@ public class ModItems {
 
     public static final RegistryObject<Item> HAIR_MUICHIRO_FP = ITEMS.register("hair_muichiro_fp",
         () -> new HairMuichiroFpItem(CosmeticArmorMaterial.MUICHIRO_FP_HAIR,
+            net.minecraft.world.item.ArmorItem.Type.HELMET,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> BLINDFOLD = ITEMS.register("blindfold",
+        () -> new BlindfoldItem(CosmeticArmorMaterial.COSMETIC,
             net.minecraft.world.item.ArmorItem.Type.HELMET,
             new Item.Properties().stacksTo(1)));
 
@@ -359,9 +439,14 @@ public class ModItems {
                 output.accept(SLAYER_UNIFORM_2_CHESTPLATE_PURPLE.get());
                 output.accept(SLAYER_UNIFORM_2_LEGGINGS_PURPLE.get());
                 output.accept(SLAYER_UNIFORM_2_BOOTS_PURPLE.get());
+                output.accept(KAKUSHI_UNIFORM_HELMET.get());
+                output.accept(KAKUSHI_UNIFORM_CHESTPLATE.get());
+                output.accept(KAKUSHI_UNIFORM_LEGGINGS.get());
+                output.accept(KAKUSHI_UNIFORM_BOOTS.get());
                 output.accept(CLOTHES_MUICHIRO_FP_CHESTPLATE.get());
                 output.accept(UNIFORM_MUICHIRO_FP_CHESTPLATE.get());
                 output.accept(HAIR_MUICHIRO_FP.get());
+                output.accept(BLINDFOLD.get());
                 output.accept(HAHNAFUDA_SIMPLE.get());
 
                 // Spawn eggs
@@ -372,8 +457,15 @@ public class ModItems {
                 output.accept(KANAWO_SPAWN_EGG.get());
                 output.accept(KANATA_SPAWN_EGG.get());
                 output.accept(KIRIYA_SPAWN_EGG.get());
+                output.accept(PRINCESS_SPAWN_EGG.get());
                 output.accept(DEMON_SLAYER_SPAWN_EGG.get());
                 output.accept(DEMON_SLAYER_FEMALE_SPAWN_EGG.get());
+                output.accept(DEMON_CREEPER_SPAWN_EGG.get());
+                output.accept(DEMON_VILLAGER_SPAWN_EGG.get());
+                output.accept(DEMON_PILLAGER_SPAWN_EGG.get());
+                output.accept(DEMON_VINDICATOR_SPAWN_EGG.get());
+                output.accept(CREEPER_DEMON_ART.get());
+                output.accept(VINDICATOR_DEMON_ART.get());
 
                 // Omen Potions
                 output.accept(OMEN_OF_MUZAN_POTION_1.get());

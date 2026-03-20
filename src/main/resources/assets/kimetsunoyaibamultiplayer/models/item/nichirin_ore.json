@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "kimetsunoyaibamultiplayer:item/nichirin_ore_grey",
+    "layer1": "kimetsunoyaibamultiplayer:item/nichirin_ore_color"
+  }
+}

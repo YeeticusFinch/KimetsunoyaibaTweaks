@@ -1,0 +1,8 @@
+{
+  "parent": "kimetsunoyaiba:custom/nichirinsword",
+  "textures": {
+    "0": "kimetsunoyaiba:block/nichirinsword_withoutblade",
+    "1": "kimetsunoyaiba:block/blade_black",
+    "particle": "kimetsunoyaiba:item/icon_sword"
+  }
+}

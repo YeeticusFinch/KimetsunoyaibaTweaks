@@ -1,6 +1,10 @@
 {
   "replace": false,
   "values": [
+    "kimetsunoyaibamultiplayer:demon_creeper",
+    "kimetsunoyaibamultiplayer:demon_villager",
+    "kimetsunoyaibamultiplayer:demon_pillager",
+    "kimetsunoyaibamultiplayer:demon_vindicator",
     { "id": "kimetsu:akaza", "required": false },
     { "id": "kimetsu:daki", "required": false },
     { "id": "kimetsu:demon_nakime", "required": false },

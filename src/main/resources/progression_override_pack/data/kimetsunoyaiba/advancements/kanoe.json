@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaiba:nichirinsword_thunder"
+    },
+    "title": {
+      "translate": "advancements.kanoe.title"
+    },
+    "description": {
+      "translate": "advancements.kanoe.descr"
+    },
+    "frame": "goal",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": {
+    "kanoe_0": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "kimetsunoyaiba:kanoto"
+}

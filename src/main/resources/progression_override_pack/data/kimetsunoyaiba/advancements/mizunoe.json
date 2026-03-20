@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaiba:nichirinsword_water"
+    },
+    "title": {
+      "translate": "advancements.mizunoe.title"
+    },
+    "description": {
+      "translate": "advancements.mizunoe.descr"
+    },
+    "frame": "goal",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": {
+    "mizunoe_0": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "kimetsunoyaiba:mizunoto"
+}

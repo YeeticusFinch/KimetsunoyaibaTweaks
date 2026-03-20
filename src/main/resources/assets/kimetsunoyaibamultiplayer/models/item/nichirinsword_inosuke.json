@@ -1,0 +1,7 @@
+{
+  "parent": "kimetsunoyaiba:custom/nitirintou_inosuke",
+  "textures": {
+    "0": "kimetsunoyaiba:block/nitirintou_inosuke",
+    "particle": "kimetsunoyaiba:item/icon_sword"
+  }
+}

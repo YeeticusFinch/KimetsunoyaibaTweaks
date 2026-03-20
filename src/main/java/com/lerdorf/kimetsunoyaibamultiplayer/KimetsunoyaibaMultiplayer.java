@@ -302,6 +302,33 @@ public class KimetsunoyaibaMultiplayer
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.LoveVariations.register();
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MistVariations.register();
 
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonCreeperEntity.registerBloodDemonArt();
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonVindicatorEntity.registerBloodDemonArt();
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_creeper",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_DEMON,
+                false,
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonCreeperEntity.BLOOD_DEMON_ART_ID
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_villager",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.EASY_DEMON,
+                false,
+                null
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_pillager",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.EASY_DEMON,
+                false,
+                null
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_vindicator",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.EASY_DEMON,
+                false,
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonVindicatorEntity.BLOOD_DEMON_ART_ID
+            );
+
             Log.info("Registered built-in swords in SwordRegistry");
         });
     }
@@ -423,6 +450,7 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SunBreathingLevelCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SpawnDemonSlayerCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TorilGateCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.SwordsmithVillageCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.FinalSelectionCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.OreSelectCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SurvivalRaidCommand.register(event.getDispatcher());
@@ -718,8 +746,18 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER_FEMALE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerFemaleRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_CREEPER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonCreeperRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_VILLAGER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonVillagerRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_PILLAGER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonPillagerRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_VINDICATOR.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonVindicatorRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MUICHIRO_FP.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroFPRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.PRINCESS.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.PrincessRenderer::new);
 
             if (Config.logDebug)
             Log.info("Registered entity renderers");

@@ -203,6 +203,20 @@ public class EntityCategorization {
     }
 
     /**
+     * Register or override a custom entity categorization at runtime.
+     */
+    public static synchronized void registerCustomEntity(ResourceLocation entityId, EntityPowerScale scale) {
+        EntityPowerScale previousScale = ENTITY_SCALES.put(entityId, scale);
+        if (previousScale != null) {
+            List<ResourceLocation> previousList = SCALE_ENTITIES.get(previousScale);
+            if (previousList != null) {
+                previousList.remove(entityId);
+            }
+        }
+        SCALE_ENTITIES.computeIfAbsent(scale, key -> new ArrayList<>()).add(entityId);
+    }
+
+    /**
      * Build reverse lookup map (scale -> entity list).
      */
     private static void buildReverseLookup() {

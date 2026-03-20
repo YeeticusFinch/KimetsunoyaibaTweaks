@@ -76,6 +76,13 @@ public class ModNetworking {
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBreathingFormPacket::handle)
                 .add();
 
+        int cycleBloodDemonArtPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBloodDemonArtFormPacket.class, cycleBloodDemonArtPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBloodDemonArtFormPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBloodDemonArtFormPacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBloodDemonArtFormPacket::handle)
+                .add();
+
         // Register sword model override packet (server -> client)
         int swordModelOverridePacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordModelOverridePacket.class, swordModelOverridePacketId)

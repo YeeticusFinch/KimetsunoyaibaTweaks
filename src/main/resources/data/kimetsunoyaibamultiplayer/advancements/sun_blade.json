@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaibamultiplayer:nichirin_ore"
+    },
+    "title": {
+      "translate": "advancement.kimetsunoyaibamultiplayer.sun_blade.title"
+    },
+    "description": {
+      "translate": "advancement.kimetsunoyaibamultiplayer.sun_blade.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "kimetsunoyaibamultiplayer:completed_final_selectioni",
+  "criteria": {
+    "crafted_from_ore": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaiba:uniform_chestplate"
+    },
+    "title": {
+      "translate": "advancements.demon_slayer_corps.title"
+    },
+    "description": {
+      "translate": "advancements.demon_slayer_corps.descr"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": {
+    "demon_slayer_corps_0": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "kimetsunoyaiba:demon_slayer"
+}

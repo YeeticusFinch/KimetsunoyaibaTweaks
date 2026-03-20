@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaiba:nichirinsword_senior"
+    },
+    "title": {
+      "translate": "advancements.kill_12_moons.title"
+    },
+    "description": {
+      "translate": "advancements.kill_12_moons.descr"
+    },
+    "frame": "goal",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": {
+    "kill_12_moons_0": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "kimetsunoyaiba:cruel"
+}

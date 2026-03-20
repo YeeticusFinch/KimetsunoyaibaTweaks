@@ -75,6 +75,7 @@ public class SwordSlashModelRegistry {
         // Register wind breathing swords to use wind model (random texture selection)
         SWORD_TO_MODEL_MAP.put("nichirinsword_wind", "wind");
         SWORD_TO_MODEL_MAP.put("nichirinsword_sanemi", "wind");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_shinazugawa", "wind");
 
         // Register wind with 3 texture variants, using random selection (not animated)
         ANIMATED_TEXTURE_FRAMES.put("wind", 3);

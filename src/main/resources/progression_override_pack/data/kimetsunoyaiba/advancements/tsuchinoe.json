@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaiba:nichirinsword_mist"
+    },
+    "title": {
+      "translate": "advancements.tsuchinoe.title"
+    },
+    "description": {
+      "translate": "advancements.tsuchinoe.descr"
+    },
+    "frame": "goal",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": {
+    "tsuchinoe_0": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "kimetsunoyaiba:tsuchinoto"
+}

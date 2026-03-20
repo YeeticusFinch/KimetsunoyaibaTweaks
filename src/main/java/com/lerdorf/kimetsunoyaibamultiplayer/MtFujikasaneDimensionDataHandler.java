@@ -2,7 +2,10 @@ package com.lerdorf.kimetsunoyaibamultiplayer;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.FinalSelectionProcedure;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.MtFujikasaneDaylightController;
+import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -10,6 +13,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.border.WorldBorder;
@@ -27,6 +32,7 @@ import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -66,6 +72,7 @@ import java.util.zip.ZipInputStream;
  */
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID)
 public class MtFujikasaneDimensionDataHandler {
+    private static final String MT_FUJIKASANE_SUN_BURN_TICKS_TAG = "KnYMtFujikasaneSunBurnTicks";
 
     private static final ResourceLocation MT_FUJIKASANE_DIM_ID =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "mt_fujikasane");
@@ -120,6 +127,9 @@ public class MtFujikasaneDimensionDataHandler {
      */
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
+        MtFujikasaneDaylightController.resetRuntimeState(event.getServer());
+        FinalSelectionProcedure.resetRuntimeState();
+
         if (!ENABLE_AUTO_DOWNLOAD) {
             return;
         }
@@ -268,6 +278,12 @@ public class MtFujikasaneDimensionDataHandler {
                 e.printStackTrace();
             }
         });
+    }
+
+    @SubscribeEvent
+    public static void onServerStopping(ServerStoppingEvent event) {
+        MtFujikasaneDaylightController.resetRuntimeState(event.getServer());
+        FinalSelectionProcedure.resetRuntimeState();
     }
 
     /**
@@ -847,6 +863,62 @@ public class MtFujikasaneDimensionDataHandler {
         return !level.getFluidState(pos).isSource();
     }
 
+    private static void tickMtFujikasaneSunlightBurn(ServerLevel level) {
+        if (level == null || !level.isDay()) {
+            return;
+        }
+
+        for (Entity entity : level.getAllEntities()) {
+            if (!(entity instanceof Mob mob) || !mob.isAlive()) {
+                continue;
+            }
+            if (mob instanceof AbstractDemonEntity) {
+                continue;
+            }
+            if (!isSunlightVulnerableDemon(mob)) {
+                continue;
+            }
+
+            if (isInBurningSunlight(level, mob)) {
+                int burnTicks = mob.getPersistentData().getInt(MT_FUJIKASANE_SUN_BURN_TICKS_TAG) + 1;
+                mob.getPersistentData().putInt(MT_FUJIKASANE_SUN_BURN_TICKS_TAG, burnTicks);
+                mob.setSecondsOnFire(2);
+
+                level.sendParticles(ParticleTypes.FLAME, mob.getX(), mob.getY(0.5D), mob.getZ(), 4, 0.3D, 0.4D, 0.3D, 0.01D);
+                level.sendParticles(ParticleTypes.LAVA, mob.getX(), mob.getY(0.2D), mob.getZ(), 2, 0.2D, 0.2D, 0.2D, 0.0D);
+
+                if (burnTicks % 10 == 0 && burnTicks <= 40) {
+                    mob.hurt(mob.damageSources().onFire(), 10.0F);
+                }
+
+                if (burnTicks >= 40) {
+                    level.sendParticles(ParticleTypes.EXPLOSION, mob.getX(), mob.getY(0.6D), mob.getZ(), 12, 0.3D, 0.4D, 0.3D, 0.02D);
+                    mob.playSound(SoundEvents.GENERIC_EXPLODE, 1.0F, 1.1F);
+                    mob.discard();
+                }
+            } else if (mob.getPersistentData().contains(MT_FUJIKASANE_SUN_BURN_TICKS_TAG)) {
+                mob.getPersistentData().remove(MT_FUJIKASANE_SUN_BURN_TICKS_TAG);
+            }
+        }
+    }
+
+    private static boolean isSunlightVulnerableDemon(Mob mob) {
+        ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
+        if (entityId != null && com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry.isSunlightImmune(entityId)) {
+            return false;
+        }
+        return (entityId != null && EntityCategorization.isDemon(entityId)) || mob.getPersistentData().getBoolean("oni");
+    }
+
+    private static boolean isInBurningSunlight(ServerLevel level, Mob mob) {
+        if (mob.isInWaterRainOrBubble() || mob.isUnderWater()) {
+            return false;
+        }
+
+        BlockPos pos = mob.blockPosition();
+        return level.canSeeSky(pos) && !level.isRainingAt(pos);
+    }
+
     /**
      * Tick the Mt Fujikasane daylight controller and final selection procedure.
      */
@@ -865,6 +937,9 @@ public class MtFujikasaneDimensionDataHandler {
 
         // Tick daylight controller
         MtFujikasaneDaylightController.tick(mtFujikasane);
+
+        // Apply sunlight death to all demons in Mt Fujikasane, including base-mod demons.
+        tickMtFujikasaneSunlightBurn(mtFujikasane);
 
         // Tick final selection procedure
         FinalSelectionProcedure.tickActive(mtFujikasane);

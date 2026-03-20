@@ -314,7 +314,7 @@ public class MistVariations {
      								attackBox, e -> e != entity && e.isAlive());
 
      						for (LivingEntity target : targets) {
-     							Damager.hurt(entity, target, (float)damage, true);
+     							Damager.hurt(entity, target, (float)damage, false);
      						}
 
      						// Spawn particles

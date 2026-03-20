@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaibamultiplayer:wisteria_sapling_lavender"
+    },
+    "title": {
+      "text": "Completed Final Selection"
+    },
+    "description": {
+      "text": "Survive Final Selection and become eligible for Demon Slayer progression."
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "minecraft:adventure/root",
+  "criteria": {
+    "completed_final_selectioni_0": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

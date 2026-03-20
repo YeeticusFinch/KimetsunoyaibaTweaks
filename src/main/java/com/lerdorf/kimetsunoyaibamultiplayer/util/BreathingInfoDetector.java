@@ -22,6 +22,13 @@ public class BreathingInfoDetector {
             return null;
         }
 
+        if (heldSword.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem artItem) {
+            return getBloodDemonArtInfo(heldSword, artItem);
+        }
+        if (heldSword.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem artItem) {
+            return getBloodDemonArtInfo(heldSword, artItem);
+        }
+
         // Check if this is our mod's breathing sword
         if (heldSword.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem breathingSword) {
             return getOurModBreathingInfo(player, heldSword, breathingSword);
@@ -138,6 +145,52 @@ public class BreathingInfoDetector {
 
         // Fallback: Use NBT-based detection (for when cache doesn't have it yet)
         return getBreathingInfoFromNBT(player, heldSword);
+    }
+
+    private static BreathingInfo getBloodDemonArtInfo(ItemStack stack,
+                                                      com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem artItem) {
+        String display = artItem.getDisplayText(stack);
+        if (display == null || display.isEmpty()) {
+            return null;
+        }
+
+        String[] parts = display.split(": ", 2);
+        String styleName = parts.length > 0 ? parts[0] : display;
+        String formName = parts.length > 1 ? parts[1] : display;
+        return new BreathingInfo(
+            styleName,
+            formName,
+            artItem.getSelectedFormIndex(stack) + 1,
+            0,
+            0.0,
+            "§2" + display,
+            0,
+            0,
+            null
+        );
+    }
+
+    private static BreathingInfo getBloodDemonArtInfo(ItemStack stack,
+                                                      com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem artItem) {
+        String display = artItem.getDisplayText(stack);
+        if (display == null || display.isEmpty()) {
+            return null;
+        }
+
+        String[] parts = display.split(": ", 2);
+        String styleName = parts.length > 0 ? parts[0] : display;
+        String formName = parts.length > 1 ? parts[1] : display;
+        return new BreathingInfo(
+            styleName,
+            formName,
+            artItem.getSelectedFormIndex(stack) + 1,
+            0,
+            0.0,
+            "§2" + display,
+            0,
+            0,
+            null
+        );
     }
 
     /**

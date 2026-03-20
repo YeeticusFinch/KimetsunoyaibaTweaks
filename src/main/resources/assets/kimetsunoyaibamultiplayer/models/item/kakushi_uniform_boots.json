@@ -1,0 +1,8 @@
+{
+  "format_version": "1.21.11",
+  "credit": "Generated for Kakushi armor",
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "kimetsunoyaibamultiplayer:item/kakushi_uniform_boots"
+  }
+}

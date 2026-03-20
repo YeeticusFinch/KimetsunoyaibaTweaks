@@ -112,6 +112,7 @@ public class BaseModRegistration {
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_shinobu", "insect_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_iguro", "serpent_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_sanemi", "wind_breathing", 2);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_shinazugawa", "wind_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_tokito", "mist_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaibamultiplayer:nichirinsword_muichiro", "mist_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_kanroji", "love_breathing", 2);

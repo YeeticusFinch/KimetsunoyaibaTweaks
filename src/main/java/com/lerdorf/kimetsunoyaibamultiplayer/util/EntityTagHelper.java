@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.util;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale;
 import net.minecraft.core.Holder;
@@ -54,7 +55,8 @@ public class EntityTagHelper {
      */
     public static boolean isDemon(Entity entity) {
         if (entity == null) return false;
-        return entity.getType().is(DEMON);
+        ResourceLocation entityId = getEntityTypeId(entity);
+        return entity.getType().is(DEMON) || (entityId != null && DemonRegistry.isRegistered(entityId));
     }
 
     /**

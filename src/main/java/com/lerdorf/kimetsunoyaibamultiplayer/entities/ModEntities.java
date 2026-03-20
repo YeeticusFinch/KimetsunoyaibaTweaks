@@ -133,6 +133,18 @@ public class ModEntities {
                 .build("kiriya"));
 
     /**
+     * Princess - Tanzanite's poodle companion.
+     * Egg-spawned, self-taming GeckoLib dog that follows and defends its owner.
+     */
+    public static final RegistryObject<EntityType<PrincessEntity>> PRINCESS =
+        ENTITY_TYPES.register("princess",
+            () -> EntityType.Builder.of(PrincessEntity::new, MobCategory.CREATURE)
+                .sized(0.8F, 1.0F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("princess"));
+
+    /**
      * Mugen Door - Decorative entity for kizuki demon spawns
      * Plays an opening animation and sound, then disappears
      */
@@ -214,6 +226,38 @@ public class ModEntities {
                 .updateInterval(3)
                 .build("demon_slayer_female"));
 
+    public static final RegistryObject<EntityType<DemonCreeperEntity>> DEMON_CREEPER =
+        ENTITY_TYPES.register("demon_creeper",
+            () -> EntityType.Builder.of(DemonCreeperEntity::new, MobCategory.MONSTER)
+                .sized(0.8F, 1.7F)
+                .clientTrackingRange(10)
+                .updateInterval(2)
+                .build("demon_creeper"));
+
+    public static final RegistryObject<EntityType<DemonVillagerEntity>> DEMON_VILLAGER =
+        ENTITY_TYPES.register("demon_villager",
+            () -> EntityType.Builder.of(DemonVillagerEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.95F)
+                .clientTrackingRange(10)
+                .updateInterval(2)
+                .build("demon_villager"));
+
+    public static final RegistryObject<EntityType<DemonPillagerEntity>> DEMON_PILLAGER =
+        ENTITY_TYPES.register("demon_pillager",
+            () -> EntityType.Builder.of(DemonPillagerEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.95F)
+                .clientTrackingRange(10)
+                .updateInterval(2)
+                .build("demon_pillager"));
+
+    public static final RegistryObject<EntityType<DemonVindicatorEntity>> DEMON_VINDICATOR =
+        ENTITY_TYPES.register("demon_vindicator",
+            () -> EntityType.Builder.of(DemonVindicatorEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.95F)
+                .clientTrackingRange(10)
+                .updateInterval(2)
+                .build("demon_vindicator"));
+
     /**
      * Flower Petal Slash - Visual effect for Flower Breathing slash attacks
      * Animated texture cycling through 18 frames (sword_loop_flower0-17.png)
@@ -259,11 +303,17 @@ public class ModEntities {
             // Register attributes for Mitsuri Kanroji
             event.put(KANROJI.get(), KanrojiEntity.createAttributes().build());
 
+            event.put(DEMON_CREEPER.get(), DemonCreeperEntity.createAttributes().build());
+            event.put(DEMON_VILLAGER.get(), DemonVillagerEntity.createAttributes().build());
+            event.put(DEMON_PILLAGER.get(), DemonPillagerEntity.createAttributes().build());
+            event.put(DEMON_VINDICATOR.get(), DemonVindicatorEntity.createAttributes().build());
+
             // Register attributes for Kanae and Kanawo
             event.put(KANAE.get(), KanaeEntity.createAttributes().build());
             event.put(KANAWO.get(), KanawoEntity.createAttributes().build());
             event.put(KANATA.get(), KanataEntity.createAttributes().build());
             event.put(KIRIYA.get(), KiriyaEntity.createAttributes().build());
+            event.put(PRINCESS.get(), PrincessEntity.createAttributes().build());
 
             // Register attributes for Mugen Door (visual-only entity)
             event.put(MUGEN_DOOR.get(), MugenDoorEntity.createAttributes().build());

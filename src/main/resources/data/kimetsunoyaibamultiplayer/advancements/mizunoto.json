@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaiba:nichirinsword_water"
+    },
+    "title": {
+      "text": "Mizunoto"
+    },
+    "description": {
+      "text": "Successfully pass Final Selection and become an official member of the Demon Slayer Corps"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "mizunoto_0": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "kimetsunoyaibamultiplayer:completed_final_selectioni"
+}

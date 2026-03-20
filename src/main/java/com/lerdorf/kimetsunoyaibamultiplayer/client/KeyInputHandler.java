@@ -2,6 +2,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.client.Minecraft;
@@ -220,6 +222,15 @@ public class KeyInputHandler {
                 return;
             }
 
+            if (mainHandItem.getItem() instanceof BloodDemonArtItem
+                    || mainHandItem.getItem() instanceof BloodDemonArtAxeItem) {
+                boolean shouldReverse = dedicatedReverseKey || (baseCycleKey && mc.options.keyShift.isDown());
+                net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART.consumeClick();
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
+                    new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBloodDemonArtFormPacket(shouldReverse ? -1 : 1));
+                return;
+            }
+
             // Handle base mod swords with dedicated reverse key
             if (dedicatedReverseKey) {
                 // Check if holding a nichirin sword
@@ -372,6 +383,15 @@ public class KeyInputHandler {
                 com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
                     new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBreathingFormPacket(shouldReverse ? -1 : 1)
                 );
+                return;
+            }
+
+            if (mainHandItem.getItem() instanceof BloodDemonArtItem
+                    || mainHandItem.getItem() instanceof BloodDemonArtAxeItem) {
+                boolean shouldReverse = dedicatedReverseButton || (baseCycleButton && mc.options.keyShift.isDown());
+                net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART.consumeClick();
+                com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
+                    new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBloodDemonArtFormPacket(shouldReverse ? -1 : 1));
                 return;
             }
 
