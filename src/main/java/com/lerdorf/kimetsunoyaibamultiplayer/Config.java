@@ -166,12 +166,12 @@ public class Config
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event)
     {
-    	if (Config.logDebug)
-        System.out.println("COMMON CONFIG LOADING...");
+        Log.debug("COMMON CONFIG LOADING...");
         logDebug = LOG_DEBUG.get();
         logWarning = LOG_WARNING.get();
         logInfo = LOG_INFO.get();
         logError = LOG_ERROR.get();
+        Log.startupProbe("Config.onLoad");
         onScreenDebug = ON_SCREEN_DEBUG.get();
         showBreathesValue = SHOW_BREATHES_VALUE.get();
         showBreathingDisplay = SHOW_BREATHING_DISPLAY.get();
@@ -184,7 +184,7 @@ public class Config
         playersAnnounceBreathingForms = PLAYERS_ANNOUNCE_BREATHING_FORMS.get();
         entitiesAnnounceBreathingForms = ENTITIES_ANNOUNCE_BREATHING_FORMS.get();
         breathingFormAnnouncementRadius = BREATHING_FORM_ANNOUNCEMENT_RADIUS.get();
-        System.out.println("[KnY-MP] Config loaded - disableBaseModSwordSwingParticles: " + disableBaseModSwordSwingParticles);
+        Log.info("[KnY-MP] Config loaded - disableBaseModSwordSwingParticles: {}", disableBaseModSwordSwingParticles);
         mobSlashBroadcastRange = MOB_SLASH_BROADCAST_RANGE.get();
         kanrojiEntityHandOffsetX = KANROJI_ENTITY_HAND_OFFSET_X.get();
         kanrojiEntityHandOffsetY = KANROJI_ENTITY_HAND_OFFSET_Y.get();
@@ -206,14 +206,10 @@ public class Config
         counterSwingTranslateZ2 = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingTranslateZ2.get();
         translateScale = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.translateScale.get();
         
-        if (Config.logDebug)
-        System.out.println("Common config loaded: logDebug=" + logDebug + ", onScreenDebug=" + onScreenDebug +
-                ", showBreathingDisplay=" + showBreathingDisplay + ", breathingDisplayPosition=" + breathingDisplayPosition +
-                ", breathingDisplayScale=" + breathingDisplayScale + ", suppressFormCycleChat=" + suppressFormCycleChat +
-                ", enableSwordClashing=" + enableSwordClashing + ", enableNichirinSprintAnimation=" + enableNichirinSprintAnimation +
-                ", playersAnnounceBreathingForms=" + playersAnnounceBreathingForms +
-                ", entitiesAnnounceBreathingForms=" + entitiesAnnounceBreathingForms +
-                ", breathingFormAnnouncementRadius=" + breathingFormAnnouncementRadius +
-                ", mobSlashBroadcastRange=" + mobSlashBroadcastRange);
+        Log.debug("Common config loaded: logDebug={}, onScreenDebug={}, showBreathingDisplay={}, breathingDisplayPosition={}, breathingDisplayScale={}, suppressFormCycleChat={}, enableSwordClashing={}, enableNichirinSprintAnimation={}, playersAnnounceBreathingForms={}, entitiesAnnounceBreathingForms={}, breathingFormAnnouncementRadius={}, mobSlashBroadcastRange={}",
+            logDebug, onScreenDebug, showBreathingDisplay, breathingDisplayPosition, breathingDisplayScale,
+            suppressFormCycleChat, enableSwordClashing, enableNichirinSprintAnimation,
+            playersAnnounceBreathingForms, entitiesAnnounceBreathingForms,
+            breathingFormAnnouncementRadius, mobSlashBroadcastRange);
     }
 }

@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -157,6 +158,7 @@ public class PlayerBreathingData {
      * Includes migration logic to convert old variation indices to encoded breathes values.
      */
     public static void loadFromNBT(Player player) {
+        Log.startupProbeOnce("PlayerBreathingData.loadFromNBT.start");
         CompoundTag persistentData = player.getPersistentData();
         PlayerData data = getOrCreate(player.getUUID());
 
@@ -217,6 +219,7 @@ public class PlayerBreathingData {
             // Remove old NBT key
             persistentData.remove(NBT_KEY_BASE_MOD_VARIATION_OLD);
         }
+        Log.startupProbeOnce("PlayerBreathingData.loadFromNBT.end");
     }
 
     public static void clear(UUID playerId) {

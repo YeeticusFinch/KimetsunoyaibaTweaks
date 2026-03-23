@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.structures;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.MaxEntityTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.StructureLocationCache;
@@ -38,6 +39,7 @@ public class StructureResidentSpawner {
 
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+        long startNanos = System.nanoTime();
         if (!EnhancedSpawnConfig.enhancedSpawningRules) {
             return;
         }
@@ -47,6 +49,7 @@ public class StructureResidentSpawner {
         if (!(accessor instanceof ServerLevel level) || !(e instanceof Mob)) {
             return;
         }
+        Log.startupProbeOnce("StructureResidentSpawner.onEntityJoinLevel");
 
         BlockPos pos = e.blockPosition();
 
@@ -60,6 +63,16 @@ public class StructureResidentSpawner {
         if ("temple_doma".equals(structurePath)) {
             ensureDomaPresent(level, cached.structureId, cached.center);
         }
+        Log.debugVisibleIfSlow(
+            "structure-resident-join",
+            startNanos,
+            25L,
+            "StructureResidentSpawner.onEntityJoinLevel entity={} pos={}, {}, {}",
+            EntityType.getKey(e.getType()),
+            pos.getX(),
+            pos.getY(),
+            pos.getZ()
+        );
     }
 
     private static void ensureDomaPresent(ServerLevel level, ResourceLocation structureId, BlockPos center) {
@@ -113,4 +126,3 @@ public class StructureResidentSpawner {
         return origin;
     }
 }
-

@@ -19,6 +19,8 @@ public class BlockRenderTypeHandler {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.CHEST_OF_DRAWERS.get(), RenderType.cutout());
+
             // Set all wisteria petals variants to use cutout rendering (for transparency)
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.WISTERIA_PETALS_PINK.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.WISTERIA_PETALS_CYAN.get(), RenderType.cutout());

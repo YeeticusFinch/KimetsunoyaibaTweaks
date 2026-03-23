@@ -46,13 +46,13 @@ public class BreathingInfoDetector {
                     .getDisplayTextForForm(player.getUUID(), formIdForCache);
 
                 if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] No sword-specific cache, using form-specific cache. " +
-                                                                     "currentBreathes: " + currentBreathes +
-                                                                     ", formIdForCache: " + formIdForCache +
-                                                                     ", cachedText: " + cachedText);
+                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debugEvery("breathing-cache-miss:" + player.getUUID(), 2000,
+                        "[BreathingInfoDetector] No sword-specific cache, using form-specific cache. currentBreathes: {}, formIdForCache: {}, cachedText: {}",
+                        currentBreathes, formIdForCache, cachedText);
                 }
             } else if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] Using sword-specific cached text: " + cachedText);
+                com.lerdorf.kimetsunoyaibamultiplayer.Log.debugEvery("breathing-cache-hit:" + player.getUUID(), 2000,
+                    "[BreathingInfoDetector] Using sword-specific cached text: {}", cachedText);
             }
 
             if (cachedText != null) {
@@ -68,9 +68,9 @@ public class BreathingInfoDetector {
                     : player.getPersistentData().getDouble("breathes");
 
                 if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] cachedBreathes: " + cachedBreathes +
-                                                                     ", player NBT breathes: " + player.getPersistentData().getDouble("breathes") +
-                                                                     ", using breathesValue: " + breathesValue);
+                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debugEvery("breathing-cache-values:" + player.getUUID(), 2000,
+                        "[BreathingInfoDetector] cachedBreathes: {}, player NBT breathes: {}, using breathesValue: {}",
+                        cachedBreathes, player.getPersistentData().getDouble("breathes"), breathesValue);
                 }
 
                 int formIdFromBreathes = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(breathesValue);
@@ -342,7 +342,8 @@ public class BreathingInfoDetector {
         double playerBreathes = player.getPersistentData().getDouble("breathes");
 
         if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] getBreathingInfoFromNBT - playerBreathes from NBT: " + playerBreathes);
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debugEvery("breathing-nbt:" + player.getUUID(), 2000,
+                "[BreathingInfoDetector] getBreathingInfoFromNBT - playerBreathes from NBT: {}", playerBreathes);
         }
 
         // Check if sword modifies the breathing style (multi-style swords)
@@ -353,7 +354,8 @@ public class BreathingInfoDetector {
             if (tag != null && tag.contains("select")) {
                 selectOffset = tag.getDouble("select");
                 if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] Sword has selectOffset: " + selectOffset);
+                    com.lerdorf.kimetsunoyaibamultiplayer.Log.debugEvery("breathing-select:" + player.getUUID(), 2000,
+                        "[BreathingInfoDetector] Sword has selectOffset: {}", selectOffset);
                 }
             }
         }
@@ -377,10 +379,9 @@ public class BreathingInfoDetector {
         int formId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(playerBreathes);
 
         if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[BreathingInfoDetector] actualBreathes: " + actualBreathes +
-                                                             ", formId: " + formId +
-                                                             ", breathingStyle: " + breathingStyle +
-                                                             ", formNumber: " + formNumber);
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debugEvery("breathing-derived:" + player.getUUID(), 2000,
+                "[BreathingInfoDetector] actualBreathes: {}, formId: {}, breathingStyle: {}, formNumber: {}",
+                actualBreathes, formId, breathingStyle, formNumber);
         }
 
         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData pdata =

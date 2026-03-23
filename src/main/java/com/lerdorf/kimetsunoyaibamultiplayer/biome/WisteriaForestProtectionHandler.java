@@ -123,6 +123,7 @@ public class WisteriaForestProtectionHandler {
      */
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+        long startNanos = System.nanoTime();
         // Check if enhanced spawning rules are enabled
         if (!EnhancedSpawnConfig.enhancedSpawningRules) {
             return;
@@ -136,6 +137,7 @@ public class WisteriaForestProtectionHandler {
         if (!(event.getEntity() instanceof Mob mob)) {
             return;
         }
+        Log.startupProbeOnce("WisteriaForestProtectionHandler.onEntityJoinLevel");
 
         // Check if this is a twelve kizuki demon
         if (!EntityTagHelper.isTwelveKizuki(mob)) {
@@ -152,6 +154,16 @@ public class WisteriaForestProtectionHandler {
                     EntityTagHelper.getEntityTypeId(mob));
             }
         }
+        Log.debugVisibleIfSlow(
+            "wisteria-protection-join",
+            startNanos,
+            25L,
+            "WisteriaForestProtectionHandler.onEntityJoinLevel entity={} pos={}, {}, {}",
+            EntityTagHelper.getEntityTypeId(mob),
+            mob.getBlockX(),
+            mob.getBlockY(),
+            mob.getBlockZ()
+        );
     }
 
     /**

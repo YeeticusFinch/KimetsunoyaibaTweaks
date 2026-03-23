@@ -11,6 +11,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerColorChangeStyleHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SunBreathingLevelHelper;
 import net.minecraft.ChatFormatting;
@@ -418,11 +419,11 @@ public class NichirinSwordBlack extends BreathingSwordItem {
                 if (!level.isClientSide) {
                     variation.getEffect().execute(player, level, form.getFormId());
                     BreathingFormAnnouncementHelper.announceCustomForm(
-                        player, technique.getName(), technique.getTechniqueColor(), displayName);
+                        player, variation.getDisplayName(), technique.getTechniqueColor());
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
                     player.getCooldowns().addCooldown(this, cooldownTicks);
                 }
-                player.displayClientMessage(Component.literal("§b" + displayName), true);
+                player.displayClientMessage(variation.getDisplayName().copy().withStyle(style -> style.withColor(0x55FFFF)), true);
                 return InteractionResultHolder.success(stack);
             } else {
                 if (level.isClientSide) {
@@ -445,11 +446,11 @@ public class NichirinSwordBlack extends BreathingSwordItem {
                 if (!level.isClientSide) {
                     form.execute(player, level);
                     BreathingFormAnnouncementHelper.announceCustomForm(
-                        player, technique.getName(), technique.getTechniqueColor(), displayName);
+                        player, form.getDisplayName(), technique.getTechniqueColor());
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
                     player.getCooldowns().addCooldown(this, cooldownTicks);
                 }
-                player.displayClientMessage(Component.literal("§b" + displayName), true);
+                player.displayClientMessage(form.getDisplayName().copy().withStyle(style -> style.withColor(0x55FFFF)), true);
                 return InteractionResultHolder.success(stack);
             } else {
                 if (level.isClientSide) {
@@ -518,10 +519,11 @@ public class NichirinSwordBlack extends BreathingSwordItem {
 
         if (form != null) {
             if (!player.level().isClientSide && !com.lerdorf.kimetsunoyaibamultiplayer.Config.suppressFormCycleChat) {
-                String techniqueColor = technique.getTechniqueColor();
-                String formColor = technique.getFormColor();
-                String message = "§l" + techniqueColor + technique.getName() + " §r§l" + formColor + form.getName();
-                player.sendSystemMessage(Component.literal(message));
+                player.sendSystemMessage(
+                    LocalizationHelper.breathingStyleFromFormId(form.getFormId(), technique.getName()).copy()
+                        .append(Component.literal(" "))
+                        .append(form.getDisplayName())
+                );
             }
         }
     }

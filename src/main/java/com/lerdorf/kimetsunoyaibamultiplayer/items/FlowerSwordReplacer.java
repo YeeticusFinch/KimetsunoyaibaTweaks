@@ -38,6 +38,7 @@ public class FlowerSwordReplacer {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        Log.startupProbeOnce("FlowerSwordReplacer.onPlayerTick");
 
         Player player = event.player;
         if (player.level().isClientSide) {

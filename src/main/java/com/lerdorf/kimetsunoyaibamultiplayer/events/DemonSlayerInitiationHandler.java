@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.advancements.Advancement;
@@ -141,8 +142,8 @@ public class DemonSlayerInitiationHandler {
                 revokeAdvancement(serverPlayer, eventAdvancement);
 
                 if (CustomProgressionConfig.enableDebugLogging.get()) {
-                    System.out.println("[KnY-MP Progression] Revoked gated advancement '" + advancementId +
-                        "' from " + player.getName().getString() + " (missing completed_final_selectioni)");
+                    Log.debug("[KnY-MP Progression] Revoked gated advancement '{}' from {} (missing completed_final_selectioni)",
+                        advancementId, player.getName().getString());
                 }
                 return;
             }
@@ -155,8 +156,8 @@ public class DemonSlayerInitiationHandler {
                 awardCustomAdvancement(serverPlayer, CUSTOM_DEMON_SLAYER_CORPS);
 
                 if (CustomProgressionConfig.enableDebugLogging.get()) {
-                    System.out.println("[KnY-MP Progression] Player " + player.getName().getString() +
-                        " earned demon_slayer_corps - scheduling item removal and crow blocking for " + BLOCKING_DURATION_TICKS + " ticks");
+                    Log.debug("[KnY-MP Progression] Player {} earned demon_slayer_corps - scheduling item removal and crow blocking for {} ticks",
+                        player.getName().getString(), BLOCKING_DURATION_TICKS);
                 }
             }
 
@@ -179,6 +180,7 @@ public class DemonSlayerInitiationHandler {
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
+        long startNanos = System.nanoTime();
         try {
             if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
                 return;
@@ -188,6 +190,7 @@ public class DemonSlayerInitiationHandler {
             if (entity.level().isClientSide()) {
                 return;
             }
+            Log.startupProbeOnce("DemonSlayerInitiationHandler.onEntityJoinWorld");
 
             // Check if this is a kasugai_crow
             ResourceLocation entityType = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
@@ -205,8 +208,8 @@ public class DemonSlayerInitiationHandler {
                         event.setCanceled(true);
 
                         if (CustomProgressionConfig.enableDebugLogging.get()) {
-                            System.out.println("[KnY-MP Progression] Prevented kasugai_crow spawn near " +
-                                player.getName().getString() + " (distance: " + Math.sqrt(entity.distanceToSqr(player)) + " blocks)");
+                            Log.debug("[KnY-MP Progression] Prevented kasugai_crow spawn near {} (distance: {} blocks)",
+                                player.getName().getString(), Math.sqrt(entity.distanceToSqr(player)));
                         }
                         return;
                     }
@@ -216,6 +219,20 @@ public class DemonSlayerInitiationHandler {
             // CRITICAL: Never use log4j in exception handlers - causes LinkageError crashes
             System.err.println("[KnY-MP Progression] Error in onEntityJoinWorld: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            Entity entity = event.getEntity();
+            if (entity != null) {
+                Log.debugVisibleIfSlow(
+                    "demon-slayer-initiation-join",
+                    startNanos,
+                    25L,
+                    "DemonSlayerInitiationHandler.onEntityJoinWorld entity={} pos={}, {}, {}",
+                    ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()),
+                    entity.getBlockX(),
+                    entity.getBlockY(),
+                    entity.getBlockZ()
+                );
+            }
         }
     }
 
@@ -267,8 +284,8 @@ public class DemonSlayerInitiationHandler {
                     removeRecentlyTamedCrows(player);
 
                     if (CustomProgressionConfig.enableDebugLogging.get() && itemsRemoved > 0) {
-                        System.out.println("[KnY-MP Progression] Tick " + ticksSinceGrant + "/" + BLOCKING_DURATION_TICKS +
-                            ": Removed " + itemsRemoved + " initiation items from " + player.getName().getString());
+                        Log.debug("[KnY-MP Progression] Tick {}/{}: Removed {} initiation items from {}",
+                            ticksSinceGrant, BLOCKING_DURATION_TICKS, itemsRemoved, player.getName().getString());
                     }
                 }
 
@@ -282,8 +299,8 @@ public class DemonSlayerInitiationHandler {
                     }
 
                     if (CustomProgressionConfig.enableDebugLogging.get()) {
-                        System.out.println("[KnY-MP Progression] Finished blocking initiation for " +
-                            (player != null ? player.getName().getString() : playerUuid));
+                        Log.debug("[KnY-MP Progression] Finished blocking initiation for {}",
+                            player != null ? player.getName().getString() : playerUuid);
                     }
                 }
             }
@@ -301,8 +318,8 @@ public class DemonSlayerInitiationHandler {
                 if (player != null && (ticksSinceGrant == 10 || ticksSinceGrant == 20 || ticksSinceGrant == 30)) {
                     removeRecentlyTamedCrows(player);
                     if (CustomProgressionConfig.enableDebugLogging.get()) {
-                        System.out.println("[KnY-MP Progression] Crow removal attempt at tick " + ticksSinceGrant +
-                            " for " + player.getName().getString());
+                        Log.debug("[KnY-MP Progression] Crow removal attempt at tick {} for {}",
+                            ticksSinceGrant, player.getName().getString());
                     }
                 }
 
@@ -369,7 +386,7 @@ public class DemonSlayerInitiationHandler {
     private static void grantTrainingSword(ServerPlayer player) {
         try {
             if (CustomProgressionConfig.enableDebugLogging.get()) {
-                System.out.println("[KnY-MP Progression] Attempting to grant training sword to " + player.getName().getString());
+                Log.debug("[KnY-MP Progression] Attempting to grant training sword to {}", player.getName().getString());
             }
 
             // Get the nichirinsword item from the base mod
@@ -380,15 +397,15 @@ public class DemonSlayerInitiationHandler {
             }
 
             if (CustomProgressionConfig.enableDebugLogging.get()) {
-                System.out.println("[KnY-MP Progression] Found nichirinsword item: " + ForgeRegistries.ITEMS.getKey(nichirinsword));
+                Log.debug("[KnY-MP Progression] Found nichirinsword item: {}", ForgeRegistries.ITEMS.getKey(nichirinsword));
             }
 
             // Create a new nichirinsword and convert it to a training sword
             ItemStack trainingSword = new ItemStack(nichirinsword);
 
             if (CustomProgressionConfig.enableDebugLogging.get()) {
-                System.out.println("[KnY-MP Progression] Created ItemStack, checking if it's a valid sword...");
-                System.out.println("[KnY-MP Progression] isNichirinOrBreathingSword: " + TrainingSwordHelper.isNichirinOrBreathingSword(trainingSword));
+                Log.debug("[KnY-MP Progression] Created ItemStack, checking if it's a valid sword...");
+                Log.debug("[KnY-MP Progression] isNichirinOrBreathingSword: {}", TrainingSwordHelper.isNichirinOrBreathingSword(trainingSword));
             }
 
             boolean success = TrainingSwordHelper.makeTrainingSword(trainingSword, player);
@@ -400,7 +417,7 @@ public class DemonSlayerInitiationHandler {
                     player.drop(trainingSword, false);
                 }
 
-                System.out.println("[KnY-MP Progression] Granted training sword to " + player.getName().getString());
+                Log.info("[KnY-MP Progression] Granted training sword to {}", player.getName().getString());
 
                 // Also grant Ubuyashiki's Invitation to guide them to the Toril Gate
                 try {
@@ -408,7 +425,7 @@ public class DemonSlayerInitiationHandler {
                     if (!player.getInventory().add(invitation)) {
                         player.drop(invitation, false);
                     }
-                    System.out.println("[KnY-MP Progression] Granted Ubuyashiki's Invitation to " + player.getName().getString());
+                    Log.info("[KnY-MP Progression] Granted Ubuyashiki's Invitation to {}", player.getName().getString());
                 } catch (Exception ex) {
                     System.err.println("[KnY-MP Progression] Failed to grant Ubuyashiki's Invitation: " + ex.getMessage());
                 }
@@ -437,7 +454,7 @@ public class DemonSlayerInitiationHandler {
                 disabledCount++;
 
                 if (CustomProgressionConfig.enableDebugLogging.get()) {
-                    System.out.println("[KnY-MP Progression] Disabled base advancement handler: " + className);
+                    Log.debug("[KnY-MP Progression] Disabled base advancement handler: {}", className);
                 }
             } catch (ClassNotFoundException ignored) {
                 // Different base-mod version; ignore missing classes.
@@ -450,7 +467,7 @@ public class DemonSlayerInitiationHandler {
         baseAdvancementHandlersDisabled = true;
 
         if (CustomProgressionConfig.enableDebugLogging.get()) {
-            System.out.println("[KnY-MP Progression] Base advancement handlers disabled: " + disabledCount);
+            Log.debug("[KnY-MP Progression] Base advancement handlers disabled: {}", disabledCount);
         }
     }
 
@@ -477,8 +494,8 @@ public class DemonSlayerInitiationHandler {
         }
 
         if (CustomProgressionConfig.enableDebugLogging.get()) {
-            System.out.println("[KnY-MP Progression] Awarded demon_slayer_corps to " +
-                player.getName().getString() + " after kizuki progression advancement");
+            Log.debug("[KnY-MP Progression] Awarded demon_slayer_corps to {} after kizuki progression advancement",
+                player.getName().getString());
         }
     }
 
@@ -500,8 +517,8 @@ public class DemonSlayerInitiationHandler {
         ensureDemonSlayerCorpsAdvancement(player);
 
         if (CustomProgressionConfig.enableDebugLogging.get()) {
-            System.out.println("[KnY-MP Progression] Triggered custom initiation for " +
-                player.getName().getString() + " (" + reason + ")");
+            Log.debug("[KnY-MP Progression] Triggered custom initiation for {} ({})",
+                player.getName().getString(), reason);
         }
     }
 
@@ -604,8 +621,8 @@ public class DemonSlayerInitiationHandler {
                             entity.discard();
 
                             if (CustomProgressionConfig.enableDebugLogging.get()) {
-                                System.out.println("[KnY-MP Progression] Removed kasugai_crow (" + reason + ") from " +
-                                    player.getName().getString() + " at distance " + Math.sqrt(distanceSq));
+                                Log.debug("[KnY-MP Progression] Removed kasugai_crow ({}) from {} at distance {}",
+                                    reason, player.getName().getString(), Math.sqrt(distanceSq));
                             }
                         }
                     }

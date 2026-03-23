@@ -161,7 +161,8 @@ public class EntityCombatStateTracker {
 
         // State changed?
         if (previousState == null || previousState != inCombat) {
-            Log.debug("EntityCombatStateTracker: {} combat state changed: {} -> {}",
+            Log.debugEvery("combat-state:" + entity.getStringUUID(), 500,
+                "EntityCombatStateTracker: {} combat state changed: {} -> {}",
                 entity.getType().getDescriptionId(), previousState, inCombat);
             onCombatStateChanged(entity, inCombat);
             combatStates.put(entity, inCombat);
@@ -229,7 +230,8 @@ public class EntityCombatStateTracker {
             // SHEATH ANIMATION: Trigger when entity exits combat (reverse draw)
             DrawSheathAnimationHelper.playSheathAnimation(entity, position, isLeft);
             sheathingUntilTick.put(entity, entity.tickCount + ENTITY_SHEATH_ANIMATION_TICKS);
-            Log.debug("[EntityCombatStateTracker] Sheathing transition started for {}: tickNow={}, untilTick={}",
+            Log.debugEvery("sheath-start:" + entity.getStringUUID(), 500,
+                "[EntityCombatStateTracker] Sheathing transition started for {}: tickNow={}, untilTick={}",
                 entity.getType().getDescriptionId(), entity.tickCount, entity.tickCount + ENTITY_SHEATH_ANIMATION_TICKS);
         }
     }
@@ -246,7 +248,8 @@ public class EntityCombatStateTracker {
         }
         if (entity.tickCount >= until) {
             sheathingUntilTick.remove(entity);
-            Log.debug("[EntityCombatStateTracker] Sheathing transition finished for {} at tick {}",
+            Log.debugEvery("sheath-finish:" + entity.getStringUUID(), 500,
+                "[EntityCombatStateTracker] Sheathing transition finished for {} at tick {}",
                 entity.getType().getDescriptionId(), entity.tickCount);
             return false;
         }

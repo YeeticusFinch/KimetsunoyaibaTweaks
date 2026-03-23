@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "kimetsunoyaibamultiplayer:block/fusuma_bars"
+    },
+    "facing=east": {
+      "model": "kimetsunoyaibamultiplayer:block/fusuma_bars",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "kimetsunoyaibamultiplayer:block/fusuma_bars",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "kimetsunoyaibamultiplayer:block/fusuma_bars",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "kimetsunoyaibamultiplayer:block/fusuma_bars",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "kimetsunoyaibamultiplayer:block/fusuma_bars",
+      "x": 90
+    }
+  }
+}

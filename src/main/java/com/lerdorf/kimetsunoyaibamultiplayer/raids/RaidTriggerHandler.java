@@ -33,6 +33,7 @@ public class RaidTriggerHandler {
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        Log.startupProbeOnce("RaidTriggerHandler.onPlayerTick");
         Player player = event.player;
         if (!(player.level() instanceof ServerLevel level)) return;
 
@@ -51,6 +52,17 @@ public class RaidTriggerHandler {
 
         if (!hasMuzan && !hasUbuyashiki) return;
 
+        Log.debugVisibleEvery(
+            "raid-trigger-check:" + player.getUUID(),
+            5000L,
+            "Raid trigger check for {} at {} in {} (muzan={}, ubuyashiki={})",
+            player.getName().getString(),
+            player.blockPosition(),
+            level.dimension().location(),
+            hasMuzan,
+            hasUbuyashiki
+        );
+
         // Check if player is already near an active raid - don't trigger new raids
         if (RaidRegistry.hasRaidNearby(level, player.blockPosition(), RAID_PROXIMITY_CHECK_RADIUS)
             || SurvivalRaidRegistry.hasRaidNearby(level, player.blockPosition(), RAID_PROXIMITY_CHECK_RADIUS)) {
@@ -59,7 +71,19 @@ public class RaidTriggerHandler {
         }
 
         // Check structure at player location
+        long structureLookupStart = System.currentTimeMillis();
         Optional<StructureLocationCache.CachedStructure> cached = StructureLocationCache.getStructureAt(level, player.blockPosition());
+        long structureLookupElapsed = System.currentTimeMillis() - structureLookupStart;
+        if (structureLookupElapsed >= 50L) {
+            Log.debugVisibleEvery(
+                "raid-structure-lookup:" + player.getUUID(),
+                5000L,
+                "Raid structure lookup took {} ms for {} at {}",
+                structureLookupElapsed,
+                player.getName().getString(),
+                player.blockPosition()
+            );
+        }
         if (cached.isEmpty()) return;
 
         StructureLocationCache.CachedStructure s = cached.get();

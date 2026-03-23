@@ -22,6 +22,7 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -85,6 +86,7 @@ public final class SwordsmithVillageEscortHandler {
         if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()) {
             return;
         }
+        Log.startupProbeOnce("SwordsmithVillageEscortHandler.onPlayerTick");
         if (!(event.player instanceof ServerPlayer player)) {
             return;
         }
@@ -254,7 +256,8 @@ public final class SwordsmithVillageEscortHandler {
             return;
         }
 
-        player.teleportTo(village, VILLAGE_ENTRY_X, VILLAGE_ENTRY_Y, VILLAGE_ENTRY_Z, VILLAGE_ENTRY_YAW, VILLAGE_ENTRY_PITCH);
+        BlockPos anchor = getVillageEntryAnchor(village);
+        player.teleportTo(village, anchor.getX() + 0.5D, anchor.getY(), anchor.getZ() + 0.5D, VILLAGE_ENTRY_YAW, VILLAGE_ENTRY_PITCH);
         ensureVillageEntryKakushi(village);
         sendKakushiMessage(player, "You can remove your blindfold.");
     }
@@ -303,7 +306,7 @@ public final class SwordsmithVillageEscortHandler {
     private static void ensureVillageEntryKakushi(ServerLevel level) {
         Mob taggedKakushi = findTaggedEntryKakushi(level);
         if (taggedKakushi != null) {
-            maintainEntryKakushiHome(taggedKakushi);
+            maintainEntryKakushiHome(taggedKakushi, getVillageEntryAnchor(level));
             return;
         }
         if (!level.isLoaded(VILLAGE_ENTRY_KAKUSHI_POS) || !hasNearbyVillageEntryPlayer(level)) {
@@ -325,7 +328,7 @@ public final class SwordsmithVillageEscortHandler {
                 .orElse(null);
             if (adoptedKakushi != null) {
                 configureEntryKakushi(adoptedKakushi);
-                maintainEntryKakushiHome(adoptedKakushi);
+                maintainEntryKakushiHome(adoptedKakushi, getVillageEntryAnchor(level));
             }
             return;
         }
@@ -340,7 +343,8 @@ public final class SwordsmithVillageEscortHandler {
             return;
         }
 
-        kakushi.moveTo(VILLAGE_ENTRY_X + 0.5D, VILLAGE_ENTRY_Y, VILLAGE_ENTRY_Z + 0.5D, 180.0F, 0.0F);
+        BlockPos anchor = getVillageEntryAnchor(level);
+        kakushi.moveTo(anchor.getX() + 0.5D, anchor.getY(), anchor.getZ() + 0.5D, 180.0F, 0.0F);
         configureEntryKakushi(kakushi);
         kakushi.finalizeSpawn(level, level.getCurrentDifficultyAt(VILLAGE_ENTRY_KAKUSHI_POS), MobSpawnType.MOB_SUMMONED, null, null);
         level.addFreshEntity(kakushi);
@@ -354,7 +358,7 @@ public final class SwordsmithVillageEscortHandler {
         if (kakushi == null) {
             return;
         }
-        maintainEntryKakushiHome(kakushi);
+        maintainEntryKakushiHome(kakushi, getVillageEntryAnchor(level));
     }
 
     private static boolean hasNearbyVillageEntryPlayer(ServerLevel level) {
@@ -394,10 +398,10 @@ public final class SwordsmithVillageEscortHandler {
         kakushi.getPersistentData().putBoolean(ENTRY_KAKUSHI_TAG, true);
     }
 
-    private static void maintainEntryKakushiHome(Mob kakushi) {
-        double homeX = VILLAGE_ENTRY_X + 0.5D;
-        double homeY = VILLAGE_ENTRY_Y;
-        double homeZ = VILLAGE_ENTRY_Z + 0.5D;
+    private static void maintainEntryKakushiHome(Mob kakushi, BlockPos home) {
+        double homeX = home.getX() + 0.5D;
+        double homeY = home.getY();
+        double homeZ = home.getZ() + 0.5D;
 
         if (kakushi.distanceToSqr(homeX, homeY, homeZ) > ENTRY_KAKUSHI_MAX_DRIFT * ENTRY_KAKUSHI_MAX_DRIFT) {
             kakushi.getNavigation().moveTo(homeX, homeY, homeZ, ENTRY_KAKUSHI_HOME_SPEED);
@@ -409,6 +413,43 @@ public final class SwordsmithVillageEscortHandler {
         kakushi.setYRot(VILLAGE_ENTRY_YAW);
         kakushi.setYHeadRot(VILLAGE_ENTRY_YAW);
         kakushi.setXRot(VILLAGE_ENTRY_PITCH);
+    }
+
+    private static BlockPos getVillageEntryAnchor(ServerLevel level) {
+        BlockPos preferred = VILLAGE_ENTRY_KAKUSHI_POS;
+        if (isSafeVillageEntryAnchor(level, preferred)) {
+            return preferred;
+        }
+
+        for (int radius = 1; radius <= 6; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    BlockPos candidate = preferred.offset(dx, 0, dz);
+                    if (isSafeVillageEntryAnchor(level, candidate)) {
+                        Log.warn("[Swordsmith Village Escort] Relocating entry anchor from {},{},{} to {},{},{}",
+                            preferred.getX(), preferred.getY(), preferred.getZ(),
+                            candidate.getX(), candidate.getY(), candidate.getZ());
+                        return candidate;
+                    }
+                }
+            }
+        }
+
+        return preferred;
+    }
+
+    private static boolean isSafeVillageEntryAnchor(ServerLevel level, BlockPos pos) {
+        if (!level.isLoaded(pos)) {
+            return false;
+        }
+
+        BlockState feet = level.getBlockState(pos);
+        BlockState head = level.getBlockState(pos.above());
+        BlockState below = level.getBlockState(pos.below());
+
+        return below.isSolidRender(level, pos.below())
+            && feet.getCollisionShape(level, pos).isEmpty()
+            && head.getCollisionShape(level, pos.above()).isEmpty();
     }
 
     private static Mob findLookedAtKakushi(ServerPlayer player, boolean requireEntryKakushi, boolean allowAnyInVillage) {

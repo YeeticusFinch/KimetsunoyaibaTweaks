@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.effects;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,6 +33,7 @@ public class SpatialAwarenessEffectHandler {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        Log.startupProbeOnce("SpatialAwarenessEffectHandler.onPlayerTick");
 
         Player player = event.player;
         if (player == null || !player.isAlive()) {

@@ -17,14 +17,15 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * Detects when a player walks through and triggers the teleport confirmation prompt.
  */
 public class TorilGateMarkerBlock extends Block {
-
     public TorilGateMarkerBlock(Properties properties) {
         super(properties);
     }
 
     @Override
     public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
-        if (!level.isClientSide && entity instanceof ServerPlayer player) {
+        if (!level.isClientSide
+            && entity instanceof ServerPlayer player
+            && level.dimension().equals(Level.OVERWORLD)) {
             TorilGateTeleportHandler.onPlayerEnterGate(player);
         }
     }

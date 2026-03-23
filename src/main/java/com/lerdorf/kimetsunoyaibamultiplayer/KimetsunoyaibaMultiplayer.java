@@ -37,6 +37,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import org.joml.Vector3f;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
@@ -63,6 +64,13 @@ import software.bernie.geckolib.GeckoLib;
 @Mod(KimetsunoyaibaMultiplayer.MODID)
 public class KimetsunoyaibaMultiplayer
 {
+    private static boolean firstServerTickProbeLogged = false;
+    private static boolean firstPlayerTickProbeLogged = false;
+    private static final long SERVER_HANG_WATCHDOG_THRESHOLD_MS = 5000L;
+    private static final AtomicBoolean SERVER_HANG_WATCHDOG_STARTED = new AtomicBoolean(false);
+    private static final AtomicBoolean SERVER_HANG_DUMPED_FOR_CURRENT_STALL = new AtomicBoolean(false);
+    private static volatile Thread observedServerThread;
+    private static volatile long lastServerTickHeartbeatMs = 0L;
     // Define mod id in a common place for everything to reference
     public static final String MODID = "kimetsunoyaibamultiplayer";
 
@@ -72,35 +80,49 @@ public class KimetsunoyaibaMultiplayer
 
     public KimetsunoyaibaMultiplayer(FMLJavaModLoadingContext context)
     {
+        Log.startupProbe("KimetsunoyaibaMultiplayer.<init>.start");
         IEventBus modEventBus = context.getModEventBus();
+        Log.alwaysWarn("[INIT] Acquired mod event bus");
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
+        Log.alwaysWarn("[INIT] Registered commonSetup listener");
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(SpawnRateHandler.class);
+        Log.alwaysWarn("[INIT] Registered Forge event bus listeners");
 
         // Register entities
         ModEntities.register(modEventBus);
+        Log.alwaysWarn("[INIT] Registered entities");
 
         // Register sounds
         ModSounds.register(modEventBus);
+        Log.alwaysWarn("[INIT] Registered sounds");
 
         // Register blocks
         com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.register(modEventBus);
+        Log.alwaysWarn("[INIT] Registered blocks");
+
+        com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.register(modEventBus);
+        Log.alwaysWarn("[INIT] Registered block entities");
 
         // Register items
         ModItems.register(modEventBus);
         com.lerdorf.kimetsunoyaibamultiplayer.items.SheathItems.register(modEventBus);
+        Log.alwaysWarn("[INIT] Registered items");
         
         // Register effects
         ModEffects.register(modEventBus);
+        Log.alwaysWarn("[INIT] Registered effects");
 
         // Register tree decorators
         com.lerdorf.kimetsunoyaibamultiplayer.worldgen.ModTreeDecorators.register(modEventBus);
+        Log.alwaysWarn("[INIT] Registered tree decorators");
 
         // Register particles
         com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.register(modEventBus);
+        Log.alwaysWarn("[INIT] Registered particles");
 
         // Register config event handlers on the mod event bus
         modEventBus.register(Config.class);
@@ -118,6 +140,8 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedChestOfDrawersConfig.class);
+        Log.alwaysWarn("[INIT] Registered config event handlers");
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC, "kimetsunoyaibamultiplayer/common.toml");
@@ -136,12 +160,16 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.SPEC, "kimetsunoyaibamultiplayer/variations.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.SPEC, "kimetsunoyaibamultiplayer/custom_progression.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.DemonSlayerConfig.SPEC, "kimetsunoyaibamultiplayer/demon_slayer.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedChestOfDrawersConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_chest_of_drawers.toml");
+        Log.alwaysWarn("[INIT] Registered config specs");
+        Log.startupProbe("KimetsunoyaibaMultiplayer.<init>.end");
     }
 
     public static final Capability<ISwordWielderData> SWORD_WIELDER_DATA = CapabilityManager.get(new CapabilityToken<>() {});
     
     private void commonSetup(final FMLCommonSetupEvent event)
     {
+        Log.startupProbe("KimetsunoyaibaMultiplayer.commonSetup.start");
         Log.info("Initializing Kimetsunoyaiba Multiplayer animation sync...");
 
         // Register custom game rules
@@ -151,11 +179,13 @@ public class KimetsunoyaibaMultiplayer
         // Register network messages
         ModNetworking.register();
         Log.info("Network messages registered");
+        Log.alwaysWarn("[INIT] commonSetup registered game rules and networking");
         
         // GeckoLib initialization moved to client setup to avoid early shader reload issues
 
         // Register our built-in swords in the SwordRegistry (must be done after items are registered)
         event.enqueueWork(() -> {
+            Log.startupProbe("KimetsunoyaibaMultiplayer.commonSetup.enqueueWork.start");
             // Register base mod style metadata and sword metadata for color change system
             com.lerdorf.kimetsunoyaibamultiplayer.api.BaseModRegistration.registerAll();
 
@@ -330,7 +360,9 @@ public class KimetsunoyaibaMultiplayer
             );
 
             Log.info("Registered built-in swords in SwordRegistry");
+            Log.startupProbe("KimetsunoyaibaMultiplayer.commonSetup.enqueueWork.end");
         });
+        Log.startupProbe("KimetsunoyaibaMultiplayer.commonSetup.end");
     }
     
  // 4. Attach it to entities
@@ -352,6 +384,7 @@ public class KimetsunoyaibaMultiplayer
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event)
     {
+        Log.startupProbe("KimetsunoyaibaMultiplayer.onServerStarting");
         Log.info("Kimetsunoyaiba Multiplayer server starting");
     }
 
@@ -363,9 +396,11 @@ public class KimetsunoyaibaMultiplayer
     public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event)
     {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            Log.startupProbeOnce("KimetsunoyaibaMultiplayer.onPlayerLogin.start");
             // Get player's current breathing data
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
                 com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(serverPlayer);
+            Log.startupProbeOnce("KimetsunoyaibaMultiplayer.onPlayerLogin.afterGetOrCreate");
 
             // Sync base mod breathes value to client (includes encoded variation)
             double breathes = serverPlayer.getPersistentData().getDouble("breathes");
@@ -381,6 +416,7 @@ public class KimetsunoyaibaMultiplayer
                     ),
                     serverPlayer
                 );
+                Log.startupProbeOnce("KimetsunoyaibaMultiplayer.onPlayerLogin.afterBreathesSync");
             }
             // Sync variation index separately
             ModNetworking.sendToPlayer(
@@ -390,6 +426,7 @@ public class KimetsunoyaibaMultiplayer
                 ),
                 serverPlayer
             );
+            Log.startupProbeOnce("KimetsunoyaibaMultiplayer.onPlayerLogin.afterVariationSync");
 
             if (Config.logDebug) {
                 // Decode form index to show base form and variation
@@ -400,6 +437,7 @@ public class KimetsunoyaibaMultiplayer
                 Log.debug("Synced breathing data to joining player: " + serverPlayer.getName().getString() +
                          " (form: " + baseFormIndex + ", variation: " + variationIndex + ", breathes: " + breathes + ")");
             }
+            Log.startupProbeOnce("KimetsunoyaibaMultiplayer.onPlayerLogin.end");
         }
     }
 
@@ -430,12 +468,26 @@ public class KimetsunoyaibaMultiplayer
                                  event.getState().getValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS))
                 );
             }
+            else if (block == com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_OAK_WALL.get()) {
+                net.minecraft.world.level.block.state.BlockState state = event.getState();
+                event.setFinalState(
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_DARK_OAK_WALL.get()
+                        .defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.WallBlock.UP, state.getValue(net.minecraft.world.level.block.WallBlock.UP))
+                        .setValue(net.minecraft.world.level.block.WallBlock.NORTH_WALL, state.getValue(net.minecraft.world.level.block.WallBlock.NORTH_WALL))
+                        .setValue(net.minecraft.world.level.block.WallBlock.EAST_WALL, state.getValue(net.minecraft.world.level.block.WallBlock.EAST_WALL))
+                        .setValue(net.minecraft.world.level.block.WallBlock.SOUTH_WALL, state.getValue(net.minecraft.world.level.block.WallBlock.SOUTH_WALL))
+                        .setValue(net.minecraft.world.level.block.WallBlock.WEST_WALL, state.getValue(net.minecraft.world.level.block.WallBlock.WEST_WALL))
+                        .setValue(net.minecraft.world.level.block.WallBlock.WATERLOGGED, state.getValue(net.minecraft.world.level.block.WallBlock.WATERLOGGED))
+                );
+            }
         }
     }
 
     @SubscribeEvent
     public void onRegisterCommands(RegisterCommandsEvent event)
     {
+        Log.startupProbe("KimetsunoyaibaMultiplayer.onRegisterCommands.start");
         Log.info("Registering server commands");
         // Only register server-safe commands
         // TestAnimationCommand, TestAnimCommand, TestParticlesCommand, and DebugParticlesCommand
@@ -454,6 +506,7 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.commands.FinalSelectionCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.OreSelectCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SurvivalRaidCommand.register(event.getDispatcher());
+        Log.startupProbe("KimetsunoyaibaMultiplayer.onRegisterCommands.end");
     }
 
     @SubscribeEvent
@@ -463,6 +516,10 @@ public class KimetsunoyaibaMultiplayer
         }
         if (event.player.level().isClientSide()) {
             return;
+        }
+        if (!firstPlayerTickProbeLogged) {
+            firstPlayerTickProbeLogged = true;
+            Log.startupProbe("KimetsunoyaibaMultiplayer.onPlayerTick");
         }
         net.minecraft.world.entity.player.Player player = event.player;
         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedBeastForms.syncDualWieldAttackSpeed(player);
@@ -490,7 +547,7 @@ public class KimetsunoyaibaMultiplayer
         }
 
         if (!key.equals(data.getLastSwordKey())) {
-            System.out.println("[PlayerTick] Sword key changed! Old: '" + data.getLastSwordKey() + "', New: '" + key + "' - RESETTING variation index");
+            Log.debug("[PlayerTick] Sword key changed! Old: '{}', New: '{}' - RESETTING variation index", data.getLastSwordKey(), key);
             data.setLastSwordKey(key);
             data.setCurrentVariationIndex(0);
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.saveToNBT(player);
@@ -523,8 +580,8 @@ public class KimetsunoyaibaMultiplayer
                     .isTransientBaseModCombatBreathes(currentFormId, firstForm);
 
             if (currentBreathes > 0 && currentFormId != firstForm && !transientBaseCombatState) {
-                System.out.println("[TrainingSword] Detected non-first form on training sword! Current: " + currentBreathes +
-                                   " (formId=" + currentFormId + "), First form: " + firstForm + " - RESETTING");
+                Log.debug("[TrainingSword] Detected non-first form on training sword! Current: {} (formId={}), First form: {} - RESETTING",
+                    currentBreathes, currentFormId, firstForm);
 
                 // Reset to first form using the helper
                 com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.resetToFirstForm(main, player);
@@ -639,6 +696,14 @@ public class KimetsunoyaibaMultiplayer
     {
         if (event.phase == TickEvent.Phase.END) {
             if (event.getServer() != null) {
+                observedServerThread = Thread.currentThread();
+                lastServerTickHeartbeatMs = System.currentTimeMillis();
+                SERVER_HANG_DUMPED_FOR_CURRENT_STALL.set(false);
+                startServerHangWatchdogIfNeeded();
+                if (!firstServerTickProbeLogged) {
+                    firstServerTickProbeLogged = true;
+                    Log.startupProbe("KimetsunoyaibaMultiplayer.onServerTick");
+                }
                 ServerLevel overworld = event.getServer().overworld();
 
                 // Update flying crows ONCE per tick (not per dimension)
@@ -654,6 +719,58 @@ public class KimetsunoyaibaMultiplayer
                 }
             }
         }
+    }
+
+    private static void startServerHangWatchdogIfNeeded() {
+        if (!SERVER_HANG_WATCHDOG_STARTED.compareAndSet(false, true)) {
+            return;
+        }
+
+        Thread watchdog = new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(1000L);
+                    long heartbeatMs = lastServerTickHeartbeatMs;
+                    Thread serverThread = observedServerThread;
+                    if (heartbeatMs == 0L || serverThread == null) {
+                        continue;
+                    }
+
+                    long stallMs = System.currentTimeMillis() - heartbeatMs;
+                    if (stallMs < SERVER_HANG_WATCHDOG_THRESHOLD_MS) {
+                        SERVER_HANG_DUMPED_FOR_CURRENT_STALL.set(false);
+                        continue;
+                    }
+
+                    if (!SERVER_HANG_DUMPED_FOR_CURRENT_STALL.compareAndSet(false, true)) {
+                        continue;
+                    }
+
+                    Log.startupProbe("KimetsunoyaibaMultiplayer.serverHangWatchdog");
+                    Log.alwaysWarn("[WATCHDOG] Server thread '{}' has not advanced for {} ms", serverThread.getName(), stallMs);
+                    StackTraceElement[] stack = serverThread.getStackTrace();
+                    if (stack.length == 0) {
+                        Log.alwaysWarn("[WATCHDOG] No stack trace available for stalled server thread");
+                        continue;
+                    }
+
+                    for (int i = 0; i < stack.length; i++) {
+                        Log.alwaysWarn("[WATCHDOG] at {}", stack[i]);
+                        if (i >= 39) {
+                            Log.alwaysWarn("[WATCHDOG] stack trace truncated after {} frames", i + 1);
+                            break;
+                        }
+                    }
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    return;
+                } catch (Throwable throwable) {
+                    Log.alwaysError("[WATCHDOG] Failed to inspect server thread: {}", throwable.toString());
+                }
+            }
+        }, "KimetsunoyaibaTweaks-ServerHangWatchdog");
+        watchdog.setDaemon(true);
+        watchdog.start();
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
@@ -711,12 +828,12 @@ public class KimetsunoyaibaMultiplayer
         @SubscribeEvent
         public static void onKeyRegister(net.minecraftforge.client.event.RegisterKeyMappingsEvent event)
         {
-            System.out.println("[KimetsunoyaibaMultiplayer] onKeyRegister() called - registering keybindings");
+            Log.debug("[KimetsunoyaibaMultiplayer] onKeyRegister() called - registering keybindings");
             //event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD);
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_FORM_VARIATION);
-            System.out.println("[KimetsunoyaibaMultiplayer] Registered breathing technique cycling key bindings");
-            System.out.println("[KimetsunoyaibaMultiplayer] CYCLE_FORM_VARIATION bound to: " +
+            Log.debug("[KimetsunoyaibaMultiplayer] Registered breathing technique cycling key bindings");
+            Log.debug("[KimetsunoyaibaMultiplayer] CYCLE_FORM_VARIATION bound to: {}",
                     com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_FORM_VARIATION.getKey().getName());
             if (Config.logDebug) {
                 Log.info("Registered breathing technique cycling key bindings");
@@ -758,6 +875,11 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroFPRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.PRINCESS.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.PrincessRenderer::new);
+
+            event.registerBlockEntityRenderer(
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.CHEST_OF_DRAWERS.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.ChestOfDrawersRenderer::new
+            );
 
             if (Config.logDebug)
             Log.info("Registered entity renderers");

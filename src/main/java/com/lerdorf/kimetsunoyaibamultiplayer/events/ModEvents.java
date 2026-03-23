@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig;
@@ -22,9 +23,11 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        Log.startupProbeOnce("ModEvents.onPlayerLogin.start");
         Player player = event.getEntity();
         // Load player's breathing form data from NBT
         PlayerBreathingData.loadFromNBT(player);
+        Log.startupProbeOnce("ModEvents.onPlayerLogin.end");
     }
 
     @SubscribeEvent

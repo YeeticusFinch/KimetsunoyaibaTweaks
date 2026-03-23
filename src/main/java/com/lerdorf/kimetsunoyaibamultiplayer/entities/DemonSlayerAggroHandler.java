@@ -59,6 +59,7 @@ public class DemonSlayerAggroHandler {
      */
     @SubscribeEvent
     public static void onEntityJoin(EntityJoinLevelEvent event) {
+        long startNanos = System.nanoTime();
         if (event.getLevel().isClientSide()) {
             return;
         }
@@ -66,26 +67,23 @@ public class DemonSlayerAggroHandler {
         if (!(event.getEntity() instanceof Mob mob)) {
             return;
         }
+        Log.startupProbeOnce("DemonSlayerAggroHandler.onEntityJoin");
 
+        // Keep entity-join work minimal. Chunk/entity loading during world entry can invoke this
+        // for many mobs at once, so defer range scans for demon/hostile retargeting to periodic ticks.
         if (isDemonSlayerOrHashira(mob)) {
             addSlayerAggroGoals(mob);
-            return;
         }
-
-        // Demon-tagged entities should automatically target our DemonSlayerEntity.
-        if (EntityTagHelper.isDemon(mob)) {
-            if (findNearestTargetableDemonSlayer(mob, SCAN_RANGE) != null) {
-                addDemonVsSlayerGoal(mob);
-            }
-            return;
-        }
-
-        // Other hostile mobs should also be able to target DemonSlayerEntity.
-        if (isHostileMobForSlayer(mob)) {
-            if (findNearestTargetableDemonSlayer(mob, HOSTILE_SLAYER_SCAN_RANGE) != null) {
-                addHostileVsSlayerGoal(mob);
-            }
-        }
+        Log.debugVisibleIfSlow(
+            "demon-slayer-aggro-join",
+            startNanos,
+            25L,
+            "DemonSlayerAggroHandler.onEntityJoin entity={} pos={}, {}, {}",
+            EntityTagHelper.getEntityTypeId(mob),
+            mob.getBlockX(),
+            mob.getBlockY(),
+            mob.getBlockZ()
+        );
     }
 
     private static void addSlayerAggroGoals(Mob mob) {

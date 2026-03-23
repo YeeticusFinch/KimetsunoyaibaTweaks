@@ -37,6 +37,7 @@ public class MistSwordReplacer {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        Log.startupProbeOnce("MistSwordReplacer.onPlayerTick");
 
         Player player = event.player;
         if (player.level().isClientSide) {

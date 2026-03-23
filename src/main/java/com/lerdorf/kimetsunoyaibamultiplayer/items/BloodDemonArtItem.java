@@ -4,9 +4,11 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -71,7 +73,7 @@ public class BloodDemonArtItem extends Item {
             player.getCooldowns().addCooldown(this, Math.max(20, form.getCooldownSeconds() * 20));
         }
 
-        player.displayClientMessage(Component.literal(formatFormName(technique, form))
+        player.displayClientMessage(formatFormName(artId, form)
             .withStyle(ChatFormatting.DARK_GREEN), true);
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
@@ -85,16 +87,19 @@ public class BloodDemonArtItem extends Item {
 
         BloodDemonArtTechnique technique = art.getTechnique();
         BloodDemonArtForm selectedForm = technique.getForm(getSelectedFormIndexInternal(stack));
-        tooltip.add(Component.literal(technique.getName()).withStyle(ChatFormatting.DARK_GREEN));
+        tooltip.add(LocalizationHelper.bloodDemonArt(artId).copy().withStyle(ChatFormatting.DARK_GREEN));
         if (selectedForm != null) {
-            tooltip.add(Component.literal("Selected: " + formatFormName(technique, selectedForm)).withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("tooltip.kimetsunoyaibamultiplayer.blood_demon_art.selected", formatFormName(artId, selectedForm))
+                .withStyle(ChatFormatting.GRAY));
         }
         tooltip.add(Component.literal("Sneak-right click: Cycle forms").withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.literal("Right click: Use selected form").withStyle(ChatFormatting.DARK_GRAY));
     }
 
-    private static String formatFormName(BloodDemonArtTechnique technique, BloodDemonArtForm form) {
-        return technique.getName().replace("Blood Demon Art: ", "") + ": " + form.getName();
+    private static MutableComponent formatFormName(String artId, BloodDemonArtForm form) {
+        return LocalizationHelper.bloodDemonArt(artId).copy()
+            .append(Component.literal(": "))
+            .append(form.getDisplayName());
     }
 
     public void cycleForm(Player player, ItemStack stack, int direction) {
@@ -114,7 +119,7 @@ public class BloodDemonArtItem extends Item {
 
         BloodDemonArtForm form = technique.getForm(next);
         if (form != null) {
-            player.sendSystemMessage(Component.literal(formatFormName(technique, form))
+            player.sendSystemMessage(formatFormName(artId, form)
                 .withStyle(ChatFormatting.DARK_GREEN, ChatFormatting.BOLD));
         }
     }
@@ -133,7 +138,7 @@ public class BloodDemonArtItem extends Item {
             return null;
         }
         BloodDemonArtForm form = art.getTechnique().getForm(getSelectedFormIndexInternal(stack));
-        return form == null ? null : formatFormName(art.getTechnique(), form);
+        return form == null ? null : formatFormName(artId, form).getString();
     }
 
     private static int getSelectedFormIndexInternal(ItemStack stack) {

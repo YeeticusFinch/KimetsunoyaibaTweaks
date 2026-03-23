@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 
@@ -30,6 +32,7 @@ import java.util.Set;
  */
 public class BreathingFormVariation {
     private final String name;                 // Display name (completely replaces form name)
+    private final String translationKey;
     private final String description;          // Description of this variation
     private final int cooldownSeconds;         // Cooldown (can differ from base form)
     private final FormEffect effect;           // Effect (completely replaces base form effect)
@@ -52,7 +55,19 @@ public class BreathingFormVariation {
         FormEffect effect,
         Set<String> applicableSwords
     ) {
+        this(name, LocalizationHelper.breathingVariationKey(name), description, cooldownSeconds, effect, applicableSwords);
+    }
+
+    public BreathingFormVariation(
+        String name,
+        String translationKey,
+        String description,
+        int cooldownSeconds,
+        FormEffect effect,
+        Set<String> applicableSwords
+    ) {
         this.name = name;
+        this.translationKey = translationKey;
         this.description = description;
         this.cooldownSeconds = cooldownSeconds;
         this.effect = effect;
@@ -61,6 +76,14 @@ public class BreathingFormVariation {
 
     public String getName() {
         return name;
+    }
+
+    public String getTranslationKey() {
+        return translationKey;
+    }
+
+    public Component getDisplayName() {
+        return Component.translatable(translationKey);
     }
 
     public String getDescription() {

@@ -68,8 +68,9 @@ public class EntityKanrojiSwordAnimationSync {
         if (!inCombat) {
             // Out of combat - sword should always be in sheath animation
             targetAnimation = "sheath";
-            Log.debug("[EntityKanrojiSwordAnimationSync] Entity {} out of combat - forcing sheath animation",
-                      entity.getName().getString());
+            Log.debugEvery("kanroji-sheath:" + entityUUID, 2000,
+                "[EntityKanrojiSwordAnimationSync] Entity {} out of combat - forcing sheath animation",
+                entity.getName().getString());
         } else {
             // In combat - use entity's current animation
             targetAnimation = entity.getCurrentAnimation();
@@ -90,8 +91,9 @@ public class EntityKanrojiSwordAnimationSync {
         // Update tracking
         lastKnownAnimation.put(entityUUID, targetAnimation);
 
-        Log.debug("[EntityKanrojiSwordAnimationSync] Animation changed for entity {} from {} to {}",
-                  entity.getName().getString(), lastAnimation, targetAnimation);
+        Log.debugEvery("kanroji-anim-change:" + entityUUID + ":" + targetAnimation, 500,
+            "[EntityKanrojiSwordAnimationSync] Animation changed for entity {} from {} to {}",
+            entity.getName().getString(), lastAnimation, targetAnimation);
 
         // CRITICAL FIX: Store animation in client-side cache for renderer to access
         // We need to pass the sword item to ensure the controller exists
@@ -104,7 +106,8 @@ public class EntityKanrojiSwordAnimationSync {
         // Also trigger via the normal method (sets NBT as fallback)
         KanrojiSwordAnimationTrigger.triggerAnimation(entity, targetAnimation);
 
-        Log.debug("[EntityKanrojiSwordAnimationSync] Set animation in cache and triggered: {}", targetAnimation);
+        Log.debugEvery("kanroji-anim-trigger:" + entityUUID + ":" + targetAnimation, 500,
+            "[EntityKanrojiSwordAnimationSync] Set animation in cache and triggered: {}", targetAnimation);
     }
 
     /**

@@ -1,8 +1,11 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordMetadataRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinOreItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.resources.ResourceLocation;
@@ -26,6 +29,7 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = "kimetsunoyaibamultiplayer")
 public final class SwordSmithOreHandler {
     private static final double DROP_INTERACTION_RADIUS = 1.5D;
+    private static final int DROP_SCAN_INTERVAL_TICKS = 20;
     private static final ResourceLocation SUN_BLADE_ADVANCEMENT =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "sun_blade");
 
@@ -59,6 +63,12 @@ public final class SwordSmithOreHandler {
         if (event.phase != TickEvent.Phase.END || !(event.level instanceof ServerLevel serverLevel)) {
             return;
         }
+        if (serverLevel.getGameTime() % DROP_SCAN_INTERVAL_TICKS != 0) {
+            return;
+        }
+
+        long start = System.currentTimeMillis();
+        int matchingOreItems = 0;
 
         for (Entity entity : serverLevel.getAllEntities()) {
             if (!(entity instanceof ItemEntity itemEntity)) {
@@ -69,6 +79,7 @@ public final class SwordSmithOreHandler {
             if (!canUseOreStack(stack)) {
                 continue;
             }
+            matchingOreItems++;
 
             AABB smithRange = itemEntity.getBoundingBox().inflate(DROP_INTERACTION_RADIUS);
             List<Entity> swordSmiths = serverLevel.getEntities(itemEntity, smithRange, EntityTagHelper::isSwordSmith);
@@ -80,6 +91,18 @@ public final class SwordSmithOreHandler {
             if (craftSwordFromOre(swordSmiths.get(0), stack, nearestPlayer)) {
                 // Consumed by craftSwordFromOre.
             }
+        }
+
+        long elapsedMs = System.currentTimeMillis() - start;
+        if (elapsedMs >= 50L) {
+            Log.debugVisibleEvery(
+                "swordsmith-ore-scan:" + serverLevel.dimension().location(),
+                5000L,
+                "Swordsmith ore scan took {} ms in {} (matching ore items={})",
+                elapsedMs,
+                serverLevel.dimension().location(),
+                matchingOreItems
+            );
         }
     }
 
@@ -95,28 +118,29 @@ public final class SwordSmithOreHandler {
             return false;
         }
 
-        Item swordItem = resolveLevelZeroSword(styleId);
-        if (swordItem == null) {
+        boolean blackVariant = NichirinOreItem.isBlackVariant(oreStack);
+        ItemStack craftedSword = createSwordFromOre(styleId, blackVariant);
+        if (craftedSword.isEmpty()) {
             return false;
         }
 
         boolean consumed = player != null
-            ? consumePlayerOre(player, styleId, 2)
-            : consumeDroppedOre(swordSmith, styleId, 2);
+            ? consumePlayerOre(player, styleId, blackVariant, 2)
+            : consumeDroppedOre(swordSmith, styleId, blackVariant, 2);
         if (!consumed) {
             return false;
         }
 
-        swordSmith.spawnAtLocation(new ItemStack(swordItem));
+        swordSmith.spawnAtLocation(craftedSword);
         awardSunBladeAdvancement(player);
         return true;
     }
 
-    private static boolean consumePlayerOre(Player player, String styleId, int amount) {
+    private static boolean consumePlayerOre(Player player, String styleId, boolean blackVariant, int amount) {
         int available = 0;
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
-            if (isMatchingOre(stack, styleId)) {
+            if (isMatchingOre(stack, styleId, blackVariant)) {
                 available += stack.getCount();
             }
         }
@@ -127,7 +151,7 @@ public final class SwordSmithOreHandler {
         int remaining = amount;
         for (int slot = 0; slot < player.getInventory().getContainerSize() && remaining > 0; slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
-            if (!isMatchingOre(stack, styleId)) {
+            if (!isMatchingOre(stack, styleId, blackVariant)) {
                 continue;
             }
             int toShrink = Math.min(remaining, stack.getCount());
@@ -137,7 +161,7 @@ public final class SwordSmithOreHandler {
         return remaining == 0;
     }
 
-    private static boolean consumeDroppedOre(Entity swordSmith, String styleId, int amount) {
+    private static boolean consumeDroppedOre(Entity swordSmith, String styleId, boolean blackVariant, int amount) {
         if (!(swordSmith.level() instanceof ServerLevel serverLevel)) {
             return false;
         }
@@ -146,7 +170,7 @@ public final class SwordSmithOreHandler {
         List<ItemEntity> matchingItems = serverLevel.getEntitiesOfClass(
             ItemEntity.class,
             search,
-            itemEntity -> isMatchingOre(itemEntity.getItem(), styleId)
+            itemEntity -> isMatchingOre(itemEntity.getItem(), styleId, blackVariant)
         );
 
         int available = matchingItems.stream().mapToInt(item -> item.getItem().getCount()).sum();
@@ -175,8 +199,26 @@ public final class SwordSmithOreHandler {
         return remaining == 0;
     }
 
-    private static boolean isMatchingOre(ItemStack stack, String styleId) {
-        return canUseOreStack(stack) && styleId.equals(NichirinOreItem.getStyleId(stack));
+    private static boolean isMatchingOre(ItemStack stack, String styleId, boolean blackVariant) {
+        return canUseOreStack(stack)
+            && styleId.equals(NichirinOreItem.getStyleId(stack))
+            && blackVariant == NichirinOreItem.isBlackVariant(stack);
+    }
+
+    private static ItemStack createSwordFromOre(String styleId, boolean blackVariant) {
+        if (blackVariant) {
+            ItemStack blackSword = new ItemStack(ModItems.NICHIRINSWORD_BLACK.get());
+            if (!NichirinSwordBlack.assignStyle(blackSword, styleId)) {
+                return ItemStack.EMPTY;
+            }
+            return blackSword;
+        }
+
+        Item swordItem = resolveLevelZeroSword(styleId);
+        if (swordItem == null) {
+            return ItemStack.EMPTY;
+        }
+        return new ItemStack(swordItem);
     }
 
     private static void awardSunBladeAdvancement(Player player) {

@@ -400,6 +400,12 @@ public class ModItems {
                 output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_WOOD.get());
                 output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_WISTERIA_WOOD.get());
                 output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PLANKS.get());
+                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FENCE.get());
+                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.FUSUMA_BARS.get());
+                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FUSUMA.get());
+                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_OAK_WALL.get());
+                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_DARK_OAK_WALL.get());
+                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS.get());
 
                 // Wisteria Leaves (all 4 colors)
                 output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_PINK.get());

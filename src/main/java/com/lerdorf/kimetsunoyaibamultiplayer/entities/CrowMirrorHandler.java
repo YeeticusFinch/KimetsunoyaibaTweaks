@@ -41,12 +41,14 @@ public class CrowMirrorHandler {
 
     @SubscribeEvent
     public static void onEntitySpawn(EntityJoinLevelEvent event) {
+        long startNanos = System.nanoTime();
         Entity entity = event.getEntity();
 
         // Only process on server side
         if (entity.level().isClientSide()) {
             return;
         }
+        Log.startupProbeOnce("CrowMirrorHandler.onEntitySpawn");
 
         // Check if this is a kasugai_crow
         if (!isKasugaiCrow(entity)) {
@@ -79,6 +81,16 @@ public class CrowMirrorHandler {
 
         // Use the helper method to create the mirror
         createMirrorForCrow(entity, (ServerLevel) entity.level());
+        Log.debugVisibleIfSlow(
+            "crow-mirror-join",
+            startNanos,
+            25L,
+            "CrowMirrorHandler.onEntitySpawn crow={} pos={}, {}, {}",
+            entity.getUUID(),
+            entity.getBlockX(),
+            entity.getBlockY(),
+            entity.getBlockZ()
+        );
     }
 
     @SubscribeEvent

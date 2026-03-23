@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -18,7 +19,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.border.WorldBorder;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.storage.WritableLevelData;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -33,6 +37,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -79,40 +84,84 @@ public class SwordsmithVillageDimensionDataHandler {
     private static final String RESIDENT_TAG = "SwordsmithVillageResident";
     private static final String RESIDENT_TYPE_TAG = "SwordsmithVillageResidentType";
     private static final int RESIDENT_CHECK_INTERVAL_TICKS = 200;
+    private static final int WEATHER_ENFORCEMENT_INTERVAL_TICKS = 20;
     private static final double SPAWN_DENSITY_RADIUS = 15.0D;
     private static final int MAX_ENTITIES_PER_SPAWN_CLUSTER = 2;
 
     private static final ResourceLocation HYOTTOKO_MASK_ID =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mask_hyottoko_helmet");
 
+    private static final BlockPos CHIEF_LOCATION = new BlockPos(15, 83, 42);
+    private static final List<BlockPos> CHIEF_ASSISTANT_LOCATIONS = List.of(
+        new BlockPos(16, 83, 44),
+                new BlockPos(16, 83, 40)
+    );
+
     private static final List<BlockPos> SPAWN_LOCATIONS = List.of(
-        new BlockPos(20, 72, -42),
-        new BlockPos(52, 76, -10),
-        new BlockPos(65, 77, 29),
-        new BlockPos(69, 77, 72),
-        new BlockPos(51, 73, 125),
-        new BlockPos(14, 71, 146),
-        new BlockPos(4, 73, 179),
-        new BlockPos(18, 74, 220),
-        new BlockPos(-7, 72, 107),
-        new BlockPos(-30, 76, 51),
-        new BlockPos(-27, 79, -8),
-        new BlockPos(-16, 85, -12),
-        new BlockPos(-23, 85, -20),
-        new BlockPos(69, 77, -4),
-        new BlockPos(67, 83, -13),
-        new BlockPos(49, 76, 13),
-        new BlockPos(46, 72, 8),
-        new BlockPos(46, 71, 50),
-        new BlockPos(-5, 76, -122),
-        new BlockPos(-28, 76, -85),
+        new BlockPos(7, 72, 154),
+        new BlockPos(0, 72, 190),
+        new BlockPos(16, 73, 214),
+        new BlockPos(4, 72, 69),
+        new BlockPos(-11, 72, 76),
+        new BlockPos(-8, 78, 100),
+        new BlockPos(-13, 72, 114),
+        new BlockPos(-6, 72, 101),
+        new BlockPos(29, 72, 107),
+        new BlockPos(27, 72, 120),
+        new BlockPos(28, 77, 119),
+        new BlockPos(25, 77, 112),
+        new BlockPos(28, 77, 105),
+        new BlockPos(-7, 72, 115),
+        new BlockPos(-7, 72, 100),
+        new BlockPos(-14, 78, 100),
+        new BlockPos(-6, 78, 115),
+        new BlockPos(-17, 74, 138),
+        new BlockPos(-16, 74, 145),
+        new BlockPos(-18, 79, 161),
+        new BlockPos(-19, 73, 161),
+        new BlockPos(-19, 73, 176),
+        new BlockPos(-11, 73, 176),
+        new BlockPos(25, 74, 170),
+        new BlockPos(33, 79, 169),
+        new BlockPos(32, 79, 140),
+        new BlockPos(31, 74, 163),
+        new BlockPos(33, 75, 178),
+        new BlockPos(24, 79, 176),
+        new BlockPos(-13, 74, 199),
+        new BlockPos(-13, 74, 206),
+        new BlockPos(-19, 74, 193),
+        new BlockPos(-12, 80, 199),
+        new BlockPos(28, 75, 199),
+        new BlockPos(29, 75, 206),
+        new BlockPos(-7, 76, 230),
+        new BlockPos(-22, 76, 236),
+        new BlockPos(-15, 83, 231),
+        new BlockPos(-7, 83, 228),
+        new BlockPos(21, 76, 231),
+        new BlockPos(8, 74, 43),
+        new BlockPos(18, 74, 36),
+        new BlockPos(20, 74, 50),
+        new BlockPos(0, 74, 46),
+        new BlockPos(0, 78, 47),
+        new BlockPos(9, 78, 38),
+        new BlockPos(19, 78, 45),
+        new BlockPos(11, 78, 56),
+        new BlockPos(17, 77, 81),
+        new BlockPos(5, 77, 107),
+        new BlockPos(17, 77, 115),
+        new BlockPos(-3, 74, 25),
+        new BlockPos(21, 74, 25),
+        new BlockPos(17, 74, 36),
+        new BlockPos(6, 83, 43),
+        new BlockPos(111, 155, -241),
+        new BlockPos(26, 170, -285),
+        new BlockPos(-27, 85, -159),
+        new BlockPos(-76, 97, -88),
         new BlockPos(-47, 86, -48),
-        new BlockPos(-23, 85, -5),
-        new BlockPos(-37, 81, 51),
-        new BlockPos(2, 71, -63),
-        new BlockPos(31, 74, -40),
-        new BlockPos(0, 71, 42),
-        new BlockPos(114, 156, -241)
+        new BlockPos(-20, 80, -32),
+        new BlockPos(124, 75, 53),
+        new BlockPos(224, 176, 19),
+        new BlockPos(23, 79, -192)
     );
 
     private static final List<ResidentSpec> RESIDENT_SPECS = List.of(
@@ -180,15 +229,7 @@ public class SwordsmithVillageDimensionDataHandler {
         Log.debug(prefix() + " World border configured: "
             + (int) WORLD_BORDER_SIZE + "x" + (int) WORLD_BORDER_SIZE);
 
-        IO_EXECUTOR.execute(() -> {
-            try {
-                ensureCacheUpToDate();
-                ensureWorldPrepared(serverLevel.getServer(), true);
-            } catch (Exception e) {
-                System.err.println(prefix() + " Error ensuring world is prepared:");
-                e.printStackTrace();
-            }
-        });
+        clearVillageWeather(serverLevel, "level load");
     }
 
     @SubscribeEvent
@@ -209,6 +250,7 @@ public class SwordsmithVillageDimensionDataHandler {
         }
 
         player.teleportTo(targetLevel, ENTRY_X, ENTRY_Y, ENTRY_Z, ENTRY_YAW, ENTRY_PITCH);
+        clearVillageWeather(targetLevel, "player entered dimension");
     }
 
     @SubscribeEvent
@@ -246,15 +288,20 @@ public class SwordsmithVillageDimensionDataHandler {
         if (event.phase != TickEvent.Phase.END || event.getServer() == null) {
             return;
         }
-        if (event.getServer().getTickCount() % RESIDENT_CHECK_INTERVAL_TICKS != 0) {
-            return;
-        }
 
         ServerLevel swordsmithVillage = event.getServer().getLevel(ResourceKey.create(
             net.minecraft.core.registries.Registries.DIMENSION,
             SWORDSMITH_VILLAGE_DIM_ID
         ));
         if (swordsmithVillage == null) {
+            return;
+        }
+
+        if (event.getServer().getTickCount() % WEATHER_ENFORCEMENT_INTERVAL_TICKS == 0) {
+            clearVillageWeatherIfNeeded(swordsmithVillage, "server tick");
+        }
+
+        if (event.getServer().getTickCount() % RESIDENT_CHECK_INTERVAL_TICKS != 0) {
             return;
         }
         if (!residentMaintenanceInProgress.compareAndSet(false, true)) {
@@ -266,6 +313,21 @@ public class SwordsmithVillageDimensionDataHandler {
         } finally {
             residentMaintenanceInProgress.set(false);
         }
+    }
+
+    @SubscribeEvent
+    public static void onChunkLoad(ChunkEvent.Load event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+        if (!level.dimension().location().equals(SWORDSMITH_VILLAGE_DIM_ID)) {
+            return;
+        }
+        if (!(event.getChunk() instanceof LevelChunk chunk)) {
+            return;
+        }
+
+        stripTorilGateMarkers(chunk);
     }
 
     private static void ensureCacheUpToDate() {
@@ -415,11 +477,7 @@ public class SwordsmithVillageDimensionDataHandler {
             .resolve("swordsmith_village");
         Path regionDir = dimensionDir.resolve("region");
 
-        String cacheVersion = readVersionFile(cacheDir.resolve(VERSION_FILE_NAME));
-        String worldVersion = readVersionFile(regionDir.resolve(VERSION_FILE_NAME));
-        boolean needsCopy = !Files.exists(regionDir)
-            || isDirectoryEmpty(regionDir)
-            || !cacheHasSameVersion(cacheVersion, worldVersion);
+        boolean needsCopy = !Files.exists(regionDir) || isDirectoryEmpty(regionDir);
 
         if (!needsCopy) {
             return;
@@ -436,7 +494,6 @@ public class SwordsmithVillageDimensionDataHandler {
             if (!cacheHasAnyMca()) {
                 ensureCacheUpToDate();
             }
-            clearDirectory(regionDir);
             copyCachedRegionFiles(regionDir);
 
             server.execute(() -> {
@@ -657,6 +714,89 @@ public class SwordsmithVillageDimensionDataHandler {
             return worldVersion == null;
         }
         return cacheVersion.equals(worldVersion);
+    }
+
+    private static void clearVillageWeather(ServerLevel village, String reason) {
+        boolean weatherActive = hasActiveVillageWeather(village);
+        clearWritableWeatherFlags(village);
+        village.setWeatherParameters(12000, 0, false, false);
+        if (weatherActive) {
+            Log.info(prefix() + " Cleared lingering weather on {}", reason);
+        }
+    }
+
+    private static void clearVillageWeatherIfNeeded(ServerLevel village, String reason) {
+        if (!hasActiveVillageWeather(village)) {
+            return;
+        }
+        clearVillageWeather(village, reason);
+    }
+
+    private static boolean hasActiveVillageWeather(ServerLevel village) {
+        return village.isRaining() || village.isThundering()
+            || village.getRainLevel(1.0F) > 0.0F || village.getThunderLevel(1.0F) > 0.0F;
+    }
+
+    private static void clearWritableWeatherFlags(ServerLevel village) {
+        if (village.getLevelData() instanceof WritableLevelData levelData) {
+            levelData.setRaining(false);
+        }
+
+        Object levelData = village.getLevelData();
+        invokeBooleanSetter(levelData, "setRaining", false);
+        invokeBooleanSetter(levelData, "setThundering", false);
+    }
+
+    private static void invokeBooleanSetter(Object target, String methodName, boolean value) {
+        if (target == null) {
+            return;
+        }
+        try {
+            Method method = target.getClass().getMethod(methodName, boolean.class);
+            method.invoke(target, value);
+        } catch (ReflectiveOperationException ignored) {
+        }
+    }
+
+    private static void stripTorilGateMarkers(LevelChunk chunk) {
+        long startNanos = System.nanoTime();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int removed = 0;
+        int minX = chunk.getPos().getMinBlockX();
+        int maxX = chunk.getPos().getMaxBlockX();
+        int minZ = chunk.getPos().getMinBlockZ();
+        int maxZ = chunk.getPos().getMaxBlockZ();
+        int minY = chunk.getMinBuildHeight();
+        int maxY = chunk.getMaxBuildHeight();
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                for (int y = minY; y < maxY; y++) {
+                    cursor.set(x, y, z);
+                    if (!chunk.getBlockState(cursor).is(ModBlocks.TORIL_GATE_MARKER.get())) {
+                        continue;
+                    }
+
+                    chunk.setBlockState(cursor, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), false);
+                    removed++;
+                }
+            }
+        }
+
+        if (removed > 0) {
+            Log.debug(prefix() + " Removed " + removed + " Toril Gate marker block(s) from swordsmith village chunk "
+                + chunk.getPos().x + "," + chunk.getPos().z);
+        }
+        Log.debugVisibleIfSlow(
+            "swordsmith-strip-toril-markers",
+            startNanos,
+            50L,
+            prefix() + " stripTorilGateMarkers took {} ms in chunk {},{} (removed={})",
+            (System.nanoTime() - startNanos) / 1_000_000L,
+            chunk.getPos().x,
+            chunk.getPos().z,
+            removed
+        );
     }
 
     private static void clearDirectory(Path dir) throws IOException {

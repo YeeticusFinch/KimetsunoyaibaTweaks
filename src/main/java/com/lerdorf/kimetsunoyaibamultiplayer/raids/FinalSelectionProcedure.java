@@ -10,6 +10,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinOreItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerColorChangeStyleHelper;
+import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -126,11 +127,6 @@ public class FinalSelectionProcedure {
 
     private record UniformSet(Item chest, Item leggings, Item boots) {}
 
-    // Dialogue lines
-    private static final String KIRIYA_LINE_1 = "Final Selection is a selective process for individuals who seek to become a recognized Demon Slayer of the Demon Slayer Corps";
-    private static final String KANATA_LINE_2 = "The exam entails surviving seven consecutive nights on the mountaintop, relying solely on their own resources without external assistance.";
-    private static final String KIRIYA_LINE_3 = "Candidates who manage to survive all seven nights successfully are granted the opportunity to join the esteemed ranks of the Demon Slayer Corps as official Demon Slayers.";
-    private static final String KANATA_LINE_4 = "Final selection begins now!";
     private static final BlockPos FINAL_SELECTION_EXIT_POS = new BlockPos(307, 79, 775);
     private static final double EXIT_PROMPT_DISTANCE = 5.0D;
     private static final long EXIT_PROMPT_COOLDOWN_TICKS = 100L;
@@ -372,25 +368,43 @@ public class FinalSelectionProcedure {
                 }
 
                 // Kiriya speaks first line
-                broadcastDialogue("\u00a7e[Kiriya]\u00a7f " + KIRIYA_LINE_1);
+                broadcastDialogue(createSpeakerDialogue(
+                    "entity.kimetsunoyaibamultiplayer.kiriya",
+                    ChatFormatting.YELLOW,
+                    Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.dialogue.kiriya_1")
+                ));
                 state = State.DIALOGUE_1;
                 nextActionTime = gameTime + 100; // 5 seconds
             }
             case DIALOGUE_1 -> {
                 // Kanata speaks second line
-                broadcastDialogue("\u00a7d[Kanata]\u00a7f " + KANATA_LINE_2);
+                broadcastDialogue(createSpeakerDialogue(
+                    "entity.kimetsunoyaibamultiplayer.kanata",
+                    ChatFormatting.LIGHT_PURPLE,
+                    Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.dialogue.kanata_2")
+                ));
                 state = State.DIALOGUE_2;
                 nextActionTime = gameTime + 100; // 5 seconds
             }
             case DIALOGUE_2 -> {
                 // Kiriya speaks third line
-                broadcastDialogue("\u00a7e[Kiriya]\u00a7f " + KIRIYA_LINE_3);
+                broadcastDialogue(createSpeakerDialogue(
+                    "entity.kimetsunoyaibamultiplayer.kiriya",
+                    ChatFormatting.YELLOW,
+                    Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.dialogue.kiriya_3")
+                ));
                 state = State.DIALOGUE_3;
                 nextActionTime = gameTime + 100; // 5 seconds
             }
             case DIALOGUE_3 -> {
                 // Kanata speaks final line
-                broadcastDialogue("\u00a7d[Kanata]\u00a76\u00a7l " + KANATA_LINE_4);
+                broadcastDialogue(createSpeakerDialogue(
+                    "entity.kimetsunoyaibamultiplayer.kanata",
+                    ChatFormatting.LIGHT_PURPLE,
+                    Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.dialogue.kanata_4")
+                        .copy()
+                        .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                ));
                 state = State.DIALOGUE_4;
                 nextActionTime = gameTime + 40; // 2-second pause before raid starts
             }
@@ -400,7 +414,8 @@ public class FinalSelectionProcedure {
             }
             case RAID_START -> {
                 if (!FinalSelectionRaidConfig.enableFinalSelectionRaid.get()) {
-                    broadcastDialogue("\u00a7cFinal Selection raid is disabled by config.");
+                    broadcastDialogue(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.raid_disabled")
+                        .withStyle(ChatFormatting.RED));
                     state = State.FINISHED;
                 } else {
                     finalSelectionRaid = new FinalSelectionRaid(level, FINAL_SELECTION_RAID_CENTER, FINAL_SELECTION_RAID_RADIUS);
@@ -431,7 +446,8 @@ public class FinalSelectionProcedure {
                         raidEndStartTime = gameTime;
 
                         if (raidSucceeded) {
-                            broadcastDialogue("\u00a7aReturn to Kanata or Kiriya to complete Final Selection.");
+                            broadcastDialogue(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.return_to_npc")
+                                .withStyle(ChatFormatting.GREEN));
                             sendKanataWaypointToAllPlayers(gameTime);
                         }
 
@@ -633,9 +649,12 @@ public class FinalSelectionProcedure {
     private void completeRaidEndForPlayer(ServerPlayer player) {
         raidEndCompletedPlayers.add(player.getUUID());
 
-        String npcName = level.random.nextBoolean() ? "Kanata" : "Kiriya";
-        player.sendSystemMessage(Component.literal("[" + npcName + "] Congratulations " + player.getName().getString()
-            + ", you have survived final selection, you have been issued a Demon Slayer Uniform and a Kasugai crow. Please select an ore for your new nichirin blade."));
+        boolean kanataSpeaker = level.random.nextBoolean();
+        player.sendSystemMessage(createSpeakerDialogue(
+            kanataSpeaker ? "entity.kimetsunoyaibamultiplayer.kanata" : "entity.kimetsunoyaibamultiplayer.kiriya",
+            kanataSpeaker ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.YELLOW,
+            Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.congratulations", player.getDisplayName())
+        ));
 
         spawnAndTameKasugaiCrow(player);
         grantRandomUniformSet(player);
@@ -662,7 +681,8 @@ public class FinalSelectionProcedure {
         raidSuccessWaypointIssued = true;
 
         for (ServerPlayer player : level.players()) {
-            player.sendSystemMessage(Component.literal("\u00a7bKanata is at 307 ~ 713"));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.waypoint_kanata")
+                .withStyle(ChatFormatting.AQUA));
             playerExitPromptCooldown.put(player.getUUID(), gameTime);
         }
     }
@@ -680,13 +700,15 @@ public class FinalSelectionProcedure {
             if (gameTime - lastSent < KANATA_WAYPOINT_REMINDER_TICKS) {
                 continue;
             }
-            player.sendSystemMessage(Component.literal("\u00a7bKanata is at 307 ~ 713"));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.waypoint_kanata")
+                .withStyle(ChatFormatting.AQUA));
             playerExitPromptCooldown.put(player.getUUID(), gameTime);
         }
     }
 
     private static void sendExitWaypoint(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("\u00a7bFinal Selection Exit is at 307 ~ 775"));
+        player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.exit_waypoint")
+            .withStyle(ChatFormatting.AQUA));
     }
 
     private void processExitPrompts(long gameTime) {
@@ -702,7 +724,8 @@ public class FinalSelectionProcedure {
                 if (isPlayerNearExit(player)) {
                     long lastSent = playerExitPromptCooldown.getOrDefault(player.getUUID(), Long.MIN_VALUE);
                     if (gameTime - lastSent >= KANATA_WAYPOINT_REMINDER_TICKS) {
-                        player.sendSystemMessage(Component.literal("\u00a76[Final Selection] Choose your Scarlet ore before leaving."));
+                        player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.choose_ore_before_leaving")
+                            .withStyle(ChatFormatting.GOLD));
                         playerExitPromptCooldown.put(player.getUUID(), gameTime);
                     }
                 }
@@ -768,16 +791,29 @@ public class FinalSelectionProcedure {
         kakushiPromptCooldown.put(player.getUUID(), gameTime + KAKUSHI_PROMPT_COOLDOWN_TICKS);
         kakushiPendingUntilTick.put(player.getUUID(), gameTime + KAKUSHI_CONFIRM_TIMEOUT_TICKS);
 
-        String npcName = level.random.nextBoolean() ? "Kanata" : "Kiriya";
-        player.sendSystemMessage(Component.literal("[" + npcName + "] You have failed Final Selection, but you may still serve the Demon Slayer Corps as a Kakushi. Will you accept?"));
+        boolean kanataSpeaker = level.random.nextBoolean();
+        player.sendSystemMessage(createSpeakerDialogue(
+            kanataSpeaker ? "entity.kimetsunoyaibamultiplayer.kanata" : "entity.kimetsunoyaibamultiplayer.kiriya",
+            kanataSpeaker ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.YELLOW,
+            Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.kakushi_offer")
+        ));
 
-        Component yes = Component.literal("\u00a7a\u00a7l[Yes]")
+        Component yes = Component.translatable("message.kimetsunoyaibamultiplayer.common.yes")
             .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent(
-                net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/finalselection kakushi accept")));
-        Component no = Component.literal("\u00a7c\u00a7l[No]")
+                net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/finalselection kakushi accept"))
+                .withColor(ChatFormatting.GREEN)
+                .withBold(true));
+        Component no = Component.translatable("message.kimetsunoyaibamultiplayer.common.no")
             .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent(
-                net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/finalselection kakushi decline")));
-        player.sendSystemMessage(Component.literal("\u00a76\u00a7l[Final Selection] ").append(yes).append(Component.literal(" ")).append(no));
+                net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/finalselection kakushi decline"))
+                .withColor(ChatFormatting.RED)
+                .withBold(true));
+        player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.prompt_prefix")
+            .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+            .append(Component.literal(" "))
+            .append(yes)
+            .append(Component.literal(" "))
+            .append(no));
     }
 
     private boolean isPlayerNearExit(ServerPlayer player) {
@@ -790,13 +826,18 @@ public class FinalSelectionProcedure {
         playerExitPromptCooldown.put(player.getUUID(), gameTime + EXIT_PROMPT_COOLDOWN_TICKS);
         playerExitPendingUntilTick.put(player.getUUID(), gameTime + EXIT_CONFIRM_TIMEOUT_TICKS);
 
-        Component prefix = Component.literal("\u00a76\u00a7l[Final Selection] \u00a7eLeave Mt. Fujikasane?");
-        Component yes = Component.literal("\u00a7a\u00a7l[Yes]")
+        Component prefix = Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.leave_prompt")
+            .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
+        Component yes = Component.translatable("message.kimetsunoyaibamultiplayer.common.yes")
             .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent(
-                net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/finalselection leave confirm")));
-        Component no = Component.literal("\u00a7c\u00a7l[No]")
+                net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/finalselection leave confirm"))
+                .withColor(ChatFormatting.GREEN)
+                .withBold(true));
+        Component no = Component.translatable("message.kimetsunoyaibamultiplayer.common.no")
             .withStyle(style -> style.withClickEvent(new net.minecraft.network.chat.ClickEvent(
-                net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/finalselection leave cancel")));
+                net.minecraft.network.chat.ClickEvent.Action.RUN_COMMAND, "/finalselection leave cancel"))
+                .withColor(ChatFormatting.RED)
+                .withBold(true));
         player.sendSystemMessage(prefix.copy().append(Component.literal(" ")).append(yes).append(Component.literal(" ")).append(no));
     }
 
@@ -979,7 +1020,8 @@ public class FinalSelectionProcedure {
             player.getPersistentData().putString(FINAL_SELECTION_ORE_STYLE_TAG, styleId);
         }
 
-        player.sendSystemMessage(Component.literal("\u00a7aYou selected " + selectedStack.getHoverName().getString() + "."));
+        player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.ore_selected", selectedStack.getHoverName())
+            .withStyle(ChatFormatting.GREEN));
         sendExitWaypoint(player);
     }
 
@@ -990,11 +1032,17 @@ public class FinalSelectionProcedure {
     /**
      * Send a chat message to all players in the Mt Fujikasane dimension.
      */
-    private void broadcastDialogue(String message) {
-        Component component = Component.literal(message);
+    private void broadcastDialogue(Component component) {
         for (ServerPlayer player : level.players()) {
             player.sendSystemMessage(component);
         }
+    }
+
+    private static Component createSpeakerDialogue(String speakerKey, ChatFormatting speakerColor, Component dialogue) {
+        return Component.literal("[")
+            .append(Component.translatable(speakerKey).copy().withStyle(speakerColor))
+            .append(Component.literal("] "))
+            .append(dialogue);
     }
 
     public boolean isFinished() {
@@ -1478,7 +1526,8 @@ public class FinalSelectionProcedure {
             return false;
         }
         if (!activeProcedure.raidEndCompletedPlayers.contains(player.getUUID())) {
-            player.sendSystemMessage(Component.literal("\u00a7cComplete Final Selection rewards first."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.complete_rewards_first")
+                .withStyle(ChatFormatting.RED));
             return false;
         }
 
@@ -1486,7 +1535,8 @@ public class FinalSelectionProcedure {
         long nowTick = player.serverLevel().getGameTime();
         if (pendingUntil == null || nowTick > pendingUntil) {
             activeProcedure.playerExitPendingUntilTick.remove(player.getUUID());
-            player.sendSystemMessage(Component.literal("\u00a7cNo pending exit confirmation."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.no_pending_exit")
+                .withStyle(ChatFormatting.RED));
             return false;
         }
 
@@ -1497,28 +1547,33 @@ public class FinalSelectionProcedure {
 
         ServerLevel overworld = player.server.getLevel(Level.OVERWORLD);
         if (overworld == null) {
-            player.sendSystemMessage(Component.literal("\u00a7cCould not find overworld to return you."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.overworld_missing")
+                .withStyle(ChatFormatting.RED));
             return false;
         }
 
         BlockPos spawn = overworld.getSharedSpawnPos();
         player.teleportTo(overworld, spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D, player.getYRot(), player.getXRot());
-        player.sendSystemMessage(Component.literal("\u00a7aReturned to overworld spawn."));
+        player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.returned_to_spawn")
+            .withStyle(ChatFormatting.GREEN));
         return true;
     }
 
     public static void cancelExit(ServerPlayer player) {
         if (activeProcedure == null || player == null) {
             if (player != null) {
-                player.sendSystemMessage(Component.literal("\u00a7cNo pending exit confirmation."));
+                player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.no_pending_exit")
+                    .withStyle(ChatFormatting.RED));
             }
             return;
         }
 
         if (activeProcedure.playerExitPendingUntilTick.remove(player.getUUID()) != null) {
-            player.sendSystemMessage(Component.literal("\u00a7eExit cancelled."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.exit_cancelled")
+                .withStyle(ChatFormatting.YELLOW));
         } else {
-            player.sendSystemMessage(Component.literal("\u00a7cNo pending exit confirmation."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.no_pending_exit")
+                .withStyle(ChatFormatting.RED));
         }
     }
 
@@ -1540,7 +1595,8 @@ public class FinalSelectionProcedure {
         long nowTick = player.serverLevel().getGameTime();
         if (pendingUntil == null || nowTick > pendingUntil) {
             activeProcedure.kakushiPendingUntilTick.remove(player.getUUID());
-            player.sendSystemMessage(Component.literal("\u00a7cNo Kakushi offer is pending."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.no_kakushi_offer")
+                .withStyle(ChatFormatting.RED));
             return false;
         }
 
@@ -1552,7 +1608,8 @@ public class FinalSelectionProcedure {
         activeProcedure.givePlayerItemOrDrop(player, new ItemStack(ModItems.KAKUSHI_UNIFORM_CHESTPLATE.get()));
         activeProcedure.givePlayerItemOrDrop(player, new ItemStack(ModItems.KAKUSHI_UNIFORM_LEGGINGS.get()));
         activeProcedure.givePlayerItemOrDrop(player, new ItemStack(ModItems.KAKUSHI_UNIFORM_BOOTS.get()));
-        player.sendSystemMessage(Component.literal("\u00a7aYou have joined the Kakushi and received your uniform."));
+        player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.kakushi_joined")
+            .withStyle(ChatFormatting.GREEN));
 
         if (TorilGateTeleportHandler.returnToPreviousPosition(player)) {
             return true;
@@ -1560,28 +1617,33 @@ public class FinalSelectionProcedure {
 
         ServerLevel overworld = player.server.getLevel(Level.OVERWORLD);
         if (overworld == null) {
-            player.sendSystemMessage(Component.literal("\u00a7cCould not find overworld to return you."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.overworld_missing")
+                .withStyle(ChatFormatting.RED));
             return false;
         }
 
         BlockPos spawn = overworld.getSharedSpawnPos();
         player.teleportTo(overworld, spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D, player.getYRot(), player.getXRot());
-        player.sendSystemMessage(Component.literal("\u00a7aReturned to overworld spawn."));
+        player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.returned_to_spawn")
+            .withStyle(ChatFormatting.GREEN));
         return true;
     }
 
     public static void declineKakushiOffer(ServerPlayer player) {
         if (activeProcedure == null || player == null) {
             if (player != null) {
-                player.sendSystemMessage(Component.literal("\u00a7cNo Kakushi offer is pending."));
+                player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.no_kakushi_offer")
+                    .withStyle(ChatFormatting.RED));
             }
             return;
         }
 
         if (activeProcedure.kakushiPendingUntilTick.remove(player.getUUID()) != null) {
-            player.sendSystemMessage(Component.literal("\u00a7eKakushi offer declined."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.kakushi_declined")
+                .withStyle(ChatFormatting.YELLOW));
         } else {
-            player.sendSystemMessage(Component.literal("\u00a7cNo Kakushi offer is pending."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.no_kakushi_offer")
+                .withStyle(ChatFormatting.RED));
         }
     }
 

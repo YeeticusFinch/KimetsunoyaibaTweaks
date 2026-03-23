@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CrowGeoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.AfterImageRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.CushionSeatRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerFemaleRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.FlowerPetalSlashRenderer;
@@ -60,6 +61,9 @@ public class CrowRendererManager {
 
         // Register renderer for flower petal slash entity (Flower Breathing slash effect)
         event.registerEntityRenderer(ModEntities.FLOWER_PETAL_SLASH.get(), FlowerPetalSlashRenderer::new);
+
+        // Register no-op renderer for invisible cushion seat mount
+        event.registerEntityRenderer(ModEntities.CUSHION_SEAT.get(), CushionSeatRenderer::new);
 
         // Register renderers for generic demon slayers
         event.registerEntityRenderer(ModEntities.DEMON_SLAYER.get(), DemonSlayerRenderer::new);

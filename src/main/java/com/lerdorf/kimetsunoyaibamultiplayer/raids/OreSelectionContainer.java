@@ -1,6 +1,10 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.raids;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinOreItem;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -39,6 +43,26 @@ public class OreSelectionContainer extends SimpleContainer {
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
         return false;
+    }
+
+    @Override
+    public void stopOpen(Player player) {
+        super.stopOpen(player);
+
+        if (selectionComplete || player.level().isClientSide()) {
+            return;
+        }
+
+        Component reopen = Component.literal("[Open Ore Selection]")
+            .withStyle(style -> style
+                .withColor(ChatFormatting.GREEN)
+                .withUnderlined(true)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/oreselect"))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    Component.literal("Click to reopen the ore selection menu"))));
+
+        player.sendSystemMessage(Component.literal("You closed the ore selection. Want to open it again? ")
+            .append(reopen));
     }
 
     @Override

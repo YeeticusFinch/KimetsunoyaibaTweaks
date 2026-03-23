@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.StyleMetadataRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordMetadataRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
@@ -65,6 +66,7 @@ public class ColorChangeProcedureOverride {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        Log.startupProbeOnce("ColorChangeProcedureOverride.onPlayerTick");
 
         Player player = event.player;
         if (player.level().isClientSide()) {
@@ -124,8 +126,8 @@ public class ColorChangeProcedureOverride {
             tag.putDouble(CNT_X_TAG, 0.0);
 
             if (CustomProgressionConfig.enableDebugLogging.get()) {
-                System.out.println("[KnY-MP ColorChangeOverride] Performed custom transformation for " +
-                    player.getName().getString() + " at cnt_x=" + cntX);
+                Log.debug("[KnY-MP ColorChangeOverride] Performed custom transformation for {} at cnt_x={}",
+                    player.getName().getString(), cntX);
             }
         }
         // Note: We intentionally do NOT reset cnt_x every tick anymore.
@@ -147,10 +149,10 @@ public class ColorChangeProcedureOverride {
 
         if (Config.logDebug)
             for (StyleMetadataRegistry.StyleMetadata style : eligibleStyles)
-                System.out.println("[Eligible Style] " + style.getStyleId());
+                Log.debug("[Eligible Style] {}", style.getStyleId());
 
         if (eligibleStyles.isEmpty()) {
-            System.out.println("[KnY-MP ColorChangeOverride] No color-change-eligible styles registered!");
+            Log.warn("[KnY-MP ColorChangeOverride] No color-change-eligible styles registered!");
             return;
         }
 
@@ -158,7 +160,7 @@ public class ColorChangeProcedureOverride {
         StyleMetadataRegistry.StyleMetadata chosenStyle =
             PlayerColorChangeStyleHelper.resolveOrAssignColorChangeStyle(player, eligibleStyles);
         if (chosenStyle == null) {
-            System.out.println("[KnY-MP ColorChangeOverride] Failed to resolve player style for color change");
+            Log.warn("[KnY-MP ColorChangeOverride] Failed to resolve player style for color change");
             return;
         }
 
@@ -166,8 +168,7 @@ public class ColorChangeProcedureOverride {
         List<Item> eligibleSwords = getEligibleSwordsForStyle(chosenStyle.getStyleId());
 
         if (eligibleSwords.isEmpty()) {
-            System.out.println("[KnY-MP ColorChangeOverride] No level-0 swords found for style: " +
-                chosenStyle.getStyleId());
+            Log.warn("[KnY-MP ColorChangeOverride] No level-0 swords found for style: {}", chosenStyle.getStyleId());
             return;
         }
 
@@ -175,10 +176,8 @@ public class ColorChangeProcedureOverride {
         Item chosenSword = eligibleSwords.get(RANDOM.nextInt(eligibleSwords.size()));
         ResourceLocation swordId = ForgeRegistries.ITEMS.getKey(chosenSword);
 
-        System.out.println("[KnY-MP ColorChangeOverride] Transforming sword for " +
-            player.getName().getString() + " -> " + swordId +
-            " (style: " + chosenStyle.getStyleId() + ")" +
-            (wasTrainingSword ? " [Training Sword]" : ""));
+        Log.info("[KnY-MP ColorChangeOverride] Transforming sword for {} -> {} (style: {}){}",
+            player.getName().getString(), swordId, chosenStyle.getStyleId(), wasTrainingSword ? " [Training Sword]" : "");
 
         // Create the new sword item stack - DO NOT copy metadata from original sword
         // The new sword should start fresh with its default properties
@@ -187,8 +186,8 @@ public class ColorChangeProcedureOverride {
         if (newSword.getItem() instanceof NichirinSwordBlack) {
             String blackSwordStyle = NichirinSwordBlack.assignRememberedStyle(newSword, player, player.getRandom());
             if (blackSwordStyle != null) {
-                System.out.println("[KnY-MP ColorChangeOverride] Applied black sword style for " +
-                    player.getName().getString() + ": " + blackSwordStyle);
+                Log.info("[KnY-MP ColorChangeOverride] Applied black sword style for {}: {}",
+                    player.getName().getString(), blackSwordStyle);
             }
         }
 
@@ -198,7 +197,7 @@ public class ColorChangeProcedureOverride {
             if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                 TrainingSwordAdvancementHelper.awardTrainingSwordAdvancement(serverPlayer, chosenStyle.getStyleId());
             }
-            System.out.println("[KnY-MP ColorChangeOverride] Applied training sword tag to new sword");
+            Log.info("[KnY-MP ColorChangeOverride] Applied training sword tag to new sword");
         }
 
         // Replace the sword in the player's hand
@@ -296,8 +295,8 @@ public class ColorChangeProcedureOverride {
             if (currentName.contains("Training")) {
                 sword.setHoverName(Component.literal(expectedTrainingName).withStyle(style -> style.withItalic(false)));
 
-                System.out.println("[KnY-MP ColorChangeOverride] Fixed training sword name for " +
-                    player.getName().getString() + ": '" + currentName + "' -> '" + expectedTrainingName + "'");
+                Log.info("[KnY-MP ColorChangeOverride] Fixed training sword name for {}: '{}' -> '{}'",
+                    player.getName().getString(), currentName, expectedTrainingName);
             }
         }
     }

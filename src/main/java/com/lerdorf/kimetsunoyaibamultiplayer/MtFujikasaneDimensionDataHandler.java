@@ -266,18 +266,6 @@ public class MtFujikasaneDimensionDataHandler {
         Log.debug("[Mt Fujikasane] World border configured: " +
             (int)WORLD_BORDER_SIZE + "x" + (int)WORLD_BORDER_SIZE +
             " blocks centered at (" + (int)WORLD_BORDER_CENTER_X + ", " + (int)WORLD_BORDER_CENTER_Z + ")");
-
-        // Ensure region files exist for this world in the background
-        IO_EXECUTOR.execute(() -> {
-            try {
-                // If cache not ready or missing, attempt to prepare it (non-blocking safety)
-                ensureCacheUpToDate();
-                ensureWorldPrepared(serverLevel.getServer(), true);
-            } catch (Exception e) {
-                System.err.println("[Mt Fujikasane] Error ensuring world is prepared:");
-                e.printStackTrace();
-            }
-        });
     }
 
     @SubscribeEvent
@@ -499,7 +487,7 @@ public class MtFujikasaneDimensionDataHandler {
             .resolve("mt_fujikasane");
         Path regionDir = dimensionDir.resolve("region");
 
-        boolean needsCopy = !Files.exists(regionDir) || isDirectoryEmpty(regionDir) || !worldHasVersionFile(regionDir);
+        boolean needsCopy = !Files.exists(regionDir) || isDirectoryEmpty(regionDir);
 
         if (!needsCopy) {
             return;

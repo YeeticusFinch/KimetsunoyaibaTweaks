@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
@@ -16,6 +17,9 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
 public class EyesGlowLayer<T extends LivingEntity & GeoEntity> extends GeoRenderLayer<T> {
+    private static final float PULSE_PERIOD_TICKS = 40.0F;
+    private static final float BASE_BRIGHTNESS = 1.35F;
+    private static final float PEAK_BRIGHTNESS = 2.35F;
     private final GeoModel<T> overlayModel;
 
     public EyesGlowLayer(GeoRenderer<T> renderer, String modelPath, String texturePath, String animationPath) {
@@ -46,6 +50,7 @@ public class EyesGlowLayer<T extends LivingEntity & GeoEntity> extends GeoRender
         RenderType overlayRenderType = CustomRenderTypes.geoEntityTranslucentEmissive(
             overlayModel.getTextureResource(animatable)
         );
+        float brightness = getPulsingBrightness(animatable, partialTick);
 
         getRenderer().reRender(
             overlayBakedModel,
@@ -57,10 +62,16 @@ public class EyesGlowLayer<T extends LivingEntity & GeoEntity> extends GeoRender
             partialTick,
             0xF000F0,
             OverlayTexture.NO_OVERLAY,
-            1.35F,
-            1.35F,
-            1.35F,
+            brightness,
+            brightness,
+            brightness,
             1.0F
         );
+    }
+
+    private static float getPulsingBrightness(LivingEntity animatable, float partialTick) {
+        float cycleProgress = ((animatable.tickCount + partialTick) % PULSE_PERIOD_TICKS) / PULSE_PERIOD_TICKS;
+        float pulse = 0.5F + 0.5F * Mth.sin((cycleProgress * ((float) Math.PI * 2.0F)) - ((float) Math.PI / 2.0F));
+        return Mth.lerp(pulse, BASE_BRIGHTNESS, PEAK_BRIGHTNESS);
     }
 }

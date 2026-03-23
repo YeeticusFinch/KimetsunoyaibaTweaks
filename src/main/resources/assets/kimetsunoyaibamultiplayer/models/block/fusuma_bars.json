@@ -1,0 +1,9 @@
+{
+  "parent": "kimetsunoyaibamultiplayer:custom/fusuma_bars",
+  "textures": {
+    "all": "kimetsunoyaibamultiplayer:block/fusuma_bars",
+    "particle": "kimetsunoyaibamultiplayer:block/fusuma_bars",
+    "0": "kimetsunoyaibamultiplayer:block/fusuma_bars"
+  },
+  "render_type": "cutout"
+}

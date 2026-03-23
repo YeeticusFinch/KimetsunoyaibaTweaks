@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.blocks;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.FinalSelectionProcedure;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -104,21 +105,24 @@ public class TorilGateTeleportHandler {
     }
 
     private static void sendConfirmationMessage(ServerPlayer player) {
-        MutableComponent message = Component.literal("")
-            .append(Component.literal("\u00a76\u00a7l[Toril Gate] ")
-                .append(Component.literal("\u00a7eDo you wish to enter Final Selection? ")));
+        MutableComponent message = Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.enter_prompt")
+            .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD);
 
-        MutableComponent yes = Component.literal("\u00a7a\u00a7l[Yes]")
+        MutableComponent yes = Component.translatable("message.kimetsunoyaibamultiplayer.common.yes")
             .withStyle(Style.EMPTY
+                .withColor(ChatFormatting.GREEN)
+                .withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/torilgate confirm"))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                    Component.literal("Teleport to Mt. Fujikasane"))));
+                    Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.hover.confirm"))));
 
-        MutableComponent no = Component.literal("\u00a7c\u00a7l[No]")
+        MutableComponent no = Component.translatable("message.kimetsunoyaibamultiplayer.common.no")
             .withStyle(Style.EMPTY
+                .withColor(ChatFormatting.RED)
+                .withBold(true)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/torilgate cancel"))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                    Component.literal("Cancel teleportation"))));
+                    Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.hover.cancel"))));
 
         message.append(yes).append(Component.literal(" ")).append(no);
 
@@ -134,18 +138,21 @@ public class TorilGateTeleportHandler {
         Long pendingExpiry = PENDING.get(uuid);
 
         if (pendingExpiry == null) {
-            player.sendSystemMessage(Component.literal("\u00a7cNo pending gate teleportation."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.no_pending")
+                .withStyle(ChatFormatting.RED));
             return false;
         }
 
         if (now > pendingExpiry) {
             PENDING.remove(uuid);
-            player.sendSystemMessage(Component.literal("\u00a7cTeleportation request has expired."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.expired")
+                .withStyle(ChatFormatting.RED));
             return false;
         }
 
         if (!isPlayerInGate(uuid, now)) {
-            player.sendSystemMessage(Component.literal("\u00a7cYou must be inside the Toril Gate to confirm."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.must_be_inside")
+                .withStyle(ChatFormatting.RED));
             return false;
         }
 
@@ -157,14 +164,16 @@ public class TorilGateTeleportHandler {
         // Get target dimension
         ServerLevel targetLevel = player.getServer().getLevel(MT_FUJIKASANE_KEY);
         if (targetLevel == null) {
-            player.sendSystemMessage(Component.literal("\u00a7cMt. Fujikasane dimension not found!"));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.dimension_missing")
+                .withStyle(ChatFormatting.RED));
             Log.debug("Mt. Fujikasane dimension not available");
             return false;
         }
 
         // Teleport
         player.teleportTo(targetLevel, TARGET_X, TARGET_Y, TARGET_Z, TARGET_YAW, TARGET_PITCH);
-        player.sendSystemMessage(Component.literal("\u00a76\u00a7lWelcome to Final Selection."));
+        player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.welcome")
+            .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
         Log.debug("Teleported " + player.getName().getString() + " to Mt. Fujikasane via toril gate");
 
         // Start or join the final selection procedure
@@ -184,9 +193,11 @@ public class TorilGateTeleportHandler {
     public static void cancelTeleport(ServerPlayer player) {
         UUID uuid = player.getUUID();
         if (PENDING.remove(uuid) != null) {
-            player.sendSystemMessage(Component.literal("\u00a7eTeleportation cancelled."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.cancelled")
+                .withStyle(ChatFormatting.YELLOW));
         } else {
-            player.sendSystemMessage(Component.literal("\u00a7cNo pending gate teleportation."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.no_pending")
+                .withStyle(ChatFormatting.RED));
         }
     }
 
@@ -197,7 +208,8 @@ public class TorilGateTeleportHandler {
     public static boolean returnToPreviousPosition(ServerPlayer player) {
         CompoundTag persistentData = player.getPersistentData();
         if (!persistentData.contains(RETURN_TAG)) {
-            player.sendSystemMessage(Component.literal("\u00a7cNo return position stored."));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.no_return_position")
+                .withStyle(ChatFormatting.RED));
             return false;
         }
 
@@ -211,7 +223,8 @@ public class TorilGateTeleportHandler {
 
         ResourceLocation dimLocation = ResourceLocation.tryParse(dimId);
         if (dimLocation == null) {
-            player.sendSystemMessage(Component.literal("\u00a7cInvalid return dimension!"));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.invalid_return_dimension")
+                .withStyle(ChatFormatting.RED));
             persistentData.remove(RETURN_TAG);
             return false;
         }
@@ -219,14 +232,16 @@ public class TorilGateTeleportHandler {
         ResourceKey<Level> returnDimKey = ResourceKey.create(Registries.DIMENSION, dimLocation);
         ServerLevel returnLevel = player.getServer().getLevel(returnDimKey);
         if (returnLevel == null) {
-            player.sendSystemMessage(Component.literal("\u00a7cReturn dimension not found!"));
+            player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.return_dimension_missing")
+                .withStyle(ChatFormatting.RED));
             persistentData.remove(RETURN_TAG);
             return false;
         }
 
         player.teleportTo(returnLevel, x, y, z, yaw, pitch);
         persistentData.remove(RETURN_TAG);
-        player.sendSystemMessage(Component.literal("\u00a7aYou have returned to your previous position."));
+        player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.returned")
+            .withStyle(ChatFormatting.GREEN));
         Log.debug("Returned " + player.getName().getString() + " to " + dimId + " via toril gate return");
 
         return true;

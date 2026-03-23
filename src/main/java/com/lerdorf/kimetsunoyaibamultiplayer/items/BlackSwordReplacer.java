@@ -28,6 +28,7 @@ public class BlackSwordReplacer {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        Log.startupProbeOnce("BlackSwordReplacer.onPlayerTick");
 
         Player player = event.player;
         if (player.level().isClientSide) {

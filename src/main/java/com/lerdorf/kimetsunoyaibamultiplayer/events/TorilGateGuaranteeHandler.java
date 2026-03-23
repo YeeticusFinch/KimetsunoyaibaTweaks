@@ -49,6 +49,7 @@ public class TorilGateGuaranteeHandler {
     private static final int WISTERIA_TREE_COUNT = 8;
     private static final int MARKER_SCAN_XZ_RADIUS = 24;
     private static final int MARKER_SCAN_Y_RADIUS = 12;
+    private static final long ESTABLISHED_WORLD_SKIP_GAME_TIME = 200L;
 
     private static final TagKey<Structure> TORIL_GATE_TAG = TagKey.create(
         Registries.STRUCTURE,
@@ -66,15 +67,22 @@ public class TorilGateGuaranteeHandler {
 
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
-        System.out.println(CONSOLE_PREFIX + "ServerStartedEvent fired for overworld guarantee check.");
+        Log.info(CONSOLE_PREFIX + "ServerStartedEvent fired for overworld guarantee check.");
 
         if (!CustomProgressionConfig.guaranteeTorilGateNearOrigin.get()) {
-            System.out.println(CONSOLE_PREFIX + "Disabled by config.");
+            Log.info(CONSOLE_PREFIX + "Disabled by config.");
             return;
         }
 
         ServerLevel overworld = event.getServer().getLevel(Level.OVERWORLD);
         if (overworld == null) {
+            return;
+        }
+
+        long existingGameTime = overworld.getGameTime();
+        if (existingGameTime > ESTABLISHED_WORLD_SKIP_GAME_TIME) {
+            Log.warn(CONSOLE_PREFIX + "Skipping near-origin Toril Gate guarantee for established world (gameTime={}).",
+                existingGameTime);
             return;
         }
 
@@ -88,19 +96,18 @@ public class TorilGateGuaranteeHandler {
                 state.completed = true;
                 state.setDirty();
             }
-            System.out.println(CONSOLE_PREFIX + "Already satisfied (guaranteed=" + guaranteedStateValid +
-                ", natural=" + naturalGateValid + ").");
+            Log.info(CONSOLE_PREFIX + "Already satisfied (guaranteed={}, natural={}).", guaranteedStateValid, naturalGateValid);
             return;
         }
 
         if (state.completed) {
-            System.out.println(CONSOLE_PREFIX + "State was marked completed but no valid gate found in 300-6000 range. Re-generating.");
+            Log.warn(CONSOLE_PREFIX + "State was marked completed but no valid gate found in 300-6000 range. Re-generating.");
             state.completed = false;
             state.setDirty();
         }
 
         activeJob = new SearchJob(overworld, state);
-        System.out.println(CONSOLE_PREFIX + "Scheduled non-blocking guarantee search.");
+        Log.info(CONSOLE_PREFIX + "Scheduled non-blocking guarantee search.");
     }
 
     @SubscribeEvent
@@ -121,7 +128,7 @@ public class TorilGateGuaranteeHandler {
                 activeJob = null;
             }
         } catch (Exception e) {
-            System.out.println(CONSOLE_PREFIX + "Error during tick search: " + e.getMessage());
+            Log.warn(CONSOLE_PREFIX + "Error during tick search: {}", e.getMessage());
             Log.error("Error during toril gate guarantee tick search: {}", e.getMessage());
             activeJob = null;
         }
@@ -135,7 +142,7 @@ public class TorilGateGuaranteeHandler {
         boolean placed = placeTorilGate(level, placementPos);
         if (!placed) {
             Log.error("Failed to place guaranteed toril gate at {}", placementPos);
-            System.out.println(CONSOLE_PREFIX + "Structure placement failed at " + placementPos.getX() + " ~ " + placementPos.getZ());
+            Log.warn(CONSOLE_PREFIX + "Structure placement failed at {} ~ {}", placementPos.getX(), placementPos.getZ());
             return;
         }
 
@@ -148,7 +155,7 @@ public class TorilGateGuaranteeHandler {
         }
         state.setDirty();
         Log.info("Placed guaranteed toril gate near origin at {} ~ {}", placementPos.getX(), placementPos.getZ());
-        System.out.println(CONSOLE_PREFIX + "Placed guaranteed toril gate at " + placementPos.getX() + " ~ " + placementPos.getZ());
+        Log.info(CONSOLE_PREFIX + "Placed guaranteed toril gate at {} ~ {}", placementPos.getX(), placementPos.getZ());
     }
 
     public static BlockPos getGuaranteedGateMarker(ServerLevel level) {
@@ -458,8 +465,7 @@ public class TorilGateGuaranteeHandler {
             for (int i = 0; i < SEARCH_ATTEMPTS_PER_TICK; i++) {
                 BlockPos placementPos = tryFindNonOceanSite(level, currentMinRadius, currentMaxRadius, 1);
                 if (placementPos != null) {
-                    System.out.println(CONSOLE_PREFIX + "Found placement site in band " +
-                        currentMinRadius + "-" + currentMaxRadius + " blocks.");
+                    Log.info(CONSOLE_PREFIX + "Found placement site in band {}-{} blocks.", currentMinRadius, currentMaxRadius);
                     applyGuaranteePlacement(level, state, placementPos);
                     finished = true;
                     return;
@@ -472,8 +478,8 @@ public class TorilGateGuaranteeHandler {
 
                 round++;
                 if (round > maxRounds) {
-                    System.out.println(CONSOLE_PREFIX + "Failed to find non-ocean placement site after expansion up to " +
-                        GUARANTEE_HARD_MAX_RADIUS_BLOCKS + " blocks.");
+                    Log.warn(CONSOLE_PREFIX + "Failed to find non-ocean placement site after expansion up to {} blocks.",
+                        GUARANTEE_HARD_MAX_RADIUS_BLOCKS);
                     Log.warn("Failed to find non-ocean placement site after expansion up to {} blocks",
                         GUARANTEE_HARD_MAX_RADIUS_BLOCKS);
                     finished = true;
@@ -481,8 +487,8 @@ public class TorilGateGuaranteeHandler {
                 }
 
                 applyRoundSettings();
-                System.out.println(CONSOLE_PREFIX + "Expansion round " + round + ": trying band " +
-                    currentMinRadius + "-" + currentMaxRadius + " blocks.");
+                Log.info(CONSOLE_PREFIX + "Expansion round {}: trying band {}-{} blocks.",
+                    round, currentMinRadius, currentMaxRadius);
             }
         }
 

@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechniq
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -142,14 +143,14 @@ public abstract class BreathingSwordItem extends SwordItem {
                 if (!level.isClientSide) {
                     variation.getEffect().execute(player, level, form.getFormId());
                     BreathingFormAnnouncementHelper.announceCustomForm(
-                        player, technique.getName(), technique.getTechniqueColor(), displayName);
+                        player, variation.getDisplayName(), technique.getTechniqueColor());
                     // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
                     player.getCooldowns().addCooldown(this, cooldownTicks);
                 }
 
                 // Send action bar message
-                player.displayClientMessage(Component.literal("§b" + displayName), true);
+                player.displayClientMessage(variation.getDisplayName().copy().withStyle(style -> style.withColor(0x55FFFF)), true);
                 return InteractionResultHolder.success(stack);
             } else {
                 if (level.isClientSide) {
@@ -186,14 +187,14 @@ public abstract class BreathingSwordItem extends SwordItem {
                 if (!level.isClientSide) {
                     form.execute(player, level);
                     BreathingFormAnnouncementHelper.announceCustomForm(
-                        player, technique.getName(), technique.getTechniqueColor(), displayName);
+                        player, form.getDisplayName(), technique.getTechniqueColor());
                     // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
                     player.getCooldowns().addCooldown(this, cooldownTicks);
                 }
 
                 // Send action bar message (both sides for immediate feedback)
-                player.displayClientMessage(Component.literal("§b" + displayName), true);
+                player.displayClientMessage(form.getDisplayName().copy().withStyle(style -> style.withColor(0x55FFFF)), true);
                 return InteractionResultHolder.success(stack);
             } else {
                 // Still on cooldown
@@ -310,13 +311,11 @@ public abstract class BreathingSwordItem extends SwordItem {
             // Using bold text and technique-specific colors
             // Only send on server to avoid duplicate messages
             if (!player.level().isClientSide && !com.lerdorf.kimetsunoyaibamultiplayer.Config.suppressFormCycleChat) {
-                String techniqueColor = technique.getTechniqueColor();
-                String formColor = technique.getFormColor();
-
-                // Format: §l§<color>Technique Name §l§<color>Form Name
-                String message = "§l" + techniqueColor + technique.getName() + " §r§l" + formColor + form.getName();
-
-                player.sendSystemMessage(Component.literal(message));
+                player.sendSystemMessage(
+                    LocalizationHelper.breathingStyleFromFormId(form.getFormId(), technique.getName()).copy()
+                        .append(Component.literal(" "))
+                        .append(form.getDisplayName())
+                );
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.raids;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -53,6 +54,7 @@ public class StructureLocationCache {
 
     // Per-dimension cache: position -> structure info
     private static final Map<ResourceLocation, Map<BlockPos, CachedStructure>> DIMENSION_CACHES = new HashMap<>();
+    private static final Map<ResourceLocation, Map<BlockPos, Long>> NEGATIVE_CACHES = new HashMap<>();
 
     /**
      * Find the structure at a given position (with caching).
@@ -68,15 +70,23 @@ public class StructureLocationCache {
         Map<BlockPos, CachedStructure> dimensionCache = DIMENSION_CACHES.computeIfAbsent(
             dimensionId, k -> new HashMap<>()
         );
+        Map<BlockPos, Long> negativeCache = NEGATIVE_CACHES.computeIfAbsent(
+            dimensionId, k -> new HashMap<>()
+        );
 
         // Check cache first
         CachedStructure cached = dimensionCache.get(pos);
         if (cached != null && cached.isValid(CACHE_DURATION_MS)) {
             return Optional.of(cached);
         }
+        Long negativeCachedAt = negativeCache.get(pos);
+        if (negativeCachedAt != null && (System.currentTimeMillis() - negativeCachedAt) < CACHE_DURATION_MS) {
+            return Optional.empty();
+        }
 
         // Cache miss - search for structure
         try {
+            long searchStart = System.currentTimeMillis();
             var structureManager = level.structureManager();
 
             for (Holder<Structure> structureHolder : level.registryAccess()
@@ -101,16 +111,30 @@ public class StructureLocationCache {
                             // Cache and return
                             CachedStructure newCached = new CachedStructure(structureId, center);
                             dimensionCache.put(pos, newCached);
+                            negativeCache.remove(pos);
                             return Optional.of(newCached);
                         }
                     }
                 }
+            }
+
+            long elapsedMs = System.currentTimeMillis() - searchStart;
+            if (elapsedMs >= 50L) {
+                Log.debugVisibleEvery(
+                    "structure-scan:" + dimensionId + ":" + pos.asLong(),
+                    5000L,
+                    "Structure scan took {} ms at {} in {} and found nothing",
+                    elapsedMs,
+                    pos,
+                    dimensionId
+                );
             }
         } catch (Exception e) {
             System.err.println("[Structure Cache] Error searching for structure: " + e.getMessage());
         }
 
         // No structure found - cache negative result with null
+        negativeCache.put(pos.immutable(), System.currentTimeMillis());
         return Optional.empty();
     }
 
@@ -121,6 +145,7 @@ public class StructureLocationCache {
      */
     public static void clearDimension(ResourceLocation dimensionId) {
         DIMENSION_CACHES.remove(dimensionId);
+        NEGATIVE_CACHES.remove(dimensionId);
     }
 
     /**
@@ -128,6 +153,7 @@ public class StructureLocationCache {
      */
     public static void clearAll() {
         DIMENSION_CACHES.clear();
+        NEGATIVE_CACHES.clear();
     }
 
     /**
@@ -140,9 +166,14 @@ public class StructureLocationCache {
                 entry -> !entry.getValue().isValid(CACHE_DURATION_MS)
             );
         }
+        for (Map<BlockPos, Long> negativeCache : NEGATIVE_CACHES.values()) {
+            long now = System.currentTimeMillis();
+            negativeCache.entrySet().removeIf(entry -> (now - entry.getValue()) >= CACHE_DURATION_MS);
+        }
 
         // Remove empty dimension caches
         DIMENSION_CACHES.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+        NEGATIVE_CACHES.entrySet().removeIf(entry -> entry.getValue().isEmpty());
     }
 
     /**
@@ -166,6 +197,9 @@ public class StructureLocationCache {
         int totalDimensions = DIMENSION_CACHES.size();
 
         for (Map<BlockPos, CachedStructure> cache : DIMENSION_CACHES.values()) {
+            totalEntries += cache.size();
+        }
+        for (Map<BlockPos, Long> cache : NEGATIVE_CACHES.values()) {
             totalEntries += cache.size();
         }
 

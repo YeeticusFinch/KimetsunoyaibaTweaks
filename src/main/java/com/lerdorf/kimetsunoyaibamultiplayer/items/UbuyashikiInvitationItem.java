@@ -51,20 +51,20 @@ public class UbuyashikiInvitationItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal("A formal invitation from")
+        tooltip.add(Component.translatable("tooltip.kimetsunoyaibamultiplayer.ubuyashiki_invitation.line1")
             .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("Kagaya Ubuyashiki himself")
+        tooltip.add(Component.translatable("tooltip.kimetsunoyaibamultiplayer.ubuyashiki_invitation.line2")
             .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("to join the Demon Slayer")
+        tooltip.add(Component.translatable("tooltip.kimetsunoyaibamultiplayer.ubuyashiki_invitation.line3")
             .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("Corps. Procede to the")
+        tooltip.add(Component.translatable("tooltip.kimetsunoyaibamultiplayer.ubuyashiki_invitation.line4")
             .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("nearest Toril Gate to")
+        tooltip.add(Component.translatable("tooltip.kimetsunoyaibamultiplayer.ubuyashiki_invitation.line5")
             .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("enter final selection.")
+        tooltip.add(Component.translatable("tooltip.kimetsunoyaibamultiplayer.ubuyashiki_invitation.line6")
             .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.empty());
-        tooltip.add(Component.literal("Right-click to locate the nearest Toril Gate.")
+        tooltip.add(Component.translatable("tooltip.kimetsunoyaibamultiplayer.ubuyashiki_invitation.hint")
             .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC));
     }
 

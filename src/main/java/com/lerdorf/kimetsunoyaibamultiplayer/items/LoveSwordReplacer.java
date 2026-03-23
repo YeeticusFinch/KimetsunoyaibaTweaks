@@ -37,6 +37,7 @@ public class LoveSwordReplacer {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        Log.startupProbeOnce("LoveSwordReplacer.onPlayerTick");
 
         Player player = event.player;
         if (player.level().isClientSide) {

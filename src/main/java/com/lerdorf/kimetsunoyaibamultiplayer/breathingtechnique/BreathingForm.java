@@ -1,5 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
+import net.minecraft.network.chat.Component;
+
 /**
  * Represents a single breathing form with its animations, particles, sounds, and effects
  */
@@ -24,6 +27,14 @@ public class BreathingForm {
 
     public String getName() {
         return name;
+    }
+
+    public String getTranslationKey() {
+        return LocalizationHelper.breathingFormKey(formId);
+    }
+
+    public Component getDisplayName() {
+        return LocalizationHelper.breathingForm(formId);
     }
 
     public String getDescription() {

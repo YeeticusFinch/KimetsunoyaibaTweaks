@@ -103,6 +103,7 @@ public class EntityReplacerHandler {
      */
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+        long startNanos = System.nanoTime();
         // Only run on server side
         if (event.getLevel().isClientSide()) {
             return;
@@ -112,6 +113,7 @@ public class EntityReplacerHandler {
         if (entity == null) {
             return;
         }
+        Log.startupProbeOnce("EntityReplacerHandler.onEntityJoinLevel");
 
         // Get entity type ID
         ResourceLocation entityTypeId = EntityType.getKey(entity.getType());
@@ -249,6 +251,17 @@ public class EntityReplacerHandler {
         } catch (Exception e) {
             System.err.println("[Entity Replacer] Error replacing entity: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            Log.debugVisibleIfSlow(
+                "entity-replacer-join",
+                startNanos,
+                25L,
+                "EntityReplacerHandler.onEntityJoinLevel entity={} pos={}, {}, {}",
+                entityTypeId,
+                entity.getBlockX(),
+                entity.getBlockY(),
+                entity.getBlockZ()
+            );
         }
     }
 

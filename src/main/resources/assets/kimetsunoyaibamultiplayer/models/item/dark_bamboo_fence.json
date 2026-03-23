@@ -1,0 +1,7 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "kimetsunoyaibamultiplayer:block/dark_bamboo_fence"
+  },
+  "render_type": "cutout"
+}

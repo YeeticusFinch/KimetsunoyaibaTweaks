@@ -15,8 +15,8 @@ public final class BreathingFormAnnouncementHelper {
     private BreathingFormAnnouncementHelper() {
     }
 
-    public static void announceCustomForm(LivingEntity source, String techniqueName, String techniqueColor, String formName) {
-        if (source == null || formName == null || formName.isBlank()) {
+    public static void announceCustomForm(LivingEntity source, Component formName, String techniqueColor) {
+        if (source == null || formName == null) {
             return;
         }
 
@@ -27,7 +27,7 @@ public final class BreathingFormAnnouncementHelper {
             return;
         }
 
-        announce(source, buildTechniqueAwareFormName(techniqueName, formName), techniqueColor);
+        announce(source, formName, techniqueColor);
     }
 
     public static void announceBaseModForm(LivingEntity source, int formId) {
@@ -43,10 +43,10 @@ public final class BreathingFormAnnouncementHelper {
             return;
         }
 
-        announce(source, buildTechniqueAwareFormName(resolveBaseModTechniqueName(formId), baseForm.name), baseForm.color);
+        announce(source, LocalizationHelper.breathingForm(formId), baseForm.color);
     }
 
-    private static void announce(LivingEntity source, String formName, String colorCode) {
+    private static void announce(LivingEntity source, Component formName, String colorCode) {
         if (!(source.level() instanceof ServerLevel serverLevel)) {
             return;
         }
@@ -54,7 +54,7 @@ public final class BreathingFormAnnouncementHelper {
         double radius = Config.breathingFormAnnouncementRadius;
         double radiusSq = radius * radius;
         MutableComponent message = Component.literal("<" + source.getName().getString() + "> ");
-        MutableComponent formComponent = Component.literal(formName);
+        MutableComponent formComponent = formName.copy();
         ChatFormatting color = parseLegacyColor(colorCode);
         if (color != null) {
             formComponent.withStyle(color);
@@ -69,43 +69,6 @@ public final class BreathingFormAnnouncementHelper {
                 nearbyPlayer.sendSystemMessage(message);
             }
         }
-    }
-
-    private static String buildTechniqueAwareFormName(String techniqueName, String formName) {
-        if (techniqueName == null || techniqueName.isBlank()) {
-            return formName;
-        }
-
-        String normalizedTechnique = techniqueName.trim().toLowerCase();
-        String normalizedForm = formName.trim().toLowerCase();
-        if (normalizedForm.contains(normalizedTechnique)) {
-            return formName;
-        }
-
-        return techniqueName + " " + formName;
-    }
-
-    private static String resolveBaseModTechniqueName(int formId) {
-        int styleRange = (formId / 100) * 100;
-        return switch (styleRange) {
-            case 0 -> "Bamboo Breathing";
-            case 100 -> "Water Breathing";
-            case 200 -> "Beast Breathing";
-            case 300 -> "Thunder Breathing";
-            case 400 -> "Flame Breathing";
-            case 500 -> "Wind Breathing";
-            case 600, 1600 -> "Stone Breathing";
-            case 700 -> "Mist Breathing";
-            case 800 -> "Serpent Breathing";
-            case 900 -> "Sound Breathing";
-            case 1100 -> "Moon Breathing";
-            case 1200 -> "Sun Breathing";
-            case 1300 -> "Flower Breathing";
-            case 1400 -> "Insect Breathing";
-            case 1500 -> "Love Breathing";
-            case 1800 -> "Sakura Breathing";
-            default -> "";
-        };
     }
 
     private static ChatFormatting parseLegacyColor(String colorCode) {

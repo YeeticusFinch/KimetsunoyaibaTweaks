@@ -274,6 +274,18 @@ public class ModEntities {
                 .build("flower_petal_slash"));
 
     /**
+     * Invisible temporary mount used so players can sit on cushion blocks from the base mod.
+     */
+    public static final RegistryObject<EntityType<CushionSeatEntity>> CUSHION_SEAT =
+        ENTITY_TYPES.register("cushion_seat",
+            () -> EntityType.Builder.of(CushionSeatEntity::new, MobCategory.MISC)
+                .sized(0.01F, 0.01F)
+                .clientTrackingRange(16)
+                .updateInterval(1)
+                .noSave()
+                .build("cushion_seat"));
+
+    /**
      * Register entity types to the mod event bus
      */
     public static void register(IEventBus eventBus) {
@@ -329,6 +341,9 @@ public class ModEntities {
 
             // Register attributes for Flower Petal Slash (visual-only entity)
             event.put(FLOWER_PETAL_SLASH.get(), FlowerPetalSlashEntity.createAttributes().build());
+
+            // Register attributes for invisible cushion seat mount
+            event.put(CUSHION_SEAT.get(), CushionSeatEntity.createAttributes().build());
 
             // Register attributes for generic demon slayers (male and female)
             event.put(DEMON_SLAYER.get(), DemonSlayerEntity.createAttributes().build());

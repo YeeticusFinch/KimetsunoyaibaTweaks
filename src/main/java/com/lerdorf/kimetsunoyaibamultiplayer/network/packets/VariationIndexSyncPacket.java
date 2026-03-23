@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientPacketHandler;
 import net.minecraft.network.FriendlyByteBuf;
@@ -47,12 +48,12 @@ public class VariationIndexSyncPacket {
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
                     var level = ClientPacketHandler.getClientLevel();
                     if (level == null) {
-                        System.out.println("[Client] ERROR: Client level is null, cannot update variation index!");
+                        Log.warn("[Client] ERROR: Client level is null, cannot update variation index!");
                         return;
                     }
                     var player = level.getPlayerByUUID(playerUUID);
                     if (player == null) {
-                        System.out.println("[Client] ERROR: Player " + playerUUID + " not found in client level!");
+                        Log.warn("[Client] ERROR: Player {} not found in client level!", playerUUID);
                         return;
                     }
                     PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(playerUUID);

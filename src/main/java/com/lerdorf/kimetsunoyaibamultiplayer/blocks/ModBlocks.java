@@ -5,9 +5,11 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.IronBarsBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -54,6 +56,45 @@ public class ModBlocks {
             .mapColor(MapColor.WOOD)
             .sound(SoundType.WOOD)
             .strength(2.0f, 3.0f)));
+
+    public static final RegistryObject<Block> DARK_BAMBOO_FENCE = registerBlock("dark_bamboo_fence",
+        () -> new IronBarsBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BARS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.BAMBOO_WOOD)
+            .strength(2.0f)));
+
+    public static final RegistryObject<Block> FUSUMA_BARS = registerBlock("fusuma_bars",
+        () -> new FusumaBarsBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(1.0f, 10.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> DARK_BAMBOO_FUSUMA = registerBlock("dark_bamboo_fusuma",
+        () -> new DarkBambooFusumaBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(1.0f, 10.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> DARK_OAK_WALL = registerBlock("dark_oak_wall",
+        () -> new WallBlock(BlockBehaviour.Properties.copy(Blocks.DARK_OAK_LOG)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f)));
+
+    public static final RegistryObject<Block> STRIPPED_DARK_OAK_WALL = registerBlock("stripped_dark_oak_wall",
+        () -> new WallBlock(BlockBehaviour.Properties.copy(Blocks.STRIPPED_DARK_OAK_LOG)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f)));
+
+    public static final RegistryObject<Block> CHEST_OF_DRAWERS = registerBlock("chest_of_drawers",
+        () -> new ChestOfDrawersBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
 
     // Wisteria Leaves - 4 color variants (with moderate glow)
     public static final RegistryObject<Block> WISTERIA_LEAVES_PINK = registerBlock("wisteria_leaves_pink",

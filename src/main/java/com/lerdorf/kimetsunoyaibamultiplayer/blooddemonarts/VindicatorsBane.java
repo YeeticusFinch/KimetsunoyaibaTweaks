@@ -14,6 +14,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
@@ -57,7 +58,7 @@ public final class VindicatorsBane {
         }
 
         playAnimation(entity, "sword_rotate", 12);
-        entity.playSound(SoundEvents.PLAYER_ATTACK_SWEEP, 1.0F, 0.9F + (entity.getRandom().nextFloat() * 0.2F));
+        playDramaticCleaveSound(serverLevel, entity);
 
         ParticleHelper.spawnCircleParticles(serverLevel, entity.position().add(0.0D, 1.0D, 0.0D), 5.0D, ParticleTypes.SWEEP_ATTACK, 36);
 
@@ -76,6 +77,7 @@ public final class VindicatorsBane {
 
         Vec3 launch = getTargetDirection(entity).scale(0.55D);
         playAnimation(entity, "sword_to_upper", 10);
+        playSplitterLaunchSound(serverLevel, entity);
         entity.setDeltaMovement(entity.getDeltaMovement().add(launch.x, 0.85D, launch.z));
         entity.hurtMarked = true;
 
@@ -93,8 +95,7 @@ public final class VindicatorsBane {
                     return;
                 }
 
-                entity.playSound(SoundEvents.PLAYER_ATTACK_CRIT, 1.0F, 0.9F + (entity.getRandom().nextFloat() * 0.2F));
-                entity.playSound(SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, 1.0F, 0.95F + (entity.getRandom().nextFloat() * 0.15F));
+                playSplitterImpactSound(serverLevel, entity);
                 serverLevel.sendParticles(ParticleTypes.EXPLOSION, entity.getX(), entity.getY(0.1D), entity.getZ(), 12, 0.45D, 0.15D, 0.45D, 0.01D);
                 serverLevel.sendParticles(ParticleTypes.CRIT, entity.getX(), entity.getY(0.2D), entity.getZ(), 20, 0.8D, 0.3D, 0.8D, 0.03D);
 
@@ -130,6 +131,7 @@ public final class VindicatorsBane {
 
                 if (tick % 10 == 0) {
                     playAnimation(entity, "kimetsunoyaibamultiplayer:front_flip", 10);
+                    playBloodlustRushPulse(serverLevel, entity, tick / 10);
                     double yaw = Math.atan2(dash.z, dash.x) - (Math.PI / 2.0D);
                     double pitch = Math.atan2(dash.y, Math.sqrt((dash.x * dash.x) + (dash.z * dash.z)));
                     Vec3 center = entity.position().add(0.0D, 1.0D, 0.0D);
@@ -149,6 +151,43 @@ public final class VindicatorsBane {
                 tick++;
             }
         }, 1, 40);
+    }
+
+    private static void playDramaticCleaveSound(ServerLevel level, LivingEntity entity) {
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.ENDER_DRAGON_FLAP, SoundSource.HOSTILE, 0.8F, 1.7F);
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1.2F, 0.75F + (entity.getRandom().nextFloat() * 0.1F));
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.HOSTILE, 1.0F, 0.6F + (entity.getRandom().nextFloat() * 0.1F));
+    }
+
+    private static void playSplitterLaunchSound(ServerLevel level, LivingEntity entity) {
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 0.65F, 1.65F);
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.HOSTILE, 1.0F, 0.7F);
+    }
+
+    private static void playSplitterImpactSound(ServerLevel level, LivingEntity entity) {
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.HOSTILE, 1.1F, 0.75F + (entity.getRandom().nextFloat() * 0.1F));
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.HOSTILE, 1.2F, 0.95F + (entity.getRandom().nextFloat() * 0.1F));
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, 0.8F, 1.35F);
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.ANVIL_LAND, SoundSource.HOSTILE, 0.55F, 1.65F);
+    }
+
+    private static void playBloodlustRushPulse(ServerLevel level, LivingEntity entity, int pulseIndex) {
+        float stepPitch = 1.0F + (pulseIndex * 0.08F);
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.HOSTILE, 1.0F, 0.85F + (entity.getRandom().nextFloat() * 0.1F));
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.PHANTOM_FLAP, SoundSource.HOSTILE, 0.9F, stepPitch);
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+            SoundEvents.WARDEN_ATTACK_IMPACT, SoundSource.HOSTILE, 0.5F, 1.55F - (pulseIndex * 0.05F));
     }
 
     private static void playAnimation(LivingEntity entity, String animation, int duration) {

@@ -153,12 +153,12 @@ public class BreathingFormAttackGoal extends Goal {
                 // Execute the variation's effect (formId is auto-injected)
                 selectedVariation.getEffect().execute(this.entity, this.entity.level(), form.getFormId());
                 BreathingFormAnnouncementHelper.announceCustomForm(
-                    this.entity, technique.getName(), technique.getTechniqueColor(), selectedVariation.getName());
+                    this.entity, selectedVariation.getDisplayName(), technique.getTechniqueColor());
             } else {
                 // Execute the base breathing form (formId is auto-injected)
                 form.execute(this.entity, this.entity.level());
                 BreathingFormAnnouncementHelper.announceCustomForm(
-                    this.entity, technique.getName(), technique.getTechniqueColor(), form.getName());
+                    this.entity, form.getDisplayName(), technique.getTechniqueColor());
             }
 
             // Set cooldown (use base form's cooldown)

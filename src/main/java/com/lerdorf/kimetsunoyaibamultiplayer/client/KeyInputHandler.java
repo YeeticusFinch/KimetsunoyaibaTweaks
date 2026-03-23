@@ -73,41 +73,32 @@ public class KeyInputHandler {
 
             // DEBUG: Log all G key presses to diagnose keybind issues
             if (event.getKey() == GLFW.GLFW_KEY_G) {
-                System.out.println("[KeyInputHandler] G key pressed! variationCycleKey=" + variationCycleKey +
-                         ", keybinding=" + (ModKeyBindings.CYCLE_FORM_VARIATION != null ?
-                         ModKeyBindings.CYCLE_FORM_VARIATION.getKey().getName() : "null"));
-                if (Config.logDebug) {
-                    Log.debug("[KeyInputHandler] G key pressed! variationCycleKey=" + variationCycleKey +
-                             ", keybinding=" + (ModKeyBindings.CYCLE_FORM_VARIATION != null ?
-                             ModKeyBindings.CYCLE_FORM_VARIATION.getKey().getName() : "null"));
-                }
+                Log.debug("[KeyInputHandler] G key pressed! variationCycleKey={}, keybinding={}",
+                    variationCycleKey,
+                    ModKeyBindings.CYCLE_FORM_VARIATION != null
+                        ? ModKeyBindings.CYCLE_FORM_VARIATION.getKey().getName()
+                        : "null");
             }
 
             if (variationCycleKey) {
                 ItemStack mainHandItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
 
-                System.out.println("[KeyInputHandler] Variation cycle key pressed (keyboard)");
-                if (Config.logDebug) {
-                    Log.debug("[KeyInputHandler] Variation cycle key pressed (keyboard)");
-                }
+                Log.debug("[KeyInputHandler] Variation cycle key pressed (keyboard)");
 
                 // Handle custom breathing swords
                 if (mainHandItem.getItem() instanceof BreathingSwordItem) {
-                    System.out.println("[KeyInputHandler] Detected CUSTOM breathing sword");
+                    Log.debug("[KeyInputHandler] Detected CUSTOM breathing sword");
                     // Send packet to server to cycle variation
                     // Direction: Shift+G = backward (-1), G = forward (1)
                     int direction = mc.options.keyShift.isDown() ? -1 : 1;
-                    System.out.println("[KeyInputHandler] Sending CycleFormVariationPacket for custom sword, direction: " + direction);
-                    if (Config.logDebug) {
-                        Log.debug("[KeyInputHandler] Sending CycleFormVariationPacket for custom sword, direction: " + direction);
-                    }
+                    Log.debug("[KeyInputHandler] Sending CycleFormVariationPacket for custom sword, direction: {}", direction);
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
                             new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleFormVariationPacket(direction));
                     return;
                 }
                 // Handle base mod swords
                 else if (com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.isNichirinSword(mainHandItem)) {
-                    System.out.println("[KeyInputHandler] Detected BASE MOD nichirin sword");
+                    Log.debug("[KeyInputHandler] Detected BASE MOD nichirin sword");
 
                     // Read form name from chat cache (populated when user cycled with R key)
                     // Get cached breathes value first
@@ -117,7 +108,7 @@ public class KeyInputHandler {
                         breathes = mc.player.getPersistentData().getDouble("breathes");
                     }
 
-                    System.out.println("[KeyInputHandler] Current breathes value: " + breathes);
+                    Log.debug("[KeyInputHandler] Current breathes value: {}", breathes);
 
                     // Get form name from chat cache (source of truth - independent of breathes NBT corruption)
                     String formName = null;
@@ -129,36 +120,33 @@ public class KeyInputHandler {
                         if (formName != null) {
                             // Strip color codes for server-side matching
                             formName = formName.replaceAll("§.", "");
-                            System.out.println("[KeyInputHandler] Using form name from chat cache (formId=" + formId + "): " + formName);
+                            Log.debug("[KeyInputHandler] Using form name from chat cache (formId={}): {}", formId, formName);
                         } else {
                             // Fallback: use BaseKnYForms map
                             com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.BaseForm form =
                                 com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.forms.get(formId);
                             if (form != null) {
                                 formName = form.name;
-                                System.out.println("[KeyInputHandler] Form name from BaseKnYForms (formId=" + formId + "): " + formName);
+                                Log.debug("[KeyInputHandler] Form name from BaseKnYForms (formId={}): {}", formId, formName);
                             } else {
-                                System.out.println("[KeyInputHandler] WARNING: Form ID " + formId + " not found in chat cache or BaseKnYForms!");
+                                Log.warn("[KeyInputHandler] Form ID {} not found in chat cache or BaseKnYForms!", formId);
                             }
                         }
                     } else {
-                        System.out.println("[KeyInputHandler] No breathes value found, cannot determine form");
+                        Log.debug("[KeyInputHandler] No breathes value found, cannot determine form");
                     }
 
                     // Send packet to server with form name
                     // Server will handle cycling and send chat message
                     // Direction: Shift+G = backward (-1), G = forward (1)
                     int direction = mc.options.keyShift.isDown() ? -1 : 1;
-                    System.out.println("[KeyInputHandler] Sending CycleFormVariationPacket for base sword, direction: " + direction + ", formName: " + formName);
-                    if (Config.logDebug) {
-                        Log.debug("[KeyInputHandler] Sending CycleFormVariationPacket for base sword, direction: " + direction + ", formName: " + formName);
-                    }
+                    Log.debug("[KeyInputHandler] Sending CycleFormVariationPacket for base sword, direction: {}, formName: {}", direction, formName);
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
                             new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleFormVariationPacket(direction, formName));
                     return;
                 }
                 else {
-                    System.out.println("[KeyInputHandler] Not a breathing sword, item: " + mainHandItem.getItem());
+                    Log.debug("[KeyInputHandler] Not a breathing sword, item: {}", mainHandItem.getItem());
                 }
                 return;
             }

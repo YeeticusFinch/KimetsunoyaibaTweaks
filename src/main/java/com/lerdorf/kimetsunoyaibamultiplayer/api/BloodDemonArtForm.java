@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.api;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 
@@ -27,6 +29,14 @@ public class BloodDemonArtForm {
 
     public String getName() {
         return name;
+    }
+
+    public String getTranslationKey() {
+        return LocalizationHelper.bloodDemonArtFormKey(formId);
+    }
+
+    public Component getDisplayName() {
+        return LocalizationHelper.bloodDemonArtForm(formId);
     }
 
     public String getDescription() {

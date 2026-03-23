@@ -420,7 +420,8 @@ public class EnhancedLoveForms {
                 	}
                 	if (currentTick[0] > 50 && currentTick[0] < 80 && currentTick[0] % 2 == 0) {
                 		if (Config.logDebug)
-                			System.out.println("Damaging " + targets.size() + " targets on tick " + currentTick[0] + " ");
+                			Log.debugEvery("enhanced-love-damage:" + entity.getUUID(), 1000,
+                			    "Damaging {} targets on tick {}", targets.size(), currentTick[0]);
                 		for (LivingEntity target : targets) {
                 			if (Math.random() < 0.4) {
 	                			//System.out.println("Trying to damage " + target.getName().getString());

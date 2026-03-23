@@ -28,6 +28,7 @@ public class BeastSwordReplacer {
         if (event.phase != TickEvent.Phase.END) {
             return;
         }
+        Log.startupProbeOnce("BeastSwordReplacer.onPlayerTick");
 
         Player player = event.player;
         if (player.level().isClientSide) {

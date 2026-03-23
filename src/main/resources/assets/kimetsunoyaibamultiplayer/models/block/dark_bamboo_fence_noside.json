@@ -1,0 +1,8 @@
+{
+  "parent": "block/template_glass_pane_noside",
+  "textures": {
+    "particle": "kimetsunoyaibamultiplayer:block/dark_bamboo_fence",
+    "pane": "kimetsunoyaibamultiplayer:block/dark_bamboo_fence"
+  },
+  "render_type": "cutout"
+}

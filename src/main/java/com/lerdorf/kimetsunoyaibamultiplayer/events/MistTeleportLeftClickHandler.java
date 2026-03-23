@@ -83,6 +83,7 @@ public class MistTeleportLeftClickHandler {
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        Log.startupProbeOnce("MistTeleportLeftClickHandler.onPlayerTick");
 
         Player player = event.player;
 
