@@ -371,10 +371,11 @@ public class NichirinSwordBlack extends BreathingSwordItem {
         }
 
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
-        int baseFormIndex = data.getCurrentFormIndex();
+        String styleKey = PlayerBreathingData.getTechniqueKey(technique.getName());
+        int baseFormIndex = data.getCurrentFormIndex(styleKey);
         if (baseFormIndex < 0 || baseFormIndex >= technique.getFormCount()) {
             baseFormIndex = 0;
-            data.setCurrentFormIndex(0);
+            data.setCurrentFormIndex(styleKey, 0);
         }
         int variationIndex = data.getCurrentVariationIndex();
 
@@ -472,13 +473,14 @@ public class NichirinSwordBlack extends BreathingSwordItem {
         }
 
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
+        String styleKey = PlayerBreathingData.getTechniqueKey(technique.getName());
         if (backward) {
-            data.cycleFormBackward(technique.getFormCount());
+            data.cycleFormBackward(styleKey, technique.getFormCount());
         } else {
-            data.cycleForm(technique.getFormCount());
+            data.cycleForm(styleKey, technique.getFormCount());
         }
 
-        int newIndex = data.getCurrentFormIndex();
+        int newIndex = data.getCurrentFormIndex(styleKey);
         BreathingForm form = technique.getForm(newIndex);
 
         if (form != null && !player.level().isClientSide) {
@@ -501,6 +503,7 @@ public class NichirinSwordBlack extends BreathingSwordItem {
                 com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
                     new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket(
                         player.getUUID(),
+                        styleKey,
                         newIndex
                     )
                 );

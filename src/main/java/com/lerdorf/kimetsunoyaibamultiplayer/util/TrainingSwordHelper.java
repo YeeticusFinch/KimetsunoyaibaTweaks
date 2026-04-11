@@ -142,10 +142,14 @@ public class TrainingSwordHelper {
         if (stack.getItem() instanceof BreathingSwordItem breathingSword) {
             // Handle custom breathing sword
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique technique =
-                breathingSword.getBreathingTechnique();
+                breathingSword instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack blackSword
+                    ? blackSword.getEffectiveTechnique(stack, player)
+                    : breathingSword.getBreathingTechnique();
+            String styleKey = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData
+                .getTechniqueKey(technique != null ? technique.getName() : breathingSword.getClass().getName());
 
             // Reset to first form (index 0)
-            data.setCurrentFormIndex(0);
+            data.setCurrentFormIndex(styleKey, 0);
 
             // Get the first form to update breathes value
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm firstForm = technique.getForm(0);
@@ -163,7 +167,7 @@ public class TrainingSwordHelper {
                     );
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
                         new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket(
-                            player.getUUID(), 0)
+                            player.getUUID(), styleKey, 0)
                     );
                 }
 

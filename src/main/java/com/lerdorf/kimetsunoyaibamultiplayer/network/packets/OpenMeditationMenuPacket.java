@@ -1,0 +1,38 @@
+package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.client.MeditationMenuScreen;
+import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuData;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.network.NetworkEvent;
+
+import java.util.function.Supplier;
+
+public class OpenMeditationMenuPacket {
+    private final MeditationMenuData data;
+
+    public OpenMeditationMenuPacket(MeditationMenuData data) {
+        this.data = data;
+    }
+
+    public OpenMeditationMenuPacket(FriendlyByteBuf buf) {
+        this.data = new MeditationMenuData(buf);
+    }
+
+    public void toBytes(FriendlyByteBuf buf) {
+        data.write(buf);
+    }
+
+    public boolean handle(Supplier<NetworkEvent.Context> supplier) {
+        NetworkEvent.Context context = supplier.get();
+        context.enqueueWork(() ->
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+                Minecraft.getInstance().setScreen(new MeditationMenuScreen(data))
+            )
+        );
+        context.setPacketHandled(true);
+        return true;
+    }
+}

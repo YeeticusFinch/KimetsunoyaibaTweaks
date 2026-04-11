@@ -2,6 +2,9 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectMeditationTargetPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -202,6 +205,41 @@ public class ModNetworking {
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BleedingFlashPacket::new)
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BleedingFlashPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BleedingFlashPacket::handle)
+                .add();
+
+        int meditationOpenPacketId = id();
+        net.messageBuilder(OpenMeditationMenuPacket.class, meditationOpenPacketId)
+                .decoder(OpenMeditationMenuPacket::new)
+                .encoder(OpenMeditationMenuPacket::toBytes)
+                .consumerMainThread(OpenMeditationMenuPacket::handle)
+                .add();
+
+        int meditationSelectionPacketId = id();
+        net.messageBuilder(SelectMeditationTargetPacket.class, meditationSelectionPacketId)
+                .decoder(SelectMeditationTargetPacket::new)
+                .encoder(SelectMeditationTargetPacket::toBytes)
+                .consumerMainThread(SelectMeditationTargetPacket::handle)
+                .add();
+
+        int swampPuddleStatePacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwampPuddleStatePacket.class, swampPuddleStatePacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwampPuddleStatePacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwampPuddleStatePacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwampPuddleStatePacket::handle)
+                .add();
+
+        int debugPlayerDimensionsPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DebugPlayerDimensionsPacket.class, debugPlayerDimensionsPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DebugPlayerDimensionsPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DebugPlayerDimensionsPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DebugPlayerDimensionsPacket::handle)
+                .add();
+
+        int crowQuestMarkerPacketId = id();
+        net.messageBuilder(SetCrowQuestMarkerPacket.class, crowQuestMarkerPacketId)
+                .decoder(SetCrowQuestMarkerPacket::new)
+                .encoder(SetCrowQuestMarkerPacket::toBytes)
+                .consumerMainThread(SetCrowQuestMarkerPacket::handle)
                 .add();
     }
 

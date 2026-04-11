@@ -262,10 +262,14 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
             return;
         }
 
-        double chance = Math.min(1.0D, 0.30D + (0.05D * Math.max(0, lootingLevel)));
+        double chance = Math.min(1.0D, getMuzanBloodDropChance(lootingLevel));
         if (this.random.nextDouble() < chance) {
             this.spawnAtLocation(new ItemStack(muzanBlood));
         }
+    }
+
+    protected double getMuzanBloodDropChance(int lootingLevel) {
+        return 0.30D + (0.05D * Math.max(0, lootingLevel));
     }
 
     private static Item resolveMuzanBloodItem() {

@@ -17,20 +17,24 @@ import java.util.function.Supplier;
  */
 public class FormSyncPacket {
     private final UUID playerId;
+    private final String styleKey;
     private final int formIndex;
 
-    public FormSyncPacket(UUID playerId, int formIndex) {
+    public FormSyncPacket(UUID playerId, String styleKey, int formIndex) {
         this.playerId = playerId;
+        this.styleKey = styleKey;
         this.formIndex = formIndex;
     }
 
     public FormSyncPacket(FriendlyByteBuf buf) {
         this.playerId = buf.readUUID();
+        this.styleKey = buf.readUtf();
         this.formIndex = buf.readInt();
     }
 
     public void encode(FriendlyByteBuf buf) {
         buf.writeUUID(playerId);
+        buf.writeUtf(styleKey);
         buf.writeInt(formIndex);
     }
 
@@ -44,7 +48,7 @@ public class FormSyncPacket {
                     if (player != null) {
                         // Update the player's form index in client-side data
                         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(playerId);
-                        data.setCurrentFormIndex(formIndex);
+                        data.setCurrentFormIndex(styleKey, formIndex);
                     }
                 }
             });

@@ -114,4 +114,8 @@ public class CustomProgressionConfig {
 
         SPEC = builder.build();
     }
+
+    public static boolean isCustomProgressionEnabled() {
+        return disableBaseModDemonSlayerInitiation != null && disableBaseModDemonSlayerInitiation.get();
+    }
 }

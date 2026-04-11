@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.raids.FinalSelectionProcedure;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.MtFujikasaneDaylightController;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.FinalSelectionRaidConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
@@ -514,12 +515,12 @@ public class MtFujikasaneDimensionDataHandler {
 
             // Notify players on main thread
             server.execute(() -> {
-                try {
-                    server.getPlayerList().broadcastSystemMessage(
-                        Component.literal("§a[Mt Fujikasane] Dimension is ready."), false);
-                } catch (Throwable t) {
+                //try {
+                //    server.getPlayerList().broadcastSystemMessage(
+                //        Component.literal("§a[Mt Fujikasane] Dimension is ready."), false);
+                //} catch (Throwable t) {
                     Log.debug("[Mt Fujikasane] Dimension is ready.");
-                }
+                //}
             });
         } finally {
             worldCopyInProgress.set(false);
@@ -661,6 +662,9 @@ public class MtFujikasaneDimensionDataHandler {
         if (isDemonEntityType(entityType)) {
             return FinalSelectionProcedure.canSpawnAdditionalNonBossDemon(level);
         }
+        if (isVanillaHostileEntityType(entityType) && !FinalSelectionRaidConfig.allowVanillaMonstersInFinalSelection.get()) {
+            return false;
+        }
 
         int night = FinalSelectionProcedure.getActiveRaidNight(level);
         double allowChance = getNonDemonHostileAllowChanceForNight(night);
@@ -677,6 +681,14 @@ public class MtFujikasaneDimensionDataHandler {
         }
         ResourceLocation entityId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
         return entityId != null && com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization.isDemon(entityId);
+    }
+
+    private static boolean isVanillaHostileEntityType(EntityType<?> entityType) {
+        if (!isHostileEntityType(entityType)) {
+            return false;
+        }
+        ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
+        return entityId != null && "minecraft".equals(entityId.getNamespace());
     }
 
     private static double getNonDemonHostileAllowChanceForNight(int night) {

@@ -1,9 +1,12 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.items;
 
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SwampDemonArt;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +14,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -24,10 +31,24 @@ public class BloodDemonArtItem extends Item {
     private static final String FORM_INDEX_TAG = "SelectedBloodDemonArtForm";
 
     private final String artId;
+    private final Multimap<Attribute, AttributeModifier> defaultModifiers;
 
     public BloodDemonArtItem(String artId, Properties properties) {
+        this(artId, 0.0F, 4.0F, properties);
+    }
+
+    public BloodDemonArtItem(String artId, float attackDamage, float attackSpeed, Properties properties) {
         super(properties);
         this.artId = artId;
+
+        ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+        if (attackDamage != 0.0F) {
+            builder.put(Attributes.ATTACK_DAMAGE,
+                new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", attackDamage, AttributeModifier.Operation.ADDITION));
+        }
+        builder.put(Attributes.ATTACK_SPEED,
+            new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", attackSpeed - 4.0D, AttributeModifier.Operation.ADDITION));
+        this.defaultModifiers = builder.build();
     }
 
     @Override
@@ -69,6 +90,8 @@ public class BloodDemonArtItem extends Item {
         }
 
         if (!level.isClientSide) {
+            SwampDemonArt.markAbilityUse(player);
+            SwampDemonArt.handleAbilityItemUse(player, stack, form.getFormId());
             form.execute(player, level);
             player.getCooldowns().addCooldown(this, Math.max(20, form.getCooldownSeconds() * 20));
         }
@@ -94,6 +117,11 @@ public class BloodDemonArtItem extends Item {
         }
         tooltip.add(Component.literal("Sneak-right click: Cycle forms").withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.literal("Right click: Use selected form").withStyle(ChatFormatting.DARK_GRAY));
+    }
+
+    @Override
+    public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot slot) {
+        return slot == EquipmentSlot.MAINHAND ? this.defaultModifiers : super.getDefaultAttributeModifiers(slot);
     }
 
     private static MutableComponent formatFormName(String artId, BloodDemonArtForm form) {

@@ -1,0 +1,59 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+	"textures": {
+		"0": "kimetsunoyaibamultiplayer:item/swamp_demon_art",
+		"particle": "kimetsunoyaibamultiplayer:item/swamp_demon_art"
+	},
+	"elements": [
+		{
+			"name": "arm",
+			"from": [6, 4, 2],
+			"to": [10, 8, 14],
+			"rotation": {"angle": 0, "axis": "x", "origin": [8, 6, 8]},
+			"faces": {
+				"north": {"uv": [12, 0, 8, 4], "texture": "#0"},
+				"east": {"uv": [8, 4, 12, 16], "rotation": 270, "texture": "#0"},
+				"south": {"uv": [8, 4, 4, 0], "rotation": 180, "texture": "#0"},
+				"west": {"uv": [0, 4, 4, 16], "rotation": 90, "texture": "#0"},
+				"up": {"uv": [12, 4, 16, 16], "rotation": 180, "texture": "#0"},
+				"down": {"uv": [4, 4, 8, 16], "texture": "#0"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"translation": [0, 0.25, 5.75],
+			"scale": [1.1, 1.1, 1.1]
+		},
+		"thirdperson_lefthand": {
+			"translation": [0, 0.25, 5.75],
+			"scale": [1.1, 1.1, 1.1]
+		},
+		"firstperson_righthand": {
+			"rotation": [23.25, 0, 0],
+			"translation": [1.75, 1.75, 0]
+		},
+		"firstperson_lefthand": {
+			"rotation": [37.5, 0, 0],
+			"translation": [0, 2.75, 0]
+		},
+		"ground": {
+			"rotation": [52.1, 2.51, 5.14],
+			"translation": [0, 1.5, 0]
+		},
+		"gui": {
+			"rotation": [130.48, -31.49, 11.69],
+			"translation": [0, -1.75, 0],
+			"scale": [1.5, 1.5, 1.5]
+		},
+		"fixed": {
+			"rotation": [90, 0, 0],
+			"scale": [1.4, 1.4, 1.4]
+		},
+		"on_shelf": {
+			"rotation": [90, 0, 0],
+			"scale": [1.4, 1.4, 1.4]
+		}
+	}
+}

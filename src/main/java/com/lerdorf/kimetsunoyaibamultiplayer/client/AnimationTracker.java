@@ -407,7 +407,9 @@ public class AnimationTracker {
             "kamusari1", "kamusari2", "kamusari3", "togen_totsuka1", "togen_totsuka2", "breath1",
             "breath2", "rashin", "kick_akaza1", "kick_akaza2", "sword_to_right_reverse",
             "sword_to_left_reverse", "breath_sun2_1", "breath_sun2_2", "breath_sound5", "breath_sound5_p",
-            "breath_beast1", "breath_beast2", "beast2", "sword_to_upper",
+            "breath_beast1", "breath_beast2", "beast2", "sword_to_upper", "puddle_enter",
+            "puddle_idle", "puddle_walk", "puddle_attack", "puddle_hide", "puddle_hide_attack",
+            "puddle_show", "puddle_exit",
             "left_sword_to_left", "left_sword_to_right", "left_sword_overhead", "double_sword_overhead"
         };
 

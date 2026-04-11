@@ -239,11 +239,15 @@ public class CycleBreathingFormPacket {
         if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem breathingSword) {
             // Handle custom breathing sword training restriction
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique technique =
-                breathingSword.getBreathingTechnique();
+                breathingSword instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack blackSword
+                    ? blackSword.getEffectiveTechnique(heldItem, player)
+                    : breathingSword.getBreathingTechnique();
+            String styleKey = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData
+                .getTechniqueKey(technique != null ? technique.getName() : breathingSword.getClass().getName());
 
             // Reset to first form (index 0)
-            if (data.getCurrentFormIndex() != 0) {
-                data.setCurrentFormIndex(0);
+            if (data.getCurrentFormIndex(styleKey) != 0) {
+                data.setCurrentFormIndex(styleKey, 0);
 
                 // Get the first form to update breathes value
                 com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm firstForm = technique.getForm(0);
@@ -261,7 +265,7 @@ public class CycleBreathingFormPacket {
                     // Sync form index
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
                         new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket(
-                            player.getUUID(), 0)
+                            player.getUUID(), styleKey, 0)
                     );
                 }
             }

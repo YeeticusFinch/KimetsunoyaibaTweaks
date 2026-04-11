@@ -1,8 +1,12 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordsmithVillageConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -20,10 +24,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.WritableLevelData;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.LevelEvent;
@@ -65,9 +71,9 @@ public class SwordsmithVillageDimensionDataHandler {
     private static final String DIMENSION_NAME = "Swordsmith Village";
     private static final String VERSION_FILE_NAME = "swordsmith_village.version";
     private static final String GITHUB_DOWNLOAD_URL =
-        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.43/swordsmith_village_region.zip";
+        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.47/swordsmith_village_region.zip";
     private static final String RELEASE_VERSION_URL =
-        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.43/swordsmith_village.version";
+        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.47/swordsmith_village.version";
     private static final String RAW_VERSION_URL =
         "https://raw.githubusercontent.com/YeeticusFinch/KimetsunoyaibaTweaks/main/swordsmith_village_region/" + VERSION_FILE_NAME;
 
@@ -83,13 +89,19 @@ public class SwordsmithVillageDimensionDataHandler {
 
     private static final String RESIDENT_TAG = "SwordsmithVillageResident";
     private static final String RESIDENT_TYPE_TAG = "SwordsmithVillageResidentType";
+    private static final String ENTRY_KAKUSHI_TAG = "SwordsmithVillageEntryKakushi";
+    private static final String POPULATION_DATA_NAME = "swordsmith_village_population";
     private static final int RESIDENT_CHECK_INTERVAL_TICKS = 200;
     private static final int WEATHER_ENFORCEMENT_INTERVAL_TICKS = 20;
     private static final double SPAWN_DENSITY_RADIUS = 15.0D;
     private static final int MAX_ENTITIES_PER_SPAWN_CLUSTER = 2;
+    private static final long TICKS_PER_DAY = 24000L;
+    private static final long NOON_TIME = 6000L;
 
     private static final ResourceLocation HYOTTOKO_MASK_ID =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mask_hyottoko_helmet");
+    private static final ResourceLocation KAKUSHI_ID =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "kakushi");
 
     private static final BlockPos CHIEF_LOCATION = new BlockPos(15, 83, 42);
     private static final List<BlockPos> CHIEF_ASSISTANT_LOCATIONS = List.of(
@@ -276,11 +288,24 @@ public class SwordsmithVillageDimensionDataHandler {
         if (!serverLevel.dimension().location().equals(SWORDSMITH_VILLAGE_DIM_ID)) {
             return;
         }
-        if (!isNaturalLikeSpawn(event.getSpawnType())) {
+
+        Mob mob = event.getEntity();
+        BlockPos spawnPos = mob.blockPosition();
+        if (!serverLevel.isLoaded(spawnPos)) {
+            event.setSpawnCancelled(true);
             return;
         }
 
-        event.setSpawnCancelled(true);
+        if (isPopulationTrackedEntity(mob)
+            && !isVillageEntryKakushi(mob)
+            && isVillagePopulationAtOrAboveStored(serverLevel)) {
+            event.setSpawnCancelled(true);
+            return;
+        }
+
+        if (isNaturalLikeSpawn(event.getSpawnType())) {
+            event.setSpawnCancelled(true);
+        }
     }
 
     @SubscribeEvent
@@ -299,6 +324,7 @@ public class SwordsmithVillageDimensionDataHandler {
 
         if (event.getServer().getTickCount() % WEATHER_ENFORCEMENT_INTERVAL_TICKS == 0) {
             clearVillageWeatherIfNeeded(swordsmithVillage, "server tick");
+            processNoonPopulationRecovery(swordsmithVillage);
         }
 
         if (event.getServer().getTickCount() % RESIDENT_CHECK_INTERVAL_TICKS != 0) {
@@ -328,6 +354,24 @@ public class SwordsmithVillageDimensionDataHandler {
         }
 
         stripTorilGateMarkers(chunk);
+    }
+
+    @SubscribeEvent
+    public static void onLivingDeath(LivingDeathEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (!(entity.level() instanceof ServerLevel level)) {
+            return;
+        }
+        if (!level.dimension().location().equals(SWORDSMITH_VILLAGE_DIM_ID)) {
+            return;
+        }
+        if (!isPopulationTrackedEntity(entity)) {
+            return;
+        }
+
+        VillagePopulationState state = getPopulationState(level);
+        state.setCurrentPopulation(Math.max(0, state.getCurrentPopulation() - 1));
+        state.setDirty();
     }
 
     private static void ensureCacheUpToDate() {
@@ -497,12 +541,12 @@ public class SwordsmithVillageDimensionDataHandler {
             copyCachedRegionFiles(regionDir);
 
             server.execute(() -> {
-                try {
-                    server.getPlayerList().broadcastSystemMessage(
-                        Component.literal("§a[" + DIMENSION_NAME + "] Dimension is ready."), false);
-                } catch (Throwable ignored) {
-                    Log.debug(prefix() + " Dimension is ready.");
-                }
+                //try {
+                //    server.getPlayerList().broadcastSystemMessage(
+                //        Component.literal("§a[" + DIMENSION_NAME + "] Dimension is ready."), false);
+                //} catch (Throwable ignored) {
+                    Log.info(prefix() + " Dimension is ready.");
+                //}
             });
         } finally {
             worldCopyInProgress.set(false);
@@ -556,7 +600,13 @@ public class SwordsmithVillageDimensionDataHandler {
     }
 
     private static boolean canSpawnAtLocation(ServerLevel level, BlockPos pos) {
+        if (!level.isLoaded(pos)) {
+            return false;
+        }
         if (isExactSpawnLocationOccupied(level, pos)) {
+            return false;
+        }
+        if (isVillagePopulationAtOrAboveStored(level)) {
             return false;
         }
         return countNearbyLivingEntities(level, pos) < getAllowedEntitiesNearSpawnPoint(pos);
@@ -601,6 +651,10 @@ public class SwordsmithVillageDimensionDataHandler {
     }
 
     private static Mob spawnResident(ServerLevel level, BlockPos pos, ResidentSpec spec) {
+        if (!level.isLoaded(pos) || isVillagePopulationAtOrAboveStored(level)) {
+            return null;
+        }
+
         EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getOptional(spec.entityId).orElse(null);
         if (entityType == null) {
             System.err.println(prefix() + " Entity type not found: " + spec.entityId);
@@ -716,6 +770,61 @@ public class SwordsmithVillageDimensionDataHandler {
         return cacheVersion.equals(worldVersion);
     }
 
+    private static boolean isVillagePopulationAtOrAboveStored(ServerLevel level) {
+        return countTrackedVillageResidents(level) >= getPopulationState(level).getCurrentPopulation();
+    }
+
+    private static int countTrackedVillageResidents(ServerLevel level) {
+        int count = 0;
+        for (Entity entity : level.getEntities().getAll()) {
+            if (entity instanceof LivingEntity living && living.isAlive() && isPopulationTrackedEntity(living)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static boolean isPopulationTrackedEntity(Entity entity) {
+        return entity instanceof LivingEntity
+            && (EntityTagHelper.isCivilian(entity) || EntityTagHelper.isSwordSmith(entity));
+    }
+
+    private static boolean isVillageEntryKakushi(Entity entity) {
+        if (!KAKUSHI_ID.equals(EntityType.getKey(entity.getType()))) {
+            return false;
+        }
+        return entity.getPersistentData().getBoolean(ENTRY_KAKUSHI_TAG);
+    }
+
+    private static void processNoonPopulationRecovery(ServerLevel level) {
+        VillagePopulationState state = getPopulationState(level);
+        long dayTime = level.getDayTime();
+        long dayIndex = dayTime / TICKS_PER_DAY;
+        long timeOfDay = dayTime % TICKS_PER_DAY;
+        if (timeOfDay < NOON_TIME || state.getLastNoonRollDay() == dayIndex) {
+            return;
+        }
+
+        state.setLastNoonRollDay(dayIndex);
+        int maxPopulation = Math.max(0, SwordsmithVillageConfig.maxPopulation);
+        if (state.getCurrentPopulation() < maxPopulation
+            && level.getRandom().nextDouble() < SwordsmithVillageConfig.noonRecoveryChance) {
+            state.setCurrentPopulation(state.getCurrentPopulation() + 1);
+        }
+        state.clampToConfiguredMaximum();
+        state.setDirty();
+    }
+
+    private static VillagePopulationState getPopulationState(ServerLevel level) {
+        VillagePopulationState state = level.getDataStorage().computeIfAbsent(
+            VillagePopulationState::load,
+            VillagePopulationState::new,
+            POPULATION_DATA_NAME
+        );
+        state.ensureInitialized();
+        return state;
+    }
+
     private static void clearVillageWeather(ServerLevel village, String reason) {
         boolean weatherActive = hasActiveVillageWeather(village);
         clearWritableWeatherFlags(village);
@@ -825,5 +934,68 @@ public class SwordsmithVillageDimensionDataHandler {
     }
 
     private record ResidentSpec(ResourceLocation entityId, boolean wearHyottokoMask) {
+    }
+
+    private static final class VillagePopulationState extends SavedData {
+        private int currentPopulation = -1;
+        private long lastNoonRollDay = -1L;
+
+        private VillagePopulationState() {
+        }
+
+        private static VillagePopulationState load(CompoundTag tag) {
+            VillagePopulationState state = new VillagePopulationState();
+            if (tag.contains("CurrentPopulation", Tag.TAG_INT)) {
+                state.currentPopulation = tag.getInt("CurrentPopulation");
+            }
+            if (tag.contains("LastNoonRollDay", Tag.TAG_LONG)) {
+                state.lastNoonRollDay = tag.getLong("LastNoonRollDay");
+            }
+            state.ensureInitialized();
+            return state;
+        }
+
+        @Override
+        public CompoundTag save(CompoundTag tag) {
+            tag.putInt("CurrentPopulation", currentPopulation);
+            tag.putLong("LastNoonRollDay", lastNoonRollDay);
+            return tag;
+        }
+
+        private void ensureInitialized() {
+            if (currentPopulation < 0) {
+                currentPopulation = Math.max(0, SwordsmithVillageConfig.maxPopulation);
+                setDirty();
+                return;
+            }
+            clampToConfiguredMaximum();
+        }
+
+        private void clampToConfiguredMaximum() {
+            int maxPopulation = Math.max(0, SwordsmithVillageConfig.maxPopulation);
+            if (currentPopulation > maxPopulation) {
+                currentPopulation = maxPopulation;
+                setDirty();
+            } else if (currentPopulation < 0) {
+                currentPopulation = 0;
+                setDirty();
+            }
+        }
+
+        private int getCurrentPopulation() {
+            return currentPopulation;
+        }
+
+        private void setCurrentPopulation(int currentPopulation) {
+            this.currentPopulation = Math.max(0, Math.min(currentPopulation, Math.max(0, SwordsmithVillageConfig.maxPopulation)));
+        }
+
+        private long getLastNoonRollDay() {
+            return lastNoonRollDay;
+        }
+
+        private void setLastNoonRollDay(long lastNoonRollDay) {
+            this.lastNoonRollDay = lastNoonRollDay;
+        }
     }
 }

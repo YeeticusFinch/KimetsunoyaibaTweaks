@@ -3,12 +3,16 @@ package com.lerdorf.kimetsunoyaibamultiplayer.items;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CreepingRuin;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.VindicatorsBane;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Tiers;
+import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -119,6 +123,12 @@ public class ModItems {
             0xDEE4EE, 0xA7B2C2, // Cool pale body, muted blue-gray spots
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> KAZUMI_SPAWN_EGG = ITEMS.register("kazumi_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KAZUMI,
+            0x4A3027, 0xD8C3AF,
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> PRINCESS_SPAWN_EGG = ITEMS.register("princess_spawn_egg",
         () -> new PrincessSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.PRINCESS,
@@ -161,11 +171,22 @@ public class ModItems {
             0x4A565B, 0x9B2B21,
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> SWAMP_DEMON_SPAWN_EGG = ITEMS.register("swamp_demon_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SWAMP_DEMON,
+            0x29443f, 0x6c847b,
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> CREEPER_DEMON_ART = ITEMS.register("creeper_demon_art",
         () -> new BloodDemonArtItem(CreepingRuin.ART_ID, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> VINDICATOR_DEMON_ART = ITEMS.register("vindicator_demon_art",
         () -> new BloodDemonArtAxeItem(VindicatorsBane.ART_ID, Tiers.IRON, 9.0F, 0.9F,
             new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> SWAMP_DEMON_ART = ITEMS.register("swamp_demon_art",
+        () -> new BloodDemonArtItem(com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SwampDemonArt.ART_ID,
+            4.0F, 1.6F, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> PUDDLE = ITEMS.register("puddle",
+        () -> new Item(new Item.Properties().stacksTo(1)));
 
     // Armor pieces
     public static final RegistryObject<Item> ANDON_BAKAMA = ITEMS.register("andon_bakama",
@@ -323,6 +344,12 @@ public class ModItems {
     public static final RegistryObject<Item> DEMONSLAYERMARK_LOVE = ITEMS.register("demonslayermark_love",
         () -> new Item(new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> QUEST_SCROLL = ITEMS.register("quest_scroll",
+        () -> new QuestScrollItem(new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> NAV_PIN_WAYPOINT = ITEMS.register("nav_pin_waypoint",
+        () -> new NavPinItem(new Item.Properties().stacksTo(1)));
+
     // Omen Potion Items - Muzan (for demon slayer players)
     public static final RegistryObject<Item> OMEN_OF_MUZAN_POTION_1 = ITEMS.register("omen_of_muzan_potion_1",
         () -> new OmenPotionItem(new Item.Properties().stacksTo(16), OmenPotionItem.OmenType.MUZAN, 1));
@@ -373,154 +400,106 @@ public class ModItems {
             .title(Component.translatable("KnY Additions"))
             .icon(() -> new ItemStack(NICHIRINSWORD_MIST.get()))
             .displayItems((parameters, output) -> {
-                // Automatically add all swords registered via the API
-                // This allows other mods to have their swords appear in this tab
-                for (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.RegisteredSword sword :
-                        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getAllSwords()) {
-                    // Only add swords that are flagged to be in the creative tab
-                    if (sword.shouldRegisterToCreativeTab()) {
-                        output.accept(sword.getSwordItem());
-                    }
-                }
+                addSortedSwords(output);
 
-                // Ensure new swords are always present even if SwordRegistry registration timing changes.
-                addIfNotRegistryManaged(output, NICHIRINSWORD_BEAST.get());
-                addIfNotRegistryManaged(output, NICHIRINSWORD_INOSUKE.get());
-                addIfNotRegistryManaged(output, NICHIRINSWORD_STONE1.get());
-                addIfNotRegistryManaged(output, NICHIRINSWORD_STONE2.get());
-                addIfNotRegistryManaged(output, NICHIRINSWORD_INSECT.get());
-                addIfNotRegistryManaged(output, NICHIRINSWORD_SNAKE.get());
-                addIfNotRegistryManaged(output, NICHIRINSWORD_LOVE.get());
-                addIfNotRegistryManaged(output, NICHIRINSWORD_SOUND.get());
-                addIfNotRegistryManaged(output, NICHIRINSWORD_BLACK.get());
+                addItems(output,
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LOG.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_WISTERIA_LOG.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_WOOD.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_WISTERIA_WOOD.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PLANKS.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FENCE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.FUSUMA_BARS.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FUSUMA.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_OAK_WALL.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_DARK_OAK_WALL.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_PINK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_CYAN.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_LAVENDER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_CREAM.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GLOWING_WISTERIA_LEAVES_PINK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GLOWING_WISTERIA_LEAVES_CYAN.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GLOWING_WISTERIA_LEAVES_LAVENDER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GLOWING_WISTERIA_LEAVES_CREAM.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_SAPLING_PINK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_SAPLING_CYAN.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_SAPLING_LAVENDER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_SAPLING_CREAM.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_PINK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_CYAN.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_LAVENDER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_CREAM.get()
+                );
 
-                // Wisteria blocks
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LOG.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_WISTERIA_LOG.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_WOOD.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_WISTERIA_WOOD.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PLANKS.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FENCE.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.FUSUMA_BARS.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FUSUMA.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_OAK_WALL.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_DARK_OAK_WALL.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS.get());
+                addItems(output,
+                    ANDON_BAKAMA.get(),
+                    PURPLE_ANDON_BAKAMA.get(),
+                    PURPLE_DEMON_SLAYER_UNIFORM_CHESTPLATE.get(),
+                    PURPLE_DEMON_SLAYER_UNIFORM_LEGGINGS.get(),
+                    PURPLE_DEMON_SLAYER_UNIFORM_BOOTS.get(),
+                    UNIFORM_BOOTS_CHERRY.get(),
+                    UNIFORM_BOOTS_GOLD.get(),
+                    SLAYER_UNIFORM_2_CHESTPLATE.get(),
+                    SLAYER_UNIFORM_2_LEGGINGS.get(),
+                    SLAYER_UNIFORM_2_BOOTS.get(),
+                    SLAYER_UNIFORM_2_CHESTPLATE_PURPLE.get(),
+                    SLAYER_UNIFORM_2_LEGGINGS_PURPLE.get(),
+                    SLAYER_UNIFORM_2_BOOTS_PURPLE.get(),
+                    KAKUSHI_UNIFORM_HELMET.get(),
+                    KAKUSHI_UNIFORM_CHESTPLATE.get(),
+                    KAKUSHI_UNIFORM_LEGGINGS.get(),
+                    KAKUSHI_UNIFORM_BOOTS.get(),
+                    CLOTHES_MUICHIRO_FP_CHESTPLATE.get(),
+                    UNIFORM_MUICHIRO_FP_CHESTPLATE.get(),
+                    HAIR_MUICHIRO_FP.get(),
+                    BLINDFOLD.get(),
+                    HAHNAFUDA_SIMPLE.get()
+                );
 
-                // Wisteria Leaves (all 4 colors)
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_PINK.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_CYAN.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_LAVENDER.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_CREAM.get());
+                addItems(output,
+                    MUICHIRO_SPAWN_EGG.get(),
+                    MUICHIRO_FP_SPAWN_EGG.get(),
+                    KANROJI_SPAWN_EGG.get(),
+                    KANAE_SPAWN_EGG.get(),
+                    KANAWO_SPAWN_EGG.get(),
+                    KANATA_SPAWN_EGG.get(),
+                    KIRIYA_SPAWN_EGG.get(),
+                    KAZUMI_SPAWN_EGG.get(),
+                    PRINCESS_SPAWN_EGG.get(),
+                    DEMON_SLAYER_SPAWN_EGG.get(),
+                    DEMON_SLAYER_FEMALE_SPAWN_EGG.get(),
+                    DEMON_CREEPER_SPAWN_EGG.get(),
+                    DEMON_VILLAGER_SPAWN_EGG.get(),
+                    DEMON_PILLAGER_SPAWN_EGG.get(),
+                    DEMON_VINDICATOR_SPAWN_EGG.get(),
+                    SWAMP_DEMON_SPAWN_EGG.get(),
+                    CREEPER_DEMON_ART.get(),
+                    VINDICATOR_DEMON_ART.get(),
+                    SWAMP_DEMON_ART.get()
+                );
+                addOptionalSpawnEggs(output);
 
-                // Glowing Wisteria Leaves (all 4 colors)
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GLOWING_WISTERIA_LEAVES_PINK.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GLOWING_WISTERIA_LEAVES_CYAN.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GLOWING_WISTERIA_LEAVES_LAVENDER.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GLOWING_WISTERIA_LEAVES_CREAM.get());
+                addItems(output,
+                    OMEN_OF_MUZAN_POTION_1.get(),
+                    OMEN_OF_MUZAN_POTION_2.get(),
+                    OMEN_OF_MUZAN_POTION_3.get(),
+                    OMEN_OF_MUZAN_POTION_4.get(),
+                    OMEN_OF_MUZAN_POTION_5.get(),
+                    OMEN_OF_UBUYASHIKI_POTION_1.get(),
+                    OMEN_OF_UBUYASHIKI_POTION_2.get(),
+                    OMEN_OF_UBUYASHIKI_POTION_3.get(),
+                    OMEN_OF_UBUYASHIKI_POTION_4.get(),
+                    OMEN_OF_UBUYASHIKI_POTION_5.get(),
+                    FAVOR_OF_MUZAN_POTION_1.get(),
+                    FAVOR_OF_MUZAN_POTION_2.get(),
+                    FAVOR_OF_MUZAN_POTION_3.get(),
+                    FAVOR_OF_UBUYASHIKI_POTION_1.get(),
+                    FAVOR_OF_UBUYASHIKI_POTION_2.get(),
+                    FAVOR_OF_UBUYASHIKI_POTION_3.get()
+                );
 
-                // Wisteria Saplings (all 4 colors)
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_SAPLING_PINK.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_SAPLING_CYAN.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_SAPLING_LAVENDER.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_SAPLING_CREAM.get());
-
-                // Wisteria Petals (all 4 colors)
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_PINK.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_CYAN.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_LAVENDER.get());
-                output.accept(com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_CREAM.get());
-
-                // Armor
-                output.accept(ANDON_BAKAMA.get());
-                output.accept(PURPLE_ANDON_BAKAMA.get());
-                output.accept(PURPLE_DEMON_SLAYER_UNIFORM_CHESTPLATE.get());
-                output.accept(PURPLE_DEMON_SLAYER_UNIFORM_LEGGINGS.get());
-                output.accept(PURPLE_DEMON_SLAYER_UNIFORM_BOOTS.get());
-                output.accept(UNIFORM_BOOTS_CHERRY.get());
-                output.accept(UNIFORM_BOOTS_GOLD.get());
-                output.accept(SLAYER_UNIFORM_2_CHESTPLATE.get());
-                output.accept(SLAYER_UNIFORM_2_LEGGINGS.get());
-                output.accept(SLAYER_UNIFORM_2_BOOTS.get());
-                output.accept(SLAYER_UNIFORM_2_CHESTPLATE_PURPLE.get());
-                output.accept(SLAYER_UNIFORM_2_LEGGINGS_PURPLE.get());
-                output.accept(SLAYER_UNIFORM_2_BOOTS_PURPLE.get());
-                output.accept(KAKUSHI_UNIFORM_HELMET.get());
-                output.accept(KAKUSHI_UNIFORM_CHESTPLATE.get());
-                output.accept(KAKUSHI_UNIFORM_LEGGINGS.get());
-                output.accept(KAKUSHI_UNIFORM_BOOTS.get());
-                output.accept(CLOTHES_MUICHIRO_FP_CHESTPLATE.get());
-                output.accept(UNIFORM_MUICHIRO_FP_CHESTPLATE.get());
-                output.accept(HAIR_MUICHIRO_FP.get());
-                output.accept(BLINDFOLD.get());
-                output.accept(HAHNAFUDA_SIMPLE.get());
-
-                // Spawn eggs
-                output.accept(MUICHIRO_SPAWN_EGG.get());
-                output.accept(MUICHIRO_FP_SPAWN_EGG.get());
-                output.accept(KANROJI_SPAWN_EGG.get());
-                output.accept(KANAE_SPAWN_EGG.get());
-                output.accept(KANAWO_SPAWN_EGG.get());
-                output.accept(KANATA_SPAWN_EGG.get());
-                output.accept(KIRIYA_SPAWN_EGG.get());
-                output.accept(PRINCESS_SPAWN_EGG.get());
-                output.accept(DEMON_SLAYER_SPAWN_EGG.get());
-                output.accept(DEMON_SLAYER_FEMALE_SPAWN_EGG.get());
-                output.accept(DEMON_CREEPER_SPAWN_EGG.get());
-                output.accept(DEMON_VILLAGER_SPAWN_EGG.get());
-                output.accept(DEMON_PILLAGER_SPAWN_EGG.get());
-                output.accept(DEMON_VINDICATOR_SPAWN_EGG.get());
-                output.accept(CREEPER_DEMON_ART.get());
-                output.accept(VINDICATOR_DEMON_ART.get());
-
-                // Omen Potions
-                output.accept(OMEN_OF_MUZAN_POTION_1.get());
-                output.accept(OMEN_OF_MUZAN_POTION_2.get());
-                output.accept(OMEN_OF_MUZAN_POTION_3.get());
-                output.accept(OMEN_OF_MUZAN_POTION_4.get());
-                output.accept(OMEN_OF_MUZAN_POTION_5.get());
-                output.accept(OMEN_OF_UBUYASHIKI_POTION_1.get());
-                output.accept(OMEN_OF_UBUYASHIKI_POTION_2.get());
-                output.accept(OMEN_OF_UBUYASHIKI_POTION_3.get());
-                output.accept(OMEN_OF_UBUYASHIKI_POTION_4.get());
-                output.accept(OMEN_OF_UBUYASHIKI_POTION_5.get());
-
-                // Favor Potions
-                output.accept(FAVOR_OF_MUZAN_POTION_1.get());
-                output.accept(FAVOR_OF_MUZAN_POTION_2.get());
-                output.accept(FAVOR_OF_MUZAN_POTION_3.get());
-                output.accept(FAVOR_OF_UBUYASHIKI_POTION_1.get());
-                output.accept(FAVOR_OF_UBUYASHIKI_POTION_2.get());
-                output.accept(FAVOR_OF_UBUYASHIKI_POTION_3.get());
-
-                // Miscellaneous items
-                output.accept(UBUYASHIKI_INVITATION.get());
-                output.accept(NICHIRIN_ORE.get());
-
-                // Add spawn eggs from KnY Extra Additions (if mod is loaded)
-                try {
-                    // Ice Slayer spawn egg
-                    net.minecraft.world.item.Item iceSlayerEgg = net.minecraftforge.registries.ForgeRegistries.ITEMS
-                        .getValue(net.minecraft.resources.ResourceLocation.tryBuild("knyextraadditions", "ice_slayer_spawn_egg"));
-                    if (iceSlayerEgg != null) output.accept(iceSlayerEgg);
-
-                    // Frost Slayer spawn egg
-                    net.minecraft.world.item.Item frostSlayerEgg = net.minecraftforge.registries.ForgeRegistries.ITEMS
-                        .getValue(net.minecraft.resources.ResourceLocation.tryBuild("knyextraadditions", "frost_slayer_spawn_egg"));
-                    if (frostSlayerEgg != null) output.accept(frostSlayerEgg);
-
-                    // Komorebi spawn egg
-                    net.minecraft.world.item.Item komorebiEgg = net.minecraftforge.registries.ForgeRegistries.ITEMS
-                        .getValue(net.minecraft.resources.ResourceLocation.tryBuild("knyextraadditions", "komorebi_spawn_egg"));
-                    if (komorebiEgg != null) output.accept(komorebiEgg);
-
-                    // Shimizu spawn egg
-                    net.minecraft.world.item.Item shimizuEgg = net.minecraftforge.registries.ForgeRegistries.ITEMS
-                        .getValue(net.minecraft.resources.ResourceLocation.tryBuild("knyextraadditions", "shimizu_spawn_egg"));
-                    if (shimizuEgg != null) output.accept(shimizuEgg);
-                } catch (Exception e) {
-                    // Silently ignore if KnY Extra Additions is not loaded
-                }
+                addItems(output, UBUYASHIKI_INVITATION.get(), NICHIRIN_ORE.get());
             })
             .build());
 
@@ -529,9 +508,67 @@ public class ModItems {
         CREATIVE_MODE_TABS.register(eventBus);
     }
 
+    private static void addSortedSwords(CreativeModeTab.Output output) {
+        List<Item> swords = new ArrayList<>();
+
+        for (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.RegisteredSword sword :
+                com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getAllSwords()) {
+            if (sword.shouldRegisterToCreativeTab()) {
+                swords.add(sword.getSwordItem());
+            }
+        }
+
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_BEAST.get());
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_INOSUKE.get());
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_STONE1.get());
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_STONE2.get());
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_INSECT.get());
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_SNAKE.get());
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_LOVE.get());
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_SOUND.get());
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_BLACK.get());
+
+        swords.sort(Comparator.comparing(ModItems::getCreativeSortName));
+        swords.forEach(output::accept);
+    }
+
+    private static String getCreativeSortName(Item item) {
+        return item.getDescription().getString().toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private static void addItems(CreativeModeTab.Output output, ItemLike... items) {
+        for (ItemLike item : items) {
+            output.accept(item);
+        }
+    }
+
+    private static void addOptionalSpawnEggs(CreativeModeTab.Output output) {
+        try {
+            addIfPresent(output, "knyextraadditions", "ice_slayer_spawn_egg");
+            addIfPresent(output, "knyextraadditions", "frost_slayer_spawn_egg");
+            addIfPresent(output, "knyextraadditions", "komorebi_spawn_egg");
+            addIfPresent(output, "knyextraadditions", "shimizu_spawn_egg");
+        } catch (Exception e) {
+            // Silently ignore if KnY Extra Additions is not loaded
+        }
+    }
+
+    private static void addIfPresent(CreativeModeTab.Output output, String namespace, String path) {
+        Item item = ForgeRegistries.ITEMS.getValue(net.minecraft.resources.ResourceLocation.tryBuild(namespace, path));
+        if (item != null) {
+            output.accept(item);
+        }
+    }
+
     private static void addIfNotRegistryManaged(CreativeModeTab.Output output, Item item) {
         if (!com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.isRegistered(item)) {
             output.accept(item);
+        }
+    }
+
+    private static void addIfNotRegistryManaged(List<Item> items, Item item) {
+        if (!com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.isRegistered(item)) {
+            items.add(item);
         }
     }
 

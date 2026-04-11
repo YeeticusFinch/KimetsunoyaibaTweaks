@@ -3,10 +3,12 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -38,6 +40,15 @@ public class BaseModVariationHandler {
 
         if (!BreathingInfoDetector.isNichirinSword(heldItem)) {
             return; // Not a nichirin sword
+        }
+
+        // While one of our custom forms is still active, base-mod right-click form usage must be blocked.
+        if (GuardStateHelper.isCustomBreathingActive(player)) {
+            event.setCanceled(true);
+            if (player.level().isClientSide()) {
+                player.displayClientMessage(Component.literal("§cYou cannot use base mod forms while a custom breathing form is active."), true);
+            }
+            return;
         }
 
         // Prevent double-triggering from client/server

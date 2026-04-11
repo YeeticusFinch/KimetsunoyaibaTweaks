@@ -109,7 +109,7 @@ public class EnhancedBreathingConfig {
     private static final ForgeConfigSpec.BooleanValue DISABLE_LOVE_M1_TRAIL_PARTICLES = BUILDER
             .comment("Whether or not to disable the love sword swing particles",
             "Default: false")
-            .define("disableLoveM1TrailParticles", false);
+            .define("disableLoveM1TrailParticles", true);
 
     // Whip Segment Configuration
     private static final ForgeConfigSpec.IntValue WHIP_SEGMENT_COUNT = BUILDER

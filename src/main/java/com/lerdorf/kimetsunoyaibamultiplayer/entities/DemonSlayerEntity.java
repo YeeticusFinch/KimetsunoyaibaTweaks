@@ -9,6 +9,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechniq
 import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -182,7 +183,11 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
             target -> !this.isFinalSelectionPathingActive() && DemonSlayerAggroHandler.isDemonTarget(target)));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Monster.class, 10, true, false,
-            monster -> !this.isFinalSelectionPathingActive() && !DemonSlayerAggroHandler.isDemonTarget(monster)));
+            monster -> !this.isFinalSelectionPathingActive()
+                && !DemonSlayerAggroHandler.isDemonTarget(monster)
+                && !EntityTagHelper.isDemonSlayer(monster)
+                && !EntityTagHelper.isHashira(monster)
+                && !EntityTagHelper.isKamaboko(monster)));
         this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
             (player) -> !this.isFinalSelectionPathingActive() && player.getPersistentData().getBoolean("oni")));
     }

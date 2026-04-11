@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 public class PlayerBreathingData {
     private static final Map<UUID, PlayerData> playerData = new HashMap<>();
     private static final String NBT_KEY_FORM_INDEX = "CustomBreathingFormIndex";
+    private static final String NBT_KEY_FORM_INDEX_BY_STYLE = "CustomBreathingFormIndices";
     private static final String NBT_KEY_VARIATION_INDEX = "CustomVariationIndex";
     // OLD KEYS - for migration only
     private static final String NBT_KEY_VARIATION_INDEX_OLD = "CustomBreathingVariationIndex";
@@ -23,6 +25,7 @@ public class PlayerBreathingData {
 
     public static class PlayerData {
         private int currentFormIndex = 0;
+        private final Map<String, Integer> currentFormIndicesByStyle = new HashMap<>();
         private long lastUsedTick = 0;
 
         // Cache for base mod sword data (server-side)
@@ -39,6 +42,25 @@ public class PlayerBreathingData {
 
         public void setCurrentFormIndex(int index) {
             this.currentFormIndex = index;
+        }
+
+        public int getCurrentFormIndex(String styleKey) {
+            String normalizedStyleKey = normalizeStyleKey(styleKey);
+            if (currentFormIndicesByStyle.containsKey(normalizedStyleKey)) {
+                return currentFormIndicesByStyle.get(normalizedStyleKey);
+            }
+            return currentFormIndicesByStyle.isEmpty() ? currentFormIndex : 0;
+        }
+
+        public void setCurrentFormIndex(String styleKey, int index) {
+            String normalizedStyleKey = normalizeStyleKey(styleKey);
+            int sanitizedIndex = Math.max(0, index);
+            currentFormIndicesByStyle.put(normalizedStyleKey, sanitizedIndex);
+            currentFormIndex = sanitizedIndex;
+        }
+
+        public Map<String, Integer> getCurrentFormIndicesByStyle() {
+            return currentFormIndicesByStyle;
         }
 
         public long getLastUsedTick() {
@@ -108,6 +130,24 @@ public class PlayerBreathingData {
             // Just cycle directly without decoding
             currentFormIndex = (currentFormIndex - 1 + maxForms) % maxForms;
         }
+
+        public void cycleForm(String styleKey, int maxForms) {
+            if (maxForms <= 0) {
+                return;
+            }
+            setCurrentFormIndex(styleKey, (getCurrentFormIndex(styleKey) + 1) % maxForms);
+        }
+
+        public void cycleFormBackward(String styleKey, int maxForms) {
+            if (maxForms <= 0) {
+                return;
+            }
+            setCurrentFormIndex(styleKey, (getCurrentFormIndex(styleKey) - 1 + maxForms) % maxForms);
+        }
+    }
+
+    public static String getTechniqueKey(String techniqueName) {
+        return normalizeStyleKey(techniqueName);
     }
 
     public static PlayerData getOrCreate(UUID playerId) {
@@ -130,6 +170,7 @@ public class PlayerBreathingData {
             if (persistentData.contains(NBT_KEY_FORM_INDEX)) {
                 data.currentFormIndex = persistentData.getInt(NBT_KEY_FORM_INDEX);
             }
+            loadFormIndicesFromNBT(persistentData, data);
             // CRITICAL FIX: Also load variation index from NBT
             // This ensures that when we reset variation to 0 on form cycle, it's properly loaded
             if (persistentData.contains(NBT_KEY_VARIATION_INDEX)) {
@@ -148,6 +189,7 @@ public class PlayerBreathingData {
         PlayerData data = playerData.get(player.getUUID());
         if (data != null) {
             player.getPersistentData().putInt(NBT_KEY_FORM_INDEX, data.currentFormIndex);
+            saveFormIndicesToNBT(player.getPersistentData(), data);
             player.getPersistentData().putInt(NBT_KEY_VARIATION_INDEX, data.currentVariationIndex);
         }
     }
@@ -166,6 +208,7 @@ public class PlayerBreathingData {
         if (persistentData.contains(NBT_KEY_FORM_INDEX)) {
             data.currentFormIndex = persistentData.getInt(NBT_KEY_FORM_INDEX);
         }
+        loadFormIndicesFromNBT(persistentData, data);
         if (persistentData.contains(NBT_KEY_VARIATION_INDEX)) {
             data.currentVariationIndex = Math.max(0, persistentData.getInt(NBT_KEY_VARIATION_INDEX));
         }
@@ -228,5 +271,34 @@ public class PlayerBreathingData {
 
     public static void clearAll() {
         playerData.clear();
+    }
+
+    private static void loadFormIndicesFromNBT(CompoundTag persistentData, PlayerData data) {
+        data.currentFormIndicesByStyle.clear();
+        if (!persistentData.contains(NBT_KEY_FORM_INDEX_BY_STYLE)) {
+            return;
+        }
+
+        CompoundTag formIndicesTag = persistentData.getCompound(NBT_KEY_FORM_INDEX_BY_STYLE);
+        for (String key : formIndicesTag.getAllKeys()) {
+            data.currentFormIndicesByStyle.put(key, Math.max(0, formIndicesTag.getInt(key)));
+        }
+    }
+
+    private static void saveFormIndicesToNBT(CompoundTag persistentData, PlayerData data) {
+        CompoundTag formIndicesTag = new CompoundTag();
+        for (Map.Entry<String, Integer> entry : data.currentFormIndicesByStyle.entrySet()) {
+            formIndicesTag.putInt(entry.getKey(), Math.max(0, entry.getValue()));
+        }
+        persistentData.put(NBT_KEY_FORM_INDEX_BY_STYLE, formIndicesTag);
+    }
+
+    private static String normalizeStyleKey(String styleKey) {
+        if (styleKey == null || styleKey.isBlank()) {
+            return "default";
+        }
+        return styleKey.trim().toLowerCase(Locale.ROOT)
+            .replace(' ', '_')
+            .replace('-', '_');
     }
 }

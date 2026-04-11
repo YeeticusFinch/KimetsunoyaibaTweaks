@@ -43,6 +43,10 @@ public abstract class BreathingSwordItem extends SwordItem {
      */
     public abstract BreathingTechnique getBreathingTechnique();
 
+    protected String getTechniqueFormStateKey(BreathingTechnique technique) {
+        return PlayerBreathingData.getTechniqueKey(technique != null ? technique.getName() : getClass().getName());
+    }
+
     /**
      * Handle right-click to activate current form
      */
@@ -53,9 +57,10 @@ public abstract class BreathingSwordItem extends SwordItem {
 
         // Load player data from NBT if on server
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
+        String styleKey = getTechniqueFormStateKey(technique);
 
         // Determine selected form from our index, and variation from tracked value (not breathes)
-        int baseFormIndex = data.getCurrentFormIndex();
+        int baseFormIndex = data.getCurrentFormIndex(styleKey);
         int variationIndex = data.getCurrentVariationIndex();
 
         // Get the current form to access its form ID (use base form index)
@@ -237,14 +242,15 @@ public abstract class BreathingSwordItem extends SwordItem {
     public void cycleForm(Player player, boolean backward) {
         BreathingTechnique technique = getBreathingTechnique();
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
+        String styleKey = getTechniqueFormStateKey(technique);
 
         if (backward) {
-            data.cycleFormBackward(technique.getFormCount());
+            data.cycleFormBackward(styleKey, technique.getFormCount());
         } else {
-            data.cycleForm(technique.getFormCount());
+            data.cycleForm(styleKey, technique.getFormCount());
         }
 
-        int newIndex = data.getCurrentFormIndex();
+        int newIndex = data.getCurrentFormIndex(styleKey);
         BreathingForm form = technique.getForm(newIndex);
 
         // CRITICAL: Also update the "breathes" NBT tag with the form's ID
@@ -289,6 +295,7 @@ public abstract class BreathingSwordItem extends SwordItem {
                 com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClients(
                     new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.FormSyncPacket(
                         player.getUUID(),
+                        styleKey,
                         newIndex
                     )
                 );

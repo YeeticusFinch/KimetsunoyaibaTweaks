@@ -439,7 +439,11 @@ public class BreathingInfoDetector {
         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player);
 
-        int baseFormIndex = data.getCurrentFormIndex();
+        int baseFormIndex = data.getCurrentFormIndex(
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getTechniqueKey(
+                technique.getName()
+            )
+        );
         int variationIndex = data.getCurrentVariationIndex();
 
         // Get form object (use base form index)

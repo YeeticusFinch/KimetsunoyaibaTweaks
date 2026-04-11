@@ -157,6 +157,7 @@ public class FinalSelectionRaid {
     private long spawnIntervalTicks = 20L;
     private long nextSpawnTime = 0L;
 
+    private final Set<UUID> participants = new HashSet<>();
     private final Set<UUID> allRaidEntities = new HashSet<>();
     private final Set<UUID> aliveEntities = new HashSet<>();
     private final Set<UUID> aliveBosses = new HashSet<>();
@@ -818,15 +819,23 @@ public class FinalSelectionRaid {
     }
 
     private void updateBossBarPlayers() {
+        Set<ServerPlayer> currentPlayers = new HashSet<>();
+
         for (ServerPlayer player : level.players()) {
-            if (!player.isAlive() || player.getPersistentData().getBoolean("oni") || FinalSelectionProcedure.isPlayerDisqualified(player)) {
+            if (!isValidRaidParticipant(player)) {
                 bossBar.removePlayer(player);
                 continue;
             }
 
             if (isWithinRaidBoundary(player.getX(), player.getZ())) {
+                participants.add(player.getUUID());
+                currentPlayers.add(player);
                 bossBar.addPlayer(player);
-            } else {
+            }
+        }
+
+        for (ServerPlayer player : level.players()) {
+            if (!currentPlayers.contains(player)) {
                 bossBar.removePlayer(player);
             }
         }
@@ -914,9 +923,7 @@ public class FinalSelectionRaid {
     private List<ServerPlayer> getAliveNonDemonPlayersInDimension() {
         List<ServerPlayer> out = new ArrayList<>();
         for (ServerPlayer player : level.players()) {
-            if (!player.isAlive()) continue;
-            if (player.getPersistentData().getBoolean("oni")) continue;
-            if (FinalSelectionProcedure.isPlayerDisqualified(player)) continue;
+            if (!isValidRaidParticipant(player)) continue;
             out.add(player);
         }
         return out;
@@ -969,13 +976,19 @@ public class FinalSelectionRaid {
     private List<ServerPlayer> getBoundaryParticipants() {
         List<ServerPlayer> out = new ArrayList<>();
         for (ServerPlayer player : level.players()) {
-            if (!player.isAlive()) continue;
-            if (player.getPersistentData().getBoolean("oni")) continue;
-            if (FinalSelectionProcedure.isPlayerDisqualified(player)) continue;
+            if (!isValidRaidParticipant(player)) continue;
             if (!isWithinRaidBoundary(player.getX(), player.getZ())) continue;
+            participants.add(player.getUUID());
             out.add(player);
         }
         return out;
+    }
+
+    private boolean isValidRaidParticipant(ServerPlayer player) {
+        return player != null
+            && player.isAlive()
+            && !player.getPersistentData().getBoolean("oni")
+            && !FinalSelectionProcedure.isPlayerDisqualified(player);
     }
 
     private boolean isWithinRaidBoundary(double x, double z) {
@@ -1312,6 +1325,12 @@ public class FinalSelectionRaid {
         }
         tag.put("PendingSpawns", pending);
 
+        ListTag participantTag = new ListTag();
+        for (UUID id : participants) {
+            participantTag.add(net.minecraft.nbt.StringTag.valueOf(id.toString()));
+        }
+        tag.put("Participants", participantTag);
+
         ListTag all = new ListTag();
         for (UUID id : allRaidEntities) all.add(net.minecraft.nbt.StringTag.valueOf(id.toString()));
         tag.put("AllRaidEntities", all);
@@ -1382,6 +1401,14 @@ public class FinalSelectionRaid {
         for (int i = 0; i < pending.size(); i++) {
             ResourceLocation id = ResourceLocation.tryParse(pending.getString(i));
             if (id != null) raid.pendingSpawns.add(id);
+        }
+
+        raid.participants.clear();
+        ListTag participants = tag.getList("Participants", Tag.TAG_STRING);
+        for (int i = 0; i < participants.size(); i++) {
+            try {
+                raid.participants.add(UUID.fromString(participants.getString(i)));
+            } catch (Exception ignored) {}
         }
 
         raid.allRaidEntities.clear();

@@ -132,6 +132,14 @@ public class ModEntities {
                 .updateInterval(3)
                 .build("kiriya"));
 
+    public static final RegistryObject<EntityType<KazumiEntity>> KAZUMI =
+        ENTITY_TYPES.register("kazumi",
+            () -> EntityType.Builder.of(KazumiEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("kazumi"));
+
     /**
      * Princess - Tanzanite's poodle companion.
      * Egg-spawned, self-taming GeckoLib dog that follows and defends its owner.
@@ -258,6 +266,38 @@ public class ModEntities {
                 .updateInterval(2)
                 .build("demon_vindicator"));
 
+    public static final RegistryObject<EntityType<SwampDemonEntity>> SWAMP_DEMON =
+        ENTITY_TYPES.register("swamp_demon",
+            () -> EntityType.Builder.of(SwampDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.95F)
+                .clientTrackingRange(10)
+                .updateInterval(2)
+                .build("swamp_demon"));
+
+    public static final RegistryObject<EntityType<SwampPuddleEntity>> SWAMP_PUDDLE =
+        ENTITY_TYPES.register("swamp_puddle",
+            () -> EntityType.Builder.<SwampPuddleEntity>of(SwampPuddleEntity::new, MobCategory.MISC)
+                .sized(1.0F, 0.1F)
+                .clientTrackingRange(32)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("swamp_puddle"));
+
+    /**
+     * Swamp Hand - Temporary attack effect for Swamp Demon Art
+     * Spawns, plays attack animation, deals damage at tick 10, despawns at tick 20
+     */
+    public static final RegistryObject<EntityType<SwampHandEntity>> SWAMP_HAND =
+        ENTITY_TYPES.register("swamp_hand",
+            () -> EntityType.Builder.<SwampHandEntity>of(SwampHandEntity::new, MobCategory.MISC)
+                .sized(1.0F, 1.0F) // Hand effect size
+                .clientTrackingRange(64) // Visible from distance
+                .updateInterval(1) // Update every tick for smooth animation
+                .noSave() // Don't save to world (temporary entity)
+                .fireImmune()
+                .build("swamp_hand"));
+
     /**
      * Flower Petal Slash - Visual effect for Flower Breathing slash attacks
      * Animated texture cycling through 18 frames (sword_loop_flower0-17.png)
@@ -319,12 +359,14 @@ public class ModEntities {
             event.put(DEMON_VILLAGER.get(), DemonVillagerEntity.createAttributes().build());
             event.put(DEMON_PILLAGER.get(), DemonPillagerEntity.createAttributes().build());
             event.put(DEMON_VINDICATOR.get(), DemonVindicatorEntity.createAttributes().build());
+            event.put(SWAMP_DEMON.get(), SwampDemonEntity.createAttributes().build());
 
             // Register attributes for Kanae and Kanawo
             event.put(KANAE.get(), KanaeEntity.createAttributes().build());
             event.put(KANAWO.get(), KanawoEntity.createAttributes().build());
             event.put(KANATA.get(), KanataEntity.createAttributes().build());
             event.put(KIRIYA.get(), KiriyaEntity.createAttributes().build());
+            event.put(KAZUMI.get(), KazumiEntity.createAttributes().build());
             event.put(PRINCESS.get(), PrincessEntity.createAttributes().build());
 
             // Register attributes for Mugen Door (visual-only entity)
@@ -341,6 +383,9 @@ public class ModEntities {
 
             // Register attributes for Flower Petal Slash (visual-only entity)
             event.put(FLOWER_PETAL_SLASH.get(), FlowerPetalSlashEntity.createAttributes().build());
+
+            // Register attributes for Swamp Hand (temporary attack effect)
+            event.put(SWAMP_HAND.get(), SwampHandEntity.createAttributes().build());
 
             // Register attributes for invisible cushion seat mount
             event.put(CUSHION_SEAT.get(), CushionSeatEntity.createAttributes().build());

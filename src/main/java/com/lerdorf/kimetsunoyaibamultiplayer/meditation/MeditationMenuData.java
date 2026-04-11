@@ -1,0 +1,168 @@
+package com.lerdorf.kimetsunoyaibamultiplayer.meditation;
+
+import net.minecraft.network.FriendlyByteBuf;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MeditationMenuData {
+    private final String role;
+    private final String rank;
+    private final String muzanBlood;
+    private final String kizukiRank;
+    private final List<InfoSection> infoSections;
+    private final List<QuestEntry> quests;
+    private final List<LocationEntry> locations;
+    private final String selectedType;
+    private final String selectedId;
+
+    public MeditationMenuData(String role, String rank, String muzanBlood, String kizukiRank,
+                              List<InfoSection> infoSections, List<QuestEntry> quests, List<LocationEntry> locations,
+                              String selectedType, String selectedId) {
+        this.role = role;
+        this.rank = rank;
+        this.muzanBlood = muzanBlood;
+        this.kizukiRank = kizukiRank;
+        this.infoSections = List.copyOf(infoSections);
+        this.quests = List.copyOf(quests);
+        this.locations = List.copyOf(locations);
+        this.selectedType = selectedType;
+        this.selectedId = selectedId;
+    }
+
+    public MeditationMenuData(FriendlyByteBuf buf) {
+        this.role = buf.readUtf();
+        this.rank = buf.readUtf();
+        this.muzanBlood = buf.readUtf();
+        this.kizukiRank = buf.readUtf();
+        this.infoSections = buf.readList(InfoSection::new);
+        this.quests = buf.readList(QuestEntry::new);
+        this.locations = buf.readList(LocationEntry::new);
+        this.selectedType = buf.readUtf();
+        this.selectedId = buf.readUtf();
+    }
+
+    public void write(FriendlyByteBuf buf) {
+        buf.writeUtf(role);
+        buf.writeUtf(rank);
+        buf.writeUtf(muzanBlood);
+        buf.writeUtf(kizukiRank);
+        buf.writeCollection(infoSections, (packetBuffer, section) -> section.write(packetBuffer));
+        buf.writeCollection(quests, (packetBuffer, quest) -> quest.write(packetBuffer));
+        buf.writeCollection(locations, (packetBuffer, location) -> location.write(packetBuffer));
+        buf.writeUtf(selectedType);
+        buf.writeUtf(selectedId);
+    }
+
+    private static List<String> readStringList(FriendlyByteBuf buf) {
+        int size = buf.readVarInt();
+        List<String> lines = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            lines.add(buf.readUtf());
+        }
+        return lines;
+    }
+
+    private static void writeStringList(FriendlyByteBuf buf, List<String> lines) {
+        buf.writeVarInt(lines.size());
+        for (String line : lines) {
+            buf.writeUtf(line);
+        }
+    }
+
+    public String role() {
+        return role;
+    }
+
+    public String rank() {
+        return rank;
+    }
+
+    public String muzanBlood() {
+        return muzanBlood;
+    }
+
+    public String kizukiRank() {
+        return kizukiRank;
+    }
+
+    public List<InfoSection> infoSections() {
+        return infoSections;
+    }
+
+    public List<QuestEntry> quests() {
+        return quests;
+    }
+
+    public List<LocationEntry> locations() {
+        return locations;
+    }
+
+    public String selectedType() {
+        return selectedType;
+    }
+
+    public String selectedId() {
+        return selectedId;
+    }
+
+    public record InfoSection(String id, String title, int count, List<InfoSection> children) {
+        public InfoSection(FriendlyByteBuf buf) {
+            this(
+                buf.readUtf(),
+                buf.readUtf(),
+                buf.readInt(),
+                buf.readList(InfoSection::new)
+            );
+        }
+
+        public void write(FriendlyByteBuf buf) {
+            buf.writeUtf(id);
+            buf.writeUtf(title);
+            buf.writeInt(count);
+            buf.writeCollection(children, (packetBuffer, child) -> child.write(packetBuffer));
+        }
+    }
+
+    public record QuestEntry(String id, String name, String categoryLabel, int categoryColor, List<String> description,
+                             List<String> rewards, String progressText, boolean completed, boolean selected) {
+        public QuestEntry(FriendlyByteBuf buf) {
+            this(
+                buf.readUtf(),
+                buf.readUtf(),
+                buf.readUtf(),
+                buf.readInt(),
+                readStringList(buf),
+                readStringList(buf),
+                buf.readUtf(),
+                buf.readBoolean(),
+                buf.readBoolean()
+            );
+        }
+
+        public void write(FriendlyByteBuf buf) {
+            buf.writeUtf(id);
+            buf.writeUtf(name);
+            buf.writeUtf(categoryLabel);
+            buf.writeInt(categoryColor);
+            writeStringList(buf, description);
+            writeStringList(buf, rewards);
+            buf.writeUtf(progressText);
+            buf.writeBoolean(completed);
+            buf.writeBoolean(selected);
+        }
+    }
+
+    public record LocationEntry(String id, String name, String description, boolean selected) {
+        public LocationEntry(FriendlyByteBuf buf) {
+            this(buf.readUtf(), buf.readUtf(), buf.readUtf(), buf.readBoolean());
+        }
+
+        public void write(FriendlyByteBuf buf) {
+            buf.writeUtf(id);
+            buf.writeUtf(name);
+            buf.writeUtf(description);
+            buf.writeBoolean(selected);
+        }
+    }
+}

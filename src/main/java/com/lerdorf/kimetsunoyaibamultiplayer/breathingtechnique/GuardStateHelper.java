@@ -21,6 +21,7 @@ public class GuardStateHelper {
     private static final String NBT_SKILL = "skill";
     private static final String NBT_ATTACK = "attack";
     private static final String NBT_BREATHES = "breathes";
+    private static final String NBT_CUSTOM_BREATHING_ACTIVE = "knymp_custom_breathing_active";
 
     /**
      * Set entity to guard/defensive state with specified defensive power.
@@ -33,6 +34,7 @@ public class GuardStateHelper {
     public static void setGuardState(LivingEntity entity, double defensivePower, double breathingId) {
         entity.getPersistentData().putDouble(NBT_DAMAGE, defensivePower);
         entity.getPersistentData().putBoolean(NBT_GUARD, true);
+        entity.getPersistentData().putBoolean(NBT_CUSTOM_BREATHING_ACTIVE, true);
         // Don't set skill or breathes - they interfere with base mod's movement and form cycling
         // Only set Damage and guard which are needed for sword clashing
     }
@@ -82,7 +84,12 @@ public class GuardStateHelper {
         entity.getPersistentData().putDouble(NBT_DAMAGE, 0.0);
         entity.getPersistentData().putBoolean(NBT_GUARD, false);
         entity.getPersistentData().putBoolean(NBT_ATTACK, false);
+        entity.getPersistentData().putBoolean(NBT_CUSTOM_BREATHING_ACTIVE, false);
         // Don't touch skill or breathes tags - let base mod manage them
+    }
+
+    public static boolean isCustomBreathingActive(LivingEntity entity) {
+        return entity != null && entity.getPersistentData().getBoolean(NBT_CUSTOM_BREATHING_ACTIVE);
     }
 
     /**

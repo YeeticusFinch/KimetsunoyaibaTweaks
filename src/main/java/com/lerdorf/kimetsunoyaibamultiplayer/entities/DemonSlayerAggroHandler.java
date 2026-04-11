@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.core.registries.Registries;
@@ -187,13 +188,18 @@ public class DemonSlayerAggroHandler {
     }
 
     private static void tickSlayerAggro(Mob mob) {
+        LivingEntity currentTarget = mob.getTarget();
+        if (isFriendlySlayerTarget(currentTarget) && !shouldKeepFriendlyFireTarget(mob, currentTarget)) {
+            mob.setTarget(null);
+            currentTarget = null;
+        }
+
         // Only scan periodically to reduce performance impact
         if (mob.tickCount % SCAN_INTERVAL != 0) {
             return;
         }
 
         // If the mob already has a valid demon target, don't change it
-        LivingEntity currentTarget = mob.getTarget();
         if (currentTarget != null && currentTarget.isAlive() && isDemonTarget(currentTarget)) {
             return;
         }
@@ -400,7 +406,36 @@ public class DemonSlayerAggroHandler {
     }
 
     private static boolean isHostileMobForSlayer(Mob mob) {
-        return mob instanceof Monster && !EntityTagHelper.isDemon(mob);
+        return mob instanceof Monster
+            && !EntityTagHelper.isDemon(mob)
+            && !EntityTagHelper.isDemonSlayer(mob)
+            && !EntityTagHelper.isHashira(mob)
+            && !EntityTagHelper.isKamaboko(mob);
+    }
+
+    private static boolean isFriendlySlayerTarget(LivingEntity entity) {
+        return entity != null
+            && entity.isAlive()
+            && (EntityTagHelper.isDemonSlayer(entity)
+                || EntityTagHelper.isHashira(entity)
+                || EntityTagHelper.isKamaboko(entity));
+    }
+
+    private static boolean shouldKeepFriendlyFireTarget(Mob attacker, LivingEntity target) {
+        if (attacker == null || target == null || !target.isAlive()) {
+            return false;
+        }
+
+        // Let external systems like Mob Battle keep the fight when they have explicitly set aggro.
+        if (target instanceof Mob targetMob && targetMob.getTarget() == attacker) {
+            return true;
+        }
+
+        if (attacker.getLastHurtByMob() == target || target.getLastHurtByMob() == attacker) {
+            return true;
+        }
+
+        return DamageTracker.hasDamageHistory(attacker, target);
     }
 
     private static boolean isWoman(LivingEntity entity) {

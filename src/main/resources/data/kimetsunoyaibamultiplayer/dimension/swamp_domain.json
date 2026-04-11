@@ -1,0 +1,26 @@
+{
+  "type": "kimetsunoyaibamultiplayer:swamp_domain",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "kimetsunoyaibamultiplayer:swamp_domain",
+      "features": false,
+      "lakes": false,
+      "layers": [
+        {
+          "block": "minecraft:barrier",
+          "height": 1
+        },
+        {
+          "block": "minecraft:water",
+          "height": 126
+        },
+        {
+          "block": "minecraft:barrier",
+          "height": 1
+        }
+      ],
+      "structure_overrides": []
+    }
+  }
+}

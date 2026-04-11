@@ -20,6 +20,7 @@ public class FinalSelectionRaidConfig {
     public static ForgeConfigSpec.IntValue bossEscortRespawnIntervalSeconds;
     public static ForgeConfigSpec.IntValue bossEscortSpawnStepSeconds;
     public static ForgeConfigSpec.IntValue maxDemonsPerPlayer;
+    public static ForgeConfigSpec.BooleanValue allowVanillaMonstersInFinalSelection;
     public static ForgeConfigSpec.BooleanValue enableDaytimePassiveAnimals;
     public static ForgeConfigSpec.IntValue daytimePassiveAnimalsPerPlayerMax;
     public static ForgeConfigSpec.IntValue daytimePassiveAnimalSpawnRadius;
@@ -77,6 +78,10 @@ public class FinalSelectionRaidConfig {
         maxDemonsPerPlayer = builder
             .comment("Maximum non-boss demons allowed per player in Mt Fujikasane during Final Selection")
             .defineInRange("max_demons_per_player", 30, 0, 200);
+
+        allowVanillaMonstersInFinalSelection = builder
+            .comment("Allow vanilla non-demon hostile mobs to spawn naturally during Final Selection when they are not replaced by demons")
+            .define("allow_vanilla_monsters_in_final_selection", true);
 
         enableDaytimePassiveAnimals = builder
             .comment("Spawn passive animals during daytime breaks between nights")

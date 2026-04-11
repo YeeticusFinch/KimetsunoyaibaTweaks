@@ -63,9 +63,10 @@ public class CycleFormVariationPacket {
             if (heldItem.getItem() instanceof BreathingSwordItem breathingSword) {
                 Log.debug("[CycleFormVariationPacket] Handling CUSTOM breathing sword");
                 PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
-                int baseFormIndex = data.getCurrentFormIndex();
 
                 BreathingTechnique technique = breathingSword.getBreathingTechnique();
+                String styleKey = PlayerBreathingData.getTechniqueKey(technique.getName());
+                int baseFormIndex = data.getCurrentFormIndex(styleKey);
                 var form = technique.getForm(baseFormIndex);
                 if (form == null) {
                     return;
