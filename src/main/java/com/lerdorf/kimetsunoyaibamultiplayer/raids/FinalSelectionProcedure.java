@@ -502,6 +502,12 @@ public class FinalSelectionProcedure {
         return false;
     }
 
+    private boolean playerEnteredRaidArea(ServerPlayer player) {
+        return player != null
+            && player.isAlive()
+            && player.getPersistentData().getBoolean("final_selection_zone");
+    }
+
     private boolean isEligibleCandidate(ServerPlayer player) {
         return player != null
             && player.isAlive()
@@ -763,11 +769,20 @@ public class FinalSelectionProcedure {
             if (!isEligibleCandidate(player)) {
                 continue;
             }
+            if (!playerEnteredRaidArea(player)) {
+                if (finalSelectionRaid.isWithinRaidArea(player.getX(), player.getZ())) {
+                    player.getPersistentData().putBoolean("final_selection_zone", true);
+                }
+                continue;
+            }
             if (!isPlayerNearCeremonyNpc(player, PLAYER_START_TRIGGER_DISTANCE * PLAYER_START_TRIGGER_DISTANCE)) {
                 continue;
             }
             if (finalSelectionRaid.isWithinRaidArea(player.getX(), player.getZ())) {
                 continue;
+            }
+            else {
+                player.getPersistentData().putBoolean("final_selection_zone", false);
             }
 
             long pendingUntil = kakushiPendingUntilTick.getOrDefault(player.getUUID(), 0L);

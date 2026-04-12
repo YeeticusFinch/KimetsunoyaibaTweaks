@@ -50,8 +50,8 @@ public class EyesGlowLayer<T extends LivingEntity & GeoEntity> extends GeoRender
         RenderType overlayRenderType = CustomRenderTypes.geoEntityTranslucentEmissive(
             overlayModel.getTextureResource(animatable)
         );
-        float brightness = getPulsingBrightness(animatable, partialTick);
-
+        //float brightness = getPulsingBrightness(animatable, partialTick);
+        float brightness = 1;
         getRenderer().reRender(
             overlayBakedModel,
             poseStack,

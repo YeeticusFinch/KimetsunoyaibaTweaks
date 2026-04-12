@@ -3,6 +3,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.items;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.TorilGateGuaranteeHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -20,6 +22,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -87,6 +90,12 @@ public class UbuyashikiInvitationItem extends Item {
                     Component.literal("Toril Gate is at " + chosenMarkerPos.getX() + " ~ " + chosenMarkerPos.getZ())
                         .withStyle(ChatFormatting.LIGHT_PURPLE)
                 );
+
+                // Send quest marker packet to render particle arrow and destination marker
+                int surfaceY = serverLevel.getHeight(Heightmap.Types.WORLD_SURFACE, chosenMarkerPos.getX(), chosenMarkerPos.getZ());
+                Vec3 markerTarget = new Vec3(chosenMarkerPos.getX() + 0.5D, surfaceY + 1.0D, chosenMarkerPos.getZ() + 0.5D);
+                int durationTicks = 300; // 15 seconds
+                ModNetworking.sendToPlayer(new SetCrowQuestMarkerPacket(markerTarget, durationTicks), serverPlayer);
             } else {
                 serverPlayer.sendSystemMessage(
                     Component.literal("No Toril Gate could be found nearby. Explore new chunks and try again.")

@@ -676,7 +676,7 @@ public final class SwampDemonArt {
 
         int lifetimeTicks = 30;
 
-        int tickInterval = 3;
+        int tickInterval = 2;
 
         AbilityScheduler.scheduleRepeating(caster, new Runnable() {
             private boolean finished = false;
@@ -706,8 +706,7 @@ public final class SwampDemonArt {
 
                     int limit = 10;
 
-                    sourceLevel.playSound(null, caster.getX(), caster.getY(), caster.getZ(),
-                        SoundEvents.PLAYER_SPLASH_HIGH_SPEED, SoundSource.HOSTILE, 1.2F, 1.2F);
+                    
 
                     // Use nearest block in X/Z instead of flooring/truncating
                     int baseX = (int) Math.round(basePos.x);
@@ -748,6 +747,8 @@ public final class SwampDemonArt {
                             continue;
                         }
 
+                        sourceLevel.playSound(null, spawnPos.x, spawnPos.y, spawnPos.z,
+                            SoundEvents.PLAYER_SPLASH_HIGH_SPEED, SoundSource.HOSTILE, 1.2F, 1.2F);
                         SwampHandEntity.spawn(sourceLevel, spawnPos, caster);
                         break;
                     }
@@ -766,8 +767,8 @@ public final class SwampDemonArt {
 
     private static boolean hasSwampHandAt(ServerLevel level, Vec3 spawnPos) {
         AABB box = new AABB(
-            spawnPos.x - 0.4D, spawnPos.y - 0.1D, spawnPos.z - 0.4D,
-            spawnPos.x + 0.4D, spawnPos.y + 1.5D, spawnPos.z + 0.4D
+            spawnPos.x - 1D, spawnPos.y - 1D, spawnPos.z - 1D,
+            spawnPos.x + 1D, spawnPos.y + 1.5D, spawnPos.z + 1D
         );
 
         return !level.getEntitiesOfClass(SwampHandEntity.class, box).isEmpty();
@@ -1243,6 +1244,13 @@ public final class SwampDemonArt {
     private static void spawnSwampDomainDemons(ServerLevel level, Vec3 center, LivingEntity target) {
         int count = 3; // start with 3, tune later
 
+        // Check if target is a player doing the kidnapper's bog quest
+        boolean isOnKidnappersBogQuest = false;
+        if (target instanceof ServerPlayer player) {
+            isOnKidnappersBogQuest = player.getPersistentData().getBoolean(
+                com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.KIDNAPPERS_BOG_ACTIVE_TAG);
+        }
+
         for (int i = 0; i < count; i++) {
             SwampDemonEntity demon = ModEntities.SWAMP_DEMON.get().create(level);
             if (demon == null) {
@@ -1257,6 +1265,21 @@ public final class SwampDemonArt {
 
             demon.moveTo(x, y, z, level.random.nextFloat() * 360.0F, 0.0F);
             demon.setHealth(demon.getMaxHealth() * 0.40F);
+
+            // If player is on the quest, mark the first demon as the quest target and equip Satoko's Bow
+            if (isOnKidnappersBogQuest && i == 0) {
+                demon.getPersistentData().putString(
+                    com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG,
+                    "swamp_demon_kidnappers_bog_satoko");
+                demon.setCustomName(net.minecraft.network.chat.Component.literal("Numa, the Swamp Demon"));
+                demon.setCustomNameVisible(true);
+
+                // Equip Satoko's Bow on the demon's head
+                net.minecraft.world.item.ItemStack bowStack = new net.minecraft.world.item.ItemStack(
+                    net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
+                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "satokos_bow")));
+                demon.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, bowStack);
+            }
 
             if (target != null) {
                 demon.setTarget(target);
@@ -1275,10 +1298,10 @@ public final class SwampDemonArt {
             return false;
         }
 
-        System.out.println("SWAMP TELEPORT: " + entity.getName().getString()
-            + " from " + sourceLevel.dimension().location()
-            + " to " + targetDimension.location()
-            + " puddled=" + (entity instanceof LivingEntity living && isPuddled(living)));
+        // System.out.println("SWAMP TELEPORT: " + entity.getName().getString()
+        //     + " from " + sourceLevel.dimension().location()
+        //     + " to " + targetDimension.location()
+        //     + " puddled=" + (entity instanceof LivingEntity living && isPuddled(living)));
 
         boolean leavingSwampDomain = isLeavingSwampDomain(sourceLevel, targetDimension);
         Vec3 storedReturnPos = getStoredReturnPosition(entity);
@@ -1532,6 +1555,26 @@ public final class SwampDemonArt {
             LivingEntity entity = event.getEntity();
             if (isPuddled(entity) && !entity.level().isClientSide && event.getAmount() > 0.0F && entity.getRandom().nextFloat() < 0.04F) {
                 exitPuddle(entity, true);
+            }
+
+            // Check if this is the quest-targeted swamp demon at low health
+            if (!entity.level().isClientSide && entity instanceof SwampDemonEntity demon) {
+                String targetKey = entity.getPersistentData().getString(
+                    com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG);
+                if ("swamp_demon_kidnappers_bog_satoko".equals(targetKey)) {
+                    float healthPercent = entity.getHealth() / entity.getMaxHealth();
+                    if (healthPercent <= 0.20F && !entity.getPersistentData().getBoolean("KnYSwampDemonLowHealthDialoguePlayed")) {
+                        entity.getPersistentData().putBoolean("KnYSwampDemonLowHealthDialoguePlayed", true);
+                        // Send dialogue to nearby players
+                        if (entity.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                            for (net.minecraft.server.level.ServerPlayer player : serverLevel.players()) {
+                                if (player.distanceToSqr(entity.position()) < 64.0D) {
+                                    com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.sendSwampDemonLowHealthDialogue(player);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

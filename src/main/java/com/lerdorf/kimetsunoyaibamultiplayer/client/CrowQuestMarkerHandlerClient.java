@@ -2,7 +2,6 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
-import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
@@ -64,9 +63,6 @@ public class CrowQuestMarkerHandlerClient {
      * Client-only: Process chat messages for quest markers
      */
     public static void onChatMessage(String message) {
-        if (CustomProgressionConfig.isCustomProgressionEnabled()) {
-            return;
-        }
         if (!EntityConfig.crowEnhancementsEnabled || !EntityConfig.crowAutoDetectQuests) {
             return;
         }

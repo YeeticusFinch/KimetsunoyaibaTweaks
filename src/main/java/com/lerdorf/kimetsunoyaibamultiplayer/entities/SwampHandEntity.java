@@ -11,6 +11,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager.ControllerRegistrar;
@@ -202,13 +203,13 @@ public class SwampHandEntity extends Mob implements GeoEntity {
 
     @Override
     public void registerControllers(ControllerRegistrar controllers) {
-        // Controller for attack animation
-        controllers.add(new AnimationController<>(this, "controller", 0, state -> {
-            // Play "attack" animation and hold on last frame
-            state.getController().setAnimation(RawAnimation.begin()
-                .then("kimetsunoyaibamultiplayer.swamp_hand.attack",
-                      software.bernie.geckolib.core.animation.Animation.LoopType.HOLD_ON_LAST_FRAME));
-            return software.bernie.geckolib.core.object.PlayState.CONTINUE;
+        controllers.add(new AnimationController<>(this, "controller", state -> {
+            return state.setAndContinue(
+                RawAnimation.begin().then(
+                    "kimetsunoyaibamultiplayer.swamp_hand.attack",
+                    software.bernie.geckolib.core.animation.Animation.LoopType.HOLD_ON_LAST_FRAME
+                )
+            );
         }));
     }
 
@@ -227,41 +228,32 @@ public class SwampHandEntity extends Mob implements GeoEntity {
         return false; // No collisions
     }
 
-    @Override
-    public void travel(net.minecraft.world.phys.Vec3 travelVector) {
-        // Prevent any travel/movement
-    }
+    // @Override
+    // public void travel(net.minecraft.world.phys.Vec3 travelVector) {
+    //     // Prevent any travel/movement
+    // }
 
-    @Override
-    public void move(net.minecraft.world.entity.MoverType type, net.minecraft.world.phys.Vec3 pos) {
-        // Prevent any movement
-    }
+    // @Override
+    // public void move(net.minecraft.world.entity.MoverType type, net.minecraft.world.phys.Vec3 pos) {
+    //     // Prevent any movement
+    // }
 
     @Override
     public void tick() {
-        // Override tick to prevent entity ticking that might apply physics
-        this.baseTick(); // Only do base entity updates (like NBT, effects)
+        super.tick();
 
-        // Aggressively prevent any movement or gravity
         this.setNoGravity(true);
-        this.setDeltaMovement(0, 0, 0); // Zero out velocity every tick
-        this.setOnGround(true); // Prevent falling calculations
+        this.setDeltaMovement(Vec3.ZERO);
+        this.hurtMarked = true; // optional, helps sync motion reset cleanly
 
         if (!level().isClientSide) {
-            // Start attacking animation immediately
-            if (!isAttacking()) {
-                setAttacking(true);
-            }
-
             ticksAlive++;
 
-            // Deal damage at tick 10
             if (ticksAlive == DAMAGE_TRIGGER_TICK && !damageDealt) {
                 dealDamageToNearbyEntities();
                 damageDealt = true;
             }
 
-            // Despawn after animation completes (20 ticks)
             if (ticksAlive >= ATTACK_ANIMATION_DURATION) {
                 this.discard();
             }

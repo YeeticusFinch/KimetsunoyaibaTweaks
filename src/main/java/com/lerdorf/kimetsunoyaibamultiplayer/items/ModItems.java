@@ -80,6 +80,9 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRIN_ORE = ITEMS.register("nichirin_ore",
         () -> new NichirinOreItem(new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> YEN = ITEMS.register("yen",
+        () -> new Item(new Item.Properties().stacksTo(999)));
+
     // Spawn eggs
     public static final RegistryObject<Item> MUICHIRO_SPAWN_EGG = ITEMS.register("muichiro_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
@@ -337,6 +340,11 @@ public class ModItems {
             net.minecraft.world.item.ArmorItem.Type.HELMET,
             new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> SATOKOS_BOW = ITEMS.register("satokos_bow",
+        () -> new SatokosBowItem(CosmeticArmorMaterial.COSMETIC,
+            net.minecraft.world.item.ArmorItem.Type.HELMET,
+            new Item.Properties().stacksTo(1)));
+
     public static final RegistryObject<Item> HAHNAFUDA_SIMPLE = ITEMS.register("hahnafuda_simple",
         () -> new HanafudaClassicItem(new Item.Properties().stacksTo(1)));
 
@@ -454,6 +462,7 @@ public class ModItems {
                     UNIFORM_MUICHIRO_FP_CHESTPLATE.get(),
                     HAIR_MUICHIRO_FP.get(),
                     BLINDFOLD.get(),
+                    SATOKOS_BOW.get(),
                     HAHNAFUDA_SIMPLE.get()
                 );
 
@@ -499,7 +508,7 @@ public class ModItems {
                     FAVOR_OF_UBUYASHIKI_POTION_3.get()
                 );
 
-                addItems(output, UBUYASHIKI_INVITATION.get(), NICHIRIN_ORE.get());
+                addItems(output, UBUYASHIKI_INVITATION.get(), NICHIRIN_ORE.get(), YEN.get());
             })
             .build());
 

@@ -62,14 +62,26 @@ public final class QuestProgressionManager {
             return false;
         }
         QuestRuntimeContext context = getOrInitializeContext(player, role);
-        if (context == null || context.step().type() != QuestStepType.TALK_TO_ENTITY) {
+        if (context == null) {
             return false;
         }
-        if (!matchesTarget(context.step(), target)) {
-            return false;
+
+        // Handle TALK_TO_ENTITY steps
+        if (context.step().type() == QuestStepType.TALK_TO_ENTITY && matchesTarget(context.step(), target)) {
+            completeStep(player, context);
+            return true;
         }
-        completeStep(player, context);
-        return true;
+
+        // Handle CUSTOM steps that are waiting for a talk interaction (like return_to_kazumi)
+        if (context.step().type() == QuestStepType.CUSTOM && !context.step().targetKey().isBlank() && matchesTarget(context.step(), target)) {
+            // Check if the custom condition is met (e.g., has Satoko's Bow)
+            if (isStepComplete(player, context)) {
+                completeStep(player, context);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static void handleKill(ServerPlayer player, LivingEntity victim, PlayerRole role) {
