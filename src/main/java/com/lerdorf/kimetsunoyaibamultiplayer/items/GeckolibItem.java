@@ -119,6 +119,14 @@ public abstract class GeckolibItem extends Item implements GeoItem {
      */
     protected abstract Supplier<BlockEntityWithoutLevelRenderer> getRendererSupplier();
 
+    /**
+     * Whether this item should drive a GeckoLib animation controller.
+     * Some geo-rendered items are static models and should not attempt to resolve animations.
+     */
+    protected boolean supportsGeckolibItemAnimations(ItemStack stack) {
+        return true;
+    }
+
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         super.inventoryTick(stack, level, entity, slot, selected);
@@ -134,6 +142,11 @@ public abstract class GeckolibItem extends Item implements GeoItem {
         // Standard controller that reads from NBT
         controllers.add(new AnimationController<>(this, "controller", 0, state -> {
             ItemStack stack = state.getData(DataTickets.ITEMSTACK);
+
+            if (!supportsGeckolibItemAnimations(stack)) {
+                state.getController().forceAnimationReset();
+                return software.bernie.geckolib.core.object.PlayState.STOP;
+            }
 
             // For items, use the NBT-based system
             String animName = getAnimationFromStack(stack);

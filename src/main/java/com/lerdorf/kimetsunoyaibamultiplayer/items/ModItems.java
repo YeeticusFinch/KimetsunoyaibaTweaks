@@ -190,6 +190,41 @@ public class ModItems {
             4.0F, 1.6F, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> PUDDLE = ITEMS.register("puddle",
         () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> HUMAN_FLESH_3 = ITEMS.register("human_flesh_3",
+        () -> new HumanFleshItem(
+            new Item.Properties().stacksTo(64).food(
+                new net.minecraft.world.food.FoodProperties.Builder()
+                    .nutrition(3)
+                    .saturationMod(0.2F)
+                    .meat()
+                    .alwaysEat()
+                    .build()),
+            KimetsunoyaibaMultiplayer.MODID + ":geo/human_flesh_3.geo.json",
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                KimetsunoyaibaMultiplayer.MODID, "textures/entity/kazumi.png")));
+    public static final RegistryObject<Item> HUMAN_FLESH_4 = ITEMS.register("human_flesh_4",
+        () -> new HumanFleshItem(
+            new Item.Properties().stacksTo(64).food(
+                new net.minecraft.world.food.FoodProperties.Builder()
+                    .nutrition(3)
+                    .saturationMod(0.2F)
+                    .meat()
+                    .alwaysEat()
+                    .build()),
+            KimetsunoyaibaMultiplayer.MODID + ":geo/human_flesh_4.geo.json",
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                KimetsunoyaibaMultiplayer.MODID, "textures/entity/slayer_female_1.png")));
+    public static final RegistryObject<Item> HUMAN_FLESH_5 = ITEMS.register("human_flesh_5",
+        () -> new HumanFleshItem(
+            new Item.Properties().stacksTo(64).food(
+                new net.minecraft.world.food.FoodProperties.Builder()
+                    .nutrition(3)
+                    .saturationMod(0.2F)
+                    .meat()
+                    .alwaysEat()
+                    .build()),
+            KimetsunoyaibaMultiplayer.MODID + ":geo/human_flesh_5.geo.json",
+            net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/steve.png")));
 
     // Armor pieces
     public static final RegistryObject<Item> ANDON_BAKAMA = ITEMS.register("andon_bakama",
@@ -508,7 +543,8 @@ public class ModItems {
                     FAVOR_OF_UBUYASHIKI_POTION_3.get()
                 );
 
-                addItems(output, UBUYASHIKI_INVITATION.get(), NICHIRIN_ORE.get(), YEN.get());
+                addItems(output, UBUYASHIKI_INVITATION.get(), NICHIRIN_ORE.get(), YEN.get(),
+                    HUMAN_FLESH_3.get(), HUMAN_FLESH_4.get(), HUMAN_FLESH_5.get());
             })
             .build());
 

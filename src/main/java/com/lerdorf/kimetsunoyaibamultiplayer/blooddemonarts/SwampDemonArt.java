@@ -112,8 +112,11 @@ public final class SwampDemonArt {
     private static final int PUDDLE_EXIT_ANIMATION_TICKS = 10;
     private static final int PORTAL_DURATION_TICKS = 20 * 20;
     private static final int TELEPORT_COOLDOWN_TICKS = 20;
-    private static final int EXIT_PORTAL_COOLDOWN_TICKS = 30;
+    private static final int SWAMP_DOMAIN_MIN_STAY_TICKS = 20 * 10;
+    private static final int SWAMP_DOMAIN_REENTRY_COOLDOWN_TICKS = 20 * 30;
     private static final String PORTAL_COOLDOWN_TAG = "SwampPortalCooldown";
+    private static final String SWAMP_DOMAIN_EXIT_LOCK_TAG = "SwampDomainExitLockUntil";
+    private static final String SWAMP_DOMAIN_ENTRY_LOCK_TAG = "SwampDomainEntryLockUntil";
     private static final float PUDDLE_STEP_HEIGHT = 1.4F;
     private static final double SWAMP_DOMAIN_PROJECTILE_SPEED = 0.5D;
     private static final int SWAMP_DOMAIN_PROJECTILE_LIFETIME_TICKS = 20 * 5;
@@ -1304,6 +1307,10 @@ public final class SwampDemonArt {
         //     + " puddled=" + (entity instanceof LivingEntity living && isPuddled(living)));
 
         boolean leavingSwampDomain = isLeavingSwampDomain(sourceLevel, targetDimension);
+        boolean enteringSwampDomain = !sourceLevel.dimension().equals(SWAMP_DOMAIN_LEVEL) && SWAMP_DOMAIN_LEVEL.equals(targetDimension);
+        if (isPortalTeleportBlocked(entity, targetDimension)) {
+            return false;
+        }
         Vec3 storedReturnPos = getStoredReturnPosition(entity);
         Vec3 destinationPos = leavingSwampDomain && storedReturnPos != null ? storedReturnPos : targetPos;
         float destinationYaw = leavingSwampDomain ? getStoredReturnYaw(entity) : entity.getYRot();
@@ -1318,13 +1325,14 @@ public final class SwampDemonArt {
         }
 
         if (entity instanceof ServerPlayer player) {
-            boolean result = player.teleportTo(targetLevel, targetPos.x, targetPos.y, targetPos.z, Set.of(), player.getYRot(), player.getXRot());
+            boolean result = player.teleportTo(targetLevel, destinationPos.x, destinationPos.y, destinationPos.z, Set.of(), destinationYaw, destinationPitch);
             if (result) {
-                targetLevel.playSound(null, targetPos.x, targetPos.y, targetPos.z,
+                applyPortalGracePeriods(player, targetLevel, enteringSwampDomain, leavingSwampDomain);
+                targetLevel.playSound(null, destinationPos.x, destinationPos.y, destinationPos.z,
                     SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.8F, 0.75F);
 
                 if (targetDimension.equals(SWAMP_DOMAIN_LEVEL)) {
-                    spawnSwampDomainDemons(targetLevel, targetPos, player);
+                    spawnSwampDomainDemons(targetLevel, destinationPos, player);
                 }
             }
             return result;
@@ -1342,13 +1350,46 @@ public final class SwampDemonArt {
         });
 
         if (moved != null) {
-            int cooldown = leavingSwampDomain ? EXIT_PORTAL_COOLDOWN_TICKS : TELEPORT_COOLDOWN_TICKS;
+            int cooldown = leavingSwampDomain ? TELEPORT_COOLDOWN_TICKS : TELEPORT_COOLDOWN_TICKS;
             moved.getPersistentData().putLong(PORTAL_COOLDOWN_TAG, targetLevel.getGameTime() + cooldown);
+            applyPortalGracePeriods(moved, targetLevel, enteringSwampDomain, leavingSwampDomain);
             if (leavingSwampDomain) {
                 clearNearbySwampPortals(targetLevel, destinationPos, 15.0D);
             }
             return true;
         }
+        return false;
+    }
+
+    private static void applyPortalGracePeriods(Entity entity, ServerLevel currentLevel, boolean enteringSwampDomain, boolean leavingSwampDomain) {
+        if (enteringSwampDomain) {
+            entity.getPersistentData().putLong(SWAMP_DOMAIN_EXIT_LOCK_TAG, currentLevel.getGameTime() + SWAMP_DOMAIN_MIN_STAY_TICKS);
+        }
+        if (leavingSwampDomain) {
+            entity.getPersistentData().putLong(SWAMP_DOMAIN_ENTRY_LOCK_TAG, currentLevel.getGameTime() + SWAMP_DOMAIN_REENTRY_COOLDOWN_TICKS);
+        }
+    }
+
+    public static boolean isPortalTeleportBlocked(Entity entity, ResourceKey<Level> targetDimension) {
+        if (!(entity.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+
+        long gameTime = serverLevel.getGameTime();
+        if (entity.getPersistentData().getLong(PORTAL_COOLDOWN_TAG) > gameTime) {
+            return true;
+        }
+
+        boolean leavingSwampDomain = isLeavingSwampDomain(serverLevel, targetDimension);
+        if (leavingSwampDomain) {
+            return entity.getPersistentData().getLong(SWAMP_DOMAIN_EXIT_LOCK_TAG) > gameTime;
+        }
+
+        boolean enteringSwampDomain = !serverLevel.dimension().equals(SWAMP_DOMAIN_LEVEL) && SWAMP_DOMAIN_LEVEL.equals(targetDimension);
+        if (enteringSwampDomain) {
+            return entity.getPersistentData().getLong(SWAMP_DOMAIN_ENTRY_LOCK_TAG) > gameTime;
+        }
+
         return false;
     }
 

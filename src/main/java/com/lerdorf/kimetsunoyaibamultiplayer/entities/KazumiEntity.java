@@ -49,7 +49,8 @@ public class KazumiEntity extends PathfinderMob implements GeoEntity {
             if (this.isDeadOrDying()) {
                 return state.setAndContinue(RawAnimation.begin().thenPlay("death"));
             }
-            if (state.isMoving()) {
+            // Check actual movement OR active navigation to properly trigger walk animation
+            if (state.isMoving() || (this.getNavigation().isInProgress() && !this.isNoAi())) {
                 return state.setAndContinue(RawAnimation.begin().thenLoop("walk"));
             }
             return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));

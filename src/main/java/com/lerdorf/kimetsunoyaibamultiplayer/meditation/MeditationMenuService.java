@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.PlayerRole;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.DemonEyesHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.advancements.Advancement;
@@ -71,7 +72,9 @@ public final class MeditationMenuService {
                 List.of(),
                 List.of(),
                 "",
-                ""
+                "",
+                false,
+                DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX
             );
         }
 
@@ -79,6 +82,8 @@ public final class MeditationMenuService {
         String rank = resolveRank(player, role);
         String muzanBlood = resolveMuzanBlood(player);
         String kizukiRank = resolveKizukiRank(player);
+        boolean demonPlayer = role == PlayerRole.DEMON;
+        int demonEyesIndex = DemonEyesHelper.getOrCreateIndex(player);
 
         List<MeditationMenuData.InfoSection> infoSections = buildInfoSections(player);
         List<MeditationMenuData.QuestEntry> quests = QuestProgressionManager.buildQuestEntries(player, role);
@@ -104,7 +109,7 @@ public final class MeditationMenuService {
         locations = applyLocationSelection(locations, selectedType, selectedId);
 
         return new MeditationMenuData(role.getDisplayName(), rank, muzanBlood, kizukiRank,
-            infoSections, quests, locations, selectedType, selectedId);
+            infoSections, quests, locations, selectedType, selectedId, demonPlayer, demonEyesIndex);
     }
 
     public static void saveSelection(ServerPlayer player, String type, String id) {

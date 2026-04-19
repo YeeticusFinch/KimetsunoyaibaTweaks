@@ -34,6 +34,7 @@ public class MeditationMenuScreen extends Screen {
     private int questScroll;
     private int locationScroll;
     private int skillsScroll;
+    private int detailScroll;
     private final List<Rect2i> tabBounds = new ArrayList<>();
     private final List<InfoHitbox> infoHitboxes = new ArrayList<>();
     private final List<EntryHitbox> questHitboxes = new ArrayList<>();
@@ -41,10 +42,13 @@ public class MeditationMenuScreen extends Screen {
     private ItemStack hoveredStack = ItemStack.EMPTY;
     private List<Component> hoveredTooltip = List.of();
     private final Set<String> expandedInfoSections = new HashSet<>(Set.of("demons_killed", "humans_killed"));
+    private Rect2i demonEyesButtonBounds;
+    private int localDemonEyesIndex;
 
     public MeditationMenuScreen(MeditationMenuData data) {
-        super(Component.literal("Meditation Menu"));
+        super(Component.literal("Meditation"));
         this.data = data;
+        this.localDemonEyesIndex = data.demonEyesIndex();
     }
 
     @Override
@@ -65,6 +69,7 @@ public class MeditationMenuScreen extends Screen {
         infoHitboxes.clear();
         questHitboxes.clear();
         locationHitboxes.clear();
+        demonEyesButtonBounds = null;
 
         guiGraphics.fill(left - 4, top - 4, left + PANEL_WIDTH + 4, top + PANEL_HEIGHT + 4, 0xAA0A0A10);
         guiGraphics.fill(left, top, left + PANEL_WIDTH, top + PANEL_HEIGHT, 0xF1211B19);
@@ -232,24 +237,23 @@ public class MeditationMenuScreen extends Screen {
             return;
         }
 
-        int bottom = y + height;
-        guiGraphics.enableScissor(x, y, x + width, bottom);
-        int cursorY = y;
+        // Pre-build all detail lines to calculate total height
+        List<DetailLine> detailLines = new ArrayList<>();
+        
+        // Title
         for (FormattedCharSequence sequence : font.split(Component.literal(selected.title()), width)) {
-            if (cursorY + 10 > bottom) {
-                guiGraphics.disableScissor();
-                return;
-            }
-            guiGraphics.drawString(font, sequence, x, cursorY, 0xF5D18A, false);
-            cursorY += 10;
+            detailLines.add(new DetailLine(sequence, 0xF5D18A));
         }
+        detailLines.add(new DetailLine(null, 0)); // spacer
 
         if (selected.quest != null) {
-            guiGraphics.renderItem(new ItemStack(ModItems.QUEST_SCROLL.get()), x, cursorY + 4);
-            drawWrappedBlock(guiGraphics, font.split(Component.literal(selected.quest.progressText()), width - 26),
-                x + 22, cursorY + 8, width - 24, bottom, 0xD6E3C5);
-            cursorY += 30;
+            // Progress text
+            for (FormattedCharSequence seq : font.split(Component.literal(selected.quest.progressText()), width - 26)) {
+                detailLines.add(new DetailLine(seq, 0xD6E3C5, 22));
+            }
+            detailLines.add(new DetailLine(null, 0)); // spacer
 
+            // Description
             List<String> descriptionLines = new ArrayList<>();
             String currentQuestName = null;
             for (String line : selected.quest.description()) {
@@ -259,33 +263,77 @@ public class MeditationMenuScreen extends Screen {
                     descriptionLines.add(line);
                 }
             }
+            for (FormattedCharSequence seq : wrapLines(descriptionLines, width)) {
+                detailLines.add(new DetailLine(seq, 0xEADCC0));
+            }
 
-            cursorY = drawWrappedBlock(guiGraphics, wrapLines(descriptionLines, width), x, cursorY, width, bottom, 0xEADCC0);
             if (currentQuestName != null && !currentQuestName.isBlank()) {
-                cursorY += 4;
-                if (cursorY + 10 <= bottom) {
-                    guiGraphics.drawString(font, "Current Quest", x, cursorY, 0x8FD48C, false);
-                    cursorY += 12;
+                detailLines.add(new DetailLine(null, 0)); // spacer
+                detailLines.add(new DetailLine(Component.literal("Current Quest").getVisualOrderText(), 0x8FD48C));
+                for (FormattedCharSequence seq : font.split(Component.literal(currentQuestName), width)) {
+                    detailLines.add(new DetailLine(seq, 0xEADCC0));
                 }
-                cursorY = drawWrappedBlock(guiGraphics, font.split(Component.literal(currentQuestName), width), x, cursorY, width, bottom, 0xEADCC0);
             }
 
-            cursorY += 4;
-            if (cursorY + 10 <= bottom) {
-                guiGraphics.drawString(font, "Rewards", x, cursorY, 0x8FD48C, false);
-                cursorY += 12;
+            // Rewards
+            detailLines.add(new DetailLine(null, 0)); // spacer
+            detailLines.add(new DetailLine(Component.literal("Rewards").getVisualOrderText(), 0x8FD48C));
+            for (FormattedCharSequence seq : prefixWrappedLines(selected.quest.rewards(), "- ", width)) {
+                detailLines.add(new DetailLine(seq, 0xCBE7C8));
             }
-            drawWrappedBlock(guiGraphics, prefixWrappedLines(selected.quest.rewards(), "- ", width), x, cursorY, width, bottom, 0xCBE7C8);
         } else {
-            guiGraphics.renderItem(new ItemStack(ModItems.NAV_PIN_WAYPOINT.get()), x, cursorY + 4);
-            cursorY = drawWrappedBlock(guiGraphics, font.split(Component.literal(selected.location.description()), width - 24),
-                x + 22, cursorY + 8, width - 24, bottom, 0xEADCC0);
-            cursorY += 12;
-            drawWrappedBlock(guiGraphics,
-                wrapLines(List.of("Selection persistence is wired in.", "Navigation behavior comes next."), width),
-                x, cursorY, width, bottom, 0xCBE7C8);
+            detailLines.add(new DetailLine(null, 0)); // spacer
+            for (FormattedCharSequence seq : font.split(Component.literal(selected.location.description()), width - 24)) {
+                detailLines.add(new DetailLine(seq, 0xEADCC0, 22));
+            }
+            detailLines.add(new DetailLine(null, 0)); // spacer
+            for (FormattedCharSequence seq : wrapLines(List.of(
+                    "Selection persistence is wired in.",
+                    "Navigation behavior comes next."
+                ), width)) {
+                detailLines.add(new DetailLine(seq, 0xCBE7C8));
+            }
+        }
+
+        int lineHeight = 10;
+        int totalLines = detailLines.size();
+        int visible = Math.max(1, height / lineHeight);
+        detailScroll = clampScroll(detailScroll, totalLines, visible);
+
+        guiGraphics.enableScissor(x, y, x + width, y + height);
+        int scrollOffset = detailScroll * lineHeight;
+        for (int i = detailScroll; i < Math.min(detailLines.size(), detailScroll + visible + 1); i++) {
+            DetailLine line = detailLines.get(i);
+            int lineY = y + (i - detailScroll) * lineHeight;
+            if (line.sequence() != null) {
+                int drawX = line.indent() > 0 ? x + line.indent() : x;
+                guiGraphics.drawString(font, line.sequence(), drawX, lineY, line.color(), false);
+            }
         }
         guiGraphics.disableScissor();
+
+        // Render scrollbar
+        renderDetailScrollbar(guiGraphics, x + width + 2, y, y + height, totalLines, visible);
+    }
+
+    private void renderDetailScrollbar(GuiGraphics guiGraphics, int x, int top, int bottom, int total, int visible) {
+        int height = bottom - top;
+        guiGraphics.fill(x, top, x + 4, bottom, 0x55281F1A);
+        if (total <= visible) {
+            guiGraphics.fill(x, top, x + 4, bottom, 0xAA8A6A3E);
+            return;
+        }
+        int knobHeight = Math.max(10, height * visible / total);
+        int travel = height - knobHeight;
+        int maxScroll = Math.max(1, total - visible);
+        int knobTop = top + (travel * detailScroll / maxScroll);
+        guiGraphics.fill(x, knobTop, x + 4, knobTop + knobHeight, 0xFFB08D55);
+    }
+
+    private record DetailLine(FormattedCharSequence sequence, int color, int indent) {
+        DetailLine(FormattedCharSequence sequence, int color) {
+            this(sequence, color, 0);
+        }
     }
 
     private void renderSkillsTab(GuiGraphics guiGraphics, int left, int top) {
@@ -295,12 +343,34 @@ public class MeditationMenuScreen extends Screen {
         int bodyBottom = top + PANEL_HEIGHT - BODY_BOTTOM_MARGIN;
         guiGraphics.fill(bodyLeft, bodyTop, bodyRight, bodyBottom, 0xAA15100E);
 
+        if (data.demonPlayer()) {
+            int cardLeft = bodyLeft + 10;
+            int cardTop = bodyTop + 12;
+            int cardRight = bodyRight - 10;
+            int buttonTop = cardTop + 46;
+            int buttonHeight = 18;
+            guiGraphics.fill(cardLeft, cardTop, cardRight, cardTop + 86, 0x88312420);
+            guiGraphics.drawString(font, "Demon Customization", cardLeft + 8, cardTop + 8, 0xF5D18A, false);
+            guiGraphics.drawString(font, "Adjust the glowing demon-eyes overlay on your player skin.", cardLeft + 8, cardTop + 24, 0xF0E3C2, false);
+            guiGraphics.drawString(font, "Current style: " + localDemonEyesIndex, cardLeft + 8, cardTop + 36, 0xCBE7C8, false);
+
+            demonEyesButtonBounds = new Rect2i(cardLeft + 8, buttonTop, cardRight - cardLeft - 16, buttonHeight);
+            guiGraphics.fill(demonEyesButtonBounds.getX(), demonEyesButtonBounds.getY(),
+                demonEyesButtonBounds.getX() + demonEyesButtonBounds.getWidth(),
+                demonEyesButtonBounds.getY() + demonEyesButtonBounds.getHeight(), 0xFF8A6A3E);
+            guiGraphics.drawCenteredString(font, "Change Demon Eyes",
+                demonEyesButtonBounds.getX() + demonEyesButtonBounds.getWidth() / 2,
+                demonEyesButtonBounds.getY() + 5, 0x1D1208);
+
+            guiGraphics.drawString(font, "Other demon skills can be added here later.", cardLeft + 8, cardTop + 72, 0xB8A48B, false);
+            return;
+        }
+
         List<String> lines = List.of(
-            "Skills tab framework",
+            "Skills",
             "",
-            "This page is intentionally lightweight for now.",
-            "We can later split it into breathing, blood demon arts, passives, and unlock trees.",
-            "The scrolling behavior is already in place so this can grow without changing the shell."
+            "No demon eye customization is available for non-demon players.",
+            "This tab can later hold role-specific skills and passive systems."
         );
 
         List<FormattedCharSequence> wrappedLines = wrapLines(lines, bodyRight - bodyLeft - 20);
@@ -392,6 +462,10 @@ public class MeditationMenuScreen extends Screen {
                     }
                 }
             }
+            if (activeTab == Tab.SKILLS && demonEyesButtonBounds != null && contains(demonEyesButtonBounds, mouseX, mouseY)) {
+                minecraft.setScreen(new DemonEyesCustomizationScreen(this, localDemonEyesIndex));
+                return true;
+            }
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
@@ -433,6 +507,21 @@ public class MeditationMenuScreen extends Screen {
                     int visible = Math.max(1, (bodyBottom - locationBoxTop - 24) / ROW_HEIGHT);
                     locationScroll = clampScroll(locationScroll + amount, data.locations().size(), visible);
                 }
+            } else {
+                // Detail pane scrolling
+                int detailLeft = listRight + 10 + 8;
+                int detailRight = left + PANEL_WIDTH - INNER_MARGIN;
+                if (mouseX >= detailLeft && mouseX <= detailRight && mouseY >= bodyTop && mouseY <= bodyBottom) {
+                    // Recalculate detail lines count for scroll clamping
+                    SelectedEntry selected = getSelectedEntry();
+                    if (selected != null) {
+                        int lineCount = countDetailLines(selected, detailRight - detailLeft - 16);
+                        int lineHeight = 10;
+                        int detailHeight = bodyBottom - bodyTop - 16;
+                        int visible = Math.max(1, detailHeight / lineHeight);
+                        detailScroll = clampScroll(detailScroll + amount, lineCount, visible);
+                    }
+                }
             }
         } else {
             int left = (width - PANEL_WIDTH) / 2;
@@ -454,6 +543,10 @@ public class MeditationMenuScreen extends Screen {
             }
         }
         return true;
+    }
+
+    public void updateLocalDemonEyesIndex(int demonEyesIndex) {
+        this.localDemonEyesIndex = demonEyesIndex;
     }
 
     private void toggleInfoSection(String id) {
@@ -505,13 +598,50 @@ public class MeditationMenuScreen extends Screen {
         return cursorY;
     }
 
+    private int countDetailLines(SelectedEntry selected, int width) {
+        int count = 0;
+        // Title
+        count += font.split(Component.literal(selected.title()), width).size() + 1; // +1 for spacer
+
+        if (selected.quest != null) {
+            // Progress
+            count += font.split(Component.literal(selected.quest.progressText()), width - 26).size() + 1;
+            
+            // Description
+            List<String> desc = new ArrayList<>();
+            String currentQuestName = null;
+            for (String line : selected.quest.description()) {
+                if (line.startsWith("Current Quest: ")) {
+                    currentQuestName = line.substring("Current Quest: ".length());
+                } else {
+                    desc.add(line);
+                }
+            }
+            count += wrapLines(desc, width).size();
+            
+            if (currentQuestName != null && !currentQuestName.isBlank()) {
+                count += 1 + font.split(Component.literal(currentQuestName), width).size(); // header + lines
+            }
+            
+            // Rewards header + lines
+            count += 1 + prefixWrappedLines(selected.quest.rewards(), "- ", width).size();
+        } else {
+            count += font.split(Component.literal(selected.location.description()), width - 24).size();
+            count += 1 + wrapLines(List.of(
+                "Selection persistence is wired in.",
+                "Navigation behavior comes next."
+            ), width).size();
+        }
+        return count;
+    }
+
     private int clampScroll(int value, int total, int visible) {
         return Math.max(0, Math.min(value, Math.max(0, total - visible)));
     }
 
     private void select(String type, String id) {
         ModNetworking.sendToServer(new SelectMeditationTargetPacket(type, id));
-        minecraft.setScreen(new MeditationMenuScreen(new MeditationMenuData(
+        MeditationMenuScreen newScreen = new MeditationMenuScreen(new MeditationMenuData(
             data.role(),
             data.rank(),
             data.muzanBlood(),
@@ -535,8 +665,12 @@ public class MeditationMenuScreen extends Screen {
                 MeditationMenuService.SELECTED_TYPE_LOCATION.equals(type) && location.id().equals(id)
             )).toList(),
             type,
-            id
-        )));
+            id,
+            data.demonPlayer(),
+            localDemonEyesIndex
+        ));
+        newScreen.activeTab = Tab.NAVIGATION;
+        minecraft.setScreen(newScreen);
     }
 
     private boolean contains(Rect2i rect, double mouseX, double mouseY) {

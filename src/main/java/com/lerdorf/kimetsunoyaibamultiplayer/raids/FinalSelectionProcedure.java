@@ -921,6 +921,8 @@ public class FinalSelectionProcedure {
         Item baseChest = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "uniform_chestplate"));
         Item baseLeggings = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "uniform_leggings"));
         Item baseBoots = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "uniform_boots"));
+        String cushionColor = Math.random() > 0.75 ? "blue" : (Math.random() > 0.667 ? "purple" : (Math.random() > 0.5 ? "green" : "red"));
+        Item cushion = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "cushion_" + cushionColor));
         if (baseChest != null && baseLeggings != null && baseBoots != null) {
             options.add(new UniformSet(baseChest, baseLeggings, baseBoots));
         }
@@ -949,6 +951,7 @@ public class FinalSelectionProcedure {
         givePlayerItemOrDrop(player, new ItemStack(chosen.chest()));
         givePlayerItemOrDrop(player, new ItemStack(chosen.leggings()));
         givePlayerItemOrDrop(player, new ItemStack(chosen.boots()));
+        givePlayerItemOrDrop(player, new ItemStack(cushion));
     }
 
     private void givePlayerItemOrDrop(ServerPlayer player, ItemStack stack) {
@@ -1660,6 +1663,181 @@ public class FinalSelectionProcedure {
             player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.no_kakushi_offer")
                 .withStyle(ChatFormatting.RED));
         }
+    }
+
+    /**
+     * Completes final selection for a player outside the normal raid flow.
+     * Grants all rewards (crow, uniform, advancements, ore selection) and broadcasts
+     * the congratulations message. Works from any dimension.
+     */
+    public static void completeFinalSelection(ServerPlayer player) {
+        // Check if already completed
+        if (player.getServer() != null) {
+            Advancement fsAdv = player.server.getAdvancements().getAdvancement(COMPLETED_FINAL_SELECTION_ADVANCEMENT);
+            if (fsAdv != null && player.getAdvancements().getOrStartProgress(fsAdv).isDone()) {
+                player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.already_completed")
+                    .withStyle(ChatFormatting.RED));
+                return;
+            }
+        }
+
+        // Award advancements
+        if (activeProcedure != null) {
+            activeProcedure.awardAdvancement(player, DEMON_SLAYER_CORPS_ADVANCEMENT);
+            activeProcedure.awardAdvancement(player, COMPLETED_FINAL_SELECTION_ADVANCEMENT);
+            activeProcedure.awardAdvancement(player, MIZUNOTO_ADVANCEMENT);
+        } else {
+            // Fallback: directly award advancements if no active procedure
+            awardAdvancementDirect(player, DEMON_SLAYER_CORPS_ADVANCEMENT);
+            awardAdvancementDirect(player, COMPLETED_FINAL_SELECTION_ADVANCEMENT);
+            awardAdvancementDirect(player, MIZUNOTO_ADVANCEMENT);
+        }
+
+        // Spawn and tame kasugai crow
+        spawnAndTameKasugaiCrowForPlayer(player);
+
+        // Grant random uniform set
+        grantRandomUniformSetForPlayer(player);
+
+        // Run ore selection
+        if (activeProcedure != null) {
+            activeProcedure.runOreSelectionProcedurePlaceholder(player);
+        } else {
+            openStandaloneOreSelection(player);
+        }
+
+        // Broadcast congratulations message
+        boolean kanataSpeaker = player.level().getRandom().nextBoolean();
+        player.sendSystemMessage(createSpeakerDialogue(
+            kanataSpeaker ? "entity.kimetsunoyaibamultiplayer.kanata" : "entity.kimetsunoyaibamultiplayer.kiriya",
+            kanataSpeaker ? ChatFormatting.LIGHT_PURPLE : ChatFormatting.YELLOW,
+            Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.congratulations", player.getDisplayName())
+        ));
+    }
+
+    private static void spawnAndTameKasugaiCrowForPlayer(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        try {
+            EntityType<?> crowType = ForgeRegistries.ENTITY_TYPES.getValue(
+                ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "kasugai_crow")
+            );
+            if (crowType == null) {
+                Log.debug("[FinalSelection] Could not find kasugai crow entity type");
+                return;
+            }
+
+            Entity crow = crowType.create(level);
+            if (crow == null) {
+                return;
+            }
+
+            BlockPos spawnPos = findRandomSurfacePositionStatic(level, player.blockPosition(), 8);
+            if (crow instanceof Mob mob) {
+                mob.moveTo(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, level.random.nextFloat() * 360.0f, 0.0f);
+                mob.setPersistenceRequired();
+            } else {
+                crow.setPos(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
+            }
+
+            if (crow instanceof TamableAnimal tamable) {
+                tamable.tame(player);
+                tamable.setOwnerUUID(player.getUUID());
+                tamable.setPersistenceRequired();
+            }
+
+            level.addFreshEntity(crow);
+        } catch (Exception e) {
+            Log.debug("[FinalSelection] Failed to spawn/tame kasugai crow: {}", e.getMessage());
+        }
+    }
+
+    private static void grantRandomUniformSetForPlayer(ServerPlayer player) {
+        List<UniformSet> options = new ArrayList<>();
+
+        Item baseChest = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "uniform_chestplate"));
+        Item baseLeggings = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "uniform_leggings"));
+        Item baseBoots = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "uniform_boots"));
+        String cushionColor = Math.random() > 0.75 ? "blue" : (Math.random() > 0.667 ? "purple" : (Math.random() > 0.5 ? "green" : "red"));
+        Item cushion = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "cushion_" + cushionColor));
+        if (baseChest != null && baseLeggings != null && baseBoots != null) {
+            options.add(new UniformSet(baseChest, baseLeggings, baseBoots));
+        }
+
+        options.add(new UniformSet(
+            ModItems.SLAYER_UNIFORM_2_CHESTPLATE.get(),
+            ModItems.SLAYER_UNIFORM_2_LEGGINGS.get(),
+            ModItems.SLAYER_UNIFORM_2_BOOTS.get()
+        ));
+
+        options.add(new UniformSet(
+            ModItems.SLAYER_UNIFORM_2_CHESTPLATE_PURPLE.get(),
+            ModItems.SLAYER_UNIFORM_2_LEGGINGS_PURPLE.get(),
+            ModItems.SLAYER_UNIFORM_2_BOOTS_PURPLE.get()
+        ));
+
+        options.add(new UniformSet(
+            ModItems.PURPLE_DEMON_SLAYER_UNIFORM_CHESTPLATE.get(),
+            ModItems.PURPLE_DEMON_SLAYER_UNIFORM_LEGGINGS.get(),
+            ModItems.PURPLE_DEMON_SLAYER_UNIFORM_BOOTS.get()
+        ));
+
+        if (options.isEmpty()) return;
+
+        ServerLevel level = player.serverLevel();
+        UniformSet chosen = options.get(level.random.nextInt(options.size()));
+        givePlayerItemOrDropStatic(player, new ItemStack(chosen.chest()));
+        givePlayerItemOrDropStatic(player, new ItemStack(chosen.leggings()));
+        givePlayerItemOrDropStatic(player, new ItemStack(chosen.boots()));
+        givePlayerItemOrDropStatic(player, new ItemStack(cushion));
+    }
+
+    private static void givePlayerItemOrDropStatic(ServerPlayer player, ItemStack stack) {
+        if (!player.getInventory().add(stack)) {
+            player.drop(stack, false);
+        }
+    }
+
+    private static void awardAdvancementDirect(ServerPlayer player, ResourceLocation advancementId) {
+        if (player.getServer() == null) {
+            return;
+        }
+        Advancement advancement = player.server.getAdvancements().getAdvancement(advancementId);
+        if (advancement == null) {
+            Log.debug("[FinalSelection] Missing advancement definition: {}", advancementId);
+            return;
+        }
+        if (player.getAdvancements().getOrStartProgress(advancement).isDone()) {
+            return;
+        }
+        List<String> remainingCriteria = new ArrayList<>();
+        for (String criterion : player.getAdvancements().getOrStartProgress(advancement).getRemainingCriteria()) {
+            remainingCriteria.add(criterion);
+        }
+        for (String criterion : remainingCriteria) {
+            player.getAdvancements().award(advancement, criterion);
+        }
+    }
+
+    private static BlockPos findRandomSurfacePositionStatic(ServerLevel level, BlockPos anchor, int radius) {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            double angle = level.random.nextDouble() * Math.PI * 2.0;
+            int dist = level.random.nextInt(Math.max(1, radius + 1));
+            int x = (int) Math.round(anchor.getX() + Math.cos(angle) * dist);
+            int z = (int) Math.round(anchor.getZ() + Math.sin(angle) * dist);
+
+            BlockPos test = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, anchor.getY(), z));
+            if (isValidSurfacePositionStatic(level, test)) {
+                return test;
+            }
+        }
+
+        BlockPos fallback = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, anchor);
+        return isValidSurfacePositionStatic(level, fallback) ? fallback : fallback.above();
+    }
+
+    private static boolean isValidSurfacePositionStatic(ServerLevel level, BlockPos pos) {
+        BlockPos below = pos.below();
+        return level.getBlockState(below).isSolid() && level.getBlockState(pos).isAir();
     }
 
     public static boolean isPlayerDisqualified(ServerPlayer player) {

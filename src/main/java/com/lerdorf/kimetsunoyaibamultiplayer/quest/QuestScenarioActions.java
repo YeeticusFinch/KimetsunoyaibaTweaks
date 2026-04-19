@@ -1,23 +1,22 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.quest;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import java.util.Comparator;
+import java.util.List;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.KazumiEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.StructureLocationCache;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.monster.Zombie;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.registries.ForgeRegistries;
-
-import java.util.Comparator;
-import java.util.List;
 
 public final class QuestScenarioActions {
     public static final String QUEST_NPC_ID_TAG = "KnYQuestNpcId";
@@ -29,8 +28,7 @@ public final class QuestScenarioActions {
     public static final String SWAMP_DOMAIN_ENCOUNTER_STARTED_TAG = "KnYSwampDomainEncounterStarted";
 
     private static final ResourceLocation VILLAGE_SWAMP = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "village_swamp");
-    private static final ResourceLocation CIVILIAN_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "civilian");
-    private static final ResourceLocation SWAMP_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "swamp_demon");
+    private static final ResourceLocation SWAMP_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "swamp_demon");
     private static final ResourceLocation SATOKOS_BOW = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "satokos_bow");
 
     private QuestScenarioActions() {
@@ -78,25 +76,232 @@ public final class QuestScenarioActions {
             return;
         }
 
-        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(CIVILIAN_ID);
-        Entity entity = type != null ? type.create(serverLevel) : EntityType.VILLAGER.create(serverLevel);
-        if (entity == null) {
+        KazumiEntity kazumi = ModEntities.KAZUMI.get().create(serverLevel);
+        if (kazumi == null) {
             return;
         }
 
         BlockPos spawnPos = findRandomSurfacePosition(serverLevel, center, 24, 12);
-        entity.getPersistentData().putString(QUEST_NPC_ID_TAG, "kazumi");
-        entity.setCustomName(Component.literal("Kazumi"));
-        entity.setCustomNameVisible(true);
-        entity.setPos(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D);
-        if (entity instanceof Mob mob) {
-            mob.setPersistenceRequired();
-            mob.setNoAi(true);
+        kazumi.getPersistentData().putString(QUEST_NPC_ID_TAG, "kazumi");
+        kazumi.setCustomName(Component.literal("Kazumi"));
+        kazumi.setCustomNameVisible(true);
+        kazumi.setPos(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D);
+        serverLevel.addFreshEntity(kazumi);
+    }
+
+    public static void makeKazumiLookAtPlayer(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
         }
-        if (entity instanceof Villager villager) {
-            villager.setNoAi(true);
+        KazumiEntity kazumi = findNearestKazumi(serverLevel, player);
+        if (kazumi == null) {
+            return;
         }
-        serverLevel.addFreshEntity(entity);
+        // Stop AI so Kazumi stands still, but keep the entity alive and responsive
+        kazumi.setNoAi(true);
+        // Make Kazumi face the player
+        kazumi.getLookControl().setLookAt(player);
+        kazumi.yHeadRot = kazumi.getYRot();
+        kazumi.yBodyRot = kazumi.getYRot();
+    }
+
+    public static void makeKazumiWalkToRandomSpot(ServerPlayer player, QuestRuntimeContext context) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        KazumiEntity kazumi = findNearestKazumi(serverLevel, player);
+        if (kazumi == null) {
+            return;
+        }
+
+        // Enable AI again
+        kazumi.setNoAi(false);
+
+        // Pick a random spot in the swamp village
+        BlockPos center = getStoredStructureCenter(player);
+        if (center == null) {
+            center = findNearestStructure(serverLevel, player.blockPosition(), VILLAGE_SWAMP);
+        }
+        if (center == null) {
+            return;
+        }
+
+        BlockPos targetPos = findRandomSurfacePosition(serverLevel, center, 30, 20);
+        kazumi.getPersistentData().putInt("KnYKazumiTargetX", targetPos.getX());
+        kazumi.getPersistentData().putInt("KnYKazumiTargetY", targetPos.getY());
+        kazumi.getPersistentData().putInt("KnYKazumiTargetZ", targetPos.getZ());
+        kazumi.getPersistentData().putBoolean("KnYKazumiWalking", true);
+    }
+
+    /**
+     * Continuously updates Kazumi's pathfinding toward his target spot.
+     * Also teleports Kazumi to the target if the player reaches it first.
+     * Should be called every tick during the talk_to_kazumi step after dialog ends.
+     */
+    public static void tickKazumiPathing(ServerPlayer player, QuestRuntimeContext context) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        KazumiEntity kazumi = findNearestKazumi(serverLevel, player);
+        if (kazumi == null) {
+            return;
+        }
+
+        int tx = kazumi.getPersistentData().getInt("KnYKazumiTargetX");
+        int ty = kazumi.getPersistentData().getInt("KnYKazumiTargetY");
+        int tz = kazumi.getPersistentData().getInt("KnYKazumiTargetZ");
+        if (tx == 0 && ty == 0 && tz == 0) {
+            return; // No target set
+        }
+
+        BlockPos targetPos = new BlockPos(tx, ty, tz);
+
+        // Check if player reached the target location first
+        if (player.blockPosition().distSqr(targetPos) <= 100.0D) {
+            // Teleport Kazumi to the target if he's not already close
+            if (kazumi.blockPosition().distSqr(targetPos) > 100.0D) {
+                kazumi.teleportToWithTicket(targetPos.getX() + 0.5D, targetPos.getY(), targetPos.getZ() + 0.5D);
+            }
+            resetKazumiSpeed(kazumi);
+            kazumi.getPersistentData().putBoolean("KnYKazumiWalking", false);
+            return;
+        }
+
+        // Continuously give Kazumi the pathfinding goal
+        if (kazumi.getNavigation().isDone() || kazumi.getNavigation().isStuck()) {
+            // Increase speed temporarily so he actually moves
+            kazumi.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.45D);
+            kazumi.getNavigation().moveTo(targetPos.getX() + 0.5D, targetPos.getY(), targetPos.getZ() + 0.5D, 1.2D);
+        }
+    }
+
+    /**
+     * Resets Kazumi's movement speed to normal. Should be called when he reaches the destination.
+     */
+    public static void resetKazumiSpeed(KazumiEntity kazumi) {
+        if (kazumi != null && kazumi.getAttribute(Attributes.MOVEMENT_SPEED) != null) {
+            kazumi.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.22D);
+        }
+    }
+
+    /**
+     * Returns the coordinates where Kazumi is walking to, formatted as "X ~ Z".
+     * Returns null if no target is set.
+     */
+    public static String getKazumiTargetCoordinates(ServerPlayer player) {
+        KazumiEntity kazumi = findNearestKazumi((ServerLevel) player.level(), player);
+        if (kazumi == null) {
+            return null;
+        }
+        int tx = kazumi.getPersistentData().getInt("KnYKazumiTargetX");
+        int ty = kazumi.getPersistentData().getInt("KnYKazumiTargetY");
+        int tz = kazumi.getPersistentData().getInt("KnYKazumiTargetZ");
+        if (tx == 0 && ty == 0 && tz == 0) {
+            return null;
+        }
+        return tx + " ~ " + tz;
+    }
+
+    public static boolean isKazumiWalking(ServerPlayer player) {
+        KazumiEntity kazumi = findNearestKazumi((ServerLevel) player.level(), player);
+        return kazumi != null && kazumi.getPersistentData().getBoolean("KnYKazumiWalking");
+    }
+
+    public static boolean isKazumiNearTarget(ServerPlayer player, double maxDistance) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        KazumiEntity kazumi = findNearestKazumi(serverLevel, player);
+        if (kazumi == null) {
+            return false;
+        }
+        int tx = kazumi.getPersistentData().getInt("KnYKazumiTargetX");
+        int ty = kazumi.getPersistentData().getInt("KnYKazumiTargetY");
+        int tz = kazumi.getPersistentData().getInt("KnYKazumiTargetZ");
+        if (tx == 0 && ty == 0 && tz == 0) {
+            return false;
+        }
+        BlockPos target = new BlockPos(tx, ty, tz);
+        boolean isNear = player.blockPosition().distSqr(target) <= (maxDistance * maxDistance);
+        if (isNear) {
+            resetKazumiSpeed(kazumi);
+            kazumi.getPersistentData().putBoolean("KnYKazumiWalking", false);
+        }
+        return isNear;
+    }
+
+    public static boolean isKazumiAlive(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        KazumiEntity kazumi = findNearestKazumi(serverLevel, player);
+        return kazumi != null && kazumi.isAlive();
+    }
+
+    private static KazumiEntity findNearestKazumi(ServerLevel serverLevel, ServerPlayer player) {
+        List<KazumiEntity> kazumis = serverLevel.getEntitiesOfClass(KazumiEntity.class,
+            new net.minecraft.world.phys.AABB(player.blockPosition()).inflate(400.0D),
+            entity -> "kazumi".equals(entity.getPersistentData().getString(QUEST_NPC_ID_TAG)));
+        if (kazumis.isEmpty()) {
+            return null;
+        }
+        return kazumis.stream().min(java.util.Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
+    }
+
+    /**
+     * Queues delayed messages for a player. The messages will be delivered by the quest tick handler.
+     * Format: stores message index and target tick in persistent data.
+     */
+    public static void sendDelayedMessages(ServerPlayer player, List<Component> messages, int delayTicks) {
+        if (messages.isEmpty()) return;
+        
+        // Store messages as NBT
+        net.minecraft.nbt.ListTag messagesTag = new net.minecraft.nbt.ListTag();
+        for (int i = 0; i < messages.size(); i++) {
+            net.minecraft.nbt.CompoundTag msgTag = new net.minecraft.nbt.CompoundTag();
+            msgTag.putString("text", Component.Serializer.toJson(messages.get(i)));
+            msgTag.putLong("deliverAt", ((ServerLevel) player.level()).getGameTime() + (long) i * delayTicks);
+            messagesTag.add(msgTag);
+        }
+        player.getPersistentData().put("KnYDelayedMessages", messagesTag);
+        player.getPersistentData().putInt("KnYDelayedMessageIndex", 0);
+        player.getPersistentData().putLong("KnYKazumiDialogStartTick", ((ServerLevel) player.level()).getGameTime());
+    }
+
+    /**
+     * Processes any queued delayed messages for the player. Should be called from onTick.
+     */
+    public static void processDelayedMessages(ServerPlayer player) {
+        if (!player.getPersistentData().contains("KnYDelayedMessages")) {
+            return;
+        }
+        
+        net.minecraft.nbt.ListTag messagesTag = player.getPersistentData().getList("KnYDelayedMessages", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        int index = player.getPersistentData().getInt("KnYDelayedMessageIndex");
+        long currentTick = ((ServerLevel) player.level()).getGameTime();
+        
+        while (index < messagesTag.size()) {
+            net.minecraft.nbt.CompoundTag msgTag = messagesTag.getCompound(index);
+            long deliverAt = msgTag.getLong("deliverAt");
+            if (currentTick >= deliverAt) {
+                String json = msgTag.getString("text");
+                Component msg = Component.Serializer.fromJson(json);
+                if (msg != null) {
+                    player.sendSystemMessage(msg);
+                }
+                index++;
+            } else {
+                break;
+            }
+        }
+        
+        player.getPersistentData().putInt("KnYDelayedMessageIndex", index);
+        
+        // Clean up if all messages delivered
+        if (index >= messagesTag.size()) {
+            player.getPersistentData().remove("KnYDelayedMessages");
+            player.getPersistentData().remove("KnYDelayedMessageIndex");
+        }
     }
 
     public static void ensureSwampDemonSpawned(ServerPlayer player, QuestRuntimeContext context) {
@@ -119,8 +324,7 @@ public final class QuestScenarioActions {
             return;
         }
 
-        EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(SWAMP_DEMON_ID);
-        Entity entity = type != null ? type.create(serverLevel) : EntityType.ZOMBIE.create(serverLevel);
+        SwampDemonEntity entity = ModEntities.SWAMP_DEMON.get().create(serverLevel);
         if (entity == null) {
             return;
         }
@@ -130,14 +334,41 @@ public final class QuestScenarioActions {
         entity.setCustomName(Component.literal("Swamp Demon"));
         entity.setCustomNameVisible(true);
         entity.setPos(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D);
-        if (entity instanceof Mob mob) {
-            mob.setPersistenceRequired();
-            mob.setTarget(player);
-        }
-        if (entity instanceof Zombie zombie) {
-            zombie.setTarget(player);
-        }
         serverLevel.addFreshEntity(entity);
+    }
+
+    /**
+     * Spawns the quest-targeted swamp demon (Numa) near the player for the encounter step.
+     * This demon wears Satoko's Bow and is the kill target for the quest.
+     */
+    public static void spawnSwampDemonEncounter(ServerPlayer player, QuestRuntimeContext context) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        // Check if already spawned
+        List<Entity> existing = serverLevel.getEntities((Entity) null,
+            new net.minecraft.world.phys.AABB(player.blockPosition()).inflate(100.0D),
+            entity -> "swamp_demon_kidnappers_bog_satoko".equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG)));
+        if (!existing.isEmpty()) {
+            return;
+        }
+
+        SwampDemonEntity demon = ModEntities.SWAMP_DEMON.get().create(serverLevel);
+        if (demon == null) {
+            return;
+        }
+
+        // Spawn within 50 blocks of the player
+        BlockPos spawnPos = findRandomSurfacePosition(serverLevel, player.blockPosition(), 50, 16);
+        demon.getPersistentData().putString(QUEST_TARGET_ID_TAG, "swamp_demon_kidnappers_bog_satoko");
+        //demon.setCustomName(Component.literal("Numa, the Swamp Demon"));
+        //demon.setCustomNameVisible(true);
+        demon.setPos(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D);
+        demon.setPersistenceRequired();
+        demon.setTarget(player);
+        demon.setHealth(demon.getMaxHealth());
+        serverLevel.addFreshEntity(demon);
     }
 
     public static BlockPos findNearestQuestEntity(ServerPlayer player, String targetKey, double radius) {
@@ -175,14 +406,16 @@ public final class QuestScenarioActions {
     }
 
     public static void sendSwampDomainDialogue(ServerPlayer player) {
-        player.sendSystemMessage(Component.literal("§6[Player] §fHey! You're wearing Satoko's bow in your hair!"));
-        player.sendSystemMessage(Component.literal("§c[Numa] §fA trophy from my last meal!"));
-        player.sendSystemMessage(Component.literal("§6[Player] §fWhere is Satoko?"));
-        player.sendSystemMessage(Component.literal("§c[Numa] §fYou're too late! I've already eaten her!"));
-        player.sendSystemMessage(Component.literal("§c[Numa] §fI keep artifacts from all my victims! I think I'll keep your sword!"));
-        player.sendSystemMessage(Component.literal("§6[Player] §fNot if I kill you first!"));
-        player.sendSystemMessage(Component.literal("§c[Numa] §fYou think you can defeat me in MY domain?!"));
-        player.sendSystemMessage(Component.literal("§c[Numa] §fI'll drag you into the swamp just like the others!"));
+        sendDelayedMessages(player, List.of(
+            Component.literal("§6[" + player.getName() + "] §fHey! You're wearing Satoko's bow in your hair!"),
+            Component.literal("§c[Numa] §fA trophy from my last meal!"),
+            Component.literal("§6[" + player.getName() + "] §fWhere is Satoko?"),
+            Component.literal("§c[Numa] §fYou're too late! I've already eaten her!"),
+            Component.literal("§c[Numa] §fI keep artifacts from all my victims! I think I'll keep your sword!"),
+            Component.literal("§6[" + player.getName() + "] §fNot if I kill you first!"),
+            Component.literal("§c[Numa] §fYou think you can defeat me in MY domain?!"),
+            Component.literal("§c[Numa] §fI'll drag you into the swamp just like the others!")
+        ), 50);
     }
 
     public static void sendSwampDemonLowHealthDialogue(ServerPlayer player) {

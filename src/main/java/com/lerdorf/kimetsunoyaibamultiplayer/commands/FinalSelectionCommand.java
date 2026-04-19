@@ -14,6 +14,14 @@ public class FinalSelectionCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("finalselection")
+            .then(Commands.literal("complete")
+                .requires(source -> source.hasPermission(2))
+                .executes(context -> {
+                    ServerPlayer player = context.getSource().getPlayerOrException();
+                    FinalSelectionProcedure.completeFinalSelection(player);
+                    return 1;
+                })
+            )
             .then(Commands.literal("ore")
                 .executes(context -> {
                     ServerPlayer player = context.getSource().getPlayerOrException();

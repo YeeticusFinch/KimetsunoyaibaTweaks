@@ -21,9 +21,9 @@ public final class QuestGroupRegistry {
         register(new QuestGroupDefinition(
             "cruel",
             "Cruel",
-            "The demon slayer main story arc built from linked mission quests.",
+            "The demon slayer main story arc. These are your missions.",
             Set.of(PlayerRole.DEMON_SLAYER, PlayerRole.DEMON_SLAYER_IN_TRAINING),
-            List.of(
+                List.of(
                 new QuestStageDefinition(
                     "kidnappers_bog",
                     "Mission No.1 - Kidnapper's Bog",
@@ -33,7 +33,7 @@ public final class QuestGroupRegistry {
                         QuestStepDefinition.builder(
                                 "enter_village_swamp",
                                 "Reach Kidnapper's Bog",
-                                "Enter the kimetsunoyaiba:village_swamp structure.",
+                                "Enter the swamp village structure.",
                                 QuestStepType.ENTER_STRUCTURE
                             )
                             .targetId(VILLAGE_SWAMP)
@@ -46,21 +46,64 @@ public final class QuestGroupRegistry {
                                 QuestScenarioActions.findNearestStructure(player.serverLevel(), player.blockPosition(), VILLAGE_SWAMP))
                             .build(),
 
-                        // Step 2: Talk to Kazumi
+                        // Step 2: Talk to Kazumi (with delayed dialog, standing still, then walking)
                         QuestStepDefinition.builder(
                                 "talk_to_kazumi",
                                 "Find Kazumi",
                                 "Find and speak with Kazumi inside the village.",
-                                QuestStepType.TALK_TO_ENTITY
+                                QuestStepType.CUSTOM
                             )
                             .targetKey("kazumi")
                             .onStart((player, context) -> {
                                 QuestScenarioActions.ensureKazumiSpawned(player, context);
                                 player.sendSystemMessage(Component.literal("§7A distraught villager is looking for a Demon Slayer."));
                             })
+                            .onTick((player, context) -> {
+                                // Check if player is near Kazumi and has interacted
+                                if (!player.getPersistentData().getBoolean("KnYKazumiDialogStarted")) {
+                                    // Wait for player to get near Kazumi to trigger dialog
+                                    BlockPos kazumiPos = QuestScenarioActions.findNearestQuestEntity(player, "kazumi", 10.0D);
+                                    if (kazumiPos != null && player.blockPosition().distSqr(kazumiPos) < 64.0D) {
+                                        player.getPersistentData().putBoolean("KnYKazumiDialogStarted", true);
+                                        QuestScenarioActions.makeKazumiLookAtPlayer(player);
+                                        QuestScenarioActions.sendDelayedMessages(player, List.of(
+                                            Component.literal("§6[Kazumi] §fY-you're a Demon Slayer... right?"),
+                                            Component.literal("§6[Kazumi] §fPlease... you have to help me!"),
+                                            Component.literal("§6[Kazumi] §fMy fiancée, Satoko... she disappeared last night... right before my eyes!"),
+                                            Component.literal("§6[Kazumi] §fI'll take you to where it happened... maybe you can find something I missed.")
+                                        ), 60); // 3 seconds between each message
+                                    }
+                                } else if (player.getPersistentData().getBoolean("KnYKazumiDialogStarted")
+                                    && !player.getPersistentData().getBoolean("KnYKazumiWalking")) {
+                                    // After dialog finishes (give time for last message), make Kazumi walk
+                                    long dialogStartTick = player.getPersistentData().getLong("KnYKazumiDialogStartTick");
+                                    long currentTick = player.level().getGameTime();
+                                    // 4 messages * 60 ticks delay + initial = ~240 ticks (12 seconds) for all dialog
+                                    if (currentTick >= dialogStartTick + 280L) {
+                                        player.getPersistentData().putBoolean("KnYKazumiWalking", true);
+                                        QuestScenarioActions.makeKazumiWalkToRandomSpot(player, context);
+                                    }
+                                }
+                                
+                                // Continuously update Kazumi's pathfinding
+                                if (player.getPersistentData().getBoolean("KnYKazumiWalking")) {
+                                    QuestScenarioActions.tickKazumiPathing(player, context);
+                                }
+                            })
+                            .customCheck((player, context) -> {
+                                // Complete when player is within 10 blocks of Kazumi's target spot
+                                return player.getPersistentData().getBoolean("KnYKazumiWalking")
+                                    && QuestScenarioActions.isKazumiNearTarget(player, 10.0D);
+                            })
                             .onComplete((player, context) -> {
-                                QuestScenarioActions.sendKazumiDialogue(player);
-                                player.sendSystemMessage(Component.literal("§6[Kazumi] §fThis is where she was taken... Please bring her back..."));
+                                QuestScenarioActions.sendDelayedMessages(player, List.of(
+                                    Component.literal("§6[Kazumi] §fThis is where she was taken..."),
+                                    Component.literal("§6[Kazumi] §fPlease... bring her back...")
+                                ), 50);
+                                // Clean up tracking flags
+                                player.getPersistentData().remove("KnYKazumiDialogStarted");
+                                player.getPersistentData().remove("KnYKazumiWalking");
+                                player.getPersistentData().remove("KnYKazumiDialogStartTick");
                             })
                             .markerResolver((player, context) ->
                                 QuestScenarioActions.findNearestQuestEntity(player, "kazumi", 400.0D))
@@ -79,55 +122,58 @@ public final class QuestGroupRegistry {
                             })
                             .build(),
 
-                        // Step 4: Encounter the Swamp Demon (CUSTOM step - triggers when player is in swamp domain)
+                        // Step 4: Encounter the Swamp Demon (spawns in village, dialog, then enters swamp domain to find bow)
                         QuestStepDefinition.builder(
                                 "encounter_swamp_demon",
                                 "Confront the Swamp Demon",
-                                "Face the demon Numa in the swamp domain.",
+                                "Face the demon Numa in the swamp village and enter the swamp domain.",
                                 QuestStepType.CUSTOM
                             )
                             .targetKey("swamp_demon_kidnappers_bog")
                             .onStart((player, context) -> {
                                 player.sendSystemMessage(Component.literal("§7A dark presence stirs. The swamp demon reveals itself."));
-                                QuestScenarioActions.sendSwampDemonEncounterDialogue(player);
+                                // Spawn encounter dialogue with delays
+                                QuestScenarioActions.sendDelayedMessages(player, List.of(
+                                    Component.literal("§c[Numa] §fHeh... another one has come to be devoured..."),
+                                    Component.literal("§c[Numa] §fYou Demon Slayers are always so predictable...")
+                                ), 60);
+                                // Spawn the swamp demon near the player
+                                QuestScenarioActions.spawnSwampDemonEncounter(player, context);
                             })
                             .onTick((player, context) -> {
-                                // Check if player is in swamp domain and hasn't had dialogue yet
+                                // Check if player has entered the swamp domain (the swamp demon will send them there)
                                 if (player.level().dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL)) {
-                                    QuestScenarioActions.markSwampDomainEncounterStarted(player, context);
+                                    player.getPersistentData().putBoolean("KnYEnteredSwampDomain", true);
                                 }
                             })
                             .customCheck((player, context) -> {
-                                // Complete when player is in swamp domain and has seen dialogue
-                                return player.level().dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL)
-                                    && player.getPersistentData().getBoolean(QuestScenarioActions.SWAMP_DOMAIN_ENCOUNTER_STARTED_TAG);
+                                // Complete when player enters the swamp domain
+                                return player.getPersistentData().getBoolean("KnYEnteredSwampDomain");
                             })
-                            .markerResolver((player, context) -> {
-                                // If in swamp domain, don't show marker; otherwise point to structure
-                                if (player.level().dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL)) {
-                                    return player.blockPosition();
-                                }
-                                return QuestScenarioActions.findNearestStructure(player.serverLevel(), player.blockPosition(), VILLAGE_SWAMP);
+                            .onComplete((player, context) -> {
+                                // Dialog when entering the swamp domain
+                                QuestScenarioActions.sendSwampDomainDialogue(player);
                             })
+                            .markerResolver((player, context) ->
+                                QuestScenarioActions.findNearestQuestEntity(player, "swamp_demon_kidnappers_bog", 256.0D))
                             .build(),
 
-                        // Step 5: Kill the Swamp Demon wearing Satoko's bow
+                        // Step 5: Kill the Swamp Demon wearing Satoko's bow in the swamp domain
                         QuestStepDefinition.builder(
                                 "kill_swamp_demon",
-                                "Defeat Numa, the Swamp Demon",
-                                "Kill the special swamp demon wearing Satoko's bow.",
+                                "Retrieve Satoko's Bow",
+                                "Kill the swamp demon clone wearing Satoko's bow in the swamp domain.",
                                 QuestStepType.KILL_ENTITY
                             )
                             .targetKey("swamp_demon_kidnappers_bog_satoko")
                             .onStart((player, context) -> {
-                                // The demon should already be spawned from the encounter step
-                                player.sendSystemMessage(Component.literal("§cThe swamp demon prepares to fight!"));
+                                player.sendSystemMessage(Component.literal("§cOne of the clones wears Satoko's bow! Kill it!"));
                             })
                             .markerResolver((player, context) ->
                                 QuestScenarioActions.findNearestQuestEntity(player, "swamp_demon_kidnappers_bog_satoko", 256.0D))
                             .build(),
 
-                        // Step 6: Return to Kazumi with Satoko's Bow (CUSTOM step - check if player has bow and talks to Kazumi)
+                        // Step 6: Return to Kazumi with Satoko's Bow
                         QuestStepDefinition.builder(
                                 "return_to_kazumi",
                                 "Return to Kazumi",
@@ -140,12 +186,28 @@ public final class QuestGroupRegistry {
                                 // Ensure Kazumi is respawned for return
                                 QuestScenarioActions.ensureKazumiSpawned(player, context);
                             })
-                            .onComplete((player, context) -> {
-                                QuestScenarioActions.giveSatokosBowToKazumi(player, context);
+                            .onTick((player, context) -> {
+                                // Check if player is near Kazumi
+                                BlockPos kazumiPos = QuestScenarioActions.findNearestQuestEntity(player, "kazumi", 10.0D);
+                                if (kazumiPos != null && player.blockPosition().distSqr(kazumiPos) < 100.0D) {
+                                    if (!player.getPersistentData().getBoolean("KnYKazumiReturnDialogStarted")) {
+                                        player.getPersistentData().putBoolean("KnYKazumiReturnDialogStarted", true);
+                                        QuestScenarioActions.sendDelayedMessages(player, List.of(
+                                            Component.literal("§6[Kazumi] §fYou're back...! Did you find her?!")
+                                        ), 40);
+                                    }
+                                }
                             })
                             .customCheck((player, context) -> {
-                                // Complete when player has bow and is near Kazumi (talk interaction handles completion)
-                                return QuestScenarioActions.hasSatokosBow(player, context);
+                                // Complete when player has bow, dialog started, and is near Kazumi
+                                if (!QuestScenarioActions.hasSatokosBow(player, context)) return false;
+                                if (!player.getPersistentData().getBoolean("KnYKazumiReturnDialogStarted")) return false;
+                                BlockPos kazumiPos = QuestScenarioActions.findNearestQuestEntity(player, "kazumi", 10.0D);
+                                return kazumiPos != null && player.blockPosition().distSqr(kazumiPos) < 100.0D;
+                            })
+                            .onComplete((player, context) -> {
+                                QuestScenarioActions.giveSatokosBowToKazumi(player, context);
+                                player.getPersistentData().remove("KnYKazumiReturnDialogStarted");
                             })
                             .markerResolver((player, context) -> {
                                 // Check if player is back in overworld first, then find Kazumi
@@ -168,15 +230,37 @@ public final class QuestGroupRegistry {
         register(new QuestGroupDefinition(
             "permanence",
             "Permanence",
-            "The demon main story arc. Runtime stages are still to be authored.",
+            "The demon main story arc.",
             Set.of(PlayerRole.DEMON),
-            List.of()
+            List.of(
+                new QuestStageDefinition(
+                    "first_taste_of_blood",
+                    "Stage No.1 - First Taste of Blood",
+                    "Kill and devour humans to take your first steps as a demon.",
+                    List.of(
+                        QuestStepDefinition.builder(
+                                "eat_human_flesh",
+                                "First Taste of Blood",
+                                "Kill 10 humans and eat 10 human flesh items in any order.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart((player, context) -> player.sendSystemMessage(
+                                Component.literal("§cStage No.1 - First Taste of Blood: §fReach 10 human kills and eat 10 human flesh items.")))
+                            .customCheck((player, context) ->
+                                QuestProgressionManager.getPermanenceFirstTasteKillProgress(player) >= 10
+                                    && QuestProgressionManager.getPermanenceFirstTasteProgress(player) >= 10)
+                            .build()
+                    ),
+                    new QuestRewardDefinition()
+                        .experiencePoints(25)
+                )
+            )
         ));
 
         register(new QuestGroupDefinition(
             "veil",
             "Veil",
-            "The Kakushi main story arc. Runtime stages are still to be authored.",
+            "The Kakushi main story arc.",
             Set.of(PlayerRole.KAKUSHI),
             List.of()
         ));
@@ -184,7 +268,7 @@ public final class QuestGroupRegistry {
         register(new QuestGroupDefinition(
             "temper",
             "Temper",
-            "The swordsmith main story arc. Runtime stages are still to be authored.",
+            "The swordsmith main story arc.",
             Set.of(PlayerRole.SWORDSMITH),
             List.of()
         ));

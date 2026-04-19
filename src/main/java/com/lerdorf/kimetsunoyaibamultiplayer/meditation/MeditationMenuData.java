@@ -15,10 +15,12 @@ public class MeditationMenuData {
     private final List<LocationEntry> locations;
     private final String selectedType;
     private final String selectedId;
+    private final boolean demonPlayer;
+    private final int demonEyesIndex;
 
     public MeditationMenuData(String role, String rank, String muzanBlood, String kizukiRank,
                               List<InfoSection> infoSections, List<QuestEntry> quests, List<LocationEntry> locations,
-                              String selectedType, String selectedId) {
+                              String selectedType, String selectedId, boolean demonPlayer, int demonEyesIndex) {
         this.role = role;
         this.rank = rank;
         this.muzanBlood = muzanBlood;
@@ -28,6 +30,8 @@ public class MeditationMenuData {
         this.locations = List.copyOf(locations);
         this.selectedType = selectedType;
         this.selectedId = selectedId;
+        this.demonPlayer = demonPlayer;
+        this.demonEyesIndex = demonEyesIndex;
     }
 
     public MeditationMenuData(FriendlyByteBuf buf) {
@@ -40,6 +44,8 @@ public class MeditationMenuData {
         this.locations = buf.readList(LocationEntry::new);
         this.selectedType = buf.readUtf();
         this.selectedId = buf.readUtf();
+        this.demonPlayer = buf.readBoolean();
+        this.demonEyesIndex = buf.readVarInt();
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -52,6 +58,8 @@ public class MeditationMenuData {
         buf.writeCollection(locations, (packetBuffer, location) -> location.write(packetBuffer));
         buf.writeUtf(selectedType);
         buf.writeUtf(selectedId);
+        buf.writeBoolean(demonPlayer);
+        buf.writeVarInt(demonEyesIndex);
     }
 
     private static List<String> readStringList(FriendlyByteBuf buf) {
@@ -104,6 +112,14 @@ public class MeditationMenuData {
 
     public String selectedId() {
         return selectedId;
+    }
+
+    public boolean demonPlayer() {
+        return demonPlayer;
+    }
+
+    public int demonEyesIndex() {
+        return demonEyesIndex;
     }
 
     public record InfoSection(String id, String title, int count, List<InfoSection> children) {

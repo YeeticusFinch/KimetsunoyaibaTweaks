@@ -228,6 +228,14 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         return bloodDemonArtCooldownTicks;
     }
 
+    public void setExternalBloodDemonArtCooldownTicks(int cooldownTicks) {
+        setBloodDemonArtCooldownTicks(cooldownTicks);
+    }
+
+    public int getExternalBloodDemonArtCooldownTicks() {
+        return getBloodDemonArtCooldownTicks();
+    }
+
     @Override
     public boolean isAlliedTo(net.minecraft.world.entity.Entity other) {
         if (other == this) {

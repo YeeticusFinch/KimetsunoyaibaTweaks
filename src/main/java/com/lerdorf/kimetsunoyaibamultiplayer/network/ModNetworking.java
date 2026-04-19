@@ -2,7 +2,12 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CloseDemonPropositionPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonEyesSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonPropositionResponsePacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenDemonPropositionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonEyesPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectMeditationTargetPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -240,6 +245,41 @@ public class ModNetworking {
                 .decoder(SetCrowQuestMarkerPacket::new)
                 .encoder(SetCrowQuestMarkerPacket::toBytes)
                 .consumerMainThread(SetCrowQuestMarkerPacket::handle)
+                .add();
+
+        int openDemonPropositionPacketId = id();
+        net.messageBuilder(OpenDemonPropositionPacket.class, openDemonPropositionPacketId)
+                .decoder(OpenDemonPropositionPacket::new)
+                .encoder(OpenDemonPropositionPacket::toBytes)
+                .consumerMainThread(OpenDemonPropositionPacket::handle)
+                .add();
+
+        int demonPropositionResponsePacketId = id();
+        net.messageBuilder(DemonPropositionResponsePacket.class, demonPropositionResponsePacketId)
+                .decoder(DemonPropositionResponsePacket::new)
+                .encoder(DemonPropositionResponsePacket::toBytes)
+                .consumerMainThread(DemonPropositionResponsePacket::handle)
+                .add();
+
+        int closeDemonPropositionPacketId = id();
+        net.messageBuilder(CloseDemonPropositionPacket.class, closeDemonPropositionPacketId)
+                .decoder(CloseDemonPropositionPacket::new)
+                .encoder(CloseDemonPropositionPacket::toBytes)
+                .consumerMainThread(CloseDemonPropositionPacket::handle)
+                .add();
+
+        int demonEyesSyncPacketId = id();
+        net.messageBuilder(DemonEyesSyncPacket.class, demonEyesSyncPacketId)
+                .decoder(DemonEyesSyncPacket::new)
+                .encoder(DemonEyesSyncPacket::toBytes)
+                .consumerMainThread(DemonEyesSyncPacket::handle)
+                .add();
+
+        int setDemonEyesPacketId = id();
+        net.messageBuilder(SetDemonEyesPacket.class, setDemonEyesPacketId)
+                .decoder(SetDemonEyesPacket::new)
+                .encoder(SetDemonEyesPacket::toBytes)
+                .consumerMainThread(SetDemonEyesPacket::handle)
                 .add();
     }
 

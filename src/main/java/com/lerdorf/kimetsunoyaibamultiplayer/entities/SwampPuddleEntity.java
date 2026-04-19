@@ -124,7 +124,7 @@ public class SwampPuddleEntity extends Entity {
         for (LivingEntity living : serverLevel.getEntitiesOfClass(LivingEntity.class, area,
             target -> target.isAlive() && !target.isSpectator()
                 && !(target instanceof SwampDemonEntity)
-                && !SwampDemonArt.isPortalCooldownActive(target))) {
+                && !SwampDemonArt.isPortalTeleportBlocked(target, targetDimension))) {
             if (SwampDemonArt.teleportThroughPortal(living, targetDimension, targetPos)) {
                 return;
             }

@@ -29,6 +29,11 @@ public class MobAnimationHelper {
             return; // Only run on client
         }
 
+        if ("__stop__".equals(animationName)) {
+            stopAnimationOnMob(entity);
+            return;
+        }
+
         // Parse animation name into ResourceLocation and resolve from registry
         ResourceLocation animLocation = parseAnimationName(animationName);
         KeyframeAnimation animation = findAnimation(animLocation);
@@ -113,6 +118,33 @@ public class MobAnimationHelper {
         // For now, just play the animation with default settings
         // TODO: Implement speed and layer priority for mob animations
         playAnimationOnMob(entity, animationName);
+    }
+
+    public static void stopAnimationOnMob(LivingEntity entity) {
+        try {
+            Object animationStackObj = null;
+
+            try {
+                java.lang.reflect.Method entityLayerMethod =
+                    PlayerAnimationAccess.class.getMethod("getPlayerAnimLayer", net.minecraft.world.entity.LivingEntity.class);
+                animationStackObj = entityLayerMethod.invoke(null, entity);
+            } catch (Throwable ignored) {
+            }
+
+            if (animationStackObj == null) {
+                try {
+                    java.lang.reflect.Method getAnimStackMethod = entity.getClass().getMethod("getAnimationStack");
+                    animationStackObj = getAnimStackMethod.invoke(entity);
+                } catch (Throwable ignored) {
+                }
+            }
+
+            if (animationStackObj instanceof dev.kosmx.playerAnim.api.layered.AnimationStack animationStack) {
+                animationStack.removeLayer(1000);
+            }
+        } catch (Exception e) {
+            System.err.println("[MobAnimationHelper] Failed to stop animation on mob: " + e.getMessage());
+        }
     }
 
     private static ResourceLocation parseAnimationName(String animationName) {

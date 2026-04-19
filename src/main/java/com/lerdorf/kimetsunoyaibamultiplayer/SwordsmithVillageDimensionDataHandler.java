@@ -71,9 +71,9 @@ public class SwordsmithVillageDimensionDataHandler {
     private static final String DIMENSION_NAME = "Swordsmith Village";
     private static final String VERSION_FILE_NAME = "swordsmith_village.version";
     private static final String GITHUB_DOWNLOAD_URL =
-        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.47/swordsmith_village_region.zip";
+        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.475/swordsmith_village_region.zip";
     private static final String RELEASE_VERSION_URL =
-        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.47/swordsmith_village.version";
+        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.475/swordsmith_village.version";
     private static final String RAW_VERSION_URL =
         "https://raw.githubusercontent.com/YeeticusFinch/KimetsunoyaibaTweaks/main/swordsmith_village_region/" + VERSION_FILE_NAME;
 
