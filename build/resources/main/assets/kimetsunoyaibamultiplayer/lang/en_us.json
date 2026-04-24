@@ -106,6 +106,7 @@
   "effect.kimetsunoyaibamultiplayer.omen_of_ubuyashiki": "Ubuyashiki's Omen",
   "effect.kimetsunoyaibamultiplayer.favor_of_muzan": "Muzan's Favor",
   "effect.kimetsunoyaibamultiplayer.omen_of_muzan": "Muzan's Omen",
+  "effect.kimetsunoyaibamultiplayer.demon_transformation": "Demon Transformation",
   "effect.kimetsunoyaibamultiplayer.vermilion_eye": "Vermilion Eye",
   "effect.kimetsunoyaibamultiplayer.spatial_awareness": "Spatial Awareness",
   "effect.kimetsunoyaibamultiplayer.killing_intent": "Killing Intent",
@@ -122,6 +123,8 @@
   "item.kimetsunoyaibamultiplayer.omen_of_muzan_potion_3": "Potion of Muzan Omen III",
   "item.kimetsunoyaibamultiplayer.omen_of_muzan_potion_4": "Potion of Muzan Omen IV",
   "item.kimetsunoyaibamultiplayer.omen_of_muzan_potion_5": "Potion of Muzan Omen V",
+  "item.kimetsunoyaibamultiplayer.blood_of_muzan": "Blood of Muzan",
+  "item.kimetsunoyaibamultiplayer.custom_demon_art": "Custom Blood Demon Art",
   
 
   "item.kimetsunoyaibamultiplayer.favor_of_ubuyashiki_potion_1": "Potion of Ubuyashiki Favor I",

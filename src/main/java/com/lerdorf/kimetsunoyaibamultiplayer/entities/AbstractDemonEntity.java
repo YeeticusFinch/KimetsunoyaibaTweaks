@@ -5,6 +5,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -281,6 +283,12 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
     }
 
     private static Item resolveMuzanBloodItem() {
+        if (CustomProgressionConfig.customDemonInitiation != null && CustomProgressionConfig.customDemonInitiation.get()) {
+            Item customItem = ModItems.BLOOD_OF_MUZAN.get();
+            if (customItem != null && customItem != net.minecraft.world.item.Items.AIR) {
+                return customItem;
+            }
+        }
         for (ResourceLocation id : MUZAN_BLOOD_ITEM_IDS) {
             Item item = BuiltInRegistries.ITEM.get(id);
             if (item != null && item != net.minecraft.world.item.Items.AIR) {

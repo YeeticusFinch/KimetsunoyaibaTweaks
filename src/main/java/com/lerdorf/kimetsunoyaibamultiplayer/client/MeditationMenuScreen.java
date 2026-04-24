@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuData;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectMeditationTargetPacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -43,6 +44,7 @@ public class MeditationMenuScreen extends Screen {
     private List<Component> hoveredTooltip = List.of();
     private final Set<String> expandedInfoSections = new HashSet<>(Set.of("demons_killed", "humans_killed"));
     private Rect2i demonEyesButtonBounds;
+    private Rect2i bloodDemonArtBuilderButtonBounds;
     private int localDemonEyesIndex;
 
     public MeditationMenuScreen(MeditationMenuData data) {
@@ -70,6 +72,7 @@ public class MeditationMenuScreen extends Screen {
         questHitboxes.clear();
         locationHitboxes.clear();
         demonEyesButtonBounds = null;
+        bloodDemonArtBuilderButtonBounds = null;
 
         guiGraphics.fill(left - 4, top - 4, left + PANEL_WIDTH + 4, top + PANEL_HEIGHT + 4, 0xAA0A0A10);
         guiGraphics.fill(left, top, left + PANEL_WIDTH, top + PANEL_HEIGHT, 0xF1211B19);
@@ -347,13 +350,13 @@ public class MeditationMenuScreen extends Screen {
             int cardLeft = bodyLeft + 10;
             int cardTop = bodyTop + 12;
             int cardRight = bodyRight - 10;
-            int buttonTop = cardTop + 46;
             int buttonHeight = 18;
-            guiGraphics.fill(cardLeft, cardTop, cardRight, cardTop + 86, 0x88312420);
+            guiGraphics.fill(cardLeft, cardTop, cardRight, cardTop + 126, 0x88312420);
             guiGraphics.drawString(font, "Demon Customization", cardLeft + 8, cardTop + 8, 0xF5D18A, false);
             guiGraphics.drawString(font, "Adjust the glowing demon-eyes overlay on your player skin.", cardLeft + 8, cardTop + 24, 0xF0E3C2, false);
             guiGraphics.drawString(font, "Current style: " + localDemonEyesIndex, cardLeft + 8, cardTop + 36, 0xCBE7C8, false);
 
+            int buttonTop = cardTop + 46;
             demonEyesButtonBounds = new Rect2i(cardLeft + 8, buttonTop, cardRight - cardLeft - 16, buttonHeight);
             guiGraphics.fill(demonEyesButtonBounds.getX(), demonEyesButtonBounds.getY(),
                 demonEyesButtonBounds.getX() + demonEyesButtonBounds.getWidth(),
@@ -362,7 +365,16 @@ public class MeditationMenuScreen extends Screen {
                 demonEyesButtonBounds.getX() + demonEyesButtonBounds.getWidth() / 2,
                 demonEyesButtonBounds.getY() + 5, 0x1D1208);
 
-            guiGraphics.drawString(font, "Other demon skills can be added here later.", cardLeft + 8, cardTop + 72, 0xB8A48B, false);
+            bloodDemonArtBuilderButtonBounds = new Rect2i(cardLeft + 8, buttonTop + 24, cardRight - cardLeft - 16, buttonHeight);
+            guiGraphics.fill(bloodDemonArtBuilderButtonBounds.getX(), bloodDemonArtBuilderButtonBounds.getY(),
+                bloodDemonArtBuilderButtonBounds.getX() + bloodDemonArtBuilderButtonBounds.getWidth(),
+                bloodDemonArtBuilderButtonBounds.getY() + bloodDemonArtBuilderButtonBounds.getHeight(), 0xFF688B72);
+            guiGraphics.drawCenteredString(font, "Open Blood Demon Art Builder",
+                bloodDemonArtBuilderButtonBounds.getX() + bloodDemonArtBuilderButtonBounds.getWidth() / 2,
+                bloodDemonArtBuilderButtonBounds.getY() + 5, 0x102015);
+
+            guiGraphics.drawString(font, "Muzan Blood Consumed: " + data.muzanBlood(), cardLeft + 8, cardTop + 96, 0xB8A48B, false);
+            guiGraphics.drawString(font, "The builder opens in a separate editor window from this tab.", cardLeft + 8, cardTop + 108, 0x9F978D, false);
             return;
         }
 
@@ -462,9 +474,15 @@ public class MeditationMenuScreen extends Screen {
                     }
                 }
             }
-            if (activeTab == Tab.SKILLS && demonEyesButtonBounds != null && contains(demonEyesButtonBounds, mouseX, mouseY)) {
-                minecraft.setScreen(new DemonEyesCustomizationScreen(this, localDemonEyesIndex));
-                return true;
+            if (activeTab == Tab.SKILLS) {
+                if (demonEyesButtonBounds != null && contains(demonEyesButtonBounds, mouseX, mouseY)) {
+                    minecraft.setScreen(new DemonEyesCustomizationScreen(this, localDemonEyesIndex));
+                    return true;
+                }
+                if (bloodDemonArtBuilderButtonBounds != null && contains(bloodDemonArtBuilderButtonBounds, mouseX, mouseY)) {
+                    ModNetworking.sendToServer(new RequestBloodDemonArtBuilderPacket());
+                    return true;
+                }
             }
         }
         return super.mouseClicked(mouseX, mouseY, button);

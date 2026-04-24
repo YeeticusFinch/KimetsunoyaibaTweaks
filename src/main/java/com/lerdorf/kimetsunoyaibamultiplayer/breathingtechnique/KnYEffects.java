@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -72,4 +73,33 @@ public class KnYEffects {
 	public static MobEffect getImmvableEffect() {
 		return ForgeRegistries.MOB_EFFECTS.getValue(IMMVABLE);
 	}
+
+    /**
+     * Gets the remaining duration, in ticks, of the base mod's breathing cooldown effects.
+     */
+    public static int getRemainingBaseModCooldownTicks(LivingEntity entity) {
+        if (entity == null) {
+            return 0;
+        }
+
+        int remaining = 0;
+
+        MobEffect coolTime = getCoolTimeEffect();
+        if (coolTime != null) {
+            MobEffectInstance instance = entity.getEffect(coolTime);
+            if (instance != null) {
+                remaining = Math.max(remaining, instance.getDuration());
+            }
+        }
+
+        MobEffect coolTime2 = getCoolTime2Effect();
+        if (coolTime2 != null) {
+            MobEffectInstance instance = entity.getEffect(coolTime2);
+            if (instance != null) {
+                remaining = Math.max(remaining, instance.getDuration());
+            }
+        }
+
+        return remaining;
+    }
 }

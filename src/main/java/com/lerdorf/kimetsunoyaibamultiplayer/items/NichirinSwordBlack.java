@@ -6,8 +6,10 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.StyleMetadataRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.NichirinCooldownHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
@@ -370,6 +372,21 @@ public class NichirinSwordBlack extends BreathingSwordItem {
             return InteractionResultHolder.pass(stack);
         }
 
+        if (GuardStateHelper.isBaseModBreathingActiveOrOnCooldown(player)) {
+            player.displayClientMessage(
+                Component.literal("§cYou cannot use a custom breathing form while a base mod form is active or on cooldown."),
+                true
+            );
+            return InteractionResultHolder.fail(stack);
+        }
+
+        if (player.getCooldowns().isOnCooldown(stack.getItem())) {
+            if (level.isClientSide) {
+                player.displayClientMessage(Component.literal("§cAbility on cooldown!"), true);
+            }
+            return InteractionResultHolder.fail(stack);
+        }
+
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
         String styleKey = PlayerBreathingData.getTechniqueKey(technique.getName());
         int baseFormIndex = data.getCurrentFormIndex(styleKey);
@@ -422,7 +439,7 @@ public class NichirinSwordBlack extends BreathingSwordItem {
                     BreathingFormAnnouncementHelper.announceCustomForm(
                         player, variation.getDisplayName(), technique.getTechniqueColor());
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
-                    player.getCooldowns().addCooldown(this, cooldownTicks);
+                    NichirinCooldownHelper.applyCooldownToAllNichirinSwords(player, cooldownTicks);
                 }
                 player.displayClientMessage(variation.getDisplayName().copy().withStyle(style -> style.withColor(0x55FFFF)), true);
                 return InteractionResultHolder.success(stack);
@@ -449,7 +466,7 @@ public class NichirinSwordBlack extends BreathingSwordItem {
                     BreathingFormAnnouncementHelper.announceCustomForm(
                         player, form.getDisplayName(), technique.getTechniqueColor());
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
-                    player.getCooldowns().addCooldown(this, cooldownTicks);
+                    NichirinCooldownHelper.applyCooldownToAllNichirinSwords(player, cooldownTicks);
                 }
                 player.displayClientMessage(form.getDisplayName().copy().withStyle(style -> style.withColor(0x55FFFF)), true);
                 return InteractionResultHolder.success(stack);

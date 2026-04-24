@@ -3,10 +3,12 @@ package com.lerdorf.kimetsunoyaibamultiplayer.items;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.NichirinCooldownHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -54,6 +56,21 @@ public abstract class BreathingSwordItem extends SwordItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         BreathingTechnique technique = getBreathingTechnique();
+
+        if (GuardStateHelper.isBaseModBreathingActiveOrOnCooldown(player)) {
+            player.displayClientMessage(
+                Component.literal("§cYou cannot use a custom breathing form while a base mod form is active or on cooldown."),
+                true
+            );
+            return InteractionResultHolder.fail(stack);
+        }
+
+        if (player.getCooldowns().isOnCooldown(stack.getItem())) {
+            if (level.isClientSide) {
+                player.displayClientMessage(Component.literal("§cAbility on cooldown!"), true);
+            }
+            return InteractionResultHolder.fail(stack);
+        }
 
         // Load player data from NBT if on server
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
@@ -151,7 +168,7 @@ public abstract class BreathingSwordItem extends SwordItem {
                         player, variation.getDisplayName(), technique.getTechniqueColor());
                     // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
-                    player.getCooldowns().addCooldown(this, cooldownTicks);
+                    NichirinCooldownHelper.applyCooldownToAllNichirinSwords(player, cooldownTicks);
                 }
 
                 // Send action bar message
@@ -195,7 +212,7 @@ public abstract class BreathingSwordItem extends SwordItem {
                         player, form.getDisplayName(), technique.getTechniqueColor());
                     // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
-                    player.getCooldowns().addCooldown(this, cooldownTicks);
+                    NichirinCooldownHelper.applyCooldownToAllNichirinSwords(player, cooldownTicks);
                 }
 
                 // Send action bar message (both sides for immediate feedback)

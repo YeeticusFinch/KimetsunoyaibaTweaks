@@ -80,6 +80,9 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRIN_ORE = ITEMS.register("nichirin_ore",
         () -> new NichirinOreItem(new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> HEMOLITH_DUST = ITEMS.register("hemolith_dust",
+        () -> new Item(new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> YEN = ITEMS.register("yen",
         () -> new Item(new Item.Properties().stacksTo(999)));
 
@@ -188,6 +191,8 @@ public class ModItems {
     public static final RegistryObject<Item> SWAMP_DEMON_ART = ITEMS.register("swamp_demon_art",
         () -> new BloodDemonArtItem(com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SwampDemonArt.ART_ID,
             4.0F, 1.6F, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> CUSTOM_DEMON_ART = ITEMS.register("custom_demon_art",
+        () -> new CustomDemonArtItem(new Item.Properties()));
     public static final RegistryObject<Item> PUDDLE = ITEMS.register("puddle",
         () -> new Item(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> HUMAN_FLESH_3 = ITEMS.register("human_flesh_3",
@@ -393,6 +398,9 @@ public class ModItems {
     public static final RegistryObject<Item> NAV_PIN_WAYPOINT = ITEMS.register("nav_pin_waypoint",
         () -> new NavPinItem(new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> BLOOD_OF_MUZAN = ITEMS.register("blood_of_muzan",
+        () -> new BloodOfMuzanItem(new Item.Properties().stacksTo(16)));
+
     // Omen Potion Items - Muzan (for demon slayer players)
     public static final RegistryObject<Item> OMEN_OF_MUZAN_POTION_1 = ITEMS.register("omen_of_muzan_potion_1",
         () -> new OmenPotionItem(new Item.Properties().stacksTo(16), OmenPotionItem.OmenType.MUZAN, 1));
@@ -446,6 +454,7 @@ public class ModItems {
                 addSortedSwords(output);
 
                 addItems(output,
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.HEMOLITH_ORE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LOG.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_WISTERIA_LOG.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_WOOD.get(),
@@ -525,6 +534,7 @@ public class ModItems {
                 addOptionalSpawnEggs(output);
 
                 addItems(output,
+                    BLOOD_OF_MUZAN.get(),
                     OMEN_OF_MUZAN_POTION_1.get(),
                     OMEN_OF_MUZAN_POTION_2.get(),
                     OMEN_OF_MUZAN_POTION_3.get(),
@@ -543,7 +553,7 @@ public class ModItems {
                     FAVOR_OF_UBUYASHIKI_POTION_3.get()
                 );
 
-                addItems(output, UBUYASHIKI_INVITATION.get(), NICHIRIN_ORE.get(), YEN.get(),
+                addItems(output, UBUYASHIKI_INVITATION.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
                     HUMAN_FLESH_3.get(), HUMAN_FLESH_4.get(), HUMAN_FLESH_5.get());
             })
             .build());

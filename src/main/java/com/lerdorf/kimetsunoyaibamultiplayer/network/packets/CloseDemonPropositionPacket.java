@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonPropositionClientController;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonPropositionScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
@@ -24,6 +25,7 @@ public class CloseDemonPropositionPacket {
         context.enqueueWork(() ->
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
                 Minecraft minecraft = Minecraft.getInstance();
+                DemonPropositionClientController.deactivate();
                 if (minecraft.screen instanceof DemonPropositionScreen) {
                     minecraft.setScreen(null);
                 }

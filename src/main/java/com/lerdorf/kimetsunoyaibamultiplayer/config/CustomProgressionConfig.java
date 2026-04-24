@@ -17,6 +17,12 @@ public class CustomProgressionConfig {
     // Grant training sword when initiation is blocked
     public static ForgeConfigSpec.BooleanValue grantTrainingSword;
 
+    // Custom demon initiation flow
+    public static ForgeConfigSpec.BooleanValue customDemonInitiation;
+
+    // Replace the base mod's muzan blood ore with hemolith ore
+    public static ForgeConfigSpec.BooleanValue replaceMuzanBloodOre;
+
     // Replace the base mod's color changing procedure (sword transformation)
     public static ForgeConfigSpec.BooleanValue replaceColorChangingProcedure;
 
@@ -68,6 +74,44 @@ public class CustomProgressionConfig {
                     "This is useful for servers that want new demon slayers to start with a training sword",
                     "and earn a real sword through gameplay.")
             .define("grant_training_sword", true);
+
+        builder.pop();
+
+        // Demon progression override
+        builder.comment("Demon Progression Override").push("demon_progression");
+
+        customDemonInitiation = builder
+            .comment("Enable the custom demon initiation flow",
+                    "",
+                    "When enabled, consuming kimetsunoyaibamultiplayer:blood_of_muzan starts a",
+                    "custom demon transformation phase instead of immediately turning the player",
+                    "into a demon.",
+                    "",
+                    "During this phase:",
+                    "  - The player receives the Demon Transformation effect",
+                    "  - The player is tagged with oni_transform",
+                    "  - Demon slayers and demons stay neutral unless provoked",
+                    "  - Slowness, weakness, and hunger are continuously applied",
+                    "",
+                    "When the effect expires naturally, the player is converted using the base",
+                    "mod's blood_of_muzan logic. If the effect is removed early or the player dies,",
+                    "the transformation is cancelled.",
+                    "",
+                    "This also replaces base mod blood_of_muzan items in player inventories with",
+                    "kimetsunoyaibamultiplayer:blood_of_muzan.")
+            .define("custom_demon_initiation", true);
+
+        replaceMuzanBloodOre = builder
+            .comment("Replace base mod muzan blood ore with hemolith ore",
+                    "",
+                    "When enabled, any player who starts mining kimetsunoyaiba:muzanblood_ore",
+                    "will cause that block to be replaced with",
+                    "kimetsunoyaibamultiplayer:hemolith_ore.",
+                    "",
+                    "If a player somehow finishes breaking the original base ore before the swap",
+                    "fully resolves, the break is intercepted and hemolith drops are forced so",
+                    "the original muzan blood ore drop never appears.")
+            .define("replace_muzan_blood_ore", true);
 
         builder.pop();
 

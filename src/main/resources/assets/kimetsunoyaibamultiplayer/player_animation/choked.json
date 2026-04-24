@@ -8,11 +8,11 @@
 				"body": {
 					"position": {
 						"0.0": {
-							"post": [0, 6, 0],
+							"post": [0, 8, 0],
 							"lerp_mode": "catmullrom"
 						},
 						"1.0": {
-							"post": [0, 6, 0],
+							"post": [0, 8, 0],
 							"lerp_mode": "catmullrom"
 						}
 					}

@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.meditation;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.PlayerRole;
@@ -265,14 +266,10 @@ public final class MeditationMenuService {
     }
 
     private static String resolveMuzanBlood(ServerPlayer player) {
-        String[] keys = {"muzan_blood", "blood_of_muzan", "bloodmuzan"};
-        for (String key : keys) {
-            int value = player.getPersistentData().getInt(key);
-            if (value > 0) {
-                return Integer.toString(value);
-            }
+        if (!player.getPersistentData().getBoolean("oni")) {
+            return "";
         }
-        return "0";
+        return Integer.toString(DemonTransformationHandler.getTrackedMuzanBlood(player));
     }
 
     private static String resolveKizukiRank(ServerPlayer player) {

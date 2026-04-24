@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
@@ -90,6 +92,31 @@ public class GuardStateHelper {
 
     public static boolean isCustomBreathingActive(LivingEntity entity) {
         return entity != null && entity.getPersistentData().getBoolean(NBT_CUSTOM_BREATHING_ACTIVE);
+    }
+
+    /**
+     * Detects whether a base-mod breathing form is still active or on cooldown.
+     * This is used to block our custom swords from starting while the base mod still owns runtime state.
+     */
+    public static boolean isBaseModBreathingActiveOrOnCooldown(LivingEntity entity) {
+        if (entity == null || isCustomBreathingActive(entity)) {
+            return false;
+        }
+
+        if (KnYEffects.hasCoolTime(entity) || KnYEffects.hasCoolTime2(entity)) {
+            return true;
+        }
+
+        double breathes = entity.getPersistentData().getDouble(NBT_BREATHES);
+        int formId = VariationEncoder.getFormId(breathes);
+        if (!BaseModStyleMapping.isKnownFormId(formId)) {
+            return false;
+        }
+
+        return entity.getPersistentData().getBoolean(NBT_SKILL)
+            || entity.getPersistentData().getBoolean(NBT_GUARD)
+            || entity.getPersistentData().getBoolean(NBT_ATTACK)
+            || entity.getPersistentData().getDouble(NBT_DAMAGE) > 0.0;
     }
 
     /**

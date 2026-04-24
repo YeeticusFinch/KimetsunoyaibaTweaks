@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -211,7 +212,8 @@ public class KeyInputHandler {
             }
 
             if (mainHandItem.getItem() instanceof BloodDemonArtItem
-                    || mainHandItem.getItem() instanceof BloodDemonArtAxeItem) {
+                    || mainHandItem.getItem() instanceof BloodDemonArtAxeItem
+                    || mainHandItem.getItem() instanceof CustomDemonArtItem) {
                 boolean shouldReverse = dedicatedReverseKey || (baseCycleKey && mc.options.keyShift.isDown());
                 net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART.consumeClick();
                 com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
@@ -375,7 +377,8 @@ public class KeyInputHandler {
             }
 
             if (mainHandItem.getItem() instanceof BloodDemonArtItem
-                    || mainHandItem.getItem() instanceof BloodDemonArtAxeItem) {
+                    || mainHandItem.getItem() instanceof BloodDemonArtAxeItem
+                    || mainHandItem.getItem() instanceof CustomDemonArtItem) {
                 boolean shouldReverse = dedicatedReverseButton || (baseCycleButton && mc.options.keyShift.isDown());
                 net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART.consumeClick();
                 com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(

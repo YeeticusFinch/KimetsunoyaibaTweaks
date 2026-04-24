@@ -7,6 +7,7 @@ import org.joml.Quaternionf;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonPropositionClientController;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.DualLayerSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
@@ -34,6 +35,7 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderHandEvent;
+import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -45,6 +47,54 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 	    value = Dist.CLIENT
 	)
 public class ClientRenderEvents {
+    private static boolean demonPropositionRenderOverrideActive;
+    private static float originalYRot;
+    private static float originalYRotO;
+    private static float originalYHeadRot;
+    private static float originalYHeadRotO;
+    private static float originalYBodyRot;
+    private static float originalYBodyRotO;
+
+    @SubscribeEvent
+    public static void onRenderLivingPre(RenderLivingEvent.Pre<?, ?> event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!(event.getEntity() instanceof LocalPlayer player) || !DemonPropositionClientController.shouldOverrideLocalPlayer(player)) {
+            return;
+        }
+
+        float facingYaw = DemonPropositionClientController.getFacingYaw(player);
+        originalYRot = player.getYRot();
+        originalYRotO = player.yRotO;
+        originalYHeadRot = player.getYHeadRot();
+        originalYHeadRotO = player.yHeadRotO;
+        originalYBodyRot = player.yBodyRot;
+        originalYBodyRotO = player.yBodyRotO;
+        demonPropositionRenderOverrideActive = true;
+
+        player.setYRot(facingYaw);
+        player.yRotO = facingYaw;
+        player.setYHeadRot(facingYaw);
+        player.yHeadRotO = facingYaw;
+        player.setYBodyRot(facingYaw);
+        player.yBodyRotO = facingYaw;
+    }
+
+    @SubscribeEvent
+    public static void onRenderLivingPost(RenderLivingEvent.Post<?, ?> event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!demonPropositionRenderOverrideActive || event.getEntity() != mc.player) {
+            return;
+        }
+
+        LocalPlayer player = (LocalPlayer) event.getEntity();
+        player.setYRot(originalYRot);
+        player.yRotO = originalYRotO;
+        player.setYHeadRot(originalYHeadRot);
+        player.yHeadRotO = originalYHeadRotO;
+        player.setYBodyRot(originalYBodyRot);
+        player.yBodyRotO = originalYBodyRotO;
+        demonPropositionRenderOverrideActive = false;
+    }
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {

@@ -8,7 +8,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingD
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.NichirinCooldownHelper;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -23,6 +25,13 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod.EventBusSubscriber(modid = com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer.MODID)
 public class BaseModVariationHandler {
+    private static final String NBT_SKILL = "skill";
+    private static final String NBT_CNT1 = "cnt1";
+    private static final String NBT_CNT2 = "cnt2";
+    private static final String NBT_CNT3 = "cnt3";
+    private static final String NBT_CNT4 = "cnt4";
+    private static final String NBT_CNT5 = "cnt5";
+    private static final String NBT_CNT_X = "cnt_x";
 
     // Track last execution time to prevent double-triggering
     private static long lastExecutionTime = 0;
@@ -44,9 +53,15 @@ public class BaseModVariationHandler {
 
         // While one of our custom forms is still active, base-mod right-click form usage must be blocked.
         if (GuardStateHelper.isCustomBreathingActive(player)) {
+            blockBaseModFormUse(event, player, "§cYou cannot use base mod forms while a custom breathing form is active.");
+            return;
+        }
+
+        if (player.getCooldowns().isOnCooldown(heldItem.getItem())) {
             event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.FAIL);
             if (player.level().isClientSide()) {
-                player.displayClientMessage(Component.literal("§cYou cannot use base mod forms while a custom breathing form is active."), true);
+                player.displayClientMessage(Component.literal("§cAbility on cooldown!"), true);
             }
             return;
         }
@@ -147,7 +162,7 @@ public class BaseModVariationHandler {
             // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
             int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, baseCooldownTicks);
 
-            player.getCooldowns().addCooldown(heldItem.getItem(), cooldownTicks);
+            NichirinCooldownHelper.applyCooldownToAllNichirinSwords(player, cooldownTicks);
 
             if (Config.logDebug) {
                 if (cooldownTicks != baseCooldownTicks) {
@@ -165,6 +180,28 @@ public class BaseModVariationHandler {
             Log.error("Error executing variation " + variation.getName() + ": " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private static void blockBaseModFormUse(PlayerInteractEvent.RightClickItem event, Player player, String message) {
+        clearPendingBaseModUseState(player);
+        event.setCanceled(true);
+        event.setCancellationResult(InteractionResult.FAIL);
+        player.displayClientMessage(Component.literal(message), true);
+    }
+
+    /**
+     * The base mod can queue a pending form via counters/skill state before the actual execution happens.
+     * If we block the right click while our custom form is active, clear that queued state too.
+     */
+    private static void clearPendingBaseModUseState(Player player) {
+        var data = player.getPersistentData();
+        data.putBoolean(NBT_SKILL, false);
+        data.putDouble(NBT_CNT1, 0.0);
+        data.putDouble(NBT_CNT2, 0.0);
+        data.putDouble(NBT_CNT3, 0.0);
+        data.putDouble(NBT_CNT4, 0.0);
+        data.putDouble(NBT_CNT5, 0.0);
+        data.putDouble(NBT_CNT_X, 0.0);
     }
 
 }

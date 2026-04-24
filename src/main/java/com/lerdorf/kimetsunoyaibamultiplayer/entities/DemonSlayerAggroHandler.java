@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.core.registries.Registries;
@@ -111,7 +112,8 @@ public class DemonSlayerAggroHandler {
             10,
             true,
             false,
-            (player) -> player.getPersistentData().getBoolean("oni")
+            player -> player.getPersistentData().getBoolean("oni")
+                && !DemonTransformationHandler.hasTransformationTag(player)
         ));
 
         data.putBoolean(DEMON_AGGRO_ADDED_TAG, true);
@@ -456,6 +458,10 @@ public class DemonSlayerAggroHandler {
      */
     public static boolean isDemonTarget(LivingEntity target) {
         if (target == null || !target.isAlive()) {
+            return false;
+        }
+
+        if (target instanceof Player player && DemonTransformationHandler.hasTransformationTag(player)) {
             return false;
         }
 

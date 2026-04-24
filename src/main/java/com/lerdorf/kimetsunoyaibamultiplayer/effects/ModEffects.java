@@ -27,6 +27,9 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> FAVOR_OF_MUZAN = MOB_EFFECTS.register("favor_of_muzan",
             FavorOfMuzanEffect::new);
 
+    public static final RegistryObject<MobEffect> DEMON_TRANSFORMATION = MOB_EFFECTS.register("demon_transformation",
+            DemonTransformationEffect::new);
+
     // Vermilion Eye effect - enhanced perception with red tint, entity visibility through walls, and faster cooldowns
     public static final RegistryObject<MobEffect> VERMILION_EYE = MOB_EFFECTS.register("vermilion_eye",
             VermilionEyeEffect::new);

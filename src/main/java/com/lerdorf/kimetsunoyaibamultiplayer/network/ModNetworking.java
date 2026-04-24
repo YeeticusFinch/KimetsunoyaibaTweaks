@@ -4,9 +4,13 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CloseDemonPropositionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonEyesSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BloodDemonArtBuilderActionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonPropositionResponsePacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenDemonPropositionPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestBloodDemonArtBuilderPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonPropositionStatePacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonEyesPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectMeditationTargetPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
@@ -219,6 +223,27 @@ public class ModNetworking {
                 .consumerMainThread(OpenMeditationMenuPacket::handle)
                 .add();
 
+        int bloodDemonArtBuilderOpenPacketId = id();
+        net.messageBuilder(OpenBloodDemonArtBuilderPacket.class, bloodDemonArtBuilderOpenPacketId)
+                .decoder(OpenBloodDemonArtBuilderPacket::new)
+                .encoder(OpenBloodDemonArtBuilderPacket::toBytes)
+                .consumerMainThread(OpenBloodDemonArtBuilderPacket::handle)
+                .add();
+
+        int requestBloodDemonArtBuilderPacketId = id();
+        net.messageBuilder(RequestBloodDemonArtBuilderPacket.class, requestBloodDemonArtBuilderPacketId)
+                .decoder(RequestBloodDemonArtBuilderPacket::new)
+                .encoder(RequestBloodDemonArtBuilderPacket::encode)
+                .consumerMainThread(RequestBloodDemonArtBuilderPacket::handle)
+                .add();
+
+        int bloodDemonArtBuilderActionPacketId = id();
+        net.messageBuilder(BloodDemonArtBuilderActionPacket.class, bloodDemonArtBuilderActionPacketId)
+                .decoder(BloodDemonArtBuilderActionPacket::new)
+                .encoder(BloodDemonArtBuilderActionPacket::encode)
+                .consumerMainThread(BloodDemonArtBuilderActionPacket::handle)
+                .add();
+
         int meditationSelectionPacketId = id();
         net.messageBuilder(SelectMeditationTargetPacket.class, meditationSelectionPacketId)
                 .decoder(SelectMeditationTargetPacket::new)
@@ -266,6 +291,13 @@ public class ModNetworking {
                 .decoder(CloseDemonPropositionPacket::new)
                 .encoder(CloseDemonPropositionPacket::toBytes)
                 .consumerMainThread(CloseDemonPropositionPacket::handle)
+                .add();
+
+        int setDemonPropositionStatePacketId = id();
+        net.messageBuilder(SetDemonPropositionStatePacket.class, setDemonPropositionStatePacketId)
+                .decoder(SetDemonPropositionStatePacket::new)
+                .encoder(SetDemonPropositionStatePacket::toBytes)
+                .consumerMainThread(SetDemonPropositionStatePacket::handle)
                 .add();
 
         int demonEyesSyncPacketId = id();

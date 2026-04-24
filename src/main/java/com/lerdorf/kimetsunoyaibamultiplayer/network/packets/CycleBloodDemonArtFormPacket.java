@@ -2,6 +2,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.customdemonart.CustomBloodDemonArtRuntime;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -39,6 +41,10 @@ public class CycleBloodDemonArtFormPacket {
             } else if (stack.getItem() instanceof BloodDemonArtAxeItem artItem) {
                 artItem.cycleForm(player, stack, packet.direction);
                 player.getInventory().setChanged();
+            } else if (stack.getItem() instanceof CustomDemonArtItem) {
+                if (CustomBloodDemonArtRuntime.cycleForm(player, stack, packet.direction)) {
+                    player.getInventory().setChanged();
+                }
             }
         });
         context.setPacketHandled(true);

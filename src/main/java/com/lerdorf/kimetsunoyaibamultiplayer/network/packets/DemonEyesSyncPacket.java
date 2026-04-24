@@ -32,6 +32,14 @@ public class DemonEyesSyncPacket {
         buf.writeVarInt(eyesIndex);
     }
 
+    public boolean isDemon() {
+        return demon;
+    }
+
+    public int getEyesIndex() {
+        return eyesIndex;
+    }
+
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() ->

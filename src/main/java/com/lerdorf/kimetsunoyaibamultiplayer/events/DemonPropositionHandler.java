@@ -10,6 +10,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CloseDemonPropositionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobAnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenDemonPropositionPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonPropositionStatePacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,7 +28,8 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.mcreator.kimetsunoyaiba.procedures.StartOniProcedure;
+import net.minecraft.world.item.ItemStack;
+import net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModItems;
 
 import java.util.Map;
 import java.util.UUID;
@@ -41,6 +44,8 @@ public final class DemonPropositionHandler {
     private static final int TRANSFORMATION_DEBUFF_TICKS = 20 * 20;
     private static final String CHOKE_ANIMATION = KimetsunoyaibaMultiplayer.MODID + ":choke";
     private static final String CHOKED_ANIMATION = KimetsunoyaibaMultiplayer.MODID + ":choked";
+    private static final String CHOKE_SWORD_ANIMATION = KimetsunoyaibaMultiplayer.MODID + ":choke_sword";
+    private static final String CHOKED_SWORD_ANIMATION = KimetsunoyaibaMultiplayer.MODID + ":choked_sword";
     private static final String STOP_MOB_ANIMATION = "__stop__";
     private static final String BYPASS_FATAL_PROPOSITION_KEY = "KnYMpBypassDemonProposition";
     private static final double TARGET_DISTANCE = 1.0D;
@@ -180,6 +185,7 @@ public final class DemonPropositionHandler {
         lockAttacker(attacker);
         applyLockEffects(attacker);
         applyLockEffects(player);
+        ModNetworking.sendToPlayer(new SetDemonPropositionStatePacket(true, attacker.getId()), player);
         maintainSession(attacker, player, player.level().getGameTime());
         playSessionAnimations(attacker, player);
 
@@ -189,12 +195,14 @@ public final class DemonPropositionHandler {
     private static void maintainSession(LivingEntity attacker, ServerPlayer player, long gameTime) {
         Vec3 forward = horizontalForward(attacker);
         Vec3 targetPos = attacker.position().add(forward.scale(TARGET_DISTANCE));
+        float playerFacingYaw = yawTowards(targetPos, attacker.position());
 
         freezeEntity(attacker);
         freezeEntity(player);
 
         setEntityRotation(attacker, yawTowards(attacker.position(), targetPos));
-        teleportPlayer(player, targetPos.x, attacker.getY(), targetPos.z, yawTowards(targetPos, attacker.position()), player.getXRot());
+        teleportPlayer(player, targetPos.x, attacker.getY(), targetPos.z);
+        setPlayerRenderRotation(player, playerFacingYaw);
         player.setDeltaMovement(Vec3.ZERO);
         player.fallDistance = 0.0F;
 
@@ -205,11 +213,18 @@ public final class DemonPropositionHandler {
     }
 
     private static void playSessionAnimations(LivingEntity attacker, ServerPlayer player) {
-        ModNetworking.sendToNearby(new MobAnimationSyncPacket(attacker.getId(), CHOKE_ANIMATION),
+        String attackerAnimation = CHOKE_ANIMATION;
+        String targetAnimation = CHOKED_ANIMATION;
+        if (isHoldingNichirinSword(attacker)) {
+            attackerAnimation = CHOKE_SWORD_ANIMATION;
+            targetAnimation = CHOKED_SWORD_ANIMATION;
+        }
+
+        ModNetworking.sendToNearby(new MobAnimationSyncPacket(attacker.getId(), attackerAnimation),
             player.serverLevel(), attacker.getX(), attacker.getY(), attacker.getZ(), ANIMATION_BROADCAST_RADIUS);
         ModNetworking.sendToNearby(new AnimationSyncPacket(
                 player.getUUID(),
-                net.minecraft.resources.ResourceLocation.parse(CHOKED_ANIMATION),
+                net.minecraft.resources.ResourceLocation.parse(targetAnimation),
                 0,
                 40,
                 true,
@@ -254,8 +269,12 @@ public final class DemonPropositionHandler {
     }
 
     private static void transformIntoDemon(ServerPlayer player) {
-        StartOniProcedure.execute(player);
-        DemonEyesSyncHandler.broadcastState(player);
+        if (DemonTransformationHandler.isCustomDemonInitiationEnabled()) {
+            DemonTransformationHandler.startTransformation(player);
+            return;
+        }
+        ItemStack muzanBlood = new ItemStack(KimetsunoyaibaModItems.BLOOD_OF_MUZAN.get());
+        muzanBlood.finishUsingItem(player.level(), player);
         player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, TRANSFORMATION_REGEN_TICKS, 0, false, true, true));
         player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, TRANSFORMATION_REGEN_TICKS, 4, false, true, true));
         player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, TRANSFORMATION_DEBUFF_TICKS, 0, false, true, true));
@@ -337,8 +356,11 @@ public final class DemonPropositionHandler {
         }
     }
 
-    private static void teleportPlayer(ServerPlayer player, double x, double y, double z, float yaw, float pitch) {
-        player.connection.teleport(x, y, z, yaw, pitch);
+    private static void teleportPlayer(ServerPlayer player, double x, double y, double z) {
+        player.connection.teleport(x, y, z, player.getYRot(), player.getXRot());
+    }
+
+    private static void setPlayerRenderRotation(ServerPlayer player, float yaw) {
         player.setYBodyRot(yaw);
         player.setYHeadRot(yaw);
         player.yBodyRotO = yaw;
@@ -372,6 +394,10 @@ public final class DemonPropositionHandler {
 
     private static boolean isEligibleKizuki(LivingEntity entity) {
         return Damager.isDemon(entity) && EntityTagHelper.isTwelveKizuki(entity);
+    }
+
+    private static boolean isHoldingNichirinSword(LivingEntity entity) {
+        return entity != null && BreathingInfoDetector.isNichirinSword(entity.getMainHandItem());
     }
 
     private static boolean hasSession(LivingEntity entity) {

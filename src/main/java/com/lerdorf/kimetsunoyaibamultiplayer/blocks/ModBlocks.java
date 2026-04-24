@@ -335,6 +335,13 @@ public class ModBlocks {
             .strength(-1.0f, 3600000.0f)
             .noParticlesOnBreak()));
 
+    public static final RegistryObject<Block> HEMOLITH_ORE = registerBlock("hemolith_ore",
+        () -> new Block(BlockBehaviour.Properties.copy(Blocks.REDSTONE_ORE)
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.STONE)
+            .strength(3.0f, 3.0f)
+            .requiresCorrectToolForDrops()));
+
     /**
      * Helper method to register a block and its corresponding BlockItem
      */
