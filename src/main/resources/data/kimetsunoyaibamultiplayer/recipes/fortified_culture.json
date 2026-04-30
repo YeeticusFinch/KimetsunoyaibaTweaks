@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:bone_marrow"
+    },
+    {
+      "item": "minecraft:ghast_tear"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:muscle_fibre"
+    },
+    {
+      "item": "minecraft:diamond"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:fortified_culture"
+  }
+}

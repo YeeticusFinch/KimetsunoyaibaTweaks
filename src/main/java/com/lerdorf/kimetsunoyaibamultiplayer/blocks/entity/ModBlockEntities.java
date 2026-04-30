@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyBlocks;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -15,6 +16,10 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<ChestOfDrawersBlockEntity>> CHEST_OF_DRAWERS =
         BLOCK_ENTITIES.register("chest_of_drawers",
             () -> BlockEntityType.Builder.of(ChestOfDrawersBlockEntity::new, ModBlocks.CHEST_OF_DRAWERS.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<AlchemyTableBlockEntity>> ALCHEMY_TABLE =
+        BLOCK_ENTITIES.register("alchemy_table",
+            () -> BlockEntityType.Builder.of(AlchemyTableBlockEntity::new, ModAlchemyBlocks.ALCHEMY_TABLE.get()).build(null));
 
     private ModBlockEntities() {
     }

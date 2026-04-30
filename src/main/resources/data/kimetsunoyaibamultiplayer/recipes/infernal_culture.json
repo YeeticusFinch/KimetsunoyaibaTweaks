@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:netherite_scrap"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:muscle_fibre"
+    },
+    {
+      "item": "minecraft:blaze_powder"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:adrenal_gland"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:infernal_culture"
+  }
+}

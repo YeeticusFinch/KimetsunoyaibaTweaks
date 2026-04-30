@@ -1,0 +1,25 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"choke_sword": {
+			"loop": true,
+			"bones": {
+				"armorHead": {
+					"rotation": [15, 0, 0]
+				},
+				"right_arm": {
+					"rotation": [22.88176, 16.08305, 20.16225]
+				},
+				"left_arm": {
+					"rotation": [22.88176, -16.08305, -20.16225]
+				},
+				"right_leg": {
+					"rotation": [0, 5, 5]
+				},
+				"left_leg": {
+					"rotation": [0, -5, -5]
+				}
+			}
+		}
+	}
+}

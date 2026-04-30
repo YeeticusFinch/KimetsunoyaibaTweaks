@@ -484,6 +484,17 @@ public final class QuestProgressionManager {
     }
 
     private static BlockPos resolveMarkerTarget(ServerPlayer player, QuestRuntimeContext context) {
+        if (shouldRespawnMissingKazumiForMarker(context)) {
+            BlockPos kazumiPos = QuestScenarioActions.findNearestQuestEntity(player, "kazumi", 400.0D);
+            if (kazumiPos == null) {
+                QuestScenarioActions.ensureKazumiSpawned(player, context);
+                kazumiPos = QuestScenarioActions.findNearestQuestEntity(player, "kazumi", 400.0D);
+            }
+            if (kazumiPos != null) {
+                return kazumiPos;
+            }
+        }
+
         BlockPos custom = context.step().markerResolver().apply(player, context);
         if (custom != null) {
             return custom;
@@ -494,6 +505,12 @@ public final class QuestProgressionManager {
             case TALK_TO_ENTITY, KILL_ENTITY -> QuestScenarioActions.findNearestQuestEntity(player, context.step().targetKey(), 400.0D);
             default -> null;
         };
+    }
+
+    private static boolean shouldRespawnMissingKazumiForMarker(QuestRuntimeContext context) {
+        return "cruel".equals(context.group().id())
+            && "kidnappers_bog".equals(context.stage().id())
+            && "kazumi".equals(context.step().targetKey());
     }
 
     private static boolean isInTargetStructure(ServerPlayer player, ResourceLocation structureId) {

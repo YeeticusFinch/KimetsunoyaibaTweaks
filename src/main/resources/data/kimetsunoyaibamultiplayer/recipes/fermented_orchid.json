@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:blue_orchid"
+    },
+    {
+      "item": "minecraft:sugar"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:bone_dust"
+    },
+    {
+      "item": "minecraft:red_mushroom"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:fermented_orchid"
+  }
+}

@@ -66,7 +66,7 @@ public final class QuestScenarioActions {
             center = findNearestStructure(serverLevel, player.blockPosition(), VILLAGE_SWAMP);
         }
         if (center == null) {
-            return;
+            center = player.blockPosition();
         }
 
         List<Entity> existing = serverLevel.getEntities((Entity) null,

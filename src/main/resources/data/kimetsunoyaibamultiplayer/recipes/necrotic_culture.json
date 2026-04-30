@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:bone_marrow"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:putrid_extract"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:diseased_culture"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:necrotic_tissue"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:necrotic_culture"
+  }
+}

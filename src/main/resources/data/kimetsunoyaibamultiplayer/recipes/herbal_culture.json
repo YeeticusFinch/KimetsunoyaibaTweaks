@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:putrid_extract"
+    },
+    {
+      "item": "minecraft:poppy"
+    },
+    {
+      "item": "minecraft:cocoa_beans"
+    },
+    {
+      "item": "minecraft:mushroom_stew"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:herbal_culture"
+  }
+}

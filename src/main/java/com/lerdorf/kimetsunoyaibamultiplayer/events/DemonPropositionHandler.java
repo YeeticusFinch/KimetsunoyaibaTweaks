@@ -23,8 +23,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -58,6 +60,28 @@ public final class DemonPropositionHandler {
     }
 
     @SubscribeEvent
+    public static void onLivingAttack(LivingAttackEvent event) {
+        if (event.getEntity().level().isClientSide()) {
+            return;
+        }
+
+        if (getSession(event.getEntity()) != null) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingHurt(LivingHurtEvent event) {
+        if (event.getEntity().level().isClientSide()) {
+            return;
+        }
+
+        if (getSession(event.getEntity()) != null) {
+            event.setCanceled(true);
+        }
+    }
+
+    @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent event) {
         if (event.getEntity().level().isClientSide()) {
             return;
@@ -74,7 +98,9 @@ public final class DemonPropositionHandler {
         if (!(target instanceof ServerPlayer player) || !player.isAlive() || player.isCreative() || player.isSpectator()) {
             return;
         }
-        if (player.getPersistentData().getBoolean(BYPASS_FATAL_PROPOSITION_KEY) || Damager.isDemon(player)) {
+        if (player.getPersistentData().getBoolean(BYPASS_FATAL_PROPOSITION_KEY)
+            || Damager.isDemon(player)
+            || DemonTransformationHandler.isTransforming(player)) {
             return;
         }
         if (!(event.getSource().getEntity() instanceof LivingEntity attacker) || !isEligibleKizuki(attacker)) {
@@ -199,6 +225,7 @@ public final class DemonPropositionHandler {
 
         freezeEntity(attacker);
         freezeEntity(player);
+        keepPropositionParticipantsAlive(attacker, player);
 
         setEntityRotation(attacker, yawTowards(attacker.position(), targetPos));
         teleportPlayer(player, targetPos.x, attacker.getY(), targetPos.z);
@@ -270,11 +297,12 @@ public final class DemonPropositionHandler {
 
     private static void transformIntoDemon(ServerPlayer player) {
         if (DemonTransformationHandler.isCustomDemonInitiationEnabled()) {
-            DemonTransformationHandler.startTransformation(player);
+            DemonTransformationHandler.startTransformationFromProposition(player);
             return;
         }
         ItemStack muzanBlood = new ItemStack(KimetsunoyaibaModItems.BLOOD_OF_MUZAN.get());
         muzanBlood.finishUsingItem(player.level(), player);
+        player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 100, 4, false, true, true));
         player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, TRANSFORMATION_REGEN_TICKS, 0, false, true, true));
         player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, TRANSFORMATION_REGEN_TICKS, 4, false, true, true));
         player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, TRANSFORMATION_DEBUFF_TICKS, 0, false, true, true));
@@ -297,7 +325,7 @@ public final class DemonPropositionHandler {
     }
 
     private static void applyLockEffects(LivingEntity entity) {
-        entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, PROPOSITION_EFFECT_DURATION_TICKS, 9, false, false, false));
+        entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, PROPOSITION_EFFECT_DURATION_TICKS, 4, false, false, false));
         MobEffect immvable = KnYEffects.getImmvableEffect();
         if (immvable != null) {
             entity.addEffect(new MobEffectInstance(immvable, PROPOSITION_EFFECT_DURATION_TICKS, 0, false, false, false));
@@ -315,10 +343,23 @@ public final class DemonPropositionHandler {
     private static void freezeEntity(LivingEntity entity) {
         entity.setDeltaMovement(Vec3.ZERO);
         entity.fallDistance = 0.0F;
+        entity.invulnerableTime = Math.max(entity.invulnerableTime, 20);
         if (entity instanceof Mob mob) {
             mob.getNavigation().stop();
             mob.setTarget(null);
         }
+    }
+
+    private static void keepPropositionParticipantsAlive(LivingEntity attacker, ServerPlayer player) {
+        if (player.getHealth() < 1.0F) {
+            player.setHealth(1.0F);
+        }
+        player.invulnerableTime = Math.max(player.invulnerableTime, 20);
+
+        if (attacker.getHealth() < 1.0F) {
+            attacker.setHealth(1.0F);
+        }
+        attacker.invulnerableTime = Math.max(attacker.invulnerableTime, 20);
     }
 
     private static void lockAttacker(LivingEntity attacker) {

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "kimetsunoyaibamultiplayer:block/alchemy_table"
+    },
+    "lit=true": {
+      "model": "kimetsunoyaibamultiplayer:block/alchemy_table"
+    }
+  }
+}

@@ -336,7 +336,7 @@ public class ModBlocks {
             .noParticlesOnBreak()));
 
     public static final RegistryObject<Block> HEMOLITH_ORE = registerBlock("hemolith_ore",
-        () -> new Block(BlockBehaviour.Properties.copy(Blocks.REDSTONE_ORE)
+        () -> new Block(BlockBehaviour.Properties.copy(Blocks.STONE)
             .mapColor(MapColor.STONE)
             .sound(SoundType.STONE)
             .strength(3.0f, 3.0f)

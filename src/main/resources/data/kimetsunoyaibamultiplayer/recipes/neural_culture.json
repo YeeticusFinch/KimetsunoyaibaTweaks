@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:neural_tissue"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:adrenal_gland"
+    },
+    {
+      "item": "minecraft:gunpowder"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:herbal_culture"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:neural_culture"
+  }
+}

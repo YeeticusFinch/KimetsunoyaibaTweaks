@@ -7,10 +7,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -36,31 +34,12 @@ import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.loading.FMLPaths;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID)
 public class SwordsmithVillageDimensionDataHandler {
@@ -69,13 +48,6 @@ public class SwordsmithVillageDimensionDataHandler {
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "swordsmith_village");
 
     private static final String DIMENSION_NAME = "Swordsmith Village";
-    private static final String VERSION_FILE_NAME = "swordsmith_village.version";
-    private static final String GITHUB_DOWNLOAD_URL =
-        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.475/swordsmith_village_region.zip";
-    private static final String RELEASE_VERSION_URL =
-        "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/releases/download/v1.6.475/swordsmith_village.version";
-    private static final String RAW_VERSION_URL =
-        "https://raw.githubusercontent.com/YeeticusFinch/KimetsunoyaibaTweaks/main/swordsmith_village_region/" + VERSION_FILE_NAME;
 
     private static final double WORLD_BORDER_SIZE = 2048.0D;
     private static final double WORLD_BORDER_CENTER_X = 0.0D;
@@ -186,37 +158,11 @@ public class SwordsmithVillageDimensionDataHandler {
         new ResidentSpec(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "kanawo_buyer"), true)
     );
 
-    private static final boolean ENABLE_AUTO_DOWNLOAD = true;
-
-    private static Path cacheDir = null;
-    private static volatile boolean cacheInitialized = false;
-
-    private static final ExecutorService IO_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
-        Thread t = new Thread(r, "SwordsmithVillage-IO");
-        t.setDaemon(true);
-        return t;
-    });
-
-    private static final AtomicBoolean cacheInitInProgress = new AtomicBoolean(false);
-    private static final AtomicBoolean worldCopyInProgress = new AtomicBoolean(false);
     private static final AtomicBoolean residentMaintenanceInProgress = new AtomicBoolean(false);
 
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
-        if (!ENABLE_AUTO_DOWNLOAD) {
-            return;
-        }
-
-        MinecraftServer server = event.getServer();
-        IO_EXECUTOR.execute(() -> {
-            try {
-                ensureCacheUpToDate();
-                ensureWorldPrepared(server, false);
-            } catch (Exception e) {
-                System.err.println(prefix() + " Error scheduling startup tasks:");
-                e.printStackTrace();
-            }
-        });
+        Log.debug(prefix() + " World payload bootstrap is provided by kny_worlds.");
     }
 
     @SubscribeEvent
@@ -374,185 +320,6 @@ public class SwordsmithVillageDimensionDataHandler {
         state.setDirty();
     }
 
-    private static void ensureCacheUpToDate() {
-        if (cacheInitialized) {
-            return;
-        }
-        if (!cacheInitInProgress.compareAndSet(false, true)) {
-            return;
-        }
-
-        try {
-            Path gameDir = FMLPaths.GAMEDIR.get();
-            cacheDir = gameDir.resolve("kimetsunoyaibamultiplayer").resolve("swordsmith_village_cache");
-            Files.createDirectories(cacheDir);
-
-            boolean cacheHasMca = cacheHasAnyMca();
-            String localVersion = readVersionFile(cacheDir.resolve(VERSION_FILE_NAME));
-            String remoteVersion = fetchRemoteVersion();
-
-            if (!cacheHasMca) {
-                Log.debug(prefix() + " Cache empty, downloading region files...");
-                Log.debug(prefix() + " Cache location: " + cacheDir);
-                downloadFreshCache();
-            } else if (localVersion == null) {
-                Log.debug(prefix() + " Cache missing version file, refreshing cache...");
-                clearDirectory(cacheDir);
-                downloadFreshCache();
-            } else if (remoteVersion != null && !remoteVersion.trim().equals(localVersion.trim())) {
-                Log.debug(prefix() + " Remote region version differs (local: " + localVersion + ", remote: " + remoteVersion + "), updating cache...");
-                clearDirectory(cacheDir);
-                downloadFreshCache();
-            } else {
-                Log.debug(prefix() + " Using cached region files" + (localVersion != null ? " (version " + localVersion + ")" : ""));
-            }
-
-            cacheInitialized = true;
-        } catch (Exception e) {
-            System.err.println(prefix() + " Error ensuring cache is up to date:");
-            e.printStackTrace();
-        } finally {
-            cacheInitInProgress.set(false);
-        }
-    }
-
-    private static void downloadFreshCache() throws IOException {
-        boolean success = downloadAndExtractRegionFiles(cacheDir);
-        if (success) {
-            Log.debug(prefix() + " Successfully downloaded and cached region files.");
-        } else {
-            throw new IOException("Failed to download swordsmith village region files");
-        }
-    }
-
-    private static boolean downloadAndExtractRegionFiles(Path targetDir) {
-        Path tempZipFile = null;
-
-        try {
-            tempZipFile = Files.createTempFile("swordsmith_village_", ".zip");
-            URL url = new URL(GITHUB_DOWNLOAD_URL);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(30000);
-            connection.setReadTimeout(60000);
-            connection.setInstanceFollowRedirects(true);
-
-            int responseCode = connection.getResponseCode();
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                System.err.println(prefix() + " HTTP error " + responseCode + ": " + connection.getResponseMessage());
-                return false;
-            }
-
-            try (InputStream in = new BufferedInputStream(connection.getInputStream());
-                 FileOutputStream out = new FileOutputStream(tempZipFile.toFile())) {
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                long totalBytesRead = 0;
-
-                while ((bytesRead = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, bytesRead);
-                    totalBytesRead += bytesRead;
-                }
-
-                Log.debug(prefix() + " Download complete (" + (totalBytesRead / (1024 * 1024)) + " MB)");
-            }
-
-            int filesExtracted = extractZipFile(tempZipFile, targetDir);
-            Log.debug(prefix() + " Extracted " + filesExtracted + " region files");
-            return filesExtracted > 0;
-        } catch (Exception e) {
-            System.err.println(prefix() + " Error downloading from GitHub:");
-            e.printStackTrace();
-            return false;
-        } finally {
-            if (tempZipFile != null) {
-                try {
-                    Files.deleteIfExists(tempZipFile);
-                } catch (IOException ignored) {
-                }
-            }
-        }
-    }
-
-    private static int extractZipFile(Path zipFile, Path targetDir) throws IOException {
-        int filesExtracted = 0;
-
-        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile.toFile()))) {
-            ZipEntry entry;
-
-            while ((entry = zis.getNextEntry()) != null) {
-                String fileName = entry.getName();
-                if (fileName.endsWith(".mca")
-                    || fileName.endsWith("/" + VERSION_FILE_NAME)
-                    || fileName.endsWith("\\" + VERSION_FILE_NAME)
-                    || fileName.equals(VERSION_FILE_NAME)) {
-                    String simpleName = Paths.get(fileName).getFileName().toString();
-                    Path targetFile = targetDir.resolve(simpleName);
-
-                    try (FileOutputStream fos = new FileOutputStream(targetFile.toFile())) {
-                        byte[] buffer = new byte[8192];
-                        int len;
-                        while ((len = zis.read(buffer)) > 0) {
-                            fos.write(buffer, 0, len);
-                        }
-                    }
-
-                    if (simpleName.endsWith(".mca")) {
-                        filesExtracted++;
-                    }
-                }
-
-                zis.closeEntry();
-            }
-        }
-
-        return filesExtracted;
-    }
-
-    private static void ensureWorldPrepared(MinecraftServer server, boolean logNotReady) throws IOException {
-        ServerLevel overworld = server.getLevel(Level.OVERWORLD);
-        if (overworld == null) {
-            return;
-        }
-
-        Path worldSaveDir = overworld.getServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT);
-        Path dimensionDir = worldSaveDir.resolve("dimensions")
-            .resolve("kimetsunoyaibamultiplayer")
-            .resolve("swordsmith_village");
-        Path regionDir = dimensionDir.resolve("region");
-
-        boolean needsCopy = !Files.exists(regionDir) || isDirectoryEmpty(regionDir);
-
-        if (!needsCopy) {
-            return;
-        }
-        if (logNotReady) {
-            Log.debug(prefix() + " Dimension not ready yet; preparing files in background...");
-        }
-        if (!worldCopyInProgress.compareAndSet(false, true)) {
-            return;
-        }
-
-        try {
-            Files.createDirectories(regionDir);
-            if (!cacheHasAnyMca()) {
-                ensureCacheUpToDate();
-            }
-            copyCachedRegionFiles(regionDir);
-
-            server.execute(() -> {
-                //try {
-                //    server.getPlayerList().broadcastSystemMessage(
-                //        Component.literal("§a[" + DIMENSION_NAME + "] Dimension is ready."), false);
-                //} catch (Throwable ignored) {
-                    Log.info(prefix() + " Dimension is ready.");
-                //}
-            });
-        } finally {
-            worldCopyInProgress.set(false);
-        }
-    }
-
     private static void ensureResidentsPresent(ServerLevel level) {
         for (ResidentSpec spec : RESIDENT_SPECS) {
             if (findResident(level, spec) != null) {
@@ -686,88 +453,6 @@ public class SwordsmithVillageDimensionDataHandler {
             return mob;
         }
         return null;
-    }
-
-    private static void copyCachedRegionFiles(Path targetDir) throws IOException {
-        if (cacheDir == null || !Files.exists(cacheDir)) {
-            throw new IOException("Cache directory not initialized or missing");
-        }
-
-        try (Stream<Path> files = Files.list(cacheDir)) {
-            for (Path cachedFile : files.toList()) {
-                String name = cachedFile.getFileName().toString();
-                if (name.endsWith(".mca") || name.equals(VERSION_FILE_NAME)) {
-                    Files.copy(cachedFile, targetDir.resolve(name), StandardCopyOption.REPLACE_EXISTING);
-                }
-            }
-        }
-    }
-
-    private static boolean cacheHasAnyMca() throws IOException {
-        if (cacheDir == null || !Files.exists(cacheDir)) {
-            return false;
-        }
-        try (Stream<Path> stream = Files.list(cacheDir)) {
-            return stream.anyMatch(path -> path.getFileName().toString().endsWith(".mca"));
-        }
-    }
-
-    private static boolean isDirectoryEmpty(Path directory) throws IOException {
-        if (!Files.exists(directory)) {
-            return true;
-        }
-        try (Stream<Path> entries = Files.list(directory)) {
-            return entries.findFirst().isEmpty();
-        }
-    }
-
-    private static String fetchRemoteVersion() {
-        String version = fetchVersionFromUrl(RELEASE_VERSION_URL);
-        if (version != null) {
-            return version;
-        }
-        return fetchVersionFromUrl(RAW_VERSION_URL);
-    }
-
-    private static String fetchVersionFromUrl(String urlString) {
-        HttpURLConnection connection = null;
-        try {
-            URL url = new URL(urlString);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(15000);
-            connection.setReadTimeout(15000);
-            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                return null;
-            }
-            try (InputStream in = new BufferedInputStream(connection.getInputStream())) {
-                return new String(in.readAllBytes(), StandardCharsets.UTF_8).trim();
-            }
-        } catch (Exception ignored) {
-            return null;
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-    }
-
-    private static String readVersionFile(Path versionFile) {
-        if (versionFile == null || !Files.exists(versionFile)) {
-            return null;
-        }
-        try {
-            return Files.readString(versionFile, StandardCharsets.UTF_8).trim();
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
-    private static boolean cacheHasSameVersion(String cacheVersion, String worldVersion) {
-        if (cacheVersion == null) {
-            return worldVersion == null;
-        }
-        return cacheVersion.equals(worldVersion);
     }
 
     private static boolean isVillagePopulationAtOrAboveStored(ServerLevel level) {
@@ -906,23 +591,6 @@ public class SwordsmithVillageDimensionDataHandler {
             chunk.getPos().z,
             removed
         );
-    }
-
-    private static void clearDirectory(Path dir) throws IOException {
-        if (!Files.exists(dir)) {
-            return;
-        }
-        try (Stream<Path> walk = Files.walk(dir)) {
-            walk.sorted(Comparator.reverseOrder())
-                .forEach(path -> {
-                    try {
-                        if (!path.equals(dir)) {
-                            Files.deleteIfExists(path);
-                        }
-                    } catch (IOException ignored) {
-                    }
-                });
-        }
     }
 
     private static boolean isNaturalLikeSpawn(MobSpawnType spawnType) {

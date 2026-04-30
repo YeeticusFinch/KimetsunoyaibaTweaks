@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:herbal_culture"
+    },
+    {
+      "item": "minecraft:ghast_tear"
+    },
+    {
+      "item": "minecraft:glistering_melon_slice"
+    },
+    {
+      "item": "minecraft:allium"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:vitality_culture"
+  }
+}

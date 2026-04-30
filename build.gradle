@@ -126,6 +126,7 @@ repositories {
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
     flatDir {
         dir 'libs'
+        dir '../KnY-Worlds/build/libs'
     }
     
     maven {
@@ -139,6 +140,10 @@ repositories {
         name "GeckoLib"
         url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
     }
+    maven {
+        name 'BlameJared Maven'
+        url 'https://maven.blamejared.com'
+    }
 }
 
 dependencies {
@@ -151,9 +156,9 @@ dependencies {
 
     // Example mod dependency with JEI - using fg.deobf() ensures the dependency is remapped to your development mappings
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")
-    // compileOnly fg.deobf("mezz.jei:jei-${mc_version}-forge-api:${jei_version}")
-    // runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}-forge:${jei_version}")
+    compileOnly fg.deobf("mezz.jei:jei-${mc_version}-common-api:${jei_version}")
+    compileOnly fg.deobf("mezz.jei:jei-${mc_version}-forge-api:${jei_version}")
+    runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}-forge:${jei_version}")
 
     runtimeOnly(fg.deobf("lib:mobplayeranimator-forge:${project.mob_player_anim_version}-all")) {
         exclude group: 'org.apache.logging.log4j', module: 'log4j-api'
@@ -188,6 +193,7 @@ dependencies {
     compileOnly fg.deobf(files("libs/KimetsunoYaiba-ver3-forge-1.20.1.jar"))
     runtimeOnly fg.deobf(files("libs/KimetsunoYaiba-ver3-forge-1.20.1.jar"))
     implementation fg.deobf("curse.maven:demonslayer-471263:7151280")
+    runtimeOnly fg.deobf(files("../KnY-Worlds/build/libs/kny_worlds-1.0.0.jar"))
 
     // ShoulderSurfing integration uses reflection - no compile-time dependency needed
 

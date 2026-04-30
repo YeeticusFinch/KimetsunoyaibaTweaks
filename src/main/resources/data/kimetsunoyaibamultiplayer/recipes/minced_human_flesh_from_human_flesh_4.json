@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:human_flesh_4"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:minced_human_flesh",
+    "count": 3
+  }
+}

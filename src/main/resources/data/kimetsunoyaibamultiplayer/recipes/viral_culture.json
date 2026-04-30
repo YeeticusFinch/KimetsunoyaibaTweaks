@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:neural_tissue"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:diseased_culture"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:fermented_spider_eye"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:viral_culture"
+  }
+}

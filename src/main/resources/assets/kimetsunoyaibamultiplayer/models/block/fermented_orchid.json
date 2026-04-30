@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "kimetsunoyaibamultiplayer:item/fermented_orchid"
+  }
+}

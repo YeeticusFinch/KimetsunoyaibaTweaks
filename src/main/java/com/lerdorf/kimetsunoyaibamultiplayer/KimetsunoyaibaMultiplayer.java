@@ -102,6 +102,7 @@ public class KimetsunoyaibaMultiplayer
 
         // Register blocks
         com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.register(modEventBus);
+        com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyBlocks.register(modEventBus);
         Log.alwaysWarn("[INIT] Registered blocks");
 
         com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.register(modEventBus);
@@ -110,6 +111,9 @@ public class KimetsunoyaibaMultiplayer
         // Register items
         ModItems.register(modEventBus);
         com.lerdorf.kimetsunoyaibamultiplayer.items.SheathItems.register(modEventBus);
+        com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyItems.register(modEventBus);
+        com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyMenus.register(modEventBus);
+        com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyRecipes.register(modEventBus);
         Log.alwaysWarn("[INIT] Registered items");
         
         // Register effects
@@ -188,6 +192,15 @@ public class KimetsunoyaibaMultiplayer
         // Register our built-in swords in the SwordRegistry (must be done after items are registered)
         event.enqueueWork(() -> {
             Log.startupProbe("KimetsunoyaibaMultiplayer.commonSetup.enqueueWork.start");
+            com.lerdorf.kimetsunoyaibamultiplayer.alchemy.AlchemyBrewingRecipes.register();
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "fermented_orchid"),
+                com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyBlocks.POTTED_FERMENTED_ORCHID
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "immortal_daisy"),
+                com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyBlocks.POTTED_IMMORTAL_DAISY
+            );
             // Register base mod style metadata and sword metadata for color change system
             com.lerdorf.kimetsunoyaibamultiplayer.api.BaseModRegistration.registerAll();
 

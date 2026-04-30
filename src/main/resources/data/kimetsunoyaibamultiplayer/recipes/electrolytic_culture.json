@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:neural_tissue"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:calcite_powder"
+    },
+    {
+      "item": "minecraft:potion"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:electrolytic_culture"
+  }
+}

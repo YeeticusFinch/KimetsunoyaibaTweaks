@@ -35,6 +35,10 @@ public class ModEvents {
         Player player = event.getEntity();
         // Load player's breathing form data from NBT
         PlayerBreathingData.loadFromNBT(player);
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceTransformationRolePrecedence(serverPlayer);
+            com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceDemonRolePrecedence(serverPlayer);
+        }
         Log.startupProbeOnce("ModEvents.onPlayerLogin.end");
     }
 
@@ -60,6 +64,10 @@ public class ModEvents {
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()) {
             return;
+        }
+        if (event.player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceTransformationRolePrecedence(serverPlayer);
+            com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceDemonRolePrecedence(serverPlayer);
         }
         if (!event.player.getPersistentData().getBoolean("oni")
             && DemonTransformationHandler.getTrackedMuzanBlood(event.player) > 0) {

@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.quest;
 
 public enum PlayerRole {
     CIVILIAN("Civilian"),
+    DEMON_TRANSFORMATION("Demon Transformation"),
     DEMON_SLAYER_IN_TRAINING("Demon Slayer in Training"),
     DEMON_SLAYER("Demon Slayer"),
     KAKUSHI("Kakushi"),

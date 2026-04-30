@@ -1608,6 +1608,12 @@ public class FinalSelectionProcedure {
         if (activeProcedure == null || player == null || !player.level().dimension().equals(MT_FUJIKASANE_KEY)) {
             return false;
         }
+        if (player.getPersistentData().getBoolean("oni")
+            || com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler.isTransforming(player)) {
+            player.sendSystemMessage(Component.literal("§cDemons and transforming players cannot become Kakushi."));
+            activeProcedure.kakushiPendingUntilTick.remove(player.getUUID());
+            return false;
+        }
 
         Long pendingUntil = activeProcedure.kakushiPendingUntilTick.get(player.getUUID());
         long nowTick = player.serverLevel().getGameTime();

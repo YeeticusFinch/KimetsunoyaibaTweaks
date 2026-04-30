@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "G",
+    "G"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glass_pane"
+    }
+  },
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:empty_vial"
+  }
+}

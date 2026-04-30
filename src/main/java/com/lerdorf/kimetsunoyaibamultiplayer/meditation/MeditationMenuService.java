@@ -29,6 +29,8 @@ public final class MeditationMenuService {
         ResourceLocation.parse("kimetsunoyaibamultiplayer:completed_final_selectioni");
     private static final ResourceLocation KAKUSHI =
         ResourceLocation.parse("kimetsunoyaibamultiplayer:kakushi");
+    private static final ResourceLocation DEMON_SLAYER_CORPS =
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:demon_slayer_corps");
     private static final List<MeditationMenuData.LocationEntry> CORPS_STRUCTURE_LOCATIONS = List.of(
         new MeditationMenuData.LocationEntry("house_kocho", "Kocho House", "Waypoint for kimetsunoyaiba:house_kocho.", false),
         new MeditationMenuData.LocationEntry("graveyard", "Graveyard", "Waypoint for kimetsunoyaiba:graveyard.", false),
@@ -188,7 +190,7 @@ public final class MeditationMenuService {
             case DEMON_SLAYER, KAKUSHI, SWORDSMITH -> locations.addAll(CORPS_STRUCTURE_LOCATIONS);
             case DEMON -> locations.add(new MeditationMenuData.LocationEntry("night_hunt", "Night Hunting Grounds", "A placeholder demon navigation target.", false));
             case CIVILIAN -> locations.add(new MeditationMenuData.LocationEntry("local_village", "Nearby Village", "A placeholder civilian navigation target.", false));
-            case DEMON_SLAYER_IN_TRAINING -> {
+            case DEMON_SLAYER_IN_TRAINING, DEMON_TRANSFORMATION -> {
             }
         }
         return locations;
@@ -235,6 +237,11 @@ public final class MeditationMenuService {
     }
 
     public static PlayerRole resolveRoleForProgression(ServerPlayer player) {
+        enforceTransformationRolePrecedence(player);
+        enforceDemonRolePrecedence(player);
+        if (DemonTransformationHandler.isTransforming(player)) {
+            return PlayerRole.DEMON_TRANSFORMATION;
+        }
         if (player.getPersistentData().getBoolean("oni")) {
             return PlayerRole.DEMON;
         }
@@ -253,7 +260,36 @@ public final class MeditationMenuService {
         return PlayerRole.CIVILIAN;
     }
 
+    public static void enforceTransformationRolePrecedence(ServerPlayer player) {
+        if (player == null || !DemonTransformationHandler.isTransforming(player)) {
+            return;
+        }
+
+        player.getPersistentData().remove("kakushi");
+        player.getPersistentData().putBoolean("swordsmith", false);
+
+        revokeAdvancementIfPresent(player, KAKUSHI);
+        revokeAdvancementIfPresent(player, COMPLETED_FINAL_SELECTION);
+        revokeAdvancementIfPresent(player, DEMON_SLAYER_CORPS);
+    }
+
+    public static void enforceDemonRolePrecedence(ServerPlayer player) {
+        if (player == null || !player.getPersistentData().getBoolean("oni")) {
+            return;
+        }
+
+        player.getPersistentData().remove("kakushi");
+        player.getPersistentData().putBoolean("swordsmith", false);
+
+        revokeAdvancementIfPresent(player, KAKUSHI);
+        revokeAdvancementIfPresent(player, COMPLETED_FINAL_SELECTION);
+        revokeAdvancementIfPresent(player, DEMON_SLAYER_CORPS);
+    }
+
     private static String resolveRank(ServerPlayer player, PlayerRole role) {
+        if (role == PlayerRole.DEMON_TRANSFORMATION) {
+            return "Transforming";
+        }
         if (role == PlayerRole.DEMON) {
             return "Unranked Demon";
         }
@@ -306,6 +342,21 @@ public final class MeditationMenuService {
     private static boolean hasAdvancement(ServerPlayer player, ResourceLocation id) {
         Advancement advancement = player.server.getAdvancements().getAdvancement(id);
         return advancement != null && player.getAdvancements().getOrStartProgress(advancement).isDone();
+    }
+
+    private static void revokeAdvancementIfPresent(ServerPlayer player, ResourceLocation id) {
+        Advancement advancement = player.server.getAdvancements().getAdvancement(id);
+        if (advancement == null) {
+            return;
+        }
+
+        List<String> completedCriteria = new ArrayList<>();
+        for (String criterion : player.getAdvancements().getOrStartProgress(advancement).getCompletedCriteria()) {
+            completedCriteria.add(criterion);
+        }
+        for (String criterion : completedCriteria) {
+            player.getAdvancements().revoke(advancement, criterion);
+        }
     }
 
     private static String prettify(String raw) {
