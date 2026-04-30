@@ -1,0 +1,17 @@
+{
+  "replace": false,
+  "values": [
+    "kimetsunoyaibamultiplayer:minced_human_flesh",
+    "kimetsunoyaibamultiplayer:human_flesh_3",
+    "kimetsunoyaibamultiplayer:human_flesh_4",
+    "kimetsunoyaibamultiplayer:human_flesh_5",
+    {
+      "id": "kimetsunoyaiba:human_flesh",
+      "required": false
+    },
+    {
+      "id": "kimetsunoyaiba:human_flesh_2",
+      "required": false
+    }
+  ]
+}

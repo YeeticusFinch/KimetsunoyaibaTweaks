@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:vitality_culture"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:refined_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:beneficial_effect_amplifier_vial"
+  }
+}

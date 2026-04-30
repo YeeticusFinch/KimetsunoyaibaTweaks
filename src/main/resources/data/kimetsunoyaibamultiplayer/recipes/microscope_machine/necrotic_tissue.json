@@ -1,0 +1,12 @@
+{
+  "type": "kimetsunoyaibamultiplayer:microscope",
+  "lens": {
+    "item": "kimetsunoyaibamultiplayer:amethyst_lens"
+  },
+  "sample": {
+    "item": "kimetsunoyaibamultiplayer:unidentified_rotten_extract"
+  },
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:necrotic_tissue"
+  }
+}

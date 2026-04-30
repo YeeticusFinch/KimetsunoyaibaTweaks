@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " GI",
+    "QLI",
+    "SSS"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glowstone"
+    },
+    "S": {
+      "item": "minecraft:smooth_stone_slab"
+    },
+    "Q": {
+      "item": "minecraft:quartz"
+    },
+    "L": {
+      "item": "minecraft:glass"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "kimetsunoyaiba:microscope"
+  }
+}

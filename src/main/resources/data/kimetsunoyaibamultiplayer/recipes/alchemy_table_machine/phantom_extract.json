@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "minecraft:phantom_membrane"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:empty_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:phantom_extract"
+  }
+}

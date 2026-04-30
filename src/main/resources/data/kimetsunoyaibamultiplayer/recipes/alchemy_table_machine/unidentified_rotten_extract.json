@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "minecraft:rotten_flesh"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:empty_petri_dish"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:unidentified_rotten_extract"
+  }
+}

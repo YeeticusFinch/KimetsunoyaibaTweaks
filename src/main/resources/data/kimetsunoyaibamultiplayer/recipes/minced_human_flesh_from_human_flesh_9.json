@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaiba:dice_steak_head_2"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:minced_human_flesh",
+    "count": 1
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "minecraft:totem_of_undying"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:empty_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:immortal_extract"
+  }
+}

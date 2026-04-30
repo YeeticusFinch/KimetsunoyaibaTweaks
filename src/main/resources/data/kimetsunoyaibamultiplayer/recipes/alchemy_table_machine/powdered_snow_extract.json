@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "minecraft:powder_snow_bucket"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:empty_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:powdered_snow_extract"
+  }
+}

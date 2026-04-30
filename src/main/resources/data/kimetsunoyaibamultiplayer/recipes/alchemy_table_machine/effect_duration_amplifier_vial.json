@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:electrolytic_culture"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:refined_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:effect_duration_amplifier_vial"
+  }
+}

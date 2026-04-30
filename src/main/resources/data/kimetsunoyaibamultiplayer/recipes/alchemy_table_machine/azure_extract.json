@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "minecraft:azure_bluet"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:empty_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:azure_extract"
+  }
+}

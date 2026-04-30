@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:fortified_culture"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:refined_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:defense_amplifier_vial"
+  }
+}

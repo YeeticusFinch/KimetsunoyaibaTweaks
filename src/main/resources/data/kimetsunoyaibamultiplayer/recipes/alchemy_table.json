@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " IB",
+    " HB",
+    "IFI"
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:empty_bottle"
+    },
+    "F": {
+      "item": "minecraft:flint"
+    },
+    "H": {
+      "item": "kimetsunoyaibamultiplayer:hemolith_dust"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:alchemy_table"
+  }
+}

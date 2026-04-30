@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:azure_extract"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:cruel_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:azure_catalyst"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "tag": "kimetsunoyaibamultiplayer:human_flesh_sources"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:empty_petri_dish"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:unidentified_human_extract"
+  }
+}
