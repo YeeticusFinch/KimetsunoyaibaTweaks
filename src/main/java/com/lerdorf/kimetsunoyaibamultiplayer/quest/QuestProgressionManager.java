@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.quest;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationStatsTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuData;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
@@ -17,6 +18,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -34,8 +36,13 @@ public final class QuestProgressionManager {
     private static final String ACTIVE_STAGE_INDEX = "KnYQuestActiveStageIndex";
     private static final String ACTIVE_STEP_INDEX = "KnYQuestActiveStepIndex";
     private static final String ACTIVE_STEP_STARTED = "KnYQuestActiveStepStarted";
+    private static final String STEP_TIME_BLOCKED_NOTICE_TICK = "KnYQuestStepTimeBlockedNoticeTick";
+    private static final String STEP_RESTART_COOLDOWN_UNTIL = "KnYQuestStepRestartCooldownUntil";
     private static final String PERMANENCE_FIRST_TASTE_PROGRESS = "KnYPermanenceFirstTasteProgress";
     private static final int PERMANENCE_FIRST_TASTE_REQUIRED = 10;
+    private static final ResourceLocation HOUSE_TAMAYO = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_tamayo");
+    private static final ResourceLocation SUSAMARU_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "susamaru");
+    private static final ResourceLocation YAHABA_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "yahaba");
 
     private static final ResourceLocation COMPLETED_FINAL_SELECTION = ResourceLocation.fromNamespaceAndPath(
         KimetsunoyaibaMultiplayer.MODID, "completed_final_selectioni");
@@ -59,6 +66,18 @@ public final class QuestProgressionManager {
 
         QuestStepDefinition step = context.step();
         if (!player.getPersistentData().getBoolean(ACTIVE_STEP_STARTED)) {
+            long restartCooldownUntil = player.getPersistentData().getLong(STEP_RESTART_COOLDOWN_UNTIL);
+            if (restartCooldownUntil > 0L) {
+                long now = player.level().getGameTime();
+                if (now < restartCooldownUntil) {
+                    return;
+                }
+                player.getPersistentData().remove(STEP_RESTART_COOLDOWN_UNTIL);
+            }
+            if (!isStepStartTimeSatisfied(player, step)) {
+                maybeSendStepTimeBlockedMessage(player, step);
+                return;
+            }
             step.onStart().accept(player, context);
             player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, true);
         }
@@ -96,17 +115,132 @@ public final class QuestProgressionManager {
         return false;
     }
 
+    public static boolean handleKazumiBowTurnIn(ServerPlayer player, Entity target, PlayerRole role, boolean swampDemonAliveNearby) {
+        if (!CustomProgressionConfig.isCustomProgressionEnabled()) {
+            return false;
+        }
+        QuestRuntimeContext context = getOrInitializeContext(player, role);
+        if (context == null) {
+            return false;
+        }
+
+        String questNpcId = target.getPersistentData().getString(QuestScenarioActions.QUEST_NPC_ID_TAG);
+        if (!"kazumi".equals(questNpcId) || !"return_to_kazumi".equals(context.step().id())) {
+            return false;
+        }
+
+        if (swampDemonAliveNearby) {
+            player.sendSystemMessage(Component.literal("§6[Kazumi] §fThat swamp demon is still alive... please kill it first!"));
+            return true;
+        }
+
+        if (!QuestScenarioActions.hasSatokosBow(player, context)) {
+            return true;
+        }
+
+        completeStep(player, context);
+        return true;
+    }
+
     public static void handleKill(ServerPlayer player, LivingEntity victim, PlayerRole role) {
         if (!CustomProgressionConfig.isCustomProgressionEnabled()) {
             return;
         }
         QuestRuntimeContext context = getOrInitializeContext(player, role);
-        if (context == null || context.step().type() != QuestStepType.KILL_ENTITY) {
+        if (context == null) {
             return;
         }
+
+        if ("cruel".equals(context.group().id())
+            && "asakusa".equals(context.stage().id())
+            && "defeat_susamaru_and_yahaba".equals(context.step().id())) {
+            QuestScenarioActions.markTamayoHouseTargetKilled(player, victim);
+            if (context.step().customCheck().test(player, context)) {
+                completeStep(player, context);
+            }
+            return;
+        }
+
+        if (context.step().type() != QuestStepType.KILL_ENTITY) {
+            return;
+        }
+
         if (matchesTarget(context.step(), victim)) {
             completeStep(player, context);
         }
+    }
+
+    public static boolean isRaidSuppressedForPlayer(ServerPlayer player, ResourceLocation structureId) {
+        if (!CustomProgressionConfig.isCustomProgressionEnabled() || player == null || structureId == null) {
+            return false;
+        }
+
+        QuestRuntimeContext context = getOrInitializeContext(player, MeditationMenuService.resolveRoleForProgression(player));
+        if (context == null) {
+            return false;
+        }
+
+        if (!"cruel".equals(context.group().id())) {
+            return false;
+        }
+
+        if ("kidnappers_bog".equals(context.stage().id())) {
+            return true;
+        }
+
+        return "asakusa".equals(context.stage().id()) && HOUSE_TAMAYO.equals(structureId);
+    }
+
+    public static boolean shouldSuppressOmenForQuestKill(ServerPlayer player, LivingEntity victim) {
+        if (!CustomProgressionConfig.isCustomProgressionEnabled() || player == null || victim == null) {
+            return false;
+        }
+
+        QuestRuntimeContext context = getOrInitializeContext(player, MeditationMenuService.resolveRoleForProgression(player));
+        if (context == null || !"cruel".equals(context.group().id())) {
+            return false;
+        }
+
+        String questTargetId = victim.getPersistentData().getString(QuestScenarioActions.QUEST_TARGET_ID_TAG);
+        ResourceLocation victimId = EntityType.getKey(victim.getType());
+
+        if ("kidnappers_bog".equals(context.stage().id())) {
+            return "swamp_demon_kidnappers_bog".equals(questTargetId)
+                || "swamp_demon_kidnappers_bog_satoko".equals(questTargetId);
+        }
+
+        if ("asakusa".equals(context.stage().id())) {
+            return SUSAMARU_ID.equals(victimId) || YAHABA_ID.equals(victimId);
+        }
+
+        return false;
+    }
+
+    public static void handlePlayerDeath(ServerPlayer player, PlayerRole role) {
+        if (!CustomProgressionConfig.isCustomProgressionEnabled()) {
+            return;
+        }
+        QuestRuntimeContext context = getOrInitializeContext(player, role);
+        if (context == null) {
+            return;
+        }
+        if ("cruel".equals(context.group().id())
+            && "asakusa".equals(context.stage().id())
+            && "defeat_susamaru_and_yahaba".equals(context.step().id())) {
+            QuestScenarioActions.resetTamayoHouseFailure(player);
+            player.getPersistentData().putInt(ACTIVE_STEP_INDEX, context.stepIndex());
+            player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, false);
+            player.sendSystemMessage(Component.literal("§cQuest Failed: §fYou were slain while defending Tamayo. Return to Tamayo's House and try again."));
+        }
+    }
+
+    public static void scheduleCurrentStepRestart(ServerPlayer player, int cooldownTicks) {
+        if (player == null) {
+            return;
+        }
+        player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, false);
+        long now = player.level().getGameTime();
+        player.getPersistentData().putLong(STEP_RESTART_COOLDOWN_UNTIL, now + Math.max(0, cooldownTicks));
     }
 
     public static void handleHumanFleshConsumed(ServerPlayer player, ItemStack stack, PlayerRole role) {
@@ -411,6 +545,33 @@ public final class QuestProgressionManager {
             case WAIT_FOR_NIGHT -> player.level().isNight();
             case CUSTOM -> step.customCheck().test(player, context);
         };
+    }
+
+    private static boolean isStepStartTimeSatisfied(ServerPlayer player, QuestStepDefinition step) {
+        Boolean requiredDay = step.requiredTimeOfDay();
+        if (requiredDay == null) {
+            return true;
+        }
+        return requiredDay ? player.level().isDay() : player.level().isNight();
+    }
+
+    private static void maybeSendStepTimeBlockedMessage(ServerPlayer player, QuestStepDefinition step) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        long now = serverLevel.getGameTime();
+        long lastNotice = player.getPersistentData().getLong(STEP_TIME_BLOCKED_NOTICE_TICK);
+        if (now - lastNotice < 80L) {
+            return;
+        }
+        player.getPersistentData().putLong(STEP_TIME_BLOCKED_NOTICE_TICK, now);
+        Boolean requiredDay = step.requiredTimeOfDay();
+        if (requiredDay == null) {
+            return;
+        }
+        player.sendSystemMessage(Component.literal(requiredDay
+            ? "§7You need to wait until daytime before this step can begin."
+            : "§7You need to wait until nighttime before this step can begin."));
     }
 
     private static boolean isHumanFleshQuestItem(ResourceLocation itemId) {

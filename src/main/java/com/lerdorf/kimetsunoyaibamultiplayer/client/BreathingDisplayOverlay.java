@@ -1,11 +1,13 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
@@ -42,6 +44,13 @@ public class BreathingDisplayOverlay {
         // Get the item in the player's main hand
         ItemStack heldItem = player.getMainHandItem();
 
+        if (heldItem.getItem() instanceof CustomDemonArtItem) {
+            MutableComponent customDisplay = Component.literal(CustomDemonArtItem.getDisplayText(heldItem))
+                .withStyle(style -> style.withColor(CustomDemonArtItem.getDisplayColor(heldItem)));
+            renderDisplayText(event.getGuiGraphics().pose(), customDisplay, event.getGuiGraphics());
+            return;
+        }
+
         BreathingInfoDetector.BreathingInfo info = BreathingInfoDetector.getBreathingInfo(player, heldItem);
         if (info == null) {
             return;
@@ -55,8 +64,6 @@ public class BreathingDisplayOverlay {
      * Renders the breathing technique and form display on screen.
      */
     private static void renderBreathingInfo(PoseStack poseStack, BreathingInfoDetector.BreathingInfo info, net.minecraft.client.gui.GuiGraphics guiGraphics) {
-        Font font = mc.font;
-
         // Create the display component with color codes
         String displayString = info.getColoredDisplay();
 
@@ -74,7 +81,11 @@ public class BreathingDisplayOverlay {
         }
 
         Component displayText = Component.literal(displayString);
+        renderDisplayText(poseStack, displayText, guiGraphics);
+    }
 
+    private static void renderDisplayText(PoseStack poseStack, Component displayText, net.minecraft.client.gui.GuiGraphics guiGraphics) {
+        Font font = mc.font;
         // Apply scaling
         float scale = (float) Config.breathingDisplayScale;
         poseStack.pushPose();

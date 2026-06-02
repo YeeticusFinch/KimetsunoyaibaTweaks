@@ -179,6 +179,26 @@ public class ModEntities {
                 .noSave() // Don't save to world (temporary entity)
                 .fireImmune()
                 .build("love_sword_slashes"));
+
+    public static final RegistryObject<EntityType<WhiteSlashesEntity>> WHITE_SLASHES =
+        ENTITY_TYPES.register("white_slashes",
+            () -> EntityType.Builder.of(WhiteSlashesEntity::new, MobCategory.MISC)
+                .sized(2.0F, 2.0F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("white_slashes"));
+
+    public static final RegistryObject<EntityType<BeastSlashesEntity>> BEAST_SLASHES =
+        ENTITY_TYPES.register("beast_slashes",
+            () -> EntityType.Builder.of(BeastSlashesEntity::new, MobCategory.MISC)
+                .sized(2.0F, 2.0F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("beast_slashes"));
     
 
     /**
@@ -274,6 +294,14 @@ public class ModEntities {
                 .updateInterval(2)
                 .build("swamp_demon"));
 
+    public static final RegistryObject<EntityType<NezukoEntity>> NEZUKO =
+        ENTITY_TYPES.register("nezuko",
+            () -> EntityType.Builder.of(NezukoEntity::new, MobCategory.MISC)
+                .sized(0.6F, 2.0F)
+                .clientTrackingRange(10)
+                .updateInterval(2)
+                .build("nezuko"));
+
     public static final RegistryObject<EntityType<SwampPuddleEntity>> SWAMP_PUDDLE =
         ENTITY_TYPES.register("swamp_puddle",
             () -> EntityType.Builder.<SwampPuddleEntity>of(SwampPuddleEntity::new, MobCategory.MISC)
@@ -312,6 +340,16 @@ public class ModEntities {
                 .noSave() // Don't save to world (temporary entity)
                 .fireImmune()
                 .build("flower_petal_slash"));
+
+    public static final RegistryObject<EntityType<SpineEntity>> SPINE =
+        ENTITY_TYPES.register("spine",
+            () -> EntityType.Builder.<SpineEntity>of(SpineEntity::new, MobCategory.MISC)
+                .sized(0.25F, 0.25F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("spine"));
 
     /**
      * Invisible temporary mount used so players can sit on cushion blocks from the base mod.
@@ -360,6 +398,7 @@ public class ModEntities {
             event.put(DEMON_PILLAGER.get(), DemonPillagerEntity.createAttributes().build());
             event.put(DEMON_VINDICATOR.get(), DemonVindicatorEntity.createAttributes().build());
             event.put(SWAMP_DEMON.get(), SwampDemonEntity.createAttributes().build());
+            event.put(NEZUKO.get(), NezukoEntity.createAttributes().build());
 
             // Register attributes for Kanae and Kanawo
             event.put(KANAE.get(), KanaeEntity.createAttributes().build());
@@ -374,6 +413,8 @@ public class ModEntities {
 
             // Register attributes for Love Sword Slashes (visual-only entity)
             event.put(LOVE_SWORD_SLASHES.get(), LoveSwordSlashesEntity.createAttributes().build());
+            event.put(WHITE_SLASHES.get(), WhiteSlashesEntity.createAttributes().build());
+            event.put(BEAST_SLASHES.get(), BeastSlashesEntity.createAttributes().build());
 
             // Register attributes for Love Tornado (visual-only entity)
             event.put(LOVE_TORNADO.get(), LoveTornadoEntity.createAttributes().build());

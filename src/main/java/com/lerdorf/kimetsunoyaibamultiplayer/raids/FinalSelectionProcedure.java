@@ -143,6 +143,8 @@ public class FinalSelectionProcedure {
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "kakushi");
     private static final ResourceLocation MIZUNOTO_ADVANCEMENT =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "mizunoto");
+    private static final ResourceLocation BASE_MIZUNOTO_ADVANCEMENT =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mizunoto");
     private static final String FINAL_SELECTION_ORE_SELECTED_TAG = "KnYMPFinalSelectionOreSelected";
     private static final String FINAL_SELECTION_ORE_STYLE_TAG = "KnYMPFinalSelectionOreStyleId";
 
@@ -1692,11 +1694,13 @@ public class FinalSelectionProcedure {
             activeProcedure.awardAdvancement(player, DEMON_SLAYER_CORPS_ADVANCEMENT);
             activeProcedure.awardAdvancement(player, COMPLETED_FINAL_SELECTION_ADVANCEMENT);
             activeProcedure.awardAdvancement(player, MIZUNOTO_ADVANCEMENT);
+            activeProcedure.awardAdvancement(player, BASE_MIZUNOTO_ADVANCEMENT);
         } else {
             // Fallback: directly award advancements if no active procedure
             awardAdvancementDirect(player, DEMON_SLAYER_CORPS_ADVANCEMENT);
             awardAdvancementDirect(player, COMPLETED_FINAL_SELECTION_ADVANCEMENT);
             awardAdvancementDirect(player, MIZUNOTO_ADVANCEMENT);
+            awardAdvancementDirect(player, BASE_MIZUNOTO_ADVANCEMENT);
         }
 
         // Spawn and tame kasugai crow

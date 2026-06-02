@@ -1,12 +1,12 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.items;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.HumanFleshRenderer;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.UUID;
+import java.lang.reflect.Constructor;
 import java.util.function.Supplier;
 
 public class HumanFleshItem extends GeckolibItem {
@@ -33,7 +33,16 @@ public class HumanFleshItem extends GeckolibItem {
 
     @Override
     protected Supplier<BlockEntityWithoutLevelRenderer> getRendererSupplier() {
-        return () -> new HumanFleshRenderer(this);
+        return () -> {
+            try {
+                Class<?> rendererClass = Class.forName(
+                    "com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.HumanFleshRenderer");
+                Constructor<?> constructor = rendererClass.getConstructor(HumanFleshItem.class);
+                return (BlockEntityWithoutLevelRenderer) constructor.newInstance(this);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("Failed to create HumanFleshRenderer", e);
+            }
+        };
     }
 
     @Override

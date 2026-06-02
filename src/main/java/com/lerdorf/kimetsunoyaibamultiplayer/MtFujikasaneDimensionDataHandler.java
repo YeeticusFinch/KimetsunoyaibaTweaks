@@ -27,6 +27,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.TickEvent;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
@@ -48,6 +49,8 @@ public class MtFujikasaneDimensionDataHandler {
 
     private static final ResourceLocation MT_FUJIKASANE_DIM_ID =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "mt_fujikasane");
+    private static final ResourceLocation SWAMP_DEMON_ID =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "swamp_demon");
 
     // World border settings - 1000x1000 blocks centered at 0,0
     private static final double WORLD_BORDER_SIZE = 1000.0;
@@ -114,6 +117,26 @@ public class MtFujikasaneDimensionDataHandler {
     }
 
     // ===== Mt Fujikasane dimension-specific event handlers =====
+
+    /**
+     * Hard blacklist for swamp demons in Mt Fujikasane.
+     * This catches programmatic spawns that bypass MobSpawnEvent.
+     */
+    @SubscribeEvent
+    public static void onMtFujikasaneEntityJoin(EntityJoinLevelEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        if (!serverLevel.dimension().location().equals(MT_FUJIKASANE_DIM_ID)) {
+            return;
+        }
+        if (!isSwampDemon(event.getEntity())) {
+            return;
+        }
+
+        event.setCanceled(true);
+        event.getEntity().discard();
+    }
 
     /**
      * Deny all natural mob spawn placement checks in Mt Fujikasane.
@@ -237,6 +260,10 @@ public class MtFujikasaneDimensionDataHandler {
         if (!isHostileEntityType(entityType)) {
             return false;
         }
+        ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
+        if (isSwampDemonId(entityId)) {
+            return false;
+        }
         if (!FinalSelectionProcedure.isInsideActiveRaidArea(level, x, z)) {
             return false;
         }
@@ -255,6 +282,14 @@ public class MtFujikasaneDimensionDataHandler {
         int night = FinalSelectionProcedure.getActiveRaidNight(level);
         double allowChance = getNonDemonHostileAllowChanceForNight(night);
         return level.random.nextDouble() < allowChance;
+    }
+
+    private static boolean isSwampDemon(Entity entity) {
+        return entity != null && isSwampDemonId(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()));
+    }
+
+    private static boolean isSwampDemonId(ResourceLocation entityId) {
+        return SWAMP_DEMON_ID.equals(entityId);
     }
 
     private static boolean isHostileEntityType(EntityType<?> entityType) {

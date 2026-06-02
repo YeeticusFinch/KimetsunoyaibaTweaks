@@ -205,6 +205,13 @@ public class EnhancedSpawnRulesHandler {
      * Apply Mt Fujikasane dimension spawning rules
      */
     private static boolean applyMtFujikasaneRules(Mob entity, Level level, BlockPos pos) {
+        ResourceLocation entityId = EntityType.getKey(entity.getType());
+        if (entityId != null
+            && entityId.getNamespace().equals("kimetsunoyaiba")
+            && entityId.getPath().equals("swamp_demon")) {
+            return true; // Swamp demons are never allowed in Mt Fujikasane.
+        }
+
         boolean isDemon = EntityTagHelper.isDemon(entity);
         boolean isTwelveKizuki = EntityTagHelper.isTwelveKizuki(entity);
         boolean isKamaboko = EntityTagHelper.isKamaboko(entity);

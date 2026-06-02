@@ -218,9 +218,11 @@ public class AnimationHelper {
             return ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
         }
 
-        // Check if this is one of our custom animations (love forms, etc.)
-        // These should use kimetsunoyaibamultiplayer namespace
-        if (animationName.startsWith("love_") || animationName.equals("kanroji_sword_overhead")) {
+        // Custom player_animation assets in this mod should resolve to our namespace.
+        // beast2/beast4/beast6 are defined in assets/kimetsunoyaibamultiplayer/player_animation/*.json.
+        if (animationName.startsWith("love_")
+            || animationName.startsWith("beast")
+            || animationName.equals("kanroji_sword_overhead")) {
             return ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", animationName);
         }
 

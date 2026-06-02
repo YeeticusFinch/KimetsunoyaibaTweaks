@@ -11,6 +11,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
@@ -38,6 +39,9 @@ public class CivilianProtectionHandler {
         LivingEntity attacker = null;
         if (event.getSource().getEntity() instanceof LivingEntity le) attacker = le;
         if (attacker == null) return;
+        if (!isDemonThreat(attacker)) return;
+        if (!wasWitnessedByAwakeCivilian(target, attacker)) return;
+        CivilianDetectionNotifier.notifyDemonSpotted(attacker);
 
         handleProtection(target, attacker);
     }
@@ -52,6 +56,9 @@ public class CivilianProtectionHandler {
         if (target == null) return;
 
         if (EntityTagHelper.isCivilian(target)) {
+            if (!isDemonThreat(attacker)) return;
+            if (!wasWitnessedByAwakeCivilian(target, attacker)) return;
+            CivilianDetectionNotifier.notifyDemonSpotted(attacker);
             handleProtection(target, attacker);
         }
     }
@@ -166,5 +173,33 @@ public class CivilianProtectionHandler {
         String[] opts = {"genya", "inosuke", "tanjiro", "zennitsu", "kanawo"};
         return opts[RNG.nextInt(opts.length)];
     }
-}
 
+    private static boolean isDemonThreat(LivingEntity entity) {
+        return EntityTagHelper.isDemon(entity)
+            || EntityTagHelper.isTwelveKizuki(entity)
+            || (entity instanceof Player player && player.getPersistentData().getBoolean("oni"));
+    }
+
+    private static boolean wasWitnessedByAwakeCivilian(LivingEntity victim, LivingEntity attacker) {
+        if (!(victim.level() instanceof ServerLevel level)) {
+            return false;
+        }
+
+        List<LivingEntity> witnesses = level.getEntitiesOfClass(
+            LivingEntity.class,
+            victim.getBoundingBox().inflate(24.0D),
+            e -> e != null
+                && e != victim
+                && e.isAlive()
+                && !e.isSleeping()
+                && EntityTagHelper.isCivilian(e)
+        );
+
+        for (LivingEntity witness : witnesses) {
+            if (witness.hasLineOfSight(victim) && witness.hasLineOfSight(attacker)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}

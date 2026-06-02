@@ -104,6 +104,21 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> SCUTE_CATALYST = registerSpecial("scute_catalyst");
     public static final RegistryObject<Item> ILLAGERS_CATALYST = registerSpecial("illagers_catalyst");
     public static final RegistryObject<Item> POWDERED_SNOW_CATALYST = registerSpecial("powdered_snow_catalyst");
+    public static final RegistryObject<Item> CREEPING_DOOM_EXTRACT = registerSpecial("creeping_doom_extract");
+    public static final RegistryObject<Item> CREEPING_DOOM_CATALYST = registerSpecial("creeping_doom_catalyst");
+    public static final RegistryObject<Item> EVOKERS_CATALYST = registerSpecial("evokers_catalyst");
+    public static final RegistryObject<Item> VEX_CATALYST = registerSpecial("vex_catalyst");
+    public static final RegistryObject<Item> PRISON_CATALYST = registerSpecial("prison_catalyst");
+    public static final RegistryObject<Item> SONIC_CATALYST = registerSpecial("sonic_catalyst");
+    public static final RegistryObject<Item> NIGHT_CATALYST = registerSpecial("night_catalyst");
+    public static final RegistryObject<Item> INFERNAL_CATALYST = registerSpecial("infernal_catalyst");
+    public static final RegistryObject<Item> FLYTRAP_CATALYST = registerSpecial("flytrap_catalyst");
+    public static final RegistryObject<Item> GRAVE_CATALYST = registerSpecial("grave_catalyst");
+    public static final RegistryObject<Item> WEIGHTLESS_CATALYST = registerSpecial("weightless_catalyst");
+    public static final RegistryObject<Item> METEOR_CATALYST = registerSpecial("meteor_catalyst");
+    public static final RegistryObject<Item> CHARGED_CATALYST = registerSpecial("charged_catalyst");
+    public static final RegistryObject<Item> ARC_CATALYST = registerSpecial("arc_catalyst");
+    public static final RegistryObject<Item> INCENDIARY_CATALYST = registerSpecial("incendiary_catalyst");
     public static final RegistryObject<Item> POTION_EFFECT_BINDER = registerSpecial("potion_effect_binder");
 
     public static final RegistryObject<CreativeModeTab> ALCHEMY_TAB = CREATIVE_MODE_TABS.register("alchemy",

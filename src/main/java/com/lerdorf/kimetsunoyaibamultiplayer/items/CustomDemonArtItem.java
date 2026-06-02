@@ -23,13 +23,21 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.lang.reflect.Constructor;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 public class CustomDemonArtItem extends GeckolibItem {
     public static final String PLAYER_UUID_TAG = "CustomDemonArtPlayerUuid";
     public static final String PLAYER_NAME_TAG = "CustomDemonArtPlayerName";
+    private static final int MIN_MODEL_VARIANT = 1;
+    private static final int MAX_MODEL_VARIANT = 5;
     private static final String SELECTED_SLOT_TAG = "CustomDemonArtSelectedSlot";
+    private static final String MODEL_VARIANT_TAG = "CustomDemonArtModelVariant";
+    private static final String DISPLAY_TEXT_TAG = "CustomDemonArtDisplayText";
+    private static final String DISPLAY_COLOR_TAG = "CustomDemonArtDisplayColor";
+    private static final String DISPLAY_ART_NAME_TAG = "CustomDemonArtName";
+    private static final String DISPLAY_FORM_NAME_TAG = "CustomDemonArtFormName";
 
     private final Multimap<Attribute, AttributeModifier> defaultModifiers;
 
@@ -45,7 +53,16 @@ public class CustomDemonArtItem extends GeckolibItem {
 
     @Override
     protected Supplier<BlockEntityWithoutLevelRenderer> getRendererSupplier() {
-        return () -> new com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CustomDemonArtRenderer(this);
+        return () -> {
+            try {
+                Class<?> rendererClass = Class.forName(
+                    "com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CustomDemonArtRenderer");
+                Constructor<?> constructor = rendererClass.getConstructor(CustomDemonArtItem.class);
+                return (BlockEntityWithoutLevelRenderer) constructor.newInstance(this);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalStateException("Failed to create CustomDemonArtRenderer", e);
+            }
+        };
     }
 
     @Override
@@ -115,7 +132,68 @@ public class CustomDemonArtItem extends GeckolibItem {
         stack.getOrCreateTag().putInt(SELECTED_SLOT_TAG, slotIndex);
     }
 
+    public static void setModelVariant(ItemStack stack, int variant) {
+        stack.getOrCreateTag().putInt(MODEL_VARIANT_TAG, clampModelVariant(variant));
+    }
+
+    public static int getModelVariant(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        if (tag == null || !tag.contains(MODEL_VARIANT_TAG, Tag.TAG_INT)) {
+            return MIN_MODEL_VARIANT;
+        }
+        return clampModelVariant(tag.getInt(MODEL_VARIANT_TAG));
+    }
+
+    public static void setDisplayInfo(ItemStack stack, String artName, String formName, int color) {
+        CompoundTag tag = stack.getOrCreateTag();
+        String safeArtName = artName == null || artName.isBlank() ? "My Blood Demon Art" : artName;
+        String safeFormName = formName == null || formName.isBlank() ? "No Form" : formName;
+        tag.putString(DISPLAY_ART_NAME_TAG, safeArtName);
+        tag.putString(DISPLAY_FORM_NAME_TAG, safeFormName);
+        tag.putString(DISPLAY_TEXT_TAG, safeArtName + ": " + safeFormName);
+        tag.putInt(DISPLAY_COLOR_TAG, color);
+    }
+
+    public static String getDisplayText(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        if (tag == null) {
+            return "My Blood Demon Art: No Form";
+        }
+        if (tag.contains(DISPLAY_TEXT_TAG, Tag.TAG_STRING)) {
+            return tag.getString(DISPLAY_TEXT_TAG);
+        }
+        String artName = tag.contains(DISPLAY_ART_NAME_TAG, Tag.TAG_STRING) ? tag.getString(DISPLAY_ART_NAME_TAG) : "My Blood Demon Art";
+        String formName = tag.contains(DISPLAY_FORM_NAME_TAG, Tag.TAG_STRING) ? tag.getString(DISPLAY_FORM_NAME_TAG) : "No Form";
+        return artName + ": " + formName;
+    }
+
+    public static int getDisplayColor(ItemStack stack) {
+        CompoundTag tag = stack.getTag();
+        if (tag == null || !tag.contains(DISPLAY_COLOR_TAG, Tag.TAG_INT)) {
+            return 0xAA1E2F;
+        }
+        return tag.getInt(DISPLAY_COLOR_TAG);
+    }
+
     public static ResourceLocation getDefaultTexture() {
         return ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/item/custom_demon_art.png");
+    }
+
+    public static ResourceLocation getGeoModelForVariant(int variant) {
+        int clamped = clampModelVariant(variant);
+        String path = clamped == 1 ? "geo/custom_demon_art.geo.json" : "geo/custom_demon_art_" + clamped + ".geo.json";
+        return ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", path);
+    }
+
+    public static int minModelVariant() {
+        return MIN_MODEL_VARIANT;
+    }
+
+    public static int maxModelVariant() {
+        return MAX_MODEL_VARIANT;
+    }
+
+    private static int clampModelVariant(int variant) {
+        return Math.max(MIN_MODEL_VARIANT, Math.min(MAX_MODEL_VARIANT, variant));
     }
 }

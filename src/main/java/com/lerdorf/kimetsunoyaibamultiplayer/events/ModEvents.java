@@ -10,6 +10,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.HumanFleshItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
+import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidTriggerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -107,6 +108,11 @@ public class ModEvents {
             if (targetId != null && DemonRegistry.isRegistered(targetId)) {
                 DemonSlayerInitiationHandler.triggerCustomInitiation(serverPlayer, "killed addon demon " + targetId);
             }
+        }
+
+        if (source instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+            && QuestProgressionManager.shouldSuppressOmenForQuestKill(serverPlayer, target)) {
+            return;
         }
 
         // Check if the target was a demon slayer and the source is a demon

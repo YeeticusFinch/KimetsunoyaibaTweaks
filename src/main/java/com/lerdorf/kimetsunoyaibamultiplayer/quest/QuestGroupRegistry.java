@@ -14,6 +14,7 @@ import java.util.Set;
 public final class QuestGroupRegistry {
     private static final Map<String, QuestGroupDefinition> GROUPS = new LinkedHashMap<>();
     private static final ResourceLocation VILLAGE_SWAMP = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "village_swamp");
+    private static final ResourceLocation HOUSE_TAMAYO = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_tamayo");
     private static final ResourceLocation SWAMP_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "swamp_demon");
     private static final ResourceLocation SWAMP_DOMAIN_DIM = ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "swamp_domain");
 
@@ -223,6 +224,98 @@ public final class QuestGroupRegistry {
                     new QuestRewardDefinition()
                         .experiencePoints(50)
                         .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "yen"), 10)
+                ),
+                new QuestStageDefinition(
+                    "asakusa",
+                    "Mission No.2 - Asakusa",
+                    "Visit Tamayo's House and defend Tamayo and Yushiro from Muzan's assassins.",
+                    List.of(
+                        QuestStepDefinition.builder(
+                                "enter_tamayo_house",
+                                "Travel to Tamayo's House",
+                                "Find the demon doctor Tamayo at her hidden house.",
+                                QuestStepType.ENTER_STRUCTURE
+                            )
+                            .targetId(HOUSE_TAMAYO)
+                            .onStart((player, context) -> {
+                                player.sendSystemMessage(Component.literal("§6[Kasugai Crow] §fYour Kasugai Crow has received new orders."));
+                                player.sendSystemMessage(Component.literal("§6[Kasugai Crow] §fA demon doctor named Tamayo wishes to speak with Demon Slayers."));
+                            })
+                            .onComplete(QuestScenarioActions::storeTamayoHouseContext)
+                            .markerResolver((player, context) ->
+                                QuestScenarioActions.findNearestStructure(player.serverLevel(), player.blockPosition(), HOUSE_TAMAYO))
+                            .build(),
+
+                        QuestStepDefinition.builder(
+                                "meet_tamayo_and_yushiro",
+                                "Speak with Tamayo",
+                                "Wait for nightfall, then meet Tamayo and Yushiro inside Tamayo's House.",
+                                QuestStepType.CUSTOM
+                            )
+                            .requiredTimeOfDay(false)
+                            .onStart((player, context) -> {
+                                QuestScenarioActions.storeTamayoHouseContext(player, context);
+                                QuestScenarioActions.repairStoredTamayoHouse(player);
+                                QuestScenarioActions.ensureTamayoAndYushiroAtReception(player, context);
+                            })
+                            .onTick(QuestScenarioActions::ensureTamayoAndYushiroAtReception)
+                            .customCheck(QuestScenarioActions::isTamayoReceptionReady)
+                            .onComplete(QuestScenarioActions::sendTamayoReceptionDialogue)
+                            .markerResolver((player, context) ->
+                                QuestScenarioActions.getTamayoHousePoint(player, QuestScenarioActions.TamayoHousePoint.RECEPTION))
+                            .build(),
+
+                        QuestStepDefinition.builder(
+                                "visit_tamayo_basement",
+                                "Visit Tamayo's Basement",
+                                "Follow Tamayo and Yushiro to the basement laboratory.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart((player, context) -> {
+                                QuestScenarioActions.storeTamayoHouseContext(player, context);
+                                QuestScenarioActions.tickTamayoBasementBriefing(player, context);
+                            })
+                            .onTick(QuestScenarioActions::tickTamayoBasementBriefing)
+                            .customCheck(QuestScenarioActions::isTamayoBasementReady)
+                            .onComplete(QuestScenarioActions::sendTamayoBasementDialogue)
+                            .markerResolver((player, context) ->
+                                QuestScenarioActions.getTamayoHousePoint(player, QuestScenarioActions.TamayoHousePoint.BASEMENT))
+                            .build(),
+
+                        QuestStepDefinition.builder(
+                                "return_to_tamayo_house_entrance",
+                                "Return Upstairs",
+                                "Return with Tamayo and Yushiro before the intruders arrive.",
+                                QuestStepType.CUSTOM
+                            )
+                            .requiredTimeOfDay(false)
+                            .onStart((player, context) -> {
+                                QuestScenarioActions.sendTamayoAmbushPrelude(player, context);
+                                QuestScenarioActions.tickTamayoReturnToReception(player, context);
+                            })
+                            .onTick(QuestScenarioActions::tickTamayoReturnToReception)
+                            .customCheck(QuestScenarioActions::isTamayoReturnReady)
+                            .markerResolver((player, context) ->
+                                QuestScenarioActions.getTamayoHousePoint(player, QuestScenarioActions.TamayoHousePoint.RECEPTION))
+                            .build(),
+
+                        QuestStepDefinition.builder(
+                                "defeat_susamaru_and_yahaba",
+                                "Defend Tamayo and Yushiro",
+                                "Defeat Susamaru and Yahaba before Tamayo is slain.",
+                                QuestStepType.CUSTOM
+                            )
+                            .requiredTimeOfDay(false)
+                            .onStart(QuestScenarioActions::startSusamaruYahabaAttack)
+                            .onTick(QuestScenarioActions::tickSusamaruYahabaAttack)
+                            .customCheck(QuestScenarioActions::areSusamaruAndYahabaDefeated)
+                            .onComplete(QuestScenarioActions::sendTamayoHouseVictoryDialogue)
+                            .markerResolver(QuestScenarioActions::findNearestTamayoHouseEnemy)
+                            .build()
+                    ),
+                    new QuestRewardDefinition()
+                        .experiencePoints(75)
+                        .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "yen"), 20)
                 )
             )
         ));

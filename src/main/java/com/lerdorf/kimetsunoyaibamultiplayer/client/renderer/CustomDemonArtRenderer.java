@@ -5,16 +5,26 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
 import java.util.UUID;
 
 public class CustomDemonArtRenderer extends GeoItemRenderer<CustomDemonArtItem> {
+    private final CustomDemonArtModel model;
+
     public CustomDemonArtRenderer(CustomDemonArtItem item) {
-        super(new CustomDemonArtModel());
+        this(new CustomDemonArtModel());
+    }
+
+    private CustomDemonArtRenderer(CustomDemonArtModel model) {
+        super(model);
+        this.model = model;
     }
 
     @Override
@@ -22,6 +32,13 @@ public class CustomDemonArtRenderer extends GeoItemRenderer<CustomDemonArtItem> 
         ItemStack stack = getCurrentItemStack();
         ResourceLocation playerSkin = getPlayerSkinTexture(stack);
         return playerSkin != null ? playerSkin : CustomDemonArtItem.getDefaultTexture();
+    }
+
+    @Override
+    public void renderByItem(ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack,
+                             MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        model.setModelVariant(CustomDemonArtItem.getModelVariant(stack));
+        super.renderByItem(stack, displayContext, poseStack, bufferSource, packedLight, packedOverlay);
     }
 
     private ResourceLocation getPlayerSkinTexture(ItemStack stack) {

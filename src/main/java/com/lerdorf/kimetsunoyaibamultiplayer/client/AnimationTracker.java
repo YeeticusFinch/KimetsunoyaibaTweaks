@@ -49,9 +49,9 @@ public class AnimationTracker {
     public static void tick() {
         tickCounter++;
 
-        if (Config.logDebug && tickCounter % 40 == 0) { // Log every 2 seconds to show we're running
-            Log.info("AnimationTracker is running, tick: {}", tickCounter);
-        }
+        //if (Config.logDebug && tickCounter % 40 == 0) { // Log every 2 seconds to show we're running
+        //    Log.info("AnimationTracker is running, tick: {}", tickCounter);
+        //}
 
         if (tickCounter % 2 != 0) {
             return;

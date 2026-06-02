@@ -350,6 +350,7 @@ public class KimetsunoyaibaMultiplayer
             com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonCreeperEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonVindicatorEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampDemonEntity.registerBloodDemonArt();
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.NezukoEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:demon_creeper",
                 com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_DEMON,
@@ -530,6 +531,7 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SurvivalRaidCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.MeditationMenuCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugPlayerDimensionsCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.RepairHouseTamayoCommand.register(event.getDispatcher());
         Log.startupProbe("KimetsunoyaibaMultiplayer.onRegisterCommands.end");
     }
 
@@ -844,6 +846,11 @@ public class KimetsunoyaibaMultiplayer
             );
 
             event.registerSpriteSet(
+                com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.BLOOD_FLAME.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BloodFlameParticle.Provider::new
+            );
+
+            event.registerSpriteSet(
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.ENERGY.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.particles.EnergyParticle.Provider::new
             );
@@ -878,6 +885,12 @@ public class KimetsunoyaibaMultiplayer
 
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.LOVE_SWORD_SLASHES.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.LoveSwordSlashesRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.WHITE_SLASHES.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.WhiteSlashesRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.BEAST_SLASHES.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BeastSlashesRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SPINE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SpineRenderer::new);
 
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.LOVE_TORNADO.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.LoveTornadoRenderer::new);
@@ -897,6 +910,8 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonVindicatorRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SWAMP_DEMON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SwampDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.NEZUKO.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NezukoRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SWAMP_PUDDLE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SwampPuddleRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SWAMP_HAND.get(),
@@ -915,6 +930,15 @@ public class KimetsunoyaibaMultiplayer
 
             if (Config.logDebug)
             Log.info("Registered entity renderers");
+        }
+
+        @SubscribeEvent
+        public static void registerLayerDefinitions(net.minecraftforge.client.event.EntityRenderersEvent.RegisterLayerDefinitions event)
+        {
+            event.registerLayerDefinition(
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SpineModel.LAYER_LOCATION,
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SpineModel::createBodyLayer
+            );
         }
 
         @SubscribeEvent

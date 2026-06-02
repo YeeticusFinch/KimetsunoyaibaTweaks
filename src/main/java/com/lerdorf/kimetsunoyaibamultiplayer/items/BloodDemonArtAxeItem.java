@@ -91,8 +91,9 @@ public class BloodDemonArtAxeItem extends AxeItem {
             player.getCooldowns().addCooldown(this, Math.max(20, form.getCooldownSeconds() * 20));
         }
 
+        int displayColor = getArtDisplayColor(artId);
         player.displayClientMessage(formatFormName(artId, form)
-            .withStyle(ChatFormatting.DARK_GREEN), true);
+            .withStyle(style -> style.withColor(displayColor)), true);
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
 
@@ -105,7 +106,7 @@ public class BloodDemonArtAxeItem extends AxeItem {
 
         BloodDemonArtTechnique technique = art.getTechnique();
         BloodDemonArtForm selectedForm = technique.getForm(getSelectedFormIndexInternal(stack));
-        tooltip.add(LocalizationHelper.bloodDemonArt(artId).copy().withStyle(ChatFormatting.DARK_GREEN));
+        tooltip.add(LocalizationHelper.bloodDemonArt(artId).copy().withStyle(style -> style.withColor(getArtDisplayColor(artId))));
         if (selectedForm != null) {
             tooltip.add(Component.translatable("tooltip.kimetsunoyaibamultiplayer.blood_demon_art.selected", formatFormName(artId, selectedForm))
                 .withStyle(ChatFormatting.GRAY));
@@ -136,8 +137,9 @@ public class BloodDemonArtAxeItem extends AxeItem {
 
         BloodDemonArtForm form = technique.getForm(next);
         if (form != null) {
+            int displayColor = getArtDisplayColor(artId);
             player.sendSystemMessage(formatFormName(artId, form)
-                .withStyle(ChatFormatting.DARK_GREEN, ChatFormatting.BOLD));
+                .withStyle(style -> style.withColor(displayColor).withBold(true)));
         }
     }
 
@@ -163,6 +165,14 @@ public class BloodDemonArtAxeItem extends AxeItem {
     private static int getSelectedFormIndexInternal(ItemStack stack) {
         CompoundTag tag = stack.getOrCreateTag();
         return Math.max(0, tag.getInt(FORM_INDEX_TAG));
+    }
+
+    private static int getArtDisplayColor(String artId) {
+        BloodDemonArtRegistry.RegisteredBloodDemonArt art = BloodDemonArtRegistry.getArt(artId);
+        if (art == null || art.getTechnique() == null) {
+            return 0xAA1E2F;
+        }
+        return art.getTechnique().getDisplayColor();
     }
 
     private static boolean canUseBloodDemonArt(Player player) {

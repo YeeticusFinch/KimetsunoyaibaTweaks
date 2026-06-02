@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.ModGameRules;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
@@ -41,6 +42,7 @@ public final class DemonTransformationHandler {
     private static final int MIN_RANK_BONUS_DURATION = 3000;
     private static final int MAX_RANK_BONUS_DURATION = 6000;
     private static final int MAX_TOTAL_DURATION = 36000;
+    private static final int FAST_TRANSFORMATION_DURATION_TICKS = 200; // 10 seconds
     private static final int DEBUFF_REFRESH_TICKS = 40;
     private static final double TRANSFORMATION_AGGRO_CLEAR_RADIUS = 48.0D;
     private static final List<ResourceLocation> SLAYER_RANKS_ASCENDING = List.of(
@@ -184,6 +186,11 @@ public final class DemonTransformationHandler {
         }
 
         if (effect != null) {
+            enforceFastTransformationIfEnabled(player, effect);
+            effect = player.getEffect(ModEffects.DEMON_TRANSFORMATION.get());
+            if (effect == null) {
+                return;
+            }
             if (effect.getDuration() <= 1) {
                 completeTransformation(player);
                 return;
@@ -241,12 +248,40 @@ public final class DemonTransformationHandler {
     }
 
     private static int calculateTransformationDuration(ServerPlayer player) {
+        if (ModGameRules.isFastDemonTransformationEnabled(player.serverLevel().getGameRules())) {
+            return FAST_TRANSFORMATION_DURATION_TICKS;
+        }
+
         int duration = Mth.nextInt(player.getRandom(), MIN_BASE_DURATION, MAX_BASE_DURATION);
         int rankCount = getCompletedSlayerRanks(player);
         for (int i = 0; i < rankCount && duration < MAX_TOTAL_DURATION; i++) {
             duration += Mth.nextInt(player.getRandom(), MIN_RANK_BONUS_DURATION, MAX_RANK_BONUS_DURATION);
         }
         return Math.min(duration, MAX_TOTAL_DURATION);
+    }
+
+    private static void enforceFastTransformationIfEnabled(ServerPlayer player, MobEffectInstance effect) {
+        if (effect == null) {
+            return;
+        }
+        if (!ModGameRules.isFastDemonTransformationEnabled(player.serverLevel().getGameRules())) {
+            return;
+        }
+        if (effect.getDuration() <= FAST_TRANSFORMATION_DURATION_TICKS) {
+            return;
+        }
+
+        int amplifier = effect.getAmplifier();
+        player.addEffect(new MobEffectInstance(
+            ModEffects.DEMON_TRANSFORMATION.get(),
+            FAST_TRANSFORMATION_DURATION_TICKS,
+            amplifier,
+            false,
+            true,
+            true
+        ));
+        player.getPersistentData().putInt(DATA_LAST_DURATION, FAST_TRANSFORMATION_DURATION_TICKS);
+        player.getPersistentData().putInt(DATA_LAST_AMPLIFIER, amplifier);
     }
 
     private static int getCompletedSlayerRanks(ServerPlayer player) {

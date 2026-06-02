@@ -11,6 +11,8 @@ public class BloodDemonArtBuilderData {
     private final int unlockedSlots;
     private final boolean hasCustomItem;
     private final int selectedSlot;
+    private final String artName;
+    private final int chatColor;
     private final String primaryParticle;
     private final int primaryParticleColor;
     private final float primaryParticleSize;
@@ -32,6 +34,7 @@ public class BloodDemonArtBuilderData {
     private final List<FormSlotView> slots;
 
     public BloodDemonArtBuilderData(int xpLevel, int muzanBlood, int unlockedSlots, boolean hasCustomItem, int selectedSlot,
+                                    String artName, int chatColor,
                                     String primaryParticle, int primaryParticleColor, float primaryParticleSize, String primaryParticleBlockStateId,
                                     String secondaryParticle, int secondaryParticleColor, float secondaryParticleSize, String secondaryParticleBlockStateId,
                                     String primaryPotion, String secondaryPotion,
@@ -44,6 +47,8 @@ public class BloodDemonArtBuilderData {
         this.unlockedSlots = unlockedSlots;
         this.hasCustomItem = hasCustomItem;
         this.selectedSlot = selectedSlot;
+        this.artName = artName == null || artName.isBlank() ? CustomBloodDemonArtSavedData.DEFAULT_ART_NAME : artName;
+        this.chatColor = chatColor;
         this.primaryParticle = primaryParticle;
         this.primaryParticleColor = primaryParticleColor;
         this.primaryParticleSize = primaryParticleSize;
@@ -71,6 +76,8 @@ public class BloodDemonArtBuilderData {
         this.unlockedSlots = buf.readVarInt();
         this.hasCustomItem = buf.readBoolean();
         this.selectedSlot = buf.readVarInt();
+        this.artName = buf.readUtf();
+        this.chatColor = buf.readInt();
         this.primaryParticle = buf.readUtf();
         this.primaryParticleColor = buf.readInt();
         this.primaryParticleSize = buf.readFloat();
@@ -98,6 +105,8 @@ public class BloodDemonArtBuilderData {
         buf.writeVarInt(unlockedSlots);
         buf.writeBoolean(hasCustomItem);
         buf.writeVarInt(selectedSlot);
+        buf.writeUtf(artName);
+        buf.writeInt(chatColor);
         buf.writeUtf(primaryParticle);
         buf.writeInt(primaryParticleColor);
         buf.writeFloat(primaryParticleSize);
@@ -137,6 +146,14 @@ public class BloodDemonArtBuilderData {
 
     public int selectedSlot() {
         return selectedSlot;
+    }
+
+    public String artName() {
+        return artName;
+    }
+
+    public int chatColor() {
+        return chatColor;
     }
 
     public String primaryParticle() {
@@ -253,6 +270,8 @@ public class BloodDemonArtBuilderData {
             unlockedSlots,
             hasCustomItem,
             playerData.selectedSlot(),
+            playerData.artName(),
+            playerData.coreSettings().chatColor(),
             playerData.coreSettings().primaryParticle().particleId(),
             playerData.coreSettings().primaryParticle().color(),
             playerData.coreSettings().primaryParticle().size(),

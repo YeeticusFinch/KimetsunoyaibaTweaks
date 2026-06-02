@@ -28,6 +28,9 @@ public class ModParticles {
     public static final RegistryObject<SimpleParticleType> BLOOD = PARTICLE_TYPES.register("blood",
         () -> new SimpleParticleType(false));
 
+    public static final RegistryObject<SimpleParticleType> BLOOD_FLAME = PARTICLE_TYPES.register("blood_flame",
+        () -> new SimpleParticleType(false));
+
     @SuppressWarnings("deprecation")
     public static final RegistryObject<ParticleType<EnergyParticleOptions>> ENERGY = PARTICLE_TYPES.register("energy",
         () -> new ParticleType<EnergyParticleOptions>(false, EnergyParticleOptions.DESERIALIZER) {

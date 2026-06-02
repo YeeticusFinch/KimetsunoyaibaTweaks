@@ -199,6 +199,8 @@ public class SpatialAwarenessClientHandler {
         freeCameraPos = freeCameraPos.add(freeCameraVelocity);
         if (cameraAnchor != null && !cameraAnchor.isRemoved()) {
             cameraAnchor.setPos(freeCameraPos);
+            cameraAnchor.setYRot(player.getYRot());
+            cameraAnchor.setXRot(player.getXRot());
             cameraAnchor.setOldPosAndRot();
         }
     }
@@ -209,7 +211,7 @@ public class SpatialAwarenessClientHandler {
         if (forward.lengthSqr() < 1.0E-6D) {
             forward = new Vec3(0.0D, 0.0D, 1.0D);
         }
-        Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
+        Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
 
         Vec3 move = Vec3.ZERO;
         if (mc.options.keyUp.isDown()) {

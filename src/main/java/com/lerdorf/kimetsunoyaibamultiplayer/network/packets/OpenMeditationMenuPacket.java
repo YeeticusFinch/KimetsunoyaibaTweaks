@@ -1,8 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.client.MeditationMenuScreen;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuData;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -29,10 +27,23 @@ public class OpenMeditationMenuPacket {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() ->
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                Minecraft.getInstance().setScreen(new MeditationMenuScreen(data))
+                ClientOnlyOpeners.openMeditationMenu(data)
             )
         );
         context.setPacketHandled(true);
         return true;
+    }
+
+    /**
+     * Isolated client-only screen opener to keep outer packet class server-safe.
+     */
+    private static final class ClientOnlyOpeners {
+        private ClientOnlyOpeners() {
+        }
+
+        private static void openMeditationMenu(MeditationMenuData data) {
+            net.minecraft.client.Minecraft.getInstance()
+                .setScreen(new com.lerdorf.kimetsunoyaibamultiplayer.client.MeditationMenuScreen(data));
+        }
     }
 }

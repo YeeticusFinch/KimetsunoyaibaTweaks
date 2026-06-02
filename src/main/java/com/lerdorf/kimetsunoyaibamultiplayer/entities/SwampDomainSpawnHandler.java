@@ -3,8 +3,6 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -25,10 +23,6 @@ public class SwampDomainSpawnHandler {
             || spawnType == MobSpawnType.PATROL;
     }
 
-    private static boolean isAllowedSwampDomainNaturalSpawn(EntityType<?> entityType) {
-        return entityType == ModEntities.SWAMP_DEMON.get();
-    }
-
     @SubscribeEvent
     public static void onSpawnPlacementCheck(MobSpawnEvent.SpawnPlacementCheck event) {
         ServerLevel serverLevel = event.getLevel().getLevel();
@@ -42,9 +36,7 @@ public class SwampDomainSpawnHandler {
             return;
         }
 
-        if (!isAllowedSwampDomainNaturalSpawn(event.getEntityType())) {
-            event.setResult(Event.Result.DENY);
-        }
+        event.setResult(Event.Result.DENY);
     }
 
     @SubscribeEvent
@@ -59,9 +51,6 @@ public class SwampDomainSpawnHandler {
             return;
         }
 
-        Mob entity = event.getEntity();
-        if (!isAllowedSwampDomainNaturalSpawn(entity.getType())) {
-            event.setSpawnCancelled(true);
-        }
+        event.setSpawnCancelled(true);
     }
 }

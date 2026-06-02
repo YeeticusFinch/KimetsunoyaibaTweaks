@@ -60,7 +60,8 @@ public class BloodDemonArtBuilderActionPacket {
             String responseView = packet.nextView;
             int responseEditorSlot = packet.editorSlot;
             if ("grant_item".equals(packet.action)) {
-                CustomBloodDemonArtRuntime.grantItem(player);
+                int modelVariant = parseInt(packet.value, 1);
+                CustomBloodDemonArtRuntime.grantItem(player, modelVariant);
             } else if ("create_slot".equals(packet.action)) {
                 savedData.createBlankForm(player, packet.slotIndex);
             } else if ("create_slot_and_edit".equals(packet.action)) {
@@ -72,6 +73,8 @@ public class BloodDemonArtBuilderActionPacket {
                 savedData.setSelectedSlot(player, packet.slotIndex);
             } else if ("set_form_name".equals(packet.action)) {
                 savedData.setFormName(player, packet.slotIndex, packet.value);
+            } else if ("set_art_name".equals(packet.action)) {
+                savedData.setArtName(player, packet.value);
             } else if ("apply_held_catalyst".equals(packet.action)) {
                 savedData.applyHeldCatalyst(player, packet.slotIndex);
             } else if ("apply_held_amplifier".equals(packet.action)) {
@@ -79,6 +82,30 @@ public class BloodDemonArtBuilderActionPacket {
             } else if ("add_move".equals(packet.action)) {
                 CustomBloodDemonArtSavedData.MoveType move = CustomBloodDemonArtSavedData.MoveType.byName(packet.value);
                 savedData.addMove(player, packet.slotIndex, move);
+            } else if ("move_form_move_up".equals(packet.action)) {
+                int moveIndex = parseInt(packet.value, -1);
+                if (moveIndex >= 0) {
+                    savedData.moveFormMoveUpByIndex(player, packet.slotIndex, moveIndex);
+                } else {
+                    CustomBloodDemonArtSavedData.MoveType move = CustomBloodDemonArtSavedData.MoveType.byName(packet.value);
+                    savedData.moveFormMoveUp(player, packet.slotIndex, move);
+                }
+            } else if ("move_form_move_down".equals(packet.action)) {
+                int moveIndex = parseInt(packet.value, -1);
+                if (moveIndex >= 0) {
+                    savedData.moveFormMoveDownByIndex(player, packet.slotIndex, moveIndex);
+                } else {
+                    CustomBloodDemonArtSavedData.MoveType move = CustomBloodDemonArtSavedData.MoveType.byName(packet.value);
+                    savedData.moveFormMoveDown(player, packet.slotIndex, move);
+                }
+            } else if ("remove_form_move".equals(packet.action)) {
+                int moveIndex = parseInt(packet.value, -1);
+                if (moveIndex >= 0) {
+                    savedData.removeFormMoveByIndex(player, packet.slotIndex, moveIndex);
+                } else {
+                    CustomBloodDemonArtSavedData.MoveType move = CustomBloodDemonArtSavedData.MoveType.byName(packet.value);
+                    savedData.removeFormMove(player, packet.slotIndex, move);
+                }
             } else if ("set_primary_particle".equals(packet.action)) {
                 savedData.setCoreParticle(player, true, parseParticleStyle(packet.value,
                     savedData.getOrCreate(player).coreSettings().primaryParticle()));
@@ -93,10 +120,22 @@ public class BloodDemonArtBuilderActionPacket {
                 savedData.setCorePotionFromInventory(player, false, player.getInventory().selected, true);
             } else if ("set_secondary_potion_target".equals(packet.action)) {
                 savedData.setCorePotionFromInventory(player, false, player.getInventory().selected, false);
+            } else if ("set_primary_potion_inventory".equals(packet.action)) {
+                String[] parts = packet.value.split(";", 2);
+                int inventorySlot = parts.length > 0 ? parseInt(parts[0], -1) : -1;
+                boolean selfEffect = parts.length < 2 || !"target".equals(parts[1]);
+                savedData.setCorePotionFromInventory(player, true, inventorySlot, selfEffect);
+            } else if ("set_secondary_potion_inventory".equals(packet.action)) {
+                String[] parts = packet.value.split(";", 2);
+                int inventorySlot = parts.length > 0 ? parseInt(parts[0], -1) : -1;
+                boolean selfEffect = parts.length < 2 || !"target".equals(parts[1]);
+                savedData.setCorePotionFromInventory(player, false, inventorySlot, selfEffect);
             } else if ("toggle_primary_potion_target".equals(packet.action)) {
                 savedData.togglePotionTargeting(player, true);
             } else if ("toggle_secondary_potion_target".equals(packet.action)) {
                 savedData.togglePotionTargeting(player, false);
+            } else if ("set_chat_color".equals(packet.action)) {
+                savedData.setChatColor(player, parseInt(packet.value, savedData.getOrCreate(player).coreSettings().chatColor()));
             } else if ("bind_primary_effect".equals(packet.action)) {
                 CustomBloodDemonArtSavedData.MoveType move = CustomBloodDemonArtSavedData.MoveType.byName(packet.value);
                 savedData.bindPrimaryEffectToMove(player, packet.slotIndex, move);
@@ -106,6 +145,22 @@ public class BloodDemonArtBuilderActionPacket {
             } else if ("bind_held_effect".equals(packet.action)) {
                 CustomBloodDemonArtSavedData.MoveType move = CustomBloodDemonArtSavedData.MoveType.byName(packet.value);
                 savedData.bindCustomEffectToMove(player, packet.slotIndex, move, player.getInventory().selected);
+            } else if ("bind_primary_effect_inventory".equals(packet.action)) {
+                String[] parts = packet.value.split(";", 2);
+                CustomBloodDemonArtSavedData.MoveType move = parts.length > 0 ? CustomBloodDemonArtSavedData.MoveType.byName(parts[0]) : null;
+                int binderSlot = parts.length > 1 ? parseInt(parts[1], -1) : -1;
+                savedData.bindPrimaryEffectToMove(player, packet.slotIndex, move, binderSlot);
+            } else if ("bind_secondary_effect_inventory".equals(packet.action)) {
+                String[] parts = packet.value.split(";", 2);
+                CustomBloodDemonArtSavedData.MoveType move = parts.length > 0 ? CustomBloodDemonArtSavedData.MoveType.byName(parts[0]) : null;
+                int binderSlot = parts.length > 1 ? parseInt(parts[1], -1) : -1;
+                savedData.bindSecondaryEffectToMove(player, packet.slotIndex, move, binderSlot);
+            } else if ("bind_custom_effect_inventory".equals(packet.action)) {
+                String[] parts = packet.value.split(";", 3);
+                CustomBloodDemonArtSavedData.MoveType move = parts.length > 0 ? CustomBloodDemonArtSavedData.MoveType.byName(parts[0]) : null;
+                int binderSlot = parts.length > 1 ? parseInt(parts[1], -1) : -1;
+                int effectSlot = parts.length > 2 ? parseInt(parts[2], -1) : -1;
+                savedData.bindCustomEffectToMove(player, packet.slotIndex, move, binderSlot, effectSlot);
             } else if ("unlock_catalyst_inventory".equals(packet.action)) {
                 int inventorySlot = parseInt(packet.value, -1);
                 savedData.unlockCatalystFromInventory(player, inventorySlot);

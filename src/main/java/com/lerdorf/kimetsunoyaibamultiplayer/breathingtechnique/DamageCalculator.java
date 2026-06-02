@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -55,16 +56,24 @@ public class DamageCalculator {
             damage += 3.0F * strengthLevel;
         }
 
-        // Weakness effect: -4 damage per level
-        if (entity.hasEffect(MobEffects.WEAKNESS)) {
-            int weaknessLevel = entity.getEffect(MobEffects.WEAKNESS).getAmplifier() + 1;
-            damage -= 4.0F * weaknessLevel;
-        }
-        
         // Vermilion Eye effect: +30% damage
         if (entity.hasEffect(ModEffects.VERMILION_EYE.get())) {
         	damageScaler = 1.3f; 
         }
+
+        // Weakness effect: -4 damage per level
+        if (entity.hasEffect(MobEffects.WEAKNESS)) {
+            int weaknessLevel = entity.getEffect(MobEffects.WEAKNESS).getAmplifier() + 1;
+            //damage -= 4.0F * weaknessLevel;
+            damage *= Math.pow(0.8, weaknessLevel);
+            damage += (Math.pow(0.8, weaknessLevel) - 1) / 0.4;
+        }
+
+		MobEffectInstance killingIntent = entity.getEffect(ModEffects.KILLING_INTENT.get());
+		if (killingIntent != null) {
+			int level = killingIntent.getAmplifier() + 1;
+			damageScaler *= 1.0f + (0.02f * level);
+		}
         
         damageScaler = damageScaler * getDifficultyMultiplier(entity);
 

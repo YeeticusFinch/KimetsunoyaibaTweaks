@@ -102,6 +102,11 @@ public class GuardianSpawnHandler {
             return;
         }
 
+        if (!wasWitnessedByAwakeCivilian(victim, attacker)) {
+            return;
+        }
+        CivilianDetectionNotifier.notifyDemonSpotted(attacker);
+
         // Only run on server side
         if (victim.level().isClientSide()) {
             return;
@@ -171,6 +176,29 @@ public class GuardianSpawnHandler {
         RECENT_SPAWN_ATTEMPTS.entrySet().removeIf(entry ->
             currentTime - entry.getValue() > SPAWN_COOLDOWN_MS * 2
         );
+    }
+
+    private static boolean wasWitnessedByAwakeCivilian(LivingEntity victim, LivingEntity attacker) {
+        if (!(victim.level() instanceof ServerLevel level)) {
+            return false;
+        }
+
+        List<LivingEntity> witnesses = level.getEntitiesOfClass(
+            LivingEntity.class,
+            victim.getBoundingBox().inflate(24.0D),
+            e -> e != null
+                && e != victim
+                && e.isAlive()
+                && !e.isSleeping()
+                && EntityTagHelper.isCivilian(e)
+        );
+
+        for (LivingEntity witness : witnesses) {
+            if (witness.hasLineOfSight(victim) && witness.hasLineOfSight(attacker)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

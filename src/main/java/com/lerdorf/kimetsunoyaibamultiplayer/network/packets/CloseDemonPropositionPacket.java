@@ -1,8 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonPropositionClientController;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonPropositionScreen;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -24,14 +21,23 @@ public class CloseDemonPropositionPacket {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() ->
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                Minecraft minecraft = Minecraft.getInstance();
-                DemonPropositionClientController.deactivate();
-                if (minecraft.screen instanceof DemonPropositionScreen) {
-                    minecraft.setScreen(null);
-                }
+                ClientOnlyOpeners.closeDemonProposition();
             })
         );
         context.setPacketHandled(true);
         return true;
+    }
+
+    private static final class ClientOnlyOpeners {
+        private ClientOnlyOpeners() {
+        }
+
+        private static void closeDemonProposition() {
+            net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
+            com.lerdorf.kimetsunoyaibamultiplayer.client.DemonPropositionClientController.deactivate();
+            if (minecraft.screen instanceof com.lerdorf.kimetsunoyaibamultiplayer.client.DemonPropositionScreen) {
+                minecraft.setScreen(null);
+            }
+        }
     }
 }

@@ -1,7 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonPropositionScreen;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
@@ -38,11 +36,20 @@ public class OpenDemonPropositionPacket {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() ->
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                Minecraft minecraft = Minecraft.getInstance();
-                minecraft.setScreen(new DemonPropositionScreen(attackerUuid, attackerName, endGameTime));
+                ClientOnlyOpeners.openDemonProposition(attackerUuid, attackerName, endGameTime);
             })
         );
         context.setPacketHandled(true);
         return true;
+    }
+
+    private static final class ClientOnlyOpeners {
+        private ClientOnlyOpeners() {
+        }
+
+        private static void openDemonProposition(UUID attackerUuid, Component attackerName, long endGameTime) {
+            net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
+            minecraft.setScreen(new com.lerdorf.kimetsunoyaibamultiplayer.client.DemonPropositionScreen(attackerUuid, attackerName, endGameTime));
+        }
     }
 }

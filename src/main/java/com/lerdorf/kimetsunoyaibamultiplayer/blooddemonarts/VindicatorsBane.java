@@ -162,14 +162,14 @@ public final class VindicatorsBane {
             SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.HOSTILE, 1.0F, 0.6F + (entity.getRandom().nextFloat() * 0.1F));
     }
 
-    private static void playSplitterLaunchSound(ServerLevel level, LivingEntity entity) {
+    public static void playSplitterLaunchSound(ServerLevel level, LivingEntity entity) {
         level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
             SoundEvents.RAVAGER_ROAR, SoundSource.HOSTILE, 0.65F, 1.65F);
         level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
             SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.HOSTILE, 1.0F, 0.7F);
     }
 
-    private static void playSplitterImpactSound(ServerLevel level, LivingEntity entity) {
+    public static void playSplitterImpactSound(ServerLevel level, LivingEntity entity) {
         level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
             SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.HOSTILE, 1.1F, 0.75F + (entity.getRandom().nextFloat() * 0.1F));
         level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
@@ -204,7 +204,7 @@ public final class VindicatorsBane {
         }
     }
 
-    private static Vec3 getTargetDirection(LivingEntity entity) {
+    public static Vec3 getTargetDirection(LivingEntity entity) {
         LivingEntity target = entity.getLastHurtMob();
         if (entity instanceof net.minecraft.world.entity.Mob mob && mob.getTarget() != null) {
             target = mob.getTarget();

@@ -22,6 +22,7 @@ public class QuestStepDefinition {
     private final BiConsumer<ServerPlayer, QuestRuntimeContext> onComplete;
     private final BiPredicate<ServerPlayer, QuestRuntimeContext> customCheck;
     private final BiFunction<ServerPlayer, QuestRuntimeContext, BlockPos> markerResolver;
+    private final Boolean requiredTimeOfDay;
 
     private QuestStepDefinition(String id, String title, String description, QuestStepType type,
                                 ResourceLocation targetId, String targetKey, int requiredCount,
@@ -29,7 +30,8 @@ public class QuestStepDefinition {
                                 BiConsumer<ServerPlayer, QuestRuntimeContext> onTick,
                                 BiConsumer<ServerPlayer, QuestRuntimeContext> onComplete,
                                 BiPredicate<ServerPlayer, QuestRuntimeContext> customCheck,
-                                BiFunction<ServerPlayer, QuestRuntimeContext, BlockPos> markerResolver) {
+                                BiFunction<ServerPlayer, QuestRuntimeContext, BlockPos> markerResolver,
+                                Boolean requiredTimeOfDay) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -42,6 +44,7 @@ public class QuestStepDefinition {
         this.onComplete = onComplete;
         this.customCheck = customCheck;
         this.markerResolver = markerResolver;
+        this.requiredTimeOfDay = requiredTimeOfDay;
     }
 
     public static Builder builder(String id, String title, String description, QuestStepType type) {
@@ -124,6 +127,10 @@ public class QuestStepDefinition {
         return markerResolver;
     }
 
+    public Boolean requiredTimeOfDay() {
+        return requiredTimeOfDay;
+    }
+
     public static class Builder {
         private final String id;
         private final String title;
@@ -137,6 +144,7 @@ public class QuestStepDefinition {
         private BiConsumer<ServerPlayer, QuestRuntimeContext> onComplete = (player, context) -> { };
         private BiPredicate<ServerPlayer, QuestRuntimeContext> customCheck = (player, context) -> false;
         private BiFunction<ServerPlayer, QuestRuntimeContext, BlockPos> markerResolver = (player, context) -> null;
+        private Boolean requiredTimeOfDay = null;
 
         private Builder(String id, String title, String description, QuestStepType type) {
             this.id = Objects.requireNonNull(id);
@@ -185,9 +193,14 @@ public class QuestStepDefinition {
             return this;
         }
 
+        public Builder requiredTimeOfDay(boolean requiredDay) {
+            this.requiredTimeOfDay = requiredDay;
+            return this;
+        }
+
         public QuestStepDefinition build() {
             return new QuestStepDefinition(id, title, description, type, targetId, targetKey, requiredCount,
-                onStart, onTick, onComplete, customCheck, markerResolver);
+                onStart, onTick, onComplete, customCheck, markerResolver, requiredTimeOfDay);
         }
     }
 }

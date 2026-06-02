@@ -68,6 +68,7 @@ public class FinalSelectionRaid {
     private static final int DAY_PASSIVE_ANIMAL_WAVES_PER_DAY_BREAK = 2;
     private static final int BOSS_ARROW_DURATION_TICKS = 20 * 20;
     private static final ResourceLocation HAND_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "hand_demon");
+    private static final ResourceLocation SWAMP_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "swamp_demon");
     private static final int HAND_DEMON_WEIGHT = 4;
     private static final List<ResourceLocation> FINAL_SELECTION_BOSS_POOL = List.of(
         //ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "demon_6"),
@@ -776,6 +777,9 @@ public class FinalSelectionRaid {
 
     private ResourceLocation pickOne(EntityPowerScale scale) {
         List<ResourceLocation> options = EntityCategorization.getEntitiesForScale(scale);
+        options = options.stream()
+            .filter(id -> !SWAMP_DEMON_ID.equals(id))
+            .toList();
         if (options.isEmpty()) {
             return null;
         }
@@ -1207,6 +1211,9 @@ public class FinalSelectionRaid {
 
     private List<ResourceLocation> pick(EntityPowerScale scale, int count) {
         List<ResourceLocation> pool = EntityCategorization.getEntitiesForScale(scale);
+        pool = pool.stream()
+            .filter(id -> !SWAMP_DEMON_ID.equals(id))
+            .toList();
         List<ResourceLocation> out = new ArrayList<>();
 
         if (pool.isEmpty() || count <= 0) return out;

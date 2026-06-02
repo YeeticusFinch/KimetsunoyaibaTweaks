@@ -3,6 +3,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.customdemonart;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.BloodDemonArtAlchemyCatalog;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -30,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CustomBloodDemonArtSavedData extends SavedData {
     private static final String DATA_NAME = "kny_custom_blood_demon_arts";
     private static final int MAX_SLOTS = 10;
+    public static final String DEFAULT_ART_NAME = "My Blood Demon Art";
 
     private final Map<UUID, PlayerArtData> players = new ConcurrentHashMap<>();
 
@@ -115,6 +118,7 @@ public class CustomBloodDemonArtSavedData extends SavedData {
         if (data.selectedSlot() < 0 || !data.hasFilledSlot(data.selectedSlot())) {
             data.setSelectedSlot(slotIndex);
         }
+        syncCustomItemDisplay(player, data);
         setDirty();
         return true;
     }
@@ -125,6 +129,7 @@ public class CustomBloodDemonArtSavedData extends SavedData {
             return;
         }
         data.setSelectedSlot(slotIndex);
+        syncCustomItemDisplay(player, data);
         setDirty();
     }
 
@@ -134,6 +139,15 @@ public class CustomBloodDemonArtSavedData extends SavedData {
             return false;
         }
         data.slots().get(slotIndex).setName(name == null || name.isBlank() ? "Form " + (slotIndex + 1) : name.trim());
+        syncCustomItemDisplay(player, data);
+        setDirty();
+        return true;
+    }
+
+    public boolean setArtName(ServerPlayer player, String artName) {
+        PlayerArtData data = getOrCreate(player);
+        data.setArtName(sanitizeArtName(artName));
+        syncCustomItemDisplay(player, data);
         setDirty();
         return true;
     }
@@ -144,7 +158,7 @@ public class CustomBloodDemonArtSavedData extends SavedData {
             return false;
         }
         CustomFormSlot slot = data.slots().get(slotIndex);
-        if (slot.moves().contains(move) || !data.availableMoves().contains(move)) {
+        if (!data.availableMoves().contains(move)) {
             return false;
         }
         if (slot.moves().size() >= maxMovesForSlot(slotIndex)) {
@@ -158,6 +172,93 @@ public class CustomBloodDemonArtSavedData extends SavedData {
             player.giveExperienceLevels(-xpCost);
         }
         slot.moves().add(move);
+        setDirty();
+        return true;
+    }
+
+    public boolean moveFormMoveUpByIndex(ServerPlayer player, int slotIndex, int moveIndex) {
+        PlayerArtData data = getOrCreate(player);
+        if (!data.hasFilledSlot(slotIndex)) {
+            return false;
+        }
+        List<MoveType> moves = data.slots().get(slotIndex).moves();
+        if (moveIndex <= 0 || moveIndex >= moves.size()) {
+            return false;
+        }
+        Collections.swap(moves, moveIndex, moveIndex - 1);
+        setDirty();
+        return true;
+    }
+
+    public boolean moveFormMoveDownByIndex(ServerPlayer player, int slotIndex, int moveIndex) {
+        PlayerArtData data = getOrCreate(player);
+        if (!data.hasFilledSlot(slotIndex)) {
+            return false;
+        }
+        List<MoveType> moves = data.slots().get(slotIndex).moves();
+        if (moveIndex < 0 || moveIndex >= moves.size() - 1) {
+            return false;
+        }
+        Collections.swap(moves, moveIndex, moveIndex + 1);
+        setDirty();
+        return true;
+    }
+
+    public boolean removeFormMoveByIndex(ServerPlayer player, int slotIndex, int moveIndex) {
+        PlayerArtData data = getOrCreate(player);
+        if (!data.hasFilledSlot(slotIndex)) {
+            return false;
+        }
+        CustomFormSlot slot = data.slots().get(slotIndex);
+        if (moveIndex < 0 || moveIndex >= slot.moves().size()) {
+            return false;
+        }
+        MoveType move = slot.moves().remove(moveIndex);
+        slot.effectBindings().removeIf(binding -> binding.moveId().equals(move.serializedName()));
+        setDirty();
+        return true;
+    }
+
+    public boolean moveFormMoveUp(ServerPlayer player, int slotIndex, MoveType move) {
+        PlayerArtData data = getOrCreate(player);
+        if (!data.hasFilledSlot(slotIndex) || move == null) {
+            return false;
+        }
+        List<MoveType> moves = data.slots().get(slotIndex).moves();
+        int index = moves.indexOf(move);
+        if (index <= 0) {
+            return false;
+        }
+        Collections.swap(moves, index, index - 1);
+        setDirty();
+        return true;
+    }
+
+    public boolean moveFormMoveDown(ServerPlayer player, int slotIndex, MoveType move) {
+        PlayerArtData data = getOrCreate(player);
+        if (!data.hasFilledSlot(slotIndex) || move == null) {
+            return false;
+        }
+        List<MoveType> moves = data.slots().get(slotIndex).moves();
+        int index = moves.indexOf(move);
+        if (index < 0 || index >= moves.size() - 1) {
+            return false;
+        }
+        Collections.swap(moves, index, index + 1);
+        setDirty();
+        return true;
+    }
+
+    public boolean removeFormMove(ServerPlayer player, int slotIndex, MoveType move) {
+        PlayerArtData data = getOrCreate(player);
+        if (!data.hasFilledSlot(slotIndex) || move == null) {
+            return false;
+        }
+        CustomFormSlot slot = data.slots().get(slotIndex);
+        if (!slot.moves().remove(move)) {
+            return false;
+        }
+        slot.effectBindings().removeIf(binding -> binding.moveId().equals(move.serializedName()));
         setDirty();
         return true;
     }
@@ -215,20 +316,40 @@ public class CustomBloodDemonArtSavedData extends SavedData {
     }
 
     public boolean bindPrimaryEffectToMove(ServerPlayer player, int slotIndex, MoveType move) {
-        return bindMoveEffect(player, slotIndex, move, EffectBindingSource.PRIMARY, PotionSetting.none(), false);
+        return bindPrimaryEffectToMove(player, slotIndex, move, findFirstBinderSlot(player));
+    }
+
+    public boolean bindPrimaryEffectToMove(ServerPlayer player, int slotIndex, MoveType move, int binderSlot) {
+        PlayerArtData data = getOrCreate(player);
+        if (data.coreSettings().primaryPotion().effectId().isBlank()) {
+            return false;
+        }
+        return bindMoveEffect(player, slotIndex, move, EffectBindingSource.PRIMARY, PotionSetting.none(), binderSlot, false, -1);
     }
 
     public boolean bindSecondaryEffectToMove(ServerPlayer player, int slotIndex, MoveType move) {
-        return bindMoveEffect(player, slotIndex, move, EffectBindingSource.SECONDARY, PotionSetting.none(), false);
+        return bindSecondaryEffectToMove(player, slotIndex, move, findFirstBinderSlot(player));
+    }
+
+    public boolean bindSecondaryEffectToMove(ServerPlayer player, int slotIndex, MoveType move, int binderSlot) {
+        PlayerArtData data = getOrCreate(player);
+        if (data.coreSettings().secondaryPotion().effectId().isBlank()) {
+            return false;
+        }
+        return bindMoveEffect(player, slotIndex, move, EffectBindingSource.SECONDARY, PotionSetting.none(), binderSlot, false, -1);
     }
 
     public boolean bindCustomEffectToMove(ServerPlayer player, int slotIndex, MoveType move, int inventorySlot) {
+        return bindCustomEffectToMove(player, slotIndex, move, findFirstBinderSlot(player), inventorySlot);
+    }
+
+    public boolean bindCustomEffectToMove(ServerPlayer player, int slotIndex, MoveType move, int binderSlot, int inventorySlot) {
         ItemStack stack = inventoryStack(player, inventorySlot);
         PotionSetting setting = potionSettingFromItem(stack);
         if (stack.isEmpty() || setting == null) {
             return false;
         }
-        return bindMoveEffect(player, slotIndex, move, EffectBindingSource.CUSTOM, setting, true, inventorySlot);
+        return bindMoveEffect(player, slotIndex, move, EffectBindingSource.CUSTOM, setting, binderSlot, true, inventorySlot);
     }
 
     public boolean setCoreParticle(ServerPlayer player, boolean primary, ParticleStyle newStyle) {
@@ -282,6 +403,7 @@ public class CustomBloodDemonArtSavedData extends SavedData {
         PlayerArtData data = getOrCreate(player);
         CoreSettings current = data.coreSettings();
         data.setCoreSettings(new CoreSettings(current.primaryParticle(), current.secondaryParticle(), current.primaryPotion(), current.secondaryPotion(), chatColor));
+        syncCustomItemDisplay(player, data);
         setDirty();
         return true;
     }
@@ -291,21 +413,27 @@ public class CustomBloodDemonArtSavedData extends SavedData {
     }
 
     private boolean bindMoveEffect(ServerPlayer player, int slotIndex, MoveType move, EffectBindingSource source,
-                                   PotionSetting customPotion, boolean consumeChosenPotion) {
-        return bindMoveEffect(player, slotIndex, move, source, customPotion, consumeChosenPotion, -1);
-    }
-
-    private boolean bindMoveEffect(ServerPlayer player, int slotIndex, MoveType move, EffectBindingSource source,
-                                   PotionSetting customPotion, boolean consumeChosenPotion, int effectInventorySlot) {
+                                   PotionSetting customPotion, int binderSlot, boolean consumeChosenPotion, int effectInventorySlot) {
         PlayerArtData data = getOrCreate(player);
         if (!data.hasFilledSlot(slotIndex) || move == null || !data.slots().get(slotIndex).moves().contains(move)) {
             return false;
         }
-        int binderSlot = findFirstBinderSlot(player);
         if (binderSlot < 0) {
             return false;
         }
         ItemStack binderStack = inventoryStack(player, binderSlot);
+        if (binderStack.isEmpty() || !BloodDemonArtAlchemyCatalog.matches(binderStack, "kimetsunoyaibamultiplayer:potion_effect_binder")) {
+            return false;
+        }
+        if (source == EffectBindingSource.CUSTOM && (customPotion == null || customPotion.effectId().isBlank())) {
+            return false;
+        }
+        if (consumeChosenPotion && effectInventorySlot >= 0) {
+            ItemStack effectStack = inventoryStack(player, effectInventorySlot);
+            if (effectStack.isEmpty() || potionSettingFromItem(effectStack) == null) {
+                return false;
+            }
+        }
         consumeInventoryItem(player, binderSlot, binderStack);
         if (consumeChosenPotion && effectInventorySlot >= 0) {
             consumeInventoryItem(player, effectInventorySlot, inventoryStack(player, effectInventorySlot));
@@ -330,6 +458,43 @@ public class CustomBloodDemonArtSavedData extends SavedData {
             return ItemStack.EMPTY;
         }
         return player.getInventory().items.get(inventorySlot);
+    }
+
+    private static String sanitizeArtName(String artName) {
+        if (artName == null) {
+            return DEFAULT_ART_NAME;
+        }
+        String trimmed = artName.trim();
+        return trimmed.isBlank() ? DEFAULT_ART_NAME : trimmed;
+    }
+
+    private static String selectedFormNameForDisplay(PlayerArtData data) {
+        int selectedSlot = data.selectedSlot();
+        if (selectedSlot < 0 || selectedSlot >= data.slots().size()) {
+            return "No Form";
+        }
+        CustomFormSlot slot = data.slots().get(selectedSlot);
+        if (!slot.filled()) {
+            return "Empty Form";
+        }
+        return slot.name() == null || slot.name().isBlank() ? ("Form " + (selectedSlot + 1)) : slot.name();
+    }
+
+    private static void syncCustomItemDisplay(ServerPlayer player, PlayerArtData data) {
+        String artName = sanitizeArtName(data.artName());
+        String formName = selectedFormNameForDisplay(data);
+        int color = data.coreSettings().chatColor();
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.getItem() == ModItems.CUSTOM_DEMON_ART.get()) {
+                CustomDemonArtItem.setSelectedSlot(stack, data.selectedSlot());
+                CustomDemonArtItem.setDisplayInfo(stack, artName, formName, color);
+            }
+        }
+        ItemStack offhand = player.getOffhandItem();
+        if (offhand.getItem() == ModItems.CUSTOM_DEMON_ART.get()) {
+            CustomDemonArtItem.setSelectedSlot(offhand, data.selectedSlot());
+            CustomDemonArtItem.setDisplayInfo(offhand, artName, formName, color);
+        }
     }
 
     private static void consumeInventoryItem(ServerPlayer player, int inventorySlot, ItemStack stackBefore) {
@@ -381,12 +546,14 @@ public class CustomBloodDemonArtSavedData extends SavedData {
 
     public static final class PlayerArtData {
         private CoreSettings coreSettings;
+        private String artName;
         private final List<String> catalystIds;
         private final List<CustomFormSlot> slots;
         private int selectedSlot;
 
-        private PlayerArtData(CoreSettings coreSettings, List<String> catalystIds, List<CustomFormSlot> slots, int selectedSlot) {
+        private PlayerArtData(CoreSettings coreSettings, String artName, List<String> catalystIds, List<CustomFormSlot> slots, int selectedSlot) {
             this.coreSettings = coreSettings;
+            this.artName = sanitizeArtName(artName);
             this.catalystIds = catalystIds;
             this.slots = slots;
             this.selectedSlot = selectedSlot;
@@ -397,11 +564,12 @@ public class CustomBloodDemonArtSavedData extends SavedData {
             for (int i = 0; i < MAX_SLOTS; i++) {
                 slots.add(CustomFormSlot.empty());
             }
-            return new PlayerArtData(CoreSettings.defaults(), new ArrayList<>(), slots, -1);
+            return new PlayerArtData(CoreSettings.defaults(), DEFAULT_ART_NAME, new ArrayList<>(), slots, -1);
         }
 
         public static PlayerArtData fromTag(CompoundTag tag) {
             CoreSettings core = CoreSettings.fromTag(tag.getCompound("core"));
+            String artName = tag.contains("artName", Tag.TAG_STRING) ? tag.getString("artName") : DEFAULT_ART_NAME;
             List<String> catalystIds = readStringList(tag, "catalystIds");
             List<CustomFormSlot> slots = new ArrayList<>(MAX_SLOTS);
             ListTag slotsTag = tag.getList("slots", Tag.TAG_COMPOUND);
@@ -413,12 +581,13 @@ public class CustomBloodDemonArtSavedData extends SavedData {
                 }
             }
             int selectedSlot = tag.contains("selectedSlot", Tag.TAG_INT) ? tag.getInt("selectedSlot") : -1;
-            return new PlayerArtData(core, catalystIds, slots, selectedSlot);
+            return new PlayerArtData(core, artName, catalystIds, slots, selectedSlot);
         }
 
         public CompoundTag toTag() {
             CompoundTag tag = new CompoundTag();
             tag.put("core", coreSettings.toTag());
+            tag.putString("artName", sanitizeArtName(artName));
             tag.put("catalystIds", writeStringList(catalystIds));
             ListTag slotsTag = new ListTag();
             for (CustomFormSlot slot : slots) {
@@ -435,6 +604,14 @@ public class CustomBloodDemonArtSavedData extends SavedData {
 
         public void setCoreSettings(CoreSettings coreSettings) {
             this.coreSettings = coreSettings;
+        }
+
+        public String artName() {
+            return sanitizeArtName(artName);
+        }
+
+        public void setArtName(String artName) {
+            this.artName = sanitizeArtName(artName);
         }
 
         public List<String> catalystIds() {
@@ -739,13 +916,38 @@ public class CustomBloodDemonArtSavedData extends SavedData {
     }
 
     public enum MoveType {
-        PUNCH_RIGHT("punch_right", "Punch Right", "Uses the right punch animation and fires a primary-particle shockwave.", 5, 2, 10, true),
-        PUNCH_LEFT("punch_left", "Punch Left", "Uses the left punch animation and fires a primary-particle shockwave.", 5, 2, 10, true),
-        FRONT_FLIP("front_flip", "Front Flip", "Launches forward while leaving a secondary-particle trail.", 5, 4, 15, true),
-        MELEE_COMBO("melee_combo", "Melee Combo", "A four-hit flurry using punch and kick animations.", 12, 7, 15, true),
+        PUNCH_RIGHT("punch_right", "Punch Right", "Punches with the right hand and fires a conical shockwave.", 5, 2, 10, true),
+        PUNCH_LEFT("punch_left", "Punch Left", "Punches with the left hand and fires a conical shockwave.", 5, 2, 10, true),
+        FRONT_FLIP("front_flip", "Front Flip", "Launches forward and upward while doing a front flip", 5, 4, 15, true),
+        MELEE_COMBO("melee_combo", "Melee Combo", "A four-hit flurry of punches and kicks.", 12, 7, 15, true),
         WITHER_SKULL("wither_skull", "Wither Skull", "Launches a guided wither skull that keeps correcting toward your current look direction.", 8, 5, 20, false),
-        BLAZE_BARRAGE("blaze_barrage", "Blaze Barrage", "Fires three consecutive particle volleys using both your primary and secondary particle styles.", 9, 5, 18, false),
-        GUARDIAN_LASER("guardian_laser", "Guardian Laser", "Projects a piercing beam forward that damages targets in a straight line.", 10, 6, 24, false);
+        BLAZE_BARRAGE("blaze_barrage", "Blaze Barrage", "Fires three consecutive particle volleys.", 9, 5, 18, false),
+        GUARDIAN_LASER("guardian_laser", "Guardian Laser",
+                "Fires a constant laser beam that deals continuous damage.", 10, 6, 24, false),
+        SINGULARITY("singularity", "Singularity", "Pulls nearby entities inward and crushes them with a dense gravity field.", 10, 6, 20, false),
+        TASTE_OF_IMMORTALITY("taste_of_immortality", "Taste of Immortality", "Briefly enters a state where lethal blows are resisted.", 10, 7, 20, false),
+        GLIDE("glide", "Glide", "Glides through the air for a short duration.", 9, 5, 20, false),
+        ROAR("roar", "Roar", "Unleashes a shock roar that pushes enemies back.", 9, 5, 20, false),
+        FLOWER_DANCE("flower_dance", "Flower Dance", "Dashes in a flowing pattern with chained strikes.", 10, 6, 20, false),
+        SPINE_BURST("spine_burst", "Spine Burst", "Fires spikes outward in all directions.", 10, 6, 20, false),
+        MIDAS_TOUCH("midas_touch", "Midas Touch", "Marks a target to take increased damage.", 10, 6, 20, false),
+        DEFEND("defend", "Defend", "Enters an entrenched defensive stance.", 8, 5, 20, false),
+        VINDICATORS_CLEAVE("vindicators_cleave", "Vindicator's Cleave", "Leaps and slams a heavy downward cleave.", 10, 6, 20, false),
+        WHITEOUT("whiteout", "Whiteout", "Summons a blinding storm around you.", 10, 6, 20, false),
+        EXPLODE("explode", "Explode", "Detonates violently around the user.", 10, 6, 20, false),
+        FANGS_OF_THE_EARTH("fangs_of_the_earth", "Fangs of the Earth", "Summons a line of erupting earth-fangs from the ground.", 10, 6, 20, false),
+        VEX_SWARM("vex_swarm", "Vex Swarm", "Calls a swarm of vex spirits to harass enemies.", 10, 6, 20, false),
+        PRISON("prison", "Prison", "Traps targets in a floating particle prison.", 10, 6, 20, false),
+        SONIC_SHRIEK("sonic_shriek", "Sonic Shriek", "Fires a focused sonic blast.", 10, 6, 20, false),
+        NIGHT_TERROR("night_terror", "Night Terror", "Cloaks the area in gliding illusions that attack nearby foes.", 10, 6, 20, false),
+        INFERNAL_SPIN("infernal_spin", "Infernal Spin", "Spins rapidly while flinging spiraling embers.", 10, 6, 20, false),
+        FLYTRAP("flytrap", "Flytrap", "Places a predatory trap-flower.", 10, 6, 20, false),
+        GRAVE_PULSE("grave_pulse", "Grave Pulse", "Sends a damaging ground pulse in an expanding ring.", 10, 6, 20, false),
+        HOVER("hover", "Hover", "Suspends in the air briefly.", 8, 5, 20, false),
+        SHOOTING_STAR("shooting_star", "Shooting Star", "Launches forward and detonates on impact.", 10, 6, 20, false),
+        LIGHTNING_CHARGE("lightning_charge", "Lightning Charge", "Charges yourself with lightning.", 10, 6, 20, false),
+        CHAIN_LIGHTNING("chain_lightning", "Chain Lightning", "Arcs lightning between multiple enemies.", 10, 6, 20, false),
+        INCENDIARY_PROJECTILE("incendiary_projectile", "Incendiary Projectile", "Launches a volatile explosive projectile.", 10, 6, 20, false);
 
         private final String serializedName;
         private final String displayName;

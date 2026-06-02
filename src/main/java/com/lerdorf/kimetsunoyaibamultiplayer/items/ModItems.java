@@ -182,6 +182,11 @@ public class ModItems {
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SWAMP_DEMON,
             0x29443f, 0x6c847b,
             new Item.Properties().stacksTo(64)));
+    public static final RegistryObject<Item> NEZUKO_SPAWN_EGG = ITEMS.register("nezuko_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.NEZUKO,
+            0x8b3b44, 0xf3a2b4,
+            new Item.Properties().stacksTo(64)));
 
     public static final RegistryObject<Item> CREEPER_DEMON_ART = ITEMS.register("creeper_demon_art",
         () -> new BloodDemonArtItem(CreepingRuin.ART_ID, new Item.Properties().stacksTo(1)));
@@ -191,6 +196,9 @@ public class ModItems {
     public static final RegistryObject<Item> SWAMP_DEMON_ART = ITEMS.register("swamp_demon_art",
         () -> new BloodDemonArtItem(com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SwampDemonArt.ART_ID,
             4.0F, 1.6F, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> COMBUSTIBLE_BLOOD = ITEMS.register("combustible_blood",
+        () -> new BloodDemonArtItem(com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CombustibleBlood.ART_ID,
+            7.0F, 1.6F, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CUSTOM_DEMON_ART = ITEMS.register("custom_demon_art",
         () -> new CustomDemonArtItem(new Item.Properties()));
     public static final RegistryObject<Item> PUDDLE = ITEMS.register("puddle",
@@ -370,6 +378,11 @@ public class ModItems {
             net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
             new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> HAORI_UROKODAKI = ITEMS.register("haori_urokodaki",
+        () -> new UrokodakiHaoriItem(CosmeticArmorMaterial.MUICHIRO_HAORI,
+            net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
+            new Item.Properties().stacksTo(1)));
+
     public static final RegistryObject<Item> HAIR_MUICHIRO_FP = ITEMS.register("hair_muichiro_fp",
         () -> new HairMuichiroFpItem(CosmeticArmorMaterial.MUICHIRO_FP_HAIR,
             net.minecraft.world.item.ArmorItem.Type.HELMET,
@@ -504,6 +517,7 @@ public class ModItems {
                     KAKUSHI_UNIFORM_BOOTS.get(),
                     CLOTHES_MUICHIRO_FP_CHESTPLATE.get(),
                     UNIFORM_MUICHIRO_FP_CHESTPLATE.get(),
+                    HAORI_UROKODAKI.get(),
                     HAIR_MUICHIRO_FP.get(),
                     BLINDFOLD.get(),
                     SATOKOS_BOW.get(),
@@ -527,9 +541,11 @@ public class ModItems {
                     DEMON_PILLAGER_SPAWN_EGG.get(),
                     DEMON_VINDICATOR_SPAWN_EGG.get(),
                     SWAMP_DEMON_SPAWN_EGG.get(),
+                    NEZUKO_SPAWN_EGG.get(),
                     CREEPER_DEMON_ART.get(),
                     VINDICATOR_DEMON_ART.get(),
-                    SWAMP_DEMON_ART.get()
+                    SWAMP_DEMON_ART.get(),
+                    COMBUSTIBLE_BLOOD.get()
                 );
                 addOptionalSpawnEggs(output);
 

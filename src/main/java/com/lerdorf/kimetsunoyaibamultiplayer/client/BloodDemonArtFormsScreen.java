@@ -19,11 +19,11 @@ public class BloodDemonArtFormsScreen extends Screen {
     private static final int VISIBLE_ROWS = 7;
 
     private final BloodDemonArtBuilderData data;
-    private final Screen parent;
+    private final BloodDemonArtBuilderScreen parent;
     private final List<ActionHitbox> actionHitboxes = new ArrayList<>();
     private int scroll = 0;
 
-    public BloodDemonArtFormsScreen(BloodDemonArtBuilderData data, Screen parent) {
+    public BloodDemonArtFormsScreen(BloodDemonArtBuilderData data, BloodDemonArtBuilderScreen parent) {
         super(Component.literal("Forms"));
         this.data = data;
         this.parent = parent;

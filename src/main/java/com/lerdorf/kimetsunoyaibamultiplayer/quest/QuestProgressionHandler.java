@@ -10,6 +10,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
@@ -37,6 +38,11 @@ public final class QuestProgressionHandler {
 
     @SubscribeEvent
     public static void onLivingDeath(LivingDeathEvent event) {
+        if (event.getEntity() instanceof ServerPlayer deadPlayer && !deadPlayer.level().isClientSide()) {
+            PlayerRole role = MeditationMenuService.resolveRoleForProgression(deadPlayer);
+            QuestProgressionManager.handlePlayerDeath(deadPlayer, role);
+        }
+
         if (!(event.getSource().getEntity() instanceof ServerPlayer player) || player.level().isClientSide()) {
             return;
         }
@@ -85,6 +91,15 @@ public final class QuestProgressionHandler {
         // Check if clicking on Kazumi during walking phase
         String questNpcId = target.getPersistentData().getString(QuestScenarioActions.QUEST_NPC_ID_TAG);
         if ("kazumi".equals(questNpcId)) {
+            ItemStack heldStack = player.getItemInHand(event.getHand());
+            if (QuestScenarioActions.isSatokosBow(heldStack)) {
+                boolean swampDemonAliveNearby = QuestScenarioActions.isSwampDemonAliveNear(player, target, 100.0D);
+                QuestProgressionManager.handleKazumiBowTurnIn(player, target, role, swampDemonAliveNearby);
+                event.setCanceled(true);
+                event.setCancellationResult(InteractionResult.SUCCESS);
+                return;
+            }
+
             String kazumiCoords = QuestScenarioActions.getKazumiTargetCoordinates(player);
             if (kazumiCoords != null && QuestScenarioActions.isKazumiWalking(player)) {
                 player.sendSystemMessage(Component.literal("§6[Kazumi] §fSatoko disappeared at " + kazumiCoords));

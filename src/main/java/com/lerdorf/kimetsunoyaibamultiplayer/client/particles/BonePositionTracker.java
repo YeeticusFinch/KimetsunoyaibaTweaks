@@ -776,10 +776,10 @@ public class BonePositionTracker {
 			break;
 		case "beast2":
 			// mainhand sword to right
-			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, false, entityId, "sword_to_right", entity);
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, false, entityId, "sword_to_right", entity);
 			
 			// offhand sword to left
-			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, true, entityId, "left_sword_to_left", entity);
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, true, entityId, "left_sword_to_left", entity);
 			
 			break;
 		case "breath_beast2":

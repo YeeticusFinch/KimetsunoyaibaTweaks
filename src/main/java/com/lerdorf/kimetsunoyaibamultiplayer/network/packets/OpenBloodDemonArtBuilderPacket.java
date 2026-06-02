@@ -1,12 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.client.BloodDemonArtBuilderScreen;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.BloodDemonArtCoreConfigScreen;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.BloodDemonArtFormEditorScreen;
-import com.lerdorf.kimetsunoyaibamultiplayer.client.BloodDemonArtFormsScreen;
 import com.lerdorf.kimetsunoyaibamultiplayer.customdemonart.BloodDemonArtBuilderData;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -41,36 +37,24 @@ public class OpenBloodDemonArtBuilderPacket {
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
-        context.enqueueWork(() -> {
-            Minecraft minecraft = Minecraft.getInstance();
-            Screen parent = rootParent(minecraft.screen);
-            BloodDemonArtBuilderScreen hub = new BloodDemonArtBuilderScreen(data, parent);
-            BloodDemonArtFormsScreen forms = new BloodDemonArtFormsScreen(data, hub);
-            Screen screen = switch (view) {
-                case "core" -> new BloodDemonArtCoreConfigScreen(data, hub);
-                case "forms" -> forms;
-                case "form_editor" -> new BloodDemonArtFormEditorScreen(data, forms, editorSlot);
-                default -> hub;
-            };
-            minecraft.setScreen(screen);
-        });
+        context.enqueueWork(() ->
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+                ClientOnlyOpeners.openBloodDemonArtBuilder(data, view, editorSlot)
+            )
+        );
         context.setPacketHandled(true);
         return true;
     }
 
-    private static Screen rootParent(Screen screen) {
-        if (screen instanceof BloodDemonArtBuilderScreen builderScreen) {
-            return builderScreen.parentScreen();
+    /**
+     * Isolated client-only screen opener to keep outer packet class server-safe.
+     */
+    private static final class ClientOnlyOpeners {
+        private ClientOnlyOpeners() {
         }
-        if (screen instanceof BloodDemonArtCoreConfigScreen coreConfigScreen) {
-            return rootParent(coreConfigScreen.parentScreen());
+
+        private static void openBloodDemonArtBuilder(BloodDemonArtBuilderData data, String view, int editorSlot) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.BloodDemonArtBuilderScreen.openFromNetwork(data, view, editorSlot);
         }
-        if (screen instanceof BloodDemonArtFormsScreen formsScreen) {
-            return rootParent(formsScreen.parentScreen());
-        }
-        if (screen instanceof BloodDemonArtFormEditorScreen formEditorScreen) {
-            return rootParent(formEditorScreen.parentScreen());
-        }
-        return screen;
     }
 }

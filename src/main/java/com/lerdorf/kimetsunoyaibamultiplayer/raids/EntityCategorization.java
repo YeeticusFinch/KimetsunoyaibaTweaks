@@ -47,7 +47,6 @@ public class EntityCategorization {
         registerDemon("demon_5", EntityPowerScale.MEDIUM_DEMON);
         registerDemon("demon_9", EntityPowerScale.MEDIUM_DEMON);
         registerDemon("temple_demon", EntityPowerScale.MEDIUM_DEMON);
-        registerDemon("swamp_demon", EntityPowerScale.MEDIUM_DEMON);
 
         // HARD_DEMON / EASY_BOSS_DEMON
         registerDemon("demon_8", EntityPowerScale.HARD_DEMON);

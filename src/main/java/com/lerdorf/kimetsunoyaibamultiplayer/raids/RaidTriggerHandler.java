@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.ModGameRules;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
+import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -90,6 +91,11 @@ public class RaidTriggerHandler {
 
         // Only trigger at civilian structures
         if (!CivilianStructureRegistry.isCivilianStructure(s.structureId)) return;
+
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+            && QuestProgressionManager.isRaidSuppressedForPlayer(serverPlayer, s.structureId)) {
+            return;
+        }
 
         // Already an active raid at this specific structure?
         if (RaidRegistry.hasRaid(level, s.structureId, s.center)) return;

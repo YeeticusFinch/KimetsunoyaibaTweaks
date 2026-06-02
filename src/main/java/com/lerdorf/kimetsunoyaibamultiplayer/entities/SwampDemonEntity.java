@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SwampDemonArt;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -23,6 +24,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.DifficultyInstance;
@@ -30,20 +32,26 @@ import net.minecraftforge.common.ForgeMod;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
 
 public class SwampDemonEntity extends AbstractDemonEntity {
     public static final String BLOOD_DEMON_ART_ID = SwampDemonArt.ART_ID;
+    private static final AABB WHOLE_SWAMP_DOMAIN_SCAN = new AABB(
+        -30_000_000.0D, -2048.0D, -30_000_000.0D,
+        30_000_000.0D, 2048.0D, 30_000_000.0D
+    );
 
     private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> TEXTURE_VARIANT =
         net.minecraft.network.syncher.SynchedEntityData.defineId(SwampDemonEntity.class, net.minecraft.network.syncher.EntityDataSerializers.INT);
     private static final UUID COMBAT_SPRINT_UUID = UUID.fromString("7d4a98aa-38b7-4792-84ad-0e4cb8ca1af6");
     private static final AttributeModifier COMBAT_SPRINT_MODIFIER =
         new AttributeModifier(COMBAT_SPRINT_UUID, "Swamp demon combat sprint", 0.45D, AttributeModifier.Operation.MULTIPLY_TOTAL);
-    private static final float WATER_SPEED_MULTIPLIER = 2.0F;
+    private static final float WATER_SPEED_MULTIPLIER = 3.0F;
     private static final String SPAWN_PUDDLE_INIT_TAG = "SwampSpawnPuddleInitialized";
+    private static final double CLONE_DEATH_EJECT_RADIUS = 15.0D;
 
     private boolean canSplit = true;
     private boolean splitTriggered = false;
@@ -65,8 +73,54 @@ public class SwampDemonEntity extends AbstractDemonEntity {
             .add(ForgeMod.ENTITY_REACH.get(), 3.0D);
     }
 
+    @Override
+    public boolean canBreatheUnderwater() {
+        return true;
+    }
+
     public static void registerBloodDemonArt() {
         SwampDemonArt.register();
+    }
+
+    private boolean isInSwampDomain() {
+        return this.level().dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL);
+    }
+
+    public static void retargetSwampDomainDemonsToNearestPlayer(ServerLevel level) {
+        if (!level.dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL)) {
+            return;
+        }
+
+        for (SwampDemonEntity demon : level.getEntitiesOfClass(SwampDemonEntity.class, WHOLE_SWAMP_DOMAIN_SCAN)) {
+            demon.targetNearestSwampDomainPlayer();
+        }
+    }
+
+    private ServerPlayer findNearestSwampDomainPlayer() {
+        if (!(this.level() instanceof ServerLevel serverLevel) || !isInSwampDomain()) {
+            return null;
+        }
+
+        ServerPlayer nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+        for (ServerPlayer player : serverLevel.players()) {
+            if (!player.isAlive() || player.isSpectator() || !player.level().dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL)) {
+                continue;
+            }
+            double distance = this.distanceToSqr(player);
+            if (distance < nearestDistance) {
+                nearest = player;
+                nearestDistance = distance;
+            }
+        }
+        return nearest;
+    }
+
+    private void targetNearestSwampDomainPlayer() {
+        ServerPlayer nearest = findNearestSwampDomainPlayer();
+        if (nearest != null && this.getTarget() != nearest) {
+            this.setTarget(nearest);
+        }
     }
 
     @Override
@@ -96,6 +150,10 @@ public class SwampDemonEntity extends AbstractDemonEntity {
             if (!this.getPersistentData().getBoolean(SPAWN_PUDDLE_INIT_TAG)) {
                 this.getPersistentData().putBoolean(SPAWN_PUDDLE_INIT_TAG, true);
                 SwampDemonArt.activateSpawnPuddle(this);
+            }
+
+            if (isInSwampDomain() && this.tickCount % 20 == 0) {
+                targetNearestSwampDomainPlayer();
             }
 
             tickCombatSprint();
@@ -144,12 +202,27 @@ public class SwampDemonEntity extends AbstractDemonEntity {
             return;
         }
 
+        int cloneSpawnLimit = 2;
+        if (isInSwampDomain()) {
+            Vec3 densityCenter = this.getTarget() != null
+                ? SwampDemonArt.resolveSwampDomainEntryPosition(this.getTarget(), this.position())
+                : this.position();
+            int nearbyDemonCount = serverLevel.getEntitiesOfClass(
+                SwampDemonEntity.class,
+                new AABB(densityCenter, densityCenter).inflate(SwampDemonArt.SWAMP_DOMAIN_DEMON_DENSITY_RADIUS)
+            ).size();
+            if (nearbyDemonCount >= SwampDemonArt.SWAMP_DOMAIN_MAX_SWAMP_DEMONS_PER_RADIUS) {
+                return;
+            }
+            cloneSpawnLimit = Math.min(cloneSpawnLimit, SwampDemonArt.SWAMP_DOMAIN_MAX_SWAMP_DEMONS_PER_RADIUS - nearbyDemonCount);
+        }
+
         splitTriggered = true;
         setTextureVariant(1);
         this.playGeckoAnimation("reel", 14);
 
         float sharedHealth = Math.max(1.0F, this.getHealth());
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < cloneSpawnLimit; i++) {
             SwampDemonEntity clone = ModEntities.SWAMP_DEMON.get().create(serverLevel);
             if (clone == null) {
                 continue;
@@ -157,7 +230,8 @@ public class SwampDemonEntity extends AbstractDemonEntity {
 
             double angle = (Math.PI * 2.0D * i) / 2.0D + (this.random.nextDouble() * 0.4D);
             double distance = 1.4D + (this.random.nextDouble() * 0.8D);
-            clone.moveTo(this.getX() + Math.cos(angle) * distance, this.getY(), this.getZ() + Math.sin(angle) * distance, this.getYRot(), this.getXRot());
+            double cloneY = isInSwampDomain() ? SwampDemonArt.clampSwampDomainDemonY(this.getY()) : this.getY();
+            clone.moveTo(this.getX() + Math.cos(angle) * distance, cloneY, this.getZ() + Math.sin(angle) * distance, this.getYRot(), this.getXRot());
             clone.setTextureVariant(i == 0 ? 2 : 3);
             clone.setSplitClone(true);
             clone.setHealth(Math.min(sharedHealth, clone.getMaxHealth()));
@@ -314,14 +388,21 @@ public class SwampDemonEntity extends AbstractDemonEntity {
     public void die(DamageSource damageSource) {
         boolean ejectOnDeath = !this.level().isClientSide
             && isSplitClone()
-            && this.level().dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL);
+            && isInSwampDomain();
 
         super.die(damageSource);
 
         if (ejectOnDeath && this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-            for (LivingEntity living : serverLevel.getEntitiesOfClass(LivingEntity.class,
-                this.getBoundingBox().inflate(512.0D),
-                target -> target.isAlive() && !(target instanceof SwampDemonEntity))) {
+            boolean satokosBowQuestClone = "swamp_demon_kidnappers_bog_satoko".equals(
+                this.getPersistentData().getString(
+                    com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG));
+            java.util.List<LivingEntity> ejectedTargets = serverLevel.getEntitiesOfClass(LivingEntity.class,
+                this.getBoundingBox().inflate(CLONE_DEATH_EJECT_RADIUS),
+                target -> target.isAlive()
+                    && target instanceof ServerPlayer player
+                    && (DamageTracker.hasDamageHistory(this, player)
+                        || player.distanceToSqr(this) <= CLONE_DEATH_EJECT_RADIUS * CLONE_DEATH_EJECT_RADIUS));
+            for (LivingEntity living : ejectedTargets) {
                 net.minecraft.world.phys.Vec3 returnPos = new net.minecraft.world.phys.Vec3(
                     living.getPersistentData().getDouble(SwampDemonArt.SWAMP_RETURN_X_TAG),
                     living.getPersistentData().getDouble(SwampDemonArt.SWAMP_RETURN_Y_TAG),
@@ -333,14 +414,43 @@ public class SwampDemonEntity extends AbstractDemonEntity {
                     SwampDemonArt.teleportThroughPortal(living,
                         net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, id),
                         returnPos);
+                    if (satokosBowQuestClone && living instanceof ServerPlayer player) {
+                        ensurePlayerHasSatokosBow(player);
+                    }
                 }
             }
         }
     }
 
+    private static void ensurePlayerHasSatokosBow(ServerPlayer player) {
+        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+            ItemStack stack = player.getInventory().getItem(i);
+            if (!stack.isEmpty() && stack.is(ModItems.SATOKOS_BOW.get())) {
+                return;
+            }
+        }
+
+        ItemStack bow = new ItemStack(ModItems.SATOKOS_BOW.get());
+        if (player.getInventory().add(bow)) {
+            return;
+        }
+
+        int forcedSlot = player.getInventory().selected;
+        ItemStack displaced = player.getInventory().getItem(forcedSlot);
+        player.getInventory().setItem(forcedSlot, bow);
+        player.getInventory().setChanged();
+        if (!displaced.isEmpty()) {
+            player.drop(displaced, false);
+        }
+    }
+
     @Override
     public boolean hurt(DamageSource source, float amount) {
-        return super.hurt(source, amount);
+        boolean damaged = super.hurt(source, amount);
+        if (damaged && amount > 0.0F && !this.level().isClientSide) {
+            DamageTracker.recordDamage(source, this);
+        }
+        return damaged;
     }
 
     @Override

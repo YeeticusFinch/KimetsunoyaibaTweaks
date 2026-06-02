@@ -5,9 +5,16 @@ import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.GeoModel;
 
 public class CustomDemonArtModel extends GeoModel<CustomDemonArtItem> {
+    private int modelVariant = CustomDemonArtItem.minModelVariant();
+
+    public void setModelVariant(int modelVariant) {
+        this.modelVariant = Math.max(CustomDemonArtItem.minModelVariant(),
+            Math.min(CustomDemonArtItem.maxModelVariant(), modelVariant));
+    }
+
     @Override
     public ResourceLocation getModelResource(CustomDemonArtItem animatable) {
-        return ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "geo/custom_demon_art.geo.json");
+        return CustomDemonArtItem.getGeoModelForVariant(modelVariant);
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -18,6 +19,9 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 
 public class Damager {
+	private static final String NBT_MIDAS_OWNER = "knymp_midas_owner";
+	private static final String NBT_MIDAS_EXPIRES = "knymp_midas_expires";
+	private static final String NBT_MIDAS_BONUS_MULTIPLIER = "knymp_midas_bonus_multiplier";
 
 	/**
 	 * Checks if an entity is a demon slayer (human or demon slayer corps member).
@@ -293,6 +297,7 @@ public class Damager {
 
 		// Apply difficulty scaling if source is not a player
 		float scaledDamage = calculateScaledDamage(source, damage);
+		scaledDamage = applyMidasBonus(source, target, scaledDamage);
 
 		if (isDemonSlayer(source) && isDemonSlayer(target)) {
 			// Demon slayers shouldn't damage other demon slayers with their abilities by accident
@@ -304,17 +309,49 @@ public class Damager {
 			// If either check indicates combat, allow damage
 			if (traditionallyAngry || hasRecentCombat) {
 				// They are fighting - damage is allowed
-				target.hurt(DamageCalculator.getDamageSource(source), scaledDamage);
-				return true;
+				boolean damaged = target.hurt(DamageCalculator.getDamageSource(source), scaledDamage);
+				if (damaged) {
+					DamageTracker.recordDamage(source, target);
+				}
+				return damaged;
 			} else {
 				// Not in combat - prevent friendly fire
 				return false;
 			}
 		} else {
 			// Not both demon slayers - apply damage normally
-			target.hurt(DamageCalculator.getDamageSource(source), scaledDamage);
-			return true;
+			boolean damaged = target.hurt(DamageCalculator.getDamageSource(source), scaledDamage);
+			if (damaged) {
+				DamageTracker.recordDamage(source, target);
+			}
+			return damaged;
 		}
+	}
+
+	private static float applyMidasBonus(LivingEntity source, LivingEntity target, float damage) {
+		if (source == null || target == null) {
+			return damage;
+		}
+
+		CompoundTag tag = target.getPersistentData();
+		if (!tag.hasUUID(NBT_MIDAS_OWNER)) {
+			return damage;
+		}
+
+		if (!tag.getUUID(NBT_MIDAS_OWNER).equals(source.getUUID())) {
+			return damage;
+		}
+
+		long expiresAt = tag.getLong(NBT_MIDAS_EXPIRES);
+		if (expiresAt > 0L && source.level() != null && source.level().getGameTime() > expiresAt) {
+			tag.remove(NBT_MIDAS_OWNER);
+			tag.remove(NBT_MIDAS_EXPIRES);
+			tag.remove(NBT_MIDAS_BONUS_MULTIPLIER);
+			return damage;
+		}
+
+		float multiplier = Math.max(1.0F, tag.getFloat(NBT_MIDAS_BONUS_MULTIPLIER));
+		return damage * multiplier;
 	}
 
 	/**
@@ -326,14 +363,14 @@ public class Damager {
 			return baseDamage;
 		}
 
-		float scaled = baseDamage;
-		MobEffectInstance killingIntent = source.getEffect(ModEffects.KILLING_INTENT.get());
-		if (killingIntent != null) {
-			int level = killingIntent.getAmplifier() + 1;
-			scaled *= 1.0f + (0.02f * level);
-		}
+		// float scaled = baseDamage;
+		// MobEffectInstance killingIntent = source.getEffect(ModEffects.KILLING_INTENT.get());
+		// if (killingIntent != null) {
+		// 	int level = killingIntent.getAmplifier() + 1;
+		// 	scaled *= 1.0f + (0.02f * level);
+		// }
 
-		return scaled;
+		return DamageCalculator.calculateScaledDamage(source, baseDamage);
 	}
 
 	private static boolean canDemonSlayerDamageTarget(DemonSlayerEntity source, LivingEntity target) {

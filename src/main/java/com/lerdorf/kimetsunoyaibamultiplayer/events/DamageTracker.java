@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -31,26 +33,54 @@ public class DamageTracker {
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         try {
-            LivingEntity target = event.getEntity();
-
-            // Get the source of the damage
-            if (event.getSource().getEntity() instanceof LivingEntity attacker) {
-                UUID targetUuid = target.getUUID();
-                UUID attackerUuid = attacker.getUUID();
-                long currentTime = System.currentTimeMillis();
-
-                // Record that attacker damaged target
-                damageHistory.computeIfAbsent(targetUuid, k -> ConcurrentHashMap.newKeySet()).add(attackerUuid);
-                damageTimestamps.computeIfAbsent(targetUuid, k -> new ConcurrentHashMap<>()).put(attackerUuid, currentTime);
-
-                // Also record the reverse relationship (target has been damaged by attacker)
-                damageHistory.computeIfAbsent(attackerUuid, k -> ConcurrentHashMap.newKeySet()).add(targetUuid);
-                damageTimestamps.computeIfAbsent(attackerUuid, k -> new ConcurrentHashMap<>()).put(targetUuid, currentTime);
-            }
+            recordDamage(event.getSource(), event.getEntity());
         } catch (Exception e) {
             // Never use log4j in exception handlers (causes LinkageError crashes)
             System.err.println("[DamageTracker] Error tracking damage: " + e.getMessage());
         }
+    }
+
+    public static void recordDamage(DamageSource source, LivingEntity target) {
+        if (source == null || target == null) {
+            return;
+        }
+
+        LivingEntity attacker = resolveAttacker(source);
+        if (attacker != null) {
+            recordDamage(attacker, target);
+        }
+    }
+
+    public static void recordDamage(LivingEntity attacker, LivingEntity target) {
+        if (attacker == null || target == null || attacker == target) {
+            return;
+        }
+
+        UUID targetUuid = target.getUUID();
+        UUID attackerUuid = attacker.getUUID();
+        long currentTime = System.currentTimeMillis();
+
+        // Record that attacker damaged target.
+        damageHistory.computeIfAbsent(targetUuid, k -> ConcurrentHashMap.newKeySet()).add(attackerUuid);
+        damageTimestamps.computeIfAbsent(targetUuid, k -> new ConcurrentHashMap<>()).put(attackerUuid, currentTime);
+
+        // Also record the reverse relationship so callers can query either direction.
+        damageHistory.computeIfAbsent(attackerUuid, k -> ConcurrentHashMap.newKeySet()).add(targetUuid);
+        damageTimestamps.computeIfAbsent(attackerUuid, k -> new ConcurrentHashMap<>()).put(targetUuid, currentTime);
+    }
+
+    private static LivingEntity resolveAttacker(DamageSource source) {
+        Entity sourceEntity = source.getEntity();
+        if (sourceEntity instanceof LivingEntity living) {
+            return living;
+        }
+
+        Entity directEntity = source.getDirectEntity();
+        if (directEntity instanceof LivingEntity living) {
+            return living;
+        }
+
+        return null;
     }
 
     /**

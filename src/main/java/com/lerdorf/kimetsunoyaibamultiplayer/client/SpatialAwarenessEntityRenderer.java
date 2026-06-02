@@ -21,7 +21,7 @@ import java.util.Set;
 public class SpatialAwarenessEntityRenderer {
 
     private static final Minecraft MC = Minecraft.getInstance();
-    private static final double GLOW_RANGE_BLOCKS = 20.0D;
+    private static final double GLOW_RANGE_BLOCKS = 100.0D;
     private static final double GLOW_RANGE_SQR = GLOW_RANGE_BLOCKS * GLOW_RANGE_BLOCKS;
     private static final int DEACTIVATION_CLEAR_FRAMES = 6;
 
@@ -53,6 +53,7 @@ public class SpatialAwarenessEntityRenderer {
         if (!recentlyHighlightedEntities.isEmpty()) {
             pendingClearFrames = DEACTIVATION_CLEAR_FRAMES;
         }
+        clearLocalPlayerGlowTag();
     }
 
     @SubscribeEvent
@@ -62,10 +63,12 @@ public class SpatialAwarenessEntityRenderer {
         }
 
         if (pendingClearFrames <= 0) {
+            clearLocalPlayerGlowTag();
             return;
         }
 
         clearRecentlyHighlightedGlowTags();
+        clearLocalPlayerGlowTag();
         pendingClearFrames--;
         if (pendingClearFrames == 0) {
             recentlyHighlightedEntities.clear();
@@ -82,6 +85,13 @@ public class SpatialAwarenessEntityRenderer {
             if (tracked instanceof LivingEntity living && !living.hasEffect(MobEffects.GLOWING)) {
                 tracked.setGlowingTag(false);
             }
+        }
+    }
+
+    private static void clearLocalPlayerGlowTag() {
+        LocalPlayer player = MC.player;
+        if (player != null && !player.hasEffect(MobEffects.GLOWING)) {
+            player.setGlowingTag(false);
         }
     }
 }

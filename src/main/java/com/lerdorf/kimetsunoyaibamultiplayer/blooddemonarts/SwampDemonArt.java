@@ -14,6 +14,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampHandEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampPuddleEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwampPuddleStatePacket;
@@ -35,6 +36,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -90,6 +92,9 @@ public final class SwampDemonArt {
     public static final String SWAMP_RETURN_YAW_TAG = "SwampDomainReturnYaw";
     public static final String SWAMP_RETURN_PITCH_TAG = "SwampDomainReturnPitch";
     public static final String SWAMP_DOMAIN_ENTRY_TICK_TAG = "SwampDomainEntryTick";
+    public static final String SWAMP_DOMAIN_ENTRY_X_TAG = "SwampDomainEntryX";
+    public static final String SWAMP_DOMAIN_ENTRY_Y_TAG = "SwampDomainEntryY";
+    public static final String SWAMP_DOMAIN_ENTRY_Z_TAG = "SwampDomainEntryZ";
     public static final String DEBUG_DIMENSIONS_ACTIVE_TAG = "SwampDebugDimensionsActive";
     public static final String DEBUG_DIMENSIONS_HEIGHT_TAG = "SwampDebugDimensionsHeight";
     public static final String DEBUG_DIMENSIONS_EYE_HEIGHT_TAG = "SwampDebugDimensionsEyeHeight";
@@ -105,6 +110,13 @@ public final class SwampDemonArt {
     public static final ResourceKey<Level> SWAMP_DOMAIN_LEVEL = ResourceKey.create(
         Registries.DIMENSION,
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "swamp_domain"));
+    private static final int SWAMP_DOMAIN_CEILING_CHECK_INTERVAL_TICKS = 20;
+    private static final double SWAMP_DOMAIN_CEILING_Y = 120.0D;
+    private static final double SWAMP_DOMAIN_CEILING_DOWNWARD_SPEED = -1.0D;
+
+    public static final double SWAMP_DOMAIN_MAX_DEMON_Y = 125.0D;
+    public static final double SWAMP_DOMAIN_DEMON_DENSITY_RADIUS = 100.0D;
+    public static final int SWAMP_DOMAIN_MAX_SWAMP_DEMONS_PER_RADIUS = 4;
 
     private static final int PUDDLE_DURATION_TICKS = 20 * 60;
     private static final int PUDDLE_TRANSITION_TICKS = 10;
@@ -908,6 +920,26 @@ public final class SwampDemonArt {
         return entity.getPersistentData().getFloat(SWAMP_RETURN_PITCH_TAG);
     }
 
+    public static Vec3 getSwampDomainEntryPosition(Entity entity) {
+        if (entity == null || !entity.getPersistentData().contains(SWAMP_DOMAIN_ENTRY_X_TAG)) {
+            return null;
+        }
+        return new Vec3(
+            entity.getPersistentData().getDouble(SWAMP_DOMAIN_ENTRY_X_TAG),
+            entity.getPersistentData().getDouble(SWAMP_DOMAIN_ENTRY_Y_TAG),
+            entity.getPersistentData().getDouble(SWAMP_DOMAIN_ENTRY_Z_TAG)
+        );
+    }
+
+    public static Vec3 resolveSwampDomainEntryPosition(Entity entity, Vec3 fallback) {
+        Vec3 stored = getSwampDomainEntryPosition(entity);
+        return stored != null ? stored : fallback;
+    }
+
+    public static double clampSwampDomainDemonY(double y) {
+        return Math.min(SWAMP_DOMAIN_MAX_DEMON_Y, y);
+    }
+
     private static boolean isLeavingSwampDomain(ServerLevel sourceLevel, ResourceKey<Level> targetDimension) {
         return sourceLevel.dimension().equals(SWAMP_DOMAIN_LEVEL) && !SWAMP_DOMAIN_LEVEL.equals(targetDimension);
     }
@@ -1246,6 +1278,9 @@ public final class SwampDemonArt {
 
     private static void spawnSwampDomainDemons(ServerLevel level, Vec3 center, LivingEntity target) {
         int count = 3; // start with 3, tune later
+        Vec3 densityCenter = target != null
+            ? resolveSwampDomainEntryPosition(target, center)
+            : center;
 
         // Check if target is a player doing the kidnapper's bog quest
         boolean isOnKidnappersBogQuest = false;
@@ -1254,7 +1289,19 @@ public final class SwampDemonArt {
                 com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.KIDNAPPERS_BOG_ACTIVE_TAG);
         }
 
+        if (isOnKidnappersBogQuest && !hasNearbySatokosBowDemon(level, densityCenter)) {
+            spawnForcedSatokosBowClone(level, center, target);
+        }
+
         for (int i = 0; i < count; i++) {
+            int nearbyCount = level.getEntitiesOfClass(
+                SwampDemonEntity.class,
+                new AABB(densityCenter, densityCenter).inflate(SWAMP_DOMAIN_DEMON_DENSITY_RADIUS)
+            ).size();
+            if (nearbyCount >= SWAMP_DOMAIN_MAX_SWAMP_DEMONS_PER_RADIUS) {
+                continue;
+            }
+
             SwampDemonEntity demon = ModEntities.SWAMP_DEMON.get().create(level);
             if (demon == null) {
                 continue;
@@ -1264,25 +1311,11 @@ public final class SwampDemonArt {
             double distance = 20.0D;
             double x = center.x + Math.cos(angle) * distance;
             double z = center.z + Math.sin(angle) * distance;
-            double y = center.y + level.random.nextFloat() * 10;
+            double y = clampSwampDomainDemonY(center.y + level.random.nextFloat() * 10);
 
             demon.moveTo(x, y, z, level.random.nextFloat() * 360.0F, 0.0F);
+            demon.setSplitClone(true);
             demon.setHealth(demon.getMaxHealth() * 0.40F);
-
-            // If player is on the quest, mark the first demon as the quest target and equip Satoko's Bow
-            if (isOnKidnappersBogQuest && i == 0) {
-                demon.getPersistentData().putString(
-                    com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG,
-                    "swamp_demon_kidnappers_bog_satoko");
-                demon.setCustomName(net.minecraft.network.chat.Component.literal("Numa, the Swamp Demon"));
-                demon.setCustomNameVisible(true);
-
-                // Equip Satoko's Bow on the demon's head
-                net.minecraft.world.item.ItemStack bowStack = new net.minecraft.world.item.ItemStack(
-                    net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
-                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "satokos_bow")));
-                demon.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, bowStack);
-            }
 
             if (target != null) {
                 demon.setTarget(target);
@@ -1290,6 +1323,50 @@ public final class SwampDemonArt {
 
             level.addFreshEntity(demon);
         }
+    }
+
+    private static boolean hasNearbySatokosBowDemon(ServerLevel level, Vec3 center) {
+        return !level.getEntitiesOfClass(
+            SwampDemonEntity.class,
+            new AABB(center, center).inflate(SWAMP_DOMAIN_DEMON_DENSITY_RADIUS),
+            demon -> demon.isAlive() && isSatokosBowQuestTarget(demon)
+        ).isEmpty();
+    }
+
+    private static boolean isSatokosBowQuestTarget(Entity entity) {
+        return "swamp_demon_kidnappers_bog_satoko".equals(entity.getPersistentData().getString(
+            com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG));
+    }
+
+    private static void spawnForcedSatokosBowClone(ServerLevel level, Vec3 center, LivingEntity target) {
+        SwampDemonEntity demon = ModEntities.SWAMP_DEMON.get().create(level);
+        if (demon == null) {
+            return;
+        }
+
+        double angle = level.random.nextDouble() * Math.PI * 2.0D;
+        double distance = 16.0D;
+        double x = center.x + Math.cos(angle) * distance;
+        double z = center.z + Math.sin(angle) * distance;
+        double y = clampSwampDomainDemonY(center.y);
+
+        demon.moveTo(x, y, z, level.random.nextFloat() * 360.0F, 0.0F);
+        demon.setSplitClone(true);
+        demon.setTextureVariant(1 + level.random.nextInt(3));
+        demon.setHealth(demon.getMaxHealth() * 0.40F);
+        demon.setPersistenceRequired();
+        demon.getPersistentData().putString(
+            com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG,
+            "swamp_demon_kidnappers_bog_satoko");
+        demon.setCustomName(Component.literal("Numa, the Swamp Demon"));
+        demon.setCustomNameVisible(true);
+        demon.setItemSlot(EquipmentSlot.HEAD, new ItemStack(ModItems.SATOKOS_BOW.get()));
+
+        if (target != null) {
+            demon.setTarget(target);
+        }
+
+        level.addFreshEntity(demon);
     }
 
     public static boolean teleportThroughPortal(Entity entity, ResourceKey<Level> targetDimension, Vec3 targetPos) {
@@ -1327,12 +1404,18 @@ public final class SwampDemonArt {
         if (entity instanceof ServerPlayer player) {
             boolean result = player.teleportTo(targetLevel, destinationPos.x, destinationPos.y, destinationPos.z, Set.of(), destinationYaw, destinationPitch);
             if (result) {
+                if (enteringSwampDomain) {
+                    player.getPersistentData().putDouble(SWAMP_DOMAIN_ENTRY_X_TAG, destinationPos.x);
+                    player.getPersistentData().putDouble(SWAMP_DOMAIN_ENTRY_Y_TAG, destinationPos.y);
+                    player.getPersistentData().putDouble(SWAMP_DOMAIN_ENTRY_Z_TAG, destinationPos.z);
+                }
                 applyPortalGracePeriods(player, targetLevel, enteringSwampDomain, leavingSwampDomain);
                 targetLevel.playSound(null, destinationPos.x, destinationPos.y, destinationPos.z,
                     SoundEvents.ENDERMAN_TELEPORT, SoundSource.HOSTILE, 0.8F, 0.75F);
 
                 if (targetDimension.equals(SWAMP_DOMAIN_LEVEL)) {
                     spawnSwampDomainDemons(targetLevel, destinationPos, player);
+                    SwampDemonEntity.retargetSwampDomainDemonsToNearestPlayer(targetLevel);
                 }
             }
             return result;
@@ -1529,6 +1612,34 @@ public final class SwampDemonArt {
             }
             if (!isPuddled(player)) {
                 return;
+            }
+        }
+
+        @SubscribeEvent
+        public static void onServerTick(TickEvent.ServerTickEvent event) {
+            if (event.phase != TickEvent.Phase.END || event.getServer() == null) {
+                return;
+            }
+            if (event.getServer().getTickCount() % SWAMP_DOMAIN_CEILING_CHECK_INTERVAL_TICKS != 0) {
+                return;
+            }
+
+            ServerLevel swampDomain = event.getServer().getLevel(SWAMP_DOMAIN_LEVEL);
+            if (swampDomain == null || swampDomain.players().isEmpty()) {
+                return;
+            }
+
+            List<LivingEntity> entitiesAboveCeiling = swampDomain.getEntitiesOfClass(
+                LivingEntity.class,
+                new AABB(-30000000.0D, SWAMP_DOMAIN_CEILING_Y, -30000000.0D, 30000000.0D, 30000000.0D, 30000000.0D),
+                living -> living != null && living.isAlive() && living.getY() > SWAMP_DOMAIN_CEILING_Y
+            );
+
+            for (LivingEntity living : entitiesAboveCeiling) {
+                Vec3 movement = living.getDeltaMovement();
+                double yVelocity = Math.min(movement.y, SWAMP_DOMAIN_CEILING_DOWNWARD_SPEED);
+                living.setDeltaMovement(movement.x, yVelocity, movement.z);
+                living.hurtMarked = true;
             }
         }
 

@@ -20,6 +20,9 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class BloodDemonArtAlchemyCatalog {
+    public static final String FIRE_INFUSION_EFFECT_ID = "kimetsunoyaibamultiplayer:fire_infusion";
+    public static final String FROZEN_INFUSION_EFFECT_ID = "kimetsunoyaibamultiplayer:frozen_infusion";
+
     public static final String MICROSCOPE_BLOCK_ID = "kimetsunoyaiba:microscope";
     private static final int CATALYST_RING_TINT = 0xD4AF37;
     private static final int INFUSION_RING_TINT = 0x5A9BFF;
@@ -62,6 +65,7 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:scute_extract", 0x7CAE6C),
         Map.entry("kimetsunoyaibamultiplayer:illagers_extract", 0x8A3A32),
         Map.entry("kimetsunoyaibamultiplayer:powdered_snow_extract", 0xDDEAF1),
+        Map.entry("kimetsunoyaibamultiplayer:creeping_doom_extract", 0x6E4A3A),
         Map.entry("kimetsunoyaibamultiplayer:infernal_culture", 0xE5622F),
         Map.entry("kimetsunoyaibamultiplayer:fortified_culture", 0x82A1BF),
         Map.entry("kimetsunoyaibamultiplayer:neural_culture", 0x8F6CE0),
@@ -101,6 +105,20 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:scute_catalyst", 0x7CAE6C),
         Map.entry("kimetsunoyaibamultiplayer:illagers_catalyst", 0x8A3A32),
         Map.entry("kimetsunoyaibamultiplayer:powdered_snow_catalyst", 0xDDEAF1),
+        Map.entry("kimetsunoyaibamultiplayer:creeping_doom_catalyst", 0x6E4A3A),
+        Map.entry("kimetsunoyaibamultiplayer:evokers_catalyst", 0xB2B26A),
+        Map.entry("kimetsunoyaibamultiplayer:vex_catalyst", 0x9FC8F2),
+        Map.entry("kimetsunoyaibamultiplayer:prison_catalyst", 0x74D2C2),
+        Map.entry("kimetsunoyaibamultiplayer:sonic_catalyst", 0x2D7D89),
+        Map.entry("kimetsunoyaibamultiplayer:night_catalyst", 0x5F6B91),
+        Map.entry("kimetsunoyaibamultiplayer:infernal_catalyst", 0xE88E37),
+        Map.entry("kimetsunoyaibamultiplayer:flytrap_catalyst", 0x88AF4E),
+        Map.entry("kimetsunoyaibamultiplayer:grave_catalyst", 0x5F6A45),
+        Map.entry("kimetsunoyaibamultiplayer:weightless_catalyst", 0xA8B3DC),
+        Map.entry("kimetsunoyaibamultiplayer:meteor_catalyst", 0xD6DAB8),
+        Map.entry("kimetsunoyaibamultiplayer:charged_catalyst", 0xA7926A),
+        Map.entry("kimetsunoyaibamultiplayer:arc_catalyst", 0x55A6C0),
+        Map.entry("kimetsunoyaibamultiplayer:incendiary_catalyst", 0xD9633F),
         Map.entry("kimetsunoyaibamultiplayer:potion_effect_binder", 0xF2F2F2)
     );
 
@@ -131,38 +149,38 @@ public final class BloodDemonArtAlchemyCatalog {
         new InfusionDefinition("kimetsunoyaibamultiplayer:rotten_blood_sample", "kimetsunoyaibamultiplayer:hunger_infusion", "minecraft:hunger", 8, 1),
         new InfusionDefinition("kimetsunoyaibamultiplayer:scute_extract", "kimetsunoyaibamultiplayer:resistance_infusion", "minecraft:resistance", 8, 1),
         new InfusionDefinition("kimetsunoyaibamultiplayer:illagers_extract", "kimetsunoyaibamultiplayer:bleeding_infusion", "kimetsunoyaibamultiplayer:bleeding", 8, 1),
-        new InfusionDefinition("kimetsunoyaibamultiplayer:blaze_extract", "kimetsunoyaibamultiplayer:fire_infusion", "minecraft:fire_resistance", 8, 1),
-        new InfusionDefinition("kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:frozen_infusion", "minecraft:slowness", 8, 1)
+        new InfusionDefinition("kimetsunoyaibamultiplayer:blaze_extract", "kimetsunoyaibamultiplayer:fire_infusion", FIRE_INFUSION_EFFECT_ID, 8, 1),
+        new InfusionDefinition("kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:frozen_infusion", FROZEN_INFUSION_EFFECT_ID, 8, 1)
     );
 
     private static final List<CatalystDefinition> CATALYSTS = List.of(
         new CatalystDefinition("kimetsunoyaibamultiplayer:wither_extract", "kimetsunoyaibamultiplayer:wither_catalyst", CustomBloodDemonArtSavedData.MoveType.WITHER_SKULL),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:stellar_extract", "kimetsunoyaibamultiplayer:stellar_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:immortal_extract", "kimetsunoyaibamultiplayer:immortal_catalyst", null),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:stellar_extract", "kimetsunoyaibamultiplayer:stellar_catalyst", CustomBloodDemonArtSavedData.MoveType.SINGULARITY),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:immortal_extract", "kimetsunoyaibamultiplayer:immortal_catalyst", CustomBloodDemonArtSavedData.MoveType.TASTE_OF_IMMORTALITY),
         new CatalystDefinition("kimetsunoyaibamultiplayer:blaze_extract", "kimetsunoyaibamultiplayer:blaze_catalyst", CustomBloodDemonArtSavedData.MoveType.BLAZE_BARRAGE),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:phantom_extract", "kimetsunoyaibamultiplayer:phantom_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:sculk_extract", "kimetsunoyaibamultiplayer:sculk_catalyst_vial", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:azure_extract", "kimetsunoyaibamultiplayer:azure_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:noxious_extract", "kimetsunoyaibamultiplayer:noxious_catalyst", null),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:phantom_extract", "kimetsunoyaibamultiplayer:phantom_catalyst", CustomBloodDemonArtSavedData.MoveType.GLIDE),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:sculk_extract", "kimetsunoyaibamultiplayer:sculk_catalyst_vial", CustomBloodDemonArtSavedData.MoveType.ROAR),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:azure_extract", "kimetsunoyaibamultiplayer:azure_catalyst", CustomBloodDemonArtSavedData.MoveType.FLOWER_DANCE),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:noxious_extract", "kimetsunoyaibamultiplayer:noxious_catalyst", CustomBloodDemonArtSavedData.MoveType.SPINE_BURST),
         new CatalystDefinition("kimetsunoyaibamultiplayer:guardian_extract", "kimetsunoyaibamultiplayer:guardian_catalyst", CustomBloodDemonArtSavedData.MoveType.GUARDIAN_LASER),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:golden_extract", "kimetsunoyaibamultiplayer:golden_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:scute_extract", "kimetsunoyaibamultiplayer:scute_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:illagers_extract", "kimetsunoyaibamultiplayer:illagers_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:powdered_snow_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:creeping_doom_extract", "kimetsunoyaibamultiplayer:creeping_doom_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:illagers_catalyst", "kimetsunoyaibamultiplayer:evokers_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:azure_catalyst", "kimetsunoyaibamultiplayer:vex_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:immortal_catalyst", "kimetsunoyaibamultiplayer:prison_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:guardian_catalyst", "kimetsunoyaibamultiplayer:sonic_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:phantom_catalyst", "kimetsunoyaibamultiplayer:night_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:blaze_catalyst", "kimetsunoyaibamultiplayer:infernal_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:noxious_catalyst", "kimetsunoyaibamultiplayer:flytrap_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:wither_catalyst", "kimetsunoyaibamultiplayer:grave_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:phantom_catalyst", "kimetsunoyaibamultiplayer:weightless_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:stellar_catalyst", "kimetsunoyaibamultiplayer:meteor_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:creeping_doom_catalyst", "kimetsunoyaibamultiplayer:charged_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:guardian_catalyst", "kimetsunoyaibamultiplayer:arc_catalyst", null),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:blaze_catalyst", "kimetsunoyaibamultiplayer:incendiary_catalyst", null)
+        new CatalystDefinition("kimetsunoyaibamultiplayer:golden_extract", "kimetsunoyaibamultiplayer:golden_catalyst", CustomBloodDemonArtSavedData.MoveType.MIDAS_TOUCH),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:scute_extract", "kimetsunoyaibamultiplayer:scute_catalyst", CustomBloodDemonArtSavedData.MoveType.DEFEND),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:illagers_extract", "kimetsunoyaibamultiplayer:illagers_catalyst", CustomBloodDemonArtSavedData.MoveType.VINDICATORS_CLEAVE),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:powdered_snow_catalyst", CustomBloodDemonArtSavedData.MoveType.WHITEOUT),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:creeping_doom_extract", "kimetsunoyaibamultiplayer:creeping_doom_catalyst", CustomBloodDemonArtSavedData.MoveType.EXPLODE),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:illagers_catalyst", "kimetsunoyaibamultiplayer:evokers_catalyst", CustomBloodDemonArtSavedData.MoveType.FANGS_OF_THE_EARTH),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:azure_catalyst", "kimetsunoyaibamultiplayer:vex_catalyst", CustomBloodDemonArtSavedData.MoveType.VEX_SWARM),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:immortal_catalyst", "kimetsunoyaibamultiplayer:prison_catalyst", CustomBloodDemonArtSavedData.MoveType.PRISON),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:guardian_catalyst", "kimetsunoyaibamultiplayer:sonic_catalyst", CustomBloodDemonArtSavedData.MoveType.SONIC_SHRIEK),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:phantom_catalyst", "kimetsunoyaibamultiplayer:night_catalyst", CustomBloodDemonArtSavedData.MoveType.NIGHT_TERROR),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:blaze_catalyst", "kimetsunoyaibamultiplayer:infernal_catalyst", CustomBloodDemonArtSavedData.MoveType.INFERNAL_SPIN),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:noxious_catalyst", "kimetsunoyaibamultiplayer:flytrap_catalyst", CustomBloodDemonArtSavedData.MoveType.FLYTRAP),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:wither_catalyst", "kimetsunoyaibamultiplayer:grave_catalyst", CustomBloodDemonArtSavedData.MoveType.GRAVE_PULSE),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:phantom_catalyst", "kimetsunoyaibamultiplayer:weightless_catalyst", CustomBloodDemonArtSavedData.MoveType.HOVER),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:stellar_catalyst", "kimetsunoyaibamultiplayer:meteor_catalyst", CustomBloodDemonArtSavedData.MoveType.SHOOTING_STAR),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:creeping_doom_catalyst", "kimetsunoyaibamultiplayer:charged_catalyst", CustomBloodDemonArtSavedData.MoveType.LIGHTNING_CHARGE),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:guardian_catalyst", "kimetsunoyaibamultiplayer:arc_catalyst", CustomBloodDemonArtSavedData.MoveType.CHAIN_LIGHTNING),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:blaze_catalyst", "kimetsunoyaibamultiplayer:incendiary_catalyst", CustomBloodDemonArtSavedData.MoveType.INCENDIARY_PROJECTILE)
     );
 
     private static final List<AmplifierDefinition> AMPLIFIERS = List.of(
@@ -398,6 +416,14 @@ public final class BloodDemonArtAlchemyCatalog {
             }
         }
         return 1;
+    }
+
+    public static boolean isFireInfusionEffectId(String effectId) {
+        return FIRE_INFUSION_EFFECT_ID.equals(effectId);
+    }
+
+    public static boolean isFrozenInfusionEffectId(String effectId) {
+        return FROZEN_INFUSION_EFFECT_ID.equals(effectId);
     }
 
     public static ItemStack brewingOutput(ItemStack ingredient, ItemStack input) {

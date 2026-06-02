@@ -6,8 +6,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +15,6 @@ import java.util.Map;
  * Registry for mapping sword items to their slash model resources
  * Supports per-sword models with fallback to generic model
  */
-@OnlyIn(Dist.CLIENT)
 public class SwordSlashModelRegistry {
 
     // Map sword item paths to model keys (e.g., "nichirinsword_mist" -> "mist")

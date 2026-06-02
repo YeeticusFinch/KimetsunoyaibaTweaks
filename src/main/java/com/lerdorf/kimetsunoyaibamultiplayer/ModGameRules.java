@@ -7,6 +7,7 @@ import net.minecraft.world.level.GameRules;
  *
  * Custom Game Rules:
  * - kimetsu_raids: Master switch for enabling/disabling raid system (default: true)
+ * - kimetsu_fast_demon_transformation: Shorten demon transformation to 10s (default: false)
  */
 public class ModGameRules {
     /**
@@ -15,6 +16,7 @@ public class ModGameRules {
      * Default: true
      */
     public static GameRules.Key<GameRules.BooleanValue> RULE_KIMETSU_RAIDS;
+    public static GameRules.Key<GameRules.BooleanValue> RULE_KIMETSU_FAST_DEMON_TRANSFORMATION;
 
     /**
      * Register custom game rules.
@@ -25,6 +27,11 @@ public class ModGameRules {
             "kimetsu_raids",
             GameRules.Category.SPAWNING,
             GameRules.BooleanValue.create(true)
+        );
+        RULE_KIMETSU_FAST_DEMON_TRANSFORMATION = GameRules.register(
+            "kimetsu_fast_demon_transformation",
+            GameRules.Category.PLAYER,
+            GameRules.BooleanValue.create(false)
         );
     }
 
@@ -40,6 +47,13 @@ public class ModGameRules {
             return com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.enableRaids.get();
         }
         return gameRules.getBoolean(RULE_KIMETSU_RAIDS);
+    }
+
+    public static boolean isFastDemonTransformationEnabled(GameRules gameRules) {
+        if (RULE_KIMETSU_FAST_DEMON_TRANSFORMATION == null) {
+            return false;
+        }
+        return gameRules.getBoolean(RULE_KIMETSU_FAST_DEMON_TRANSFORMATION);
     }
 
     /**
