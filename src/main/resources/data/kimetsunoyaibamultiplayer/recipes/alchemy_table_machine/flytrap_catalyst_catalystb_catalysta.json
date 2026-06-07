@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:noxious_catalyst"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:azure_catalyst"
+  },
+  "unordered": false,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:flytrap_catalyst"
+  }
+}

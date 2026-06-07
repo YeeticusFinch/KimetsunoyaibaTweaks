@@ -86,6 +86,10 @@ public class SwordSlashModelRegistry {
         ANIMATED_TEXTURE_FRAMES.put("beast", 3);
         RANDOM_TEXTURE_SELECTION.add("beast");
 
+        // Nezuko claw slash visuals for Combustible Blood rupture attacks.
+        ANIMATED_TEXTURE_FRAMES.put("claw_nezuko", 6);
+        ANIMATED_TEXTURE_FRAME_DELAY.put("claw_nezuko", 1);
+
         // Register flower breathing swords to use flower model (animated texture)
         // Covers both base mod and our mod variants (registry matches by path, not namespace)
         SWORD_TO_MODEL_MAP.put("nichirinsword_flower", "flower");

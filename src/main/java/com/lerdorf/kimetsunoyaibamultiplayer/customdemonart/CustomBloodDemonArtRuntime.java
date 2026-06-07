@@ -939,7 +939,7 @@ public final class CustomBloodDemonArtRuntime {
                             if ((x * x) + (y * y) + (z * z) > (radius * radius)) {
                                 continue;
                             }
-                            if (level.random.nextFloat() > 0.30F) {
+                            if (level.random.nextFloat() > 0.15F) {
                                 continue;
                             }
                             BlockPos pos = centerPos.offset(x, y, z);

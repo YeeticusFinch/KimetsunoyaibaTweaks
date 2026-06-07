@@ -13,6 +13,8 @@ import net.minecraft.world.phys.Vec3;
  * by spawning the entity on the server and sending packets to all nearby clients.
  */
 public class LoveSwordSlashesSpawner {
+    private static final String NEZUKO_TORNADO_ANIMATION = "nezuko_tornado";
+    private static final int DEFAULT_NEZUKO_TORNADO_LIFETIME_TICKS = 40;
 
     /**
      * Spawn a Love Sword Slashes entity at the specified location with custom orientation and animation.
@@ -30,6 +32,11 @@ public class LoveSwordSlashesSpawner {
      */
     public static LoveSwordSlashesEntity spawnLoveSwordSlashes(Level level, Vec3 position, float yaw, float pitch,
                                              String animationName, int lifetimeTicks) {
+        return spawnLoveSwordSlashes(level, position, yaw, pitch, animationName, lifetimeTicks, true);
+    }
+
+    private static LoveSwordSlashesEntity spawnLoveSwordSlashes(Level level, Vec3 position, float yaw, float pitch,
+                                             String animationName, int lifetimeTicks, boolean sendCustomSpawnPacket) {
         // Only spawn on server side - clients will receive packet
         if (level.isClientSide) {
             return null;
@@ -44,7 +51,7 @@ public class LoveSwordSlashesSpawner {
         level.addFreshEntity(entity);
 
         // Send packet to all nearby clients so they can see the effect
-        if (level instanceof ServerLevel serverLevel) {
+        if (sendCustomSpawnPacket && level instanceof ServerLevel serverLevel) {
             SpawnLoveSwordSlashesPacket packet = new SpawnLoveSwordSlashesPacket(
                 position, yaw, pitch, animationName, lifetimeTicks
             );
@@ -80,5 +87,29 @@ public class LoveSwordSlashesSpawner {
      */
     public static void spawnLoveSwordSlashes(Level level, Vec3 position, float yaw, String animationName) {
         spawnLoveSwordSlashes(level, position, yaw, 0.0f, animationName, 40);
+    }
+
+    /**
+     * Spawn a Nezuko tornado slash at a position facing the supplied direction.
+     */
+    public static LoveSwordSlashesEntity spawnNezukoTornado(Level level, Vec3 position, Vec3 direction) {
+        return spawnNezukoTornado(level, position, direction, DEFAULT_NEZUKO_TORNADO_LIFETIME_TICKS);
+    }
+
+    /**
+     * Spawn a Nezuko tornado slash at a position facing the supplied direction.
+     */
+    public static LoveSwordSlashesEntity spawnNezukoTornado(Level level, Vec3 position, Vec3 direction, int lifetimeTicks) {
+        Vec3 normalizedDirection = direction;
+        if (normalizedDirection == null || normalizedDirection.lengthSqr() < 1.0E-4D) {
+            normalizedDirection = new Vec3(0.0D, 0.0D, 1.0D);
+        } else {
+            normalizedDirection = normalizedDirection.normalize();
+        }
+
+        float yaw = (float) Math.toDegrees(Math.atan2(-normalizedDirection.x, normalizedDirection.z));
+        yaw += 180.0F;
+        float pitch = (float) Math.toDegrees(-Math.asin(normalizedDirection.y));
+        return spawnLoveSwordSlashes(level, position, yaw, pitch, NEZUKO_TORNADO_ANIMATION, lifetimeTicks, false);
     }
 }

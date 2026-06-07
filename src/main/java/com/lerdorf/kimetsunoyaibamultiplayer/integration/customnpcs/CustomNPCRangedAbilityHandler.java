@@ -1,13 +1,9 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig;
-import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor;
-import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BloodDemonArtExecutor;
-import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.CustomBreathingExecutor;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -71,8 +67,8 @@ public class CustomNPCRangedAbilityHandler {
                     }
 
                     // Get the held item
-                    ItemStack heldItem = mob.getMainHandItem();
-                    if (heldItem.isEmpty()) {
+                    ItemStack abilityStack = CustomNPCAbilityResolver.findAbilityStack(mob);
+                    if (abilityStack.isEmpty()) {
                         continue;
                     }
 
@@ -91,38 +87,18 @@ public class CustomNPCRangedAbilityHandler {
                         continue;
                     }
 
-                    Item item = heldItem.getItem();
-
                     if (CustomNPCConfig.isDebugEnabled()) {
                         double dist = Math.sqrt(distanceSq);
                         Log.debug("[KnY Custom NPCs] [Ranged] Checking NPC: " + mob.getName().getString() +
                                          " (distance: " + String.format("%.1f", dist) + " blocks)");
                     }
 
-                    // Try to execute ability based on item type
-                    boolean abilityExecuted = false;
+                    if (CustomNPCConfig.isDebugEnabled()) {
+                        Log.debug("[KnY Custom NPCs] [Ranged] → Executing supported ability from " +
+                            (abilityStack == mob.getMainHandItem() ? "main hand" : "offhand"));
+                    }
 
-                    // Priority 1: This mod's custom breathing swords
-                    if (CustomBreathingExecutor.isCustomBreathingSword(item)) {
-                        if (CustomNPCConfig.isDebugEnabled()) {
-                            Log.debug("[KnY Custom NPCs] [Ranged] → Executing custom breathing sword ability");
-                        }
-                        abilityExecuted = CustomBreathingExecutor.execute(mob, heldItem);
-                    }
-                    // Priority 2: Base mod nichirin swords
-                    else if (BaseModBreathingExecutor.isBaseModNichirinSword(item)) {
-                        if (CustomNPCConfig.isDebugEnabled()) {
-                            Log.debug("[KnY Custom NPCs] [Ranged] → Executing base mod nichirin sword ability");
-                        }
-                        abilityExecuted = BaseModBreathingExecutor.execute(mob, item);
-                    }
-                    // Priority 3: Blood demon arts
-                    else if (BloodDemonArtExecutor.isBloodDemonArt(item)) {
-                        if (CustomNPCConfig.isDebugEnabled()) {
-                            Log.debug("[KnY Custom NPCs] [Ranged] → Executing blood demon art ability");
-                        }
-                        abilityExecuted = BloodDemonArtExecutor.execute(mob, item);
-                    }
+                    boolean abilityExecuted = CustomNPCAbilityResolver.executeAbility(mob, abilityStack);
 
                     if (abilityExecuted && CustomNPCConfig.isDebugEnabled()) {
                         Log.debug("[KnY Custom NPCs] [Ranged] ✓ Ability executed successfully");

@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:creeping_doom_catalyst"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:illagers_catalyst"
+  },
+  "unordered": false,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:charged_catalyst"
+  }
+}

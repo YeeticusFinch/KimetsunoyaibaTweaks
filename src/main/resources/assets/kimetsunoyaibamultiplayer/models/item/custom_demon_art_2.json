@@ -1,0 +1,58 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+	"parent": "builtin/entity",
+	"texture_size": [64, 64],
+	"display": {
+		"thirdperson_righthand": {
+			"rotation": [90, 0, 0],
+			"translation": [-6, -2, -11]
+		},
+		"thirdperson_lefthand": {
+			"rotation": [90, 0, 0],
+			"translation": [6, -2, -11]
+		},
+		"firstperson_righthand": {
+			"rotation": [114, 9, 15],
+			"translation": [0, 8, -17.75]
+		},
+		"firstperson_lefthand": {
+			"rotation": [118, 0, 13],
+			"translation": [11.75, 7.75, -13.75]
+		},
+		"ground": {
+			"translation": [-7.25, -14.5, 0]
+		},
+		"gui": {
+			"rotation": [0, -32.5, 141],
+			"translation": [13.5, 9, 0]
+		},
+		"fixed": {
+			"translation": [-5.75, -16.25, 0]
+		},
+		"on_shelf": {
+			"translation": [0, -3.75, 0]
+		}
+	},
+	"groups": [
+		{
+			"name": "right_arm",
+			"origin": [5, 22, 0],
+			"color": 0,
+			"children": [
+				{
+					"name": "armorRightArm",
+					"origin": [5, 22, 0],
+					"color": 1,
+					"children": []
+				},
+				{
+					"name": "itemMainHand",
+					"origin": [6, 12, -2],
+					"color": 2,
+					"children": []
+				}
+			]
+		}
+	]
+}

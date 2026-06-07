@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:creeping_doom_extract"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:cruel_vial"
+  },
+  "unordered": false,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:creeping_doom_catalyst"
+  }
+}

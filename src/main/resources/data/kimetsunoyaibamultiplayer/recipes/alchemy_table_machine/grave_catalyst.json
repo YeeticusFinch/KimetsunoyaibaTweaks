@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:rotten_blood_sample"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:wither_catalyst"
+  },
+  "unordered": false,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:grave_catalyst"
+  }
+}

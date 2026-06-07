@@ -738,10 +738,9 @@ public class KimetsunoyaibaMultiplayer
                 // Tick breathing technique ability scheduler in every loaded dimension.
                 com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler.tickAll(event.getServer());
 
-                // Scan for unmirrored crows every 5 seconds (100 ticks)
-                // Uses batching internally to avoid freezing the server
-                if (overworld.getGameTime() % 100 == 0) {
-                    com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowMirrorHandler.scanForUnmirroredCrows(overworld);
+                // Repair missing or stale GeckoLib mirrors for kasugai crows near players every 10 seconds.
+                if (overworld.getGameTime() % 200 == 0) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowMirrorHandler.scanNearbyPlayerCrows(event.getServer());
                 }
             }
         }

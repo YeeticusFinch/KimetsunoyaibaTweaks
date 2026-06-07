@@ -126,6 +126,7 @@ public final class SwampDemonArt {
     private static final int TELEPORT_COOLDOWN_TICKS = 20;
     private static final int SWAMP_DOMAIN_MIN_STAY_TICKS = 20 * 10;
     private static final int SWAMP_DOMAIN_REENTRY_COOLDOWN_TICKS = 20 * 30;
+    private static final int SWAMP_DOMAIN_WATER_BREATHING_TICKS = 20 * 60 * 30;
     private static final String PORTAL_COOLDOWN_TAG = "SwampPortalCooldown";
     private static final String SWAMP_DOMAIN_EXIT_LOCK_TAG = "SwampDomainExitLockUntil";
     private static final String SWAMP_DOMAIN_ENTRY_LOCK_TAG = "SwampDomainEntryLockUntil";
@@ -321,6 +322,8 @@ public final class SwampDemonArt {
             && serverLevel.dimension().equals(SWAMP_DOMAIN_LEVEL)) {
             return;
         }
+
+        entity.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, SWAMP_DOMAIN_WATER_BREATHING_TICKS, 0, false, true, true));
 
         //exitPuddle(entity, false);
 

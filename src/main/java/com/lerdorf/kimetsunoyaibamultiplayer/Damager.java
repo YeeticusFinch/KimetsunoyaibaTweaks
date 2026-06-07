@@ -373,7 +373,7 @@ public class Damager {
 		return DamageCalculator.calculateScaledDamage(source, baseDamage);
 	}
 
-	private static boolean canDemonSlayerDamageTarget(DemonSlayerEntity source, LivingEntity target) {
+	public static boolean canDemonSlayerDamageTarget(DemonSlayerEntity source, LivingEntity target) {
 		if (source == null || target == null) {
 			return false;
 		}
@@ -388,7 +388,31 @@ public class Damager {
 		}
 
 		// Explicit target/revenge references are treated as active combat intent.
-		if (source.getTarget() == target || source.getLastHurtByMob() == target || target.getLastHurtByMob() == source) {
+		if (source.getTarget() == target || source.getLastHurtByMob() == target
+				|| target.getLastHurtByMob() == source) {
+			return true;
+		}
+
+		// Fallback combat memory for AoE/ability overlap cases.
+		return DamageTracker.hasDamageHistory(source, target);
+	}
+	
+	public static boolean canDemonSlayerDamageTarget(LivingEntity source, LivingEntity target) {
+		if (source == null || target == null) {
+			return false;
+		}
+
+		if (source == target) {
+			return false;
+		}
+
+		// Primary aggro checks: either side is actively targeting the other.
+		if (isAngry(source, target) || isAngry(target, source)) {
+			return true;
+		}
+
+		// Explicit target/revenge references are treated as active combat intent.
+		if (source.getLastHurtByMob() == target || target.getLastHurtByMob() == source) {
 			return true;
 		}
 

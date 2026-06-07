@@ -160,11 +160,37 @@ public class BaseModBreathingExecutor {
      * @return true if ability was executed successfully
      */
     public static boolean execute(LivingEntity npc, Item item) {
-        if (npc == null || item == null || npc.level().isClientSide) {
+        if (npc == null || item == null) {
+            return false;
+        }
+
+        ItemStack mainHand = npc.getMainHandItem();
+        if (!mainHand.isEmpty() && mainHand.getItem() == item) {
+            return execute(npc, mainHand);
+        }
+
+        ItemStack offHand = npc.getOffhandItem();
+        if (!offHand.isEmpty() && offHand.getItem() == item) {
+            return execute(npc, offHand);
+        }
+
+        return execute(npc, new ItemStack(item));
+    }
+
+    /**
+     * Execute a breathing form for an NPC holding a base mod nichirin sword stack.
+     *
+     * @param npc The NPC entity
+     * @param heldItem The nichirin sword stack
+     * @return true if ability was executed successfully
+     */
+    public static boolean execute(LivingEntity npc, ItemStack heldItem) {
+        if (npc == null || heldItem == null || heldItem.isEmpty() || npc.level().isClientSide) {
             return false;
         }
 
         try {
+            Item item = heldItem.getItem();
             // Get breathing style from item
             String breathingStyle = getBreathingStyleFromItem(item);
             if (breathingStyle == null) {
@@ -228,15 +254,6 @@ public class BaseModBreathingExecutor {
                     Log.debug("  Form: " + FormSelector.getFormName(formIndex) + " (Index: " + formIndex + ")");
                 }
                 Log.debug("  Using: StartBreathesProcedure");
-            }
-
-            // Get held item and set "select" NBT (like the 1.16.5 script example)
-            ItemStack heldItem = npc.getMainHandItem();
-            if (heldItem.isEmpty()) {
-                if (CustomNPCConfig.isDebugEnabled()) {
-                    Log.debug("[KnY Custom NPCs] NPC has no item in main hand");
-                }
-                return false;
             }
 
             // Set itemstack "select" NBT to form index (0-based)

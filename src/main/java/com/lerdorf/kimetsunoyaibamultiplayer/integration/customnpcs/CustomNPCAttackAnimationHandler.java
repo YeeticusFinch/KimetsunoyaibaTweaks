@@ -60,9 +60,17 @@ public class CustomNPCAttackAnimationHandler {
                 return;
             }
 
-            // Get held item - must be a sword
+            // Get a sword from either hand so offhand / dual-wield setups still animate.
             ItemStack heldItem = attacker.getMainHandItem();
             if (heldItem.isEmpty() || !(heldItem.getItem() instanceof SwordItem)) {
+                ItemStack offHand = attacker.getOffhandItem();
+                if (offHand.isEmpty() || !(offHand.getItem() instanceof SwordItem)) {
+                    return;
+                }
+                heldItem = offHand;
+            }
+
+            if (!(heldItem.getItem() instanceof SwordItem)) {
                 return;
             }
 

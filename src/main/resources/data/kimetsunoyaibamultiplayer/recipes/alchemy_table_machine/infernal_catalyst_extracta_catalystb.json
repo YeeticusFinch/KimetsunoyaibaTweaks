@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:golden_extract"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:blaze_catalyst"
+  },
+  "unordered": false,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:infernal_catalyst"
+  }
+}

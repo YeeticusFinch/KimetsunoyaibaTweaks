@@ -19,6 +19,8 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.MobSpawnType;
@@ -86,6 +88,14 @@ public class SwampDemonEntity extends AbstractDemonEntity {
         return this.level().dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL);
     }
 
+    @Override
+    protected PathNavigation createNavigation(Level level) {
+        if (level.dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL)) {
+            return new AmphibiousPathNavigation(this, level);
+        }
+        return super.createNavigation(level);
+    }
+
     public static void retargetSwampDomainDemonsToNearestPlayer(ServerLevel level) {
         if (!level.dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL)) {
             return;
@@ -120,6 +130,50 @@ public class SwampDemonEntity extends AbstractDemonEntity {
         ServerPlayer nearest = findNearestSwampDomainPlayer();
         if (nearest != null && this.getTarget() != nearest) {
             this.setTarget(nearest);
+        } else if (nearest == null) {
+            this.setTarget(null);
+            this.getNavigation().stop();
+        }
+    }
+
+    private boolean canTargetInCurrentDimension(LivingEntity target) {
+        if (target == null || !target.isAlive() || Damager.isDemon(target)) {
+            return false;
+        }
+        if (!isInSwampDomain()) {
+            return true;
+        }
+        return isValidSwampDomainTarget(target);
+    }
+
+    private boolean isValidSwampDomainTarget(LivingEntity target) {
+        if (!(target instanceof ServerPlayer player)) {
+            return false;
+        }
+        return player.isAlive()
+            && !player.isSpectator()
+            && player.level() == this.level()
+            && player.level().dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL);
+    }
+
+    private void enforceSwampDomainPlayerTarget() {
+        if (!isInSwampDomain()) {
+            return;
+        }
+
+        LivingEntity target = this.getTarget();
+        if (target != null && !isValidSwampDomainTarget(target)) {
+            this.setTarget(null);
+            this.getNavigation().stop();
+            target = null;
+        }
+
+        if (target == null || this.tickCount % 20 == 0) {
+            targetNearestSwampDomainPlayer();
+        }
+
+        if (this.getTarget() == null) {
+            this.getNavigation().stop();
         }
     }
 
@@ -133,13 +187,23 @@ public class SwampDemonEntity extends AbstractDemonEntity {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new SwampDemonMeleeGoal(this, 1.2D));
-        this.goalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 0.95D));
+        this.goalSelector.addGoal(2, new SwampDemonRandomStrollGoal(this, 0.95D));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
-            target -> target != null && target.isAlive() && !Damager.isDemon(target)));
+            this::canTargetInCurrentDimension));
+    }
+
+    @Override
+    public void setTarget(LivingEntity target) {
+        if (target != null && isInSwampDomain() && !isValidSwampDomainTarget(target)) {
+            super.setTarget(null);
+            this.getNavigation().stop();
+            return;
+        }
+        super.setTarget(target);
     }
 
     @Override
@@ -152,9 +216,7 @@ public class SwampDemonEntity extends AbstractDemonEntity {
                 SwampDemonArt.activateSpawnPuddle(this);
             }
 
-            if (isInSwampDomain() && this.tickCount % 20 == 0) {
-                targetNearestSwampDomainPlayer();
-            }
+            enforceSwampDomainPlayerTarget();
 
             tickCombatSprint();
             maybeSplit();
@@ -480,6 +542,25 @@ public class SwampDemonEntity extends AbstractDemonEntity {
             this.setHealth(this.getMaxHealth() * 0.5F);
         }
         return finalized;
+    }
+
+    private static class SwampDemonRandomStrollGoal extends WaterAvoidingRandomStrollGoal {
+        private final SwampDemonEntity demon;
+
+        private SwampDemonRandomStrollGoal(SwampDemonEntity demon, double speedModifier) {
+            super(demon, speedModifier);
+            this.demon = demon;
+        }
+
+        @Override
+        public boolean canUse() {
+            return !demon.isInSwampDomain() && super.canUse();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return !demon.isInSwampDomain() && super.canContinueToUse();
+        }
     }
 
     private static class SwampDemonMeleeGoal extends MeleeAttackGoal {

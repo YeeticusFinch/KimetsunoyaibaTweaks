@@ -5,10 +5,12 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.mojang.logging.LogUtils;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -162,6 +164,68 @@ public class CrowMirrorHandler {
     }
 
     /**
+     * Checks kasugai crows near loaded players and repairs missing or stale mirror entities.
+     */
+    public static void scanNearbyPlayerCrows(net.minecraft.server.MinecraftServer server) {
+        if (server == null) {
+            return;
+        }
+
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (player == null || player.level().isClientSide()) {
+                continue;
+            }
+            ServerLevel level = player.serverLevel();
+            AABB bounds = player.getBoundingBox().inflate(20.0D);
+            for (Entity entity : level.getEntities((Entity) null, bounds, CrowMirrorHandler::isKasugaiCrow)) {
+                ensureMirrorForCrow(entity, level);
+            }
+        }
+    }
+
+    /**
+     * Ensures a crow has a live mirror in the same dimension and that the base crow is hidden.
+     */
+    public static void ensureMirrorForCrow(Entity originalCrow, ServerLevel serverLevel) {
+        if (originalCrow == null || serverLevel == null || originalCrow.isRemoved() || !isKasugaiCrow(originalCrow)) {
+            return;
+        }
+
+        KNOWN_CROW_UUIDS.add(originalCrow.getUUID());
+        GeckolibCrowEntity mirror = CROW_MIRRORS.get(originalCrow.getUUID());
+        if (mirror != null && mirror.isAlive() && !mirror.isRemoved() && mirror.level() == serverLevel) {
+            ensureCrowInvisibility(originalCrow);
+            mirror.teleportTo(originalCrow.getX(), originalCrow.getY(), originalCrow.getZ());
+            return;
+        }
+
+        if (mirror != null && !mirror.isRemoved()) {
+            mirror.discard();
+        }
+        CROW_MIRRORS.remove(originalCrow.getUUID());
+        createMirrorForCrow(originalCrow, serverLevel);
+    }
+
+    /**
+     * Moves or recreates the mirror immediately after the original crow is teleported.
+     */
+    public static void syncMirrorAfterCrowTeleport(Entity originalCrow, ServerLevel serverLevel) {
+        if (originalCrow == null || serverLevel == null || !isKasugaiCrow(originalCrow)) {
+            return;
+        }
+
+        GeckolibCrowEntity mirror = CROW_MIRRORS.get(originalCrow.getUUID());
+        if (mirror != null && mirror.isAlive() && !mirror.isRemoved() && mirror.level() == serverLevel) {
+            mirror.teleportTo(originalCrow.getX(), originalCrow.getY(), originalCrow.getZ());
+            mirror.moveTo(originalCrow.getX(), originalCrow.getY(), originalCrow.getZ(), originalCrow.getYRot(), originalCrow.getXRot());
+            ensureCrowInvisibility(originalCrow);
+            return;
+        }
+
+        ensureMirrorForCrow(originalCrow, serverLevel);
+    }
+
+    /**
      * Scan for existing kasugai_crow entities that don't have mirrors.
      * Uses batching to avoid iterating all entities in a single tick.
      * Should be called periodically (e.g., every 5 seconds).
@@ -218,6 +282,9 @@ public class CrowMirrorHandler {
                         // Mirror is gone, remove from map and re-create
                         if (Config.logDebug)
                             Log.warn("Mirror crow was removed, recreating...");
+                        CROW_MIRRORS.remove(entity.getUUID());
+                    } else if (mirror.level() != level) {
+                        mirror.discard();
                         CROW_MIRRORS.remove(entity.getUUID());
                     } else {
                         // Mirror exists and is valid - ensure original crow is still invisible

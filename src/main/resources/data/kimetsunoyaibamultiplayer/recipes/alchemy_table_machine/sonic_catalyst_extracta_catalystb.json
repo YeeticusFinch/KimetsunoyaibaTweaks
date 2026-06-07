@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:guardian_extract"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:sculk_catalyst_vial"
+  },
+  "unordered": false,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:sonic_catalyst"
+  }
+}

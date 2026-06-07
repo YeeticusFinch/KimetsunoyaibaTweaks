@@ -2,12 +2,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig;
-import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor;
-import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BloodDemonArtExecutor;
-import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.CustomBreathingExecutor;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -77,62 +73,35 @@ public class CustomNPCAbilityHandler {
             }
 
             // Get held item
-            ItemStack heldItem = attacker.getMainHandItem();
-            if (heldItem.isEmpty()) {
+            ItemStack abilityStack = CustomNPCAbilityResolver.findAbilityStack(attacker);
+            if (abilityStack.isEmpty()) {
                 if (CustomNPCConfig.isDebugEnabled()) {
-                    Log.debug("[KnY Custom NPCs] No item in main hand");
+                    Log.debug("[KnY Custom NPCs] No supported breathing sword or blood demon art found in either hand");
                 }
                 return;
             }
 
-            Item item = heldItem.getItem();
-
             if (CustomNPCConfig.isDebugEnabled()) {
-                Log.debug("[KnY Custom NPCs] Held Item: " + item.getDescriptionId());
-                Log.debug("[KnY Custom NPCs] Item Class: " + item.getClass().getName());
+                Log.debug("[KnY Custom NPCs] Held Item: " + abilityStack.getItem().getDescriptionId());
+                Log.debug("[KnY Custom NPCs] Item Class: " + abilityStack.getItem().getClass().getName());
             }
-
-            // Try to execute ability based on item type
-            boolean abilityExecuted = false;
 
             // Debug: Check all detection methods
             if (CustomNPCConfig.isDebugEnabled()) {
-                boolean isCustomSword = CustomBreathingExecutor.isCustomBreathingSword(item);
-                boolean isBaseModSword = BaseModBreathingExecutor.isBaseModNichirinSword(item);
-                boolean isBloodArt = BloodDemonArtExecutor.isBloodDemonArt(item);
+                boolean isBreathing = CustomNPCAbilityResolver.isBreathingItem(abilityStack);
+                boolean isBloodArt = CustomNPCAbilityResolver.isBloodDemonArtItem(abilityStack);
 
                 Log.debug("[KnY Custom NPCs] Detection Results:");
-                Log.debug("  - Is Custom Breathing Sword: " + isCustomSword);
-                Log.debug("  - Is Base Mod Nichirin Sword: " + isBaseModSword);
+                Log.debug("  - Is Breathing Sword: " + isBreathing);
                 Log.debug("  - Is Blood Demon Art: " + isBloodArt);
             }
 
-            // Priority 1: This mod's custom breathing swords
-            if (CustomBreathingExecutor.isCustomBreathingSword(item)) {
-                if (CustomNPCConfig.isDebugEnabled()) {
-                    Log.debug("[KnY Custom NPCs] → Executing custom breathing sword ability");
-                }
-                abilityExecuted = CustomBreathingExecutor.execute(attacker, heldItem);
+            if (CustomNPCConfig.isDebugEnabled()) {
+                Log.debug("[KnY Custom NPCs] → Executing supported ability from " +
+                    (abilityStack == attacker.getMainHandItem() ? "main hand" : "offhand"));
             }
-            // Priority 2: Base mod nichirin swords
-            else if (BaseModBreathingExecutor.isBaseModNichirinSword(item)) {
-                if (CustomNPCConfig.isDebugEnabled()) {
-                    Log.debug("[KnY Custom NPCs] → Executing base mod nichirin sword ability");
-                }
-                abilityExecuted = BaseModBreathingExecutor.execute(attacker, item);
-            }
-            // Priority 3: Blood demon arts
-            else if (BloodDemonArtExecutor.isBloodDemonArt(item)) {
-                if (CustomNPCConfig.isDebugEnabled()) {
-                    Log.debug("[KnY Custom NPCs] → Executing blood demon art ability");
-                }
-                abilityExecuted = BloodDemonArtExecutor.execute(attacker, item);
-            }
-            else {
-                if (CustomNPCConfig.isDebugEnabled()) {
-                    Log.debug("[KnY Custom NPCs] ✗ Item not recognized as any ability type");
-                }
-            }
+
+            boolean abilityExecuted = CustomNPCAbilityResolver.executeAbility(attacker, abilityStack);
 
             if (abilityExecuted && CustomNPCConfig.isDebugEnabled()) {
                 Log.debug("[KnY Custom NPCs] ✓ Ability executed successfully");

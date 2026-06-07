@@ -243,6 +243,8 @@ public class AnimationSyncHandler {
             ResourceLocation[] possibleLocations = {
                 // Original ID
                 animationId,
+                // Custom player_animation assets from this mod
+                ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", animationName),
                 // Common namespaces for kimetsunoyaiba animations
                 ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", animationName),
                 ResourceLocation.fromNamespaceAndPath("playeranimator", animationName),

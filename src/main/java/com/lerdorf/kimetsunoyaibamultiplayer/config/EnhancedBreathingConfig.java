@@ -96,6 +96,19 @@ public class EnhancedBreathingConfig {
                     "Default: true")
             .define("enhancedBlackSword", true);
 
+    // Combustible Blood Enhancement
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_COMBUSTIBLE_BLOOD = BUILDER
+            .comment("Enable enhanced Combustible Blood replacement",
+                    "When true, automatically replaces base mod Nezuko Blood Demon Art with the enhanced version:",
+                    "  - kimetsunoyaiba:blooddemonart_nezuko -> kimetsunoyaibamultiplayer:combustible_blood",
+                    "",
+                    "Enhanced features:",
+                    "  - Uses the Combustible Blood technique implementation",
+                    "  - Expanded Nezuko-inspired forms and effects",
+                    "",
+                    "Default: true")
+            .define("enhancedCombustibleBlood", true);
+
     static {
         BUILDER.pop(); // enhanced_breathing
 
@@ -206,6 +219,7 @@ public class EnhancedBreathingConfig {
     public static boolean enhancedBeastBreathing;
     public static boolean enhancedLoveBreathing;
     public static boolean enhancedBlackSword;
+    public static boolean enhancedCombustibleBlood;
     public static boolean disableLoveM1TrailParticles;
 
     // Whip Physics Settings
@@ -238,6 +252,7 @@ public class EnhancedBreathingConfig {
         enhancedBeastBreathing = ENHANCED_BEAST_BREATHING.get();
         enhancedLoveBreathing = ENHANCED_LOVE_BREATHING.get();
         enhancedBlackSword = ENHANCED_BLACK_SWORD.get();
+        enhancedCombustibleBlood = ENHANCED_COMBUSTIBLE_BLOOD.get();
         disableLoveM1TrailParticles = DISABLE_LOVE_M1_TRAIL_PARTICLES.get();
 
         // Load whip physics settings
@@ -269,6 +284,7 @@ public class EnhancedBreathingConfig {
         Log.debug("  - Enhanced Beast Breathing: " + enhancedBeastBreathing);
         Log.debug("  - Enhanced Love Breathing: " + enhancedLoveBreathing);
         Log.debug("  - Enhanced Black Sword: " + enhancedBlackSword);
+        Log.debug("  - Enhanced Combustible Blood: " + enhancedCombustibleBlood);
         Log.debug("  - Disable Love/Kanroji M1 Trail Particles: " + disableLoveM1TrailParticles);
         Log.debug("  - Whip Segments: " + whipSegmentCount);
         Log.debug("  - Whip Extended Length: " + whipExtendedLength);

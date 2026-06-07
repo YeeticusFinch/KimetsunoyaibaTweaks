@@ -222,6 +222,8 @@ public class AnimationHelper {
         // beast2/beast4/beast6 are defined in assets/kimetsunoyaibamultiplayer/player_animation/*.json.
         if (animationName.startsWith("love_")
             || animationName.startsWith("beast")
+            || animationName.equals("backflip")
+            || animationName.equals("tilted_spin")
             || animationName.equals("kanroji_sword_overhead")) {
             return ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", animationName);
         }

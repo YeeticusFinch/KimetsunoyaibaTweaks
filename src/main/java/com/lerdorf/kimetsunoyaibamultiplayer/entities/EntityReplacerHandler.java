@@ -133,6 +133,9 @@ public class EntityReplacerHandler {
         if (EnhancedSpawnConfig.replaceBaseGenericDemonSlayers && tryReplaceWithOurDemonSlayer(event, entity, entityTypeId)) {
             return;
         }
+        if (EnhancedSpawnConfig.replaceBaseNezuko && tryReplaceWithOurNezuko(event, entity, entityTypeId)) {
+            return;
+        }
 
         // kimetsu replacements are only available when kimetsu is loaded.
         if (!kimetsuModLoaded) {
@@ -324,6 +327,50 @@ public class EntityReplacerHandler {
         }
     }
 
+    private static boolean tryReplaceWithOurNezuko(EntityJoinLevelEvent event, Entity original, ResourceLocation originalId) {
+        if (!"nezuko".equals(originalId.getPath()) || !(event.getLevel() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+
+        NezukoEntity replacement = ModEntities.NEZUKO.get().create(serverLevel);
+        if (replacement == null) {
+            return false;
+        }
+
+        replacement.moveTo(original.getX(), original.getY(), original.getZ(), original.getYRot(), original.getXRot());
+        replacement.setDeltaMovement(original.getDeltaMovement());
+
+        try {
+            replacement.finalizeSpawn(
+                serverLevel,
+                serverLevel.getCurrentDifficultyAt(replacement.blockPosition()),
+                MobSpawnType.CONVERSION,
+                null,
+                null
+            );
+
+            if (original instanceof net.minecraft.world.entity.LivingEntity originalLiving) {
+                replacement.setHealth(Math.min(replacement.getMaxHealth(), originalLiving.getHealth()));
+            }
+
+            transferRaidMetadataAndTracking(serverLevel, original, replacement);
+
+            event.getLevel().addFreshEntity(replacement);
+            original.discard();
+            event.setCanceled(true);
+
+            if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
+                Log.debug("[Entity Replacer] Replaced {} with {}",
+                    originalId, EntityType.getKey(replacement.getType()));
+            }
+            return true;
+        } catch (Exception e) {
+            System.err.println("[Entity Replacer] Error replacing base Nezuko: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     private static void transferRaidMetadataAndTracking(ServerLevel level, Entity oldEntity, Entity replacementEntity) {
         CompoundTag oldPersistentData = oldEntity.getPersistentData();
         if (!oldPersistentData.contains("RaidId")) {
@@ -373,6 +420,18 @@ public class EntityReplacerHandler {
             if ("kimetsunoyaibamultiplayer".equals(ns) && (
                 "demon_slayer".equals(path) || "demon_slayer_female".equals(path))) {
                 return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "demon_slayer");
+            }
+        }
+        if (EnhancedSpawnConfig.replaceBaseNezuko) {
+            String ns = entityTypeId.getNamespace();
+            String path = entityTypeId.getPath();
+
+            if ("kimetsunoyaiba".equals(ns) && "nezuko".equals(path)) {
+                return EntityType.getKey(ModEntities.NEZUKO.get());
+            }
+
+            if ("kimetsunoyaibamultiplayer".equals(ns) && "nezuko".equals(path)) {
+                return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "nezuko");
             }
         }
 

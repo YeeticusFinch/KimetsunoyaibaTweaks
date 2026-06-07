@@ -1,20 +1,29 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowMirrorHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.util.ITeleporter;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * Handles teleporting familiars (tamed kasugai crows and princess dogs)
@@ -25,6 +34,8 @@ public class FamiliarDimensionHandler {
 
     private static final int TELEPORT_SCAN_RADIUS = 64;
     private static final int TELEPORT_FALLBACK_Y_OFFSET = 2;
+    private static final double PLAYER_LONG_TELEPORT_DISTANCE_SQR = 50.0D * 50.0D;
+    private static final Map<UUID, PlayerPositionSnapshot> LAST_PLAYER_POSITIONS = new HashMap<>();
 
     @SubscribeEvent
     public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
@@ -41,6 +52,32 @@ public class FamiliarDimensionHandler {
         // Actually, at this point the player has already changed dimensions, so we need to
         // search in ALL levels for familiars owned by this player.
         teleportFamiliarsToPlayer(player);
+        rememberPlayerPosition(player);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) {
+            return;
+        }
+
+        PlayerPositionSnapshot previous = LAST_PLAYER_POSITIONS.get(player.getUUID());
+        ResourceKey<Level> currentDimension = player.level().dimension();
+        Vec3 currentPosition = player.position();
+        if (previous != null) {
+            boolean changedDimension = !previous.dimension.equals(currentDimension);
+            boolean movedLongDistance = previous.position.distanceToSqr(currentPosition) > PLAYER_LONG_TELEPORT_DISTANCE_SQR;
+            if (changedDimension || movedLongDistance) {
+                teleportFamiliarsToPlayer(player);
+            }
+        }
+
+        LAST_PLAYER_POSITIONS.put(player.getUUID(), new PlayerPositionSnapshot(currentDimension, currentPosition));
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        LAST_PLAYER_POSITIONS.remove(event.getEntity().getUUID());
     }
 
     private static void teleportFamiliarsToPlayer(ServerPlayer player) {
@@ -95,27 +132,53 @@ public class FamiliarDimensionHandler {
             familiar.getType().toString(), player.getGameProfile().getName(), targetLevel.dimension().location());
 
         if (familiar instanceof Mob mob) {
-            // Stop any active AI/goals
             mob.getNavigation().stop();
             mob.setTarget(null);
         }
 
-        // Teleport the familiar
-        familiar.teleportToWithTicket(targetPos.getX() + 0.5D, targetPos.getY(), targetPos.getZ() + 0.5D);
-
-        // If the familiar is in a different dimension, we need to change its dimension
+        double x = targetPos.getX() + 0.5D;
+        double y = targetPos.getY();
+        double z = targetPos.getZ() + 0.5D;
+        boolean isCrow = isKasugaiCrow(familiar);
+        Entity movedFamiliar = familiar;
         if (familiar.level() != targetLevel) {
-            familiar.changeDimension(targetLevel);
+            float yaw = familiar.getYRot();
+            float pitch = familiar.getXRot();
+            movedFamiliar = familiar.changeDimension(targetLevel, new ITeleporter() {
+                @Override
+                public Entity placeEntity(Entity entity, ServerLevel currentWorld, ServerLevel destWorld, float portalYaw, Function<Boolean, Entity> repositionEntity) {
+                    Entity teleported = repositionEntity.apply(false);
+                    teleported.moveTo(x, y, z, yaw, pitch);
+                    return teleported;
+                }
+            });
+        } else {
+            familiar.teleportToWithTicket(x, y, z);
+            familiar.moveTo(x, y, z, familiar.getYRot(), familiar.getXRot());
         }
 
-        // Set familiar's position after dimension change
-        familiar.moveTo(targetPos.getX() + 0.5D, targetPos.getY(), targetPos.getZ() + 0.5D,
-            familiar.getYRot(), familiar.getXRot());
+        if (movedFamiliar == null) {
+            return;
+        }
 
-        // If it's a crow, make it fly near the player
-        if (familiar instanceof Mob mob) {
+        if (movedFamiliar instanceof Mob mob) {
             mob.setNoGravity(false);
+            mob.getNavigation().stop();
         }
+        movedFamiliar.fallDistance = 0.0F;
+
+        if (isCrow) {
+            CrowMirrorHandler.syncMirrorAfterCrowTeleport(movedFamiliar, targetLevel);
+        }
+    }
+
+    private static boolean isKasugaiCrow(Entity entity) {
+        String typeKey = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()).toString();
+        return typeKey.contains("kasugai_crow");
+    }
+
+    private static void rememberPlayerPosition(ServerPlayer player) {
+        LAST_PLAYER_POSITIONS.put(player.getUUID(), new PlayerPositionSnapshot(player.level().dimension(), player.position()));
     }
 
     private static BlockPos findSafeTeleportPosition(ServerLevel level, BlockPos nearPos) {
@@ -133,4 +196,6 @@ public class FamiliarDimensionHandler {
         }
         return null;
     }
+
+    private record PlayerPositionSnapshot(ResourceKey<Level> dimension, Vec3 position) {}
 }

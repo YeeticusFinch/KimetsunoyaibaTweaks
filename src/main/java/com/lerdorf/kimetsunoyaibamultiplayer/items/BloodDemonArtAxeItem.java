@@ -156,6 +156,10 @@ public class BloodDemonArtAxeItem extends AxeItem {
         return form == null ? null : formatFormName(artId, form).getString();
     }
 
+    public String getArtId() {
+        return artId;
+    }
+
     private static MutableComponent formatFormName(String artId, BloodDemonArtForm form) {
         return LocalizationHelper.bloodDemonArt(artId).copy()
             .append(Component.literal(": "))

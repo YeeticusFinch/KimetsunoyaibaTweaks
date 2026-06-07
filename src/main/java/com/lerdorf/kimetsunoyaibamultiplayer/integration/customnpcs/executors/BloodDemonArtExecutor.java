@@ -1,8 +1,13 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtForm;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.FormSelector;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.NPCCooldownManager;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -81,88 +86,54 @@ public class BloodDemonArtExecutor {
      * @return true if ability was executed successfully
      */
     public static boolean execute(LivingEntity npc, Item item) {
-        if (npc == null || item == null || npc.level().isClientSide) {
+        if (npc == null || item == null) {
+            return false;
+        }
+
+        ItemStack heldItem = npc.getMainHandItem();
+        if (heldItem.isEmpty() || heldItem.getItem() != item) {
+            ItemStack offHand = npc.getOffhandItem();
+            if (!offHand.isEmpty() && offHand.getItem() == item) {
+                heldItem = offHand;
+            }
+        }
+
+        return execute(npc, heldItem);
+    }
+
+    /**
+     * Execute a blood demon art for an NPC holding a demon art stack.
+     *
+     * @param npc The NPC entity
+     * @param heldItem The demon art item stack
+     * @return true if ability was executed successfully
+     */
+    public static boolean execute(LivingEntity npc, ItemStack heldItem) {
+        if (npc == null || heldItem == null || heldItem.isEmpty() || npc.level().isClientSide) {
             return false;
         }
 
         try {
-            // Get demon art from item
-            String demonArt = getDemonArtFromItem(item);
-            boolean genericBda = false;
-            if (demonArt == null) {
-                // Allow generic BDA execution for items that look like BDAs,
-                // even if we don't have a specific mapping.
-                if (isBloodDemonArt(item)) {
-                    genericBda = true;
-                    demonArt = "generic"; // for cooldown keying
-                } else {
-                    if (CustomNPCConfig.isDebugEnabled()) {
-                        Log.debug("[KnY Custom NPCs] Unknown blood demon art item: " + item.getDescriptionId());
-                    }
-                    return false;
-                }
+            Item item = heldItem.getItem();
+            String demonArt = resolveDemonArtId(heldItem);
+
+            BloodDemonArtRegistry.RegisteredBloodDemonArt registeredArt = demonArt != null
+                ? BloodDemonArtRegistry.getArt(demonArt)
+                : null;
+
+            if (registeredArt != null && registeredArt.getTechnique() != null
+                && registeredArt.getTechnique().getFormCount() > 0) {
+                return executeRegisteredArt(npc, heldItem, demonArt, registeredArt.getTechnique());
             }
 
-            DemonArtInfo artInfo = DEMON_ARTS.get(demonArt);
-            if (artInfo == null && !genericBda) {
-                if (CustomNPCConfig.isDebugEnabled()) {
-                    Log.debug("[KnY Custom NPCs] No demon art info for: " + demonArt);
-                }
-                return false;
+            if (isBloodDemonArt(item)) {
+                return executeLegacyDemonArt(npc, heldItem, item, demonArt);
             }
-
-            String cooldownKey = "demon_art_" + demonArt;
-
-            // Check cooldown
-            if (!NPCCooldownManager.canUseAbility(npc, cooldownKey)) {
-                if (CustomNPCConfig.isDebugEnabled()) {
-                    int remaining = NPCCooldownManager.getRemainingCooldown(npc, cooldownKey);
-                    Log.debug("[KnY Custom NPCs] On cooldown: " + remaining + " ticks remaining");
-                }
-                return false;
-            }
-
-            // Select weighted form
-            int formIndex = genericBda ? 0 : FormSelector.selectWeightedForm(npc.getRandom(), artInfo.formCount);
 
             if (CustomNPCConfig.isDebugEnabled()) {
-                Log.debug("[KnY Custom NPCs] Executing Blood Demon Art:");
-                Log.debug("  NPC: " + npc.getName().getString());
-                Log.debug("  Art: " + demonArt);
-                Log.debug("  Form: " + FormSelector.getFormName(formIndex) + " (Index: " + formIndex + ")");
-                Log.debug("  Using: StartKekkizyutuProcedure");
+                Log.debug("[KnY Custom NPCs] Unknown blood demon art item: " + item.getDescriptionId());
             }
-
-            // Get held item and set "select" NBT (like the 1.16.5 script example)
-            ItemStack heldItem = npc.getMainHandItem();
-            if (heldItem.isEmpty()) {
-                if (CustomNPCConfig.isDebugEnabled()) {
-                    Log.debug("[KnY Custom NPCs] NPC has no item in main hand");
-                }
-                return false;
-            }
-
-            // Set itemstack "select" NBT to form index (0-based)
-            heldItem.getOrCreateTag().putDouble("select", (double) formIndex);
-
-            // Call StartKekkizyutuProcedure (official base mod entry point)
-            boolean success = callStartKekkizyutuProcedure(npc.level(), npc, heldItem);
-
-            if (success) {
-                // Set cooldown
-                int cooldownTicks = (genericBda ? 8 : artInfo.baseCooldownSeconds) * 20;
-                NPCCooldownManager.setCooldown(npc, cooldownKey, cooldownTicks);
-
-                // Remember which form was used
-                NPCCooldownManager.setLastFormUsed(npc, demonArt, formIndex);
-
-                return true;
-            } else {
-                if (CustomNPCConfig.isDebugEnabled()) {
-                    Log.debug("[KnY Custom NPCs] Failed to call demon art procedure");
-                }
-                return false;
-            }
+            return false;
 
         } catch (Exception e) {
             System.err.println("[KnY Custom NPCs] Error executing blood demon art:");
@@ -180,6 +151,10 @@ public class BloodDemonArtExecutor {
     public static boolean isBloodDemonArt(Item item) {
         if (item == null) {
             return false;
+        }
+
+        if (item instanceof BloodDemonArtItem || item instanceof BloodDemonArtAxeItem) {
+            return true;
         }
 
         // Prefer registry path if available
@@ -206,6 +181,13 @@ public class BloodDemonArtExecutor {
      * @return Demon art name, or null if unknown
      */
     private static String getDemonArtFromItem(Item item) {
+        if (item instanceof BloodDemonArtItem bloodItem) {
+            return bloodItem.getArtId();
+        }
+        if (item instanceof BloodDemonArtAxeItem axeItem) {
+            return axeItem.getArtId();
+        }
+
         String descriptionId = item.getDescriptionId().toLowerCase();
 
         for (Map.Entry<String, String> entry : ITEM_TO_ART.entrySet()) {
@@ -215,6 +197,115 @@ public class BloodDemonArtExecutor {
         }
 
         return null;
+    }
+
+    private static String resolveDemonArtId(ItemStack heldItem) {
+        if (heldItem == null || heldItem.isEmpty()) {
+            return null;
+        }
+
+        String demonArt = getDemonArtFromItem(heldItem.getItem());
+        if (demonArt != null && !demonArt.isBlank()) {
+            return demonArt;
+        }
+
+        return null;
+    }
+
+    private static boolean executeRegisteredArt(
+            LivingEntity npc,
+            ItemStack heldItem,
+            String demonArt,
+            BloodDemonArtTechnique technique) {
+        String cooldownKey = "demon_art_" + demonArt;
+
+        if (!NPCCooldownManager.canUseAbility(npc, cooldownKey)) {
+            if (CustomNPCConfig.isDebugEnabled()) {
+                int remaining = NPCCooldownManager.getRemainingCooldown(npc, cooldownKey);
+                Log.debug("[KnY Custom NPCs] On cooldown: " + remaining + " ticks remaining");
+            }
+            return false;
+        }
+
+        int formIndex = FormSelector.selectWeightedForm(npc.getRandom(), technique.getFormCount());
+        BloodDemonArtForm form = technique.getForm(formIndex);
+        if (form == null) {
+            if (CustomNPCConfig.isDebugEnabled()) {
+                Log.debug("[KnY Custom NPCs] Selected blood demon art form was null at index " + formIndex);
+            }
+            return false;
+        }
+
+        if (CustomNPCConfig.isDebugEnabled()) {
+            Log.debug("[KnY Custom NPCs] Executing Blood Demon Art:");
+            Log.debug("  NPC: " + npc.getName().getString());
+            Log.debug("  Art: " + demonArt);
+            Log.debug("  Form: " + FormSelector.getFormName(formIndex) + " (Index: " + formIndex + ")");
+            Log.debug("  Using: Registered BloodDemonArtTechnique");
+        }
+
+        form.execute(npc, npc.level());
+
+        int cooldownTicks = Math.max(20, form.getCooldownSeconds() * 20);
+        NPCCooldownManager.setCooldown(npc, cooldownKey, cooldownTicks);
+        NPCCooldownManager.setLastFormUsed(npc, demonArt, formIndex);
+        return true;
+    }
+
+    private static boolean executeLegacyDemonArt(LivingEntity npc, ItemStack heldItem, Item item, String demonArt) {
+        boolean genericBda = false;
+        String legacyArt = demonArt;
+
+        if (legacyArt == null) {
+            if (isBloodDemonArt(item)) {
+                genericBda = true;
+                legacyArt = "generic";
+            } else {
+                return false;
+            }
+        }
+
+        DemonArtInfo artInfo = DEMON_ARTS.get(legacyArt);
+        if (artInfo == null && !genericBda) {
+            if (CustomNPCConfig.isDebugEnabled()) {
+                Log.debug("[KnY Custom NPCs] No demon art info for: " + legacyArt);
+            }
+            return false;
+        }
+
+        String cooldownKey = "demon_art_" + legacyArt;
+        if (!NPCCooldownManager.canUseAbility(npc, cooldownKey)) {
+            if (CustomNPCConfig.isDebugEnabled()) {
+                int remaining = NPCCooldownManager.getRemainingCooldown(npc, cooldownKey);
+                Log.debug("[KnY Custom NPCs] On cooldown: " + remaining + " ticks remaining");
+            }
+            return false;
+        }
+
+        int formIndex = genericBda ? 0 : FormSelector.selectWeightedForm(npc.getRandom(), artInfo.formCount);
+
+        if (CustomNPCConfig.isDebugEnabled()) {
+            Log.debug("[KnY Custom NPCs] Executing Legacy Blood Demon Art:");
+            Log.debug("  NPC: " + npc.getName().getString());
+            Log.debug("  Art: " + legacyArt);
+            Log.debug("  Form: " + FormSelector.getFormName(formIndex) + " (Index: " + formIndex + ")");
+            Log.debug("  Using: StartKekkizyutuProcedure");
+        }
+
+        heldItem.getOrCreateTag().putDouble("select", (double) formIndex);
+        boolean success = callStartKekkizyutuProcedure(npc.level(), npc, heldItem);
+
+        if (success) {
+            int cooldownTicks = (genericBda ? 8 : artInfo.baseCooldownSeconds) * 20;
+            NPCCooldownManager.setCooldown(npc, cooldownKey, cooldownTicks);
+            NPCCooldownManager.setLastFormUsed(npc, legacyArt, formIndex);
+            return true;
+        }
+
+        if (CustomNPCConfig.isDebugEnabled()) {
+            Log.debug("[KnY Custom NPCs] Failed to call demon art procedure");
+        }
+        return false;
     }
 
     /**

@@ -177,6 +177,13 @@ public class ModNetworking {
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SpawnLoveSwordSlashesPacket::handle)
                 .add();
 
+        int updateLoveSwordSlashesPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateLoveSwordSlashesPacket.class, updateLoveSwordSlashesPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateLoveSwordSlashesPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateLoveSwordSlashesPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateLoveSwordSlashesPacket::handle)
+                .add();
+
         // Register spawn love tornado packet (server -> client)
         int spawnLoveTornadoPacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SpawnLoveTornadoPacket.class, spawnLoveTornadoPacketId)

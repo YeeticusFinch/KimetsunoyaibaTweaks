@@ -166,10 +166,14 @@ public class LoveSwordSlashesEntity extends Mob implements GeoEntity {
             // Format: "kimetsunoyaibamultiplayer.love_sword_slashes.<animation>"
             // Example: "kimetsunoyaibamultiplayer.love_sword_slashes.love_third_form"
             String animationResourceName = "kimetsunoyaibamultiplayer.love_sword_slashes." + animationName;
+            software.bernie.geckolib.core.animation.Animation.LoopType loopType =
+                "nezuko_tornado".equals(animationName)
+                    ? software.bernie.geckolib.core.animation.Animation.LoopType.LOOP
+                    : software.bernie.geckolib.core.animation.Animation.LoopType.PLAY_ONCE;
 
             state.getController().setAnimation(RawAnimation.begin()
                 .then(animationResourceName,
-                      software.bernie.geckolib.core.animation.Animation.LoopType.PLAY_ONCE));
+                      loopType));
 
             return software.bernie.geckolib.core.object.PlayState.CONTINUE;
         }));

@@ -1,6 +1,9 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -51,6 +54,16 @@ public class BreathingDisplayOverlay {
             return;
         }
 
+        if (heldItem.getItem() instanceof BloodDemonArtItem artItem) {
+            renderBloodDemonArtItem(event, artItem.getDisplayText(heldItem), artItem.getArtId());
+            return;
+        }
+
+        if (heldItem.getItem() instanceof BloodDemonArtAxeItem artItem) {
+            renderBloodDemonArtItem(event, artItem.getDisplayText(heldItem), artItem.getArtId());
+            return;
+        }
+
         BreathingInfoDetector.BreathingInfo info = BreathingInfoDetector.getBreathingInfo(player, heldItem);
         if (info == null) {
             return;
@@ -58,6 +71,24 @@ public class BreathingDisplayOverlay {
 
         // Render the breathing info on screen
         renderBreathingInfo(event.getGuiGraphics().pose(), info, event.getGuiGraphics());
+    }
+
+    private static void renderBloodDemonArtItem(RenderGuiOverlayEvent.Post event, String displayText, String artId) {
+        if (displayText == null || displayText.isBlank()) {
+            return;
+        }
+
+        MutableComponent display = Component.literal(displayText)
+            .withStyle(style -> style.withColor(getBloodDemonArtDisplayColor(artId)));
+        renderDisplayText(event.getGuiGraphics().pose(), display, event.getGuiGraphics());
+    }
+
+    private static int getBloodDemonArtDisplayColor(String artId) {
+        BloodDemonArtRegistry.RegisteredBloodDemonArt art = BloodDemonArtRegistry.getArt(artId);
+        if (art == null || art.getTechnique() == null) {
+            return 0xAA1E2F;
+        }
+        return art.getTechnique().getDisplayColor();
     }
 
     /**

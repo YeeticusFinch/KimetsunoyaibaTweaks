@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:wither_extract"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:phantom_catalyst"
+  },
+  "unordered": false,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:weightless_catalyst"
+  }
+}

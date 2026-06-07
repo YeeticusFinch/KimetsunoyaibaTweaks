@@ -149,13 +149,29 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 		return SwordSlashModelRegistry.getNamespaceForModelKey(modelKey);
 	}
 
+	private boolean isNezukoClawModel() {
+		return "claw_nezuko".equals(modelKey);
+	}
+
 	public ResourceLocation getModelResource() {
+		if (isNezukoClawModel()) {
+			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw_nezuko.geo.json");
+		}
 		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"geo/sword_slash_" + modelKey + ".geo.json");
 	}
 
 	public ResourceLocation getTextureResource() {
 		String namespace = getResourceNamespace();
+		if (isNezukoClawModel()) {
+			if (frameCount <= 1) {
+				return ResourceLocation.fromNamespaceAndPath(namespace,
+						"textures/entity/slash_nezuko0.png");
+			}
+			int frame = getCurrentFrame();
+			return ResourceLocation.fromNamespaceAndPath(namespace,
+					"textures/entity/slash_nezuko" + frame + ".png");
+		}
 		if (frameCount <= 1) {
 			// Static texture
 			return ResourceLocation.fromNamespaceAndPath(namespace,
@@ -185,12 +201,20 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 
 	@Override
 	public ResourceLocation getModelResource(SwordSlashRenderState animatable) {
+		if (isNezukoClawModel()) {
+			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw_nezuko.geo.json");
+		}
 		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"geo/sword_slash_" + modelKey + ".geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(SwordSlashRenderState animatable) {
+		if (isNezukoClawModel()) {
+			int frame = getCurrentFrame();
+			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
+					"textures/entity/slash_nezuko" + frame + ".png");
+		}
 		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"textures/entity/sword_slash_" + modelKey + ".png");
 	}

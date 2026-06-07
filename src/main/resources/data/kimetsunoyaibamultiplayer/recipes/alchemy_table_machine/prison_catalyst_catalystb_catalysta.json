@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:immortal_catalyst"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:guardian_catalyst"
+  },
+  "unordered": false,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:prison_catalyst"
+  }
+}

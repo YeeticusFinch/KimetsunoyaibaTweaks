@@ -43,6 +43,12 @@ public class EnhancedSpawnConfig {
                     "- kimetsunoyaiba:dice_steak_senior_super -> multiplayer demon slayer (level 5)")
             .define("replace_base_generic_demon_slayers", true);
 
+    private static final ForgeConfigSpec.BooleanValue REPLACE_BASE_NEZUKO = BUILDER
+            .comment("Replace base mod Nezuko with kimetsunoyaibamultiplayer Nezuko.",
+                    "Replaces:",
+                    "- kimetsunoyaiba:nezuko -> kimetsunoyaibamultiplayer:nezuko")
+            .define("replace_base_nezuko", true);
+
     // ========== GENERIC SPAWN RATES ==========
     static {
         BUILDER.comment("Generic spawn rate reductions")
@@ -198,6 +204,7 @@ public class EnhancedSpawnConfig {
     // Runtime cache - Initialize with default values before config loads
     public static boolean enhancedSpawningRules = true;  // Default to true
     public static boolean replaceBaseGenericDemonSlayers = true;
+    public static boolean replaceBaseNezuko = true;
     public static double genericDemonSpawnRate = 0.4;
     public static double genericDemonSlayerSpawnRate = 0.1;
     public static int maxEntityCheckRadius = 500;
@@ -236,6 +243,7 @@ public class EnhancedSpawnConfig {
     private static void updateCache() {
         enhancedSpawningRules = ENHANCED_SPAWNING_RULES.get();
         replaceBaseGenericDemonSlayers = REPLACE_BASE_GENERIC_DEMON_SLAYERS.get();
+        replaceBaseNezuko = REPLACE_BASE_NEZUKO.get();
         genericDemonSpawnRate = GENERIC_DEMON_SPAWN_RATE.get();
         genericDemonSlayerSpawnRate = GENERIC_DEMON_SLAYER_SPAWN_RATE.get();
         maxEntityCheckRadius = MAX_ENTITY_CHECK_RADIUS.get();
