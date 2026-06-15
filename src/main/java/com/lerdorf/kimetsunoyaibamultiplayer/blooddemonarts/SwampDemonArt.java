@@ -110,9 +110,14 @@ public final class SwampDemonArt {
     public static final ResourceKey<Level> SWAMP_DOMAIN_LEVEL = ResourceKey.create(
         Registries.DIMENSION,
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "swamp_domain"));
+    public static final ResourceKey<Level> MT_FUJIKASANE_LEVEL = ResourceKey.create(
+        Registries.DIMENSION,
+        ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "mt_fujikasane"));
     private static final int SWAMP_DOMAIN_CEILING_CHECK_INTERVAL_TICKS = 20;
     private static final double SWAMP_DOMAIN_CEILING_Y = 120.0D;
     private static final double SWAMP_DOMAIN_CEILING_DOWNWARD_SPEED = -1.0D;
+    private static final double SWAMP_DOMAIN_MAX_CONTROLLED_RISE_SPEED = 0.18D;
+    private static final double SWAMP_DOMAIN_PASSIVE_SINK_SPEED = -0.015D;
 
     public static final double SWAMP_DOMAIN_MAX_DEMON_Y = 125.0D;
     public static final double SWAMP_DOMAIN_DEMON_DENSITY_RADIUS = 100.0D;
@@ -149,6 +154,10 @@ public final class SwampDemonArt {
     private static final String[] SWAMP_MELEE_COMBO = {"punch_right", "punch_left", "kick_right", "kick_left"};
 
     private SwampDemonArt() {
+    }
+
+    public static boolean isMtFujikasane(Level level) {
+        return level != null && level.dimension().equals(MT_FUJIKASANE_LEVEL);
     }
 
     public static boolean hasDebugDimensionOverride(LivingEntity entity) {
@@ -318,6 +327,14 @@ public final class SwampDemonArt {
             return;
         }
 
+        if (isMtFujikasane(serverLevel)) {
+            if (entity instanceof Player player) {
+                player.displayClientMessage(Component.literal("Swamp Domain cannot be used during Final Selection.")
+                    .withStyle(ChatFormatting.RED), true);
+            }
+            return;
+        }
+
         if (entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampDemonEntity
             && serverLevel.dimension().equals(SWAMP_DOMAIN_LEVEL)) {
             return;
@@ -328,8 +345,7 @@ public final class SwampDemonArt {
         //exitPuddle(entity, false);
 
         if (serverLevel.dimension().equals(SWAMP_DOMAIN_LEVEL)) {
-            ServerLevel targetLevel = resolvePortalTargetLevel(serverLevel, entity);
-            if (targetLevel == null) {
+            if (!teleportOutOfSwampDomain(entity, serverLevel)) {
                 if (entity instanceof Player player) {
                     player.displayClientMessage(Component.literal("Swamp Domain is unavailable right now.")
                         .withStyle(ChatFormatting.RED), true);
@@ -337,7 +353,6 @@ public final class SwampDemonArt {
                 return;
             }
 
-            teleportThroughPortal(entity, targetLevel.dimension(), entity.position());
             playAnimation(entity, "sword_to_lower", 10);
             return;
         }
@@ -623,6 +638,10 @@ public final class SwampDemonArt {
     }
 
     private static void spawnSwampDomainPortal(ServerLevel sourceLevel, Vec3 sourcePos, Vec3 targetPos, LivingEntity caster) {
+        if (isMtFujikasane(sourceLevel)) {
+            return;
+        }
+
         SwampPuddleEntity sourcePortal = ModEntities.SWAMP_PUDDLE.get().create(sourceLevel);
         if (sourcePortal == null) {
             return;
@@ -793,6 +812,10 @@ public final class SwampDemonArt {
     }
 
     private static void launchSwampDomainProjectile(LivingEntity caster, ServerLevel sourceLevel) {
+        if (isMtFujikasane(sourceLevel)) {
+            return;
+        }
+
         Vec3 start = caster.getEyePosition();
         Vec3 look = caster.getLookAngle();
         if (look.lengthSqr() < 1.0E-4D) {
@@ -873,11 +896,16 @@ public final class SwampDemonArt {
             return currentLevel.getServer().getLevel(SWAMP_DOMAIN_LEVEL);
         }
 
+        return resolveSwampDomainReturnLevel(currentLevel, entity);
+    }
+
+    private static ServerLevel resolveSwampDomainReturnLevel(ServerLevel currentLevel, Entity entity) {
         String storedDim = entity.getPersistentData().getString(SWAMP_RETURN_DIM_TAG);
         if (!storedDim.isEmpty()) {
             ResourceLocation id = ResourceLocation.tryParse(storedDim);
-            if (id != null) {
-                ServerLevel returnLevel = currentLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, id));
+            if (id != null && !SWAMP_DOMAIN_LEVEL.location().equals(id)) {
+                ResourceKey<Level> returnKey = ResourceKey.create(Registries.DIMENSION, id);
+                ServerLevel returnLevel = currentLevel.getServer().getLevel(returnKey);
                 if (returnLevel != null) {
                     return returnLevel;
                 }
@@ -885,6 +913,21 @@ public final class SwampDemonArt {
         }
 
         return currentLevel.getServer().overworld();
+    }
+
+    private static boolean teleportOutOfSwampDomain(LivingEntity entity, ServerLevel sourceLevel) {
+        if (!sourceLevel.dimension().equals(SWAMP_DOMAIN_LEVEL)) {
+            return false;
+        }
+
+        ServerLevel returnLevel = resolveSwampDomainReturnLevel(sourceLevel, entity);
+        Vec3 returnPos = getStoredReturnPosition(entity);
+        if (returnPos == null || returnLevel.dimension().equals(SWAMP_DOMAIN_LEVEL)) {
+            BlockPos spawn = returnLevel.getSharedSpawnPos();
+            returnPos = new Vec3(spawn.getX() + 0.5D, spawn.getY() + 1.0D, spawn.getZ() + 0.5D);
+        }
+
+        return teleportThroughPortal(entity, returnLevel.dimension(), returnPos, true);
     }
 
     private static Vec3 clampPortalSpawn(ServerLevel level, Vec3 pos) {
@@ -945,6 +988,34 @@ public final class SwampDemonArt {
 
     private static boolean isLeavingSwampDomain(ServerLevel sourceLevel, ResourceKey<Level> targetDimension) {
         return sourceLevel.dimension().equals(SWAMP_DOMAIN_LEVEL) && !SWAMP_DOMAIN_LEVEL.equals(targetDimension);
+    }
+
+    private static void neutralizeSwampDomainBuoyancy(LivingEntity entity) {
+        if (entity instanceof Player
+            || !entity.level().dimension().equals(SWAMP_DOMAIN_LEVEL)
+            || !entity.isInWaterOrBubble()) {
+            return;
+        }
+
+        Vec3 movement = entity.getDeltaMovement();
+        double yVelocity = movement.y;
+        boolean allowControlledSwampDemonRise = entity instanceof SwampDemonEntity demon
+            && demon.getTarget() != null
+            && demon.getTarget().isAlive();
+
+        if (yVelocity > 0.0D) {
+            yVelocity = allowControlledSwampDemonRise
+                ? Math.min(yVelocity, SWAMP_DOMAIN_MAX_CONTROLLED_RISE_SPEED)
+                : 0.0D;
+        } else if (Math.abs(yVelocity) < 0.003D && !allowControlledSwampDemonRise) {
+            yVelocity = SWAMP_DOMAIN_PASSIVE_SINK_SPEED;
+        }
+
+        if (yVelocity != movement.y) {
+            entity.setDeltaMovement(movement.x, yVelocity, movement.z);
+            entity.hurtMarked = true;
+        }
+        entity.fallDistance = 0.0F;
     }
 
     private static void clearNearbySwampPortals(ServerLevel level, Vec3 center, double radius) {
@@ -1211,7 +1282,7 @@ public final class SwampDemonArt {
             return;
         }
 
-        if (serverLevel.dimension().equals(SWAMP_DOMAIN_LEVEL)) {
+        if (serverLevel.dimension().equals(SWAMP_DOMAIN_LEVEL) || isMtFujikasane(serverLevel)) {
             return;
         }
 
@@ -1373,7 +1444,18 @@ public final class SwampDemonArt {
     }
 
     public static boolean teleportThroughPortal(Entity entity, ResourceKey<Level> targetDimension, Vec3 targetPos) {
+        return teleportThroughPortal(entity, targetDimension, targetPos, false);
+    }
+
+    private static boolean teleportThroughPortal(Entity entity, ResourceKey<Level> targetDimension, Vec3 targetPos,
+                                                boolean ignoreSwampDomainExitLock) {
         if (!(entity.level() instanceof ServerLevel sourceLevel)) {
+            return false;
+        }
+        if (isMtFujikasane(sourceLevel) && SWAMP_DOMAIN_LEVEL.equals(targetDimension)) {
+            return false;
+        }
+        if (sourceLevel.dimension().equals(targetDimension)) {
             return false;
         }
         ServerLevel targetLevel = sourceLevel.getServer().getLevel(targetDimension);
@@ -1388,7 +1470,7 @@ public final class SwampDemonArt {
 
         boolean leavingSwampDomain = isLeavingSwampDomain(sourceLevel, targetDimension);
         boolean enteringSwampDomain = !sourceLevel.dimension().equals(SWAMP_DOMAIN_LEVEL) && SWAMP_DOMAIN_LEVEL.equals(targetDimension);
-        if (isPortalTeleportBlocked(entity, targetDimension)) {
+        if (isPortalTeleportBlocked(entity, targetDimension, ignoreSwampDomainExitLock)) {
             return false;
         }
         Vec3 storedReturnPos = getStoredReturnPosition(entity);
@@ -1457,8 +1539,16 @@ public final class SwampDemonArt {
     }
 
     public static boolean isPortalTeleportBlocked(Entity entity, ResourceKey<Level> targetDimension) {
+        return isPortalTeleportBlocked(entity, targetDimension, false);
+    }
+
+    private static boolean isPortalTeleportBlocked(Entity entity, ResourceKey<Level> targetDimension,
+                                                  boolean ignoreSwampDomainExitLock) {
         if (!(entity.level() instanceof ServerLevel serverLevel)) {
             return false;
+        }
+        if (isMtFujikasane(serverLevel) && SWAMP_DOMAIN_LEVEL.equals(targetDimension)) {
+            return true;
         }
 
         long gameTime = serverLevel.getGameTime();
@@ -1468,7 +1558,8 @@ public final class SwampDemonArt {
 
         boolean leavingSwampDomain = isLeavingSwampDomain(serverLevel, targetDimension);
         if (leavingSwampDomain) {
-            return entity.getPersistentData().getLong(SWAMP_DOMAIN_EXIT_LOCK_TAG) > gameTime;
+            return !ignoreSwampDomainExitLock
+                && entity.getPersistentData().getLong(SWAMP_DOMAIN_EXIT_LOCK_TAG) > gameTime;
         }
 
         boolean enteringSwampDomain = !serverLevel.dimension().equals(SWAMP_DOMAIN_LEVEL) && SWAMP_DOMAIN_LEVEL.equals(targetDimension);
@@ -1503,6 +1594,9 @@ public final class SwampDemonArt {
                 } else if (puddledNow) {
                     syncPuddleCollisionBox(entity);
                 }
+            }
+            if (!entity.level().isClientSide && entity.level().dimension().equals(SWAMP_DOMAIN_LEVEL)) {
+                neutralizeSwampDomainBuoyancy(entity);
             }
             if (entity.level().dimension().equals(SWAMP_DOMAIN_LEVEL)
                 && !(entity instanceof Player)
@@ -1628,7 +1722,7 @@ public final class SwampDemonArt {
             }
 
             ServerLevel swampDomain = event.getServer().getLevel(SWAMP_DOMAIN_LEVEL);
-            if (swampDomain == null || swampDomain.players().isEmpty()) {
+            if (swampDomain == null) {
                 return;
             }
 
@@ -1639,6 +1733,11 @@ public final class SwampDemonArt {
             );
 
             for (LivingEntity living : entitiesAboveCeiling) {
+                if (living instanceof ServerPlayer player) {
+                    teleportOutOfSwampDomain(player, swampDomain);
+                    continue;
+                }
+
                 Vec3 movement = living.getDeltaMovement();
                 double yVelocity = Math.min(movement.y, SWAMP_DOMAIN_CEILING_DOWNWARD_SPEED);
                 living.setDeltaMovement(movement.x, yVelocity, movement.z);

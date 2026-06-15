@@ -11,7 +11,10 @@ import com.lerdorf.kimetsunoyaibamultiplayer.raids.StructureLocationCache;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SunBreathingLevelHelper;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -20,9 +23,14 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -43,6 +51,20 @@ public final class QuestProgressionManager {
     private static final ResourceLocation HOUSE_TAMAYO = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_tamayo");
     private static final ResourceLocation SUSAMARU_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "susamaru");
     private static final ResourceLocation YAHABA_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "yahaba");
+    private static final String SWORDSMITH_VILLAGE_LOCATION_ID = "swordsmith_village";
+    private static final String SWORDSMITH_NAV_MESSAGE_TICK = "KnYSwordsmithVillageNavMessageTick";
+    private static final String SWORDSMITH_NAV_STRUCTURE_X = "KnYSwordsmithVillageNavStructureX";
+    private static final String SWORDSMITH_NAV_STRUCTURE_Z = "KnYSwordsmithVillageNavStructureZ";
+    private static final String SWORDSMITH_NAV_KAKUSHI_TAG = "KnYSwordsmithVillageGuideKakushi";
+    private static final int SWORDSMITH_NAV_MESSAGE_COOLDOWN_TICKS = 20 * 30;
+    private static final double SWORDSMITH_KAKUSHI_SEARCH_RADIUS = 48.0D;
+    private static final ResourceLocation KAKUSHI_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "kakushi");
+    private static final List<ResourceLocation> SWORDSMITH_ACCESS_STRUCTURES = List.of(
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_kocho"),
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_rengoku"),
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_ubuyashiki"),
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "graveyard")
+    );
 
     private static final ResourceLocation COMPLETED_FINAL_SELECTION = ResourceLocation.fromNamespaceAndPath(
         KimetsunoyaibaMultiplayer.MODID, "completed_final_selectioni");
@@ -58,6 +80,7 @@ public final class QuestProgressionManager {
 
         // Process any queued delayed messages
         QuestScenarioActions.processDelayedMessages(player);
+        tickSwordsmithVillageNavigation(player);
 
         QuestRuntimeContext context = getOrInitializeContext(player, role);
         if (context == null) {
@@ -274,6 +297,47 @@ public final class QuestProgressionManager {
             player.getPersistentData().getInt(MeditationStatsTracker.HUMAN_KILLS_TOTAL));
     }
 
+    public static void copyQuestProgressOnClone(Player original, Player clone) {
+        if (original == null || clone == null) {
+            return;
+        }
+
+        CompoundTag originalData = original.getPersistentData();
+        CompoundTag cloneData = clone.getPersistentData();
+
+        List<String> cloneKeys = new ArrayList<>(cloneData.getAllKeys());
+        for (String key : cloneKeys) {
+            if (isQuestProgressKey(key)) {
+                cloneData.remove(key);
+            }
+        }
+
+        for (String key : originalData.getAllKeys()) {
+            if (!isQuestProgressKey(key)) {
+                continue;
+            }
+            Tag value = originalData.get(key);
+            if (value != null) {
+                cloneData.put(key, value.copy());
+            }
+        }
+    }
+
+    private static boolean isQuestProgressKey(String key) {
+        return key.startsWith("KnYQuest")
+            || key.startsWith("KnYKazumi")
+            || key.startsWith("KnYKidnappersBog")
+            || key.startsWith("KnYSwamp")
+            || key.startsWith("KnYTamayo")
+            || key.startsWith("KnYSusamaru")
+            || key.startsWith("KnYYahaba")
+            || key.startsWith("KnYYushiro")
+            || key.startsWith("KnYDelayed")
+            || key.equals("KnYEnteredSwampDomain")
+            || key.equals("KnYDoctorsRequestUnlocked")
+            || key.equals(PERMANENCE_FIRST_TASTE_PROGRESS);
+    }
+
     public static boolean handleCrowInteract(ServerPlayer player, PlayerRole role) {
         if (!CustomProgressionConfig.isCustomProgressionEnabled()) {
             return false;
@@ -295,6 +359,9 @@ public final class QuestProgressionManager {
             ), player);
             player.sendSystemMessage(Component.literal("§6[Crow] §f" + meditationMarker.name() + " is at "
                 + meditationMarker.position().getX() + " ~ " + meditationMarker.position().getZ()));
+            if (meditationMarker.extraCrowMessage() != null && !meditationMarker.extraCrowMessage().isBlank()) {
+                player.sendSystemMessage(Component.literal("§6[Crow] §f" + meditationMarker.extraCrowMessage()));
+            }
             return true;
         }
 
@@ -369,6 +436,10 @@ public final class QuestProgressionManager {
             return null;
         }
 
+        if (SWORDSMITH_VILLAGE_LOCATION_ID.equals(locationId)) {
+            return resolveSwordsmithVillageMarker(player, serverLevel, true);
+        }
+
         ResourceLocation structureId = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", locationId);
         TagKey<Structure> tagKey = QuestStructureTags.tagFor(structureId);
         BlockPos structurePos = serverLevel.findNearestMapStructure(tagKey,
@@ -390,10 +461,184 @@ public final class QuestProgressionManager {
             case "house_tanjiro" -> "Tanjiro House";
             case "house_ubuyashiki" -> "Ubuyashiki House";
             case "house_urokodaki" -> "Urokodaki House";
+            case SWORDSMITH_VILLAGE_LOCATION_ID -> "Swordsmith Village";
             default -> locationId;
         };
 
         return new MarkerResult(displayName, surfacePos);
+    }
+
+    private static MarkerResult resolveSwordsmithVillageMarker(ServerPlayer player, ServerLevel serverLevel, boolean includePrompt) {
+        StructureLocationCache.CachedStructure currentStructure = StructureLocationCache
+            .getStructureAt(serverLevel, player.blockPosition())
+            .filter(cached -> isSwordsmithAccessStructure(cached.structureId))
+            .orElse(null);
+
+        if (currentStructure != null) {
+            Mob kakushi = ensureSwordsmithGuideKakushi(serverLevel, currentStructure);
+            if (kakushi == null) {
+                return new MarkerResult("Swordsmith Village Kakushi", currentStructure.center);
+            }
+            return new MarkerResult(
+                "Swordsmith Village Kakushi",
+                kakushi.blockPosition(),
+                includePrompt ? "Show your Scarlet Ore to the Kakushi to be transported to the Swordsmith Village." : null
+            );
+        }
+
+        MarkerResult nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
+        for (ResourceLocation structureId : SWORDSMITH_ACCESS_STRUCTURES) {
+            BlockPos structurePos = serverLevel.findNearestMapStructure(
+                QuestStructureTags.tagFor(structureId),
+                player.blockPosition(),
+                100,
+                false
+            );
+            if (structurePos == null) {
+                continue;
+            }
+
+            int y = serverLevel.getHeight(Heightmap.Types.WORLD_SURFACE, structurePos.getX(), structurePos.getZ());
+            BlockPos surfacePos = new BlockPos(structurePos.getX(), y + 1, structurePos.getZ());
+            double distance = player.blockPosition().distSqr(surfacePos);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = new MarkerResult("Swordsmith Village", surfacePos);
+            }
+        }
+
+        return nearest;
+    }
+
+    private static void tickSwordsmithVillageNavigation(ServerPlayer player) {
+        String selectedType = player.getPersistentData().getString("MeditationSelectedType");
+        String selectedId = player.getPersistentData().getString("MeditationSelectedId");
+        if (!SELECTED_TYPE_LOCATION.equals(selectedType) || !SWORDSMITH_VILLAGE_LOCATION_ID.equals(selectedId)) {
+            return;
+        }
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        StructureLocationCache.CachedStructure currentStructure = StructureLocationCache
+            .getStructureAt(serverLevel, player.blockPosition())
+            .filter(cached -> isSwordsmithAccessStructure(cached.structureId))
+            .orElse(null);
+        if (currentStructure == null) {
+            return;
+        }
+
+        Mob kakushi = ensureSwordsmithGuideKakushi(serverLevel, currentStructure);
+        if (kakushi == null) {
+            return;
+        }
+
+        long now = serverLevel.getGameTime();
+        int lastX = player.getPersistentData().getInt(SWORDSMITH_NAV_STRUCTURE_X);
+        int lastZ = player.getPersistentData().getInt(SWORDSMITH_NAV_STRUCTURE_Z);
+        long lastMessageTick = player.getPersistentData().getLong(SWORDSMITH_NAV_MESSAGE_TICK);
+        boolean sameStructure = lastX == currentStructure.center.getX() && lastZ == currentStructure.center.getZ();
+        if (sameStructure && now - lastMessageTick < SWORDSMITH_NAV_MESSAGE_COOLDOWN_TICKS) {
+            return;
+        }
+
+        player.getPersistentData().putInt(SWORDSMITH_NAV_STRUCTURE_X, currentStructure.center.getX());
+        player.getPersistentData().putInt(SWORDSMITH_NAV_STRUCTURE_Z, currentStructure.center.getZ());
+        player.getPersistentData().putLong(SWORDSMITH_NAV_MESSAGE_TICK, now);
+
+        ModNetworking.sendToPlayer(new SetCrowQuestMarkerPacket(
+            Vec3.atBottomCenterOf(kakushi.blockPosition()),
+            20 * 60
+        ), player);
+        player.sendSystemMessage(Component.literal(
+            "§6[Crow] §fShow your Scarlet Ore to the Kakushi to be transported to the Swordsmith Village."
+        ));
+    }
+
+    private static boolean isSwordsmithAccessStructure(ResourceLocation structureId) {
+        return SWORDSMITH_ACCESS_STRUCTURES.contains(structureId);
+    }
+
+    private static Mob ensureSwordsmithGuideKakushi(ServerLevel level, StructureLocationCache.CachedStructure structure) {
+        Mob existing = findSwordsmithGuideKakushi(level, structure.center);
+        if (existing != null) {
+            configureSwordsmithGuideKakushi(existing);
+            return existing;
+        }
+
+        EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getOptional(KAKUSHI_ID).orElse(null);
+        if (entityType == null) {
+            return null;
+        }
+
+        BlockPos spawnPos = findSafeSurfacePosNear(level, structure.center, 24);
+        if (spawnPos == null) {
+            return null;
+        }
+
+        Entity created = entityType.create(level);
+        if (!(created instanceof Mob kakushi)) {
+            return null;
+        }
+
+        kakushi.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D, 0.0F, 0.0F);
+        configureSwordsmithGuideKakushi(kakushi);
+        kakushi.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), MobSpawnType.MOB_SUMMONED, null, null);
+        return level.addFreshEntity(kakushi) ? kakushi : null;
+    }
+
+    private static Mob findSwordsmithGuideKakushi(ServerLevel level, BlockPos center) {
+        List<Mob> kakushi = level.getEntitiesOfClass(
+            Mob.class,
+            new AABB(center).inflate(SWORDSMITH_KAKUSHI_SEARCH_RADIUS),
+            mob -> mob.isAlive() && KAKUSHI_ID.equals(EntityType.getKey(mob.getType()))
+        );
+        if (kakushi.isEmpty()) {
+            return null;
+        }
+        return kakushi.stream()
+            .min(java.util.Comparator.comparingDouble(mob -> mob.blockPosition().distSqr(center)))
+            .orElse(null);
+    }
+
+    private static void configureSwordsmithGuideKakushi(Mob kakushi) {
+        kakushi.setPersistenceRequired();
+        kakushi.getPersistentData().putBoolean(SWORDSMITH_NAV_KAKUSHI_TAG, true);
+    }
+
+    private static BlockPos findSafeSurfacePosNear(ServerLevel level, BlockPos center, int maxRadius) {
+        for (int radius = 0; radius <= maxRadius; radius++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue;
+                    }
+                    int x = center.getX() + dx;
+                    int z = center.getZ() + dz;
+                    int y = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
+                    BlockPos candidate = new BlockPos(x, y, z);
+                    if (isSafeSpawnSurface(level, candidate)) {
+                        return candidate;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean isSafeSpawnSurface(ServerLevel level, BlockPos pos) {
+        if (!level.isLoaded(pos)) {
+            return false;
+        }
+
+        BlockState feet = level.getBlockState(pos);
+        BlockState head = level.getBlockState(pos.above());
+        BlockState below = level.getBlockState(pos.below());
+
+        return below.isSolidRender(level, pos.below())
+            && feet.getCollisionShape(level, pos).isEmpty()
+            && head.getCollisionShape(level, pos.above()).isEmpty();
     }
 
     private static MarkerResult resolveQuestMarker(ServerPlayer player, PlayerRole role, String questGroupId) {
@@ -411,7 +656,11 @@ public final class QuestProgressionManager {
         return new MarkerResult(stepName, targetPos);
     }
 
-    private record MarkerResult(String name, BlockPos position) { }
+    private record MarkerResult(String name, BlockPos position, String extraCrowMessage) {
+        private MarkerResult(String name, BlockPos position) {
+            this(name, position, null);
+        }
+    }
 
     public static List<MeditationMenuData.QuestEntry> buildQuestEntries(ServerPlayer player, PlayerRole role) {
         QuestRuntimeContext active = getOrInitializeContext(player, role);
@@ -631,7 +880,7 @@ public final class QuestProgressionManager {
         for (QuestRewardDefinition.ItemReward itemReward : rewards.itemRewards()) {
             Item item = ForgeRegistries.ITEMS.getValue(itemReward.itemId());
             if (item != null) {
-                player.getInventory().placeItemBackInInventory(new ItemStack(item, itemReward.count()));
+                QuestItemHelper.addQuestItem(player, new ItemStack(item, itemReward.count()));
             }
         }
         for (ResourceLocation advancementId : rewards.advancementRewards()) {

@@ -10,13 +10,12 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.event.GrindstoneEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.network.NetworkHooks;
 
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -58,27 +57,35 @@ public final class AlchemyInteractionHandler {
                 return;
             }
         }
+    }
 
-        if (!event.getLevel().getBlockState(event.getPos()).is(Blocks.GRINDSTONE)) {
-            return;
+    @SubscribeEvent
+    public static void onGrindstonePlaceItem(GrindstoneEvent.OnPlaceItem event) {
+        ItemStack output = grindstoneOutput(event.getTopItem(), event.getBottomItem());
+        if (!output.isEmpty()) {
+            event.setOutput(output);
+            event.setXp(0);
+        }
+    }
+
+    private static ItemStack grindstoneOutput(ItemStack top, ItemStack bottom) {
+        boolean hasTop = !top.isEmpty();
+        boolean hasBottom = !bottom.isEmpty();
+        if (hasTop == hasBottom) {
+            return ItemStack.EMPTY;
         }
 
-        ItemStack held = event.getItemStack();
+        ItemStack input = hasTop ? top : bottom;
+        if (input.getCount() != 1) {
+            return ItemStack.EMPTY;
+        }
+
         ItemStack output = ItemStack.EMPTY;
-        if (held.is(Items.BONE)) {
+        if (input.is(Items.BONE)) {
             output = new ItemStack(ModAlchemyItems.BONE_DUST.get(), 1);
-        } else if (held.is(Items.CALCITE)) {
+        } else if (input.is(Items.CALCITE)) {
             output = new ItemStack(ModAlchemyItems.CALCITE_POWDER.get(), 1);
         }
-
-        if (output.isEmpty()) {
-            return;
-        }
-
-        held.shrink(1);
-        ItemHandlerHelper.giveItemToPlayer(event.getEntity(), output);
-        event.getLevel().playSound(null, event.getPos(), SoundEvents.GRINDSTONE_USE, SoundSource.BLOCKS, 1.0F, 1.0F);
-        event.setCanceled(true);
-        event.setCancellationResult(InteractionResult.CONSUME);
+        return output;
     }
 }

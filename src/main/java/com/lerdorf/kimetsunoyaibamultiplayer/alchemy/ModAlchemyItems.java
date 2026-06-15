@@ -127,6 +127,7 @@ public final class ModAlchemyItems {
             .icon(() -> new ItemStack(CRUDE_VIAL.get()))
             .displayItems((parameters, output) -> {
                 output.accept(ModAlchemyBlocks.ALCHEMY_TABLE.get());
+                output.accept(ModAlchemyBlocks.VIAL_RACK.get());
                 output.accept(ModAlchemyBlocks.FERMENTED_ORCHID.get());
                 output.accept(ModAlchemyBlocks.IMMORTAL_DAISY.get());
                 for (RegistryObject<Item> item : TAB_ITEMS) {

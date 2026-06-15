@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig;
 import com.mojang.logging.LogUtils;
@@ -17,7 +18,9 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -80,7 +83,32 @@ public class CrowEnhancementHandler {
         }
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onCrowAttack(LivingAttackEvent event) {
+        Entity entity = event.getEntity();
+        DamageSource source = event.getSource();
+
+        if (!isKasugaiCrow(entity)) {
+            return;
+        }
+
+        if (source.getMsgId().equals("fall")) {
+            event.setCanceled(true);
+            return;
+        }
+
+        if (shouldAlwaysCancelCrowDamage(source)) {
+            event.setCanceled(true);
+            return;
+        }
+
+        if (shouldCancelNonFlyingCrowDamage(entity)) {
+            event.setCanceled(true);
+            initiateCrowFlight(entity);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onCrowHurt(LivingHurtEvent event) {
         Entity entity = event.getEntity();
         DamageSource source = event.getSource();
@@ -119,14 +147,16 @@ public class CrowEnhancementHandler {
             return;
         }
 
-        // Check if enhancements are enabled before handling flying dodge
-        if (!EntityConfig.crowEnhancementsEnabled || !EntityConfig.crowFlyingDodgeEnabled) {
+        if (shouldAlwaysCancelCrowDamage(source)) {
+            event.setCanceled(true);
+            if (Config.logDebug)
+                Log.info("Cancelled demon slayer damage to kasugai crow");
             return;
         }
 
-        // Check if it's tamed
-        if (!(entity instanceof TamableAnimal tamable) || !tamable.isTame() || tamable.getOwner() == null) {
-            return; // Only handle tamed crows
+        // Check if enhancements are enabled before handling flying dodge
+        if (!shouldCrowDodgeDamage(entity)) {
+            return;
         }
 
         CrowFlyingState state = flyingCrows.get(entity.getUUID());
@@ -152,11 +182,10 @@ public class CrowEnhancementHandler {
             return;
         }
 
-        // If crow is ALREADY flying, allow damage (crow can be killed while flying)
+        // If crow is ALREADY flying, allow non-slayer damage.
         if (state != null && state.isFlying()) {
-            // Don't cancel - let the crow take damage
         	if (Config.logDebug)
-            Log.info("Crow is flying - allowing damage (crow can die while flying)");
+            Log.info("Crow is flying - allowing non-slayer damage");
             return;
         }
 
@@ -439,10 +468,45 @@ public class CrowEnhancementHandler {
         }
     }
 
-    private static boolean isKasugaiCrow(Entity entity) {
+    public static boolean isKasugaiCrow(Entity entity) {
+        if (entity == null || entity.getType() == null) {
+            return false;
+        }
         // Check entity type
         String entityType = entity.getType().toString();
         return entityType.contains("kasugai_crow");
+    }
+
+    private static boolean shouldCrowDodgeDamage(Entity entity) {
+        if (!EntityConfig.crowEnhancementsEnabled || !EntityConfig.crowFlyingDodgeEnabled) {
+            return false;
+        }
+
+        if (!(entity instanceof TamableAnimal tamable)) {
+            return false;
+        }
+
+        return tamable.isTame() && tamable.getOwner() != null;
+    }
+
+    private static boolean shouldCancelNonFlyingCrowDamage(Entity entity) {
+        if (!shouldCrowDodgeDamage(entity)) {
+            return false;
+        }
+
+        CrowFlyingState state = flyingCrows.get(entity.getUUID());
+        return state == null || !state.isFlying();
+    }
+
+    private static boolean shouldAlwaysCancelCrowDamage(DamageSource source) {
+        Entity causingEntity = source.getEntity();
+        Entity directEntity = source.getDirectEntity();
+
+        return isDemonSlayerDamageSource(causingEntity) || isDemonSlayerDamageSource(directEntity);
+    }
+
+    private static boolean isDemonSlayerDamageSource(Entity sourceEntity) {
+        return sourceEntity instanceof LivingEntity living && Damager.isDemonSlayer(living);
     }
 
     public static void clearFlyingCrows() {

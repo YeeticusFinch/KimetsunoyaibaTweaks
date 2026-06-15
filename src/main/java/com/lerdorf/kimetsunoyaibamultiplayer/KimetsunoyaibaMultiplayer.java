@@ -532,6 +532,8 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.commands.MeditationMenuCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugPlayerDimensionsCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.RepairHouseTamayoCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.TestTamayoHouseCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.LocalPosCommand.register(event.getDispatcher());
         Log.startupProbe("KimetsunoyaibaMultiplayer.onRegisterCommands.end");
     }
 

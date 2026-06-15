@@ -2,8 +2,10 @@ package com.lerdorf.kimetsunoyaibamultiplayer;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 
 import net.minecraft.nbt.CompoundTag;
@@ -29,6 +31,10 @@ public class Damager {
 	 * proper NBT tags or entity type checks.
 	 */
 	public static boolean isDemonSlayer(LivingEntity entity) {
+		if (CrowEnhancementHandler.isKasugaiCrow(entity)) {
+			return false;
+		}
+
 		// Check if entity has the demon slayer corps NBT tag
 		if (entity.getPersistentData().getBoolean("kisatsutai")) {
 			return true;
@@ -67,6 +73,10 @@ public class Damager {
 	 */
 	public static boolean isDemon(LivingEntity entity) {
 		if (entity == null) {
+			return false;
+		}
+
+		if (CrowEnhancementHandler.isKasugaiCrow(entity)) {
 			return false;
 		}
 
@@ -217,6 +227,10 @@ public class Damager {
 			return false;
 		}
 
+		if (CrowEnhancementHandler.isKasugaiCrow(entity)) {
+			return false;
+		}
+
 		// Don't attack self
 		if (entity.equals(attacker)) {
 			return false;
@@ -282,6 +296,14 @@ public class Damager {
 	 */
 	public static boolean hurt(LivingEntity source, LivingEntity target, float damage, boolean resetInvulnerability) {
 		if (source == null || target == null) {
+			return false;
+		}
+
+		if (CrowEnhancementHandler.isKasugaiCrow(target) && isDemonSlayer(source)) {
+			return false;
+		}
+
+		if (target instanceof Player player && DemonTransformationHandler.isTransforming(player) && isDemon(source)) {
 			return false;
 		}
 
@@ -378,6 +400,10 @@ public class Damager {
 			return false;
 		}
 
+		if (CrowEnhancementHandler.isKasugaiCrow(target)) {
+			return false;
+		}
+
 		if (source == target) {
 			return false;
 		}
@@ -399,6 +425,10 @@ public class Damager {
 	
 	public static boolean canDemonSlayerDamageTarget(LivingEntity source, LivingEntity target) {
 		if (source == null || target == null) {
+			return false;
+		}
+
+		if (CrowEnhancementHandler.isKasugaiCrow(target)) {
 			return false;
 		}
 

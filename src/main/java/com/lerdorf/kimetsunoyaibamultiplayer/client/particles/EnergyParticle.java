@@ -84,6 +84,17 @@ public class EnergyParticle extends TextureSheetParticle {
     }
 
     @Override
+    public int getLightColor(float partialTick) {
+        float brightness = Math.max(rCol, Math.max(gCol, bCol));
+
+        if (brightness > 0.5F) {
+            return 0xF000F0; // fullbright
+        }
+
+        return super.getLightColor(partialTick);
+    }
+
+    @Override
     public ParticleRenderType getRenderType() {
         return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }

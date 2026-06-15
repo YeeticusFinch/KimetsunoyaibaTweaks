@@ -50,6 +50,11 @@ public class BloodFlameParticle extends TextureSheetParticle {
     }
 
     @Override
+    public int getLightColor(float partialTick) {
+        return 0xFF1964; // fullbright, same style as flame/lava-ish particles
+    }
+
+    @Override
     public void tick() {
         super.tick();
         if (this.age > this.lifetime - 6) {

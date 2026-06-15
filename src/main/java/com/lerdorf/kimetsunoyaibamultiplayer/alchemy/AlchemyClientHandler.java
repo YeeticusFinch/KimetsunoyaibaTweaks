@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.alchemy;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.AlchemyTableRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.VialRackRenderer;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -24,7 +25,9 @@ public final class AlchemyClientHandler {
         event.enqueueWork(() -> {
             MenuScreens.register(ModAlchemyMenus.MICROSCOPE.get(), MicroscopeScreen::new);
             MenuScreens.register(ModAlchemyMenus.ALCHEMY_TABLE.get(), AlchemyTableScreen::new);
+            MenuScreens.register(ModAlchemyMenus.VIAL_RACK.get(), VialRackScreen::new);
             ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.ALCHEMY_TABLE.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.VIAL_RACK.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.FERMENTED_ORCHID.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.POTTED_FERMENTED_ORCHID.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.IMMORTAL_DAISY.get(), RenderType.cutout());
@@ -35,6 +38,7 @@ public final class AlchemyClientHandler {
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.ALCHEMY_TABLE.get(), AlchemyTableRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.VIAL_RACK.get(), VialRackRenderer::new);
     }
 
     @SubscribeEvent

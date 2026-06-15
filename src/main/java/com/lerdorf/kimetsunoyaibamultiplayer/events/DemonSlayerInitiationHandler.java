@@ -510,14 +510,48 @@ public class DemonSlayerInitiationHandler {
         if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
             return;
         }
-        if (hasAdvancement(player, DEMON_SLAYER_CORPS)) {
+        boolean hasBaseCorps = hasAdvancement(player, DEMON_SLAYER_CORPS);
+        boolean hasCustomCorps = hasAdvancement(player, CUSTOM_DEMON_SLAYER_CORPS);
+        if (hasBaseCorps && hasCustomCorps) {
             return;
         }
 
-        ensureDemonSlayerCorpsAdvancement(player);
+        if (!hasBaseCorps) {
+            ensureDemonSlayerCorpsAdvancement(player);
+        }
+        if (!hasCustomCorps) {
+            awardCustomAdvancement(player, CUSTOM_DEMON_SLAYER_CORPS);
+        }
 
         if (CustomProgressionConfig.enableDebugLogging.get()) {
             Log.debug("[KnY-MP Progression] Triggered custom initiation for {} ({})",
+                player.getName().getString(), reason);
+        }
+    }
+
+    public static void completeFinalSelectionInitiation(ServerPlayer player, String reason) {
+        if (player == null || player.getServer() == null) {
+            return;
+        }
+
+        boolean hasBaseCorps = hasAdvancement(player, DEMON_SLAYER_CORPS);
+        boolean hasCustomCorps = hasAdvancement(player, CUSTOM_DEMON_SLAYER_CORPS);
+        if (!hasBaseCorps) {
+            ensureDemonSlayerCorpsAdvancement(player);
+        }
+        if (!hasCustomCorps) {
+            awardCustomAdvancement(player, CUSTOM_DEMON_SLAYER_CORPS);
+        }
+
+        if (CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
+            pendingItemRemoval.remove(player.getUUID());
+            pendingCrowBlock.remove(player.getUUID());
+            removeInitiationItems(player);
+            removeRecentlyTamedCrows(player);
+        }
+
+        if (CustomProgressionConfig.enableDebugLogging.get() && (!hasBaseCorps || !hasCustomCorps)) {
+            Log.debug("[KnY-MP Progression] Completed final selection initiation for {} ({})",
                 player.getName().getString(), reason);
         }
     }

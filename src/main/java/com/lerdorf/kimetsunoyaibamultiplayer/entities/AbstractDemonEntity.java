@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -264,6 +265,12 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         super.dropCustomDeathLoot(source, lootingLevel, recentlyHit);
 
         if (suppressLootDrops) {
+            return;
+        }
+
+        if (CustomProgressionConfig.customDemonInitiation != null
+            && CustomProgressionConfig.customDemonInitiation.get()
+            && !EntityTagHelper.isTwelveKizuki(this)) {
             return;
         }
 

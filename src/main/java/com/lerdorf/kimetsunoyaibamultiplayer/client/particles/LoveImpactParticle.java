@@ -66,6 +66,12 @@ public class LoveImpactParticle extends TextureSheetParticle {
     }
 
     @Override
+    public int getLightColor(float partialTick) {
+        return 0xFF94D7; // fullbright, same style as flame/lava-ish particles
+    }
+
+
+    @Override
     public void tick() {
         this.xo = this.x;
         this.yo = this.y;

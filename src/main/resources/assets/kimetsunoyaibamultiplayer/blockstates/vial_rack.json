@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "rotation=0": {
+      "model": "kimetsunoyaibamultiplayer:block/vial_rack"
+    },
+    "rotation=1": {
+      "model": "kimetsunoyaibamultiplayer:block/vial_rack"
+    },
+    "rotation=2": {
+      "model": "kimetsunoyaibamultiplayer:block/vial_rack"
+    },
+    "rotation=3": {
+      "model": "kimetsunoyaibamultiplayer:block/vial_rack"
+    },
+    "rotation=4": {
+      "model": "kimetsunoyaibamultiplayer:block/vial_rack"
+    },
+    "rotation=5": {
+      "model": "kimetsunoyaibamultiplayer:block/vial_rack"
+    },
+    "rotation=6": {
+      "model": "kimetsunoyaibamultiplayer:block/vial_rack"
+    },
+    "rotation=7": {
+      "model": "kimetsunoyaibamultiplayer:block/vial_rack"
+    }
+  }
+}

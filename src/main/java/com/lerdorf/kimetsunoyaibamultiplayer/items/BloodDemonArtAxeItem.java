@@ -74,7 +74,8 @@ public class BloodDemonArtAxeItem extends AxeItem {
 
         if (player.getCooldowns().isOnCooldown(this)) {
             if (level.isClientSide) {
-                player.displayClientMessage(Component.literal("§cAbility on cooldown!"), true);
+                player.displayClientMessage(Component.literal("This ability is still on cooldown")
+                    .withStyle(ChatFormatting.RED), true);
             }
             return InteractionResultHolder.fail(stack);
         }

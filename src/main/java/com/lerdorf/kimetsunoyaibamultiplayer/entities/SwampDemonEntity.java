@@ -19,6 +19,7 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Monster;
@@ -29,6 +30,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraftforge.common.ForgeMod;
 import net.minecraft.world.item.ItemStack;
@@ -53,7 +55,6 @@ public class SwampDemonEntity extends AbstractDemonEntity {
         new AttributeModifier(COMBAT_SPRINT_UUID, "Swamp demon combat sprint", 0.45D, AttributeModifier.Operation.MULTIPLY_TOTAL);
     private static final float WATER_SPEED_MULTIPLIER = 3.0F;
     private static final String SPAWN_PUDDLE_INIT_TAG = "SwampSpawnPuddleInitialized";
-    private static final double CLONE_DEATH_EJECT_RADIUS = 15.0D;
 
     private boolean canSplit = true;
     private boolean splitTriggered = false;
@@ -63,6 +64,9 @@ public class SwampDemonEntity extends AbstractDemonEntity {
 
     public SwampDemonEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
+        if (level.dimension().equals(SwampDemonArt.SWAMP_DOMAIN_LEVEL)) {
+            this.moveControl = new SwampDomainSwimMoveControl(this);
+        }
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -185,7 +189,7 @@ public class SwampDemonEntity extends AbstractDemonEntity {
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(0, new SwampDemonFloatGoal(this));
         this.goalSelector.addGoal(1, new SwampDemonMeleeGoal(this, 1.2D));
         this.goalSelector.addGoal(2, new SwampDemonRandomStrollGoal(this, 0.95D));
         this.goalSelector.addGoal(3, new LookAtPlayerGoal(this, Player.class, 8.0F));
@@ -208,9 +212,18 @@ public class SwampDemonEntity extends AbstractDemonEntity {
 
     @Override
     public void tick() {
+        if (!this.level().isClientSide && SwampDemonArt.isMtFujikasane(this.level())) {
+            this.discard();
+            return;
+        }
+
         super.tick();
 
         if (!this.level().isClientSide) {
+            if (isInSwampDomain() && !(this.moveControl instanceof SwampDomainSwimMoveControl)) {
+                this.moveControl = new SwampDomainSwimMoveControl(this);
+            }
+
             if (!this.getPersistentData().getBoolean(SPAWN_PUDDLE_INIT_TAG)) {
                 this.getPersistentData().putBoolean(SPAWN_PUDDLE_INIT_TAG, true);
                 SwampDemonArt.activateSpawnPuddle(this);
@@ -332,6 +345,10 @@ public class SwampDemonEntity extends AbstractDemonEntity {
 
     @Override
     protected void tickBloodDemonArt() {
+        if (SwampDemonArt.isMtFujikasane(this.level())) {
+            return;
+        }
+
         BloodDemonArtRegistry.RegisteredBloodDemonArt art = getBloodDemonArt();
         LivingEntity target = getTarget();
         if (art == null || target == null || !target.isAlive() || getBloodDemonArtCooldownTicks() > 0 || isUsingLockedAnimation()) {
@@ -447,66 +464,6 @@ public class SwampDemonEntity extends AbstractDemonEntity {
     }
 
     @Override
-    public void die(DamageSource damageSource) {
-        boolean ejectOnDeath = !this.level().isClientSide
-            && isSplitClone()
-            && isInSwampDomain();
-
-        super.die(damageSource);
-
-        if (ejectOnDeath && this.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-            boolean satokosBowQuestClone = "swamp_demon_kidnappers_bog_satoko".equals(
-                this.getPersistentData().getString(
-                    com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG));
-            java.util.List<LivingEntity> ejectedTargets = serverLevel.getEntitiesOfClass(LivingEntity.class,
-                this.getBoundingBox().inflate(CLONE_DEATH_EJECT_RADIUS),
-                target -> target.isAlive()
-                    && target instanceof ServerPlayer player
-                    && (DamageTracker.hasDamageHistory(this, player)
-                        || player.distanceToSqr(this) <= CLONE_DEATH_EJECT_RADIUS * CLONE_DEATH_EJECT_RADIUS));
-            for (LivingEntity living : ejectedTargets) {
-                net.minecraft.world.phys.Vec3 returnPos = new net.minecraft.world.phys.Vec3(
-                    living.getPersistentData().getDouble(SwampDemonArt.SWAMP_RETURN_X_TAG),
-                    living.getPersistentData().getDouble(SwampDemonArt.SWAMP_RETURN_Y_TAG),
-                    living.getPersistentData().getDouble(SwampDemonArt.SWAMP_RETURN_Z_TAG)
-                );
-                String storedDim = living.getPersistentData().getString(SwampDemonArt.SWAMP_RETURN_DIM_TAG);
-                net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(storedDim);
-                if (id != null) {
-                    SwampDemonArt.teleportThroughPortal(living,
-                        net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, id),
-                        returnPos);
-                    if (satokosBowQuestClone && living instanceof ServerPlayer player) {
-                        ensurePlayerHasSatokosBow(player);
-                    }
-                }
-            }
-        }
-    }
-
-    private static void ensurePlayerHasSatokosBow(ServerPlayer player) {
-        for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
-            ItemStack stack = player.getInventory().getItem(i);
-            if (!stack.isEmpty() && stack.is(ModItems.SATOKOS_BOW.get())) {
-                return;
-            }
-        }
-
-        ItemStack bow = new ItemStack(ModItems.SATOKOS_BOW.get());
-        if (player.getInventory().add(bow)) {
-            return;
-        }
-
-        int forcedSlot = player.getInventory().selected;
-        ItemStack displaced = player.getInventory().getItem(forcedSlot);
-        player.getInventory().setItem(forcedSlot, bow);
-        player.getInventory().setChanged();
-        if (!displaced.isEmpty()) {
-            player.drop(displaced, false);
-        }
-    }
-
-    @Override
     public boolean hurt(DamageSource source, float amount) {
         boolean damaged = super.hurt(source, amount);
         if (damaged && amount > 0.0F && !this.level().isClientSide) {
@@ -563,12 +520,42 @@ public class SwampDemonEntity extends AbstractDemonEntity {
         }
     }
 
+    private static class SwampDemonFloatGoal extends FloatGoal {
+        private final SwampDemonEntity demon;
+
+        private SwampDemonFloatGoal(SwampDemonEntity demon) {
+            super(demon);
+            this.demon = demon;
+        }
+
+        @Override
+        public boolean canUse() {
+            return !demon.isInSwampDomain() && super.canUse();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return !demon.isInSwampDomain() && super.canContinueToUse();
+        }
+    }
+
     private static class SwampDemonMeleeGoal extends MeleeAttackGoal {
         private final SwampDemonEntity demon;
+        private final double speedModifier;
 
         private SwampDemonMeleeGoal(SwampDemonEntity demon, double speedModifier) {
             super(demon, speedModifier, false);
             this.demon = demon;
+            this.speedModifier = speedModifier;
+        }
+
+        @Override
+        public void tick() {
+            super.tick();
+            LivingEntity target = demon.getTarget();
+            if (target != null && target.isAlive() && demon.isInSwampDomain() && demon.isInWaterOrBubble()) {
+                demon.getMoveControl().setWantedPosition(target.getX(), target.getY(0.5D), target.getZ(), speedModifier);
+            }
         }
 
         @Override
@@ -584,6 +571,49 @@ public class SwampDemonEntity extends AbstractDemonEntity {
             super.stop();
             if (demon.combatSprintTicks <= 0) {
                 demon.setSprinting(false);
+            }
+        }
+    }
+
+    private static class SwampDomainSwimMoveControl extends MoveControl {
+        private final SwampDemonEntity demon;
+
+        private SwampDomainSwimMoveControl(SwampDemonEntity demon) {
+            super(demon);
+            this.demon = demon;
+        }
+
+        @Override
+        public void tick() {
+            if (this.operation != MoveControl.Operation.MOVE_TO) {
+                demon.setSpeed(0.0F);
+                return;
+            }
+
+            double dx = this.wantedX - demon.getX();
+            double dy = this.wantedY - demon.getY();
+            double dz = this.wantedZ - demon.getZ();
+            double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (distance < 1.0E-6D) {
+                demon.setSpeed(0.0F);
+                return;
+            }
+
+            dy /= distance;
+            float targetYaw = (float)(Mth.atan2(dz, dx) * (180.0F / (float)Math.PI)) - 90.0F;
+            demon.setYRot(this.rotlerp(demon.getYRot(), targetYaw, 90.0F));
+            demon.yBodyRot = demon.getYRot();
+            demon.yHeadRot = demon.getYRot();
+
+            float speed = (float)(this.speedModifier * demon.getAttributeValue(Attributes.MOVEMENT_SPEED));
+            demon.setSpeed(speed);
+
+            if (demon.isInWaterOrBubble()) {
+                Vec3 movement = demon.getDeltaMovement();
+                double verticalSpeed = Mth.clamp(dy * 0.12D, -0.12D, 0.12D);
+                double cappedY = Mth.clamp((movement.y * 0.8D) + verticalSpeed, -0.18D, 0.18D);
+                demon.setDeltaMovement(movement.x, cappedY, movement.z);
+                demon.hurtMarked = true;
             }
         }
     }

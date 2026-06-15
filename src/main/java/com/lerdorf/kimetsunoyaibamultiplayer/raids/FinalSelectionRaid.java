@@ -68,7 +68,8 @@ public class FinalSelectionRaid {
     private static final int DAY_PASSIVE_ANIMAL_WAVES_PER_DAY_BREAK = 2;
     private static final int BOSS_ARROW_DURATION_TICKS = 20 * 20;
     private static final ResourceLocation HAND_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "hand_demon");
-    private static final ResourceLocation SWAMP_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "swamp_demon");
+    private static final ResourceLocation BASE_SWAMP_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "swamp_demon");
+    private static final ResourceLocation CUSTOM_SWAMP_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "swamp_demon");
     private static final int HAND_DEMON_WEIGHT = 4;
     private static final List<ResourceLocation> FINAL_SELECTION_BOSS_POOL = List.of(
         //ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "demon_6"),
@@ -247,7 +248,7 @@ public class FinalSelectionRaid {
             return;
         }
 
-        if (!pendingSpawns.isEmpty() && gameTime >= nextSpawnTime) {
+        if (isDemonSpawnState() && !pendingSpawns.isEmpty() && gameTime >= nextSpawnTime) {
             spawnNextPending(gameTime);
         }
 
@@ -492,6 +493,13 @@ public class FinalSelectionRaid {
     }
 
     private void spawnEntity(ResourceLocation entityId, boolean boss, long gameTime) {
+        if (isSwampDemonId(entityId)) {
+            return;
+        }
+        if (!boss && !isDemonSpawnState()) {
+            return;
+        }
+
         EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(entityId);
         if (entityType == null) return;
 
@@ -511,7 +519,8 @@ public class FinalSelectionRaid {
     }
 
     private void spawnMobNow(Mob mob, BlockPos spawnPos, boolean boss, ServerPlayer preferredTarget) {
-        if (!boss && !FinalSelectionProcedure.canSpawnAdditionalNonBossDemon(level)) {
+        ResourceLocation mobId = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
+        if (isSwampDemonId(mobId) || (!boss && (!isDemonSpawnState() || !FinalSelectionProcedure.canSpawnAdditionalNonBossDemon(level)))) {
             mob.discard();
             return;
         }
@@ -542,6 +551,10 @@ public class FinalSelectionRaid {
             if (gameTime < task.executeAt) continue;
 
             try {
+                if (isSwampDemonId(task.entityId) || (!task.boss && !isDemonSpawnState())) {
+                    it.remove();
+                    continue;
+                }
                 EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(task.entityId);
                 if (entityType != null) {
                     Mob mob = (Mob) entityType.create(level);
@@ -730,9 +743,17 @@ public class FinalSelectionRaid {
     }
 
     private boolean isPressureSpawnState() {
-        return state != RaidState.PREPARING
-            && state != RaidState.VICTORY
-            && state != RaidState.DEFEAT;
+        return isDemonSpawnState();
+    }
+
+    public boolean allowsDemonSpawns() {
+        return isDemonSpawnState();
+    }
+
+    private boolean isDemonSpawnState() {
+        return state == RaidState.NIGHT_ACTIVE
+            || state == RaidState.BOSS_PRE_MIDNIGHT
+            || state == RaidState.BOSS_MIDNIGHT_HOLD;
     }
 
     private int countDemonsNearPlayers(List<ServerPlayer> players, int radius) {
@@ -778,7 +799,7 @@ public class FinalSelectionRaid {
     private ResourceLocation pickOne(EntityPowerScale scale) {
         List<ResourceLocation> options = EntityCategorization.getEntitiesForScale(scale);
         options = options.stream()
-            .filter(id -> !SWAMP_DEMON_ID.equals(id))
+            .filter(id -> !isSwampDemonId(id))
             .toList();
         if (options.isEmpty()) {
             return null;
@@ -1173,6 +1194,7 @@ public class FinalSelectionRaid {
             if (usedBossDemons.contains(id)) continue;
             if (!BuiltInRegistries.ENTITY_TYPE.containsKey(id)) continue;
             if (HAND_DEMON_ID.equals(id) && handDemonSpawned) continue;
+            if (isSwampDemonId(id)) continue;
             available.add(id);
         }
 
@@ -1212,7 +1234,7 @@ public class FinalSelectionRaid {
     private List<ResourceLocation> pick(EntityPowerScale scale, int count) {
         List<ResourceLocation> pool = EntityCategorization.getEntitiesForScale(scale);
         pool = pool.stream()
-            .filter(id -> !SWAMP_DEMON_ID.equals(id))
+            .filter(id -> !isSwampDemonId(id))
             .toList();
         List<ResourceLocation> out = new ArrayList<>();
 
@@ -1224,6 +1246,10 @@ public class FinalSelectionRaid {
         }
 
         return out;
+    }
+
+    private static boolean isSwampDemonId(ResourceLocation id) {
+        return BASE_SWAMP_DEMON_ID.equals(id) || CUSTOM_SWAMP_DEMON_ID.equals(id);
     }
 
     private void completeNightAndEnterDayBreak() {

@@ -191,6 +191,11 @@ public class DemonSlayerAggroHandler {
 
     private static void tickSlayerAggro(Mob mob) {
         LivingEntity currentTarget = mob.getTarget();
+        if (CrowEnhancementHandler.isKasugaiCrow(currentTarget)) {
+            mob.setTarget(null);
+            currentTarget = null;
+        }
+
         if (isFriendlySlayerTarget(currentTarget) && !shouldKeepFriendlyFireTarget(mob, currentTarget)) {
             mob.setTarget(null);
             currentTarget = null;
@@ -458,6 +463,10 @@ public class DemonSlayerAggroHandler {
      */
     public static boolean isDemonTarget(LivingEntity target) {
         if (target == null || !target.isAlive()) {
+            return false;
+        }
+
+        if (CrowEnhancementHandler.isKasugaiCrow(target)) {
             return false;
         }
 

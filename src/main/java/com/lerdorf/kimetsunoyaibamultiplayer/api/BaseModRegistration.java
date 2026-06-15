@@ -108,6 +108,7 @@ public class BaseModRegistration {
 
         // Level 2 - Hashira swords (NOT eligible for color change)
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_rengoku", "flame_breathing", 2);
+        SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_tomioka", "water_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_uzui", "sound_breathing", 2, true);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_shinobu", "insect_breathing", 2);
         SwordMetadataRegistry.registerLazy("kimetsunoyaiba:nichirinsword_iguro", "serpent_breathing", 2);

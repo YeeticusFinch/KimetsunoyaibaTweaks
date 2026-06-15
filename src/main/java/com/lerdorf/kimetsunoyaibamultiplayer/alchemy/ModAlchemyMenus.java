@@ -18,6 +18,9 @@ public final class ModAlchemyMenus {
     public static final RegistryObject<MenuType<AlchemyTableMenu>> ALCHEMY_TABLE =
         MENUS.register("alchemy_table", () -> IForgeMenuType.create(AlchemyTableMenu::new));
 
+    public static final RegistryObject<MenuType<VialRackMenu>> VIAL_RACK =
+        MENUS.register("vial_rack", () -> IForgeMenuType.create(VialRackMenu::new));
+
     private ModAlchemyMenus() {
     }
 

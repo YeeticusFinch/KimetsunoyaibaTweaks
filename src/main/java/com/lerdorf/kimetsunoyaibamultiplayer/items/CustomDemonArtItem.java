@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.items;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.customdemonart.CustomBloodDemonArtRuntime;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -79,8 +80,14 @@ public class CustomDemonArtItem extends GeckolibItem {
         if (!(player instanceof ServerPlayer serverPlayer)) {
             return InteractionResultHolder.pass(stack);
         }
+        if (!Damager.isDemon(player)) {
+            player.displayClientMessage(Component.literal("You must be a demon to use this ability")
+                .withStyle(ChatFormatting.RED), true);
+            return InteractionResultHolder.fail(stack);
+        }
         if (player.getCooldowns().isOnCooldown(this)) {
-            player.displayClientMessage(Component.literal("Ability on cooldown!").withStyle(ChatFormatting.RED), true);
+            player.displayClientMessage(Component.literal("This ability is still on cooldown")
+                .withStyle(ChatFormatting.RED), true);
             return InteractionResultHolder.fail(stack);
         }
         return CustomBloodDemonArtRuntime.use(serverPlayer, stack)

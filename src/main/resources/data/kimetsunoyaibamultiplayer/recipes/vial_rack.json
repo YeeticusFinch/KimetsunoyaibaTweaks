@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "decorations",
+  "pattern": [
+    "HHH",
+    "S S",
+    "HHH"
+  ],
+  "key": {
+    "H": {
+      "tag": "minecraft:wooden_slabs"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:vial_rack",
+    "count": 3
+  }
+}

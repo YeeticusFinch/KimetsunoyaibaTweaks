@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.config.DemonSlayerConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.FinalSelectionRaidConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonSlayerInitiationHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinOreItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack;
@@ -664,10 +665,11 @@ public class FinalSelectionProcedure {
             Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.congratulations", player.getDisplayName())
         ));
 
-        spawnAndTameKasugaiCrow(player);
-        grantRandomUniformSet(player);
         awardAdvancement(player, COMPLETED_FINAL_SELECTION_ADVANCEMENT);
         awardAdvancement(player, MIZUNOTO_ADVANCEMENT);
+        DemonSlayerInitiationHandler.completeFinalSelectionInitiation(player, "final selection raid completion");
+        spawnAndTameKasugaiCrow(player);
+        grantRandomUniformSet(player);
         runOreSelectionProcedurePlaceholder(player);
     }
 
@@ -1453,6 +1455,9 @@ public class FinalSelectionProcedure {
         if (!isRaidOngoing(level)) {
             return false;
         }
+        if (activeProcedure.finalSelectionRaid == null || !activeProcedure.finalSelectionRaid.allowsDemonSpawns()) {
+            return false;
+        }
 
         int playersInDimension = level.players().size();
         if (playersInDimension <= 0) {
@@ -1683,6 +1688,7 @@ public class FinalSelectionProcedure {
         if (player.getServer() != null) {
             Advancement fsAdv = player.server.getAdvancements().getAdvancement(COMPLETED_FINAL_SELECTION_ADVANCEMENT);
             if (fsAdv != null && player.getAdvancements().getOrStartProgress(fsAdv).isDone()) {
+                DemonSlayerInitiationHandler.completeFinalSelectionInitiation(player, "final selection command repair");
                 player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.already_completed")
                     .withStyle(ChatFormatting.RED));
                 return;
@@ -1702,6 +1708,8 @@ public class FinalSelectionProcedure {
             awardAdvancementDirect(player, MIZUNOTO_ADVANCEMENT);
             awardAdvancementDirect(player, BASE_MIZUNOTO_ADVANCEMENT);
         }
+
+        DemonSlayerInitiationHandler.completeFinalSelectionInitiation(player, "final selection command completion");
 
         // Spawn and tame kasugai crow
         spawnAndTameKasugaiCrowForPlayer(player);

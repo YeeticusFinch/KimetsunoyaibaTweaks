@@ -81,16 +81,19 @@ public final class DemonTransformationHandler {
     }
 
     public static boolean shouldSuppressAggro(Mob attacker, LivingEntity target) {
-        if (!(target instanceof Player player) || !hasTransformationTag(target)) {
+        if (!(target instanceof Player player) || !isTransforming(player)) {
             return false;
         }
 
-        boolean relevantAttacker = Damager.isDemon(attacker)
-            || Damager.isDemonSlayer(attacker)
-            || EntityTagHelper.isDemon(attacker)
+        boolean demonAttacker = Damager.isDemon(attacker) || EntityTagHelper.isDemon(attacker);
+        if (demonAttacker) {
+            return true;
+        }
+
+        boolean slayerAttacker = Damager.isDemonSlayer(attacker)
             || EntityTagHelper.isDemonSlayer(attacker)
             || EntityTagHelper.isHashira(attacker);
-        if (!relevantAttacker) {
+        if (!slayerAttacker) {
             return false;
         }
 

@@ -135,6 +135,11 @@ public class LoveSlashParticle extends TextureSheetParticle {
         return CustomParticleRenderTypes.ADDITIVE_TRANSLUCENT;
     }
 
+    @Override
+    public int getLightColor(float partialTick) {
+        return 0xFF94D7; // fullbright, same style as flame/lava-ish particles
+    }
+
     @OnlyIn(Dist.CLIENT)
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;

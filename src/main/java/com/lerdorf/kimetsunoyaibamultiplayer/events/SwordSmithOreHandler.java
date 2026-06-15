@@ -119,14 +119,15 @@ public final class SwordSmithOreHandler {
         }
 
         boolean blackVariant = NichirinOreItem.isBlackVariant(oreStack);
-        ItemStack craftedSword = createSwordFromOre(styleId, blackVariant);
+        boolean rareVariant = NichirinOreItem.isRareVariant(oreStack);
+        ItemStack craftedSword = createSwordFromOre(styleId, blackVariant, rareVariant);
         if (craftedSword.isEmpty()) {
             return false;
         }
 
         boolean consumed = player != null
-            ? consumePlayerOre(player, styleId, blackVariant, 2)
-            : consumeDroppedOre(swordSmith, styleId, blackVariant, 2);
+            ? consumePlayerOre(player, styleId, blackVariant, rareVariant, 2)
+            : consumeDroppedOre(swordSmith, styleId, blackVariant, rareVariant, 2);
         if (!consumed) {
             return false;
         }
@@ -136,11 +137,11 @@ public final class SwordSmithOreHandler {
         return true;
     }
 
-    private static boolean consumePlayerOre(Player player, String styleId, boolean blackVariant, int amount) {
+    private static boolean consumePlayerOre(Player player, String styleId, boolean blackVariant, boolean rareVariant, int amount) {
         int available = 0;
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
-            if (isMatchingOre(stack, styleId, blackVariant)) {
+            if (isMatchingOre(stack, styleId, blackVariant, rareVariant)) {
                 available += stack.getCount();
             }
         }
@@ -151,7 +152,7 @@ public final class SwordSmithOreHandler {
         int remaining = amount;
         for (int slot = 0; slot < player.getInventory().getContainerSize() && remaining > 0; slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
-            if (!isMatchingOre(stack, styleId, blackVariant)) {
+            if (!isMatchingOre(stack, styleId, blackVariant, rareVariant)) {
                 continue;
             }
             int toShrink = Math.min(remaining, stack.getCount());
@@ -161,7 +162,7 @@ public final class SwordSmithOreHandler {
         return remaining == 0;
     }
 
-    private static boolean consumeDroppedOre(Entity swordSmith, String styleId, boolean blackVariant, int amount) {
+    private static boolean consumeDroppedOre(Entity swordSmith, String styleId, boolean blackVariant, boolean rareVariant, int amount) {
         if (!(swordSmith.level() instanceof ServerLevel serverLevel)) {
             return false;
         }
@@ -170,7 +171,7 @@ public final class SwordSmithOreHandler {
         List<ItemEntity> matchingItems = serverLevel.getEntitiesOfClass(
             ItemEntity.class,
             search,
-            itemEntity -> isMatchingOre(itemEntity.getItem(), styleId, blackVariant)
+            itemEntity -> isMatchingOre(itemEntity.getItem(), styleId, blackVariant, rareVariant)
         );
 
         int available = matchingItems.stream().mapToInt(item -> item.getItem().getCount()).sum();
@@ -199,19 +200,27 @@ public final class SwordSmithOreHandler {
         return remaining == 0;
     }
 
-    private static boolean isMatchingOre(ItemStack stack, String styleId, boolean blackVariant) {
+    private static boolean isMatchingOre(ItemStack stack, String styleId, boolean blackVariant, boolean rareVariant) {
         return canUseOreStack(stack)
             && styleId.equals(NichirinOreItem.getStyleId(stack))
-            && blackVariant == NichirinOreItem.isBlackVariant(stack);
+            && blackVariant == NichirinOreItem.isBlackVariant(stack)
+            && rareVariant == NichirinOreItem.isRareVariant(stack);
     }
 
-    private static ItemStack createSwordFromOre(String styleId, boolean blackVariant) {
+    private static ItemStack createSwordFromOre(String styleId, boolean blackVariant, boolean rareVariant) {
         if (blackVariant) {
             ItemStack blackSword = new ItemStack(ModItems.NICHIRINSWORD_BLACK.get());
             if (!NichirinSwordBlack.assignStyle(blackSword, styleId)) {
                 return ItemStack.EMPTY;
             }
             return blackSword;
+        }
+
+        if (rareVariant) {
+            Item higherTierSword = resolveHigherTierSword(styleId);
+            if (higherTierSword != null) {
+                return new ItemStack(higherTierSword);
+            }
         }
 
         Item swordItem = resolveLevelZeroSword(styleId);
@@ -265,6 +274,28 @@ public final class SwordSmithOreHandler {
             }
         }
 
+        return chooseDeterministicSword(swords);
+    }
+
+    private static Item resolveHigherTierSword(String styleId) {
+        Item levelTwo = resolveSwordForLevel(styleId, 2);
+        if (levelTwo != null) {
+            return levelTwo;
+        }
+        return resolveSwordForLevel(styleId, 1);
+    }
+
+    private static Item resolveSwordForLevel(String styleId, int level) {
+        List<Item> swords = new ArrayList<>();
+        for (SwordRegistry.RegisteredSword registered : SwordRegistry.getSwordsByStyleAndLevel(styleId, level)) {
+            swords.add(registered.getSwordItem());
+        }
+        for (SwordMetadataRegistry.SwordMetadata meta : SwordMetadataRegistry.getSwordsByStyleAndLevel(styleId, level)) {
+            Item item = meta.getSwordItem();
+            if (item != null) {
+                swords.add(item);
+            }
+        }
         return chooseDeterministicSword(swords);
     }
 

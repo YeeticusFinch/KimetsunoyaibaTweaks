@@ -6,7 +6,9 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 
 import java.util.HashMap;
@@ -30,11 +32,15 @@ public class StructureLocationCache {
     public static class CachedStructure {
         public final ResourceLocation structureId;
         public final BlockPos center;
+        public final BlockPos corner;
+        public final Rotation rotation;
         public final long cacheTime;
 
-        public CachedStructure(ResourceLocation structureId, BlockPos center) {
+        public CachedStructure(ResourceLocation structureId, BlockPos center, BlockPos corner, Rotation rotation) {
             this.structureId = structureId;
             this.center = center;
+            this.corner = corner;
+            this.rotation = rotation;
             this.cacheTime = System.currentTimeMillis();
         }
 
@@ -107,9 +113,15 @@ public class StructureLocationCache {
                         if (CivilianStructureRegistry.isCivilianStructure(structureId)) {
                             // Calculate structure center (use bounding box center)
                             BlockPos center = structureStart.getBoundingBox().getCenter();
+                            BlockPos corner = new BlockPos(
+                                structureStart.getBoundingBox().minX(),
+                                structureStart.getBoundingBox().minY(),
+                                structureStart.getBoundingBox().minZ()
+                            );
+                            Rotation rotation = findRotation(structureStart);
 
                             // Cache and return
-                            CachedStructure newCached = new CachedStructure(structureId, center);
+                            CachedStructure newCached = new CachedStructure(structureId, center, corner, rotation);
                             dimensionCache.put(pos, newCached);
                             negativeCache.remove(pos);
                             return Optional.of(newCached);
@@ -136,6 +148,16 @@ public class StructureLocationCache {
         // No structure found - cache negative result with null
         negativeCache.put(pos.immutable(), System.currentTimeMillis());
         return Optional.empty();
+    }
+
+    private static Rotation findRotation(StructureStart structureStart) {
+        for (StructurePiece piece : structureStart.getPieces()) {
+            Rotation rotation = piece.getRotation();
+            if (rotation != null) {
+                return rotation;
+            }
+        }
+        return Rotation.NONE;
     }
 
     /**

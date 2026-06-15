@@ -32,6 +32,7 @@ public final class MeditationMenuService {
     private static final ResourceLocation DEMON_SLAYER_CORPS =
         ResourceLocation.parse("kimetsunoyaibamultiplayer:demon_slayer_corps");
     private static final List<MeditationMenuData.LocationEntry> CORPS_STRUCTURE_LOCATIONS = List.of(
+        new MeditationMenuData.LocationEntry("swordsmith_village", "Swordsmith Village", "Find a Kakushi who can escort you to the Swordsmith Village.", false),
         new MeditationMenuData.LocationEntry("house_kocho", "Kocho House", "Waypoint for kimetsunoyaiba:house_kocho.", false),
         new MeditationMenuData.LocationEntry("graveyard", "Graveyard", "Waypoint for kimetsunoyaiba:graveyard.", false),
         new MeditationMenuData.LocationEntry("house_rengoku", "Rengoku House", "Waypoint for kimetsunoyaiba:house_rengoku.", false),

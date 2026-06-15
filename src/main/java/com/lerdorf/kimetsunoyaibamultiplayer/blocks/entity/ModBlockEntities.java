@@ -21,6 +21,10 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("alchemy_table",
             () -> BlockEntityType.Builder.of(AlchemyTableBlockEntity::new, ModAlchemyBlocks.ALCHEMY_TABLE.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<VialRackBlockEntity>> VIAL_RACK =
+        BLOCK_ENTITIES.register("vial_rack",
+            () -> BlockEntityType.Builder.of(VialRackBlockEntity::new, ModAlchemyBlocks.VIAL_RACK.get()).build(null));
+
     private ModBlockEntities() {
     }
 

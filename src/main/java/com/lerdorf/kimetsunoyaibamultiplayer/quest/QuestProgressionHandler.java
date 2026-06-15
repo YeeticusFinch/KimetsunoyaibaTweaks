@@ -34,6 +34,7 @@ public final class QuestProgressionHandler {
 
         PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
         QuestProgressionManager.tick(player, role);
+        QuestScenarioActions.tickTamayoHouseTest(player);
     }
 
     @SubscribeEvent

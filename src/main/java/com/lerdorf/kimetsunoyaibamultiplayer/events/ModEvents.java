@@ -17,18 +17,29 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
+
+import java.util.Set;
 
 @Mod.EventBusSubscriber
 public class ModEvents {
+    private static final Set<ResourceLocation> MUZAN_BLOOD_ITEM_IDS = Set.of(
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "blood_of_muzan"),
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "muzan_blood"),
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "bloodmuzan"),
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "blood_of_muzan")
+    );
 
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -56,6 +67,7 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
+        QuestProgressionManager.copyQuestProgressOnClone(event.getOriginal(), event.getEntity());
         if (event.isWasDeath()) {
             DemonTransformationHandler.resetTrackedMuzanBlood(event.getEntity());
         }
@@ -131,6 +143,20 @@ public class ModEvents {
         }
     }
 
+    @SubscribeEvent
+    public static void onLivingDrops(LivingDropsEvent event) {
+        LivingEntity target = event.getEntity();
+        if (target.level().isClientSide() || !DemonTransformationHandler.isCustomDemonInitiationEnabled()) {
+            return;
+        }
+
+        if (!Damager.isDemon(target) || EntityTagHelper.isTwelveKizuki(target)) {
+            return;
+        }
+
+        event.getDrops().removeIf(drop -> isMuzanBlood(drop));
+    }
+
     private static void handleCustomHumanFleshDrops(LivingEntity target) {
         if (target instanceof Player player && !player.getPersistentData().getBoolean("oni")) {
             ItemStack stack = new ItemStack(ModItems.HUMAN_FLESH_5.get());
@@ -172,5 +198,18 @@ public class ModEvents {
         return ResourceLocation.fromNamespaceAndPath(
             com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer.MODID,
             "textures/entity/slayer_female_" + (textureIndex + 1) + ".png");
+    }
+
+    private static boolean isMuzanBlood(ItemEntity itemEntity) {
+        return itemEntity != null && isMuzanBlood(itemEntity.getItem());
+    }
+
+    private static boolean isMuzanBlood(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+
+        ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        return itemId != null && MUZAN_BLOOD_ITEM_IDS.contains(itemId);
     }
 }

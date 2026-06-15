@@ -23,6 +23,9 @@ public class CustomProgressionConfig {
     // Replace the base mod's muzan blood ore with hemolith ore
     public static ForgeConfigSpec.BooleanValue replaceMuzanBloodOre;
 
+    // Replace the base mod's scarlet ore drops with nichirin ore
+    public static ForgeConfigSpec.BooleanValue replaceScarletOre;
+
     // Replace the base mod's color changing procedure (sword transformation)
     public static ForgeConfigSpec.BooleanValue replaceColorChangingProcedure;
 
@@ -112,6 +115,16 @@ public class CustomProgressionConfig {
                     "fully resolves, the break is intercepted and hemolith drops are forced so",
                     "the original muzan blood ore drop never appears.")
             .define("replace_muzan_blood_ore", true);
+
+        replaceScarletOre = builder
+            .comment("Replace base mod scarlet ore drops with nichirin ore",
+                    "",
+                    "When enabled, any dropped kimetsunoyaiba:scarlet_ore item is rewritten into",
+                    "a nichirin ore stack for a random breathing style.",
+                    "",
+                    "This uses the same item-replacement flow as hemolith dust so the base item",
+                    "never reaches the player inventory unchanged.")
+            .define("replace_scarlet_ore", true);
 
         builder.pop();
 

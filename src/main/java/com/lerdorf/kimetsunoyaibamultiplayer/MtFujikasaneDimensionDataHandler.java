@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
+import java.util.ArrayList;
+import java.util.List;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.FinalSelectionProcedure;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.MtFujikasaneDaylightController;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization;
@@ -37,6 +39,7 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -49,8 +52,10 @@ public class MtFujikasaneDimensionDataHandler {
 
     private static final ResourceLocation MT_FUJIKASANE_DIM_ID =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "mt_fujikasane");
-    private static final ResourceLocation SWAMP_DEMON_ID =
+    private static final ResourceLocation BASE_SWAMP_DEMON_ID =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "swamp_demon");
+    private static final ResourceLocation CUSTOM_SWAMP_DEMON_ID =
+        ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "swamp_demon");
 
     // World border settings - 1000x1000 blocks centered at 0,0
     private static final double WORLD_BORDER_SIZE = 1000.0;
@@ -289,7 +294,15 @@ public class MtFujikasaneDimensionDataHandler {
     }
 
     private static boolean isSwampDemonId(ResourceLocation entityId) {
-        return SWAMP_DEMON_ID.equals(entityId);
+        return BASE_SWAMP_DEMON_ID.equals(entityId) || CUSTOM_SWAMP_DEMON_ID.equals(entityId);
+    }
+
+    private static void purgeSwampDemons(ServerLevel level) {
+        for (Entity entity : level.getAllEntities()) {
+            if (isSwampDemon(entity)) {
+                entity.discard();
+            }
+        }
     }
 
     private static boolean isHostileEntityType(EntityType<?> entityType) {
@@ -489,6 +502,8 @@ public class MtFujikasaneDimensionDataHandler {
             return;
         }
 
+        List<Mob> targets = new ArrayList<>();
+
         for (Entity entity : level.getAllEntities()) {
             if (!(entity instanceof Mob mob) || !mob.isAlive()) {
                 continue;
@@ -500,20 +515,61 @@ public class MtFujikasaneDimensionDataHandler {
                 continue;
             }
 
+            targets.add(mob);
+        }
+
+        for (Mob mob : targets) {
+            if (!mob.isAlive() || mob.isRemoved()) {
+                continue;
+            }
+
             if (isInBurningSunlight(level, mob)) {
                 int burnTicks = mob.getPersistentData().getInt(MT_FUJIKASANE_SUN_BURN_TICKS_TAG) + 1;
                 mob.getPersistentData().putInt(MT_FUJIKASANE_SUN_BURN_TICKS_TAG, burnTicks);
+
                 mob.setSecondsOnFire(2);
 
-                level.sendParticles(ParticleTypes.FLAME, mob.getX(), mob.getY(0.5D), mob.getZ(), 4, 0.3D, 0.4D, 0.3D, 0.01D);
-                level.sendParticles(ParticleTypes.LAVA, mob.getX(), mob.getY(0.2D), mob.getZ(), 2, 0.2D, 0.2D, 0.2D, 0.0D);
+                level.sendParticles(
+                    ParticleTypes.FLAME,
+                    mob.getX(),
+                    mob.getY(0.5D),
+                    mob.getZ(),
+                    4,
+                    0.3D,
+                    0.4D,
+                    0.3D,
+                    0.01D
+                );
 
-                if (burnTicks % 10 == 0 && burnTicks <= 40) {
+                level.sendParticles(
+                    ParticleTypes.LAVA,
+                    mob.getX(),
+                    mob.getY(0.2D),
+                    mob.getZ(),
+                    2,
+                    0.2D,
+                    0.2D,
+                    0.2D,
+                    0.0D
+                );
+
+                if (burnTicks % 10 == 0 && burnTicks <= 40 && !mob.isRemoved()) {
                     mob.hurt(mob.damageSources().onFire(), 10.0F);
                 }
 
-                if (burnTicks >= 40) {
-                    level.sendParticles(ParticleTypes.EXPLOSION, mob.getX(), mob.getY(0.6D), mob.getZ(), 12, 0.3D, 0.4D, 0.3D, 0.02D);
+                if (burnTicks >= 40 && mob.isAlive() && !mob.isRemoved()) {
+                    level.sendParticles(
+                        ParticleTypes.EXPLOSION,
+                        mob.getX(),
+                        mob.getY(0.6D),
+                        mob.getZ(),
+                        12,
+                        0.3D,
+                        0.4D,
+                        0.3D,
+                        0.02D
+                    );
+
                     mob.playSound(SoundEvents.GENERIC_EXPLODE, 1.0F, 1.1F);
                     mob.discard();
                 }
@@ -558,6 +614,9 @@ public class MtFujikasaneDimensionDataHandler {
 
         // Tick daylight controller
         MtFujikasaneDaylightController.tick(mtFujikasane);
+
+        // Hard purge: no swamp demons are allowed in Mt Fujikasane.
+        purgeSwampDemons(mtFujikasane);
 
         // Apply sunlight death to all demons in Mt Fujikasane, including base-mod demons.
         tickMtFujikasaneSunlightBurn(mtFujikasane);

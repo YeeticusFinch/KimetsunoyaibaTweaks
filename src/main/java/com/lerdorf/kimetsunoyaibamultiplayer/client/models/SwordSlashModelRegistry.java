@@ -55,7 +55,7 @@ public class SwordSlashModelRegistry {
         // Register water breathing swords to use water model (animated texture)
         SWORD_TO_MODEL_MAP.put("nichirinsword_water", "water");
         SWORD_TO_MODEL_MAP.put("nichirinsword_tanjiro", "water");
-        SWORD_TO_MODEL_MAP.put("nichirinsword_giyu", "water");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_tomioka", "water");
 
         // Register animated texture for water breathing (5 frames, 2 ticks per frame)
         ANIMATED_TEXTURE_FRAMES.put("water", 5);

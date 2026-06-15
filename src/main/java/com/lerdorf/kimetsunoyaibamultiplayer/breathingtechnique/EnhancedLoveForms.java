@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.combat.WhipDamageHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesSpawner;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveTornadoSpawner;
@@ -78,6 +79,10 @@ public class EnhancedLoveForms {
 
 		// Don't target self
 		if (source == target) {
+			return false;
+		}
+
+		if (CrowEnhancementHandler.isKasugaiCrow(target)) {
 			return false;
 		}
 

@@ -112,15 +112,27 @@ public class BloodDemonArtParticleEditorScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(guiGraphics);
         actionHitboxes.clear();
         refreshFiltered();
 
         int left = (width - PANEL_WIDTH) / 2;
         int top = (height - PANEL_HEIGHT) / 2;
-        guiGraphics.fill(left - 4, top - 4, left + PANEL_WIDTH + 4, top + PANEL_HEIGHT + 4, 0xAA09090C);
-        guiGraphics.fill(left, top, left + PANEL_WIDTH, top + PANEL_HEIGHT, 0xF1211B19);
-        guiGraphics.fill(left + 1, top + 1, left + PANEL_WIDTH - 1, top + PANEL_HEIGHT - 1, 0xF5382B28);
+        int previewLeft = left + 206;
+        int previewTop = top + 30;
+        int previewRight = left + PANEL_WIDTH - 12;
+        int previewBottom = top + PANEL_HEIGHT - 42;
+        int previewContentLeft = previewLeft + 2;
+        int previewContentTop = previewTop + 18;
+        int previewContentRight = previewRight - 2;
+        int previewContentBottom = previewBottom - 2;
+
+        renderBackgroundWithPreviewWindow(guiGraphics, previewContentLeft, previewContentTop, previewContentRight, previewContentBottom);
+        fillAround(guiGraphics, left - 4, top - 4, left + PANEL_WIDTH + 4, top + PANEL_HEIGHT + 4,
+            previewContentLeft, previewContentTop, previewContentRight, previewContentBottom, 0xAA09090C);
+        fillAround(guiGraphics, left, top, left + PANEL_WIDTH, top + PANEL_HEIGHT,
+            previewContentLeft, previewContentTop, previewContentRight, previewContentBottom, 0xF1211B19);
+        fillAround(guiGraphics, left + 1, top + 1, left + PANEL_WIDTH - 1, top + PANEL_HEIGHT - 1,
+            previewContentLeft, previewContentTop, previewContentRight, previewContentBottom, 0xF5382B28);
 
         guiGraphics.drawString(font, title, left + 12, top + 10, 0xF5D18A, false);
         searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -161,19 +173,25 @@ public class BloodDemonArtParticleEditorScreen extends Screen {
             actionHitboxes.add(new ActionHitbox(nextBlock, "next_block"));
         }
 
-        int previewLeft = left + 206;
-        int previewTop = top + 30;
-        int previewRight = left + PANEL_WIDTH - 12;
-        int previewBottom = top + PANEL_HEIGHT - 42;
-        guiGraphics.fill(previewLeft, previewTop, previewRight, previewBottom, 0x552A201C);
+        fillAround(guiGraphics, previewLeft, previewTop, previewRight, previewBottom,
+            previewContentLeft, previewContentTop, previewContentRight, previewContentBottom, 0x552A201C);
+        drawPreviewWindowFrame(guiGraphics, previewContentLeft, previewContentTop, previewContentRight, previewContentBottom);
         guiGraphics.drawString(font, "Live Preview", previewLeft + 8, previewTop + 8, 0xF5D18A, false);
-        renderPreviewParticles(previewLeft + 2, previewTop + 18, previewRight - 2, previewBottom - 2, selectedParticle);
+        renderPreviewParticles(previewContentLeft, previewContentTop, previewContentRight, previewContentBottom, selectedParticle);
 
         Rect2i applyButton = new Rect2i(left + PANEL_WIDTH - 104, top + PANEL_HEIGHT - 28, 92, 18);
         drawButton(guiGraphics, applyButton, "Apply (1 XP)");
         actionHitboxes.add(new ActionHitbox(applyButton, "apply"));
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+    }
+
+    private void renderBackgroundWithPreviewWindow(GuiGraphics guiGraphics, int holeLeft, int holeTop, int holeRight, int holeBottom) {
+        if (minecraft == null || minecraft.level == null) {
+            guiGraphics.fill(0, 0, width, height, 0xFF120F0D);
+            return;
+        }
+        fillAround(guiGraphics, 0, 0, width, height, holeLeft, holeTop, holeRight, holeBottom, 0x80000000);
     }
 
     @Override
@@ -321,7 +339,7 @@ public class BloodDemonArtParticleEditorScreen extends Screen {
             double planeScale = depth * 0.75;
 
             Vec3 spawn = eye.add(forward.scale(depth))
-                .add(rightAxis.scale(ndcX * planeScale))
+                .add(rightAxis.scale(-3*ndcX * planeScale))
                 .add(upAxis.scale(ndcY * planeScale));
             minecraft.level.addParticle(
                 options,
@@ -365,6 +383,36 @@ public class BloodDemonArtParticleEditorScreen extends Screen {
     private static void drawButton(GuiGraphics guiGraphics, Rect2i rect, String label) {
         guiGraphics.fill(rect.getX(), rect.getY(), rect.getX() + rect.getWidth(), rect.getY() + rect.getHeight(), 0xFF705336);
         guiGraphics.drawCenteredString(Minecraft.getInstance().font, label, rect.getX() + rect.getWidth() / 2, rect.getY() + 3, 0xF7EBDD);
+    }
+
+    private static void drawPreviewWindowFrame(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
+        guiGraphics.fill(left - 1, top - 1, right + 1, top, 0xAA5B4032);
+        guiGraphics.fill(left - 1, bottom, right + 1, bottom + 1, 0xAA5B4032);
+        guiGraphics.fill(left - 1, top, left, bottom, 0xAA5B4032);
+        guiGraphics.fill(right, top, right + 1, bottom, 0xAA5B4032);
+    }
+
+    private static void fillAround(GuiGraphics guiGraphics, int left, int top, int right, int bottom,
+                                   int holeLeft, int holeTop, int holeRight, int holeBottom, int color) {
+        int clampedHoleLeft = Mth.clamp(holeLeft, left, right);
+        int clampedHoleRight = Mth.clamp(holeRight, left, right);
+        int clampedHoleTop = Mth.clamp(holeTop, top, bottom);
+        int clampedHoleBottom = Mth.clamp(holeBottom, top, bottom);
+        if (clampedHoleLeft >= clampedHoleRight || clampedHoleTop >= clampedHoleBottom) {
+            fillIfPositive(guiGraphics, left, top, right, bottom, color);
+            return;
+        }
+
+        fillIfPositive(guiGraphics, left, top, right, clampedHoleTop, color);
+        fillIfPositive(guiGraphics, left, clampedHoleBottom, right, bottom, color);
+        fillIfPositive(guiGraphics, left, clampedHoleTop, clampedHoleLeft, clampedHoleBottom, color);
+        fillIfPositive(guiGraphics, clampedHoleRight, clampedHoleTop, right, clampedHoleBottom, color);
+    }
+
+    private static void fillIfPositive(GuiGraphics guiGraphics, int left, int top, int right, int bottom, int color) {
+        if (right > left && bottom > top) {
+            guiGraphics.fill(left, top, right, bottom, color);
+        }
     }
 
     private static boolean supportsColor(String particleId) {

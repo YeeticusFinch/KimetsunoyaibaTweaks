@@ -29,6 +29,14 @@ public final class ModAlchemyBlocks {
             .lightLevel(state -> state.getValue(AlchemyTableBlock.LIT) ? 10 : 0)
             .noOcclusion()));
 
+    public static final RegistryObject<Block> VIAL_RACK = registerBlockWithItem("vial_rack",
+        () -> new VialRackBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(1.5F, 2.0F)
+            .noOcclusion()),
+        block -> new VialRackBlockItem(block.get(), new Item.Properties().stacksTo(1)));
+
     public static final RegistryObject<Block> IMMORTAL_DAISY = registerBlock("immortal_daisy",
         () -> new AlchemyFlowerBlock(() -> MobEffects.REGENERATION, 5,
             BlockBehaviour.Properties.copy(Blocks.DANDELION)
@@ -61,6 +69,13 @@ public final class ModAlchemyBlocks {
     private static <T extends Block> RegistryObject<T> registerBlock(String name, Supplier<T> blockSupplier) {
         RegistryObject<T> block = BLOCKS.register(name, blockSupplier);
         ModAlchemyItems.ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
+        return block;
+    }
+
+    private static <T extends Block> RegistryObject<T> registerBlockWithItem(
+        String name, Supplier<T> blockSupplier, java.util.function.Function<RegistryObject<T>, Item> itemFactory) {
+        RegistryObject<T> block = BLOCKS.register(name, blockSupplier);
+        ModAlchemyItems.ITEMS.register(name, () -> itemFactory.apply(block));
         return block;
     }
 

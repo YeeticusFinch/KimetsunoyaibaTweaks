@@ -10,6 +10,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.StructureLocationCache;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
@@ -26,7 +29,13 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.TrapDoorBlock;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public final class QuestScenarioActions {
@@ -41,7 +50,10 @@ public final class QuestScenarioActions {
     public static final String TAMAYO_HOUSE_Y = "KnYTamayoHouseY";
     public static final String TAMAYO_HOUSE_Z = "KnYTamayoHouseZ";
     public static final String TAMAYO_HOUSE_ROTATION = "KnYTamayoHouseRotation";
-    private static final int TAMAYO_HOUSE_Y_OFFSET = 6;
+    private static final String TAMAYO_HOUSE_TEST_ACTIVE = "KnYTamayoHouseTestActive";
+    private static final String TAMAYO_HOUSE_TEST_END_TICK = "KnYTamayoHouseTestEndTick";
+    private static final String BASE_MOD_NAMESPACE = "kimetsunoyaiba";
+    private static final String MOD_NAMESPACE = "kimetsunoyaibamultiplayer";
 
     private static final ResourceLocation VILLAGE_SWAMP = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "village_swamp");
     private static final ResourceLocation TAMAYO_HOUSE = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_tamayo");
@@ -52,6 +64,8 @@ public final class QuestScenarioActions {
     private static final ResourceLocation SWAMP_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "swamp_demon");
     private static final ResourceLocation SATOKOS_BOW = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "satokos_bow");
     private static final double TAMAYO_RESTRAINED_DEMON_MAX_RADIUS = 10.0D;
+    private static final double KAZUMI_DUPLICATE_RADIUS = 50.0D;
+    private static final double KAZUMI_QUEST_REUSE_RADIUS = 400.0D;
 
     private QuestScenarioActions() {
     }
@@ -91,10 +105,19 @@ public final class QuestScenarioActions {
             center = player.blockPosition();
         }
 
-        List<Entity> existing = serverLevel.getEntities((Entity) null,
-            new net.minecraft.world.phys.AABB(center).inflate(400.0D),
-            entity -> "kazumi".equals(entity.getPersistentData().getString(QUEST_NPC_ID_TAG)));
-        if (!existing.isEmpty()) {
+        KazumiEntity existing = findNearestKazumi(serverLevel, center, KAZUMI_QUEST_REUSE_RADIUS);
+        if (existing == null) {
+            existing = findNearestKazumi(serverLevel, player.blockPosition(), KAZUMI_QUEST_REUSE_RADIUS);
+        }
+        if (existing != null) {
+            claimKazumiForQuest(existing);
+            return;
+        }
+
+        BlockPos spawnPos = findRandomSurfacePosition(serverLevel, center, 24, 12);
+        existing = findNearestKazumi(serverLevel, spawnPos, KAZUMI_DUPLICATE_RADIUS);
+        if (existing != null) {
+            claimKazumiForQuest(existing);
             return;
         }
 
@@ -103,10 +126,7 @@ public final class QuestScenarioActions {
             return;
         }
 
-        BlockPos spawnPos = findRandomSurfacePosition(serverLevel, center, 24, 12);
-        kazumi.getPersistentData().putString(QUEST_NPC_ID_TAG, "kazumi");
-        kazumi.setCustomName(Component.literal("Kazumi"));
-        kazumi.setCustomNameVisible(true);
+        claimKazumiForQuest(kazumi);
         kazumi.setPos(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D);
         serverLevel.addFreshEntity(kazumi);
     }
@@ -261,13 +281,31 @@ public final class QuestScenarioActions {
     }
 
     private static KazumiEntity findNearestKazumi(ServerLevel serverLevel, ServerPlayer player) {
+        KazumiEntity kazumi = findNearestKazumi(serverLevel, player.blockPosition(), KAZUMI_QUEST_REUSE_RADIUS);
+        if (kazumi != null) {
+            claimKazumiForQuest(kazumi);
+        }
+        return kazumi;
+    }
+
+    private static KazumiEntity findNearestKazumi(ServerLevel serverLevel, BlockPos origin, double radius) {
         List<KazumiEntity> kazumis = serverLevel.getEntitiesOfClass(KazumiEntity.class,
-            new net.minecraft.world.phys.AABB(player.blockPosition()).inflate(400.0D),
-            entity -> "kazumi".equals(entity.getPersistentData().getString(QUEST_NPC_ID_TAG)));
+            new AABB(origin).inflate(radius),
+            entity -> entity.isAlive() && !entity.isRemoved());
         if (kazumis.isEmpty()) {
             return null;
         }
-        return kazumis.stream().min(java.util.Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
+        return kazumis.stream()
+            .min(java.util.Comparator.comparingDouble(entity -> entity.blockPosition().distSqr(origin)))
+            .orElse(null);
+    }
+
+    private static void claimKazumiForQuest(KazumiEntity kazumi) {
+        kazumi.getPersistentData().putString(QUEST_NPC_ID_TAG, "kazumi");
+        if (kazumi.getCustomName() == null) {
+            kazumi.setCustomName(Component.literal("Kazumi"));
+        }
+        kazumi.setCustomNameVisible(true);
     }
 
     /**
@@ -398,8 +436,16 @@ public final class QuestScenarioActions {
             return null;
         }
 
+        if ("kazumi".equals(targetKey)) {
+            KazumiEntity kazumi = findNearestKazumi(serverLevel, player.blockPosition(), radius);
+            if (kazumi != null) {
+                claimKazumiForQuest(kazumi);
+                return kazumi.blockPosition();
+            }
+        }
+
         return serverLevel.getEntities((Entity) null,
-                new net.minecraft.world.phys.AABB(player.blockPosition()).inflate(radius),
+                new AABB(player.blockPosition()).inflate(radius),
                 entity -> targetKey.equals(entity.getPersistentData().getString(QUEST_NPC_ID_TAG)) ||
                     targetKey.equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG)))
             .stream()
@@ -521,12 +567,11 @@ public final class QuestScenarioActions {
             return;
         }
 
-        BlockPos structurePos = findNearestStructureCorner(serverLevel, player.blockPosition(), TAMAYO_HOUSE);
-        if (structurePos == null) {
+        BlockPos anchor = findTamayoHouseAnchor(serverLevel, player.blockPosition());
+        if (anchor == null) {
             return;
         }
 
-        BlockPos anchor = toTamayoHouseAnchor(structurePos);
         player.getPersistentData().putInt(TAMAYO_HOUSE_X, anchor.getX());
         player.getPersistentData().putInt(TAMAYO_HOUSE_Y, anchor.getY());
         player.getPersistentData().putInt(TAMAYO_HOUSE_Z, anchor.getZ());
@@ -537,52 +582,51 @@ public final class QuestScenarioActions {
         if (!(player.level() instanceof ServerLevel serverLevel)) {
             return false;
         }
-        BlockPos center = getStoredTamayoHouseCenter(player);
-        if (center == null) {
+        BlockPos anchor = getStoredTamayoHouseAnchor(player);
+        if (anchor == null) {
             return false;
         }
         int rotation = player.getPersistentData().getInt(TAMAYO_HOUSE_ROTATION);
-        return placeTamayoHouse(serverLevel, center, rotation);
+        return placeTamayoHouse(serverLevel, anchor, rotation);
     }
 
     public static boolean repairNearestTamayoHouse(ServerPlayer player) {
         if (!(player.level() instanceof ServerLevel serverLevel)) {
             return false;
         }
-        BlockPos structurePos = findNearestStructureCorner(serverLevel, player.blockPosition(), TAMAYO_HOUSE);
-        if (structurePos == null) {
+        BlockPos anchor = findTamayoHouseAnchor(serverLevel, player.blockPosition());
+        if (anchor == null) {
             return false;
         }
-        BlockPos center = toTamayoHouseAnchor(structurePos);
-        int rotation = inferTamayoHouseRotation(serverLevel, center);
-        player.getPersistentData().putInt(TAMAYO_HOUSE_X, center.getX());
-        player.getPersistentData().putInt(TAMAYO_HOUSE_Y, center.getY());
-        player.getPersistentData().putInt(TAMAYO_HOUSE_Z, center.getZ());
+
+        int rotation = inferTamayoHouseRotation(serverLevel, anchor);
+        player.getPersistentData().putInt(TAMAYO_HOUSE_X, anchor.getX());
+        player.getPersistentData().putInt(TAMAYO_HOUSE_Y, anchor.getY());
+        player.getPersistentData().putInt(TAMAYO_HOUSE_Z, anchor.getZ());
         player.getPersistentData().putInt(TAMAYO_HOUSE_ROTATION, rotation);
-        return placeTamayoHouse(serverLevel, center, rotation);
+        return placeTamayoHouse(serverLevel, anchor, rotation);
     }
 
     public static BlockPos getTamayoHousePoint(ServerPlayer player, TamayoHousePoint point) {
-        BlockPos center = getStoredTamayoHouseCenter(player);
-        if (center == null) {
+        BlockPos anchor = getStoredTamayoHouseAnchor(player);
+        if (anchor == null) {
             if (player.level() instanceof ServerLevel serverLevel) {
-                BlockPos structurePos = findNearestStructureCorner(serverLevel, player.blockPosition(), TAMAYO_HOUSE);
-                if (structurePos != null) {
-                    center = toTamayoHouseAnchor(structurePos);
-                    player.getPersistentData().putInt(TAMAYO_HOUSE_X, center.getX());
-                    player.getPersistentData().putInt(TAMAYO_HOUSE_Y, center.getY());
-                    player.getPersistentData().putInt(TAMAYO_HOUSE_Z, center.getZ());
-                    player.getPersistentData().putInt(TAMAYO_HOUSE_ROTATION, inferTamayoHouseRotation(serverLevel, center));
+                anchor = findTamayoHouseAnchor(serverLevel, player.blockPosition());
+                if (anchor != null) {
+                    player.getPersistentData().putInt(TAMAYO_HOUSE_X, anchor.getX());
+                    player.getPersistentData().putInt(TAMAYO_HOUSE_Y, anchor.getY());
+                    player.getPersistentData().putInt(TAMAYO_HOUSE_Z, anchor.getZ());
+                    player.getPersistentData().putInt(TAMAYO_HOUSE_ROTATION, inferTamayoHouseRotation(serverLevel, anchor));
                 }
             }
         }
-        if (center == null) {
+        if (anchor == null) {
             return null;
         }
 
         int rotation = player.getPersistentData().getInt(TAMAYO_HOUSE_ROTATION);
         int[] rotated = rotateOffset(point.offsetX, point.offsetZ, rotation);
-        return new BlockPos(center.getX() + rotated[0], center.getY() + point.offsetY, center.getZ() + rotated[1]);
+        return new BlockPos(anchor.getX() + rotated[0], anchor.getY() + point.offsetY, anchor.getZ() + rotated[1]);
     }
 
     public static void ensureTamayoAndYushiroAtReception(ServerPlayer player, QuestRuntimeContext context) {
@@ -714,6 +758,94 @@ public final class QuestScenarioActions {
         ), 55);
     }
 
+    public static boolean startTamayoHouseTest(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+
+        BlockPos anchor = findTamayoHouseAnchor(serverLevel, player.blockPosition());
+        if (anchor == null) {
+            return false;
+        }
+
+        int rotation = inferTamayoHouseRotation(serverLevel, anchor);
+        player.getPersistentData().putInt(TAMAYO_HOUSE_X, anchor.getX());
+        player.getPersistentData().putInt(TAMAYO_HOUSE_Y, anchor.getY());
+        player.getPersistentData().putInt(TAMAYO_HOUSE_Z, anchor.getZ());
+        player.getPersistentData().putInt(TAMAYO_HOUSE_ROTATION, rotation);
+        player.getPersistentData().putBoolean(TAMAYO_HOUSE_TEST_ACTIVE, true);
+        player.getPersistentData().putLong(TAMAYO_HOUSE_TEST_END_TICK, serverLevel.getGameTime() + 45L * 20L);
+        return true;
+    }
+
+    public static void tickTamayoHouseTest(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        if (!player.getPersistentData().getBoolean(TAMAYO_HOUSE_TEST_ACTIVE)) {
+            return;
+        }
+
+        long endTick = player.getPersistentData().getLong(TAMAYO_HOUSE_TEST_END_TICK);
+        if (serverLevel.getGameTime() > endTick) {
+            stopTamayoHouseTest(player);
+            return;
+        }
+
+        BlockPos[] points = new BlockPos[] {
+            getTamayoHousePoint(player, TamayoHousePoint.RECEPTION),
+            getTamayoHousePoint(player, TamayoHousePoint.BASEMENT),
+            getTamayoHousePoint(player, TamayoHousePoint.DEMON_VILLAGER),
+            getTamayoHousePoint(player, TamayoHousePoint.ATTACK_SPAWN),
+            getTamayoHousePoint(player, TamayoHousePoint.EXPLOSION),
+            getTamayoHousePoint(player, TamayoHousePoint.TRAPDOOR)
+        };
+
+        for (BlockPos point : points) {
+            if (point == null) {
+                continue;
+            }
+            serverLevel.sendParticles(
+                ParticleTypes.END_ROD,
+                point.getX() + 0.5D,
+                point.getY() + 0.25D,
+                point.getZ() + 0.5D,
+                8,
+                0.12D,
+                0.12D,
+                0.12D,
+                0.01D
+            );
+        }
+    }
+
+    public static void stopTamayoHouseTest(ServerPlayer player) {
+        player.getPersistentData().remove(TAMAYO_HOUSE_TEST_ACTIVE);
+        player.getPersistentData().remove(TAMAYO_HOUSE_TEST_END_TICK);
+    }
+
+    public static BlockPos getTamayoHouseLocalPosition(ServerPlayer player) {
+        return getCurrentStructureLocalPosition(player);
+    }
+
+    public static BlockPos getCurrentStructureLocalPosition(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+
+        StructureLocalContext context = findCurrentStructureLocalContext(serverLevel, player.blockPosition());
+        if (context == null) {
+            return null;
+        }
+
+        BlockPos worldPos = player.blockPosition();
+        int relX = worldPos.getX() - context.anchor.getX();
+        int relY = worldPos.getY() - context.anchor.getY();
+        int relZ = worldPos.getZ() - context.anchor.getZ();
+        int[] local = inverseRotateOffset(relX, relZ, context.rotation);
+        return new BlockPos(local[0], relY, local[1]);
+    }
+
     public static BlockPos findNearestTamayoHouseEnemy(ServerPlayer player, QuestRuntimeContext context) {
         BlockPos susamaru = findNearestQuestEntity(player, "susamaru_asakusa", 256.0D);
         BlockPos yahaba = findNearestQuestEntity(player, "yahaba_asakusa", 256.0D);
@@ -757,7 +889,7 @@ public final class QuestScenarioActions {
         }
     }
 
-    private static BlockPos getStoredTamayoHouseCenter(ServerPlayer player) {
+    private static BlockPos getStoredTamayoHouseAnchor(ServerPlayer player) {
         if (!player.getPersistentData().contains(TAMAYO_HOUSE_X)) {
             return null;
         }
@@ -768,17 +900,135 @@ public final class QuestScenarioActions {
         );
     }
 
+    private static BlockPos findTamayoHouseAnchor(ServerLevel serverLevel, BlockPos origin) {
+        StructureLocalContext context = StructureLocationCache.getStructureAt(serverLevel, origin)
+            .filter(cached -> TAMAYO_HOUSE.equals(cached.structureId))
+            .map(cached -> new StructureLocalContext(
+                cached.structureId,
+                findStructurePlacementAnchor(serverLevel, origin, cached.structureId, cached.corner),
+                rotationToIndex(cached.rotation)
+            ))
+            .orElse(null);
+        if (context != null) {
+            return context.anchor;
+        }
+
+        BlockPos structurePos = findNearestStructureCorner(serverLevel, origin, TAMAYO_HOUSE);
+        if (structurePos == null) {
+            return null;
+        }
+
+        BlockPos resolved = resolveTamayoHouseCorner(serverLevel, structurePos);
+        return resolved != null ? resolved : structurePos;
+    }
+
+    private static BlockPos resolveTamayoHouseCorner(ServerLevel serverLevel, BlockPos origin) {
+        return StructureLocationCache.getStructureAt(serverLevel, origin)
+            .filter(cached -> TAMAYO_HOUSE.equals(cached.structureId))
+            .map(cached -> findStructurePlacementAnchor(serverLevel, origin, cached.structureId, cached.corner))
+            .orElse(null);
+    }
+
+    private static StructureLocalContext findCurrentStructureLocalContext(ServerLevel serverLevel, BlockPos origin) {
+        StructureLocalContext best = null;
+        long bestVolume = Long.MAX_VALUE;
+
+        var structureManager = serverLevel.structureManager();
+        for (Holder<Structure> structureHolder : serverLevel.registryAccess()
+            .registryOrThrow(Registries.STRUCTURE)
+            .holders().toList()) {
+            ResourceLocation structureId = structureHolder.unwrapKey()
+                .map(key -> key.location())
+                .orElse(null);
+            if (!isLocalPositionStructure(structureId)) {
+                continue;
+            }
+
+            StructureStart structureStart = structureManager.getStructureAt(origin, structureHolder.value());
+            if (structureStart == null || !structureStart.isValid()) {
+                continue;
+            }
+
+            BoundingBox box = structureStart.getBoundingBox();
+            long volume = (long) (box.maxX() - box.minX() + 1)
+                * (long) (box.maxY() - box.minY() + 1)
+                * (long) (box.maxZ() - box.minZ() + 1);
+            if (best != null && volume >= bestVolume) {
+                continue;
+            }
+
+            BlockPos corner = new BlockPos(box.minX(), box.minY(), box.minZ());
+            int rotation = findStructureRotation(structureStart);
+            BlockPos anchor = findStructurePlacementAnchor(serverLevel, origin, structureId, corner);
+            best = new StructureLocalContext(structureId, anchor, rotation);
+            bestVolume = volume;
+        }
+
+        return best;
+    }
+
+    private static boolean isLocalPositionStructure(ResourceLocation structureId) {
+        if (structureId == null) {
+            return false;
+        }
+        return BASE_MOD_NAMESPACE.equals(structureId.getNamespace())
+            || MOD_NAMESPACE.equals(structureId.getNamespace());
+    }
+
+    private static BlockPos findStructurePlacementAnchor(ServerLevel serverLevel, BlockPos origin,
+                                                         ResourceLocation structureId, BlockPos fallbackCorner) {
+        BlockPos structurePos = serverLevel.findNearestMapStructure(QuestStructureTags.tagFor(structureId), origin, 100, false);
+        if (structurePos == null) {
+            return fallbackCorner;
+        }
+        return new BlockPos(structurePos.getX(), fallbackCorner.getY(), structurePos.getZ());
+    }
+
+    private static int findStructureRotation(StructureStart structureStart) {
+        for (StructurePiece piece : structureStart.getPieces()) {
+            Rotation rotation = piece.getRotation();
+            if (rotation != null) {
+                return rotationToIndex(rotation);
+            }
+        }
+        return 0;
+    }
+
+    private static int rotationToIndex(Rotation rotation) {
+        if (rotation == null) {
+            return 0;
+        }
+        return switch (rotation) {
+            case CLOCKWISE_90 -> 1;
+            case CLOCKWISE_180 -> 2;
+            case COUNTERCLOCKWISE_90 -> 3;
+            default -> 0;
+        };
+    }
+
+    private static final class StructureLocalContext {
+        private final ResourceLocation structureId;
+        private final BlockPos anchor;
+        private final int rotation;
+
+        private StructureLocalContext(ResourceLocation structureId, BlockPos anchor, int rotation) {
+            this.structureId = structureId;
+            this.anchor = anchor;
+            this.rotation = rotation;
+        }
+    }
+
     private static void ensureTamayoHouseNpc(ServerPlayer player, String npcKey, ResourceLocation entityTypeId, BlockPos fallbackPos) {
         if (!(player.level() instanceof ServerLevel serverLevel) || fallbackPos == null) {
             return;
         }
 
-        BlockPos center = getStoredTamayoHouseCenter(player);
-        if (center == null) {
-            center = fallbackPos;
+        BlockPos anchor = getStoredTamayoHouseAnchor(player);
+        if (anchor == null) {
+            anchor = fallbackPos;
         }
 
-        Entity existing = findNearestEntityByQuestKeyOrType(serverLevel, center, npcKey, entityTypeId, 100.0D);
+        Entity existing = findNearestEntityByQuestKeyOrType(serverLevel, anchor, npcKey, entityTypeId, 100.0D);
         if (existing != null) {
             existing.getPersistentData().putString(QUEST_NPC_ID_TAG, npcKey);
             makePersistent(existing);
@@ -964,11 +1214,11 @@ public final class QuestScenarioActions {
         if (!(player.level() instanceof ServerLevel serverLevel)) {
             return false;
         }
-        BlockPos center = getStoredTamayoHouseCenter(player);
-        if (center == null) {
-            center = player.blockPosition();
+        BlockPos anchor = getStoredTamayoHouseAnchor(player);
+        if (anchor == null) {
+            anchor = player.blockPosition();
         }
-        Entity tamayo = findNearestEntityByQuestKeyOrType(serverLevel, center, "tamayo", TAMAYO_ID, 160.0D);
+        Entity tamayo = findNearestEntityByQuestKeyOrType(serverLevel, anchor, "tamayo", TAMAYO_ID, 160.0D);
         return tamayo != null && tamayo.isAlive();
     }
 
@@ -983,12 +1233,12 @@ public final class QuestScenarioActions {
         if (!(player.level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        BlockPos center = getStoredTamayoHouseCenter(player);
-        if (center == null) {
-            center = player.blockPosition();
+        BlockPos anchor = getStoredTamayoHouseAnchor(player);
+        if (anchor == null) {
+            anchor = player.blockPosition();
         }
         List<Entity> attackers = serverLevel.getEntities((Entity) null,
-            new net.minecraft.world.phys.AABB(center).inflate(200.0D),
+            new net.minecraft.world.phys.AABB(anchor).inflate(200.0D),
             entity -> "susamaru_asakusa".equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG))
                 || "yahaba_asakusa".equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG)));
         for (Entity attacker : attackers) {
@@ -998,10 +1248,6 @@ public final class QuestScenarioActions {
 
     private static BlockPos findNearestStructureCorner(ServerLevel level, BlockPos origin, ResourceLocation structureId) {
         return level.findNearestMapStructure(QuestStructureTags.tagFor(structureId), origin, 100, false);
-    }
-
-    private static BlockPos toTamayoHouseAnchor(BlockPos structurePos) {
-        return new BlockPos(structurePos.getX(), structurePos.getY() + TAMAYO_HOUSE_Y_OFFSET, structurePos.getZ());
     }
 
     private static int inferTamayoHouseRotation(ServerLevel serverLevel, BlockPos center) {
@@ -1043,6 +1289,15 @@ public final class QuestScenarioActions {
             case 1 -> new int[] { -z, x };
             case 2 -> new int[] { -x, -z };
             case 3 -> new int[] { z, -x };
+            default -> new int[] { x, z };
+        };
+    }
+
+    private static int[] inverseRotateOffset(int x, int z, int rotation) {
+        return switch (Math.floorMod(rotation, 4)) {
+            case 1 -> new int[] { z, -x };
+            case 2 -> new int[] { -x, -z };
+            case 3 -> new int[] { -z, x };
             default -> new int[] { x, z };
         };
     }
