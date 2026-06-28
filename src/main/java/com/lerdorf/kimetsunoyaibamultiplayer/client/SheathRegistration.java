@@ -44,6 +44,11 @@ public class SheathRegistration {
             SheathItems.SWORD_SHEATH.get()
         );
 
+        SwordSheathRegistry.registerPersistentSheath(
+            ModItems.NICHIRINSWORD_KANAWO.get(),
+            SheathItems.SWORD_SHEATH_KANAWO.get()
+        );
+
         SwordSheathRegistry.registerTemporarySheath(
                 ModItems.NICHIRINSWORD_BEAST.get(),
                 SheathItems.SWORD_SHEATH_INOSUKE.get()

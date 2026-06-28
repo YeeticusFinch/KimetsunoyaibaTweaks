@@ -65,13 +65,31 @@ public class VialRackBlock extends BaseEntityBlock {
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        ItemStack heldStack = player.getItemInHand(hand);
+        if (heldStack.is(ModAlchemyBlocks.VIAL_RACK.get().asItem())) {
+            if (level.isClientSide) {
+                return InteractionResult.SUCCESS;
+            }
+
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof VialRackBlockEntity rack && rack.addRack(heldStack)) {
+                if (!player.getAbilities().instabuild) {
+                    heldStack.shrink(1);
+                }
+            }
+            return InteractionResult.CONSUME;
+        }
+
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
 
         BlockEntity blockEntity = level.getBlockEntity(pos);
         if (player instanceof ServerPlayer serverPlayer && blockEntity instanceof VialRackBlockEntity rack) {
-            NetworkHooks.openScreen(serverPlayer, rack, pos);
+            NetworkHooks.openScreen(serverPlayer, rack, buffer -> {
+                buffer.writeBlockPos(pos);
+                buffer.writeVarInt(rack.getRackCount());
+            });
         }
         return InteractionResult.CONSUME;
     }
@@ -88,7 +106,7 @@ public class VialRackBlock extends BaseEntityBlock {
     public List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
         BlockEntity blockEntity = params.getOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY);
         if (blockEntity instanceof VialRackBlockEntity rack) {
-            return List.of(rack.createItemStackWithContents());
+            return rack.createItemStacksWithContents();
         }
         return List.of(new ItemStack(this));
     }

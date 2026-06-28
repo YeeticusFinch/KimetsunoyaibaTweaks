@@ -1,0 +1,32 @@
+{
+  "parent": "kimetsunoyaibamultiplayer:block/vertical_slab_single",
+  "display": {
+    "thirdperson_righthand": {
+      "scale": [0.44, 0.5, 0.5]
+    },
+    "thirdperson_lefthand": {
+      "scale": [0.5, 0.5, 0.5]
+    },
+    "firstperson_righthand": {
+      "translation": [4.75, 0, -4.25]
+    },
+    "firstperson_lefthand": {
+      "translation": [3.5, 0, -3.25]
+    },
+    "ground": {
+      "translation": [0, 2.5, 0],
+      "scale": [0.5, 0.5, 0.5]
+    },
+    "gui": {
+      "rotation": [33, 46, 0],
+      "translation": [2.5, -1.25, 0],
+      "scale": [0.75, 0.75, 0.75]
+    },
+    "fixed": {
+      "scale": [0.5, 0.5, 0.5]
+    },
+    "on_shelf": {
+      "scale": [0.5, 0.5, 0.5]
+    }
+  }
+}

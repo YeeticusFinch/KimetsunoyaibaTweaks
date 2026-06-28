@@ -31,6 +31,14 @@ public class DualLayerSlashRenderer {
                                       float yaw, float pitch, float roll, float scale, float progress,
                                       String modelKey, int packedLight, boolean flipHorizontal,
                                       long startTimeMillis, int durationMillis) {
+        renderDualLayer(poseStack, bufferSource, position, yaw, pitch, roll, scale, progress, modelKey,
+            packedLight, flipHorizontal, startTimeMillis, durationMillis, 0xFFFFFF);
+    }
+
+    public static void renderDualLayer(PoseStack poseStack, MultiBufferSource bufferSource, Vec3 position,
+                                      float yaw, float pitch, float roll, float scale, float progress,
+                                      String modelKey, int packedLight, boolean flipHorizontal,
+                                      long startTimeMillis, int durationMillis, int tintColor) {
 
         if (!SwordSwingConfig.useSwordSwingModel) {
             return;
@@ -73,7 +81,7 @@ public class DualLayerSlashRenderer {
 
             // Render with emissive type so Shimmer/shaders can apply bloom
             // Use original texture to preserve colors and transparency
-            renderLayer(poseStack, bufferSource, model, baseTexture, alpha, packedLight, false);
+            renderLayer(poseStack, bufferSource, model, baseTexture, alpha, packedLight, false, tintColor);
 
             poseStack.popPose();
 
@@ -90,7 +98,7 @@ public class DualLayerSlashRenderer {
      */
     private static void renderLayer(PoseStack poseStack, MultiBufferSource bufferSource,
                                     SwordSlashModel model, ResourceLocation texture,
-                                    float alpha, int packedLight, boolean isEmissive) {
+                                    float alpha, int packedLight, boolean isEmissive, int tintColor) {
 
         // Choose render type based on layer
         RenderType renderType;
@@ -108,6 +116,9 @@ public class DualLayerSlashRenderer {
         }
 
         com.mojang.blaze3d.vertex.VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
+        float red = ((tintColor >> 16) & 0xFF) / 255.0F;
+        float green = ((tintColor >> 8) & 0xFF) / 255.0F;
+        float blue = (tintColor & 0xFF) / 255.0F;
 
         // Render model to buffer
         // Color multiplier applied inside model's renderToBuffer
@@ -116,7 +127,7 @@ public class DualLayerSlashRenderer {
             vertexConsumer,
             0xF000F0,  // Full bright
             net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
-            colorMultiplier, colorMultiplier, colorMultiplier, alpha
+            red * colorMultiplier, green * colorMultiplier, blue * colorMultiplier, alpha
         );
     }
 

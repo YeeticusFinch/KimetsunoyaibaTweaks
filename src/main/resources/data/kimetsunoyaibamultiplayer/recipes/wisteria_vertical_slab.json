@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "wooden_slab",
+  "key": {
+    "#": {
+      "item": "kimetsunoyaibamultiplayer:wisteria_planks"
+    }
+  },
+  "pattern": [
+    "###"
+  ],
+  "result": {
+    "count": 6,
+    "item": "kimetsunoyaibamultiplayer:wisteria_vertical_slab"
+  },
+  "show_notification": true
+}

@@ -21,25 +21,69 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class VialRackBlockEntity extends BlockEntity implements Container, MenuProvider {
-    private final NonNullList<ItemStack> items = NonNullList.withSize(VialRackContents.SLOT_COUNT, ItemStack.EMPTY);
+    private static final String RACK_COUNT_TAG = "RackCount";
+
+    private final NonNullList<ItemStack> items = NonNullList.withSize(VialRackContents.MAX_SLOT_COUNT, ItemStack.EMPTY);
+    private int rackCount = 1;
 
     public VialRackBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.VIAL_RACK.get(), pos, state);
     }
 
     public void loadFromItem(ItemStack stack) {
+        rackCount = 1;
+        clearItemsWithoutSync();
         ItemStack[] storedItems = VialRackBlockItem.getStoredItems(stack);
-        for (int slot = 0; slot < items.size(); slot++) {
+        for (int slot = 0; slot < VialRackContents.SLOT_COUNT; slot++) {
             items.set(slot, VialRackContents.asSingleVial(storedItems[slot]));
         }
         sync();
     }
 
     public ItemStack createItemStackWithContents() {
+        return createItemStackWithContents(0);
+    }
+
+    public List<ItemStack> createItemStacksWithContents() {
+        List<ItemStack> stacks = new ArrayList<>();
+        for (int rack = 0; rack < rackCount; rack++) {
+            stacks.add(createItemStackWithContents(rack));
+        }
+        return stacks;
+    }
+
+    private ItemStack createItemStackWithContents(int rack) {
         ItemStack stack = new ItemStack(getBlockState().getBlock());
-        VialRackBlockItem.setStoredItems(stack, items.toArray(new ItemStack[0]));
+        ItemStack[] storedItems = new ItemStack[VialRackContents.SLOT_COUNT];
+        int start = rack * VialRackContents.SLOT_COUNT;
+        for (int slot = 0; slot < storedItems.length; slot++) {
+            storedItems[slot] = getItem(start + slot);
+        }
+        VialRackBlockItem.setStoredItems(stack, storedItems);
         return stack;
+    }
+
+    public boolean addRack(ItemStack stack) {
+        if (rackCount >= VialRackContents.MAX_RACKS) {
+            return false;
+        }
+
+        ItemStack[] storedItems = VialRackBlockItem.getStoredItems(stack);
+        int start = rackCount * VialRackContents.SLOT_COUNT;
+        rackCount++;
+        for (int slot = 0; slot < VialRackContents.SLOT_COUNT; slot++) {
+            items.set(start + slot, VialRackContents.asSingleVial(storedItems[slot]));
+        }
+        sync();
+        return true;
+    }
+
+    public int getRackCount() {
+        return rackCount;
     }
 
     public ItemStack getRenderItem(int slot) {
@@ -58,7 +102,7 @@ public class VialRackBlockEntity extends BlockEntity implements Container, MenuP
 
     @Override
     public int getContainerSize() {
-        return items.size();
+        return rackCount * VialRackContents.SLOT_COUNT;
     }
 
     @Override
@@ -73,11 +117,15 @@ public class VialRackBlockEntity extends BlockEntity implements Container, MenuP
 
     @Override
     public ItemStack getItem(int slot) {
-        return slot >= 0 && slot < items.size() ? items.get(slot) : ItemStack.EMPTY;
+        return slot >= 0 && slot < getContainerSize() ? items.get(slot) : ItemStack.EMPTY;
     }
 
     @Override
     public ItemStack removeItem(int slot, int amount) {
+        if (slot < 0 || slot >= getContainerSize()) {
+            return ItemStack.EMPTY;
+        }
+
         ItemStack removed = ContainerHelper.removeItem(items, slot, amount);
         if (!removed.isEmpty()) {
             sync();
@@ -87,12 +135,16 @@ public class VialRackBlockEntity extends BlockEntity implements Container, MenuP
 
     @Override
     public ItemStack removeItemNoUpdate(int slot) {
+        if (slot < 0 || slot >= getContainerSize()) {
+            return ItemStack.EMPTY;
+        }
+
         return ContainerHelper.takeItem(items, slot);
     }
 
     @Override
     public void setItem(int slot, ItemStack stack) {
-        if (slot < 0 || slot >= items.size()) {
+        if (slot < 0 || slot >= getContainerSize()) {
             return;
         }
 
@@ -107,7 +159,7 @@ public class VialRackBlockEntity extends BlockEntity implements Container, MenuP
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
-        return slot >= 0 && slot < items.size() && VialRackContents.isVial(stack);
+        return slot >= 0 && slot < getContainerSize() && VialRackContents.isVial(stack);
     }
 
     @Override
@@ -117,15 +169,20 @@ public class VialRackBlockEntity extends BlockEntity implements Container, MenuP
 
     @Override
     public void clearContent() {
+        clearItemsWithoutSync();
+        sync();
+    }
+
+    private void clearItemsWithoutSync() {
         for (int slot = 0; slot < items.size(); slot++) {
             items.set(slot, ItemStack.EMPTY);
         }
-        sync();
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
+        tag.putInt(RACK_COUNT_TAG, rackCount);
         ContainerHelper.saveAllItems(tag, items);
     }
 
@@ -136,6 +193,10 @@ public class VialRackBlockEntity extends BlockEntity implements Container, MenuP
         for (int slot = 0; slot < items.size(); slot++) {
             items.set(slot, VialRackContents.asSingleVial(items.get(slot)));
         }
+        rackCount = tag.contains(RACK_COUNT_TAG)
+            ? clampRackCount(tag.getInt(RACK_COUNT_TAG))
+            : 1;
+        rackCount = Math.max(rackCount, occupiedRackCount());
     }
 
     @Override
@@ -156,5 +217,19 @@ public class VialRackBlockEntity extends BlockEntity implements Container, MenuP
             BlockState state = getBlockState();
             level.sendBlockUpdated(worldPosition, state, state, 3);
         }
+    }
+
+    private int occupiedRackCount() {
+        int occupied = 1;
+        for (int slot = 0; slot < items.size(); slot++) {
+            if (!items.get(slot).isEmpty()) {
+                occupied = Math.max(occupied, slot / VialRackContents.SLOT_COUNT + 1);
+            }
+        }
+        return clampRackCount(occupied);
+    }
+
+    private static int clampRackCount(int count) {
+        return Math.max(1, Math.min(VialRackContents.MAX_RACKS, count));
     }
 }

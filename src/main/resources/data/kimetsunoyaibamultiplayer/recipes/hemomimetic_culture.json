@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:viral_culture"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:neural_culture"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:golden_extract"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:diamond_extract"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:hemomimetic_culture"
+  }
+}

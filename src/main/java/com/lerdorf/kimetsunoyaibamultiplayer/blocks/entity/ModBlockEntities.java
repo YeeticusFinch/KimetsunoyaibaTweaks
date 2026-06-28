@@ -17,6 +17,10 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("chest_of_drawers",
             () -> BlockEntityType.Builder.of(ChestOfDrawersBlockEntity::new, ModBlocks.CHEST_OF_DRAWERS.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<SwordRackBlockEntity>> SWORD_RACK =
+        BLOCK_ENTITIES.register("sword_rack",
+            () -> BlockEntityType.Builder.of(SwordRackBlockEntity::new, ModBlocks.SWORD_RACK.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<AlchemyTableBlockEntity>> ALCHEMY_TABLE =
         BLOCK_ENTITIES.register("alchemy_table",
             () -> BlockEntityType.Builder.of(AlchemyTableBlockEntity::new, ModAlchemyBlocks.ALCHEMY_TABLE.get()).build(null));

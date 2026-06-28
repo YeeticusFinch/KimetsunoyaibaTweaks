@@ -153,6 +153,28 @@ public class ModEntities {
                 .build("princess"));
 
     /**
+     * Orochi - demon quest companion for the Permanence storyline.
+     */
+    public static final RegistryObject<EntityType<OrochiEntity>> OROCHI =
+        ENTITY_TYPES.register("orochi",
+            () -> EntityType.Builder.of(OrochiEntity::new, MobCategory.CREATURE)
+                .sized(0.45F, 0.35F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("orochi"));
+
+    /**
+     * Eye Familiar - demon quest companion.
+     */
+    public static final RegistryObject<EntityType<EyeFamiliarEntity>> EYE_FAMILIAR =
+        ENTITY_TYPES.register("eye_familiar",
+            () -> EntityType.Builder.of(EyeFamiliarEntity::new, MobCategory.CREATURE)
+                .sized(0.45F, 0.45F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("eye_familiar"));
+
+    /**
      * Mugen Door - Decorative entity for kizuki demon spawns
      * Plays an opening animation and sound, then disappears
      */
@@ -229,6 +251,20 @@ public class ModEntities {
                 .noSave() // Don't save to world (temporary entity)
                 .fireImmune()
                 .build("after_image"));
+
+    /**
+     * Dark Star - Temporary visual entity for the Dark Star blood demon art.
+     * The server spawns it and the client renderer draws the dark_star item model.
+     */
+    public static final RegistryObject<EntityType<DarkStarVisualEntity>> DARK_STAR_VISUAL =
+        ENTITY_TYPES.register("dark_star_visual",
+            () -> EntityType.Builder.<DarkStarVisualEntity>of(DarkStarVisualEntity::new, MobCategory.MISC)
+                .sized(0.25F, 0.25F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("dark_star_visual"));
 
     /**
      * Generic Demon Slayer (male) - Spawns with random nichirin sword and power level.
@@ -407,6 +443,8 @@ public class ModEntities {
             event.put(KIRIYA.get(), KiriyaEntity.createAttributes().build());
             event.put(KAZUMI.get(), KazumiEntity.createAttributes().build());
             event.put(PRINCESS.get(), PrincessEntity.createAttributes().build());
+            event.put(OROCHI.get(), OrochiEntity.createAttributes().build());
+            event.put(EYE_FAMILIAR.get(), EyeFamiliarEntity.createAttributes().build());
 
             // Register attributes for Mugen Door (visual-only entity)
             event.put(MUGEN_DOOR.get(), MugenDoorEntity.createAttributes().build());

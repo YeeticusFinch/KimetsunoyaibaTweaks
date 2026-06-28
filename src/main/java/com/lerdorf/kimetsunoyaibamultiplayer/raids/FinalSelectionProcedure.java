@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.raids;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.TorilGateTeleportHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.DemonSlayerConfig;
@@ -514,14 +515,14 @@ public class FinalSelectionProcedure {
     private boolean isEligibleCandidate(ServerPlayer player) {
         return player != null
             && player.isAlive()
-            && !player.getPersistentData().getBoolean("oni")
+            && !Damager.isDemon(player)
             && !kakushiAcceptedPlayers.contains(player.getUUID());
     }
 
     private boolean isAnyPlayerNearCeremonyNpc(double maxDistance) {
         double maxDistSq = maxDistance * maxDistance;
         for (ServerPlayer player : level.players()) {
-            if (!player.isAlive()) continue;
+            if (!isEligibleCandidate(player)) continue;
             if (isPlayerNearCeremonyNpc(player, maxDistSq)) {
                 return true;
             }
@@ -647,7 +648,7 @@ public class FinalSelectionProcedure {
     private void processRaidEndPlayerCompletions() {
         for (ServerPlayer player : level.players()) {
             if (!player.isAlive()) continue;
-            if (player.getPersistentData().getBoolean("oni")) continue;
+            if (Damager.isDemon(player)) continue;
             if (raidEndCompletedPlayers.contains(player.getUUID())) continue;
             if (!isPlayerNearCeremonyNpc(player, PLAYER_START_TRIGGER_DISTANCE * PLAYER_START_TRIGGER_DISTANCE)) continue;
 
@@ -691,6 +692,9 @@ public class FinalSelectionProcedure {
         raidSuccessWaypointIssued = true;
 
         for (ServerPlayer player : level.players()) {
+            if (!isEligibleCandidate(player)) {
+                continue;
+            }
             player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.final_selection.waypoint_kanata")
                 .withStyle(ChatFormatting.AQUA));
             playerExitPromptCooldown.put(player.getUUID(), gameTime);
@@ -699,7 +703,7 @@ public class FinalSelectionProcedure {
 
     private void sendKanataWaypointReminders(long gameTime) {
         for (ServerPlayer player : level.players()) {
-            if (!player.isAlive() || player.getPersistentData().getBoolean("oni")) {
+            if (!isEligibleCandidate(player)) {
                 continue;
             }
             if (raidEndCompletedPlayers.contains(player.getUUID())) {
@@ -723,7 +727,7 @@ public class FinalSelectionProcedure {
 
     private void processExitPrompts(long gameTime) {
         for (ServerPlayer player : level.players()) {
-            if (!player.isAlive() || player.getPersistentData().getBoolean("oni")) {
+            if (!isEligibleCandidate(player)) {
                 continue;
             }
             if (!raidEndCompletedPlayers.contains(player.getUUID())) {
@@ -1615,7 +1619,7 @@ public class FinalSelectionProcedure {
         if (activeProcedure == null || player == null || !player.level().dimension().equals(MT_FUJIKASANE_KEY)) {
             return false;
         }
-        if (player.getPersistentData().getBoolean("oni")
+        if (Damager.isDemon(player)
             || com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler.isTransforming(player)) {
             player.sendSystemMessage(Component.literal("§cDemons and transforming players cannot become Kakushi."));
             activeProcedure.kakushiPendingUntilTick.remove(player.getUUID());

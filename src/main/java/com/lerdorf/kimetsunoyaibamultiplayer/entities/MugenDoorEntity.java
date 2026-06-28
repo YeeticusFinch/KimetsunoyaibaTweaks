@@ -2,7 +2,10 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -12,6 +15,8 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager.ControllerRegistrar;
@@ -36,6 +41,10 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  */
 public class MugenDoorEntity extends Mob implements GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private static final ResourceLocation MUGEN_CASTLE_DIMENSION_ID =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mugen_castle_dimension");
+    private static final ResourceKey<Level> MUGEN_CASTLE_DIMENSION =
+        ResourceKey.create(Registries.DIMENSION, MUGEN_CASTLE_DIMENSION_ID);
 
     // Synced data for animation states
     private static final EntityDataAccessor<Boolean> DATA_OPEN =
@@ -48,10 +57,13 @@ public class MugenDoorEntity extends Mob implements GeoEntity {
     // Animation timing constants (in ticks)
     private static final int OPEN_ANIMATION_DURATION = 6;  // 0.29 seconds
     private static final int CLOSE_ANIMATION_DURATION = 5; // 0.25 seconds
+    private static final double TELEPORT_RADIUS = 2.0D;
+    private static final double FORCED_TELEPORT_RADIUS = 3.5D;
 
     private int ticksAlive = 0;
     private int openDuration = 60; // Default 3 seconds (60 ticks)
     private boolean soundPlayed = false;
+    private boolean forceTeleportation = false;
 
     // Animation state tracking
     private enum DoorState { OPENING, OPEN, CLOSING, CLOSED }
@@ -113,6 +125,12 @@ public class MugenDoorEntity extends Mob implements GeoEntity {
         return create(level, pos, 60, false);
     }
 
+    public static MugenDoorEntity createForcedTeleportation(Level level, BlockPos pos) {
+        MugenDoorEntity door = createForTeleportation(level, pos);
+        door.forceTeleportation = true;
+        return door;
+    }
+
     public boolean isOpen() {
         return this.entityData.get(DATA_OPEN);
     }
@@ -141,14 +159,15 @@ public class MugenDoorEntity extends Mob implements GeoEntity {
      * Teleport nearby entities to the Mugen Castle dimension.
      */
     private void teleportNearbyEntities() {
+        double teleportRadius = this.forceTeleportation ? FORCED_TELEPORT_RADIUS : TELEPORT_RADIUS;
         java.util.List<net.minecraft.world.entity.player.Player> nearbyPlayers = level().getEntitiesOfClass(
             net.minecraft.world.entity.player.Player.class,
-            this.getBoundingBox().inflate(2.0), // 2 block radius
+            this.getBoundingBox().inflate(teleportRadius),
             player -> player != null && !player.isSpectator()
         );
 
         for (net.minecraft.world.entity.player.Player player : nearbyPlayers) {
-            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            if (player instanceof ServerPlayer serverPlayer) {
                 teleportToMugenCastle(serverPlayer);
             }
         }
@@ -159,26 +178,12 @@ public class MugenDoorEntity extends Mob implements GeoEntity {
      * - If in Mugen Castle → teleport to overworld
      * - If in any other dimension → teleport to Mugen Castle
      */
-    private void teleportToMugenCastle(net.minecraft.server.level.ServerPlayer player) {
+    private void teleportToMugenCastle(ServerPlayer player) {
         try {
-            // Get the Mugen Castle dimension key
-            net.minecraft.resources.ResourceLocation mugenCastleId =
-                net.minecraft.resources.ResourceLocation.tryParse("kimetsunoyaiba:mugen_castle");
-            if (mugenCastleId == null) {
-                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("Failed to parse mugen_castle dimension ID");
-                return;
-            }
-
-            net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> mugenCastleKey =
-                net.minecraft.resources.ResourceKey.create(
-                    net.minecraft.core.registries.Registries.DIMENSION,
-                    mugenCastleId
-                );
-
             // Check if door is in Mugen Castle dimension
-            boolean isInMugenCastle = this.level().dimension().equals(mugenCastleKey);
+            boolean isInMugenCastle = this.level().dimension().equals(MUGEN_CASTLE_DIMENSION);
 
-            net.minecraft.server.level.ServerLevel targetDimension;
+            ServerLevel targetDimension;
             String message;
 
             if (isInMugenCastle) {
@@ -187,7 +192,7 @@ public class MugenDoorEntity extends Mob implements GeoEntity {
                 message = "§aYou have returned to the overworld!";
             } else {
                 // Door is in overworld or other dimension → teleport to Mugen Castle
-                targetDimension = player.getServer().getLevel(mugenCastleKey);
+                targetDimension = player.getServer().getLevel(MUGEN_CASTLE_DIMENSION);
                 message = "§5You have been transported to the Mugen Castle!";
             }
 
@@ -244,6 +249,7 @@ public class MugenDoorEntity extends Mob implements GeoEntity {
         this.ticksAlive = tag.getInt("TicksAlive");
         this.openDuration = tag.getInt("OpenDuration");
         this.soundPlayed = tag.getBoolean("SoundPlayed");
+        this.forceTeleportation = tag.getBoolean("ForceTeleportation");
         if (tag.contains("State")) {
             DoorState loadedState = DoorState.valueOf(tag.getString("State"));
             setCurrentState(loadedState);
@@ -256,6 +262,7 @@ public class MugenDoorEntity extends Mob implements GeoEntity {
         tag.putInt("TicksAlive", this.ticksAlive);
         tag.putInt("OpenDuration", this.openDuration);
         tag.putBoolean("SoundPlayed", this.soundPlayed);
+        tag.putBoolean("ForceTeleportation", this.forceTeleportation);
         tag.putString("State", this.currentState.name());
     }
 
@@ -361,7 +368,9 @@ public class MugenDoorEntity extends Mob implements GeoEntity {
 
                 case OPEN:
                     // While open, teleport entities if not spawning
-                    if (!isSpawning() && com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.enableMugenDoorTeleportation.get()) {
+                    if (!isSpawning()
+                        && (this.forceTeleportation
+                            || com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.enableMugenDoorTeleportation.get())) {
                         teleportNearbyEntities();
                     }
 

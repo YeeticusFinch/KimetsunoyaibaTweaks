@@ -28,6 +28,7 @@ public final class BloodDemonArtAlchemyCatalog {
     private static final int INFUSION_RING_TINT = 0x5A9BFF;
     private static final int AMPLIFIER_RING_TINT = 0xD64A3A;
     private static final int BINDER_RING_TINT = 0xC0C7D1;
+    private static final int OROCHI_ELIXIR_RING_TINT = 0x4A1D6F;
 
     private static final Map<String, Integer> ITEM_TINTS = Map.ofEntries(
         Map.entry("kimetsunoyaibamultiplayer:minced_human_flesh", 0xA64242),
@@ -43,6 +44,7 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:crude_vial", 0xB42E2E),
         Map.entry("kimetsunoyaibamultiplayer:refined_vial", 0xC979D7),
         Map.entry("kimetsunoyaibamultiplayer:cruel_vial", 0x7A001C),
+        Map.entry("kimetsunoyaibamultiplayer:catalytic_reagent", 0xF1E2A0),
         Map.entry("kimetsunoyaibamultiplayer:unidentified_human_extract", 0xC87A7A),
         Map.entry("kimetsunoyaibamultiplayer:unidentified_rotten_extract", 0x6F7E4A),
         Map.entry("kimetsunoyaibamultiplayer:adrenal_gland", 0xE36161),
@@ -65,6 +67,8 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:scute_extract", 0x7CAE6C),
         Map.entry("kimetsunoyaibamultiplayer:illagers_extract", 0x8A3A32),
         Map.entry("kimetsunoyaibamultiplayer:powdered_snow_extract", 0xDDEAF1),
+        Map.entry("kimetsunoyaibamultiplayer:diamond_extract", 0xA9DDFE),
+        Map.entry("kimetsunoyaibamultiplayer:yamato_orochi_extract", 0x5E9A6B),
         Map.entry("kimetsunoyaibamultiplayer:creeping_doom_extract", 0x6E4A3A),
         Map.entry("kimetsunoyaibamultiplayer:infernal_culture", 0xE5622F),
         Map.entry("kimetsunoyaibamultiplayer:fortified_culture", 0x82A1BF),
@@ -74,6 +78,9 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:herbal_culture", 0x6EB36A),
         Map.entry("kimetsunoyaibamultiplayer:vitality_culture", 0x88D678),
         Map.entry("kimetsunoyaibamultiplayer:electrolytic_culture", 0x67C4E8),
+        Map.entry("kimetsunoyaibamultiplayer:hemomimetic_culture", 0xB76584),
+        Map.entry("kimetsunoyaibamultiplayer:familiar_tonic", 0x7C9E46),
+        Map.entry("kimetsunoyaibamultiplayer:orochi_elixir", 0x173B22),
         Map.entry("kimetsunoyaibamultiplayer:damage_amplifier_vial", 0xD64A3A),
         Map.entry("kimetsunoyaibamultiplayer:defense_amplifier_vial", 0x6994C9),
         Map.entry("kimetsunoyaibamultiplayer:range_amplifier_vial", 0xA06BE3),
@@ -119,6 +126,13 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:charged_catalyst", 0xA7926A),
         Map.entry("kimetsunoyaibamultiplayer:arc_catalyst", 0x55A6C0),
         Map.entry("kimetsunoyaibamultiplayer:incendiary_catalyst", 0xD9633F),
+        Map.entry("kimetsunoyaibamultiplayer:yamato_orochi_catalyst", 0x5C9C6B),
+        Map.entry("kimetsunoyaibamultiplayer:serpent_nest_catalyst", 0x82C96C),
+        Map.entry("kimetsunoyaibamultiplayer:ecdysis_catalyst", 0xCBD6AB),
+        Map.entry("kimetsunoyaibamultiplayer:phantom_serpent_catalyst", 0x9CB1EA),
+        Map.entry("kimetsunoyaibamultiplayer:yamato_ascension_catalyst", 0xD8E8F3),
+        Map.entry("kimetsunoyaibamultiplayer:dark_star_catalyst", 0x3E2F66),
+        Map.entry("kimetsunoyaibamultiplayer:dark_star", 0x3E2F66),
         Map.entry("kimetsunoyaibamultiplayer:potion_effect_binder", 0xF2F2F2)
     );
 
@@ -136,6 +150,8 @@ public final class BloodDemonArtAlchemyCatalog {
         new ExtractDefinition("minecraft:scute", "kimetsunoyaibamultiplayer:scute_extract"),
         new ExtractDefinition("kimetsunoyaibamultiplayer:vindicator_demon_art", "kimetsunoyaibamultiplayer:illagers_extract"),
         new ExtractDefinition("minecraft:powder_snow_bucket", "kimetsunoyaibamultiplayer:powdered_snow_extract"),
+        new ExtractDefinition("minecraft:diamond", "kimetsunoyaibamultiplayer:diamond_extract"),
+        new ExtractDefinition("kimetsunoyaiba:blooddemonart_kamanue", "kimetsunoyaibamultiplayer:yamato_orochi_extract"),
         new ExtractDefinition("kimetsunoyaibamultiplayer:creeping_doom", "kimetsunoyaibamultiplayer:creeping_doom_extract")
     );
 
@@ -156,11 +172,16 @@ public final class BloodDemonArtAlchemyCatalog {
     private static final List<CatalystDefinition> CATALYSTS = List.of(
         new CatalystDefinition("kimetsunoyaibamultiplayer:wither_extract", "kimetsunoyaibamultiplayer:wither_catalyst", CustomBloodDemonArtSavedData.MoveType.WITHER_SKULL),
         new CatalystDefinition("kimetsunoyaibamultiplayer:stellar_extract", "kimetsunoyaibamultiplayer:stellar_catalyst", CustomBloodDemonArtSavedData.MoveType.SINGULARITY),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:stellar_extract", "kimetsunoyaibamultiplayer:dark_star_catalyst", CustomBloodDemonArtSavedData.MoveType.DARK_STAR),
         new CatalystDefinition("kimetsunoyaibamultiplayer:immortal_extract", "kimetsunoyaibamultiplayer:immortal_catalyst", CustomBloodDemonArtSavedData.MoveType.TASTE_OF_IMMORTALITY),
         new CatalystDefinition("kimetsunoyaibamultiplayer:blaze_extract", "kimetsunoyaibamultiplayer:blaze_catalyst", CustomBloodDemonArtSavedData.MoveType.BLAZE_BARRAGE),
         new CatalystDefinition("kimetsunoyaibamultiplayer:phantom_extract", "kimetsunoyaibamultiplayer:phantom_catalyst", CustomBloodDemonArtSavedData.MoveType.GLIDE),
         new CatalystDefinition("kimetsunoyaibamultiplayer:sculk_extract", "kimetsunoyaibamultiplayer:sculk_catalyst_vial", CustomBloodDemonArtSavedData.MoveType.ROAR),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:yamato_orochi_extract", "kimetsunoyaibamultiplayer:yamato_orochi_catalyst", CustomBloodDemonArtSavedData.MoveType.YAMATO_OROCHI),
         new CatalystDefinition("kimetsunoyaibamultiplayer:azure_extract", "kimetsunoyaibamultiplayer:azure_catalyst", CustomBloodDemonArtSavedData.MoveType.FLOWER_DANCE),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:yamato_orochi_catalyst", "kimetsunoyaibamultiplayer:serpent_nest_catalyst", CustomBloodDemonArtSavedData.MoveType.EIGHTFOLD_AMBUSH),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:yamato_orochi_catalyst", "kimetsunoyaibamultiplayer:ecdysis_catalyst", CustomBloodDemonArtSavedData.MoveType.SKIN_SHED),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:yamato_orochi_catalyst", "kimetsunoyaibamultiplayer:phantom_serpent_catalyst", CustomBloodDemonArtSavedData.MoveType.SNAKE_STEP),
         new CatalystDefinition("kimetsunoyaibamultiplayer:noxious_extract", "kimetsunoyaibamultiplayer:noxious_catalyst", CustomBloodDemonArtSavedData.MoveType.SPINE_BURST),
         new CatalystDefinition("kimetsunoyaibamultiplayer:guardian_extract", "kimetsunoyaibamultiplayer:guardian_catalyst", CustomBloodDemonArtSavedData.MoveType.GUARDIAN_LASER),
         new CatalystDefinition("kimetsunoyaibamultiplayer:golden_extract", "kimetsunoyaibamultiplayer:golden_catalyst", CustomBloodDemonArtSavedData.MoveType.MIDAS_TOUCH),
@@ -180,7 +201,15 @@ public final class BloodDemonArtAlchemyCatalog {
         new CatalystDefinition("kimetsunoyaibamultiplayer:stellar_catalyst", "kimetsunoyaibamultiplayer:meteor_catalyst", CustomBloodDemonArtSavedData.MoveType.SHOOTING_STAR),
         new CatalystDefinition("kimetsunoyaibamultiplayer:creeping_doom_catalyst", "kimetsunoyaibamultiplayer:charged_catalyst", CustomBloodDemonArtSavedData.MoveType.LIGHTNING_CHARGE),
         new CatalystDefinition("kimetsunoyaibamultiplayer:guardian_catalyst", "kimetsunoyaibamultiplayer:arc_catalyst", CustomBloodDemonArtSavedData.MoveType.CHAIN_LIGHTNING),
-        new CatalystDefinition("kimetsunoyaibamultiplayer:blaze_catalyst", "kimetsunoyaibamultiplayer:incendiary_catalyst", CustomBloodDemonArtSavedData.MoveType.INCENDIARY_PROJECTILE)
+        new CatalystDefinition("kimetsunoyaibamultiplayer:blaze_catalyst", "kimetsunoyaibamultiplayer:incendiary_catalyst", CustomBloodDemonArtSavedData.MoveType.INCENDIARY_PROJECTILE),
+        new CatalystDefinition("kimetsunoyaibamultiplayer:yamato_orochi_catalyst", "kimetsunoyaibamultiplayer:yamato_ascension_catalyst", CustomBloodDemonArtSavedData.MoveType.EIGHTFOLD_ASCENDANT)
+    );
+
+    private static final List<CatalystUpgradeDefinition> CATALYST_UPGRADES = List.of(
+        new CatalystUpgradeDefinition("kimetsunoyaibamultiplayer:yamato_orochi_catalyst", "kimetsunoyaibamultiplayer:azure_extract", "kimetsunoyaibamultiplayer:serpent_nest_catalyst"),
+        new CatalystUpgradeDefinition("kimetsunoyaibamultiplayer:yamato_orochi_catalyst", "kimetsunoyaibamultiplayer:golden_extract", "kimetsunoyaibamultiplayer:ecdysis_catalyst"),
+        new CatalystUpgradeDefinition("kimetsunoyaibamultiplayer:yamato_orochi_catalyst", "kimetsunoyaibamultiplayer:phantom_extract", "kimetsunoyaibamultiplayer:phantom_serpent_catalyst"),
+        new CatalystUpgradeDefinition("kimetsunoyaibamultiplayer:yamato_orochi_catalyst", "kimetsunoyaibamultiplayer:scute_extract", "kimetsunoyaibamultiplayer:yamato_ascension_catalyst")
     );
 
     private static final List<AmplifierDefinition> AMPLIFIERS = List.of(
@@ -249,12 +278,17 @@ public final class BloodDemonArtAlchemyCatalog {
         if (matches(stack, "kimetsunoyaibamultiplayer:potion_effect_binder")) {
             return BINDER_RING_TINT;
         }
+        if (matches(stack, "kimetsunoyaibamultiplayer:orochi_elixir")) {
+            return OROCHI_ELIXIR_RING_TINT;
+        }
         return 0xFFFFFF;
     }
 
     public static boolean isSpecialAlchemyItem(ItemStack stack) {
         String id = id(stack);
-        return isInfusion(stack) || isCatalyst(stack) || isAmplifier(stack) || "kimetsunoyaibamultiplayer:potion_effect_binder".equals(id);
+        return isInfusion(stack) || isCatalyst(stack) || isAmplifier(stack)
+            || "kimetsunoyaibamultiplayer:potion_effect_binder".equals(id)
+            || "kimetsunoyaibamultiplayer:orochi_elixir".equals(id);
     }
 
     public static boolean isAlchemyTableDisplayContainer(ItemStack stack) {
@@ -266,7 +300,9 @@ public final class BloodDemonArtAlchemyCatalog {
         return isEmptyPetriDish(stack) || isVialDisplayItem(stack)
             || "kimetsunoyaibamultiplayer:crude_vial".equals(itemId)
             || "kimetsunoyaibamultiplayer:refined_vial".equals(itemId)
-            || "kimetsunoyaibamultiplayer:cruel_vial".equals(itemId);
+            || "kimetsunoyaibamultiplayer:cruel_vial".equals(itemId)
+            || "kimetsunoyaibamultiplayer:familiar_tonic".equals(itemId)
+            || "kimetsunoyaibamultiplayer:orochi_elixir".equals(itemId);
     }
 
     public static boolean isVialDisplayItem(ItemStack stack) {
@@ -275,6 +311,8 @@ public final class BloodDemonArtAlchemyCatalog {
         }
         String path = ResourceLocation.tryParse(id(stack)) == null ? id(stack) : ResourceLocation.tryParse(id(stack)).getPath();
         return path.contains("vial")
+            || path.contains("elixir")
+            || path.contains("tonic")
             || path.contains("sample")
             || path.contains("infusion")
             || path.contains("catalyst")
@@ -341,6 +379,14 @@ public final class BloodDemonArtAlchemyCatalog {
         return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }
 
+    public static ItemStack stack(String itemId, int count) {
+        ItemStack stack = stack(itemId);
+        if (!stack.isEmpty()) {
+            stack.setCount(count);
+        }
+        return stack;
+    }
+
     public static ItemStack microscopeOutput(ItemStack input, RandomSource random) {
         List<String> outputs = MICROSCOPE_OUTPUTS.get(id(input));
         if (outputs == null || outputs.isEmpty()) {
@@ -378,9 +424,24 @@ public final class BloodDemonArtAlchemyCatalog {
             }
         }
 
+        if ((matches(first, "kimetsunoyaibamultiplayer:orochi_scales") && matches(second, "kimetsunoyaibamultiplayer:familiar_tonic"))
+            || (matches(second, "kimetsunoyaibamultiplayer:orochi_scales") && matches(first, "kimetsunoyaibamultiplayer:familiar_tonic"))) {
+            return stack("kimetsunoyaibamultiplayer:orochi_elixir");
+        }
+
         for (CatalystDefinition definition : CATALYSTS) {
+            if (!definition.inputId().endsWith("_extract")) {
+                continue;
+            }
             if ((matches(first, definition.inputId()) && matches(second, "kimetsunoyaibamultiplayer:cruel_vial"))
                 || (matches(second, definition.inputId()) && matches(first, "kimetsunoyaibamultiplayer:cruel_vial"))) {
+                return stack(definition.outputId());
+            }
+        }
+
+        for (CatalystUpgradeDefinition definition : CATALYST_UPGRADES) {
+            if ((matches(first, definition.catalystId()) && matches(second, definition.ingredientId()))
+                || (matches(second, definition.catalystId()) && matches(first, definition.ingredientId()))) {
                 return stack(definition.outputId());
             }
         }
@@ -439,9 +500,22 @@ public final class BloodDemonArtAlchemyCatalog {
         if (matches(ingredient, "minecraft:slime_ball") && matches(input, "kimetsunoyaibamultiplayer:refined_vial")) {
             return stack("kimetsunoyaibamultiplayer:potion_effect_binder");
         }
+        if (matches(ingredient, "kimetsunoyaibamultiplayer:herbal_culture")
+            && matches(input, "kimetsunoyaibamultiplayer:crude_vial")) {
+            return stack("kimetsunoyaibamultiplayer:familiar_tonic");
+        }
+        if (matches(ingredient, "kimetsunoyaibamultiplayer:hemomimetic_culture")
+            && matches(input, "kimetsunoyaibamultiplayer:cruel_vial")) {
+            return stack("kimetsunoyaibamultiplayer:catalytic_reagent");
+        }
         for (InfusionDefinition definition : INFUSIONS) {
             if (matches(ingredient, definition.inputId()) && matches(input, "kimetsunoyaibamultiplayer:crude_vial")) {
                 return stack(definition.outputId());
+            }
+        }
+        for (CatalystDefinition definition : baseCatalystDefinitions()) {
+            if (matches(ingredient, definition.inputId()) && matches(input, "kimetsunoyaibamultiplayer:catalytic_reagent")) {
+                return stack(definition.outputId(), 3);
             }
         }
         return ItemStack.EMPTY;
@@ -449,6 +523,11 @@ public final class BloodDemonArtAlchemyCatalog {
 
     public static ItemStack containerReturn(ItemStack consumedStack) {
         if (isInfusion(consumedStack) || isAmplifier(consumedStack) || isCatalyst(consumedStack)) {
+            return stack("kimetsunoyaibamultiplayer:empty_vial");
+        }
+        if (matches(consumedStack, "kimetsunoyaibamultiplayer:orochi_elixir")
+            || matches(consumedStack, "kimetsunoyaibamultiplayer:familiar_tonic")
+            || matches(consumedStack, "kimetsunoyaibamultiplayer:catalytic_reagent")) {
             return stack("kimetsunoyaibamultiplayer:empty_vial");
         }
         if (consumedStack.is(Items.POTION)) {
@@ -479,6 +558,12 @@ public final class BloodDemonArtAlchemyCatalog {
         return AmplifierKind.NONE;
     }
 
+    public static List<CatalystDefinition> baseCatalystDefinitions() {
+        return CATALYSTS.stream()
+            .filter(definition -> definition.inputId().endsWith("_extract"))
+            .toList();
+    }
+
     public static boolean isHarmfulEffect(MobEffect effect) {
         return effect == MobEffects.WITHER
             || effect == MobEffects.BLINDNESS
@@ -502,7 +587,8 @@ public final class BloodDemonArtAlchemyCatalog {
             || path.contains("gland") || path.contains("marrow") || path.contains("fibre")) {
             return path.contains("empty") ? "empty_petri_dish" : "full_petri_dish";
         }
-        if (path.contains("vial") || path.contains("sample") || path.contains("infusion") || path.contains("catalyst")) {
+        if (path.contains("vial") || path.contains("elixir") || path.contains("tonic")
+            || path.contains("sample") || path.contains("infusion") || path.contains("catalyst")) {
             return path.contains("empty") ? "empty_vial" : "full_vial";
         }
         return path;
@@ -518,6 +604,9 @@ public final class BloodDemonArtAlchemyCatalog {
     }
 
     public record CatalystDefinition(String inputId, String outputId, CustomBloodDemonArtSavedData.MoveType unlockedMove) {
+    }
+
+    public record CatalystUpgradeDefinition(String catalystId, String ingredientId, String outputId) {
     }
 
     public record AmplifierDefinition(String inputId, String outputId, AmplifierKind kind) {

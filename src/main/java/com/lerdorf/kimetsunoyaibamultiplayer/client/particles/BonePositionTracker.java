@@ -5,6 +5,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordSwingConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -63,6 +65,7 @@ public class BonePositionTracker {
 		public final boolean isRawVertical;
 		public final float vert;
 		public final float hor;
+		public final int tintColor;
 
 	    public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
 	                             boolean isHorizontal, boolean isVertical, boolean isSpin,
@@ -94,6 +97,7 @@ public class BonePositionTracker {
 	        this.isRawVertical = false;
 	        this.vert = 0;
 	        this.hor = 0;
+	        this.tintColor = resolveSlashTint(modelKey, entity);
 	    }
 	    
 	    public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
@@ -126,6 +130,7 @@ public class BonePositionTracker {
 		this.vert = 0;
 		this.hor = 0;
 			this.posOffset = Vec3.ZERO;
+			this.tintColor = resolveSlashTint(modelKey, entity);
 		}
 
 		// Full constructor with all raw slash parameters
@@ -156,10 +161,11 @@ public class BonePositionTracker {
 		this.isRawVertical = false;
 		this.vert = 0;
 		this.hor = 0;
-			this.sizeScaler = sizeScaler;
-			this.angleOffset = angleOffset;
+		this.sizeScaler = sizeScaler;
+		this.angleOffset = angleOffset;
 			this.reverse = reverse;
 			this.posOffset = Vec3.ZERO;
+			this.tintColor = resolveSlashTint(modelKey, entity);
 		}
 
 	// Raw horizontal slash constructor
@@ -194,6 +200,7 @@ public class BonePositionTracker {
 		this.isRawVertical = false;
 		this.vert = vert;
 		this.hor = 0;
+		this.tintColor = resolveSlashTint(modelKey, entity);
 	}
 
 	// Raw vertical slash constructor
@@ -228,6 +235,7 @@ public class BonePositionTracker {
 		this.isRawVertical = true;
 		this.vert = vert;
 		this.hor = hor;
+		this.tintColor = resolveSlashTint(modelKey, entity);
 	}
 
 	    public float getCurrentProgress() {
@@ -243,6 +251,17 @@ public class BonePositionTracker {
 	    public boolean matches(UUID entityId, String animationName, boolean leftHand) {
 	        return this.entityId.equals(entityId) && this.animationName.equals(animationName) && this.leftHand == leftHand;
 	    }
+	}
+
+	private static int resolveSlashTint(String modelKey, LivingEntity entity) {
+		if (!"claw".equals(modelKey) || entity == null) {
+			return 0xFFFFFF;
+		}
+		net.minecraft.world.item.ItemStack stack = entity.getMainHandItem();
+		if (stack.getItem() == ModItems.CUSTOM_DEMON_ART.get()) {
+			return CustomDemonArtItem.getDisplayColor(stack) & 0xFFFFFF;
+		}
+		return 0xFFFFFF;
 	}
 	
 	/**

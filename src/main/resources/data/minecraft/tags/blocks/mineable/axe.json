@@ -3,6 +3,18 @@
   "values": [
     "kimetsunoyaibamultiplayer:dark_oak_wall",
     "kimetsunoyaibamultiplayer:stripped_dark_oak_wall",
-    "kimetsunoyaibamultiplayer:chest_of_drawers"
+    "kimetsunoyaibamultiplayer:chest_of_drawers",
+    "kimetsunoyaibamultiplayer:wisteria_planks",
+    "kimetsunoyaibamultiplayer:wisteria_stairs",
+    "kimetsunoyaibamultiplayer:wisteria_slab",
+    "kimetsunoyaibamultiplayer:wisteria_fence",
+    "kimetsunoyaibamultiplayer:wisteria_vertical_slab",
+    "kimetsunoyaibamultiplayer:spruce_vertical_slab",
+    "kimetsunoyaibamultiplayer:spruce_sideways_stairs",
+    "kimetsunoyaibamultiplayer:spruce_sideways_fence",
+    "kimetsunoyaibamultiplayer:wisteria_fence_gate",
+    "kimetsunoyaibamultiplayer:wisteria_pressure_plate",
+    "kimetsunoyaibamultiplayer:wisteria_button",
+    "kimetsunoyaibamultiplayer:sword_rack"
   ]
 }

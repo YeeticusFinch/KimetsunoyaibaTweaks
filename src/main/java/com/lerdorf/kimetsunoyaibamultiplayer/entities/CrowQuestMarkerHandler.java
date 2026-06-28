@@ -26,9 +26,15 @@ public class CrowQuestMarkerHandler {
     // Store quest markers for each player
     private static final Map<UUID, QuestMarker> activeQuests = new HashMap<>();
 
-    // Pattern to match crow quest messages like "Mt Sagiri  is at 12 ~ 57" or "Mt Sagiri is at 12 ~ 57"
-    // Also matches variations like "Location is at X ~ Z" or "Place  is at X ~ Z"
-    private static final Pattern QUEST_PATTERN = Pattern.compile("(.+?)\\s+is at\\s+(-?\\d+)\\s*~\\s*(-?\\d+)", Pattern.CASE_INSENSITIVE);
+    // Pattern to match crow quest messages like "Mt Sagiri is at 12 64 57" or "Mt Sagiri is at 12 ~ 57"
+    // The tilde means the height is unknown and should be resolved on the client.
+    private static final Pattern QUEST_PATTERN = Pattern.compile(
+        "(.+?)\\s+is at\\s+(-?\\d+)\\s+(?:(-?\\d+)\\s+(-?\\d+)|~\\s+(-?\\d+))(?!\\s*~)",
+        Pattern.CASE_INSENSITIVE
+    );
+
+    public record ParsedCrowQuestMessage(Vec3 location, boolean explicitHeight) {
+    }
 
     public static class QuestMarker {
         public final UUID playerId;
@@ -118,19 +124,25 @@ public class CrowQuestMarkerHandler {
      * Attempts to parse a crow quest message from chat
      * Returns the target location if successful, null otherwise
      */
-    public static Vec3 parseCrowQuestMessage(String message) {
+    public static ParsedCrowQuestMessage parseCrowQuestMessage(String message) {
         Matcher matcher = QUEST_PATTERN.matcher(message);
         if (matcher.find()) {
             try {
                 String locationName = matcher.group(1).trim();
                 int x = Integer.parseInt(matcher.group(2));
-                int z = Integer.parseInt(matcher.group(3));
+                String yGroup = matcher.group(3);
+                boolean explicitHeight = yGroup != null;
+                int y = explicitHeight ? Integer.parseInt(yGroup) : 64;
+                int z = Integer.parseInt(explicitHeight ? matcher.group(4) : matcher.group(5));
 
-                // Use a reasonable Y value (surface level)
-                int y = 64;
-                if (Config.logDebug)
-                    Log.info("Parsed crow quest: '{}' at ({}, {}, {})", locationName, x, y, z);
-                return new Vec3(x, y, z);
+                if (Config.logDebug) {
+                    if (explicitHeight) {
+                        Log.info("Parsed crow quest: '{}' at ({}, {}, {})", locationName, x, y, z);
+                    } else {
+                        Log.info("Parsed crow quest: '{}' at ({}, ~, {})", locationName, x, z);
+                    }
+                }
+                return new ParsedCrowQuestMessage(new Vec3(x, y, z), explicitHeight);
             } catch (NumberFormatException e) {
                 if (Config.logDebug)
                 Log.warn("Failed to parse coordinates from message: {}", message);
@@ -152,9 +164,11 @@ public class CrowQuestMarkerHandler {
      */
     public static void drawQuestArrow(Player player, Vec3 target, Level level) {
         Vec3 playerPos = player.position().add(0, player.getEyeHeight(), 0);
-        // Arrow guidance is X/Z-only so it never points underground/skyward due to target Y.
-        Vec3 adjustedTarget = new Vec3(target.x, playerPos.y, target.z);
-        Vec3 direction = adjustedTarget.subtract(playerPos).normalize();
+        Vec3 toTarget = target.subtract(playerPos);
+        if (toTarget.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+        Vec3 direction = toTarget.normalize();
 
         // Draw arrow particles in front of the player
         double arrowLength = EntityConfig.crowArrowLength;
@@ -172,8 +186,9 @@ public class CrowQuestMarkerHandler {
             // Arrow head at the end
             if (progress > 0.7 && progress < 0.9) {
                 // Create arrow head effect with angled particles
-                Vec3 perpendicular1 = new Vec3(-direction.z, 0, direction.x).normalize().scale(0.2);
-                Vec3 perpendicular2 = new Vec3(0, 1, 0).cross(direction).normalize().scale(0.2);
+                Vec3 basis = Math.abs(direction.y) > 0.9D ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+                Vec3 perpendicular1 = direction.cross(basis).normalize().scale(0.2);
+                Vec3 perpendicular2 = direction.cross(perpendicular1).normalize().scale(0.2);
 
                 level.addParticle(ParticleTypes.END_ROD,
                         particlePos.x + perpendicular1.x, particlePos.y + perpendicular1.y, particlePos.z + perpendicular1.z,

@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:stellar_extract"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:night_catalyst"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:dark_star_catalyst"
+  }
+}

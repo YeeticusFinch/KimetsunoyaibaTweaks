@@ -84,6 +84,9 @@ public class AbilityScheduler {
         for (Map.Entry<UUID, List<ScheduledTask>> entry : tasksByEntity.entrySet()) {
             Entity owner = level.getEntity(entry.getKey());
             if (owner == null) {
+                owner = level.getServer() != null ? level.getServer().getPlayerList().getPlayer(entry.getKey()) : null;
+            }
+            if (owner == null) {
                 // Entity may be in an unloaded chunk or transiently between states; keep tasks.
                 continue;
             }

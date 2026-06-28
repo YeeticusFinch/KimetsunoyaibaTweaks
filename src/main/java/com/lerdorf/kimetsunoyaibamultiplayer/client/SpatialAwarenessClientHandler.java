@@ -2,7 +2,10 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.OrochiEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OrochiDismountPacket;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
 import net.minecraft.client.Minecraft;
@@ -83,10 +86,29 @@ public class SpatialAwarenessClientHandler {
     @SubscribeEvent
     public static void onInteractionKey(InputEvent.InteractionKeyMappingTriggered event) {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || !player.hasEffect(ModEffects.SPATIAL_AWARENESS.get())) {
+        if (player == null) {
             return;
         }
-        event.setCanceled(true);
+
+        if (event.isUseItem() && player.isShiftKeyDown()) {
+            OrochiEntity orochi = player.getPassengers().stream()
+                .filter(OrochiEntity.class::isInstance)
+                .map(OrochiEntity.class::cast)
+                .findFirst()
+                .orElse(null);
+            if (orochi != null && player.getUUID().equals(orochi.getOwnerUUID())) {
+                Log.alwaysWarn("[Orochi] Client detected shift-right-click dismount attempt by {} (cooldownRemaining={} ticks)",
+                    player.getName().getString(), orochi.getMountToggleCooldownRemainingTicks());
+                event.setCanceled(true);
+                event.setSwingHand(false);
+                ModNetworking.sendToServer(new OrochiDismountPacket(orochi.getId()));
+                return;
+            }
+        }
+
+        if (player.hasEffect(ModEffects.SPATIAL_AWARENESS.get())) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent

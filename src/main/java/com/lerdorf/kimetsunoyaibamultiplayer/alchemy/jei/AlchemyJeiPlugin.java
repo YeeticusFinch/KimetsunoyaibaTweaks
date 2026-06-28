@@ -96,6 +96,16 @@ public class AlchemyJeiPlugin implements IModPlugin {
             BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:cruel_vial")
         ));
         recipes.add(new AlchemyBrewingJeiRecipe(
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:hemomimetic_culture"),
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:cruel_vial"),
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:catalytic_reagent")
+        ));
+        recipes.add(new AlchemyBrewingJeiRecipe(
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:herbal_culture"),
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:crude_vial"),
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:familiar_tonic")
+        ));
+        recipes.add(new AlchemyBrewingJeiRecipe(
             BloodDemonArtAlchemyCatalog.stack("minecraft:slime_ball"),
             BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:refined_vial"),
             BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:potion_effect_binder")
@@ -112,6 +122,14 @@ public class AlchemyJeiPlugin implements IModPlugin {
         addInfusion(recipes, "kimetsunoyaibamultiplayer:illagers_extract", "kimetsunoyaibamultiplayer:bleeding_infusion");
         addInfusion(recipes, "kimetsunoyaibamultiplayer:blaze_extract", "kimetsunoyaibamultiplayer:fire_infusion");
         addInfusion(recipes, "kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:frozen_infusion");
+
+        for (BloodDemonArtAlchemyCatalog.CatalystDefinition definition : BloodDemonArtAlchemyCatalog.baseCatalystDefinitions()) {
+            recipes.add(new AlchemyBrewingJeiRecipe(
+                BloodDemonArtAlchemyCatalog.stack(definition.inputId()),
+                BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:catalytic_reagent"),
+                BloodDemonArtAlchemyCatalog.stack(definition.outputId(), 3)
+            ));
+        }
 
         return recipes;
     }

@@ -96,7 +96,7 @@ public class CustomBloodDemonArtSavedData extends SavedData {
     }
 
     public int getUnlockedSlots(ServerPlayer player) {
-        return Math.max(0, Math.min(MAX_SLOTS, DemonTransformationHandler.getTrackedMuzanBlood(player) / 10));
+        return Math.max(0, Math.min(MAX_SLOTS, DemonTransformationHandler.getEffectiveMuzanBlood(player) / 10));
     }
 
     public boolean createBlankForm(ServerPlayer player, int slotIndex) {
@@ -549,13 +549,16 @@ public class CustomBloodDemonArtSavedData extends SavedData {
         private String artName;
         private final List<String> catalystIds;
         private final List<CustomFormSlot> slots;
+        private final Map<String, Integer> passiveSkillLevels;
         private int selectedSlot;
 
-        private PlayerArtData(CoreSettings coreSettings, String artName, List<String> catalystIds, List<CustomFormSlot> slots, int selectedSlot) {
+        private PlayerArtData(CoreSettings coreSettings, String artName, List<String> catalystIds, List<CustomFormSlot> slots,
+                              Map<String, Integer> passiveSkillLevels, int selectedSlot) {
             this.coreSettings = coreSettings;
             this.artName = sanitizeArtName(artName);
             this.catalystIds = catalystIds;
             this.slots = slots;
+            this.passiveSkillLevels = passiveSkillLevels;
             this.selectedSlot = selectedSlot;
         }
 
@@ -564,7 +567,7 @@ public class CustomBloodDemonArtSavedData extends SavedData {
             for (int i = 0; i < MAX_SLOTS; i++) {
                 slots.add(CustomFormSlot.empty());
             }
-            return new PlayerArtData(CoreSettings.defaults(), DEFAULT_ART_NAME, new ArrayList<>(), slots, -1);
+            return new PlayerArtData(CoreSettings.defaults(), DEFAULT_ART_NAME, new ArrayList<>(), slots, new ConcurrentHashMap<>(), -1);
         }
 
         public static PlayerArtData fromTag(CompoundTag tag) {
@@ -581,7 +584,17 @@ public class CustomBloodDemonArtSavedData extends SavedData {
                 }
             }
             int selectedSlot = tag.contains("selectedSlot", Tag.TAG_INT) ? tag.getInt("selectedSlot") : -1;
-            return new PlayerArtData(core, artName, catalystIds, slots, selectedSlot);
+            Map<String, Integer> passiveSkillLevels = new ConcurrentHashMap<>();
+            if (tag.contains("passiveSkillLevels", Tag.TAG_COMPOUND)) {
+                CompoundTag passiveTag = tag.getCompound("passiveSkillLevels");
+                for (String key : passiveTag.getAllKeys()) {
+                    int level = passiveTag.getInt(key);
+                    if (level > 0) {
+                        passiveSkillLevels.put(key, level);
+                    }
+                }
+            }
+            return new PlayerArtData(core, artName, catalystIds, slots, passiveSkillLevels, selectedSlot);
         }
 
         public CompoundTag toTag() {
@@ -594,6 +607,13 @@ public class CustomBloodDemonArtSavedData extends SavedData {
                 slotsTag.add(slot.toTag());
             }
             tag.put("slots", slotsTag);
+            CompoundTag passiveTag = new CompoundTag();
+            for (Map.Entry<String, Integer> entry : passiveSkillLevels.entrySet()) {
+                if (entry.getKey() != null && !entry.getKey().isBlank() && entry.getValue() != null && entry.getValue() > 0) {
+                    passiveTag.putInt(entry.getKey(), entry.getValue());
+                }
+            }
+            tag.put("passiveSkillLevels", passiveTag);
             tag.putInt("selectedSlot", selectedSlot);
             return tag;
         }
@@ -631,6 +651,24 @@ public class CustomBloodDemonArtSavedData extends SavedData {
 
         public List<CustomFormSlot> slots() {
             return slots;
+        }
+
+        public int passiveSkillLevel(String skillId) {
+            if (skillId == null || skillId.isBlank()) {
+                return 0;
+            }
+            return Math.max(0, passiveSkillLevels.getOrDefault(skillId, 0));
+        }
+
+        public void setPassiveSkillLevel(String skillId, int level) {
+            if (skillId == null || skillId.isBlank()) {
+                return;
+            }
+            if (level <= 0) {
+                passiveSkillLevels.remove(skillId);
+            } else {
+                passiveSkillLevels.put(skillId, level);
+            }
         }
 
         public int selectedSlot() {
@@ -924,11 +962,18 @@ public class CustomBloodDemonArtSavedData extends SavedData {
         BLAZE_BARRAGE("blaze_barrage", "Blaze Barrage", "Fires three consecutive particle volleys.", 9, 5, 18, false),
         GUARDIAN_LASER("guardian_laser", "Guardian Laser",
                 "Fires a constant laser beam that deals continuous damage.", 10, 6, 24, false),
-        SINGULARITY("singularity", "Singularity", "Pulls nearby entities inward and crushes them with a dense gravity field.", 10, 6, 20, false),
+        SINGULARITY("singularity", "Singularity",
+                "Pulls nearby entities inward and crushes them with a dense gravity field.", 10, 6, 20, false),
+        DARK_STAR("dark_star", "Dark Star", "Conjures a dense crushing sphere of darkness and dispair.", 10, 9, 80, false),
         TASTE_OF_IMMORTALITY("taste_of_immortality", "Taste of Immortality", "Briefly enters a state where lethal blows are resisted.", 10, 7, 20, false),
         GLIDE("glide", "Glide", "Glides through the air for a short duration.", 9, 5, 20, false),
         ROAR("roar", "Roar", "Unleashes a shock roar that pushes enemies back.", 9, 5, 20, false),
         FLOWER_DANCE("flower_dance", "Flower Dance", "Dashes in a flowing pattern with chained strikes.", 10, 6, 20, false),
+        YAMATO_OROCHI("yamato_orochi", "Yamato Orochi", "Launches a barrage of serpent heads.", 10, 6, 20, false),
+        EIGHTFOLD_AMBUSH("eightfold_ambush", "Eightfold Ambush", "Eight serpent heads appear in a circle around the target, then snap forward after a brief delay.", 10, 6, 20, false),
+        SKIN_SHED("skin_shed", "Skin Shed", "Places an illusory duplicate of yourself at your position.", 8, 5, 20, false),
+        SNAKE_STEP("snake_step", "Snake Step", "Launches forward atop a giant snake.", 10, 6, 20, false),
+        EIGHTFOLD_ASCENDANT("eightfold_ascendant", "Eightfold Ascendant", "Eight serpent heads orbit the player, damaging nearby entities and blocking attacks.", 12, 8, 40, false),
         SPINE_BURST("spine_burst", "Spine Burst", "Fires spikes outward in all directions.", 10, 6, 20, false),
         MIDAS_TOUCH("midas_touch", "Midas Touch", "Marks a target to take increased damage.", 10, 6, 20, false),
         DEFEND("defend", "Defend", "Enters an entrenched defensive stance.", 8, 5, 20, false),

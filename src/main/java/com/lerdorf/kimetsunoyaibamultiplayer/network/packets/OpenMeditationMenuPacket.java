@@ -42,8 +42,12 @@ public class OpenMeditationMenuPacket {
         }
 
         private static void openMeditationMenu(MeditationMenuData data) {
-            net.minecraft.client.Minecraft.getInstance()
-                .setScreen(new com.lerdorf.kimetsunoyaibamultiplayer.client.MeditationMenuScreen(data));
+            net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
+            if (minecraft.screen instanceof com.lerdorf.kimetsunoyaibamultiplayer.client.MeditationMenuScreen current) {
+                minecraft.setScreen(current.refreshed(data));
+            } else {
+                minecraft.setScreen(new com.lerdorf.kimetsunoyaibamultiplayer.client.MeditationMenuScreen(data));
+            }
         }
     }
 }

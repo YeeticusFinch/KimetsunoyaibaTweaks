@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "type=north": {
+      "model": "kimetsunoyaibamultiplayer:block/vertical_slab_single"
+    },
+    "type=east": {
+      "model": "kimetsunoyaibamultiplayer:block/vertical_slab_single",
+      "y": 90
+    },
+    "type=south": {
+      "model": "kimetsunoyaibamultiplayer:block/vertical_slab_single",
+      "y": 180
+    },
+    "type=west": {
+      "model": "kimetsunoyaibamultiplayer:block/vertical_slab_single",
+      "y": 270
+    },
+    "type=double": {
+      "model": "kimetsunoyaibamultiplayer:block/vertical_slab_double"
+    }
+  }
+}

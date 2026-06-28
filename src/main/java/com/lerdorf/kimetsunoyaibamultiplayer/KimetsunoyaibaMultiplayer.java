@@ -134,6 +134,7 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SwordRackConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.class);
@@ -144,8 +145,9 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.class);
-        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedChestOfDrawersConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBlocksConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SwordsmithVillageConfig.class);
+        com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.register(modEventBus);
         Log.alwaysWarn("[INIT] Registered config event handlers");
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
@@ -154,6 +156,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig.SPEC, "kimetsunoyaibamultiplayer/particles.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig.SPEC, "kimetsunoyaibamultiplayer/entities.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig.SPEC, "kimetsunoyaibamultiplayer/sword_display.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordRackConfig.SPEC, "kimetsunoyaibamultiplayer/sword_rack.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.SPEC, "kimetsunoyaibamultiplayer/biomes.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.SPEC, "kimetsunoyaibamultiplayer/spawn_rates.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_spawning.toml");
@@ -165,7 +168,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.SPEC, "kimetsunoyaibamultiplayer/variations.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.SPEC, "kimetsunoyaibamultiplayer/custom_progression.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.DemonSlayerConfig.SPEC, "kimetsunoyaibamultiplayer/demon_slayer.toml");
-        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedChestOfDrawersConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_chest_of_drawers.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBlocksConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_blocks.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordsmithVillageConfig.SPEC, "kimetsunoyaibamultiplayer/swordsmith_village.toml");
         Log.alwaysWarn("[INIT] Registered config specs");
         Log.startupProbe("KimetsunoyaibaMultiplayer.<init>.end");
@@ -814,6 +817,12 @@ public class KimetsunoyaibaMultiplayer
                 if (Config.logDebug)
                 Log.error("Failed GeckoLib.initialize on client setup: {}", t.getMessage());
             }
+            event.enqueueWork(() ->
+                net.minecraft.client.gui.screens.MenuScreens.register(
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.SWORD_RACK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.SwordRackScreen::new
+                )
+            );
 		if (Config.logDebug)
             Log.info("Animation sync system initialized for client");
         }
@@ -849,6 +858,11 @@ public class KimetsunoyaibaMultiplayer
             event.registerSpriteSet(
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.BLOOD_FLAME.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BloodFlameParticle.Provider::new
+            );
+
+            event.registerSpriteSet(
+                com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.IMPACT.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.ImpactParticle.Provider::new
             );
 
             event.registerSpriteSet(
@@ -923,10 +937,18 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KazumiRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.PRINCESS.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.PrincessRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.OROCHI.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.OrochiRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.EYE_FAMILIAR.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.EyeFamiliarRenderer::new);
 
             event.registerBlockEntityRenderer(
                 com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.CHEST_OF_DRAWERS.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.ChestOfDrawersRenderer::new
+            );
+            event.registerBlockEntityRenderer(
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.SWORD_RACK.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.SwordRackRenderer::new
             );
 
             if (Config.logDebug)
@@ -1231,6 +1253,11 @@ public class KimetsunoyaibaMultiplayer
                     if (Config.logDebug) {
                         Log.debug("Set left-click attack flag for breathing sword left-click for kimetsynoyaibaSword");
                     }
+                }
+
+                if (heldItem.getItem() == ModItems.CUSTOM_DEMON_ART.get()) {
+                    ModNetworking.sendToServer(new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CustomBdaPassiveAttackPacket());
+                    return;
                 }
                 
                 // Check if holding breathing sword from our mod - play attack animation and handle AOE

@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:yamato_orochi_catalyst"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:azure_extract"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:serpent_nest_catalyst"
+  }
+}

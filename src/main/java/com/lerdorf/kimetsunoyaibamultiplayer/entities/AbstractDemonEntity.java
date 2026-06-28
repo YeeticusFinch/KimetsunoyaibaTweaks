@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonTargetingHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.core.BlockPos;
@@ -102,6 +103,7 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
 
         if (!level().isClientSide) {
             tickSunlightBurn();
+            DemonTargetingHelper.retargetToCloserNonDemonPlayer(this, this::canTargetNonDemonVictim);
             tickBloodDemonArt();
         }
 
@@ -142,6 +144,10 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
 
     protected float getBloodDemonArtUseChance() {
         return 0.04F;
+    }
+
+    protected boolean canTargetNonDemonVictim(LivingEntity target) {
+        return target != null && target.isAlive() && !Damager.isDemon(target);
     }
 
     protected boolean isUsingLockedAnimation() {

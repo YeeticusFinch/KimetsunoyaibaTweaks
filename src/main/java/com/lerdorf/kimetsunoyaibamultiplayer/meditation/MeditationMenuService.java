@@ -71,10 +71,13 @@ public final class MeditationMenuService {
                 PlayerRole.CIVILIAN.getDisplayName(),
                 "None",
                 "0",
+                "0",
                 "None",
                 List.of(),
                 List.of(),
                 List.of(),
+                List.of(),
+                0,
                 "",
                 "",
                 false,
@@ -85,6 +88,7 @@ public final class MeditationMenuService {
         PlayerRole role = resolveRoleForProgression(player);
         String rank = resolveRank(player, role);
         String muzanBlood = resolveMuzanBlood(player);
+        String humansConsumed = resolveHumansConsumed(player);
         String kizukiRank = resolveKizukiRank(player);
         boolean demonPlayer = role == PlayerRole.DEMON;
         int demonEyesIndex = DemonEyesHelper.getOrCreateIndex(player);
@@ -92,6 +96,8 @@ public final class MeditationMenuService {
         List<MeditationMenuData.InfoSection> infoSections = buildInfoSections(player);
         List<MeditationMenuData.QuestEntry> quests = QuestProgressionManager.buildQuestEntries(player, role);
         List<MeditationMenuData.LocationEntry> locations = buildLocations(role);
+        List<MeditationMenuData.PassiveSkillEntry> passiveSkills = PassiveSkillManager.buildEntries(player, role);
+        int passiveSkillPoints = PassiveSkillManager.getAvailableSkillPoints(player, role);
 
         String selectedType = player.getPersistentData().getString("MeditationSelectedType");
         String selectedId = player.getPersistentData().getString("MeditationSelectedId");
@@ -112,8 +118,8 @@ public final class MeditationMenuService {
         quests = applyQuestSelection(quests, selectedType, selectedId);
         locations = applyLocationSelection(locations, selectedType, selectedId);
 
-        return new MeditationMenuData(role.getDisplayName(), rank, muzanBlood, kizukiRank,
-            infoSections, quests, locations, selectedType, selectedId, demonPlayer, demonEyesIndex);
+        return new MeditationMenuData(role.getDisplayName(), rank, muzanBlood, humansConsumed, kizukiRank,
+            infoSections, quests, locations, passiveSkills, passiveSkillPoints, selectedType, selectedId, demonPlayer, demonEyesIndex);
     }
 
     public static void saveSelection(ServerPlayer player, String type, String id) {
@@ -188,11 +194,21 @@ public final class MeditationMenuService {
     private static List<MeditationMenuData.LocationEntry> buildLocations(PlayerRole role) {
         List<MeditationMenuData.LocationEntry> locations = new ArrayList<>();
         switch (role) {
-            case DEMON_SLAYER, KAKUSHI, SWORDSMITH -> locations.addAll(CORPS_STRUCTURE_LOCATIONS);
-            case DEMON -> locations.add(new MeditationMenuData.LocationEntry("night_hunt", "Night Hunting Grounds", "A placeholder demon navigation target.", false));
-            case CIVILIAN -> locations.add(new MeditationMenuData.LocationEntry("local_village", "Nearby Village", "A placeholder civilian navigation target.", false));
-            case DEMON_SLAYER_IN_TRAINING, DEMON_TRANSFORMATION -> {
-            }
+            case DEMON_SLAYER, KAKUSHI, SWORDSMITH:
+                locations.addAll(CORPS_STRUCTURE_LOCATIONS);
+                break;
+            case DEMON:
+                locations.add(new MeditationMenuData.LocationEntry("mt_yoko", "Mt. Yoko",
+                        "A sacred mountain touched by the sun.", false));
+                locations.add(new MeditationMenuData.LocationEntry("mt_natagumo", "Mt. Natagumo",
+                        "Rui's mountain.", false));
+                break;
+            case CIVILIAN:
+                locations.add(new MeditationMenuData.LocationEntry("local_village", "Nearby Village",
+                        "A placeholder civilian navigation target.", false));
+                break;
+            case DEMON_SLAYER_IN_TRAINING, DEMON_TRANSFORMATION:
+                break;
         }
         return locations;
     }
@@ -307,6 +323,13 @@ public final class MeditationMenuService {
             return "";
         }
         return Integer.toString(DemonTransformationHandler.getTrackedMuzanBlood(player));
+    }
+
+    private static String resolveHumansConsumed(ServerPlayer player) {
+        if (!player.getPersistentData().getBoolean("oni")) {
+            return "";
+        }
+        return Integer.toString(DemonTransformationHandler.getTrackedHumansConsumed(player));
     }
 
     private static String resolveKizukiRank(ServerPlayer player) {

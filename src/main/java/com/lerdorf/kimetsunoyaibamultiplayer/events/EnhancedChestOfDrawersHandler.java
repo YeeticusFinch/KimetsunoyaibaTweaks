@@ -4,7 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ChestOfDrawersBlock;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ChestOfDrawersBlockEntity;
-import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedChestOfDrawersConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBlocksConfig;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -34,7 +34,7 @@ public final class EnhancedChestOfDrawersHandler {
         }
 
         Player player = event.player;
-        if (player.level().isClientSide() || !EnhancedChestOfDrawersConfig.enhancedChestOfDrawers) {
+        if (player.level().isClientSide() || !EnhancedBlocksConfig.enhancedChestOfDrawers) {
             return;
         }
 
@@ -66,7 +66,7 @@ public final class EnhancedChestOfDrawersHandler {
         }
 
         Player player = event.getEntity();
-        if (player.level().isClientSide() || !EnhancedChestOfDrawersConfig.enhancedChestOfDrawers) {
+        if (player.level().isClientSide() || !EnhancedBlocksConfig.enhancedChestOfDrawers) {
             return;
         }
 

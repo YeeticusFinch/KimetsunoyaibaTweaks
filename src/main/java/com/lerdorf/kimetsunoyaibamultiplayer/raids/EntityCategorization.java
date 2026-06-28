@@ -127,6 +127,7 @@ public class EntityCategorization {
         registerSlayer("sabito", EntityPowerScale.NAMED_SLAYER);
         registerSlayer("zennitsu", EntityPowerScale.NAMED_SLAYER);
         registerSlayer("kanawo", EntityPowerScale.NAMED_SLAYER);
+        registerSlayer("nezuko", EntityPowerScale.NAMED_SLAYER);
 
         // HARD_SLAYER
         registerSlayer("dice_steak_senior", EntityPowerScale.HARD_SLAYER);
@@ -153,6 +154,7 @@ public class EntityCategorization {
         // HASHIRA (kimetsunoyaibamultiplayer - enhanced breathing)
         registerMultiplayerSlayer("kanroji", EntityPowerScale.HASHIRA);
         registerMultiplayerSlayer("muichiro", EntityPowerScale.HASHIRA);
+        registerMultiplayerSlayer("nezuko", EntityPowerScale.NAMED_SLAYER);
 
         // SUPER_HASHIRA
         // Listed in order from weakest to strongest

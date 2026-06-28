@@ -45,6 +45,15 @@ public final class AlchemyClientHandler {
     public static void registerItemColors(RegisterColorHandlersEvent.Item event) {
         for (RegistryObject<net.minecraft.world.item.Item> item : ModAlchemyItems.ITEMS.getEntries()) {
             event.register((stack, tintIndex) -> {
+                if ((stack.is(ModAlchemyItems.DARK_STAR_CATALYST.get()) || stack.is(ModAlchemyItems.DARK_STAR.get())) && tintIndex == 0) {
+                    if (stack.hasTag() && stack.getTag().contains("TintColor")) {
+                        return stack.getTag().getInt("TintColor") & 0xFFFFFF;
+                    }
+                    return BloodDemonArtAlchemyCatalog.tintFor(stack);
+                }
+                if (stack.is(ModAlchemyItems.DARK_STAR_CATALYST.get()) && tintIndex == 1) {
+                    return 0x000000;
+                }
                 if (tintIndex == 1) {
                     return BloodDemonArtAlchemyCatalog.tintFor(stack);
                 }

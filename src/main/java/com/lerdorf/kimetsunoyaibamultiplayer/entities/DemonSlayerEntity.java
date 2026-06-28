@@ -82,6 +82,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     private static final double FLEE_SPEED_MULTIPLIER = 1.35D;
     private static final int FLEE_AWAY_RANGE = 20;
     private static final int FLEE_AWAY_VERTICAL_RANGE = 8;
+    private static final String SLAYERS_BLOOD_CAPTIVE_TAG = "slayers_blood_captive";
     private static final String FINAL_SELECTION_PATHING_TAG = "FinalSelectionPathing";
     private static final double KICK_DAMAGE = 2.5D;
     private static final double KICK_KNOCKBACK = 0.6D;
@@ -255,6 +256,15 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
     public boolean isLowLevelFleeing() {
         return this.entityData.get(LOW_LEVEL_FLEEING);
+    }
+
+    public boolean isDisarmed() {
+        return this.getPersistentData().getBoolean(SLAYERS_BLOOD_CAPTIVE_TAG);
+    }
+
+    @Override
+    public boolean canBeLeashed(Player player) {
+        return this.isDisarmed() && super.canBeLeashed(player);
     }
 
     private void setLowLevelFleeing(boolean fleeing) {
@@ -952,6 +962,17 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     public void tick() {
         super.tick();
         if (!this.level().isClientSide) {
+            if (this.isDisarmed()) {
+                this.setSprinting(false);
+                this.setLowLevelFleeing(false);
+                this.fleeRepathTicks = 0;
+                this.setTarget(null);
+                this.setLastHurtByMob(null);
+                return;
+            }
+            if (this.isLeashed()) {
+                this.dropLeash(true, false);
+            }
             if (this.kickCooldownTicks > 0) {
                 this.kickCooldownTicks--;
             }
@@ -998,7 +1019,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
     @Override
     public boolean doHurtTarget(Entity entity) {
-        if (isActionLocked() || isLowLevelFleeing()) {
+        if (isActionLocked() || isLowLevelFleeing() || isDisarmed()) {
             return false;
         }
         return super.doHurtTarget(entity);
@@ -1289,6 +1310,9 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
     private void tryKickAttack(@Nullable LivingEntity target) {
         if (target == null || !target.isAlive()) {
+            return;
+        }
+        if (isDisarmed()) {
             return;
         }
         if (isLowLevelFleeing()) {

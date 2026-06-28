@@ -1,7 +1,9 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonTargetingHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization;
@@ -225,6 +227,10 @@ public class DemonSlayerAggroHandler {
             return;
         }
 
+        if (DemonTargetingHelper.retargetToCloserNonDemonPlayer(mob, DemonSlayerAggroHandler::isNonDemonVictimTarget)) {
+            return;
+        }
+
         // Only add this targeting goal when a slayer is actually nearby.
         if (!mob.getPersistentData().getBoolean(DEMON_TARGET_SLAYER_GOAL_TAG)
             && findNearestTargetableDemonSlayer(mob, SCAN_RANGE) != null) {
@@ -232,13 +238,22 @@ public class DemonSlayerAggroHandler {
         }
 
         LivingEntity currentTarget = mob.getTarget();
+        LivingEntity nearestSlayer = findNearestTargetableDemonSlayer(mob, SCAN_RANGE);
+        if (DemonTargetingHelper.shouldKeepCloserExistingNonDemonTarget(
+            mob,
+            currentTarget,
+            nearestSlayer,
+            DemonSlayerAggroHandler::isNonDemonVictimTarget
+        )) {
+            return;
+        }
+
         if (currentTarget != null && currentTarget.isAlive()
             && canDemonTargetSlayer(mob, currentTarget)
             && mob.distanceToSqr(currentTarget) <= (SCAN_RANGE * SCAN_RANGE)) {
             return;
         }
 
-        LivingEntity nearestSlayer = findNearestTargetableDemonSlayer(mob, SCAN_RANGE);
         if (nearestSlayer != null) {
             mob.setTarget(nearestSlayer);
             Log.debug("[DemonSlayerAggro] {} targeting demon slayer: {}",
@@ -443,6 +458,10 @@ public class DemonSlayerAggroHandler {
         }
 
         return DamageTracker.hasDamageHistory(attacker, target);
+    }
+
+    private static boolean isNonDemonVictimTarget(LivingEntity target) {
+        return target != null && target.isAlive() && !Damager.isDemon(target);
     }
 
     private static boolean isWoman(LivingEntity entity) {

@@ -46,7 +46,7 @@ public class BreathingFormAttackGoal extends Goal {
         }
 
         if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity demonSlayer
-            && demonSlayer.isActionLocked()) {
+            && (demonSlayer.isActionLocked() || demonSlayer.isDisarmed())) {
             return false;
         }
 
@@ -70,6 +70,15 @@ public class BreathingFormAttackGoal extends Goal {
         if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroEntity muichiro) {
             // Cannot use abilities during transformation
             if (muichiro.isTransforming()) {
+                return false;
+            }
+            // Otherwise cast as soon as cooldown finishes
+            return true;
+        }
+
+        if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroFullPotentialEntity muichiroFp) {
+            // Cannot use abilities during transformation
+            if (muichiroFp.isTransforming()) {
                 return false;
             }
             // Otherwise cast as soon as cooldown finishes
@@ -163,9 +172,12 @@ public class BreathingFormAttackGoal extends Goal {
 
             // Set cooldown (use base form's cooldown)
             int cooldownTicks;
-            if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroEntity) {
+            if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroFullPotentialEntity) {
                 // 30% faster: wait only 60% of original cooldown
-                cooldownTicks = Math.max(1, (int)Math.round(form.getCooldownSeconds() * 12.0));
+                cooldownTicks = Math.max(1, (int) Math.round(form.getCooldownSeconds() * 12.0));
+            } else if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroEntity) {
+                // 25% faster: wait only 80% of original cooldown
+                cooldownTicks = Math.max(1, (int)Math.round(form.getCooldownSeconds() * 16.0));
             } else {
                 cooldownTicks = Math.max(form.getCooldownSeconds() * 20, minCooldownTicks);
             }

@@ -24,7 +24,7 @@ public class DemonSlayerBackstepGoal extends Goal {
     public boolean canUse() {
         if (entity.level().isClientSide) return false;
         if (entity.getPowerLevel() < 3) return false;
-        if (entity.isActionLocked()) return false;
+        if (entity.isActionLocked() || entity.isDisarmed()) return false;
         if (entity.tickCount < nextAllowedTick) return false;
         if (entity.getAnimationTicks() > 0) return false;
 

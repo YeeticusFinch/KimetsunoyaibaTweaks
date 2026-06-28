@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientPacketHandler;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -74,11 +75,14 @@ public class MobSwordSlashPacket {
         ItemStack swordItem = living.getMainHandItem();
         ParticleOptions particleType = SwordParticleMapping.getParticleForSword(swordItem);
         if (particleType == null) {
-            if (!SwordParticleMapping.isKimetsunoyaibaSword(swordItem)) {
+            if (swordItem.getItem() == ModItems.CUSTOM_DEMON_ART.get()) {
+                particleType = ParticleTypes.CLOUD;
+            } else if (!SwordParticleMapping.isKimetsunoyaibaSword(swordItem)) {
                 return;
+            } else {
+                // Keep slash rendering active even if a sword has no explicit mapping.
+                particleType = ParticleTypes.CLOUD;
             }
-            // Keep slash rendering active even if a sword has no explicit mapping.
-            particleType = ParticleTypes.CLOUD;
         }
 
         // Delegate to BonePositionTracker which will select model vs particles

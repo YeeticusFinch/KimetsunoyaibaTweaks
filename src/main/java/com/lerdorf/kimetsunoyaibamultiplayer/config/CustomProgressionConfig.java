@@ -20,11 +20,17 @@ public class CustomProgressionConfig {
     // Custom demon initiation flow
     public static ForgeConfigSpec.BooleanValue customDemonInitiation;
 
+    // Keep demon state through death by replaying blood consumption on respawn
+    public static ForgeConfigSpec.BooleanValue persistentDemonhood;
+
     // Replace the base mod's muzan blood ore with hemolith ore
     public static ForgeConfigSpec.BooleanValue replaceMuzanBloodOre;
 
     // Replace the base mod's scarlet ore drops with nichirin ore
     public static ForgeConfigSpec.BooleanValue replaceScarletOre;
+
+    // Human flesh conversion for demon progression power
+    public static ForgeConfigSpec.IntValue humanFleshPerEffectiveMuzanBlood;
 
     // Replace the base mod's color changing procedure (sword transformation)
     public static ForgeConfigSpec.BooleanValue replaceColorChangingProcedure;
@@ -104,6 +110,16 @@ public class CustomProgressionConfig {
                     "kimetsunoyaibamultiplayer:blood_of_muzan.")
             .define("custom_demon_initiation", true);
 
+        persistentDemonhood = builder
+            .comment("Persistent Demonhood",
+                    "",
+                    "When enabled, demon players keep their demon progression through death.",
+                    "On respawn the mod replays the remembered Muzan blood consumption so the",
+                    "base mod restores demon state, then reapplies the tracked custom demon data.",
+                    "",
+                    "Default: true")
+            .define("persistent_demonhood", true);
+
         replaceMuzanBloodOre = builder
             .comment("Replace base mod muzan blood ore with hemolith ore",
                     "",
@@ -125,6 +141,14 @@ public class CustomProgressionConfig {
                     "This uses the same item-replacement flow as hemolith dust so the base item",
                     "never reaches the player inventory unchanged.")
             .define("replace_scarlet_ore", true);
+
+        humanFleshPerEffectiveMuzanBlood = builder
+            .comment("How many consumed human flesh items count as one effective Muzan blood for demon progression.",
+                    "",
+                    "This does not change the raw Muzan Blood Consumed display. It only affects",
+                    "progression systems that scale from the demon player's blood count, such as",
+                    "passive skill points and custom Blood Demon Art slot unlocks.")
+            .defineInRange("human_flesh_per_effective_muzan_blood", 3, 1, 64);
 
         builder.pop();
 
@@ -174,5 +198,13 @@ public class CustomProgressionConfig {
 
     public static boolean isCustomProgressionEnabled() {
         return disableBaseModDemonSlayerInitiation != null && disableBaseModDemonSlayerInitiation.get();
+    }
+
+    public static int getHumanFleshPerEffectiveMuzanBlood() {
+        return humanFleshPerEffectiveMuzanBlood == null ? 3 : Math.max(1, humanFleshPerEffectiveMuzanBlood.get());
+    }
+
+    public static boolean isPersistentDemonhoodEnabled() {
+        return persistentDemonhood != null && persistentDemonhood.get();
     }
 }

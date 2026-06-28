@@ -16,8 +16,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTeleportEvent;
+import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -33,6 +37,8 @@ public class CrowEnhancementHandler {
 
     // Store flying state for each crow entity
     private static final Map<UUID, CrowFlyingState> flyingCrows = new HashMap<>();
+    private static final double CROW_MAX_HEALTH = 50.0D;
+    private static final double CROW_ARMOR = 20.0D;
 
     public static class CrowFlyingState {
         public final UUID crowId;
@@ -83,12 +89,48 @@ public class CrowEnhancementHandler {
         }
     }
 
+    @SubscribeEvent
+    public static void onCrowJoinLevel(EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide()) {
+            return;
+        }
+
+        Entity entity = event.getEntity();
+        if (!isKasugaiCrow(entity)) {
+            return;
+        }
+
+        applyCrowStats(entity);
+    }
+
+    @SubscribeEvent
+    public static void onCrowFinalizeSpawn(MobSpawnEvent.FinalizeSpawn event) {
+        if (event.getLevel().isClientSide()) {
+            return;
+        }
+
+        Entity entity = event.getEntity();
+        if (!isKasugaiCrow(entity)) {
+            return;
+        }
+
+        applyCrowStats(entity);
+        if (entity instanceof LivingEntity living) {
+            living.setHealth(living.getMaxHealth());
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onCrowAttack(LivingAttackEvent event) {
         Entity entity = event.getEntity();
         DamageSource source = event.getSource();
 
         if (!isKasugaiCrow(entity)) {
+            return;
+        }
+
+        if (EntityConfig.crowImmuneToDamage) {
+            event.setCanceled(true);
             return;
         }
 
@@ -115,6 +157,11 @@ public class CrowEnhancementHandler {
 
         // Check if this is a kasugai_crow entity
         if (!isKasugaiCrow(entity)) {
+            return;
+        }
+
+        if (EntityConfig.crowImmuneToDamage) {
+            event.setCanceled(true);
             return;
         }
 
@@ -503,6 +550,22 @@ public class CrowEnhancementHandler {
         Entity directEntity = source.getDirectEntity();
 
         return isDemonSlayerDamageSource(causingEntity) || isDemonSlayerDamageSource(directEntity);
+    }
+
+    private static void applyCrowStats(Entity entity) {
+        if (!(entity instanceof LivingEntity living)) {
+            return;
+        }
+
+        AttributeInstance maxHealth = living.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth != null) {
+            maxHealth.setBaseValue(CROW_MAX_HEALTH);
+        }
+
+        AttributeInstance armor = living.getAttribute(Attributes.ARMOR);
+        if (armor != null) {
+            armor.setBaseValue(CROW_ARMOR);
+        }
     }
 
     private static boolean isDemonSlayerDamageSource(Entity sourceEntity) {

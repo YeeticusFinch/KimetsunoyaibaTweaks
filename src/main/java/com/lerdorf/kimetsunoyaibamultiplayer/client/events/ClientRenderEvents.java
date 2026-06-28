@@ -208,7 +208,8 @@ public class ClientRenderEvents {
                 packedLight,
                 flipHorizontal,  // Pass flip flag to use "base" or "reverse" animation
                 req.startTime,   // Start time for animated texture frame calculation
-                req.duration     // Duration for animated texture frame calculation
+                req.duration,    // Duration for animated texture frame calculation
+                req.tintColor
             );
         }
 

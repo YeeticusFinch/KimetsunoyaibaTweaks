@@ -1,0 +1,331 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/spruce_sideways_fence"
+      },
+      "when": {
+        "facing": "up"
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/spruce_sideways_fence",
+        "x": 180
+      },
+      "when": {
+        "facing": "down"
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/spruce_sideways_fence",
+        "x": 90
+      },
+      "when": {
+        "facing": "north"
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/spruce_sideways_fence",
+        "x": 270
+      },
+      "when": {
+        "facing": "south"
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/spruce_sideways_fence",
+        "x": 90,
+        "y": 90
+      },
+      "when": {
+        "facing": "east"
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/spruce_sideways_fence",
+        "x": 90,
+        "y": 270
+      },
+      "when": {
+        "facing": "west"
+      }
+    },
+
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_north",
+        "uvlock": true
+      },
+      "when": {
+        "facing": "up",
+        "local_north": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_south",
+        "uvlock": true,
+        "x": 180
+      },
+      "when": {
+        "facing": "down",
+        "local_north": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_south",
+        "uvlock": true,
+        "x": 90
+      },
+      "when": {
+        "facing": "north",
+        "local_north": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_south",
+        "uvlock": true,
+        "x": 270
+      },
+      "when": {
+        "facing": "south",
+        "local_north": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_south",
+        "uvlock": true,
+        "x": 90,
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "local_north": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_south",
+        "uvlock": true,
+        "x": 90,
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "local_north": true
+      }
+    },
+
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_south",
+        "uvlock": true
+      },
+      "when": {
+        "facing": "up",
+        "local_south": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_north",
+        "uvlock": true,
+        "x": 180
+      },
+      "when": {
+        "facing": "down",
+        "local_south": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_north",
+        "uvlock": true,
+        "x": 90
+      },
+      "when": {
+        "facing": "north",
+        "local_south": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_north",
+        "uvlock": true,
+        "x": 270
+      },
+      "when": {
+        "facing": "south",
+        "local_south": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_north",
+        "uvlock": true,
+        "x": 90,
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "local_south": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_north",
+        "uvlock": true,
+        "x": 90,
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "local_south": true
+      }
+    },
+
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_east",
+        "uvlock": true
+      },
+      "when": {
+        "facing": "up",
+        "local_east": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_west",
+        "uvlock": true,
+        "x": 180
+      },
+      "when": {
+        "facing": "down",
+        "local_east": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_east",
+        "uvlock": true,
+        "x": 90
+      },
+      "when": {
+        "facing": "north",
+        "local_east": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_west",
+        "uvlock": true,
+        "x": 270
+      },
+      "when": {
+        "facing": "south",
+        "local_east": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_east",
+        "uvlock": true,
+        "x": 90,
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "local_east": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_east",
+        "uvlock": true,
+        "x": 90,
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "local_east": true
+      }
+    },
+
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_west",
+        "uvlock": true
+      },
+      "when": {
+        "facing": "up",
+        "local_west": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_east",
+        "uvlock": true,
+        "x": 180
+      },
+      "when": {
+        "facing": "down",
+        "local_west": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_west",
+        "uvlock": true,
+        "x": 90
+      },
+      "when": {
+        "facing": "north",
+        "local_west": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_east",
+        "uvlock": true,
+        "x": 270
+      },
+      "when": {
+        "facing": "south",
+        "local_west": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_west",
+        "uvlock": true,
+        "x": 90,
+        "y": 90
+      },
+      "when": {
+        "facing": "east",
+        "local_west": true
+      }
+    },
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_west",
+        "uvlock": true,
+        "x": 90,
+        "y": 270
+      },
+      "when": {
+        "facing": "west",
+        "local_west": true
+      }
+    }
+  ]
+}

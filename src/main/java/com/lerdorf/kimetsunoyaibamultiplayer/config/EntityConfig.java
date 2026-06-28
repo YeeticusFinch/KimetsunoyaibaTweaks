@@ -69,6 +69,24 @@ public class EntityConfig {
             .define("auto-detect-quests", true);
 
     static {
+        BUILDER.comment("Quest Familiar Protection Configuration")
+                .push("quest_familiars");
+    }
+
+    private static final ForgeConfigSpec.BooleanValue QUEST_FAMILIAR_CROW_DAMAGE_IMMUNE = BUILDER
+            .comment("Make kasugai crows immune to damage")
+            .define("kasugai-crow-damage-immune", false);
+
+    private static final ForgeConfigSpec.BooleanValue QUEST_FAMILIAR_OROCHI_DAMAGE_IMMUNE = BUILDER
+            .comment("Make Orochi familiars immune to damage")
+            .define("orochi-damage-immune", false);
+
+    private static final ForgeConfigSpec.BooleanValue QUEST_FAMILIAR_EYE_DAMAGE_IMMUNE = BUILDER
+            .comment("Make Eye Familiar entities immune to damage")
+            .define("eye-familiar-damage-immune", false);
+
+    static {
+        BUILDER.pop(); // quest_familiars
         BUILDER.pop(); // kasugai_crow
         BUILDER.pop(); // entities
     }
@@ -88,6 +106,9 @@ public class EntityConfig {
     public static int crowWaypointDuration = 300;
     public static double crowWaypointCompleteDistance = 2.0;
     public static boolean crowAutoDetectQuests = true;
+    public static boolean crowImmuneToDamage = false;
+    public static boolean orochiImmuneToDamage = false;
+    public static boolean eyeFamiliarImmuneToDamage = false;
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
@@ -104,11 +125,16 @@ public class EntityConfig {
         crowWaypointDuration = CROW_WAYPOINT_DURATION.get();
         crowWaypointCompleteDistance = CROW_WAYPOINT_COMPLETE_DISTANCE.get();
         crowAutoDetectQuests = CROW_AUTO_DETECT_QUESTS.get();
+        crowImmuneToDamage = QUEST_FAMILIAR_CROW_DAMAGE_IMMUNE.get();
+        orochiImmuneToDamage = QUEST_FAMILIAR_OROCHI_DAMAGE_IMMUNE.get();
+        eyeFamiliarImmuneToDamage = QUEST_FAMILIAR_EYE_DAMAGE_IMMUNE.get();
 
         Log.debug("EntityConfig loaded: crowEnhancements=" + crowEnhancementsEnabled +
                          ", flyingDodge=" + crowFlyingDodgeEnabled + ", flightHeight=" + crowFlightHeight +
                          ", flightDuration=" + crowFlightDuration + ", circleRadius=" + crowCircleRadius +
                          ", questArrow=" + crowQuestArrowEnabled + ", waypoint=" + crowWaypointEnabled +
-                         ", waypointDuration=" + crowWaypointDuration + ", autoDetect=" + crowAutoDetectQuests);
+                         ", waypointDuration=" + crowWaypointDuration + ", autoDetect=" + crowAutoDetectQuests +
+                         ", crowImmune=" + crowImmuneToDamage + ", orochiImmune=" + orochiImmuneToDamage +
+                         ", eyeImmune=" + eyeFamiliarImmuneToDamage);
     }
 }

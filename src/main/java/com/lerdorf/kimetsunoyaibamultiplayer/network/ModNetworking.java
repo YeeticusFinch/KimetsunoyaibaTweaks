@@ -2,10 +2,13 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AdjustPassiveSkillPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CloseDemonPropositionPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CustomBdaPassiveAttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonEyesSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BloodDemonArtBuilderActionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonPropositionResponsePacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OrochiDismountPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenDemonPropositionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
@@ -216,6 +219,13 @@ public class ModNetworking {
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BossArrowPacket::handle)
                 .add();
 
+        int orochiDismountPacketId = id();
+        net.messageBuilder(OrochiDismountPacket.class, orochiDismountPacketId)
+                .decoder(OrochiDismountPacket::new)
+                .encoder(OrochiDismountPacket::toBytes)
+                .consumerMainThread(OrochiDismountPacket::handle)
+                .add();
+
         int bleedingFlashPacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BleedingFlashPacket.class, bleedingFlashPacketId)
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BleedingFlashPacket::new)
@@ -256,6 +266,20 @@ public class ModNetworking {
                 .decoder(SelectMeditationTargetPacket::new)
                 .encoder(SelectMeditationTargetPacket::toBytes)
                 .consumerMainThread(SelectMeditationTargetPacket::handle)
+                .add();
+
+        int adjustPassiveSkillPacketId = id();
+        net.messageBuilder(AdjustPassiveSkillPacket.class, adjustPassiveSkillPacketId)
+                .decoder(AdjustPassiveSkillPacket::new)
+                .encoder(AdjustPassiveSkillPacket::toBytes)
+                .consumerMainThread(AdjustPassiveSkillPacket::handle)
+                .add();
+
+        int customBdaPassiveAttackPacketId = id();
+        net.messageBuilder(CustomBdaPassiveAttackPacket.class, customBdaPassiveAttackPacketId)
+                .decoder(CustomBdaPassiveAttackPacket::new)
+                .encoder(CustomBdaPassiveAttackPacket::toBytes)
+                .consumerMainThread(CustomBdaPassiveAttackPacket::handle)
                 .add();
 
         int swampPuddleStatePacketId = id();

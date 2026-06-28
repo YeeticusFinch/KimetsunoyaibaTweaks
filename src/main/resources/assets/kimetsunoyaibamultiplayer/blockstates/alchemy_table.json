@@ -1,10 +1,34 @@
 {
   "variants": {
-    "lit=false": {
+    "lit=false,facing=north": {
       "model": "kimetsunoyaibamultiplayer:block/alchemy_table"
     },
-    "lit=true": {
+    "lit=false,facing=east": {
+      "model": "kimetsunoyaibamultiplayer:block/alchemy_table",
+      "y": 90
+    },
+    "lit=false,facing=south": {
+      "model": "kimetsunoyaibamultiplayer:block/alchemy_table",
+      "y": 180
+    },
+    "lit=false,facing=west": {
+      "model": "kimetsunoyaibamultiplayer:block/alchemy_table",
+      "y": 270
+    },
+    "lit=true,facing=north": {
       "model": "kimetsunoyaibamultiplayer:block/alchemy_table"
+    },
+    "lit=true,facing=east": {
+      "model": "kimetsunoyaibamultiplayer:block/alchemy_table",
+      "y": 90
+    },
+    "lit=true,facing=south": {
+      "model": "kimetsunoyaibamultiplayer:block/alchemy_table",
+      "y": 180
+    },
+    "lit=true,facing=west": {
+      "model": "kimetsunoyaibamultiplayer:block/alchemy_table",
+      "y": 270
     }
   }
 }

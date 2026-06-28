@@ -2,7 +2,11 @@ package com.lerdorf.kimetsunoyaibamultiplayer.quest;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.EyeFamiliarEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.GeckolibCrowEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.OrochiEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -79,10 +83,46 @@ public final class QuestProgressionHandler {
         }
 
         Entity target = unwrapCrowMirror(event.getTarget());
+        handleEntityInteract(event, player, target);
+    }
+
+    @SubscribeEvent
+    public static void onEntityInteractSpecific(PlayerInteractEvent.EntityInteractSpecific event) {
+        if (event.getLevel().isClientSide() || !CustomProgressionConfig.isCustomProgressionEnabled()) {
+            return;
+        }
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+
+        Entity target = unwrapCrowMirror(event.getTarget());
+        handleEntityInteract(event, player, target);
+    }
+
+    private static void handleEntityInteract(PlayerInteractEvent event, ServerPlayer player, Entity target) {
         PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
 
-        if (isOwnedKasugaiCrow(player, target)) {
-            if (QuestProgressionManager.handleCrowInteract(player, role)) {
+        if (isOwnedQuestEntity(player, target)) {
+            if (target instanceof EyeFamiliarEntity eyeFamiliar && player.isShiftKeyDown()) {
+                if (eyeFamiliar.openMugenDoor(player)) {
+                    event.setCanceled(true);
+                    event.setCancellationResult(InteractionResult.SUCCESS);
+                }
+                return;
+            }
+
+            if (target instanceof OrochiEntity orochi && player.isShiftKeyDown()) {
+                if (orochi.mountOwner(player)) {
+                    event.setCanceled(true);
+                    event.setCancellationResult(InteractionResult.SUCCESS);
+                }
+                return;
+            }
+
+            String speaker = target instanceof OrochiEntity ? "Orochi"
+                : target instanceof EyeFamiliarEntity ? "Eye Familiar"
+                : "Crow";
+            if (QuestProgressionManager.handleQuestEntityInteract(player, role, speaker)) {
                 event.setCanceled(true);
                 event.setCancellationResult(InteractionResult.SUCCESS);
             }
@@ -126,7 +166,66 @@ public final class QuestProgressionHandler {
         return target;
     }
 
-    private static boolean isOwnedKasugaiCrow(ServerPlayer player, Entity target) {
+    @SubscribeEvent
+    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        if (event.getLevel().isClientSide() || !(event.getEntity() instanceof ServerPlayer player) || !player.isShiftKeyDown()) {
+            return;
+        }
+
+        if (Config.logDebug) {
+            Log.debug("[Orochi] Shift-right-click block dismount attempt at {} by {} (passengers={})",
+                event.getPos(), player.getName().getString(), player.getPassengers().size());
+        }
+
+        if (tryDismountOwnedOrochi(player, event)) {
+            return;
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRightClickEmpty(PlayerInteractEvent.RightClickEmpty event) {
+        if (event.getEntity().level().isClientSide() || !(event.getEntity() instanceof ServerPlayer player) || !player.isShiftKeyDown()) {
+            return;
+        }
+
+        if (Config.logDebug) {
+            Log.debug("[Orochi] Shift-right-click empty dismount attempt by {} at {} (passengers={})",
+                player.getName().getString(), player.blockPosition(), player.getPassengers().size());
+        }
+
+        tryDismountOwnedOrochi(player, event);
+    }
+
+    private static boolean tryDismountOwnedOrochi(ServerPlayer player, PlayerInteractEvent event) {
+        for (Entity passenger : player.getPassengers()) {
+            if (passenger instanceof OrochiEntity orochi && player.getUUID().equals(orochi.getOwnerUUID())) {
+                if (Config.logDebug) {
+                    Log.debug("[Orochi] Found owned passenger {} for {} (cooldownRemaining={} ticks, vehicle={})",
+                        orochi.getUUID(), player.getName().getString(), orochi.getMountToggleCooldownRemainingTicks(),
+                        orochi.getVehicle() == null ? "none" : orochi.getVehicle().getName().getString());
+                }
+                if (orochi.dismountToSafeLocation()) {
+                    if (Config.logDebug) {
+                        Log.debug("[Orochi] Dismounted {} from {} to safe location", orochi.getUUID(), player.getName().getString());
+                    }
+                    event.setCanceled(true);
+                    event.setCancellationResult(InteractionResult.SUCCESS);
+                    return true;
+                }
+                if (Config.logDebug) {
+                    Log.debug("[Orochi] Dismount denied for {} (cooldownRemaining={} ticks)",
+                        player.getName().getString(), orochi.getMountToggleCooldownRemainingTicks());
+                }
+                return false;
+            }
+        }
+        if (Config.logDebug) {
+            Log.debug("[Orochi] Shift-right-click dismount attempt found no owned Orochi passenger for {}", player.getName().getString());
+        }
+        return false;
+    }
+
+    private static boolean isOwnedQuestEntity(ServerPlayer player, Entity target) {
         if (target == null) {
             return false;
         }
@@ -137,6 +236,9 @@ public final class QuestProgressionHandler {
             return false;
         }
         String typeKey = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(target.getType()).toString();
-        return typeKey.contains("kasugai_crow") || typeKey.contains("princess");
+        return typeKey.contains("kasugai_crow")
+            || typeKey.contains("princess")
+            || typeKey.contains("orochi")
+            || typeKey.contains("eye_familiar");
     }
 }

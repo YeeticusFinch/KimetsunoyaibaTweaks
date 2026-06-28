@@ -6,6 +6,7 @@
   "refmap": "kimetsunoyaibamultiplayer.refmap.json",
   "mixins": [
     "GrindstoneAlchemyInputMixin",
+    "LivingEntityFoodParticleMixin",
     "ServerLevelParticleMixin",
     "CommandsMixin"
   ],

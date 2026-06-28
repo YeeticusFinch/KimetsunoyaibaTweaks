@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/fence_side",
+  "textures": {
+    "texture": "kimetsunoyaibamultiplayer:block/wisteria_planks"
+  }
+}

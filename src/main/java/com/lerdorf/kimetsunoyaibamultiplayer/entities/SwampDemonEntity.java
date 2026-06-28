@@ -140,7 +140,8 @@ public class SwampDemonEntity extends AbstractDemonEntity {
         }
     }
 
-    private boolean canTargetInCurrentDimension(LivingEntity target) {
+    @Override
+    protected boolean canTargetNonDemonVictim(LivingEntity target) {
         if (target == null || !target.isAlive() || Damager.isDemon(target)) {
             return false;
         }
@@ -197,7 +198,7 @@ public class SwampDemonEntity extends AbstractDemonEntity {
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
-            this::canTargetInCurrentDimension));
+            this::canTargetNonDemonVictim));
     }
 
     @Override

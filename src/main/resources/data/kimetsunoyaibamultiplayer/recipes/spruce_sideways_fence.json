@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:spruce_fence"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "item": "kimetsunoyaibamultiplayer:spruce_sideways_fence"
+  },
+  "show_notification": true
+}

@@ -38,14 +38,16 @@ public final class QuestRegistry {
             Set.of(PlayerRole.DEMON),
             List.of(
                 "A demon's path toward power, loyalty, and survival.",
-                "This is a framework placeholder for future demon progression."
+                "Begin by feeding your hunger and proving you can prey on humans."
             ),
             List.of(
                 new QuestReward("XP"),
                 new QuestReward("Demon progression")
             ),
             List.of(
-                new QuestStep("Awakening", "Learn to survive as a newly empowered demon.")
+                new QuestStep("Stage No.1 - First Taste of Blood", "Kill 10 humans and eat 10 human flesh items."),
+                new QuestStep("Stage No.2 - Hunger Unending", "Find hunting grounds at night and continue feeding without drawing the Corps' attention."),
+                new QuestStep("Stage No.3 - Slayer's Blood", "Learn what makes demon slayers dangerous, then break one.")
             )
         ));
 

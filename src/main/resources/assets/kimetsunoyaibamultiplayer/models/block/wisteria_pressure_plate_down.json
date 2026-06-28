@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/oak_pressure_plate_down",
+  "textures": {
+    "texture": "kimetsunoyaibamultiplayer:block/wisteria_planks"
+  }
+}

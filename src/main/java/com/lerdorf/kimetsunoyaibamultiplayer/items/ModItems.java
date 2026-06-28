@@ -141,6 +141,18 @@ public class ModItems {
             0xE9D9D0, 0xB68563,
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> OROCHI_SPAWN_EGG = ITEMS.register("orochi_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.OROCHI,
+            0x1B1E18, 0xC44735,
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> EYE_FAMILIAR_SPAWN_EGG = ITEMS.register("eye_familiar_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.EYE_FAMILIAR,
+            0x211833, 0xD8C4FF,
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> DEMON_SLAYER_SPAWN_EGG = ITEMS.register("demon_slayer_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER,
@@ -473,12 +485,27 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_WOOD.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_WISTERIA_WOOD.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PLANKS.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_VERTICAL_SLAB.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPRUCE_VERTICAL_SLAB.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPRUCE_SIDEWAYS_STAIRS.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPRUCE_SIDEWAYS_FENCE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_1.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_2.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_2RED.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_3.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_STAIRS.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_SLAB.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_FENCE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_FENCE_GATE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PRESSURE_PLATE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_BUTTON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FENCE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.FUSUMA_BARS.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FUSUMA.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_OAK_WALL.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_DARK_OAK_WALL.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SWORD_RACK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_PINK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_CYAN.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_LAVENDER.get(),
@@ -534,6 +561,8 @@ public class ModItems {
                     KIRIYA_SPAWN_EGG.get(),
                     KAZUMI_SPAWN_EGG.get(),
                     PRINCESS_SPAWN_EGG.get(),
+                    OROCHI_SPAWN_EGG.get(),
+                    EYE_FAMILIAR_SPAWN_EGG.get(),
                     DEMON_SLAYER_SPAWN_EGG.get(),
                     DEMON_SLAYER_FEMALE_SPAWN_EGG.get(),
                     DEMON_CREEPER_SPAWN_EGG.get(),

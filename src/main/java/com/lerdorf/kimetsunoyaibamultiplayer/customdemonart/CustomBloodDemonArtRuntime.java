@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.customdemonart;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.BloodDemonArtAlchemyCatalog;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.VindicatorsBane;
@@ -12,12 +13,14 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DarkStarVisualEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.SpineEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampHandEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.BleedingHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -37,15 +40,19 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.EvokerFangs;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.entity.projectile.WitherSkull;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -54,11 +61,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraftforge.registries.ForgeRegistries;
+
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -327,10 +336,16 @@ public final class CustomBloodDemonArtRuntime {
             case BLAZE_BARRAGE -> executeBlazeBarrage(player, core, amplifierTotals);
             case GUARDIAN_LASER -> executeGuardianLaser(player, core, amplifierTotals);
             case SINGULARITY -> executeSingularity(player, core, amplifierTotals);
+            case DARK_STAR -> executeDarkStar(player, core, amplifierTotals);
             case TASTE_OF_IMMORTALITY -> executeTasteOfImmortality(player, core, amplifierTotals);
             case GLIDE -> executeGlide(player, core, amplifierTotals);
             case ROAR -> executeRoar(player, core, amplifierTotals);
             case FLOWER_DANCE -> executeFlowerDance(player, core, amplifierTotals);
+            case YAMATO_OROCHI -> executeYamatoOrochi(player, core, amplifierTotals);
+            case EIGHTFOLD_AMBUSH -> executeEightfoldAmbush(player, core, amplifierTotals);
+            case SKIN_SHED -> executeSkinShed(player, core, amplifierTotals);
+            case SNAKE_STEP -> executeSnakeStep(player, core, amplifierTotals);
+            case EIGHTFOLD_ASCENDANT -> executeEightfoldAscendant(player, core, amplifierTotals);
             case SPINE_BURST -> executeSpineBurst(player, core, amplifierTotals);
             case MIDAS_TOUCH -> executeMidasTouch(player, core, amplifierTotals);
             case DEFEND -> executeDefend(player, core, amplifierTotals);
@@ -1004,6 +1019,266 @@ public final class CustomBloodDemonArtRuntime {
                         level.playSound(null, living.blockPosition(), SoundEvents.ANVIL_PLACE, SoundSource.HOSTILE, 1.0F, 0.5F);
                     }
                 }
+            }
+        }, 1, durationTicks);
+    }
+
+
+    /*
+    
+    Dark Star should be similar to Singularity. 
+    Instead of doing particles, it should render the models/item/dark_star.json item model with the textures/item/dark_star_texture.png texture, 
+    tinted to a specific color. That specific color should be the chat color, using final int tintColor = core.chatColor() & 0xFFFFFF; 
+    or something like that to tint the greyscale dark_star_texture executeDarkStar should last 4 seconds (80 ticks), 
+    and it should show that dark star model rendered huge, like 10x scale, and it should be tilted, and spinning along its local vertical axis 
+    (vertical axis is the y axis), and it should be spinning rapidly along that local vertical axis. The passed in ServerPlayer player should be
+    immune to all the effects of executeDarkStar. All entities within the range should be pulled in and continuously pulled in to the center point 
+    of that dark star with a pretty large strength. All entities within 10 blocks of that center point should be given the darkness and slowness and 
+    mining fatigue and weakness effects, along with the primary and secondary target potion effects (only if they are target effects). 
+    Every 5 ticks that dark star center should play the explosion sound effect at 0.5 pitch. 
+    When the player uses dark star, it should raycast a laser of primary particle forward up to 60 blocks, and spawn the dark star on the first solid 
+    block or entity that the laser hits.
+    
+    */
+    
+    private static void executeDarkStar(ServerPlayer player,
+                                    CustomBloodDemonArtSavedData.CoreSettings core,
+                                    AmplifierTotals amplifierTotals) {
+        final ServerLevel level = player.serverLevel();
+
+        final ParticleOptions primaryParticle = resolveParticle(core.primaryParticle());
+        final int tintColor = core.chatColor() & 0xFFFFFF;
+
+        final int rangeAmp = amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE);
+        final double speedScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
+        final float damageScale = (float) ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DAMAGE));
+
+        final int durationTicks = 80;
+        final double pullRadius = 30.0D + (6.0D * rangeAmp);
+        final double effectRadius = 12.0D;
+
+        final float darkStarDamage = Damager.calculateScaledDamage(player, 3.0F * damageScale);
+        final int blocksPerTick = 15 + (int)(2 * rangeAmp);
+        final double blockLiftRadius = Math.min(20.0D + (4.0D * rangeAmp), pullRadius);
+
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getLookAngle();
+        Vec3 maxEnd = eye.add(look.scale(60.0D));
+
+        BlockHitResult blockHit = level.clip(new ClipContext(
+            eye,
+            maxEnd,
+            ClipContext.Block.COLLIDER,
+            ClipContext.Fluid.NONE,
+            player
+        ));
+
+        Vec3 rayEnd = blockHit.getType() == HitResult.Type.MISS ? maxEnd : blockHit.getLocation();
+
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
+            level,
+            player,
+            eye,
+            rayEnd,
+            new AABB(eye, rayEnd).inflate(1.0D),
+            entity -> entity != null
+                && entity.isAlive()
+                && !entity.isRemoved()
+                && entity != player
+                && entity.isPickable()
+        );
+
+        Vec3 center = rayEnd;
+        if (entityHit != null) {
+            double entityDist = entityHit.getLocation().distanceToSqr(eye);
+            double blockDist = blockHit.getType() == HitResult.Type.MISS
+                ? Double.MAX_VALUE
+                : blockHit.getLocation().distanceToSqr(eye);
+
+            if (entityDist <= blockDist) {
+                center = entityHit.getLocation();
+            }
+        }
+
+        // Laser trace using primary particle.
+        double laserLen = center.distanceTo(eye);
+        for (double d = 0.0D; d <= laserLen; d += 0.35D) {
+            Vec3 p = eye.add(look.scale(d));
+            level.sendParticles(primaryParticle, p.x, p.y, p.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        //Log.warn("[DarkStar] Laser trace finished for {} at center={} rangeAmp={} speedScale={} damageScale={}",
+        //    player.getName().getString(), center, rangeAmp, speedScale, damageScale);
+
+        DarkStarVisualEntity visual = DarkStarVisualEntity.create(level, center, player.getUUID(), tintColor, 2.0F, durationTicks);
+        level.addFreshEntity(visual);
+
+        final Vec3 darkStarCenter = center;
+        final int[] tick = {0};
+
+        level.playSound(null, BlockPos.containing(darkStarCenter), SoundEvents.BEACON_ACTIVATE,
+            SoundSource.PLAYERS, 1.0F, 0.65F);
+
+        AbilityScheduler.scheduleRepeating(player, () -> {
+            try {
+                if (!player.isAlive() || visual.isRemoved()) {
+                    visual.discard();
+                    return;
+                }
+
+                tick[0]++;
+
+                // Pull a few visible blocks every tick.
+                int lifted = 0;
+                int r = Mth.floor(blockLiftRadius);
+                BlockPos centerPos = BlockPos.containing(darkStarCenter);
+
+                for (int attempts = 0; attempts < 80 && lifted < blocksPerTick; attempts++) {
+                    int x = level.random.nextInt(r * 2 + 1) - r;
+                    int y = level.random.nextInt(r * 2 + 1) - r;
+                    int z = level.random.nextInt(r * 2 + 1) - r;
+
+                    if ((x * x) + (y * y) + (z * z) > blockLiftRadius * blockLiftRadius) {
+                        continue;
+                    }
+
+                    BlockPos pos = centerPos.offset(x, y, z);
+                    BlockState state = level.getBlockState(pos);
+
+                    if (state.isAir() || state.getDestroySpeed(level, pos) < 0.0F || state.hasBlockEntity()) {
+                        continue;
+                    }
+
+                    Vec3 blockCenter = Vec3.atCenterOf(pos);
+
+                    BlockHitResult sight = level.clip(new ClipContext(
+                            darkStarCenter,
+                            blockCenter,
+                            ClipContext.Block.COLLIDER,
+                            ClipContext.Fluid.NONE,
+                            player));
+
+                    if (sight.getType() == HitResult.Type.BLOCK) {
+                        BlockPos hitPos = sight.getBlockPos();
+
+                        // Allow the target block itself to be the first thing hit.
+                        if (!hitPos.equals(pos)) {
+                            continue;
+                        }
+                    }
+
+                    FallingBlockEntity falling = FallingBlockEntity.fall(level, pos, state);
+                    Vec3 toCenter = darkStarCenter.subtract(falling.position());
+
+                    if (toCenter.lengthSqr() > 1.0E-4D) {
+                        falling.setDeltaMovement(toCenter.normalize().scale(0.35D * speedScale));
+                        falling.hurtMarked = true;
+                    }
+
+                    lifted++;
+                }
+                
+                // Destroy a few close visible blocks every tick, biased toward the center.
+                int destroyed = 0;
+                int destroyAttempts = 50;
+                int destroyPerTick = 14 + rangeAmp;
+                double destroyRadius = Math.min(7.0D + (2.0D * rangeAmp), blockLiftRadius);
+
+                for (int attempts = 0; attempts < destroyAttempts && destroyed < destroyPerTick; attempts++) {
+                    double biasedRadius = destroyRadius * Math.pow(level.random.nextDouble(), 1.8D);
+                    double theta = level.random.nextDouble() * Math.PI * 2.0D;
+                    double phi = Math.acos(2.0D * level.random.nextDouble() - 1.0D);
+
+                    int x = Mth.floor(Math.sin(phi) * Math.cos(theta) * biasedRadius);
+                    int y = Mth.floor(Math.cos(phi) * biasedRadius);
+                    int z = Mth.floor(Math.sin(phi) * Math.sin(theta) * biasedRadius);
+
+                    BlockPos pos = centerPos.offset(x, y, z);
+                    BlockState state = level.getBlockState(pos);
+
+                    if (state.isAir() || state.getDestroySpeed(level, pos) < 0.0F || state.hasBlockEntity()) {
+                        continue;
+                    }
+
+                    Vec3 blockCenter = Vec3.atCenterOf(pos);
+
+                    BlockHitResult sight = level.clip(new ClipContext(
+                        darkStarCenter,
+                        blockCenter,
+                        ClipContext.Block.COLLIDER,
+                        ClipContext.Fluid.NONE,
+                        player
+                    ));
+
+                    if (sight.getType() == HitResult.Type.BLOCK && !sight.getBlockPos().equals(pos)) {
+                        continue;
+                    }
+
+                    level.destroyBlock(pos, true); // false = drops
+                    level.sendParticles(
+                        ParticleTypes.EXPLOSION,
+                        pos.getX() + 0.5D,
+                        pos.getY() + 0.5D,
+                        pos.getZ() + 0.5D,
+                        1,
+                        0.0D,
+                        0.0D,
+                        0.0D,
+                        0.0D
+                    );
+                    destroyed++;
+                }
+
+                if (tick[0] % 5 == 0) {
+                    level.playSound(null, BlockPos.containing(darkStarCenter), SoundEvents.GENERIC_EXPLODE,
+                        SoundSource.HOSTILE, 1.5F, 0.5F);
+                }
+
+                AABB pullBox = new AABB(darkStarCenter, darkStarCenter).inflate(pullRadius);
+
+                List<Entity> entities = level.getEntities(player, pullBox, entity ->
+                    entity != null
+                        && entity.isAlive()
+                        && !entity.isRemoved()
+                        && entity != player
+                        && entity.getId() != visual.getId()
+                );
+
+                for (Entity entity : entities) {
+                    Vec3 toCenter = darkStarCenter.subtract(entity.position());
+                    double dist = Math.max(0.001D, toCenter.length());
+
+                    if (dist > pullRadius) {
+                        continue;
+                    }
+
+                    double proximityBoost = 1.0D - (dist / pullRadius);
+                    double pullStrength = (0.28D + (0.42D * proximityBoost)) * speedScale;
+
+                    Vec3 pull = toCenter.normalize().scale(pullStrength);
+                    entity.setDeltaMovement(entity.getDeltaMovement().add(pull));
+                    entity.hurtMarked = true;
+
+                    if (entity instanceof LivingEntity living && dist <= effectRadius) {
+                        living.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 60, 0, false, true));
+                        living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 3, false, true));
+                        living.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 60, 3, false, true));
+                        living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 3, false, true));
+
+                        if (tick[0] % 5 == 0) {
+                            Damager.hurt(player, living, darkStarDamage, true);
+                        }
+
+                        applyTargetPotion(core.primaryPotion(), player, living, amplifierTotals);
+                        applyTargetPotion(core.secondaryPotion(), player, living, amplifierTotals);
+                    }
+                }
+
+                if (tick[0] >= durationTicks) {
+                    visual.discard();
+                }
+            } catch (Exception e) {
+                visual.discard();
+                throw e;
             }
         }, 1, durationTicks);
     }
@@ -2890,6 +3165,60 @@ public final class CustomBloodDemonArtRuntime {
         }
     }
 
+    private static void executeYamatoOrochi(ServerPlayer player, CustomBloodDemonArtSavedData.CoreSettings core,
+                                            AmplifierTotals amplifierTotals) {
+        ServerLevel level = player.serverLevel();
+        EntityType<?> serpentType = ForgeRegistries.ENTITY_TYPES.getValue(
+            ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "serpent")
+        );
+        if (serpentType == null) {
+            return;
+        }
+
+        Entity serpent = serpentType.create(level);
+        if (serpent == null) {
+            return;
+        }
+
+        Vec3 launchDir = player.getLookAngle().normalize();
+        double launchSpeed = 1.35D * ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
+        Vec3 spawnPos = player.getEyePosition().add(launchDir.scale(1.15D));
+
+        serpent.moveTo(spawnPos.x, spawnPos.y - 0.15D, spawnPos.z, player.getYRot(), player.getXRot());
+        serpent.setDeltaMovement(launchDir.scale(launchSpeed));
+        serpent.setNoGravity(true);
+        serpent.hasImpulse = true;
+        serpent.hurtMarked = true;
+
+        if (serpent instanceof Mob mob) {
+            mob.setPersistenceRequired();
+            mob.finalizeSpawn(level, level.getCurrentDifficultyAt(player.blockPosition()),
+                MobSpawnType.MOB_SUMMONED, null, null);
+        }
+
+        level.addFreshEntity(serpent);
+    }
+
+    private static void executeEightfoldAmbush(ServerPlayer player, CustomBloodDemonArtSavedData.CoreSettings core,
+                                                AmplifierTotals amplifierTotals) {
+        // TODO: Implement Eightfold Ambush.
+    }
+
+    private static void executeSkinShed(ServerPlayer player, CustomBloodDemonArtSavedData.CoreSettings core,
+                                        AmplifierTotals amplifierTotals) {
+        // TODO: Implement Skin Shed.
+    }
+
+    private static void executeSnakeStep(ServerPlayer player, CustomBloodDemonArtSavedData.CoreSettings core,
+                                         AmplifierTotals amplifierTotals) {
+        // TODO: Implement Snake Step.
+    }
+
+    private static void executeEightfoldAscendant(ServerPlayer player, CustomBloodDemonArtSavedData.CoreSettings core,
+                                                  AmplifierTotals amplifierTotals) {
+        // TODO: Implement Eightfold Ascendant.
+    }
+
     private static void executeCatalystPlaceholder(ServerPlayer player, CustomBloodDemonArtSavedData.CoreSettings core,
                                                    AmplifierTotals amplifierTotals) {
         // TODO: Implement catalyst move behavior.
@@ -3122,4 +3451,5 @@ public final class CustomBloodDemonArtRuntime {
         }
         return (ParticleOptions) particleType;
     }
+
 }

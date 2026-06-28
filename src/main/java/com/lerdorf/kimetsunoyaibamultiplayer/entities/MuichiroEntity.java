@@ -310,7 +310,7 @@ public class MuichiroEntity extends BreathingSlayerEntity {
             .add(Attributes.ATTACK_DAMAGE, 1.2D)     // Base damage (Strength effect adds the rest)
             .add(Attributes.MOVEMENT_SPEED, 0.24D)   // Moderate base movement (Speed effect multiplies this)
             .add(Attributes.ATTACK_SPEED, 14.0D)     // Extremely fast attack speed baseline
-            .add(Attributes.ARMOR, 7.0D)             // From armor equipment
+            .add(Attributes.ARMOR, 6.0D)             // From armor equipment
             .add(Attributes.ARMOR_TOUGHNESS, 3.0D)   // From armor equipment
             .add(Attributes.FOLLOW_RANGE, 64.0D);    // Same as base slayers
     }

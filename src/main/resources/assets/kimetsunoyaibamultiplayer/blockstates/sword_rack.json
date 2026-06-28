@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "wall=false": { "model": "kimetsunoyaibamultiplayer:item/sword_rack_floor" },
+    "wall=true": { "model": "kimetsunoyaibamultiplayer:item/sword_rack_wall" }
+  }
+}

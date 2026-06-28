@@ -81,8 +81,47 @@ public final class MeditationStatsTracker {
         }
     }
 
+    public static void copyOnClone(Player original, Player clone) {
+        if (original == null || clone == null) {
+            return;
+        }
+
+        CompoundTag originalData = original.getPersistentData();
+        CompoundTag cloneData = clone.getPersistentData();
+        copyInt(cloneData, originalData, DEMON_KILLS_TOTAL);
+        copyInt(cloneData, originalData, KIZUKI_KILLS_TOTAL);
+        copyInt(cloneData, originalData, HUMAN_KILLS_TOTAL);
+        copyCompound(cloneData, originalData, DEMON_KILLS_BY_ENTITY);
+        copyCompound(cloneData, originalData, KIZUKI_KILLS_BY_ENTITY);
+        copyCompound(cloneData, originalData, NON_KIZUKI_KILLS_BY_ENTITY);
+        copyInt(cloneData, originalData, HUMAN_KILLS_DEMON_SLAYER);
+        copyCompound(cloneData, originalData, HUMAN_KILLS_DEMON_SLAYER_BY_ENTITY);
+        copyInt(cloneData, originalData, HUMAN_KILLS_SWORDSMITH);
+        copyCompound(cloneData, originalData, HUMAN_KILLS_SWORDSMITH_BY_ENTITY);
+        copyInt(cloneData, originalData, HUMAN_KILLS_KAKUSHI);
+        copyCompound(cloneData, originalData, HUMAN_KILLS_KAKUSHI_BY_ENTITY);
+        copyInt(cloneData, originalData, HUMAN_KILLS_CIVILIAN);
+        copyCompound(cloneData, originalData, HUMAN_KILLS_CIVILIAN_BY_ENTITY);
+    }
+
     private static void increment(Player player, String key) {
         player.getPersistentData().putInt(key, player.getPersistentData().getInt(key) + 1);
+    }
+
+    private static void copyInt(CompoundTag target, CompoundTag source, String key) {
+        if (source.contains(key)) {
+            target.putInt(key, source.getInt(key));
+        } else {
+            target.remove(key);
+        }
+    }
+
+    private static void copyCompound(CompoundTag target, CompoundTag source, String key) {
+        if (source.contains(key)) {
+            target.put(key, source.getCompound(key).copy());
+        } else {
+            target.remove(key);
+        }
     }
 
     private static void incrementEntityMap(Player player, String key, ResourceLocation entityId) {

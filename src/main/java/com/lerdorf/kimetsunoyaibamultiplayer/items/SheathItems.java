@@ -34,7 +34,11 @@ public class SheathItems {
 
     // Iguro-specific sheath
     public static final RegistryObject<Item> SWORD_SHEATH_IGURO = ITEMS.register("sword_sheath_iguro",
-        () -> new Item(new Item.Properties().stacksTo(1)));
+            () -> new Item(new Item.Properties().stacksTo(1)));
+
+    // Kanawo-specific sheath
+    public static final RegistryObject<Item> SWORD_SHEATH_KANAWO = ITEMS.register("sword_sheath_kanawo",
+            () -> new Item(new Item.Properties().stacksTo(1)));
 
     // Inosuke-specific sheath
     public static final RegistryObject<Item> SWORD_SHEATH_INOSUKE = ITEMS.register("sword_sheath_inosuke",

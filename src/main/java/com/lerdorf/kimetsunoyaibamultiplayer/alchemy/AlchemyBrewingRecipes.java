@@ -24,6 +24,16 @@ public final class AlchemyBrewingRecipes {
             "kimetsunoyaibamultiplayer:cruel_vial"
         ));
         BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
+            "kimetsunoyaibamultiplayer:hemomimetic_culture",
+            "kimetsunoyaibamultiplayer:cruel_vial",
+            "kimetsunoyaibamultiplayer:catalytic_reagent"
+        ));
+        BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
+            "kimetsunoyaibamultiplayer:herbal_culture",
+            "kimetsunoyaibamultiplayer:crude_vial",
+            "kimetsunoyaibamultiplayer:familiar_tonic"
+        ));
+        BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
             "minecraft:slime_ball",
             "kimetsunoyaibamultiplayer:refined_vial",
             "kimetsunoyaibamultiplayer:potion_effect_binder"
@@ -40,6 +50,15 @@ public final class AlchemyBrewingRecipes {
         registerInfusion("kimetsunoyaibamultiplayer:illagers_extract", "kimetsunoyaibamultiplayer:bleeding_infusion");
         registerInfusion("kimetsunoyaibamultiplayer:blaze_extract", "kimetsunoyaibamultiplayer:fire_infusion");
         registerInfusion("kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:frozen_infusion");
+
+        for (BloodDemonArtAlchemyCatalog.CatalystDefinition definition : BloodDemonArtAlchemyCatalog.baseCatalystDefinitions()) {
+            BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
+                definition.inputId(),
+                "kimetsunoyaibamultiplayer:catalytic_reagent",
+                definition.outputId(),
+                3
+            ));
+        }
     }
 
     private static void registerInfusion(String ingredientId, String outputId) {

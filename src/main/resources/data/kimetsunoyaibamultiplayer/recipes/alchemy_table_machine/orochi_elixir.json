@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:orochi_scales"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:familiar_tonic"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:orochi_elixir"
+  }
+}

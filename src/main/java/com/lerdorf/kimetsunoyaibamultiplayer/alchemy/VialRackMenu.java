@@ -14,20 +14,25 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class VialRackMenu extends AbstractContainerMenu {
-    private static final int PLAYER_INV_START = VialRackContents.SLOT_COUNT;
-    private static final int PLAYER_INV_END = PLAYER_INV_START + 27;
-    private static final int HOTBAR_START = PLAYER_INV_END;
-    private static final int HOTBAR_END = HOTBAR_START + 9;
-
     private final Container container;
     private final ContainerLevelAccess access;
+    private final int rackCount;
+    private final int rackSlots;
+    private final int playerInvStart;
+    private final int playerInvEnd;
+    private final int hotbarStart;
+    private final int hotbarEnd;
 
     public VialRackMenu(int containerId, Inventory inventory, FriendlyByteBuf extraData) {
-        this(containerId, inventory, extraData.readBlockPos());
+        this(containerId, inventory, extraData.readBlockPos(), extraData.readVarInt());
     }
 
     public VialRackMenu(int containerId, Inventory inventory, BlockPos blockPos) {
-        this(containerId, inventory, resolveContainer(inventory, blockPos),
+        this(containerId, inventory, blockPos, rackCountFor(inventory, blockPos));
+    }
+
+    public VialRackMenu(int containerId, Inventory inventory, BlockPos blockPos, int rackCount) {
+        this(containerId, inventory, resolveContainer(inventory, blockPos, rackCount),
             ContainerLevelAccess.create(inventory.player.level(), blockPos));
     }
 
@@ -37,30 +42,51 @@ public class VialRackMenu extends AbstractContainerMenu {
 
     public VialRackMenu(int containerId, Inventory inventory, Container container, ContainerLevelAccess access) {
         super(ModAlchemyMenus.VIAL_RACK.get(), containerId);
-        checkContainerSize(container, VialRackContents.SLOT_COUNT);
+        checkContainerSize(container, Math.min(container.getContainerSize(), VialRackContents.MAX_SLOT_COUNT));
         this.container = container;
         this.access = access;
+        this.rackCount = clampRackCount((container.getContainerSize() + VialRackContents.SLOT_COUNT - 1) / VialRackContents.SLOT_COUNT);
+        this.rackSlots = this.rackCount * VialRackContents.SLOT_COUNT;
+        this.playerInvStart = rackSlots;
+        this.playerInvEnd = playerInvStart + 27;
+        this.hotbarStart = playerInvEnd;
+        this.hotbarEnd = hotbarStart + 9;
 
-        for (int slot = 0; slot < VialRackContents.SLOT_COUNT; slot++) {
-            addSlot(new VialSlot(container, slot, 44 + slot * 18, 20));
+        for (int rack = 0; rack < this.rackCount; rack++) {
+            for (int slot = 0; slot < VialRackContents.SLOT_COUNT; slot++) {
+                addSlot(new VialSlot(container, rack * VialRackContents.SLOT_COUNT + slot, 44 + slot * 18, 20 + rack * 18));
+            }
         }
         addPlayerInventory(inventory);
     }
 
-    private static Container resolveContainer(Inventory inventory, BlockPos blockPos) {
+    private static Container resolveContainer(Inventory inventory, BlockPos blockPos, int rackCount) {
+        int clampedRackCount = clampRackCount(rackCount);
         BlockEntity blockEntity = inventory.player.level().getBlockEntity(blockPos);
-        return blockEntity instanceof VialRackBlockEntity rack ? rack : new SimpleContainer(VialRackContents.SLOT_COUNT);
+        return blockEntity instanceof VialRackBlockEntity rack && rack.getRackCount() == clampedRackCount
+            ? rack
+            : new SimpleContainer(clampedRackCount * VialRackContents.SLOT_COUNT);
+    }
+
+    private static int rackCountFor(Inventory inventory, BlockPos blockPos) {
+        BlockEntity blockEntity = inventory.player.level().getBlockEntity(blockPos);
+        return blockEntity instanceof VialRackBlockEntity rack ? rack.getRackCount() : 1;
     }
 
     private void addPlayerInventory(Inventory inventory) {
+        int offset = (rackCount - 1) * 18;
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 51 + row * 18));
+                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 51 + offset + row * 18));
             }
         }
         for (int col = 0; col < 9; col++) {
-            addSlot(new Slot(inventory, col, 8 + col * 18, 109));
+            addSlot(new Slot(inventory, col, 8 + col * 18, 109 + offset));
         }
+    }
+
+    public int getRackCount() {
+        return rackCount;
     }
 
     @Override
@@ -73,20 +99,20 @@ public class VialRackMenu extends AbstractContainerMenu {
 
         ItemStack stack = slot.getItem();
         copy = stack.copy();
-        if (index < VialRackContents.SLOT_COUNT) {
-            if (!moveItemStackTo(stack, PLAYER_INV_START, HOTBAR_END, true)) {
+        if (index < rackSlots) {
+            if (!moveItemStackTo(stack, playerInvStart, hotbarEnd, true)) {
                 return ItemStack.EMPTY;
             }
         } else if (VialRackContents.isVial(stack)) {
-            if (!moveItemStackTo(stack, 0, VialRackContents.SLOT_COUNT, false)) {
+            if (!moveItemStackTo(stack, 0, rackSlots, false)) {
                 return ItemStack.EMPTY;
             }
-        } else if (index >= PLAYER_INV_START && index < PLAYER_INV_END) {
-            if (!moveItemStackTo(stack, HOTBAR_START, HOTBAR_END, false)) {
+        } else if (index >= playerInvStart && index < playerInvEnd) {
+            if (!moveItemStackTo(stack, hotbarStart, hotbarEnd, false)) {
                 return ItemStack.EMPTY;
             }
-        } else if (index >= HOTBAR_START && index < HOTBAR_END) {
-            if (!moveItemStackTo(stack, PLAYER_INV_START, PLAYER_INV_END, false)) {
+        } else if (index >= hotbarStart && index < hotbarEnd) {
+            if (!moveItemStackTo(stack, playerInvStart, playerInvEnd, false)) {
                 return ItemStack.EMPTY;
             }
         } else {
@@ -142,5 +168,9 @@ public class VialRackMenu extends AbstractContainerMenu {
         public int getMaxStackSize(ItemStack stack) {
             return 1;
         }
+    }
+
+    private static int clampRackCount(int count) {
+        return Math.max(1, Math.min(VialRackContents.MAX_RACKS, count));
     }
 }

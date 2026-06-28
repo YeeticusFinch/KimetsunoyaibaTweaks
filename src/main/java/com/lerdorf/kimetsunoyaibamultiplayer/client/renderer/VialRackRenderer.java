@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.renderer;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyBlocks;
 import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.VialRackBlock;
+import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.VialRackContents;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.VialRackBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -18,6 +19,11 @@ import com.mojang.math.Axis;
 
 public class VialRackRenderer implements BlockEntityRenderer<VialRackBlockEntity> {
     private static final double MODEL_UNIT_OFFSET = 8.0D / 16.0D;
+    private static final double[] RACK_Z_OFFSETS = {
+        0.0D,
+        -4.0D / 16.0D,
+        4.0D / 16.0D
+    };
     private static final double[] SLOT_X_OFFSETS = {
         (11.35D - 7.35D) / 16.0D,
         (9.35D - 7.35D) / 16.0D,
@@ -34,13 +40,20 @@ public class VialRackRenderer implements BlockEntityRenderer<VialRackBlockEntity
                        MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         poseStack.pushPose();
         applyRackRotation(rack.getBlockState(), poseStack);
-        renderRackModel(poseStack, bufferSource, packedLight, packedOverlay);
 
-        NonNullList<ItemStack> stacks = NonNullList.withSize(SLOT_X_OFFSETS.length, ItemStack.EMPTY);
-        for (int slot = 0; slot < stacks.size(); slot++) {
-            stacks.set(slot, rack.getRenderItem(slot));
+        for (int rackIndex = 0; rackIndex < rack.getRackCount() && rackIndex < RACK_Z_OFFSETS.length; rackIndex++) {
+            poseStack.pushPose();
+            poseStack.translate(0.0D, 0.0D, RACK_Z_OFFSETS[rackIndex]);
+            renderRackModel(poseStack, bufferSource, packedLight, packedOverlay);
+
+            NonNullList<ItemStack> stacks = NonNullList.withSize(SLOT_X_OFFSETS.length, ItemStack.EMPTY);
+            int startSlot = rackIndex * VialRackContents.SLOT_COUNT;
+            for (int slot = 0; slot < stacks.size(); slot++) {
+                stacks.set(slot, rack.getRenderItem(startSlot + slot));
+            }
+            renderVials(stacks, poseStack, bufferSource, packedLight);
+            poseStack.popPose();
         }
-        renderVials(stacks, poseStack, bufferSource, packedLight);
         poseStack.popPose();
     }
 

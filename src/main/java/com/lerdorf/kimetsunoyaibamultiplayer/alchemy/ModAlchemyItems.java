@@ -27,6 +27,7 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> MINCED_HUMAN_FLESH = registerPlain("minced_human_flesh");
     public static final RegistryObject<Item> BONE_DUST = registerPlain("bone_dust");
     public static final RegistryObject<Item> CALCITE_POWDER = registerPlain("calcite_powder");
+    public static final RegistryObject<Item> OROCHI_SCALES = registerPlain("orochi_scales");
     public static final RegistryObject<Item> AMETHYST_LENS = register("amethyst_lens",
         () -> new AlchemyLensItem(new Item.Properties(), 0xB99AF0));
     public static final RegistryObject<Item> EMPTY_VIAL = registerPlain("empty_vial");
@@ -37,6 +38,7 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> CRUDE_VIAL = registerPlain("crude_vial");
     public static final RegistryObject<Item> REFINED_VIAL = registerPlain("refined_vial");
     public static final RegistryObject<Item> CRUEL_VIAL = registerPlain("cruel_vial");
+    public static final RegistryObject<Item> CATALYTIC_REAGENT = registerPlain("catalytic_reagent");
 
     public static final RegistryObject<Item> UNIDENTIFIED_HUMAN_EXTRACT = registerPlain("unidentified_human_extract");
     public static final RegistryObject<Item> UNIDENTIFIED_ROTTEN_EXTRACT = registerPlain("unidentified_rotten_extract");
@@ -61,6 +63,8 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> SCUTE_EXTRACT = registerPlain("scute_extract");
     public static final RegistryObject<Item> ILLAGERS_EXTRACT = registerPlain("illagers_extract");
     public static final RegistryObject<Item> POWDERED_SNOW_EXTRACT = registerPlain("powdered_snow_extract");
+    public static final RegistryObject<Item> DIAMOND_EXTRACT = registerPlain("diamond_extract");
+    public static final RegistryObject<Item> YAMATO_OROCHI_EXTRACT = registerPlain("yamato_orochi_extract");
 
     public static final RegistryObject<Item> INFERNAL_CULTURE = registerPlain("infernal_culture");
     public static final RegistryObject<Item> FORTIFIED_CULTURE = registerPlain("fortified_culture");
@@ -70,6 +74,8 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> HERBAL_CULTURE = registerPlain("herbal_culture");
     public static final RegistryObject<Item> VITALITY_CULTURE = registerPlain("vitality_culture");
     public static final RegistryObject<Item> ELECTROLYTIC_CULTURE = registerPlain("electrolytic_culture");
+    public static final RegistryObject<Item> HEMOMIMETIC_CULTURE = registerPlain("hemomimetic_culture");
+    public static final RegistryObject<Item> FAMILIAR_TONIC = registerPlain("familiar_tonic");
 
     public static final RegistryObject<Item> DAMAGE_AMPLIFIER_VIAL = registerSpecial("damage_amplifier_vial");
     public static final RegistryObject<Item> DEFENSE_AMPLIFIER_VIAL = registerSpecial("defense_amplifier_vial");
@@ -111,6 +117,8 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> PRISON_CATALYST = registerSpecial("prison_catalyst");
     public static final RegistryObject<Item> SONIC_CATALYST = registerSpecial("sonic_catalyst");
     public static final RegistryObject<Item> NIGHT_CATALYST = registerSpecial("night_catalyst");
+    public static final RegistryObject<Item> DARK_STAR_CATALYST = registerSpecial("dark_star_catalyst");
+    public static final RegistryObject<Item> DARK_STAR = registerPlain("dark_star");
     public static final RegistryObject<Item> INFERNAL_CATALYST = registerSpecial("infernal_catalyst");
     public static final RegistryObject<Item> FLYTRAP_CATALYST = registerSpecial("flytrap_catalyst");
     public static final RegistryObject<Item> GRAVE_CATALYST = registerSpecial("grave_catalyst");
@@ -119,7 +127,14 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> CHARGED_CATALYST = registerSpecial("charged_catalyst");
     public static final RegistryObject<Item> ARC_CATALYST = registerSpecial("arc_catalyst");
     public static final RegistryObject<Item> INCENDIARY_CATALYST = registerSpecial("incendiary_catalyst");
+    public static final RegistryObject<Item> YAMATO_OROCHI_CATALYST = registerSpecial("yamato_orochi_catalyst");
+    public static final RegistryObject<Item> SERPENT_NEST_CATALYST = registerSpecial("serpent_nest_catalyst");
+    public static final RegistryObject<Item> ECDYSIS_CATALYST = registerSpecial("ecdysis_catalyst");
+    public static final RegistryObject<Item> PHANTOM_SERPENT_CATALYST = registerSpecial("phantom_serpent_catalyst");
+    public static final RegistryObject<Item> YAMATO_ASCENSION_CATALYST = registerSpecial("yamato_ascension_catalyst");
     public static final RegistryObject<Item> POTION_EFFECT_BINDER = registerSpecial("potion_effect_binder");
+    public static final RegistryObject<Item> OROCHI_ELIXIR = register("orochi_elixir",
+        () -> new OrochiElixirItem(new Item.Properties().stacksTo(1), 0x173B22));
 
     public static final RegistryObject<CreativeModeTab> ALCHEMY_TAB = CREATIVE_MODE_TABS.register("alchemy",
         () -> CreativeModeTab.builder()

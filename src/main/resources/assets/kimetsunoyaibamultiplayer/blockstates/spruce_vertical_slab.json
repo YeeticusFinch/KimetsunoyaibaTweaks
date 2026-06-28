@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "type=north": {
+      "model": "kimetsunoyaibamultiplayer:block/spruce_vertical_slab_single"
+    },
+    "type=east": {
+      "model": "kimetsunoyaibamultiplayer:block/spruce_vertical_slab_single",
+      "y": 90
+    },
+    "type=south": {
+      "model": "kimetsunoyaibamultiplayer:block/spruce_vertical_slab_single",
+      "y": 180
+    },
+    "type=west": {
+      "model": "kimetsunoyaibamultiplayer:block/spruce_vertical_slab_single",
+      "y": 270
+    },
+    "type=double": {
+      "model": "kimetsunoyaibamultiplayer:block/spruce_vertical_slab_double"
+    }
+  }
+}

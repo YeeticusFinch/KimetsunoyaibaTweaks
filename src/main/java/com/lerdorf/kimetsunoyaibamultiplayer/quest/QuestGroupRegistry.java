@@ -338,14 +338,182 @@ public final class QuestGroupRegistry {
                                 QuestStepType.CUSTOM
                             )
                             .onStart((player, context) -> player.sendSystemMessage(
-                                Component.literal("§cStage No.1 - First Taste of Blood: §fReach 10 human kills and eat 10 human flesh items.")))
+                                Component.literal("§cStage No.1 - First Taste of Blood: §fKill 10 humans and eat 10 human flesh items.")))
                             .customCheck((player, context) ->
                                 QuestProgressionManager.getPermanenceFirstTasteKillProgress(player) >= 10
-                                    && QuestProgressionManager.getPermanenceFirstTasteProgress(player) >= 10)
+                                    && QuestProgressionManager.getPermanenceFirstTasteEatenProgress(player) >= 10)
+                            .onComplete((player, context) -> {
+                                QuestProgressionManager.markPermanenceFirstTasteCompleted(player);
+                                player.sendSystemMessage(Component.literal("§6Stage Complete: §fFirst Taste of Blood"));
+                            })
+                            .markerResolver((player, context) ->
+                                QuestScenarioActions.findNearestVanillaVillage(player.serverLevel(), player.blockPosition()))
                             .build()
                     ),
                     new QuestRewardDefinition()
                         .experiencePoints(25)
+                ),
+                new QuestStageDefinition(
+                    "hunger_unending",
+                    "Stage No.2 - Hunger Unending",
+                    "Find hunting grounds at night and continue feeding without drawing the Corps' attention.",
+                    List.of(
+                        QuestStepDefinition.builder(
+                                "travel_to_village_at_night",
+                                "Travel to a Village at Night",
+                                "Find nearby hunting grounds after night falls.",
+                                QuestStepType.CUSTOM
+                            )
+                            .requiredTimeOfDay(false)
+                            .onStart((player, context) -> {
+                                player.sendSystemMessage(Component.literal("§cStage No.2 - Hunger Unending: §fFind a village under cover of night."));
+                                player.sendSystemMessage(Component.literal("§7Stay unseen and feed before demon slayers are drawn to your trail."));
+                            })
+                            .customCheck((player, context) -> QuestScenarioActions.isNearVanillaVillage(player, 64.0D))
+                            .markerResolver((player, context) ->
+                                QuestScenarioActions.findNearestVanillaVillage(player.serverLevel(), player.blockPosition()))
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "feed_without_detection",
+                                "Feed Without Detection",
+                                "Kill and eat 10 villagers in their sleep without being detected.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart((player, context) -> player.sendSystemMessage(
+                                Component.literal("§7The village sleeps. Kill 10 sleeping humans and eat 10 human flesh items.")))
+                            .customCheck((player, context) ->
+                                QuestProgressionManager.getPermanenceHungerUnendingSleepKillProgress(player) >= 10
+                                    && QuestProgressionManager.getPermanenceHungerUnendingEatenProgress(player) >= 10)
+                            .onComplete((player, context) ->
+                                player.sendSystemMessage(Component.literal("§6Stage Complete: §fHunger Unending")))
+                            .markerResolver((player, context) ->
+                                QuestScenarioActions.findNearestVanillaVillage(player.serverLevel(), player.blockPosition()))
+                            .build()
+                    ),
+                    new QuestRewardDefinition()
+                        .experiencePoints(50)
+                ),
+                new QuestStageDefinition(
+                    "slayers_blood",
+                    "Stage No.3 - Slayer's Blood",
+                    "Learn what makes demon slayers dangerous, then break one.",
+                    List.of(
+                        QuestStepDefinition.builder(
+                                "travel_to_lower_moon_den",
+                                "Find a Lower Moon's Den",
+                                "Travel to a deep dungeon where a lower moon demon is hiding.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart((player, context) -> {
+                                QuestScenarioActions.ensureOrochiCompanion(player);
+                                player.sendSystemMessage(Component.literal("§6[Orochi] §fThe strength you have shown has drawn the attention of a powerful demon."));
+                                player.sendSystemMessage(Component.literal("§cStage No.3 - Slayer's Blood: §fRumors speak of a powerful demon dwelling deep beneath the earth..."));
+                            })
+                            .onTick((player, context) -> {
+                                if (QuestScenarioActions.isInSlayersBloodDungeonCave(player, context)) {
+                                    QuestScenarioActions.ensureKamanueSpawned(player, context);
+                                }
+                            })
+                            .customCheck(QuestScenarioActions::isInSlayersBloodDungeonCave)
+                            .onComplete((player, context) -> {
+                                QuestScenarioActions.ensureKamanueSpawned(player, context);
+                                player.sendSystemMessage(Component.literal("§7A presence waits in the dark. Find Kamanue."));
+                            })
+                            .markerResolver((player, context) -> QuestScenarioActions.getOrStoreSlayersBloodDungeon(player))
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "talk_to_kamanue",
+                                "Find Kamanue",
+                                "Find Kamanue in the dungeon caves and speak with him.",
+                                QuestStepType.CUSTOM
+                            )
+                            .targetKey("kamanue")
+                            .onStart((player, context) -> {
+                                QuestScenarioActions.ensureKamanueSpawned(player, context);
+                                player.sendSystemMessage(Component.literal("§7Find Kamanue and speak with him."));
+                            })
+                            .onTick((player, context) -> {
+                                QuestScenarioActions.ensureKamanueSpawned(player, context);
+                                QuestScenarioActions.tickKamanueNeutrality(player, context);
+                            })
+                            .customCheck(QuestScenarioActions::isKamanueDialogueComplete)
+                            .onComplete(QuestScenarioActions::completeKamanueDialogue)
+                            .markerResolver((player, context) -> {
+                                QuestScenarioActions.ensureKamanueSpawned(player, context);
+                                return QuestScenarioActions.findKamanuePosition(player);
+                            })
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "terrorize_village",
+                                "Terrorize a Village",
+                                "Attack villagers until demon slayers arrive.",
+                                QuestStepType.CUSTOM
+                            )
+                            .targetKey("slayers_blood_slayer")
+                            .onStart((player, context) -> player.sendSystemMessage(
+                                Component.literal("§7The village is gripped by fear...")))
+                            .onTick(QuestProgressionManager::tickPermanenceSlayersBloodVillageAmbush)
+                            .customCheck(QuestProgressionManager::isPermanenceSlayersBloodCaptiveReady)
+                            .onComplete((player, context) -> player.sendSystemMessage(
+                                Component.literal("§aQuest Updated: §fBring the captive Demon Slayer back to Kamanue.")))
+                            .markerResolver((player, context) -> QuestProgressionManager.resolveSlayersBloodVillageMarker(player))
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "bring_captive_to_kamanue",
+                                "Bring the Captive to Kamanue",
+                                "Bring the weakened Demon Slayer back to Kamanue.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart((player, context) -> QuestScenarioActions.ensureKamanueSpawned(player, context))
+                            .onTick((player, context) -> {
+                                QuestScenarioActions.ensureKamanueSpawned(player, context);
+                                QuestProgressionManager.tickPermanenceSlayersBloodVillageAmbush(player, context);
+                                QuestProgressionManager.tickPermanenceSlayersBloodCaptiveReturn(player, context);
+                            })
+                            .customCheck(QuestProgressionManager::isPermanenceSlayersBloodCaptiveDelivered)
+                            .onComplete((player, context) -> player.sendSystemMessage(
+                                Component.literal("§aQuest Updated: §fSpeak with Kamanue.")))
+                            .markerResolver((player, context) -> {
+                                QuestScenarioActions.ensureKamanueSpawned(player, context);
+                                return QuestScenarioActions.findKamanuePosition(player);
+                            })
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "study_slayer_breathing",
+                                "Speak with Kamanue",
+                                "Let Kamanue study the captive Demon Slayer's breathing technique.",
+                                QuestStepType.CUSTOM
+                            )
+                            .targetKey("kamanue")
+                            .onStart((player, context) -> {
+                                QuestScenarioActions.ensureKamanueSpawned(player, context);
+                                player.sendSystemMessage(Component.literal("§7Speak with Kamanue when the captive is close."));
+                            })
+                            .onTick((player, context) -> {
+                                QuestScenarioActions.ensureKamanueSpawned(player, context);
+                                QuestScenarioActions.tickKamanueNeutrality(player, context);
+                            })
+                            .customCheck(QuestProgressionManager::isPermanenceSlayersBloodStudyComplete)
+                            .onComplete((player, context) -> player.sendSystemMessage(
+                                Component.literal("§aQuest Updated: §fDefeat the Demon Slayer.")))
+                            .markerResolver((player, context) -> QuestScenarioActions.findKamanuePosition(player))
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "kill_studied_slayer",
+                                "Defeat the Demon Slayer",
+                                "Kill the Demon Slayer after Kamanue restores their weapon.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(QuestProgressionManager::tickPermanenceSlayersBloodFinalFight)
+                            .customCheck(QuestProgressionManager::isPermanenceSlayersBloodFinalSlayerKilled)
+                            .onComplete(QuestScenarioActions::despawnKamanueWithMugenDoor)
+                            .markerResolver((player, context) ->
+                                QuestProgressionManager.findPermanenceSlayersBloodFinalSlayer(player))
+                            .build()
+                    ),
+                    new QuestRewardDefinition()
+                        .experiencePoints(200)
+                        .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "blood_of_muzan"), 2)
                 )
             )
         ));
@@ -387,6 +555,7 @@ public final class QuestGroupRegistry {
     public static QuestGroupDefinition getInitialActiveGroup(PlayerRole role) {
         return switch (role) {
             case DEMON_SLAYER, DEMON_SLAYER_IN_TRAINING -> get("cruel");
+            case DEMON -> get("permanence");
             default -> null;
         };
     }

@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CrowGeoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.AfterImageRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DarkStarRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.CushionSeatRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerFemaleRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerRenderer;
@@ -58,6 +59,9 @@ public class CrowRendererManager {
 
         // Register renderer for after image entity (Flower Breathing 7th Form effect)
         event.registerEntityRenderer(ModEntities.AFTER_IMAGE.get(), AfterImageRenderer::new);
+
+        // Register renderer for Dark Star visual entity
+        event.registerEntityRenderer(ModEntities.DARK_STAR_VISUAL.get(), DarkStarRenderer::new);
 
         // Register renderer for flower petal slash entity (Flower Breathing slash effect)
         event.registerEntityRenderer(ModEntities.FLOWER_PETAL_SLASH.get(), FlowerPetalSlashRenderer::new);

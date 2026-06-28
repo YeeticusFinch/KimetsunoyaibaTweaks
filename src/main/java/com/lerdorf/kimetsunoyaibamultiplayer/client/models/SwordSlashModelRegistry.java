@@ -90,6 +90,9 @@ public class SwordSlashModelRegistry {
         ANIMATED_TEXTURE_FRAMES.put("claw_nezuko", 6);
         ANIMATED_TEXTURE_FRAME_DELAY.put("claw_nezuko", 1);
 
+        // Demon passive Claws use the custom BDA item but render a claw slash model.
+        SWORD_TO_MODEL_MAP.put("custom_demon_art", "claw");
+
         // Register flower breathing swords to use flower model (animated texture)
         // Covers both base mod and our mod variants (registry matches by path, not namespace)
         SWORD_TO_MODEL_MAP.put("nichirinsword_flower", "flower");

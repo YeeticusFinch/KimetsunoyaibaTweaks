@@ -6,7 +6,10 @@ import java.util.List;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.KazumiEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonVillagerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.MugenDoorEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.OrochiEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampDemonEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.StructureLocationCache;
 
 import net.minecraft.core.BlockPos;
@@ -16,6 +19,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,9 +29,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -36,7 +43,11 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.Registries;
+import java.util.function.Predicate;
 
 public final class QuestScenarioActions {
     public static final String QUEST_NPC_ID_TAG = "KnYQuestNpcId";
@@ -44,6 +55,9 @@ public final class QuestScenarioActions {
     public static final String CURRENT_STRUCTURE_X = "KnYQuestStructureX";
     public static final String CURRENT_STRUCTURE_Y = "KnYQuestStructureY";
     public static final String CURRENT_STRUCTURE_Z = "KnYQuestStructureZ";
+    public static final String SLAYERS_BLOOD_DUNGEON_X = "KnYPermanenceSlayersBloodDungeonX";
+    public static final String SLAYERS_BLOOD_DUNGEON_Y = "KnYPermanenceSlayersBloodDungeonY";
+    public static final String SLAYERS_BLOOD_DUNGEON_Z = "KnYPermanenceSlayersBloodDungeonZ";
     public static final String KIDNAPPERS_BOG_ACTIVE_TAG = "KnYKidnappersBogActive";
     public static final String SWAMP_DOMAIN_ENCOUNTER_STARTED_TAG = "KnYSwampDomainEncounterStarted";
     public static final String TAMAYO_HOUSE_X = "KnYTamayoHouseX";
@@ -56,6 +70,9 @@ public final class QuestScenarioActions {
     private static final String MOD_NAMESPACE = "kimetsunoyaibamultiplayer";
 
     private static final ResourceLocation VILLAGE_SWAMP = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "village_swamp");
+    private static final ResourceLocation VANILLA_VILLAGE = ResourceLocation.fromNamespaceAndPath("minecraft", "village");
+    private static final ResourceLocation MINESHAFT = ResourceLocation.fromNamespaceAndPath("minecraft", "mineshaft");
+    private static final ResourceLocation KAMANUE_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "kamanue");
     private static final ResourceLocation TAMAYO_HOUSE = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_tamayo");
     private static final ResourceLocation TAMAYO_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "tamayo");
     private static final ResourceLocation YUSHIRO_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "yushiro");
@@ -64,8 +81,16 @@ public final class QuestScenarioActions {
     private static final ResourceLocation SWAMP_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "swamp_demon");
     private static final ResourceLocation SATOKOS_BOW = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "satokos_bow");
     private static final double TAMAYO_RESTRAINED_DEMON_MAX_RADIUS = 10.0D;
+    private static final double KAMANUE_FACE_PLAYER_RADIUS = 10.0D;
     private static final double KAZUMI_DUPLICATE_RADIUS = 50.0D;
     private static final double KAZUMI_QUEST_REUSE_RADIUS = 400.0D;
+    private static final String KAMANUE_DIALOGUE_STARTED = "KnYPermanenceKamanueDialogueStarted";
+    private static final String KAMANUE_DIALOGUE_START_TICK = "KnYPermanenceKamanueDialogueStartTick";
+    private static final String KAMANUE_HOSTILE = "KnYPermanenceKamanueHostile";
+    private static final String KAMANUE_DUNGEON_X = "KnYPermanenceKamanueDungeonX";
+    private static final String KAMANUE_DUNGEON_Y = "KnYPermanenceKamanueDungeonY";
+    private static final String KAMANUE_DUNGEON_Z = "KnYPermanenceKamanueDungeonZ";
+    private static final long KAMANUE_DIALOGUE_COMPLETE_TICKS = 30L * 7L + 10L;
 
     private QuestScenarioActions() {
     }
@@ -90,6 +115,273 @@ public final class QuestScenarioActions {
             player.getPersistentData().getInt(CURRENT_STRUCTURE_Y),
             player.getPersistentData().getInt(CURRENT_STRUCTURE_Z)
         );
+    }
+
+    public static BlockPos findNearestVanillaVillage(ServerLevel level, BlockPos origin) {
+        return findNearestStructure(level, origin, VANILLA_VILLAGE);
+    }
+
+    public static boolean isNearVanillaVillage(ServerPlayer player, double radius) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        BlockPos village = findNearestVanillaVillage(serverLevel, player.blockPosition());
+        return village != null && player.blockPosition().distSqr(village) <= radius * radius;
+    }
+
+    public static BlockPos findNearestSlayersBloodDungeon(ServerLevel level, BlockPos origin) {
+        return findNearestStructure(level, origin, MINESHAFT);
+    }
+
+    public static BlockPos getOrStoreSlayersBloodDungeon(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        if (player.getPersistentData().contains(SLAYERS_BLOOD_DUNGEON_X)) {
+            return new BlockPos(
+                player.getPersistentData().getInt(SLAYERS_BLOOD_DUNGEON_X),
+                player.getPersistentData().getInt(SLAYERS_BLOOD_DUNGEON_Y),
+                player.getPersistentData().getInt(SLAYERS_BLOOD_DUNGEON_Z)
+            );
+        }
+        BlockPos dungeon = findNearestSlayersBloodDungeon(serverLevel, player.blockPosition());
+        if (dungeon == null) {
+            return null;
+        }
+        player.getPersistentData().putInt(SLAYERS_BLOOD_DUNGEON_X, dungeon.getX());
+        player.getPersistentData().putInt(SLAYERS_BLOOD_DUNGEON_Y, dungeon.getY());
+        player.getPersistentData().putInt(SLAYERS_BLOOD_DUNGEON_Z, dungeon.getZ());
+        return dungeon;
+    }
+
+    public static BlockPos getStoredSlayersBloodDungeon(ServerPlayer player) {
+        if (player == null || !player.getPersistentData().contains(SLAYERS_BLOOD_DUNGEON_X)) {
+            return null;
+        }
+        return new BlockPos(
+            player.getPersistentData().getInt(SLAYERS_BLOOD_DUNGEON_X),
+            player.getPersistentData().getInt(SLAYERS_BLOOD_DUNGEON_Y),
+            player.getPersistentData().getInt(SLAYERS_BLOOD_DUNGEON_Z)
+        );
+    }
+
+    public static boolean isInSlayersBloodDungeonCave(ServerPlayer player, QuestRuntimeContext context) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        BlockPos dungeon = getOrStoreSlayersBloodDungeon(player);
+        if (dungeon == null) {
+            return false;
+        }
+        int surfaceY = serverLevel.getHeight(Heightmap.Types.WORLD_SURFACE, player.getBlockX(), player.getBlockZ());
+        double dx = player.getX() - (dungeon.getX() + 0.5D);
+        double dz = player.getZ() - (dungeon.getZ() + 0.5D);
+        return (dx * dx + dz * dz) <= 96.0D * 96.0D && player.getY() <= surfaceY - 10.0D;
+    }
+
+    public static void ensureKamanueSpawned(ServerPlayer player, QuestRuntimeContext context) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        BlockPos dungeon = getOrStoreSlayersBloodDungeon(player);
+        if (dungeon == null) {
+            return;
+        }
+        Entity existing = findKamanueNearDungeon(serverLevel, dungeon, 100.0D);
+        if (existing == null) {
+            existing = findKamanue(player, 192.0D);
+        }
+        if (existing != null) {
+            claimKamanueForQuest(existing, dungeon);
+            return;
+        }
+        BlockPos spawnPos = findUndergroundSpawnNear(serverLevel, dungeon, 48, 32);
+        if (spawnPos == null) {
+            return;
+        }
+
+        EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.getOptional(KAMANUE_ID).orElse(null);
+        if (entityType == null) {
+            return;
+        }
+        Entity entity = entityType.create(serverLevel);
+        if (!(entity instanceof LivingEntity living)) {
+            return;
+        }
+        claimKamanueForQuest(entity, dungeon);
+        entity.setPos(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D);
+        makePersistent(entity);
+        living.setHealth(living.getMaxHealth());
+        applyKamanueResistance(living);
+        if (entity instanceof Mob mob) {
+            mob.setNoAi(true);
+            mob.setTarget(null);
+            mob.setLastHurtByMob(null);
+        }
+        serverLevel.addFreshEntity(entity);
+    }
+
+    public static BlockPos findKamanuePosition(ServerPlayer player) {
+        Entity kamanue = findKamanueForPlayer(player, 256.0D);
+        return kamanue == null ? null : kamanue.blockPosition();
+    }
+
+    public static void ensureOrochiCompanion(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        OrochiEntity existing = OrochiEntity.findOwnedOrochi(player);
+        if (existing != null) {
+            existing.setOrderedToSit(false);
+            existing.setPersistenceRequired();
+            return;
+        }
+
+        OrochiEntity orochi = ModEntities.OROCHI.get().create(serverLevel);
+        if (orochi == null) {
+            return;
+        }
+        orochi.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0.0F);
+        orochi.finalizeSpawn(serverLevel, serverLevel.getCurrentDifficultyAt(player.blockPosition()),
+            MobSpawnType.MOB_SUMMONED, null, null);
+        orochi.tame(player);
+        orochi.setOrderedToSit(false);
+        orochi.setPersistenceRequired();
+        orochi.setHealth(orochi.getMaxHealth());
+        serverLevel.addFreshEntity(orochi);
+    }
+
+    public static boolean startKamanueDialogue(ServerPlayer player) {
+        if (player.getPersistentData().getBoolean(KAMANUE_DIALOGUE_STARTED)) {
+            return true;
+        }
+        Entity kamanue = findKamanueForPlayer(player, 12.0D);
+        if (kamanue == null) {
+            return false;
+        }
+        if (kamanue instanceof Mob mob) {
+            mob.setNoAi(true);
+            mob.setTarget(null);
+        }
+        List<Component> messages = List.of(
+            Component.literal("§c[Kamanue] §fAh... another demon..."),
+            Component.literal("§c[Kamanue] §fYou haven't fought many Demon Slayers yet, have you?"),
+            Component.literal("§c[Kamanue] §fHumans are weak. Demon Slayers are different."),
+            Component.literal("§c[Kamanue] §fI want you to bring one here alive."),
+            Component.literal("§6[" + player.getName().getString() + "] §fAlive?"),
+            Component.literal("§c[Kamanue] §fYes. I want to observe one closely."),
+            Component.literal("§c[Kamanue] §fBring me a slayer and I'll teach you something useful.")
+        );
+        long now = player.level().getGameTime();
+        for (ServerPlayer involved : QuestProgressionManager.getPlayersSharingSlayersBlood(player, 128.0D)) {
+            involved.getPersistentData().putBoolean(KAMANUE_DIALOGUE_STARTED, true);
+            involved.getPersistentData().putLong(KAMANUE_DIALOGUE_START_TICK, now);
+            sendDelayedMessages(involved, messages, 30);
+        }
+        return true;
+    }
+
+    public static boolean isKamanueDialogueComplete(ServerPlayer player, QuestRuntimeContext context) {
+        if (!player.getPersistentData().getBoolean(KAMANUE_DIALOGUE_STARTED)) {
+            return false;
+        }
+        return player.level().getGameTime() >= player.getPersistentData().getLong(KAMANUE_DIALOGUE_START_TICK)
+            + KAMANUE_DIALOGUE_COMPLETE_TICKS;
+    }
+
+    public static void completeKamanueDialogue(ServerPlayer player, QuestRuntimeContext context) {
+        player.getPersistentData().remove(KAMANUE_DIALOGUE_STARTED);
+        player.getPersistentData().remove(KAMANUE_DIALOGUE_START_TICK);
+        player.sendSystemMessage(Component.literal("§aQuest Update: §fCapture a Demon Slayer and bring them to Kamanue."));
+    }
+
+    public static void resetSlayersBloodDialogueState(ServerPlayer player) {
+        player.getPersistentData().remove(KAMANUE_DIALOGUE_STARTED);
+        player.getPersistentData().remove(KAMANUE_DIALOGUE_START_TICK);
+    }
+
+    public static void resetSlayersBloodKamanueState(ServerPlayer player) {
+        resetSlayersBloodDialogueState(player);
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        BlockPos dungeon = getStoredSlayersBloodDungeon(player);
+        Entity kamanue = findKamanueNearDungeon(serverLevel, dungeon, 100.0D);
+        if (!(kamanue instanceof Mob mob)) {
+            return;
+        }
+        kamanue.getPersistentData().putBoolean(KAMANUE_HOSTILE, false);
+        kamanue.getPersistentData().putString(QUEST_TARGET_ID_TAG, "kamanue");
+        mob.setNoAi(true);
+        mob.setTarget(null);
+        mob.setLastHurtByMob(null);
+        mob.getNavigation().stop();
+    }
+
+    public static void despawnKamanueWithMugenDoor(ServerPlayer player, QuestRuntimeContext context) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        Entity kamanue = findKamanueForPlayer(player, 256.0D);
+        if (!(kamanue instanceof LivingEntity living) || !living.isAlive()) {
+            return;
+        }
+
+        BlockPos position = living.blockPosition();
+        serverLevel.addFreshEntity(MugenDoorEntity.createForcedTeleportation(serverLevel, position));
+        kamanue.discard();
+    }
+
+    public static void tickKamanueNeutrality(ServerPlayer player, QuestRuntimeContext context) {
+        Entity kamanue = findKamanueForPlayer(player, 256.0D);
+        if (!(kamanue instanceof Mob mob) || kamanue.getPersistentData().getBoolean(KAMANUE_HOSTILE)) {
+            return;
+        }
+        mob.setTarget(null);
+        mob.setLastHurtByMob(null);
+        mob.getNavigation().stop();
+        mob.setNoAi(true);
+
+        if (!(mob.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        Player nearestPlayer = serverLevel.getEntitiesOfClass(
+                Player.class,
+                new AABB(mob.blockPosition()).inflate(KAMANUE_FACE_PLAYER_RADIUS),
+                candidate -> candidate.isAlive())
+            .stream()
+            .min(Comparator.comparingDouble((Player candidate) -> candidate.distanceToSqr(mob)))
+            .orElse(null);
+        if (nearestPlayer != null) {
+            MovementHelper.lookAt(mob, nearestPlayer.getEyePosition());
+        }
+    }
+
+    public static boolean isQuestKamanue(Entity entity) {
+        return entity != null
+            && "kamanue".equals(entity.getPersistentData().getString(QUEST_NPC_ID_TAG))
+            && KAMANUE_ID.equals(ForgeRegistries.ENTITY_TYPES.getKey(entity.getType()));
+    }
+
+    public static boolean isQuestKamanueHostile(Entity entity) {
+        return isQuestKamanue(entity) && entity.getPersistentData().getBoolean(KAMANUE_HOSTILE);
+    }
+
+    public static void makeKamanueHostile(ServerPlayer player, LivingEntity kamanue) {
+        if (kamanue == null) {
+            return;
+        }
+        kamanue.getPersistentData().putBoolean(KAMANUE_HOSTILE, true);
+        kamanue.getPersistentData().putString(QUEST_TARGET_ID_TAG, "hostile_kamanue");
+        player.sendSystemMessage(Component.literal("§c[Kamanue] §fYou will die for this"));
+        if (kamanue instanceof Mob mob) {
+            mob.setNoAi(false);
+            mob.setTarget(player);
+            mob.setLastHurtByMob(player);
+        }
     }
 
     public static void ensureKazumiSpawned(ServerPlayer player, QuestRuntimeContext context) {
@@ -300,6 +592,107 @@ public final class QuestScenarioActions {
             .orElse(null);
     }
 
+    private static Entity findKamanue(ServerPlayer player, double radius) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        return serverLevel.getEntities((Entity) null,
+                new AABB(player.blockPosition()).inflate(radius),
+                entity -> isQuestKamanue(entity) && entity.isAlive())
+            .stream()
+            .min(Comparator.comparingDouble(player::distanceToSqr))
+            .orElse(null);
+    }
+
+    private static Entity findKamanueForPlayer(ServerPlayer player, double radius) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        BlockPos dungeon = getOrStoreSlayersBloodDungeon(player);
+        Entity byDungeon = findKamanueNearDungeon(serverLevel, dungeon, 100.0D);
+        if (byDungeon != null && player.distanceToSqr(byDungeon) <= radius * radius) {
+            claimKamanueForQuest(byDungeon, dungeon);
+            return byDungeon;
+        }
+        return findKamanue(player, radius);
+    }
+
+    private static Entity findKamanueNearDungeon(ServerLevel serverLevel, BlockPos dungeon, double radius) {
+        if (dungeon == null) {
+            return null;
+        }
+        return serverLevel.getEntities((Entity) null,
+                new AABB(dungeon).inflate(radius),
+                entity -> isQuestKamanue(entity) && entity.isAlive())
+            .stream()
+            .min(Comparator.comparingDouble(entity -> entity.blockPosition().distSqr(dungeon)))
+            .orElse(null);
+    }
+
+    private static void claimKamanueForQuest(Entity entity, BlockPos dungeon) {
+        entity.getPersistentData().putString(QUEST_NPC_ID_TAG, "kamanue");
+        if (!entity.getPersistentData().contains(KAMANUE_HOSTILE)) {
+            entity.getPersistentData().putBoolean(KAMANUE_HOSTILE, false);
+        }
+        if (dungeon != null) {
+            entity.getPersistentData().putInt(KAMANUE_DUNGEON_X, dungeon.getX());
+            entity.getPersistentData().putInt(KAMANUE_DUNGEON_Y, dungeon.getY());
+            entity.getPersistentData().putInt(KAMANUE_DUNGEON_Z, dungeon.getZ());
+        }
+        entity.setCustomName(Component.literal("Kamanue"));
+        entity.setCustomNameVisible(true);
+        if (entity instanceof LivingEntity living) {
+            applyKamanueResistance(living);
+        }
+        makePersistent(entity);
+    }
+
+    private static void applyKamanueResistance(LivingEntity living) {
+        if (living == null) {
+            return;
+        }
+        living.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 2, false, false, false));
+    }
+
+    private static BlockPos findUndergroundSpawnNear(ServerLevel level, BlockPos center, int horizontalRadius, int verticalRadius) {
+        int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, center.getX(), center.getZ());
+        int minY = Math.max(level.getMinBuildHeight() + 2, center.getY() - verticalRadius);
+        int maxY = Math.min(surfaceY - 8, center.getY() + verticalRadius);
+        if (maxY < minY) {
+            maxY = surfaceY - 8;
+            minY = Math.max(level.getMinBuildHeight() + 2, maxY - verticalRadius * 2);
+        }
+
+        for (int radius = 0; radius <= horizontalRadius; radius += 4) {
+            for (int dx = -radius; dx <= radius; dx += 4) {
+                for (int dz = -radius; dz <= radius; dz += 4) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != radius) {
+                        continue;
+                    }
+                    int x = center.getX() + dx;
+                    int z = center.getZ() + dz;
+                    for (int y = maxY; y >= minY; y--) {
+                        BlockPos candidate = new BlockPos(x, y, z);
+                        if (isUndergroundSpawnSpace(level, candidate)) {
+                            return candidate;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean isUndergroundSpawnSpace(ServerLevel level, BlockPos pos) {
+        if (!level.isLoaded(pos)) {
+            return false;
+        }
+        return level.getBlockState(pos.below()).isSolidRender(level, pos.below())
+            && level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+            && level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()
+            && !level.canSeeSky(pos);
+    }
+
     private static void claimKazumiForQuest(KazumiEntity kazumi) {
         kazumi.getPersistentData().putString(QUEST_NPC_ID_TAG, "kazumi");
         if (kazumi.getCustomName() == null) {
@@ -454,6 +847,29 @@ public final class QuestScenarioActions {
             .orElse(null);
     }
 
+    public static Vec3 findNearestQuestEntityCenter(ServerPlayer player, String targetKey, double radius) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+
+        if ("kazumi".equals(targetKey)) {
+            KazumiEntity kazumi = findNearestKazumi(serverLevel, player.blockPosition(), radius);
+            if (kazumi != null) {
+                claimKazumiForQuest(kazumi);
+                return kazumi.getBoundingBox().getCenter();
+            }
+        }
+
+        return serverLevel.getEntities((Entity) null,
+                new AABB(player.blockPosition()).inflate(radius),
+                entity -> targetKey.equals(entity.getPersistentData().getString(QUEST_NPC_ID_TAG)) ||
+                    targetKey.equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG)))
+            .stream()
+            .min(Comparator.comparingDouble(player::distanceToSqr))
+            .map(entity -> entity.getBoundingBox().getCenter())
+            .orElse(null);
+    }
+
     public static BlockPos findNearestStructure(ServerLevel level, BlockPos origin, ResourceLocation structureId) {
         BlockPos nearest = level.findNearestMapStructure(QuestStructureTags.tagFor(structureId), origin, 100, false);
         if (nearest == null) {
@@ -461,6 +877,29 @@ public final class QuestScenarioActions {
         }
         int y = level.getHeight(Heightmap.Types.WORLD_SURFACE, nearest.getX(), nearest.getZ());
         return new BlockPos(nearest.getX(), y, nearest.getZ());
+    }
+
+    public static BlockPos findNearestBiome(ServerLevel level, BlockPos origin, ResourceLocation biomeId) {
+        ResourceKey<Biome> biomeKey = ResourceKey.create(Registries.BIOME, biomeId);
+        Registry<Biome> biomeRegistry = level.registryAccess().registryOrThrow(Registries.BIOME);
+        // Optional: Use the direct holder reference for the predicate if registry is guaranteed same
+        Holder<Biome> targetBiomeHolder = biomeRegistry.getHolderOrThrow(biomeKey);
+        Predicate<Holder<Biome>> biomePredicate = holder -> holder == targetBiomeHolder;
+
+        // 1. Capture the Pair result
+        var result = level.findClosestBiome3d(biomePredicate, origin, 5000, 100, 100);
+
+        // 2. Check if result is null (no biome found)
+        if (result == null) {
+            return null;
+        }
+
+        // 3. Extract the BlockPos from the First element of the Pair
+        BlockPos nearestBiomePos = result.getFirst();
+
+        // 4. Adjust Y to surface
+        int y = level.getHeight(Heightmap.Types.WORLD_SURFACE, nearestBiomePos.getX(), nearestBiomePos.getZ());
+        return new BlockPos(nearestBiomePos.getX(), y, nearestBiomePos.getZ());
     }
 
     public static void sendKazumiDialogue(ServerPlayer player) {

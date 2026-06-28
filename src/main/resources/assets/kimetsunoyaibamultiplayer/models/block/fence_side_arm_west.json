@@ -1,0 +1,35 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+	"textures": {
+		"texture": "minecraft:block/spruce_planks"
+	},
+	"elements": [
+		{
+			"name": "lower bar",
+			"from": [0, 6, 7],
+			"to": [9, 9, 9],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [0, 7, 9, 10], "texture": "#texture"},
+				"south": {"uv": [0, 7, 9, 10], "texture": "#texture"},
+				"west": {"uv": [7, 7, 9, 10], "texture": "#texture", "cullface": "north"},
+				"up": {"uv": [7, 0, 9, 9], "rotation": 270, "texture": "#texture"},
+				"down": {"uv": [7, 0, 9, 9], "rotation": 90, "texture": "#texture"}
+			}
+		},
+		{
+			"name": "top bar",
+			"from": [0, 12, 7],
+			"to": [9, 15, 9],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [0, 1, 9, 4], "texture": "#texture"},
+				"south": {"uv": [0, 1, 9, 4], "texture": "#texture"},
+				"west": {"uv": [7, 1, 9, 4], "texture": "#texture", "cullface": "north"},
+				"up": {"uv": [7, 0, 9, 9], "rotation": 270, "texture": "#texture"},
+				"down": {"uv": [7, 0, 9, 9], "rotation": 90, "texture": "#texture"}
+			}
+		}
+	]
+}

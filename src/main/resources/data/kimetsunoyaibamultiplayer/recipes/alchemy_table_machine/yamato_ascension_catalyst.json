@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:yamato_orochi_catalyst"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:scute_extract"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:yamato_ascension_catalyst"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/oak_fence_gate_wall",
+  "textures": {
+    "texture": "kimetsunoyaibamultiplayer:block/wisteria_planks"
+  }
+}

@@ -5,12 +5,20 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ButtonBlock;
+import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.IronBarsBlock;
 import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.PressurePlateBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -57,6 +65,104 @@ public class ModBlocks {
             .sound(SoundType.WOOD)
             .strength(2.0f, 3.0f)));
 
+    public static final RegistryObject<Block> WISTERIA_VERTICAL_SLAB = registerBlock("wisteria_vertical_slab",
+        () -> new VerticalSlabBlock(BlockBehaviour.Properties.copy(Blocks.OAK_SLAB)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> SPRUCE_VERTICAL_SLAB = registerBlock("spruce_vertical_slab",
+        () -> new VerticalSlabBlock(BlockBehaviour.Properties.copy(Blocks.SPRUCE_SLAB)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> SPRUCE_SIDEWAYS_STAIRS = registerBlock("spruce_sideways_stairs",
+        () -> new SidewaysStairsBlock(BlockBehaviour.Properties.copy(Blocks.SPRUCE_STAIRS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> SPRUCE_SIDEWAYS_FENCE = registerBlock("spruce_sideways_fence",
+        () -> new SidewaysFenceBlock(BlockBehaviour.Properties.copy(Blocks.SPRUCE_FENCE)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> SIDEWAYS_LANTERN_1 = registerBlock("sideways_lantern_1",
+        () -> new SidewaysLanternBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN)
+            .mapColor(MapColor.TERRACOTTA_ORANGE)
+            .sound(SoundType.LANTERN)
+            .strength(0.3f)
+            .lightLevel(state -> 15)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> SIDEWAYS_LANTERN_2 = registerBlock("sideways_lantern_2",
+        () -> new SidewaysLanternBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN)
+            .mapColor(MapColor.TERRACOTTA_WHITE)
+            .sound(SoundType.LANTERN)
+            .strength(0.3f)
+            .lightLevel(state -> 15)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> SIDEWAYS_LANTERN_2RED = registerBlock("sideways_lantern_2red",
+        () -> new SidewaysLanternBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN)
+            .mapColor(MapColor.COLOR_RED)
+            .sound(SoundType.LANTERN)
+            .strength(0.3f)
+            .lightLevel(state -> 15)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> SIDEWAYS_LANTERN_3 = registerBlock("sideways_lantern_3",
+        () -> new SidewaysLanternBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN)
+            .mapColor(MapColor.TERRACOTTA_ORANGE)
+            .sound(SoundType.LANTERN)
+            .strength(0.3f)
+            .lightLevel(state -> 15)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> WISTERIA_STAIRS = registerBlock("wisteria_stairs",
+        () -> new StairBlock(Blocks.OAK_PLANKS.defaultBlockState(), BlockBehaviour.Properties.copy(Blocks.OAK_STAIRS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)));
+
+    public static final RegistryObject<Block> WISTERIA_SLAB = registerBlock("wisteria_slab",
+        () -> new SlabBlock(BlockBehaviour.Properties.copy(Blocks.OAK_SLAB)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)));
+
+    public static final RegistryObject<Block> WISTERIA_FENCE = registerBlock("wisteria_fence",
+        () -> new FenceBlock(BlockBehaviour.Properties.copy(Blocks.OAK_FENCE)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)));
+
+    public static final RegistryObject<Block> WISTERIA_FENCE_GATE = registerBlock("wisteria_fence_gate",
+        () -> new FenceGateBlock(BlockBehaviour.Properties.copy(Blocks.OAK_FENCE_GATE)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f), WoodType.OAK));
+
+    public static final RegistryObject<Block> WISTERIA_PRESSURE_PLATE = registerBlock("wisteria_pressure_plate",
+        () -> new PressurePlateBlock(PressurePlateBlock.Sensitivity.EVERYTHING,
+            BlockBehaviour.Properties.copy(Blocks.OAK_PRESSURE_PLATE)
+                .mapColor(MapColor.WOOD)
+                .sound(SoundType.WOOD)
+                .strength(0.5f),
+            BlockSetType.OAK));
+
+    public static final RegistryObject<Block> WISTERIA_BUTTON = registerBlock("wisteria_button",
+        () -> new ButtonBlock(BlockBehaviour.Properties.copy(Blocks.OAK_BUTTON)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(0.5f), BlockSetType.OAK, 30, true));
+
     public static final RegistryObject<Block> DARK_BAMBOO_FENCE = registerBlock("dark_bamboo_fence",
         () -> new IronBarsBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BARS)
             .mapColor(MapColor.WOOD)
@@ -91,6 +197,13 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> CHEST_OF_DRAWERS = registerBlock("chest_of_drawers",
         () -> new ChestOfDrawersBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> SWORD_RACK = registerBlock("sword_rack",
+        () -> new SwordRackBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
             .mapColor(MapColor.WOOD)
             .sound(SoundType.WOOD)
             .strength(2.0f, 3.0f)

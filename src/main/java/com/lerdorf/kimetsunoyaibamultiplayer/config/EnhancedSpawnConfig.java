@@ -33,7 +33,7 @@ public class EnhancedSpawnConfig {
             .comment("Master switch for enhanced spawning rules.",
                     "If true, uses complex biome/structure/dimension rules.",
                     "If false, falls back to simple spawn priority system.")
-            .define("enhanced_spawning_rules", false);
+            .define("enhanced_spawning_rules", true);
 
     private static final ForgeConfigSpec.BooleanValue REPLACE_BASE_GENERIC_DEMON_SLAYERS = BUILDER
             .comment("Replace base mod generic demon slayers with kimetsunoyaibamultiplayer demon slayers.",

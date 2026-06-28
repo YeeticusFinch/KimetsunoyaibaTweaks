@@ -1,0 +1,29 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "kimetsunoyaibamultiplayer:block/sideways_lantern_2red",
+      "x": 180
+    },
+    "facing=down": {
+      "model": "kimetsunoyaibamultiplayer:block/sideways_lantern_2red"
+    },
+    "facing=north": {
+      "model": "kimetsunoyaibamultiplayer:block/sideways_lantern_2red",
+      "x": 270
+    },
+    "facing=south": {
+      "model": "kimetsunoyaibamultiplayer:block/sideways_lantern_2red",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "kimetsunoyaibamultiplayer:block/sideways_lantern_2red",
+      "x": 270,
+      "y": 90
+    },
+    "facing=west": {
+      "model": "kimetsunoyaibamultiplayer:block/sideways_lantern_2red",
+      "x": 270,
+      "y": 270
+    }
+  }
+}

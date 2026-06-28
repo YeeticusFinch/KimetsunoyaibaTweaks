@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:yamato_orochi_catalyst"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:phantom_extract"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:phantom_serpent_catalyst"
+  }
+}

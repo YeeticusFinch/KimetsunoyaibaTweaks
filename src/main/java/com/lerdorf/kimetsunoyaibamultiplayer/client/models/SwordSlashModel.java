@@ -153,9 +153,16 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 		return "claw_nezuko".equals(modelKey);
 	}
 
+	private boolean isClawModel() {
+		return "claw".equals(modelKey);
+	}
+
 	public ResourceLocation getModelResource() {
 		if (isNezukoClawModel()) {
 			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw_nezuko.geo.json");
+		}
+		if (isClawModel()) {
+			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw.geo.json");
 		}
 		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"geo/sword_slash_" + modelKey + ".geo.json");
@@ -171,6 +178,10 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 			int frame = getCurrentFrame();
 			return ResourceLocation.fromNamespaceAndPath(namespace,
 					"textures/entity/slash_nezuko" + frame + ".png");
+		}
+		if (isClawModel()) {
+			return ResourceLocation.fromNamespaceAndPath(namespace,
+					"textures/entity/claw.png");
 		}
 		if (frameCount <= 1) {
 			// Static texture
@@ -204,6 +215,9 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 		if (isNezukoClawModel()) {
 			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw_nezuko.geo.json");
 		}
+		if (isClawModel()) {
+			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw.geo.json");
+		}
 		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"geo/sword_slash_" + modelKey + ".geo.json");
 	}
@@ -214,6 +228,10 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 			int frame = getCurrentFrame();
 			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 					"textures/entity/slash_nezuko" + frame + ".png");
+		}
+		if (isClawModel()) {
+			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
+					"textures/entity/claw.png");
 		}
 		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"textures/entity/sword_slash_" + modelKey + ".png");

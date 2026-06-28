@@ -21,9 +21,16 @@ public class EyesGlowLayer<T extends LivingEntity & GeoEntity> extends GeoRender
     private static final float BASE_BRIGHTNESS = 1.35F;
     private static final float PEAK_BRIGHTNESS = 2.35F;
     private final GeoModel<T> overlayModel;
+    private final float brightnessMultiplier;
 
     public EyesGlowLayer(GeoRenderer<T> renderer, String modelPath, String texturePath, String animationPath) {
+        this(renderer, modelPath, texturePath, animationPath, 1.0F);
+    }
+
+    public EyesGlowLayer(GeoRenderer<T> renderer, String modelPath, String texturePath, String animationPath,
+                         float brightnessMultiplier) {
         super(renderer);
+        this.brightnessMultiplier = brightnessMultiplier;
         this.overlayModel = new GeoModel<>() {
             @Override
             public ResourceLocation getModelResource(T animatable) {
@@ -51,7 +58,7 @@ public class EyesGlowLayer<T extends LivingEntity & GeoEntity> extends GeoRender
             overlayModel.getTextureResource(animatable)
         );
         //float brightness = getPulsingBrightness(animatable, partialTick);
-        float brightness = 1;
+        float brightness = this.brightnessMultiplier;
         getRenderer().reRender(
             overlayBakedModel,
             poseStack,

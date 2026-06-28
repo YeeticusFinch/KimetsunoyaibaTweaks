@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.combat.KanrojiSwordAttackHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.MuichiroFullPotentialEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.AttackDamageHelper;
@@ -40,7 +41,7 @@ public class AnimatedMeleeAttackGoal extends MeleeAttackGoal {
     @Override
     public boolean canUse() {
         if (entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity demonSlayer
-            && demonSlayer.isActionLocked()) {
+            && (demonSlayer.isActionLocked() || demonSlayer.isDisarmed())) {
             return false;
         }
         return super.canUse();
@@ -49,7 +50,7 @@ public class AnimatedMeleeAttackGoal extends MeleeAttackGoal {
     @Override
     public boolean canContinueToUse() {
         if (entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity demonSlayer
-            && demonSlayer.isActionLocked()) {
+            && (demonSlayer.isActionLocked() || demonSlayer.isDisarmed())) {
             return false;
         }
         return super.canContinueToUse();
@@ -79,6 +80,9 @@ public class AnimatedMeleeAttackGoal extends MeleeAttackGoal {
             int duration = 10;
             // For Muichiro, play faster (double/triple speed effect via shorter duration)
             if (entity instanceof MuichiroEntity) {
+                duration = 7; // slightly faster attacks
+            }
+            if (entity instanceof MuichiroFullPotentialEntity) {
                 duration = 5; // ~2x speed for visibility while still fast
             }
             entity.playGeckoAnimation(animation, duration);
@@ -111,7 +115,13 @@ public class AnimatedMeleeAttackGoal extends MeleeAttackGoal {
             }
 
             // Basic sword clash window for Muichiro's regular swings
-            if (!entity.level().isClientSide && entity instanceof MuichiroEntity && Config.enableSwordClashing) {
+            if (!entity.level().isClientSide && (entity instanceof MuichiroEntity) && Config.enableSwordClashing) {
+                double weakDefense = 2.0; // brief clash/defense power
+                GuardStateHelper.setWeakAttackState(entity, weakDefense);
+                AbilityScheduler.scheduleOnce(entity, () -> GuardStateHelper.clearGuardState(entity), 15);
+            }
+
+            if (!entity.level().isClientSide && (entity instanceof MuichiroFullPotentialEntity) && Config.enableSwordClashing) {
                 double weakDefense = 5.0; // stronger brief clash/defense power
                 GuardStateHelper.setWeakAttackState(entity, weakDefense);
                 AbilityScheduler.scheduleOnce(entity, () -> GuardStateHelper.clearGuardState(entity), 15);
@@ -163,7 +173,7 @@ public class AnimatedMeleeAttackGoal extends MeleeAttackGoal {
 
     protected boolean canPerformAttack(LivingEntity target) {
         if (entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity demonSlayer
-            && demonSlayer.isActionLocked()) {
+            && (demonSlayer.isActionLocked() || demonSlayer.isDisarmed())) {
             return false;
         }
         return this.isTimeToAttack() && this.mob.distanceToSqr(target) <= this.getAttackReachSqr(target);

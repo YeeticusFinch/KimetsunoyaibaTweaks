@@ -72,12 +72,15 @@ public class CrowQuestMarkerHandlerClient {
             return;
         }
 
-        Vec3 questLocation = CrowQuestMarkerHandler.parseCrowQuestMessage(message);
-        if (questLocation != null) {
-            int x = (int) Math.floor(questLocation.x);
-            int z = (int) Math.floor(questLocation.z);
-            int targetY = resolveQuestTargetY(mc, x, z);
-            questLocation = new Vec3(questLocation.x, targetY, questLocation.z);
+        CrowQuestMarkerHandler.ParsedCrowQuestMessage parsedQuestLocation = CrowQuestMarkerHandler.parseCrowQuestMessage(message);
+        if (parsedQuestLocation != null) {
+            Vec3 questLocation = parsedQuestLocation.location();
+            if (!parsedQuestLocation.explicitHeight()) {
+                int x = (int) Math.floor(questLocation.x);
+                int z = (int) Math.floor(questLocation.z);
+                int targetY = resolveQuestTargetY(mc, x, z);
+                questLocation = new Vec3(questLocation.x, targetY, questLocation.z);
+            }
 
             long currentTime = mc.level.getGameTime();
             long duration = Math.min((long) EntityConfig.crowWaypointDuration, INVITATION_WAYPOINT_MAX_DURATION_TICKS);

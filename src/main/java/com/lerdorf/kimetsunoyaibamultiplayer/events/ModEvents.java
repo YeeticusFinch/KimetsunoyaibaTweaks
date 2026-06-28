@@ -6,15 +6,23 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.EyeFamiliarEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.OrochiEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.HumanFleshItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
+import com.lerdorf.kimetsunoyaibamultiplayer.meditation.PassiveSkillManager;
+import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationStatsTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidTriggerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.FamiliarEntityHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -24,7 +32,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -47,6 +55,9 @@ public class ModEvents {
         Player player = event.getEntity();
         // Load player's breathing form data from NBT
         PlayerBreathingData.loadFromNBT(player);
+        if (player instanceof ServerPlayer serverPlayer) {
+            DemonTransformationHandler.restorePersistentDemonhood(serverPlayer);
+        }
         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceTransformationRolePrecedence(serverPlayer);
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceDemonRolePrecedence(serverPlayer);
@@ -67,9 +78,10 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
-        QuestProgressionManager.copyQuestProgressOnClone(event.getOriginal(), event.getEntity());
+        QuestProgressionManager.copyQuestProgressOnClone(event.getOriginal(), event.getEntity(), event.isWasDeath());
+        MeditationStatsTracker.copyOnClone(event.getOriginal(), event.getEntity());
         if (event.isWasDeath()) {
-            DemonTransformationHandler.resetTrackedMuzanBlood(event.getEntity());
+            DemonTransformationHandler.capturePersistentDemonhood(event.getOriginal(), event.getEntity());
         }
     }
 
@@ -79,13 +91,77 @@ public class ModEvents {
             return;
         }
         if (event.player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            DemonTransformationHandler.restorePersistentDemonhood(serverPlayer);
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceTransformationRolePrecedence(serverPlayer);
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceDemonRolePrecedence(serverPlayer);
+            PassiveSkillManager.tick(serverPlayer);
         }
-        if (!event.player.getPersistentData().getBoolean("oni")
-            && DemonTransformationHandler.getTrackedMuzanBlood(event.player) > 0) {
-            DemonTransformationHandler.resetTrackedMuzanBlood(event.player);
+    }
+
+    @SubscribeEvent
+    public static void onLivingHurt(LivingHurtEvent event) {
+        if (FamiliarEntityHelper.isDamageImmuneQuestFamiliar(event.getEntity())) {
+            event.setCanceled(true);
+            event.setAmount(0.0F);
+            return;
         }
+        if (event.getSource().is(DamageTypes.DROWN) && isDrowningImmuneQuestEntity(event.getEntity())) {
+            event.setCanceled(true);
+            event.setAmount(0.0F);
+            return;
+        }
+        if (isMountedQuestEntityImmune(event.getEntity(), event.getSource())) {
+            event.setCanceled(true);
+            event.setAmount(0.0F);
+            return;
+        }
+        if (event.getEntity() instanceof Player player) {
+            PassiveSkillManager.recordDamage(player);
+        }
+        if (!event.getEntity().level().isClientSide()
+            && event.getSource().getEntity() instanceof ServerPlayer player) {
+            LivingEntity target = event.getEntity();
+            float projectedHealth = Math.max(0.0F, target.getHealth() - event.getAmount());
+            QuestProgressionManager.handleKamanueHurt(player, target, projectedHealth);
+            QuestProgressionManager.handleSlayersBloodSlayerHurt(player, target, projectedHealth, event);
+        }
+    }
+
+    private static boolean isDrowningImmuneQuestEntity(LivingEntity entity) {
+        ResourceLocation typeId = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+        if (typeId == null) {
+            return false;
+        }
+        String path = typeId.getPath();
+        return path.contains("kasugai_crow")
+            || path.contains("princess")
+            || path.contains("orochi")
+            || path.contains("eye_familiar");
+    }
+
+    private static boolean isMountedQuestEntityImmune(LivingEntity entity, DamageSource source) {
+        if (!(entity instanceof OrochiEntity orochi) && !(entity instanceof EyeFamiliarEntity)) {
+            return false;
+        }
+
+        if (entity.getVehicle() instanceof Player player && entity instanceof net.minecraft.world.entity.OwnableEntity ownable
+            && player.getUUID().equals(ownable.getOwnerUUID())) {
+            return true;
+        }
+
+        return isDemonPlayerSource(source);
+    }
+
+    private static boolean isDemonPlayerSource(DamageSource source) {
+        if (source == null) {
+            return false;
+        }
+
+        if (source.getEntity() instanceof Player player && Damager.isDemon(player)) {
+            return true;
+        }
+
+        return source.getDirectEntity() instanceof Player player && Damager.isDemon(player);
     }
 
     @SubscribeEvent
@@ -99,6 +175,11 @@ public class ModEvents {
 
         if (!target.level().isClientSide() && source != null && Damager.isDemon(source)) {
             handleCustomHumanFleshDrops(target);
+        }
+
+        if (!target.level().isClientSide() && target instanceof DemonSlayerEntity slayer) {
+            QuestProgressionManager.handleSlayersBloodCaptiveDeath(slayer);
+            QuestProgressionManager.handleSlayersBloodFinalSlayerDeath(slayer);
         }
 
         // Skip omen effect application if raids are disabled

@@ -113,7 +113,7 @@ public class MovementHelper {
      * @param target The position to look at
      */
     public static void lookAt(LivingEntity entity, Vec3 target) {
-        Vec3 lookDir = target.subtract(entity.position()).normalize();
+        Vec3 lookDir = target.subtract(entity.getEyePosition()).normalize();
         float yaw = (float) Math.toDegrees(Math.atan2(-lookDir.x, lookDir.z));
         float pitch = (float) Math.toDegrees(-Math.asin(lookDir.y));
         setRotation(entity, yaw, pitch);
@@ -125,7 +125,7 @@ public class MovementHelper {
      * @param target The position to look at
      */
     public static void lookAtNoY(LivingEntity entity, Vec3 target) {
-        Vec3 lookDir = target.subtract(entity.position()).normalize();
+        Vec3 lookDir = target.subtract(entity.getEyePosition()).normalize();
         float yaw = (float) Math.toDegrees(Math.atan2(-lookDir.x, lookDir.z));
         //float pitch = (float) Math.toDegrees(-Math.asin(lookDir.y));
         Vec3 normalized = entity.getLookAngle();

@@ -1,0 +1,7 @@
+{
+  "parent": "kimetsunoyaibamultiplayer:custom/sword_sheath_kanawo",
+  "textures": {
+    "0": "kimetsunoyaibamultiplayer:block/sword_sheath_kanawo",
+    "particle": "kimetsunoyaibamultiplayer:block/sword_sheath_kanawo"
+  }
+}

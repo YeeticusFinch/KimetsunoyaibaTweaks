@@ -89,7 +89,7 @@ public class DemonCreeperEntity extends AbstractDemonEntity {
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
-            target -> target != null && target.isAlive() && !Damager.isDemon(target)));
+            this::canTargetNonDemonVictim));
     }
 
     @Override

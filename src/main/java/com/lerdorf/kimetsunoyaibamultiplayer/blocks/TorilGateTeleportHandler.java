@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.blocks;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.FinalSelectionProcedure;
 import net.minecraft.ChatFormatting;
@@ -65,6 +66,16 @@ public class TorilGateTeleportHandler {
     public static void onPlayerEnterGate(ServerPlayer player) {
         UUID uuid = player.getUUID();
         long now = System.currentTimeMillis();
+
+        if (isDemonPlayer(player)) {
+            PENDING.remove(uuid);
+            Long lastPrompt = COOLDOWNS.get(uuid);
+            if (lastPrompt == null || now - lastPrompt >= COOLDOWN_MS) {
+                COOLDOWNS.put(uuid, now);
+                sendDemonBlockedMessage(player);
+            }
+            return;
+        }
 
         // Detect re-entry after leaving gate area and reset pending/cooldown state
         Long lastInside = LAST_INSIDE_GATE.put(uuid, now);
@@ -135,6 +146,13 @@ public class TorilGateTeleportHandler {
     public static boolean confirmTeleport(ServerPlayer player) {
         UUID uuid = player.getUUID();
         long now = System.currentTimeMillis();
+
+        if (isDemonPlayer(player)) {
+            PENDING.remove(uuid);
+            sendDemonBlockedMessage(player);
+            return false;
+        }
+
         Long pendingExpiry = PENDING.get(uuid);
 
         if (pendingExpiry == null) {
@@ -271,5 +289,14 @@ public class TorilGateTeleportHandler {
     private static boolean isPlayerInGate(UUID uuid, long now) {
         Long lastInside = LAST_INSIDE_GATE.get(uuid);
         return lastInside != null && now - lastInside <= LEFT_GATE_RESET_MS;
+    }
+
+    private static boolean isDemonPlayer(ServerPlayer player) {
+        return Damager.isDemon(player);
+    }
+
+    private static void sendDemonBlockedMessage(ServerPlayer player) {
+        player.sendSystemMessage(Component.translatable("message.kimetsunoyaibamultiplayer.toril_gate.demon_blocked")
+            .withStyle(ChatFormatting.RED));
     }
 }

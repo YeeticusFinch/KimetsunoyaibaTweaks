@@ -6,8 +6,11 @@ import com.lerdorf.kimetsunoyaibamultiplayer.ModGameRules;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModItems;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -33,10 +36,15 @@ public final class DemonTransformationHandler {
     public static final String ONI_TRANSFORM_TAG = "oni_transform";
     public static final String DEMON_TRANSFORMATION_TAG = "demon_transformation";
     public static final String MUZAN_BLOOD_CONSUMED_KEY = "KnYMpMuzanBloodConsumed";
+    public static final String HUMANS_CONSUMED_KEY = "KnYMpHumansConsumed";
+    private static final String PERSISTENT_DEMONHOOD_PENDING_KEY = "KnYMpPersistentDemonhoodPending";
+    private static final String PERSISTENT_DEMONHOOD_MUZAN_BLOOD_KEY = "KnYMpPersistentDemonhoodMuzanBlood";
+    private static final String PERSISTENT_DEMONHOOD_HUMANS_KEY = "KnYMpPersistentDemonhoodHumansConsumed";
 
     private static final String DATA_ACTIVE = "KnYMpCustomDemonTransformActive";
     private static final String DATA_LAST_DURATION = "KnYMpCustomDemonTransformLastDuration";
     private static final String DATA_LAST_AMPLIFIER = "KnYMpCustomDemonTransformLastAmplifier";
+    private static final String DATA_SUNLIGHT_BURN_TICKS = "KnYMpDemonSunlightBurnTicks";
     private static final int MIN_BASE_DURATION = 600;
     private static final int MAX_BASE_DURATION = 2400;
     private static final int MIN_RANK_BONUS_DURATION = 3000;
@@ -64,6 +72,10 @@ public final class DemonTransformationHandler {
 
     public static boolean isCustomDemonInitiationEnabled() {
         return CustomProgressionConfig.customDemonInitiation != null && CustomProgressionConfig.customDemonInitiation.get();
+    }
+
+    public static boolean isPersistentDemonhoodEnabled() {
+        return CustomProgressionConfig.isPersistentDemonhoodEnabled();
     }
 
     public static boolean isTransforming(Player player) {
@@ -182,6 +194,8 @@ public final class DemonTransformationHandler {
             return;
         }
 
+        tickSunlightBurn(player);
+
         boolean active = player.getPersistentData().getBoolean(DATA_ACTIVE);
         MobEffectInstance effect = player.getEffect(ModEffects.DEMON_TRANSFORMATION.get());
         if (!active) {
@@ -231,6 +245,51 @@ public final class DemonTransformationHandler {
         }
     }
 
+    public static void capturePersistentDemonhood(Player original, Player clone) {
+        if (!isPersistentDemonhoodEnabled() || original == null || clone == null || !Damager.isDemon(original)) {
+            return;
+        }
+
+        CompoundTag cloneData = clone.getPersistentData();
+        cloneData.putBoolean(PERSISTENT_DEMONHOOD_PENDING_KEY, true);
+        cloneData.putInt(PERSISTENT_DEMONHOOD_MUZAN_BLOOD_KEY, getTrackedMuzanBlood(original));
+        cloneData.putInt(PERSISTENT_DEMONHOOD_HUMANS_KEY, getTrackedHumansConsumed(original));
+    }
+
+    public static boolean restorePersistentDemonhood(ServerPlayer player) {
+        if (!isPersistentDemonhoodEnabled() || player == null) {
+            return false;
+        }
+
+        CompoundTag data = player.getPersistentData();
+        if (!data.getBoolean(PERSISTENT_DEMONHOOD_PENDING_KEY)) {
+            return false;
+        }
+
+        int muzanBlood = Math.max(0, data.getInt(PERSISTENT_DEMONHOOD_MUZAN_BLOOD_KEY));
+        int humansConsumed = Math.max(0, data.getInt(PERSISTENT_DEMONHOOD_HUMANS_KEY));
+
+        data.remove(PERSISTENT_DEMONHOOD_PENDING_KEY);
+        data.remove(PERSISTENT_DEMONHOOD_MUZAN_BLOOD_KEY);
+        data.remove(PERSISTENT_DEMONHOOD_HUMANS_KEY);
+
+        setTrackedMuzanBlood(player, 0);
+        setTrackedHumansConsumed(player, 0);
+        if (muzanBlood > 0) {
+            consumeBaseMuzanBlood(player, muzanBlood);
+        }
+        setTrackedHumansConsumed(player, humansConsumed);
+        player.getPersistentData().putBoolean("oni", true);
+        DemonEyesSyncHandler.broadcastState(player);
+        return true;
+    }
+
+    public static boolean isPersistentDemonhoodPending(Player player) {
+        return player != null
+            && isPersistentDemonhoodEnabled()
+            && player.getPersistentData().getBoolean(PERSISTENT_DEMONHOOD_PENDING_KEY);
+    }
+
     private static void applyTransformationDebuffs(ServerPlayer player, int amplifier) {
         int debuffLevel = Math.max(0, amplifier);
         player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, DEBUFF_REFRESH_TICKS, debuffLevel, false, true, true));
@@ -242,6 +301,7 @@ public final class DemonTransformationHandler {
         player.getPersistentData().remove(DATA_ACTIVE);
         player.getPersistentData().remove(DATA_LAST_DURATION);
         player.getPersistentData().remove(DATA_LAST_AMPLIFIER);
+        player.getPersistentData().remove(DATA_SUNLIGHT_BURN_TICKS);
         player.removeTag(ONI_TRANSFORM_TAG);
         player.removeTag(DEMON_TRANSFORMATION_TAG);
         player.removeEffect(ModEffects.DEMON_TRANSFORMATION.get());
@@ -337,6 +397,50 @@ public final class DemonTransformationHandler {
         return player == null ? 0 : Math.max(0, player.getPersistentData().getInt(MUZAN_BLOOD_CONSUMED_KEY));
     }
 
+    public static int getTrackedHumansConsumed(Player player) {
+        return player == null ? 0 : Math.max(0, player.getPersistentData().getInt(HUMANS_CONSUMED_KEY));
+    }
+
+    public static void tickSunlightBurn(ServerPlayer player) {
+        if (player == null || !Damager.isDemon(player) || !isInBurningSunlight(player)) {
+            if (player != null) {
+                player.getPersistentData().remove(DATA_SUNLIGHT_BURN_TICKS);
+            }
+            return;
+        }
+
+        int burnTicks = player.getPersistentData().getInt(DATA_SUNLIGHT_BURN_TICKS) + 1;
+        player.getPersistentData().putInt(DATA_SUNLIGHT_BURN_TICKS, burnTicks);
+        player.setSecondsOnFire(2);
+
+        if (player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            serverLevel.sendParticles(ParticleTypes.FLAME, player.getX(), player.getY(0.5D), player.getZ(), 4, 0.3D, 0.4D, 0.3D, 0.01D);
+            serverLevel.sendParticles(ParticleTypes.LAVA, player.getX(), player.getY(0.2D), player.getZ(), 2, 0.2D, 0.2D, 0.2D, 0.0D);
+            serverLevel.sendParticles(ParticleTypes.SMOKE, player.getX(), player.getY(0.4D), player.getZ(), 2, 0.15D, 0.15D, 0.15D, 0.0D);
+        }
+
+        if (burnTicks % 10 == 0) {
+            player.playSound(SoundEvents.GENERIC_EXTINGUISH_FIRE, 1.0F, 0.9F);
+            player.hurt(player.damageSources().onFire(), 10.0F);
+        }
+    }
+
+    private static boolean isInBurningSunlight(ServerPlayer player) {
+        if (!(player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) || !serverLevel.isDay()) {
+            return false;
+        }
+        if (player.isInWaterRainOrBubble() || player.isUnderWater()) {
+            return false;
+        }
+        BlockPos pos = player.blockPosition();
+        return serverLevel.canSeeSky(pos) && !serverLevel.isRainingAt(pos);
+    }
+
+    public static int getEffectiveMuzanBlood(Player player) {
+        int humanFleshPerBlood = CustomProgressionConfig.getHumanFleshPerEffectiveMuzanBlood();
+        return getTrackedMuzanBlood(player) + (getTrackedHumansConsumed(player) / humanFleshPerBlood);
+    }
+
     public static void addTrackedMuzanBlood(Player player, int amount) {
         if (player == null || amount <= 0) {
             return;
@@ -344,11 +448,44 @@ public final class DemonTransformationHandler {
         player.getPersistentData().putInt(MUZAN_BLOOD_CONSUMED_KEY, getTrackedMuzanBlood(player) + amount);
     }
 
+    public static void addTrackedHumansConsumed(Player player, int amount) {
+        if (player == null || amount <= 0) {
+            return;
+        }
+        player.getPersistentData().putInt(HUMANS_CONSUMED_KEY, getTrackedHumansConsumed(player) + amount);
+    }
+
+    public static void setTrackedMuzanBlood(Player player, int amount) {
+        if (player == null) {
+            return;
+        }
+        player.getPersistentData().putInt(MUZAN_BLOOD_CONSUMED_KEY, Math.max(0, amount));
+    }
+
+    public static void setTrackedHumansConsumed(Player player, int amount) {
+        if (player == null) {
+            return;
+        }
+        player.getPersistentData().putInt(HUMANS_CONSUMED_KEY, Math.max(0, amount));
+    }
+
     public static void resetTrackedMuzanBlood(Player player) {
         if (player == null) {
             return;
         }
         player.getPersistentData().putInt(MUZAN_BLOOD_CONSUMED_KEY, 0);
+    }
+
+    public static void resetTrackedHumansConsumed(Player player) {
+        if (player == null) {
+            return;
+        }
+        player.getPersistentData().putInt(HUMANS_CONSUMED_KEY, 0);
+    }
+
+    public static void resetDemonProgressionCounts(Player player) {
+        resetTrackedMuzanBlood(player);
+        resetTrackedHumansConsumed(player);
     }
 
     private static void clearNearbyDemonAggro(ServerPlayer player) {

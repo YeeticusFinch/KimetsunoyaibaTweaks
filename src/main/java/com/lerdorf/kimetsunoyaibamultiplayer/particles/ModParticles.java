@@ -32,6 +32,15 @@ public class ModParticles {
         () -> new SimpleParticleType(false));
 
     @SuppressWarnings("deprecation")
+    public static final RegistryObject<ParticleType<ImpactParticleOptions>> IMPACT = PARTICLE_TYPES.register("impact",
+        () -> new ParticleType<ImpactParticleOptions>(false, ImpactParticleOptions.DESERIALIZER) {
+            @Override
+            public Codec<ImpactParticleOptions> codec() {
+                return ImpactParticleOptions.CODEC;
+            }
+        });
+
+    @SuppressWarnings("deprecation")
     public static final RegistryObject<ParticleType<EnergyParticleOptions>> ENERGY = PARTICLE_TYPES.register("energy",
         () -> new ParticleType<EnergyParticleOptions>(false, EnergyParticleOptions.DESERIALIZER) {
             @Override

@@ -93,12 +93,15 @@ public class CivilianProtectionHandler {
         boolean isKizuki = EntityTagHelper.isTwelveKizuki(threat);
 
         if (isKizuki) {
-            // Chance to spawn a hashira and/or a kamaboko (with multiplier)
+            // Chance to spawn a hashira, Nezuko, and/or a kamaboko (with multiplier)
             if (RNG.nextDouble() < EnhancedSpawnConfig.hashiraSpawnChance * spawnChanceMultiplier) {
                 ResourceLocation hashiraId = pickRandomHashiraId();
                 if (hashiraId != null) {
                     spawnById(level, near, hashiraId);
                 }
+            }
+            if (RNG.nextDouble() < EnhancedSpawnConfig.hashiraSpawnChance * spawnChanceMultiplier) {
+                spawnById(level, near, ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "nezuko"));
             }
             if (RNG.nextDouble() < EnhancedSpawnConfig.kamabokoSpawnChance * spawnChanceMultiplier) {
                 spawnById(level, near, ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", pickRandomKamaboko()));

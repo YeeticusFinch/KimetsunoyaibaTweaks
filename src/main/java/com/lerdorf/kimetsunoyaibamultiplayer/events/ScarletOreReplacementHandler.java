@@ -23,6 +23,8 @@ import java.util.Set;
 @Mod.EventBusSubscriber(modid = "kimetsunoyaibamultiplayer")
 public final class ScarletOreReplacementHandler {
     private static final float RARE_VARIANT_CHANCE = 0.05F;
+    private static final float BLACK_VARIANT_CHANCE = 0.05F;
+    private static final String SUN_STYLE_ID = "sun_breathing";
     private static final Set<ResourceLocation> BASE_SCARLET_ORE_IDS = Set.of(
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "scarlet_ore"),
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "ore_scarlet")
@@ -90,9 +92,16 @@ public final class ScarletOreReplacementHandler {
             return ItemStack.EMPTY;
         }
 
-        ItemStack replacement = forceRare || serverLevel.getRandom().nextFloat() < RARE_VARIANT_CHANCE
-            ? NichirinOreItem.createRareForStyle(ModItems.NICHIRIN_ORE.get(), styleId)
-            : NichirinOreItem.createForStyle(ModItems.NICHIRIN_ORE.get(), styleId);
+        float roll = serverLevel.getRandom().nextFloat();
+        ItemStack replacement;
+        if (forceRare || roll < RARE_VARIANT_CHANCE) {
+            replacement = NichirinOreItem.createRareForStyle(ModItems.NICHIRIN_ORE.get(), styleId);
+        } else if (roll < RARE_VARIANT_CHANCE + BLACK_VARIANT_CHANCE) {
+            replacement = NichirinOreItem.createBlackForStyle(ModItems.NICHIRIN_ORE.get(), styleId);
+        } else {
+            replacement = NichirinOreItem.createForStyle(ModItems.NICHIRIN_ORE.get(), styleId);
+        }
+
         if (original != null && original.getCount() > 0) {
             replacement.setCount(original.getCount());
         }
@@ -107,6 +116,9 @@ public final class ScarletOreReplacementHandler {
             }
             String styleId = style.getStyleId();
             if (styleId == null || styleId.isEmpty() || "black".equals(styleId)) {
+                continue;
+            }
+            if (SUN_STYLE_ID.equals(styleId)) {
                 continue;
             }
             styleIds.add(styleId);

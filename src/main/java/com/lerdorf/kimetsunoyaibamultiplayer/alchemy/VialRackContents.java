@@ -5,6 +5,8 @@ import net.minecraft.world.item.ItemStack;
 
 public final class VialRackContents {
     public static final int SLOT_COUNT = 5;
+    public static final int MAX_RACKS = 3;
+    public static final int MAX_SLOT_COUNT = SLOT_COUNT * MAX_RACKS;
 
     private VialRackContents() {
     }
