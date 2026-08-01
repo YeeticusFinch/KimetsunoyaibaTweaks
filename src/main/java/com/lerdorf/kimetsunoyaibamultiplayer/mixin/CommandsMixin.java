@@ -26,7 +26,8 @@ public class CommandsMixin {
         method = "m_230957_(Lnet/minecraft/commands/CommandSourceStack;Ljava/lang/String;)I",
         at = @At("HEAD"),
         cancellable = true,
-        require = 0
+        require = 0,
+        remap = false
     )
     private void cancelBaseModParticleCommands(
             CommandSourceStack source,

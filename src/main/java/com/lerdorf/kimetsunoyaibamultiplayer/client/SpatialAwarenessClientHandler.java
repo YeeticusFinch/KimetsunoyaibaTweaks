@@ -149,6 +149,19 @@ public class SpatialAwarenessClientHandler {
         return player != null ? player.getEyePosition() : Vec3.ZERO;
     }
 
+    public static void onExternalShaderReplaced() {
+        shaderLoaded = false;
+    }
+
+    public static void restoreShaderIfActive() {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || !player.hasEffect(ModEffects.SPATIAL_AWARENESS.get()) || FearClientHandler.isFearInversionActive()) {
+            return;
+        }
+        shaderLoaded = tryLoadDesaturationShader(mc);
+    }
+
     private static void enableSpatialAwareness(Minecraft mc, LocalPlayer player) {
         if (lockedPlayerPos == null) {
             lockedPlayerPos = player.position();
@@ -171,6 +184,10 @@ public class SpatialAwarenessClientHandler {
         }
         if (mc.getCameraEntity() != cameraAnchor) {
             mc.setCameraEntity(cameraAnchor);
+        }
+
+        if (FearClientHandler.isFearInversionActive()) {
+            return;
         }
 
         if (!shaderLoaded) {

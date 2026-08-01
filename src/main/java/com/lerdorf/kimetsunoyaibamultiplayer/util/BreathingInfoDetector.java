@@ -9,6 +9,13 @@ import net.minecraft.world.item.ItemStack;
  * Works with both single-style and multi-style nichirin swords.
  */
 public class BreathingInfoDetector {
+    private static final java.util.Set<net.minecraft.resources.ResourceLocation> BAMBOO_SWORD_IDS = java.util.Set.of(
+        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "bamboo_sword"),
+        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "nichirinsword_bamboo"),
+        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "nichirinsword_bamboo_2"),
+        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "sword_hairo"),
+        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "saber")
+    );
 
     /**
      * Detects breathing information for the player's currently held sword.
@@ -596,10 +603,15 @@ public class BreathingInfoDetector {
             return true;
         }
 
+        net.minecraft.resources.ResourceLocation registryId = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(item.getItem());
+        if (registryId != null && BAMBOO_SWORD_IDS.contains(registryId)) {
+            return true;
+        }
+
         String itemId = item.getItem().toString().toLowerCase();
 
         // Check for kimetsunoyaiba mod swords
-        if (itemId.contains("nichirin") || itemId.contains("nitirintou") || itemId.contains("sword_kokushibo")) {
+        if (itemId.contains("nichirin") || itemId.contains("nitirintou") || itemId.contains("sword_kokushibo") || itemId.contains("sword_hairo")) {
             return true;
         }
 

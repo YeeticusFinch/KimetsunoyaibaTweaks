@@ -39,7 +39,7 @@ public class NichirinSwordLoveAnimated extends BreathingSwordItem implements Geo
     private static final BreathingTechnique LOVE_BREATHING = EnhancedLoveForms.createLoveBreathingBase();
 
     private static final double ATTACK_DAMAGE = 4.5;
-    private static final double ATTACK_SPEED = -1.8;
+    private static final double ATTACK_SPEED = -2.0;
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 

@@ -43,6 +43,10 @@ public class BlockRenderTypeHandler {
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.WISTERIA_SAPLING_CYAN.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.WISTERIA_SAPLING_LAVENDER.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.WISTERIA_SAPLING_CREAM.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.POTTED_WISTERIA_SAPLING_PINK.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.POTTED_WISTERIA_SAPLING_CYAN.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.POTTED_WISTERIA_SAPLING_LAVENDER.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.POTTED_WISTERIA_SAPLING_CREAM.get(), RenderType.cutout());
             
             // Set all glowing wisteria petals variants to use cutout rendering (for transparency)
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.GLOWING_WISTERIA_PETALS_PINK.get(), RenderType.cutout());

@@ -344,6 +344,20 @@ public class ModNetworking {
                 .encoder(SetDemonEyesPacket::toBytes)
                 .consumerMainThread(SetDemonEyesPacket::handle)
                 .add();
+
+        int updateBridgerBlockPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateBridgerBlockPacket.class, updateBridgerBlockPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateBridgerBlockPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateBridgerBlockPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateBridgerBlockPacket::handle)
+                .add();
+
+        int updateGravityBlockPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateGravityBlockPacket.class, updateGravityBlockPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateGravityBlockPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateGravityBlockPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateGravityBlockPacket::handle)
+                .add();
     }
 
     public static <MSG> void sendToServer(MSG message) {
@@ -369,5 +383,9 @@ public class ModNetworking {
     public static <MSG> void sendToNearby(MSG message, net.minecraft.server.level.ServerLevel level,
                                           double x, double y, double z, double radius) {
         INSTANCE.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(x, y, z, radius, level.dimension())), message);
+    }
+
+    public static <MSG> void sendToTrackingAndSelf(MSG message, net.minecraft.world.entity.Entity entity) {
+        INSTANCE.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), message);
     }
 }

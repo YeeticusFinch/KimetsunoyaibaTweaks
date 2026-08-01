@@ -254,6 +254,10 @@ public final class QuestProgressionManager {
             return;
         }
 
+        if (handleKidnappersBogSatokoDemonKilled(player, victim, role)) {
+            return;
+        }
+
         if (context.step().type() != QuestStepType.KILL_ENTITY) {
             return;
         }
@@ -261,6 +265,28 @@ public final class QuestProgressionManager {
         if (matchesTarget(context.step(), victim)) {
             completeStep(player, context);
         }
+    }
+
+    public static boolean handleKidnappersBogSatokoDemonKilled(ServerPlayer player, LivingEntity victim, PlayerRole role) {
+        if (!CustomProgressionConfig.isCustomProgressionEnabled()
+            || player == null
+            || victim == null
+            || !QuestScenarioActions.isKidnappersBogSatokoSwampDemon(victim)) {
+            return false;
+        }
+
+        QuestRuntimeContext context = getOrInitializeContext(player, role);
+        if (context == null
+            || !"cruel".equals(context.group().id())
+            || !"kidnappers_bog".equals(context.stage().id())
+            || !"kill_swamp_demon".equals(context.step().id())) {
+            return false;
+        }
+
+        QuestScenarioActions.giveSatokosBowReward(player);
+        player.getPersistentData().putBoolean("KnYSwampDemonKilled", true);
+        completeStep(player, context);
+        return true;
     }
 
     public static boolean isRaidSuppressedForPlayer(ServerPlayer player, ResourceLocation structureId) {

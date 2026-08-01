@@ -68,7 +68,7 @@
     },
     {
       "apply": {
-        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_south",
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_north",
         "uvlock": true,
         "x": 180
       },
@@ -136,7 +136,7 @@
     },
     {
       "apply": {
-        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_north",
+        "model": "kimetsunoyaibamultiplayer:block/fence_side_arm_south",
         "uvlock": true,
         "x": 180
       },

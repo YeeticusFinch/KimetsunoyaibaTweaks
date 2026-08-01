@@ -18,7 +18,8 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.event.RenderGuiEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix4f;
@@ -49,24 +50,17 @@ public class VermilionEyeOverlay {
     private static final int SECOND_PULSE_PEAK = 8;
     private static final int SECOND_PULSE_END = 10;
 
-    @SubscribeEvent
-    public static void onRenderGuiOverlay(RenderGuiOverlayEvent.Post event) {
-        // Only render on the main layer
-        if (!event.getOverlay().id().toString().equals("minecraft:hotbar")) {
-            return;
-        }
-
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onRenderGui(RenderGuiEvent.Post event) {
         LocalPlayer player = mc.player;
         if (player == null) {
             return;
         }
 
-        // Check if player has Vermilion Eye effect
         if (!player.hasEffect(ModEffects.VERMILION_EYE.get())) {
             return;
         }
 
-        // Render the red tint overlay
         renderRedTint(event.getGuiGraphics());
     }
 

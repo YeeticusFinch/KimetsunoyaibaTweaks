@@ -1,25 +1,37 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticleHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonVindicatorEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.BleedingHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.List;
 
@@ -50,6 +62,12 @@ public final class VindicatorsBane {
             ),
             0x8f8f8f
         );
+    }
+
+    public static boolean isVindicatorsBaneItem(ItemStack stack) {
+        return stack != null
+            && stack.getItem() instanceof BloodDemonArtAxeItem axeItem
+            && ART_ID.equals(axeItem.getArtId());
     }
 
     private static void executeExecutionersCleave(LivingEntity entity, Level level, int formId) {
@@ -224,5 +242,92 @@ public final class VindicatorsBane {
     private static Vec3 getLookDirection(LivingEntity entity) {
         Vec3 look = entity.getLookAngle();
         return look.lengthSqr() > 1.0E-4D ? look.normalize() : new Vec3(0.0D, 0.0D, 1.0D);
+    }
+
+    @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    public static final class Events {
+        private static final String LAST_LEFT_CLICK_TICK_TAG = "VindicatorsBaneLastLeftClickTick";
+        private static final String LAST_ABILITY_USE_TICK_TAG = "VindicatorsBaneLastAbilityUseTick";
+
+        private Events() {
+        }
+
+        @SubscribeEvent
+        public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+            if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide) {
+                return;
+            }
+
+            Player player = event.player;
+            if (isVindicatorsBaneItem(player.getMainHandItem())
+                && player.swinging
+                && player.swingTime == 0
+                && !shouldIgnoreSwingForAbilityUse(player)) {
+                handlePlayerLeftClick(player, null);
+            }
+        }
+
+        @SubscribeEvent
+        public static void onAttackEntity(AttackEntityEvent event) {
+            if (event.getEntity().level().isClientSide) {
+                return;
+            }
+
+            handlePlayerLeftClick(event.getEntity(), event.getTarget());
+        }
+
+        @SubscribeEvent
+        public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
+            if (event.getEntity().level().isClientSide || !isVindicatorsBaneItem(event.getItemStack())) {
+                return;
+            }
+
+            handlePlayerLeftClick(event.getEntity(), null);
+        }
+
+        @SubscribeEvent
+        public static void onLivingAttack(LivingAttackEvent event) {
+            if (event.getEntity().level().isClientSide) {
+                return;
+            }
+
+            Entity source = event.getSource().getEntity();
+            if (source instanceof LivingEntity attacker && !(attacker instanceof Player)
+                && isVindicatorsBaneItem(attacker.getMainHandItem())) {
+                BloodDemonArtM1AttackHandler.performNichirinLikeSlashAttack(attacker, event.getEntity().getUUID());
+            }
+        }
+
+        private static void handlePlayerLeftClick(Player player, Entity target) {
+            if (!isVindicatorsBaneItem(player.getMainHandItem()) || !markLeftClickHandled(player)) {
+                return;
+            }
+
+            BloodDemonArtM1AttackHandler.performNichirinLikeSlashAttack(player, target != null ? target.getUUID() : null);
+        }
+
+        private static boolean markLeftClickHandled(Player player) {
+            if (!(player.level() instanceof ServerLevel serverLevel)) {
+                return false;
+            }
+
+            long gameTime = serverLevel.getGameTime();
+            long lastHandled = player.getPersistentData().getLong(LAST_LEFT_CLICK_TICK_TAG);
+            if (lastHandled == gameTime) {
+                return false;
+            }
+
+            player.getPersistentData().putLong(LAST_LEFT_CLICK_TICK_TAG, gameTime);
+            return true;
+        }
+
+        private static boolean shouldIgnoreSwingForAbilityUse(Player player) {
+            if (!(player.level() instanceof ServerLevel serverLevel)) {
+                return false;
+            }
+            long gameTime = serverLevel.getGameTime();
+            long lastAbilityUseTick = player.getPersistentData().getLong(LAST_ABILITY_USE_TICK_TAG);
+            return gameTime - lastAbilityUseTick <= 2L;
+        }
     }
 }

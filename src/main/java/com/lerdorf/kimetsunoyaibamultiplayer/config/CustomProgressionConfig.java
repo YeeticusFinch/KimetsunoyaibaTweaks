@@ -37,6 +37,9 @@ public class CustomProgressionConfig {
 
     // Debug logging
     public static ForgeConfigSpec.BooleanValue enableDebugLogging;
+
+    // Prefer the KnY-Worlds infinity castle dimension when available
+    public static ForgeConfigSpec.BooleanValue enableEnhancedInfinityCastle;
     
     // Toril gate worldgen guarantees
     public static ForgeConfigSpec.BooleanValue guaranteeTorilGateNearOrigin;
@@ -168,6 +171,22 @@ public class CustomProgressionConfig {
 
         builder.pop();
 
+        // Infinity Castle compatibility
+        builder.comment("Infinity Castle Compatibility").push("infinity_castle");
+
+        enableEnhancedInfinityCastle = builder
+            .comment("Enable enhanced infinity castle",
+                    "",
+                    "When enabled, any non-command teleporter in this mod that enters the infinity castle",
+                    "will use the KnY-Worlds dimension if KnY-Worlds v1.0.1 or newer is installed.",
+                    "If KnY-Worlds is missing or older than v1.0.1, the mod falls back to the base",
+                    "KimetsunoYaiba infinity castle dimension.",
+                    "",
+                    "Default: true")
+            .define("enable_enhanced_infinity_castle", true);
+
+        builder.pop();
+
         // Toril gate generation guarantees
         builder.comment("Toril Gate Guarantees").push("toril_gate");
 
@@ -206,5 +225,9 @@ public class CustomProgressionConfig {
 
     public static boolean isPersistentDemonhoodEnabled() {
         return persistentDemonhood != null && persistentDemonhood.get();
+    }
+
+    public static boolean isEnhancedInfinityCastleEnabled() {
+        return enableEnhancedInfinityCastle != null && enableEnhancedInfinityCastle.get();
     }
 }

@@ -5,6 +5,7 @@ import net.minecraft.world.effect.MobEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CombustibleBlood;
+import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -250,7 +251,7 @@ public class NezukoEntity extends AbstractDemonEntity {
         boolean damaged = Damager.hurt(this, livingTarget, damage);
         if (damaged) {
             this.doEnchantDamageEffects(this, livingTarget);
-            CombustibleBlood.playRegularMeleeCombo(this);
+            BloodDemonArtM1AttackHandler.performNezukoAttack(this, livingTarget.getUUID());
             this.lastCombatTick = this.level().getGameTime();
             this.getPersistentData().putLong(LAST_COMBAT_TICK_TAG, this.lastCombatTick);
         }

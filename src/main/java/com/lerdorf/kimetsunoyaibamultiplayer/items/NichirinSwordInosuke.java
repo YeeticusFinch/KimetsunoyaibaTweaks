@@ -8,6 +8,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedBeastFor
  */
 public class NichirinSwordInosuke extends BreathingSwordItem {
     private static final BreathingTechnique BEAST_BREATHING = EnhancedBeastForms.createBeastBreathing();
+    private static final double ATTACK_DAMAGE_MODIFIER = 4.0;
 
     public NichirinSwordInosuke(Properties properties) {
         super(properties);
@@ -16,5 +17,10 @@ public class NichirinSwordInosuke extends BreathingSwordItem {
     @Override
     public BreathingTechnique getBreathingTechnique() {
         return BEAST_BREATHING;
+    }
+
+    @Override
+    protected double getAttackDamageModifier() {
+        return ATTACK_DAMAGE_MODIFIER;
     }
 }

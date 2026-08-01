@@ -26,9 +26,9 @@ public final class DemonTransformationAggroHandler {
 
         LivingEntity target = event.getNewTarget();
         if (target != null && DemonTransformationHandler.shouldSuppressAggro(mob, target)) {
-            event.setCanceled(true);
-            mob.setTarget(null);
-            mob.setLastHurtByMob(null);
+            // Do not cancel or clear revenge memory while vanilla HurtByTargetGoal.start()
+            // is assigning its target. That goal may still alert nearby mobs with the
+            // just-assigned target; clearing it here can leave vanilla with a null alert target.
             mob.getNavigation().stop();
         }
     }
@@ -40,12 +40,13 @@ public final class DemonTransformationAggroHandler {
         }
         LivingEntity target = mob.getTarget();
         if (target != null && DemonTransformationHandler.shouldSuppressAggro(mob, target)) {
-            mob.setTarget(null);
-            mob.setLastHurtByMob(null);
-            if (target.getLastHurtByMob() == mob) {
-                target.setLastHurtByMob(null);
-            }
-            mob.getNavigation().stop();
+            clearSuppressedAggro(mob, target);
+            return;
+        }
+
+        LivingEntity revengeTarget = mob.getLastHurtByMob();
+        if (revengeTarget != null && DemonTransformationHandler.shouldSuppressAggro(mob, revengeTarget)) {
+            clearSuppressedAggro(mob, revengeTarget);
         }
     }
 
@@ -71,10 +72,25 @@ public final class DemonTransformationAggroHandler {
         if (Damager.isDemon(livingAttacker) || EntityTagHelper.isDemon(livingAttacker)) {
             event.setCanceled(true);
             if (livingAttacker instanceof Mob mob) {
-                mob.setTarget(null);
-                mob.setLastHurtByMob(null);
-                mob.getNavigation().stop();
+                clearSuppressedAggro(mob, player);
             }
         }
+    }
+
+    private static void clearSuppressedAggro(Mob mob, LivingEntity target) {
+        if (mob == null) {
+            return;
+        }
+
+        if (mob.getTarget() == target) {
+            mob.setTarget(null);
+        }
+        if (mob.getLastHurtByMob() == target) {
+            mob.setLastHurtByMob(null);
+        }
+        if (target != null && target.getLastHurtByMob() == mob) {
+            target.setLastHurtByMob(null);
+        }
+        mob.getNavigation().stop();
     }
 }

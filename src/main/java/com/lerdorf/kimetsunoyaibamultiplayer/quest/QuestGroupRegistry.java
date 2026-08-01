@@ -184,6 +184,7 @@ public final class QuestGroupRegistry {
                             .targetKey("kazumi")
                             .onStart((player, context) -> {
                                 player.sendSystemMessage(Component.literal("§7The swamp domain fades. Return to Kazumi with what you found."));
+                                QuestScenarioActions.removeKidnappersBogSwampDemonResistanceNear(player, 256.0D);
                                 // Ensure Kazumi is respawned for return
                                 QuestScenarioActions.ensureKazumiSpawned(player, context);
                             })

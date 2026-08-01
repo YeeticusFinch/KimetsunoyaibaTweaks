@@ -2,6 +2,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.util;
 
 import com.google.common.collect.Multimap;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -44,6 +46,20 @@ public final class AttackDamageHelper {
         float main = getAttackDamageForHand(attacker, InteractionHand.MAIN_HAND);
         float off = getAttackDamageForHand(attacker, InteractionHand.OFF_HAND);
         return (main + off) * 0.5F;
+    }
+
+    public static float getM1AoeDamageByStrength(LivingEntity attacker) {
+        if (attacker == null) {
+            return 7.0F;
+        }
+
+        MobEffectInstance strength = attacker.getEffect(MobEffects.DAMAGE_BOOST);
+        if (strength == null) {
+            return 7.0F;
+        }
+
+        int amplifier = Math.max(0, strength.getAmplifier());
+        return 7.0F * ((amplifier / 3) + 1);
     }
 
     private static double getMainHandWeaponDamageBonus(ItemStack stack) {

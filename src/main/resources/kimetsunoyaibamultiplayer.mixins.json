@@ -6,14 +6,19 @@
   "refmap": "kimetsunoyaibamultiplayer.refmap.json",
   "mixins": [
     "GrindstoneAlchemyInputMixin",
+    "HurtByTargetGoalMixin",
     "LivingEntityFoodParticleMixin",
     "ServerLevelParticleMixin",
-    "CommandsMixin"
+    "CommandsMixin",
+    "StructureTemplateMixin"
   ],
   "client": [
+    "BridgerPreviewFallingBlockMixin",
     "GenericItemLayerMixin",
     "EntityGlowingMixin",
-    "DustParticleMixin"
+    "DustParticleMixin",
+    "EntityRenderDispatcherAccessor",
+    "FearGameRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

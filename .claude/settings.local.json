@@ -57,7 +57,21 @@
       "Bash(.gradlew.bat:*)",
       "Bash(python3:*)",
       "Bash(node -e:*)",
-      "Bash(jar tf:*)"
+      "Bash(jar tf:*)",
+      "Bash(certutil -hashfile \"src\\\\main\\\\resources\\\\assets\\\\kimetsunoyaibamultiplayer\\\\structures\\\\pillar1_end.nbt\" MD5)",
+      "Bash(certutil -hashfile \"build\\\\resources\\\\main\\\\assets\\\\kimetsunoyaibamultiplayer\\\\structures\\\\pillar1_end.nbt\" MD5)",
+      "Bash(certutil -hashfile \"src\\\\main\\\\resources\\\\assets\\\\kimetsunoyaibamultiplayer\\\\structures\\\\pillar2_end.nbt\" MD5)",
+      "Bash(certutil -hashfile \"build\\\\resources\\\\main\\\\assets\\\\kimetsunoyaibamultiplayer\\\\structures\\\\pillar2_end.nbt\" MD5)",
+      "mcp__plugin_claude-mem_mcp-search__search",
+      "Bash(git log *)",
+      "Bash(certutil -hashfile \"Kimetsunoyaiba-Multiplayer\\\\src\\\\main\\\\resources\\\\assets\\\\kimetsunoyaibamultiplayer\\\\structures\\\\pillar1_end.nbt\" MD5)",
+      "Bash(certutil -hashfile \"KnY-Worlds\\\\src\\\\main\\\\resources\\\\data\\\\kimetsunoyaibamultiplayer\\\\structures\\\\pillar1_end.nbt\" MD5)",
+      "Bash(certutil -hashfile \"Kimetsunoyaiba-Multiplayer\\\\src\\\\main\\\\resources\\\\assets\\\\kimetsunoyaibamultiplayer\\\\structures\\\\pillar2_end.nbt\" MD5)",
+      "Bash(certutil -hashfile \"KnY-Worlds\\\\src\\\\main\\\\resources\\\\data\\\\kimetsunoyaibamultiplayer\\\\structures\\\\pillar2_end.nbt\" MD5)",
+      "Bash(certutil -hashfile \"Kimetsunoyaiba-Multiplayer/src/main/resources/assets/kimetsunoyaibamultiplayer/structures/pillar1_end.nbt\" MD5)",
+      "Bash(certutil -hashfile \"KnY-Worlds/src/main/resources/data/kimetsunoyaibamultiplayer/structures/pillar1_end.nbt\" MD5)",
+      "Bash(certutil -hashfile \"Kimetsunoyaiba-Multiplayer/src/main/resources/assets/kimetsunoyaibamultiplayer/structures/pillar2_end.nbt\" MD5)",
+      "Bash(certutil -hashfile \"KnY-Worlds/src/main/resources/data/kimetsunoyaibamultiplayer/structures/pillar2_end.nbt\" MD5)"
     ],
     "deny": [],
     "ask": []

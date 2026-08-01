@@ -93,6 +93,9 @@ public final class DemonTransformationHandler {
     }
 
     public static boolean shouldSuppressAggro(Mob attacker, LivingEntity target) {
+        if (attacker == null || target == null) {
+            return false;
+        }
         if (!(target instanceof Player player) || !isTransforming(player)) {
             return false;
         }
@@ -506,6 +509,9 @@ public final class DemonTransformationHandler {
     }
 
     private static boolean hasBeenProvoked(Mob attacker, Player player) {
+        if (attacker == null || player == null) {
+            return false;
+        }
         return attacker.getLastHurtByMob() == player
             || player.getLastHurtByMob() == attacker
             || DamageTracker.hasDamageHistory(attacker, player);

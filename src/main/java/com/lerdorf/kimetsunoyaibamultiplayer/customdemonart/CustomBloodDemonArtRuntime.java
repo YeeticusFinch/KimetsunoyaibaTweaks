@@ -377,7 +377,7 @@ public final class CustomBloodDemonArtRuntime {
         double rangeScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE));
         float damageScale = (float) ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DAMAGE));
 
-        float damage = Damager.calculateScaledDamage(player, 5.0F * damageScale);
+        float damage = (5.0F * damageScale);
         GuardStateHelper.setGuardState(player, 5*ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DEFENSE)));
         
         ServerLevel level = player.serverLevel();
@@ -478,7 +478,7 @@ public final class CustomBloodDemonArtRuntime {
 
     private static void executeFrontFlip(ServerPlayer player, CustomBloodDemonArtSavedData.CoreSettings core,
             AmplifierTotals amplifierTotals) {
-        GuardStateHelper.setGuardState(player, Damager.calculateScaledDamage(player, 5)*ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DEFENSE)));
+        GuardStateHelper.setGuardState(player, 5*ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DEFENSE)));
         double rangeScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE));
         double speedScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
         AnimationHelper.playAnimation(player, "kimetsunoyaibamultiplayer:front_flip", 15);
@@ -499,7 +499,7 @@ public final class CustomBloodDemonArtRuntime {
         GuardStateHelper.setGuardState(player, 4*ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DEFENSE)));
         double rangeScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE));
         float damageScale = (float) ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DAMAGE));
-        float damage = Damager.calculateScaledDamage(player, 4.0F * damageScale);
+        float damage = (4.0F * damageScale);
         String[] animations = {"punch_right", "punch_left", "kick_right", "kick_left"};
         for (int i = 0; i < animations.length; i++) {
             final String animation = animations[i];
@@ -538,7 +538,7 @@ public final class CustomBloodDemonArtRuntime {
         final double speed = baseSpeed * speedScale;
 
         final float baseDamage = 6.0F;
-        final float explosionDamage = Damager.calculateScaledDamage(player, baseDamage * damageScale);
+        final float explosionDamage = (baseDamage * damageScale);
 
         final float baseExplosionRadius = 2.5F;
         final float explosionRadius = baseExplosionRadius * damageScale;
@@ -671,7 +671,7 @@ public final class CustomBloodDemonArtRuntime {
         //executeCatalystPlaceholder(player, core, amplifierTotals);
         final double rangeScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE));
         final float damageScale = (float) ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DAMAGE));
-        final float damage = Damager.calculateScaledDamage(player, 5.0F * damageScale);
+        final float damage = (5.0F * damageScale);
         final float projectileSpeed = (float) ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
         final int projectileInterval = 10;
         final int projectileCount = 3;
@@ -754,7 +754,7 @@ public final class CustomBloodDemonArtRuntime {
         final ParticleOptions beamParticle = resolveParticle(core.primaryParticle());
 
         final float damageScale = (float) ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DAMAGE));
-        final float pulseDamage = Damager.calculateScaledDamage(player, 3.0F * damageScale);
+        final float pulseDamage = (3.0F * damageScale);
 
         final int[] lockTicks = {0};
 
@@ -922,7 +922,7 @@ public final class CustomBloodDemonArtRuntime {
         final int rangeAmp = amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE);
         final double speedScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
         final float damageScale = (float) ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DAMAGE));
-        final float slamDamage = Damager.calculateScaledDamage(player, 8.0F * damageScale);
+        final float slamDamage = (8.0F * damageScale);
 
         final double startRadius = 20.0D + (5.0D * rangeAmp);
         final double endRadius = 3.0D;
@@ -1057,7 +1057,7 @@ public final class CustomBloodDemonArtRuntime {
         final double pullRadius = 30.0D + (6.0D * rangeAmp);
         final double effectRadius = 12.0D;
 
-        final float darkStarDamage = Damager.calculateScaledDamage(player, 3.0F * damageScale);
+        final float darkStarDamage = (3.0F * damageScale);
         final int blocksPerTick = 15 + (int)(2 * rangeAmp);
         final double blockLiftRadius = Math.min(20.0D + (4.0D * rangeAmp), pullRadius);
 
@@ -1381,7 +1381,7 @@ public final class CustomBloodDemonArtRuntime {
         double rangeScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE));
         float damageScale = (float) ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DAMAGE));
 
-        float damage = Damager.calculateScaledDamage(player, 4.0F * damageScale);
+        float damage = (4.0F * damageScale);
         GuardStateHelper.setGuardState(player, 5*ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DEFENSE)));
         
         ServerLevel level = player.serverLevel();
@@ -1527,7 +1527,7 @@ public final class CustomBloodDemonArtRuntime {
         final double sideAmplitude = 0.9D * rangeScale;
 
         final float attackDamage =
-            Damager.calculateScaledDamage(player, (float)(4.0F * damageScale));
+            ((float)(4.0F * damageScale));
 
         final int[] attackIndex = {0};
 
@@ -1685,7 +1685,7 @@ public final class CustomBloodDemonArtRuntime {
 
         final int rangeAmp = amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE);
         final int spineCount = Math.max(20, 28 + (rangeAmp * 6));
-        final float spineDamage = Damager.calculateScaledDamage(player, 4.5F * damageScale);
+        final float spineDamage = (4.5F * damageScale);
         final double spineSpeed = 0.65D * speedScale;
         final double spawnRadius = 0.7D;
 
@@ -1818,7 +1818,7 @@ public final class CustomBloodDemonArtRuntime {
         final ParticleOptions particle1 = resolveParticle(core.primaryParticle());
         final ParticleOptions particle2 = resolveParticle(core.secondaryParticle());
 
-        float damage = DamageCalculator.calculateScaledDamage(player, 9 * damageScale);
+        float damage = (9 * damageScale);
         GuardStateHelper.setGuardState(player, 7*defenseAmp);
 
        Vec3 launch = VindicatorsBane.getTargetDirection(player).scale(0.55D * speedScale);
@@ -1909,7 +1909,7 @@ public final class CustomBloodDemonArtRuntime {
 
         final double rangeScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE));
         final float damageScale = (float)ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.DAMAGE));
-        final float damage = Damager.calculateScaledDamage(player, 5*damageScale);
+        final float damage = (5*damageScale);
         ServerLevel level = player.serverLevel();
         
         Vec3 start = player.getEyePosition();
@@ -2351,7 +2351,7 @@ public final class CustomBloodDemonArtRuntime {
         final double prisonRadius = 2.2D + (0.35D * amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE));
         final int lifetimeTicks = Math.max(80, (int) Math.round(160.0D * ampScale(durationAmp)));
         final int damagePulseInterval = Math.max(8, 18 - amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
-        final float pulseDamage = Damager.calculateScaledDamage(player, 2.0F * damageScale);
+        final float pulseDamage = (2.0F * damageScale);
 
         LivingEntity initialTarget = findCrosshairTarget(player, searchRange);
         Vec3 center = initialTarget != null
@@ -2422,7 +2422,7 @@ public final class CustomBloodDemonArtRuntime {
         final double speedScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
 
         final double beamRange = 20.0D + (5.0D * rangeAmp);
-        final float beamDamage = Damager.calculateScaledDamage(player, 10.0F * damageScale);
+        final float beamDamage = (10.0F * damageScale);
         final double beamRadius = 1.25D;
 
         AnimationHelper.playAnimation(player, "kimetsunoyaibamultiplayer:sonic_shriek", 20);
@@ -2498,7 +2498,7 @@ public final class CustomBloodDemonArtRuntime {
         final double speedScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
 
         final int lifetimeTicks = Math.max(120, (int) Math.round(120.0D * rangeScale));
-        final float swoopDamage = Damager.calculateScaledDamage(player, 6.0F * damageScale);
+        final float swoopDamage = (6.0F * damageScale);
         final double orbitRadius = 3.0D + (1.5D * rangeScale);
         final double glideSpeed = 0.7D * speedScale;
 
@@ -2598,7 +2598,7 @@ public final class CustomBloodDemonArtRuntime {
         final double speedScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
 
         final double radius = 20.0D * rangeScale;
-        final float pulseDamage = Damager.calculateScaledDamage(player, 3.5F * damageScale);
+        final float pulseDamage = (3.5F * damageScale);
         final int lifetimeTicks = 60;
         final int[] tick = {0};
 
@@ -2660,7 +2660,7 @@ public final class CustomBloodDemonArtRuntime {
         final ParticleOptions primaryParticle = resolveParticle(core.primaryParticle());
         final ParticleOptions secondaryParticle = resolveParticle(core.secondaryParticle());
 
-        final float damage = Damager.calculateScaledDamage(player, 9 * damageScale);
+        final float damage = (9 * damageScale);
 
         final int lifetimeTicks = (int)(20 * rangeScale);
 
@@ -2802,7 +2802,7 @@ public final class CustomBloodDemonArtRuntime {
         final double speed = baseSpeed * speedScale;
 
         final float baseDamage = 12.0F;
-        final float explosionDamage = Damager.calculateScaledDamage(player, baseDamage * damageScale);
+        final float explosionDamage = (baseDamage * damageScale);
 
         final float baseExplosionRadius = 2.5F;
         final float explosionRadius = baseExplosionRadius * damageScale;
@@ -2880,7 +2880,7 @@ public final class CustomBloodDemonArtRuntime {
         final double speedScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
 
         final int lifetimeTicks = 150;
-        final float arcDamage = Damager.calculateScaledDamage(player, 3.0F * damageScale);
+        final float arcDamage = (3.0F * damageScale);
 
         LightningBolt bolt = EntityType.LIGHTNING_BOLT.create(level);
         if (bolt != null) {
@@ -2998,7 +2998,7 @@ public final class CustomBloodDemonArtRuntime {
         final float explosionRadius = baseExplosionRadius * damageScale;
 
         final float baseDamage = 8.0F;
-        final float explosionDamage = Damager.calculateScaledDamage(player, baseDamage * damageScale);
+        final float explosionDamage = (baseDamage * damageScale);
 
         final int maxLifetimeTicks = 80;
 

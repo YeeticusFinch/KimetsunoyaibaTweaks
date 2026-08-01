@@ -14,6 +14,8 @@ import java.util.List;
  */
 public class NichirinSwordSound extends BreathingSwordItem {
     private static final BreathingTechnique SOUND_BREATHING = createSoundBreathing();
+    private static final double ATTACK_DAMAGE_MODIFIER = 6.0;
+    private static final double ATTACK_SPEED_MODIFIER = -3.0;
 
     public NichirinSwordSound(Properties properties) {
         super(properties);
@@ -22,6 +24,16 @@ public class NichirinSwordSound extends BreathingSwordItem {
     @Override
     public BreathingTechnique getBreathingTechnique() {
         return SOUND_BREATHING;
+    }
+
+    @Override
+    protected double getAttackDamageModifier() {
+        return ATTACK_DAMAGE_MODIFIER;
+    }
+
+    @Override
+    protected double getAttackSpeedModifier() {
+        return ATTACK_SPEED_MODIFIER;
     }
 
     private static BreathingTechnique createSoundBreathing() {

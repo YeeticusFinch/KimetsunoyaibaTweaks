@@ -38,6 +38,7 @@ public final class QuestProgressionHandler {
 
         PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
         QuestProgressionManager.tick(player, role);
+        QuestScenarioActions.tickSatokosBowSwampDemonResistanceRemoval(player);
         QuestScenarioActions.tickTamayoHouseTest(player);
     }
 
@@ -59,7 +60,15 @@ public final class QuestProgressionHandler {
         String targetKey = event.getEntity().getPersistentData().getString(
             com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG);
         if ("swamp_demon_kidnappers_bog_satoko".equals(targetKey)) {
-            player.getPersistentData().putBoolean("KnYSwampDemonKilled", true);
+            if (event.getEntity().level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                for (ServerPlayer nearbyPlayer : serverLevel.players()) {
+                    if (nearbyPlayer == player || nearbyPlayer.distanceToSqr(event.getEntity()) > 128.0D * 128.0D) {
+                        continue;
+                    }
+                    PlayerRole nearbyRole = MeditationMenuService.resolveRoleForProgression(nearbyPlayer);
+                    QuestProgressionManager.handleKidnappersBogSatokoDemonKilled(nearbyPlayer, event.getEntity(), nearbyRole);
+                }
+            }
         }
     }
 

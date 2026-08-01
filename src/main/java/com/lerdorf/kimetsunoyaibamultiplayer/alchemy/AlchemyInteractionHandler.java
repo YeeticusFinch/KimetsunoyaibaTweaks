@@ -68,6 +68,26 @@ public final class AlchemyInteractionHandler {
         }
     }
 
+    @SubscribeEvent
+    public static void onGrindstoneTakeItem(GrindstoneEvent.OnTakeItem event) {
+        ItemStack output = grindstoneOutput(event.getTopItem(), event.getBottomItem());
+        if (output.isEmpty()) {
+            return;
+        }
+
+        ItemStack newTop = event.getTopItem().copy();
+        ItemStack newBottom = event.getBottomItem().copy();
+        if (!newTop.isEmpty()) {
+            newTop.shrink(1);
+        } else {
+            newBottom.shrink(1);
+        }
+
+        event.setNewTopItem(newTop.isEmpty() ? ItemStack.EMPTY : newTop);
+        event.setNewBottomItem(newBottom.isEmpty() ? ItemStack.EMPTY : newBottom);
+        event.setXp(0);
+    }
+
     private static ItemStack grindstoneOutput(ItemStack top, ItemStack bottom) {
         boolean hasTop = !top.isEmpty();
         boolean hasBottom = !bottom.isEmpty();
@@ -76,10 +96,6 @@ public final class AlchemyInteractionHandler {
         }
 
         ItemStack input = hasTop ? top : bottom;
-        if (input.getCount() != 1) {
-            return ItemStack.EMPTY;
-        }
-
         ItemStack output = ItemStack.EMPTY;
         if (input.is(Items.BONE)) {
             output = new ItemStack(ModAlchemyItems.BONE_DUST.get(), 1);

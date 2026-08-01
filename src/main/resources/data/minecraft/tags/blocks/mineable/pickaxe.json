@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "kimetsunoyaibamultiplayer:hemolith_ore"
+    "kimetsunoyaibamultiplayer:hemolith_ore",
+    "kimetsunoyaibamultiplayer:tile_vertical_slab",
+    "kimetsunoyaibamultiplayer:tile_sideways_stairs"
   ]
 }

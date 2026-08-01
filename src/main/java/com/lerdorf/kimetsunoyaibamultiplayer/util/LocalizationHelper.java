@@ -1,6 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.util;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 import java.util.Locale;
 import java.util.Map;
@@ -97,6 +99,41 @@ public final class LocalizationHelper {
             return Component.literal(fallback == null ? "" : fallback);
         }
         return breathingStyle(styleId);
+    }
+
+    public static MutableComponent coloredBreathingSelection(int formId, String fallbackStyleName,
+                                                             Component formName, String techniqueColor,
+                                                             String formColor) {
+        String safeTechniqueColor = sanitizeLegacyColor(techniqueColor);
+        String safeFormColor = sanitizeLegacyColor(formColor);
+        ChatFormatting techniqueFormatting = parseLegacyFormatting(safeTechniqueColor);
+        ChatFormatting formFormatting = parseLegacyFormatting(safeFormColor);
+        MutableComponent styleComponent = breathingStyleFromFormId(formId, fallbackStyleName).copy();
+        MutableComponent formComponent = formName == null ? Component.empty() : formName.copy();
+        if (techniqueFormatting != null) {
+            styleComponent.withStyle(techniqueFormatting);
+        }
+        if (formFormatting != null) {
+            formComponent.withStyle(formFormatting);
+        }
+        return Component.literal(safeTechniqueColor)
+            .append(styleComponent)
+            .append(Component.literal(" - " + safeFormColor))
+            .append(formComponent);
+    }
+
+    private static String sanitizeLegacyColor(String color) {
+        if (color == null || color.length() < 2 || color.charAt(0) != '§') {
+            return "";
+        }
+        return color.substring(0, 2);
+    }
+
+    private static ChatFormatting parseLegacyFormatting(String color) {
+        if (color == null || color.length() < 2 || color.charAt(0) != '§') {
+            return null;
+        }
+        return ChatFormatting.getByCode(color.charAt(1));
     }
 
     private static String breathingStyleIdFromFormId(int formId) {

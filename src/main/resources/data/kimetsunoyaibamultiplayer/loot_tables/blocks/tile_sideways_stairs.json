@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "kimetsunoyaibamultiplayer:tile_sideways_stairs"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "kimetsunoyaibamultiplayer:blocks/tile_sideways_stairs"
+}

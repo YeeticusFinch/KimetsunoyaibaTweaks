@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.VindicatorsBane;
+import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.BleedingHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import net.minecraft.sounds.SoundEvents;
@@ -142,7 +143,7 @@ public class DemonVindicatorEntity extends AbstractDemonEntity {
         boolean result = Damager.hurt(this, livingTarget, damage);
         if (result) {
             this.doEnchantDamageEffects(this, livingTarget);
-            this.playGeckoAnimation("sword_overhead", 10);
+            BloodDemonArtM1AttackHandler.performNichirinLikeSlashAttack(this, livingTarget.getUUID());
             this.meleeAnimationTicks = 10;
             BleedingHandler.applyOrRefreshBleeding(livingTarget, 20 * 8, 1);
             disableShieldIfBlocking(livingTarget);

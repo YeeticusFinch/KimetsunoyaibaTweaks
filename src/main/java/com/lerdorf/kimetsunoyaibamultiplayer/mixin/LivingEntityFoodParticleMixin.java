@@ -38,18 +38,18 @@ public abstract class LivingEntityFoodParticleMixin {
         kimetsu$spawnBloodEatParticles(self, stack, count);
     }
 
-    @Redirect(
-        method = "m_21137_(Lnet/minecraft/world/item/ItemStack;I)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/world/entity/LivingEntity;spawnItemParticles(Lnet/minecraft/world/item/ItemStack;I)V"
-        ),
-        require = 0,
-        remap = false
-    )
-    private void kimetsu$replaceHumanFleshEatParticlesSrg(LivingEntity self, ItemStack stack, int count) {
-        kimetsu$replaceHumanFleshEatParticles(self, stack, count);
-    }
+    // @Redirect(
+    //     method = "m_21137_(Lnet/minecraft/world/item/ItemStack;I)V",
+    //     at = @At(
+    //         value = "INVOKE",
+    //         target = "Lnet/minecraft/world/entity/LivingEntity;spawnItemParticles(Lnet/minecraft/world/item/ItemStack;I)V"
+    //     ),
+    //     require = 0,
+    //     remap = false
+    // )
+    // private void kimetsu$replaceHumanFleshEatParticlesSrg(LivingEntity self, ItemStack stack, int count) {
+    //     kimetsu$replaceHumanFleshEatParticles(self, stack, count);
+    // }
 
     private void kimetsu$spawnVanillaEatParticles(LivingEntity self, ItemStack stack, int count) {
         if (count <= 0 || stack.isEmpty()) {

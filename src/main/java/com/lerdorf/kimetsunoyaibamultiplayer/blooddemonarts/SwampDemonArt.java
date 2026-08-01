@@ -9,6 +9,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampHandEntity;
@@ -23,6 +24,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -36,6 +38,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -161,7 +164,15 @@ public final class SwampDemonArt {
     }
 
     public static boolean hasDebugDimensionOverride(LivingEntity entity) {
-        return entity.getPersistentData().getBoolean(DEBUG_DIMENSIONS_ACTIVE_TAG);
+        if (entity == null) {
+            return false;
+        }
+
+        CompoundTag data = entity.getPersistentData();
+        if (data == null) {
+            return false;
+        }
+        return data.getBoolean(DEBUG_DIMENSIONS_ACTIVE_TAG);
     }
 
     public static void setDebugDimensionOverride(LivingEntity entity, float height, float eyeHeight) {
@@ -453,7 +464,7 @@ public final class SwampDemonArt {
                     SoundEvents.BUBBLE_COLUMN_WHIRLPOOL_AMBIENT, SoundSource.HOSTILE, 0.45F, 1.2F);
 
                 AABB dashArea = entity.getBoundingBox().inflate(3.0D);
-                float damage = Damager.calculateScaledDamage(entity, 5);
+                float damage = 5;
                 for (LivingEntity target : activeLevel.getEntitiesOfClass(LivingEntity.class, dashArea,
                     living -> living != entity && living.isAlive() && !living.isSpectator())) {
                     Damager.hurt(entity, target, damage);
@@ -1127,7 +1138,7 @@ public final class SwampDemonArt {
         if (item instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem bloodDemonArtItem) {
             return ART_ID.equals(bloodDemonArtItem.getArtId());
         }
-        return item instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
+        return false;
     }
 
     private static boolean canHandlePlayerLeftClick(Player player) {
@@ -1172,7 +1183,7 @@ public final class SwampDemonArt {
             return;
         }
 
-        playRegularMeleeCombo(player);
+        BloodDemonArtM1AttackHandler.performSwampAttack(player, target != null ? target.getUUID() : null);
     }
 
     public static void playRegularMeleeCombo(LivingEntity entity) {
@@ -1435,6 +1446,7 @@ public final class SwampDemonArt {
         demon.setCustomName(Component.literal("Numa, the Swamp Demon"));
         demon.setCustomNameVisible(true);
         demon.setItemSlot(EquipmentSlot.HEAD, new ItemStack(ModItems.SATOKOS_BOW.get()));
+        demon.setDropChance(EquipmentSlot.HEAD, 1.0F);
 
         if (target != null) {
             demon.setTarget(target);
@@ -1772,7 +1784,7 @@ public final class SwampDemonArt {
             } else if (isPuddled(event.getEntity())) {
                 onPuddleAttack(event.getEntity());
             } else if (isSwampDemonArtItem(event.getEntity().getMainHandItem())) {
-                playRegularMeleeCombo(event.getEntity());
+                BloodDemonArtM1AttackHandler.performSwampAttack(event.getEntity(), event.getTarget().getUUID());
             }
         }
 
@@ -1787,20 +1799,49 @@ public final class SwampDemonArt {
             } else if (isPuddled(event.getEntity())) {
                 onPuddleAttack(event.getEntity());
             } else if (isSwampDemonArtItem(event.getEntity().getMainHandItem())) {
-                playRegularMeleeCombo(event.getEntity());
+                BloodDemonArtM1AttackHandler.performSwampAttack(event.getEntity(), null);
             }
         }
 
         @SubscribeEvent
         public static void onEntitySize(EntityEvent.Size event) {
-            if (event.getEntity() instanceof LivingEntity living && (hasDebugDimensionOverride(living) || isPuddled(living))) {
-                float targetHeight = hasDebugDimensionOverride(living) ? getDebugDimensionHeight(living) : getTargetPuddleHeight(living);
-                float width = event.getOldSize().width;
-                event.setNewSize(net.minecraft.world.entity.EntityDimensions.scalable(width, targetHeight), true);
-                event.setNewEyeHeight(hasDebugDimensionOverride(living) ? getDebugDimensionEyeHeight(living) : getTargetPuddleEyeHeight(living));
-                Log.infoEvery("debug-dims-event-" + living.getId(), 1000L,
-                    "Applied size event override for {}: width={}, height={}, eye={}, puddled={}, debug={}",
-                    living.getScoreboardName(), width, targetHeight, event.getNewEyeHeight(), isPuddled(living), hasDebugDimensionOverride(living));
+            if (!(event.getEntity() instanceof LivingEntity living)) {
+                return;
+            }
+
+            boolean debug = hasDebugDimensionOverrideSafe(living);
+            boolean puddled = isPuddledSafe(living);
+
+            if (!debug && !puddled) {
+                return;
+            }
+
+            float targetHeight = debug ? getDebugDimensionHeight(living) : getTargetPuddleHeight(living);
+            float targetEyeHeight = debug ? getDebugDimensionEyeHeight(living) : getTargetPuddleEyeHeight(living);
+            float width = event.getOldSize().width;
+
+            event.setNewSize(EntityDimensions.scalable(width, targetHeight), true);
+            event.setNewEyeHeight(targetEyeHeight);
+
+            Log.infoEvery("debug-dims-event-" + living.getId(), 1000L,
+                "Applied size event override for {}: width={}, height={}, eye={}, puddled={}, debug={}",
+                living.getScoreboardName(), width, targetHeight, targetEyeHeight, puddled, debug);
+        }
+
+        private static boolean hasDebugDimensionOverrideSafe(LivingEntity living) {
+            try {
+                CompoundTag data = living.getPersistentData();
+                return data != null && data.getBoolean("YOUR_DEBUG_KEY");
+            } catch (Exception ignored) {
+                return false;
+            }
+        }
+
+        private static boolean isPuddledSafe(LivingEntity living) {
+            try {
+                return isPuddled(living);
+            } catch (Exception ignored) {
+                return false;
             }
         }
 

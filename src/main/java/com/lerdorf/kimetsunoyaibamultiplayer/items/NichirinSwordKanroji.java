@@ -27,8 +27,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 public class NichirinSwordKanroji extends BreathingSwordItem {
     private static final BreathingTechnique LOVE_BREATHING = EnhancedLoveForms.createLoveBreathing();
 
-    private static final double ATTACK_DAMAGE = 6.0; // Slightly lower than normal swords
-    private static final double ATTACK_SPEED = -1.8; // Faster than normal swords (-2.4)
+    private static final double ATTACK_DAMAGE = 5.0; // Slightly lower than normal swords
+    private static final double ATTACK_SPEED = -2.2; // Faster than normal swords (1.8)
 
     public NichirinSwordKanroji(Properties properties) {
         super(properties);

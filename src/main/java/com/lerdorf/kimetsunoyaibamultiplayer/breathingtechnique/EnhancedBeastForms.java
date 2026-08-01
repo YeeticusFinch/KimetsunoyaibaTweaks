@@ -206,7 +206,7 @@ public class EnhancedBeastForms {
             2, // 2 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = DamageCalculator.calculateScaledDamage(entity, twoSwords ? 12.0F : 6.0F);
+                float damage = (twoSwords ? 12.0F : 6.0F);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 12.0F : 6.0F, formId);
                 playEntityAnimation(entity, "breath_beast1");
                 setCancelAttackSwing(entity, true);
@@ -282,7 +282,7 @@ public class EnhancedBeastForms {
             2, // 2 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = DamageCalculator.calculateScaledDamage(entity, twoSwords ? 12.0F : 6.0F);
+                float damage = (twoSwords ? 12.0F : 6.0F);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 11.0F : 5.5F, formId);
                 if (twoSwords)
                 	playEntityAnimation(entity, "breath_beast2");
@@ -391,7 +391,7 @@ public class EnhancedBeastForms {
             2, // 2 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = DamageCalculator.calculateScaledDamage(entity, twoSwords ? 10.0F : 5.0F);
+                float damage = (twoSwords ? 10.0F : 5.0F);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
                 if (twoSwords)
                 	playEntityAnimation(entity, "beast2");
@@ -503,7 +503,7 @@ public class EnhancedBeastForms {
             	
             	playEntityAnimation(entity, "beast4");
             	
-                float damage = DamageCalculator.calculateScaledDamage(entity, twoSwords ? 11.0F : 5.5f);
+                float damage = (twoSwords ? 11.0F : 5.5f);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
                 
                 //setCancelAttackSwing(entity, true);
@@ -631,7 +631,7 @@ public class EnhancedBeastForms {
             3, // 3 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = DamageCalculator.calculateScaledDamage(entity, 5.5F);
+                float damage = (5.5F);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 11.0F : 5.5F, formId);
                 entity.setNoGravity(true);
                 
@@ -691,7 +691,7 @@ public class EnhancedBeastForms {
                             MovementHelper.setVelocity(target, knockbackDir.scale(0.8).add(0, 0.2, 0));
 
                             // Deal moderate damage on contact
-                                //float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
+                                //float damage = (6.0F);
                                 hurtWithBeastBleeding(entity, target, damage, true, twoSwords);
                         }
                     }
@@ -883,7 +883,7 @@ public class EnhancedBeastForms {
             6, // 6 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = DamageCalculator.calculateScaledDamage(entity, twoSwords ? 12.0F : 6.0F);
+                float damage = (twoSwords ? 12.0F : 6.0F);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
                 
                 setCancelAttackSwing(entity, true);
@@ -1016,7 +1016,7 @@ public class EnhancedBeastForms {
             5, // 5 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = DamageCalculator.calculateScaledDamage(entity, twoSwords ? 11.0F : 5.5F);
+                float damage = (twoSwords ? 11.0F : 5.5F);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
 
                 setCancelAttackSwing(entity, true);
@@ -1172,7 +1172,7 @@ public class EnhancedBeastForms {
             5, // 5 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
+                float damage = (5.0F);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
                 
                 //setCancelAttackSwing(entity, true);
@@ -1210,7 +1210,7 @@ public class EnhancedBeastForms {
             6, // 6 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
+                float damage = (5.0F);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
                 
                 //setCancelAttackSwing(entity, true);
@@ -1248,7 +1248,7 @@ public class EnhancedBeastForms {
             6, // 6 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = DamageCalculator.calculateScaledDamage(entity, 5.0F);
+                float damage = (5.0F);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
                 
                 //setCancelAttackSwing(entity, true);
@@ -1292,6 +1292,6 @@ public class EnhancedBeastForms {
         forms.add(ninthForm());
         forms.add(tenthForm());
 
-        return new BreathingTechnique("Beast Breathing", forms, "§3", "§3");
+        return new BreathingTechnique("Beast Breathing", forms, "§b", "§b");
     }
 }

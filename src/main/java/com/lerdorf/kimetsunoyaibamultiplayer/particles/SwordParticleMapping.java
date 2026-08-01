@@ -271,7 +271,7 @@ public class SwordParticleMapping {
         // Check if this is a kimetsunoyaiba nichirin sword or our mod's breathing swords
         // Note: "nichirinsword" (base, no suffix) is also a valid sword
         String path = itemId.getPath();
-        return (itemId.getNamespace().equals("kimetsunoyaiba") && (path.equals("nichirinsword") || path.startsWith("nichirinsword_") || path.startsWith("sword_kokushibo"))) ||
+        return (itemId.getNamespace().equals("kimetsunoyaiba") && (path.equals("nichirinsword") || path.startsWith("nichirinsword_") || path.startsWith("sword_kokushibo") || path.equals("sword_hairo"))) ||
                (itemId.getNamespace().equals("kimetsunoyaibamultiplayer") && path.startsWith("nichirinsword_"));
     }
 

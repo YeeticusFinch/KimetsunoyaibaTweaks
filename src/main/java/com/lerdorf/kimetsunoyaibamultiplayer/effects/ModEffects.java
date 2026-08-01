@@ -46,6 +46,14 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> BLEEDING = MOB_EFFECTS.register("bleeding",
             BleedingEffect::new);
 
+    // Fear effect - intermittent paralysis and client fear visuals
+    public static final RegistryObject<MobEffect> FEAR = MOB_EFFECTS.register("fear",
+            FearEffect::new);
+
+    // Fear cooldown effect - prevents repeated low-level fear applications
+    public static final RegistryObject<MobEffect> FEAR_COOLDOWN = MOB_EFFECTS.register("fear_cooldown",
+            FearCooldownEffect::new);
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

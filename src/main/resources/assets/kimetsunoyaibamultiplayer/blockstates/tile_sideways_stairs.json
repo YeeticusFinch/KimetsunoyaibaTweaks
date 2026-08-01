@@ -1,0 +1,154 @@
+{
+  "variants": {
+    "facing=north,side=left,shape=straight": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left"
+    },
+    "facing=east,side=left,shape=straight": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left",
+      "y": 90
+    },
+    "facing=south,side=left,shape=straight": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left",
+      "y": 180
+    },
+    "facing=west,side=left,shape=straight": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left",
+      "y": 270
+    },
+    "facing=north,side=left,shape=bottom_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_bottom_inner"
+    },
+    "facing=east,side=left,shape=bottom_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_bottom_inner",
+      "y": 90
+    },
+    "facing=south,side=left,shape=bottom_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_bottom_inner",
+      "y": 180
+    },
+    "facing=west,side=left,shape=bottom_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_bottom_inner",
+      "y": 270
+    },
+    "facing=north,side=left,shape=bottom_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_bottom_outer"
+    },
+    "facing=east,side=left,shape=bottom_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_bottom_outer",
+      "y": 90
+    },
+    "facing=south,side=left,shape=bottom_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_bottom_outer",
+      "y": 180
+    },
+    "facing=west,side=left,shape=bottom_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_bottom_outer",
+      "y": 270
+    },
+    "facing=north,side=left,shape=top_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_top_inner"
+    },
+    "facing=east,side=left,shape=top_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_top_inner",
+      "y": 90
+    },
+    "facing=south,side=left,shape=top_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_top_inner",
+      "y": 180
+    },
+    "facing=west,side=left,shape=top_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_top_inner",
+      "y": 270
+    },
+    "facing=north,side=left,shape=top_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_top_outer"
+    },
+    "facing=east,side=left,shape=top_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_top_outer",
+      "y": 90
+    },
+    "facing=south,side=left,shape=top_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_top_outer",
+      "y": 180
+    },
+    "facing=west,side=left,shape=top_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_left_top_outer",
+      "y": 270
+    },
+    "facing=north,side=right,shape=straight": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right"
+    },
+    "facing=east,side=right,shape=straight": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right",
+      "y": 90
+    },
+    "facing=south,side=right,shape=straight": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right",
+      "y": 180
+    },
+    "facing=west,side=right,shape=straight": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right",
+      "y": 270
+    },
+    "facing=north,side=right,shape=bottom_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_bottom_inner"
+    },
+    "facing=east,side=right,shape=bottom_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_bottom_inner",
+      "y": 90
+    },
+    "facing=south,side=right,shape=bottom_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_bottom_inner",
+      "y": 180
+    },
+    "facing=west,side=right,shape=bottom_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_bottom_inner",
+      "y": 270
+    },
+    "facing=north,side=right,shape=bottom_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_bottom_outer"
+    },
+    "facing=east,side=right,shape=bottom_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_bottom_outer",
+      "y": 90
+    },
+    "facing=south,side=right,shape=bottom_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_bottom_outer",
+      "y": 180
+    },
+    "facing=west,side=right,shape=bottom_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_bottom_outer",
+      "y": 270
+    },
+    "facing=north,side=right,shape=top_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_top_inner"
+    },
+    "facing=east,side=right,shape=top_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_top_inner",
+      "y": 90
+    },
+    "facing=south,side=right,shape=top_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_top_inner",
+      "y": 180
+    },
+    "facing=west,side=right,shape=top_inner": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_top_inner",
+      "y": 270
+    },
+    "facing=north,side=right,shape=top_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_top_outer"
+    },
+    "facing=east,side=right,shape=top_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_top_outer",
+      "y": 90
+    },
+    "facing=south,side=right,shape=top_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_top_outer",
+      "y": 180
+    },
+    "facing=west,side=right,shape=top_outer": {
+      "model": "kimetsunoyaibamultiplayer:block/tile_sideways_stair_right_top_outer",
+      "y": 270
+    }
+  }
+}

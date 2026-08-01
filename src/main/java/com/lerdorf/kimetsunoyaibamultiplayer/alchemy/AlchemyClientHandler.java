@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.alchemy;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.AlchemyTableRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.PetriDishBlockRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.VialRackRenderer;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -39,6 +40,7 @@ public final class AlchemyClientHandler {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.ALCHEMY_TABLE.get(), AlchemyTableRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.VIAL_RACK.get(), VialRackRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.PETRI_DISH.get(), PetriDishBlockRenderer::new);
     }
 
     @SubscribeEvent

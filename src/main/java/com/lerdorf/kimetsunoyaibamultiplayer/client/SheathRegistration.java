@@ -39,6 +39,10 @@ public class SheathRegistration {
             ModItems.NICHIRINSWORD_KANROJI.get(),
             SheathItems.SWORD_SHEATH_KANROJI.get()
         );
+        SwordSheathRegistry.registerSheathDisplayOverride(
+            ModItems.NICHIRINSWORD_KANROJI.get(),
+            SheathItems.NICHIRINSWORD_KANROJI_SHEATHED.get()
+        );
         SwordSheathRegistry.registerPersistentSheath(
             ModItems.NICHIRINSWORD_LOVE.get(),
             SheathItems.SWORD_SHEATH.get()
@@ -64,8 +68,12 @@ public class SheathRegistration {
                 baseModKanrojiSword,
                 SheathItems.SWORD_SHEATH_KANROJI.get()
             );
+            SwordSheathRegistry.registerSheathDisplayOverride(
+                baseModKanrojiSword,
+                SheathItems.NICHIRINSWORD_KANROJI_SHEATHED.get()
+            );
             if (Config.logDebug) {
-                Log.info("Registered kanroji sheath for base mod's nichirinsword_kanroji");
+                Log.info("Registered kanroji sheath and sheathed display model for base mod's nichirinsword_kanroji");
             }
         }
 

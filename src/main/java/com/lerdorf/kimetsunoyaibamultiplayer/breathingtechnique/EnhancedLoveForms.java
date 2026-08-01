@@ -430,7 +430,7 @@ public class EnhancedLoveForms {
                 		for (LivingEntity target : targets) {
                 			if (Math.random() < 0.4) {
 	                			//System.out.println("Trying to damage " + target.getName().getString());
-	                			float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
+	                			float damage = (8.0F);
 	                			boolean damaged = Damager.hurt(entity, target, damage);
 	                			//System.out.println("Damaging " + target.getName().getString() + " " + damaged);
 	                			if (serverLevel != null) {
@@ -496,7 +496,7 @@ public class EnhancedLoveForms {
             (entity, level, formId) -> {
                 // TODO: Implement second form
 
-				final float damage = DamageCalculator.calculateScaledDamage(entity, 10.0F);
+				final float damage = (10.0F);
             	 // Set guard state (formId auto-injected as 22002)
                 GuardStateHelper.setGuardState(entity, 8.0, formId);
 
@@ -725,7 +725,7 @@ public class EnhancedLoveForms {
     		        				level.playSound(null, x, y, z,
     		                				   SoundEvents.PLAYER_ATTACK_STRONG,
     		                				    SoundSource.PLAYERS, 1.0f, 1f);
-    		        				float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
+    		        				float damage = (8.0F);
                     				Damager.hurt(entity, le, damage);
                     			}
                 				break; // Stop at first block hit
@@ -911,7 +911,7 @@ public class EnhancedLoveForms {
 	    		        				level.playSound(null, x, y, z,
 	    		                				   SoundEvents.PLAYER_ATTACK_STRONG,
 	    		                				    SoundSource.PLAYERS, 1.0f, 1f);
-	    		        				float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
+	    		        				float damage = (8.0F);
 	                    				Damager.hurt(entity, le, damage);
                     				//}
                     			}
@@ -945,7 +945,7 @@ public class EnhancedLoveForms {
     				ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
                 	float [][][] particlePoints = ParticlePositions.fourth_form.get("point_a");
                 	
-                	float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
+                	float damage = (24.0F);
 
                 	// Set guard state
                 	GuardStateHelper.setGuardState(entity, damage, formId);
@@ -1129,7 +1129,7 @@ public class EnhancedLoveForms {
             	ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
             	float [][][] particlePoints = ParticlePositions.fifth_form.get("point_a");
 
-				float damage = DamageCalculator.calculateScaledDamage(entity, 10.0F);
+				float damage = (10.0F);
             	 // Set guard state (formId auto-injected as 22005)
                 GuardStateHelper.setGuardState(entity, damage * 0.8f, formId);
 
@@ -1315,7 +1315,7 @@ public class EnhancedLoveForms {
 	        				level.playSound(null, x, y, z,
 	                				   SoundEvents.PLAYER_ATTACK_STRONG,
 	                				    SoundSource.PLAYERS, 1.0f, 1f);
-            				Damager.hurt(entity, le, damage*0.7f);
+            				Damager.hurt(entity, le, damage*0.9f);
             			}
                 	}
                 	else if (currentTick[0] < 41) {
@@ -1363,7 +1363,7 @@ public class EnhancedLoveForms {
     	        				level.playSound(null, x, y, z,
     	                				   SoundEvents.PLAYER_ATTACK_STRONG,
     	                				    SoundSource.PLAYERS, 1.0f, 1f);
-                				Damager.hurt(entity, le, damage*0.7f, true);
+                				Damager.hurt(entity, le, damage*0.9f, true);
                 			}
                 		}
                 	}
@@ -1391,7 +1391,7 @@ public class EnhancedLoveForms {
     	        				level.playSound(null, x, y, z,
     	                				   SoundEvents.PLAYER_ATTACK_STRONG,
     	                				    SoundSource.PLAYERS, 1.0f, 1f);
-                				Damager.hurt(entity, le, damage * 0.7f);
+                				Damager.hurt(entity, le, damage * 0.9f);
                 			}
                 		}
                 		
@@ -1484,7 +1484,7 @@ public class EnhancedLoveForms {
             5,
             (entity, level, formId) -> {
                 // TODO: Implement sixth form
-            	float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
+            	float damage = (10.0F);
             	ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
             	float [][][] particlePoints = ParticlePositions.sixth_form.get("point_a");
             	 // Set guard state (formId auto-injected as 22006)
@@ -1538,7 +1538,7 @@ public class EnhancedLoveForms {
 
                 			for (LivingEntity target : nearby) {
                 				//if (Math.random() < 0.8) {
-                					Damager.hurt(entity, target, damage, true);
+                					Damager.hurt(entity, target, damage, true, false, true);
                 					// Spawn love_slash particles on newly added target
                 					double particleY = target.getY() + target.getBbHeight() * 0.5;
                 					serverLevel.sendParticles(
@@ -1638,8 +1638,8 @@ public class EnhancedLoveForms {
         forms.add(thirdForm());
         forms.add(fourthForm());
 
-        // Pink colors for Love Breathing (§d = light purple/pink, §5 = dark purple)
-        return new BreathingTechnique("Love Breathing", forms, "§d", "§5");
+        // Pink colors for Love Breathing (§d = light purple/pink)
+        return new BreathingTechnique("Love Breathing", forms, "§d", "§d");
     }
 
     /**
@@ -1654,8 +1654,8 @@ public class EnhancedLoveForms {
         forms.add(fifthForm());
         forms.add(sixthForm());
 
-        // Pink colors for Love Breathing (§d = light purple/pink, §5 = dark purple)
-        return new BreathingTechnique("Love Breathing", forms, "§d", "§5");
+        // Pink colors for Love Breathing (§d = light purple/pink)
+        return new BreathingTechnique("Love Breathing", forms, "§d", "§d");
     }
 
     /**

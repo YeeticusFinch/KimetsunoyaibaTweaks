@@ -73,6 +73,8 @@ public class SwordSlashModelRegistry {
         SWORD_TO_MODEL_MAP.put("nichirinsword_wind", "wind");
         SWORD_TO_MODEL_MAP.put("nichirinsword_sanemi", "wind");
         SWORD_TO_MODEL_MAP.put("nichirinsword_shinazugawa", "wind");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_bamboo", "wind");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_bamboo_2", "wind");
 
         // Register wind with 3 texture variants, using random selection (not animated)
         ANIMATED_TEXTURE_FRAMES.put("wind", 3);
@@ -98,6 +100,7 @@ public class SwordSlashModelRegistry {
         SWORD_TO_MODEL_MAP.put("nichirinsword_flower", "flower");
         SWORD_TO_MODEL_MAP.put("nichirinsword_kanawo", "flower");
         SWORD_TO_MODEL_MAP.put("nichirinsword_kanae", "flower");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_cherry_blossom", "flower");
 
         // Register animated texture for flower breathing (5 frames, 2 ticks per frame)
         ANIMATED_TEXTURE_FRAMES.put("flower", 5);
@@ -111,6 +114,14 @@ public class SwordSlashModelRegistry {
 
         // Register love breathing sword to use love model
         SWORD_TO_MODEL_MAP.put("nichirinsword_love", "love");
+
+        // Register moon breathing swords to use the moon slash texture.
+        SWORD_TO_MODEL_MAP.put("nichirinswordmoon", "moon");
+        SWORD_TO_MODEL_MAP.put("sword_kokushibo_1", "moon");
+        SWORD_TO_MODEL_MAP.put("sword_kokushibo_2", "moon");
+
+        // Hairo's sword uses the generic slash model and texture.
+        SWORD_TO_MODEL_MAP.put("sword_hairo", "generic");
 
         // Snake, insect, stone swords fall back to generic model automatically
 

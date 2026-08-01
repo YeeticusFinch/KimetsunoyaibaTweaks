@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVar
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
@@ -53,6 +54,9 @@ public class CycleFormVariationPacket {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) {
                 Log.warn("[CycleFormVariationPacket] Player is null, aborting");
+                return;
+            }
+            if (FearEffectHandler.isParalyzed(player)) {
                 return;
             }
 
@@ -116,9 +120,13 @@ public class CycleFormVariationPacket {
                 if (!Config.suppressFormCycleChat) {
                     Component displayName = getVariationDisplayName(formId, newVariation, swordId, breathingSword, baseFormIndex);
                     player.sendSystemMessage(
-                        LocalizationHelper.breathingStyleFromFormId(formId, technique.getName()).copy()
-                            .append(Component.literal(" "))
-                            .append(displayName)
+                        LocalizationHelper.coloredBreathingSelection(
+                            formId,
+                            technique.getName(),
+                            displayName,
+                            technique.getTechniqueColor(),
+                            technique.getFormColor()
+                        )
                     );
                 }
 

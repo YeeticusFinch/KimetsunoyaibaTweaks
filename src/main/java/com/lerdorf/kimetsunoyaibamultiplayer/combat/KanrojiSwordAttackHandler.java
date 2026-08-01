@@ -23,16 +23,16 @@ import java.util.Map;
  * Used by both players (via BreathingSwordSwingPacket) and entities (Kanroji Entity, CustomNPCs).
  *
  * Handles:
- * - Extended range AOE damage (10 block box)
+ * - Extended range AOE damage
  * - Particle trail spawning for sword animations
  * - Love slash hit particles
  */
 public class KanrojiSwordAttackHandler {
 
-    public static final float KANROJI_BOX_SIZE = 10f; // Extended range for whip sword
-    public static final float LOVE_BOX_SIZE = 8f;    // Love sword has slightly less range
-    public static final double KANROJI_ENTITY_REACH = 15.0;
-    public static final double LOVE_ENTITY_REACH = 13.0;
+    public static final float KANROJI_BOX_SIZE = 9f; // Extended range for Mitsuri's whip sword
+    public static final float LOVE_BOX_SIZE = 7.5f;  // Love sword has slightly less range
+    public static final double KANROJI_ENTITY_REACH = 9.0;
+    public static final double LOVE_ENTITY_REACH = 7.5;
 
     /**
      * Check if an item is a whip-style sword (Kanroji or Love).
@@ -80,7 +80,7 @@ public class KanrojiSwordAttackHandler {
      * @param attacker The entity performing the attack
      * @param damage Damage to deal
      * @param animationName Animation being played (for particles)
-     * @param boxSize The AOE box size (10 for Kanroji, 8 for Love)
+     * @param boxSize The AOE box size (9 for Kanroji, 7.5 for Love)
      * @return Number of entities hit
      */
     public static int performWhipAttack(LivingEntity attacker, float damage, String animationName, float boxSize) {

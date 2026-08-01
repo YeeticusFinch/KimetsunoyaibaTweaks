@@ -74,6 +74,14 @@ public class KimetsunoyaibaMultiplayer
     // Define mod id in a common place for everything to reference
     public static final String MODID = "kimetsunoyaibamultiplayer";
 
+    public static boolean isGravityApiLoaded() {
+        return com.lerdorf.kimetsunoyaibamultiplayer.compat.GravityApiCompat.isLoaded();
+    }
+
+    public static boolean isGravityIntegrationEnabled() {
+        return com.lerdorf.kimetsunoyaibamultiplayer.compat.GravityApiCompat.isIntegrationEnabled();
+    }
+
     // NOTE: CLIENT_PROXY removed to prevent server crashes
     // The proxy pattern was causing client-only classes to be loaded on dedicated servers
     // Instead, packet handlers now use DistExecutor.unsafeRunWhenOn() directly
@@ -90,6 +98,8 @@ public class KimetsunoyaibaMultiplayer
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(SpawnRateHandler.class);
+        MinecraftForge.EVENT_BUS.register(com.lerdorf.kimetsunoyaibamultiplayer.gravity.field.GravityFieldManager.class);
+        MinecraftForge.EVENT_BUS.register(com.lerdorf.kimetsunoyaibamultiplayer.gravity.field.GravityFieldOutlineManager.class);
         Log.alwaysWarn("[INIT] Registered Forge event bus listeners");
 
         // Register entities
@@ -203,6 +213,22 @@ public class KimetsunoyaibaMultiplayer
             ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "immortal_daisy"),
                 com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyBlocks.POTTED_IMMORTAL_DAISY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "wisteria_sapling_pink"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WISTERIA_SAPLING_PINK
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "wisteria_sapling_cyan"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WISTERIA_SAPLING_CYAN
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "wisteria_sapling_lavender"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WISTERIA_SAPLING_LAVENDER
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "wisteria_sapling_cream"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WISTERIA_SAPLING_CREAM
             );
             // Register base mod style metadata and sword metadata for color change system
             com.lerdorf.kimetsunoyaibamultiplayer.api.BaseModRegistration.registerAll();
@@ -537,6 +563,9 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.commands.RepairHouseTamayoCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TestTamayoHouseCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.LocalPosCommand.register(event.getDispatcher());
+        if (com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity.isEnabled()) {
+            com.lerdorf.kimetsunoyaibamultiplayer.commands.KNYGravityCommand.register(event.getDispatcher());
+        }
         Log.startupProbe("KimetsunoyaibaMultiplayer.onRegisterCommands.end");
     }
 
@@ -622,7 +651,8 @@ public class KimetsunoyaibaMultiplayer
         // SPRINT ANIMATION SYNC: Detect when player starts/stops sprinting with a nichirin sword
         if (Config.enableNichirinSprintAnimation && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             boolean holdingNichirinSword = main.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem ||
-                                          (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getSword(main.getItem()) != null);
+                                          (com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.getSword(main.getItem()) != null) ||
+                                          com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor.isBaseModNichirinSword(main.getItem());
             boolean isTrainingSword = com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.isTrainingSword(main);
             boolean isSprintingWithSword = player.isSprinting() && holdingNichirinSword;
             boolean wasSprintingWithSword = data.wasSprintingWithSword();
@@ -817,12 +847,20 @@ public class KimetsunoyaibaMultiplayer
                 if (Config.logDebug)
                 Log.error("Failed GeckoLib.initialize on client setup: {}", t.getMessage());
             }
-            event.enqueueWork(() ->
+            event.enqueueWork(() -> {
                 net.minecraft.client.gui.screens.MenuScreens.register(
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.SWORD_RACK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.SwordRackScreen::new
-                )
-            );
+                );
+                net.minecraft.client.gui.screens.MenuScreens.register(
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.GRAVITY_BLOCK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.GravityBlockScreen::new
+                );
+                net.minecraft.client.gui.screens.MenuScreens.register(
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.BRIDGER_BLOCK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.BridgerBlockScreen::new
+                );
+            });
 		if (Config.logDebug)
             Log.info("Animation sync system initialized for client");
         }
@@ -949,6 +987,10 @@ public class KimetsunoyaibaMultiplayer
             event.registerBlockEntityRenderer(
                 com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.SWORD_RACK.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.SwordRackRenderer::new
+            );
+            event.registerBlockEntityRenderer(
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.GRAVITY_BLOCK.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.GravityBlockRenderer::new
             );
 
             if (Config.logDebug)
@@ -1102,7 +1144,7 @@ public class KimetsunoyaibaMultiplayer
 
                         if (isKimetsuSword) {
                             String slashAnimation = (animationName != null && !animationName.isEmpty()) ? animationName : "sword_to_left";
-                            ModNetworking.sendToServer(new BreathingSwordSwingPacket(slashAnimation));
+                            ModNetworking.sendToServer(new BreathingSwordSwingPacket(slashAnimation, event.getEntity().getUUID()));
                         }
 
                         // Set the left-click attack flag (sticky bit) for ATTACK_ONLY mode
@@ -1233,6 +1275,12 @@ public class KimetsunoyaibaMultiplayer
                     return;
                 }
 
+                if (com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler.isParalyzed(mc.player)) {
+                    event.setCanceled(true);
+                    event.setSwingHand(false);
+                    return;
+                }
+
                 ItemStack heldItem = mc.player.getItemInHand(InteractionHand.MAIN_HAND);
                 boolean isBaseTrainingSword =
                     com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper.isTrainingSword(heldItem) &&
@@ -1255,8 +1303,14 @@ public class KimetsunoyaibaMultiplayer
                     }
                 }
 
+                boolean isEntityAttack = mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult;
+
                 if (heldItem.getItem() == ModItems.CUSTOM_DEMON_ART.get()) {
-                    ModNetworking.sendToServer(new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CustomBdaPassiveAttackPacket());
+                    java.util.UUID excludedTargetId = null;
+                    if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
+                        excludedTargetId = entityHit.getEntity().getUUID();
+                    }
+                    ModNetworking.sendToServer(new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CustomBdaPassiveAttackPacket(excludedTargetId));
                     return;
                 }
                 
@@ -1266,6 +1320,9 @@ public class KimetsunoyaibaMultiplayer
 
                     // Only send packet and set sticky bit if animation was actually played (cooldown check passed)
                     if (animationName != null) {
+                        if (isEntityAttack) {
+                            return;
+                        }
                         ModNetworking.sendToServer(new BreathingSwordSwingPacket(animationName)); // For AOE damage (only our mod's swords)
 
                         // Set the left-click attack flag (sticky bit) so AnimationTracker will spawn particles

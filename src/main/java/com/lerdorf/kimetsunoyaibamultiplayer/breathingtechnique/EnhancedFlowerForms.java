@@ -119,7 +119,7 @@ public class EnhancedFlowerForms {
             "Six rapid slashes in symmetrical pattern, finishing with a neck strike",
             3, // 3 second cooldown
             (entity, level, formId) -> {
-                float damage = DamageCalculator.calculateScaledDamage(entity, 7.0F);
+                float damage = (16.0F);
                 GuardStateHelper.setGuardState(entity, 7.0, formId);
                 playEntityAnimation(entity, "sword_to_left");
                 setCancelAttackSwing(entity, true);
@@ -203,7 +203,7 @@ public class EnhancedFlowerForms {
 								attackBox, e -> e != entity && e.isAlive());
 
 						for (LivingEntity target : targets) {
-							if (Damager.hurt(entity, target, damage, true))
+							if (Damager.hurt(entity, target, damage, true, false, true))
 								MovementHelper.setVelocity(target, movement.scale(0.4f));
 						}
 						
@@ -273,7 +273,7 @@ public class EnhancedFlowerForms {
 								attackBox, e -> e != entity && e.isAlive());
 
 						for (LivingEntity target : targets) {
-							if (Damager.hurt(entity, target, damage/2, false))
+							if (Damager.hurt(entity, target, (damage/2)-1, false, false, true))
 								MovementHelper.setVelocity(target, movement.scale(0.2f).add(0, 0.1f, 0));
 						}
 						if (serverLevel != null) {
@@ -437,7 +437,7 @@ public class EnhancedFlowerForms {
 
                         // Deal moderate damage on contact
                         if (tick % 5 == 0) {
-                            float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
+                            float damage = (6.0F);
                             Damager.hurt(entity, target, damage);
                         }
                     }
@@ -587,7 +587,7 @@ public class EnhancedFlowerForms {
             "Sweeping slashes evolving into a spiraling rose-thorned attack",
             6, // 6 second cooldown
             (entity, level, formId) -> {
-                float damage = DamageCalculator.calculateScaledDamage(entity, 7.0F);
+                float damage = (16.0F);
                 GuardStateHelper.setGuardState(entity, 4.0, formId);
                 playEntityAnimation(entity, "sword_rotate");
                 setCancelAttackSwing(entity, true);
@@ -695,7 +695,7 @@ public class EnhancedFlowerForms {
                                 e -> e != entity && e.isAlive());
 
                             for (LivingEntity target : targets) {
-                                boolean hit = Damager.hurt(entity, target, damage/2);
+                                boolean hit = Damager.hurt(entity, target, damage/3);
                                 if (hit) MovementHelper.setVelocity(target, lookVec);
                             }
                 		}
@@ -854,8 +854,8 @@ public class EnhancedFlowerForms {
                             e -> e != entity && e.isAlive());
 
                         for (LivingEntity target : targets) {
-                            //float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
-                            Damager.hurt(entity, target, damage/2);
+                            //float damage = (6.0F);
+                            Damager.hurt(entity, target, damage/3);
                             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1));
                         }
 
@@ -933,7 +933,7 @@ public class EnhancedFlowerForms {
             "A single sword slash that curves and twists gracefully",
             3, // 3 second cooldown
             (entity, level, formId) -> {
-                float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
+                float damage = (17.0F);
                 GuardStateHelper.setGuardState(entity, damage, formId);
                 playEntityAnimation(entity, "sword_to_right");
                 setCancelAttackSwing(entity, true);
@@ -1056,7 +1056,7 @@ public class EnhancedFlowerForms {
             6, // 6 second cooldown
             (entity, level, formId) -> {
 
-                float damage = DamageCalculator.calculateScaledDamage(entity, 4.0F);
+                float damage = (2.0F);
                 GuardStateHelper.setGuardState(entity, 8.0, formId);
                 setCancelAttackSwing(entity, true);
 
@@ -1151,8 +1151,7 @@ public class EnhancedFlowerForms {
                 		);
                 		level.addFreshEntity(slash);
                 		
-                	if (currentTick[0] % slashInterval == 0)
-                	{
+                	if (currentTick[0] < totalSlashes * slashInterval && currentTick[0] % slashInterval == 0) {
                 		playEntityAnimationOnLayer(entity, animations[(int)(animations.length*Math.random())], 10, 3.0f, 4000);
                         level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                             SoundSource.PLAYERS, 1.0F, 1.0F);
@@ -1171,7 +1170,7 @@ public class EnhancedFlowerForms {
                             e -> e != entity && e.isAlive());
                         
                             for (LivingEntity target : targetEntities) {
-                                if (Damager.hurt(entity, target, damage, true)) target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 6, true, false));
+                                if (Damager.hurt(entity, target, damage, true, false, true)) target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 6, true, false));
                             }
                 	}
                 	
@@ -1246,7 +1245,7 @@ public class EnhancedFlowerForms {
                         	level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                                     SoundSource.PLAYERS, 0.9F, 1.4F);
                         	playEntityAnimation(entity, "sword_rotate");
-                            float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
+                            float damage = (16.0F);
                             for (LivingEntity target : targets) {
                                 Damager.hurt(entity, target, damage);
                                 // Spinning knockback - push in direction of spin
@@ -1326,7 +1325,7 @@ public class EnhancedFlowerForms {
             "Blinding speed creates afterimages, immobilizing foes before a devastating finish",
             8, // 8 second cooldown
             (entity, level, formId) -> {
-                final float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
+                final float damage = (8.0F);
                 GuardStateHelper.setGuardState(entity, 14.0, formId);
                 setCancelAttackSwing(entity, true);
 
@@ -1446,7 +1445,7 @@ public class EnhancedFlowerForms {
                                     && !(e instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.AfterImageEntity));
 
                             for (LivingEntity stageTarget : stageTargets) {
-                                if (Damager.hurt(entity, stageTarget, damage * 0.45f, true)) {
+                                if (Damager.hurt(entity, stageTarget, damage * 0.375f, true, false, true)) {
                                     stageTarget.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 2));
                                     MovementHelper.addVelocity(stageTarget, forward.x * 0.4, 0.2, forward.z * 0.4);
                                 }
@@ -1567,7 +1566,7 @@ public class EnhancedFlowerForms {
                                 e -> e != entity && e.isAlive()
                                     && !(e instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.AfterImageEntity));
                             for (LivingEntity kickTarget : kickTargets) {
-                                if (Damager.hurt(entity, kickTarget, damage * 1.1f, true)) {
+                                if (Damager.hurt(entity, kickTarget, damage, true, false, true)) {
                                     Vec3 kbDir = stage2DashDir[0];
                                     if (kbDir.lengthSqr() < 0.0001) {
                                         kbDir = kickTarget.position().subtract(entity.position()).multiply(1, 0, 1);
@@ -1638,7 +1637,7 @@ public class EnhancedFlowerForms {
                                 e -> e != entity && e.isAlive()
                                     && !(e instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.AfterImageEntity));
                             for (LivingEntity stabTarget : stabTargets) {
-                                if (Damager.hurt(entity, stabTarget, damage * 1.7f, true)) {
+                                if (Damager.hurt(entity, stabTarget, damage * 1.25f, true, false, true)) {
                                     Vec3 kbDir = stabTarget.position().subtract(entity.position()).multiply(1, 0, 1);
                                     if (kbDir.lengthSqr() < 0.0001) {
                                         kbDir = stage3DashDir[0];
@@ -1682,7 +1681,7 @@ public class EnhancedFlowerForms {
                                     && !(e instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.AfterImageEntity));
 
                             for (LivingEntity finalTarget : finalTargets) {
-                                if (Damager.hurt(entity, finalTarget, damage * 2.2f, true)) {
+                                if (Damager.hurt(entity, finalTarget, damage * 1.75f, true, false, true)) {
                                     MovementHelper.setVelocity(finalTarget, stage4DashDir[0].scale(0.45).add(0, 0.9f, 0));
                                     finalTarget.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 5));
                                     finalTarget.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 30, 0));
@@ -1911,7 +1910,7 @@ public class EnhancedFlowerForms {
 	                        e -> e != entity && e.isAlive());
 	
 	                    for (LivingEntity target : targets) {
-	                            float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
+	                            float damage = (6.0F);
 	                            Damager.hurt(entity, target, damage);
 	
 	                            // Pull towards tornado center
@@ -2045,7 +2044,7 @@ public class EnhancedFlowerForms {
             "Blurring piercing strikes surround and overwhelm, finishing with a precise neck thrust",
             12, // 12 second cooldown
             (entity, level, formId) -> {
-                final float damage = DamageCalculator.calculateScaledDamage(entity, 9.0F);
+                final float damage = (9.0F);
                 GuardStateHelper.setGuardState(entity, 16.0, formId);
                 setCancelAttackSwing(entity, true);
 
@@ -2150,7 +2149,7 @@ public class EnhancedFlowerForms {
                             List<LivingEntity> slashTargets = level.getEntitiesOfClass(LivingEntity.class, slashBox,
                                 e -> e != entity && e.isAlive());
                             for (LivingEntity slashTarget : slashTargets) {
-                                if (Damager.hurt(entity, slashTarget, damage * 0.6f, true)) {
+                                if (Damager.hurt(entity, slashTarget, damage * 0.55555555f, true, false, true)) {
                                     slashTarget.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1));
                                 }
                             }
@@ -2234,7 +2233,7 @@ public class EnhancedFlowerForms {
                                 e -> e != entity && e.isAlive()
                             );
                             for (LivingEntity hiltTarget : hiltTargets) {
-                                Damager.hurt(entity, hiltTarget, damage * 2.0f, true);
+                                Damager.hurt(entity, hiltTarget, damage * 1.11111111f, true, false, true);
                                 Vec3 direction = hiltTarget.position().subtract(entity.position()).normalize();
                                 MovementHelper.addVelocity(hiltTarget, direction.x * 1.2, 0.5, direction.z * 1.2);
                                 hiltTarget.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 1));
@@ -2280,7 +2279,7 @@ public class EnhancedFlowerForms {
                             List<LivingEntity> finalTargets = level.getEntitiesOfClass(LivingEntity.class, finalBox,
                                 e -> e != entity && e.isAlive());
                             for (LivingEntity finalTarget : finalTargets) {
-                                if (Damager.hurt(entity, finalTarget, damage * 3.0f, true)) {
+                                if (Damager.hurt(entity, finalTarget, damage * 1.5555555555f, true, false, true)) {
                                     Vec3 direction = finalTarget.position().subtract(entity.position()).normalize();
                                     MovementHelper.addVelocity(finalTarget, direction.x * 1.6, 0.6, direction.z * 1.6);
                                     finalTarget.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 2));
@@ -2327,7 +2326,7 @@ public class EnhancedFlowerForms {
                 playEntityAnimation(entity, "kamusari1");
                 //setCancelAttackSwing(entity, true);
                 
-                final int totalTicks = 20 * 600; // 10 minutes
+                final int totalTicks = 20 * 60 * 3; // 3 minutes
 
                 // Vermilion Eye activation - enhanced combat abilities
                 //entity.addEffect(new MobEffectInstance(MobEffects.GLOWING, 100, 0, false, false));
@@ -2344,25 +2343,25 @@ public class EnhancedFlowerForms {
                     // Dome expands outward
                     double domeRadius = 3.0 + (tick / 60.0) * 2.0; // Grows from 3 to 5 blocks
 
-                    // Damage all enemies in dome
-                    AABB domeBox = new AABB(
-                        centerPos.add(-domeRadius, -2, -domeRadius),
-                        centerPos.add(domeRadius, 4, domeRadius)
-                    );
+                        if (tick == 12) {
+                            // Damage all enemies in dome
+                            AABB domeBox = new AABB(
+                                    centerPos.add(-domeRadius, -2, -domeRadius),
+                                    centerPos.add(domeRadius, 4, domeRadius));
 
-                    List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, domeBox,
-                        e -> e != entity && e.isAlive());
+                            List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, domeBox,
+                                    e -> e != entity && e.isAlive());
 
-                    for (LivingEntity target : targets) {
-                        if (tick % 3 == 0) { // Damage every 3 ticks
-                            float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
-                            Damager.hurt(entity, target, damage);
+                            for (LivingEntity target : targets) {
 
-                            // Crushing pressure
-                            target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 2));
-                            target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 3));
+                                    float damage = (17.0F);
+                                    Damager.hurt(entity, target, damage);
+
+                                    // Crushing pressure
+                                    target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 100, 2));
+                                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 3));
+                            }
                         }
-                    }
 
                     // Vermilion petal dome particles + eye glow
                     if (level instanceof ServerLevel serverLevel) {
@@ -2459,8 +2458,8 @@ public class EnhancedFlowerForms {
         forms.add(fifthForm());   // 1305 - Peonies of Futility
         forms.add(sixthForm());   // 1306 - Whirling Peach
 
-        // Pink/purple palette for Flower Breathing
-        return new BreathingTechnique("Flower Breathing", forms, "§d", "§5");
+        // Pink palette for Flower Breathing
+        return new BreathingTechnique("Flower Breathing", forms, "§d", "§d");
     }
 
     /**
@@ -2477,8 +2476,8 @@ public class EnhancedFlowerForms {
         forms.add(sixthForm());   // 1306 - Whirling Peach
         forms.add(finalForm());   // 1310 - Equinoctial Vermilion Eye
 
-        // Pink/purple palette for Flower Breathing
-        return new BreathingTechnique("Flower Breathing", forms, "§d", "§5");
+        // Pink palette for Flower Breathing
+        return new BreathingTechnique("Flower Breathing", forms, "§d", "§d");
     }
 
     /**
@@ -2498,7 +2497,7 @@ public class EnhancedFlowerForms {
         forms.add(ninthForm());    // 1309 - Sudden Bamboo Entrapment
         forms.add(finalForm());    // 1310 - Equinoctial Vermilion Eye
 
-        // Pink/purple palette for Flower Breathing
-        return new BreathingTechnique("Flower Breathing", forms, "§d", "§5");
+        // Pink palette for Flower Breathing
+        return new BreathingTechnique("Flower Breathing", forms, "§d", "§d");
     }
 }

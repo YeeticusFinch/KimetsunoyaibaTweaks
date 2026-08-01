@@ -221,7 +221,7 @@ public class DemonSleepExecutionHandler {
 
     public static void executeSleepAttack(LivingEntity attacker, LivingEntity target) {
         boolean wasAlive = target.isAlive();
-        float damage = DamageCalculator.calculateScaledDamage(attacker, SLEEP_EXECUTION_DAMAGE);
+        float damage = (SLEEP_EXECUTION_DAMAGE);
         Damager.hurt(attacker, target, damage);
         if (wasAlive && !target.isAlive() && attacker instanceof ServerPlayer player) {
             QuestProgressionManager.handleSleepingHumanKilled(player, target);

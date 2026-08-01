@@ -33,12 +33,17 @@ public class GuardStateHelper {
      * @param defensivePower Amount of incoming damage that can be negated
      * @param breathingId Unique ID for the breathing technique (e.g., 320.0 for Flame Breathing)
      */
-    public static void setGuardState(LivingEntity entity, double defensivePower, double breathingId) {
-        entity.getPersistentData().putDouble(NBT_DAMAGE, defensivePower);
+    public static void setGuardState(LivingEntity entity, double defensivePower, double breathingId, boolean scale) {
+        entity.getPersistentData().putDouble(NBT_DAMAGE,
+                scale ? DamageCalculator.calculateScaledDamage(entity, (float) defensivePower) : defensivePower);
         entity.getPersistentData().putBoolean(NBT_GUARD, true);
         entity.getPersistentData().putBoolean(NBT_CUSTOM_BREATHING_ACTIVE, true);
         // Don't set skill or breathes - they interfere with base mod's movement and form cycling
         // Only set Damage and guard which are needed for sword clashing
+    }
+
+    public static void setGuardState(LivingEntity entity, double defensivePower, double breathingId) {
+        setGuardState(entity, defensivePower, breathingId, true);
     }
     
     /**
@@ -49,7 +54,7 @@ public class GuardStateHelper {
      * @param defensivePower Amount of incoming damage that can be negated
      */
     public static void setGuardState(LivingEntity entity, double defensivePower) {
-        setGuardState(entity, defensivePower, 0.0);
+        setGuardState(entity, defensivePower, 0.0, true);
     }
 
     /**
@@ -59,10 +64,15 @@ public class GuardStateHelper {
      * @param entity The entity attacking
      * @param offensiveDamage Amount of damage to deal (also acts as defensive power)
      */
-    public static void setAttackState(LivingEntity entity, double offensiveDamage) {
-        entity.getPersistentData().putDouble(NBT_DAMAGE, offensiveDamage);
+    public static void setAttackState(LivingEntity entity, double offensiveDamage, boolean scale) {
+        entity.getPersistentData().putDouble(NBT_DAMAGE,
+                scale ? DamageCalculator.calculateScaledDamage(entity, (float) offensiveDamage) : offensiveDamage);
         entity.getPersistentData().putBoolean(NBT_ATTACK, true);
         // Note: skill and guard flags should already be set from setGuardState
+    }
+
+    public static void setAttackState(LivingEntity entity, double offensiveDamage) {
+        setAttackState(entity, offensiveDamage, true);
     }
 
     /**

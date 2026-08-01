@@ -36,7 +36,7 @@ public class VermilionEyeEffect extends MobEffect {
 
     // Cooldown reduction multiplier (0.6 = 40% faster, meaning 60% of original cooldown)
     public static final float COOLDOWN_MULTIPLIER = 0.6f;
-    private static final int EYE_STRAIN_BLINDNESS_DURATION = 20 * 600; // 10 minutes
+    private static final int EYE_STRAIN_BLINDNESS_DURATION = 20 * 60 * 3; // 3 minutes
     private static final String EYE_STRAIN_PENDING_KEY = "knymp_vermilion_eye_strain_pending";
 
     public VermilionEyeEffect() {

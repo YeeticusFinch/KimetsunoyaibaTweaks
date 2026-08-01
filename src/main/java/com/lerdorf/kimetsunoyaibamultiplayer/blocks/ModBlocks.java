@@ -8,6 +8,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.ButtonBlock;
 import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.FenceGateBlock;
+import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.world.level.block.IronBarsBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.PressurePlateBlock;
@@ -84,6 +85,22 @@ public class ModBlocks {
             .mapColor(MapColor.WOOD)
             .sound(SoundType.WOOD)
             .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> TILE_VERTICAL_SLAB = registerBlock("tile_vertical_slab",
+        () -> new VerticalSlabBlock(BlockBehaviour.Properties.copy(Blocks.STONE_BRICKS)
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.STONE)
+            .strength(1.5f, 6.0f)
+            .requiresCorrectToolForDrops()
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> TILE_SIDEWAYS_STAIRS = registerBlock("tile_sideways_stairs",
+        () -> new SidewaysStairsBlock(BlockBehaviour.Properties.copy(Blocks.STONE_BRICK_STAIRS)
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.STONE)
+            .strength(1.5f, 6.0f)
+            .requiresCorrectToolForDrops()
             .noOcclusion()));
 
     public static final RegistryObject<Block> SPRUCE_SIDEWAYS_FENCE = registerBlock("spruce_sideways_fence",
@@ -436,6 +453,22 @@ public class ModBlocks {
                 .strength(0.0f)
                 .sound(SoundType.GRASS)));
 
+    public static final RegistryObject<Block> POTTED_WISTERIA_SAPLING_PINK = registerBlockWithoutItem("potted_wisteria_sapling_pink",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WISTERIA_SAPLING_PINK,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_DANDELION).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WISTERIA_SAPLING_CYAN = registerBlockWithoutItem("potted_wisteria_sapling_cyan",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WISTERIA_SAPLING_CYAN,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_DANDELION).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WISTERIA_SAPLING_LAVENDER = registerBlockWithoutItem("potted_wisteria_sapling_lavender",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WISTERIA_SAPLING_LAVENDER,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_DANDELION).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WISTERIA_SAPLING_CREAM = registerBlockWithoutItem("potted_wisteria_sapling_cream",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WISTERIA_SAPLING_CREAM,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_DANDELION).noOcclusion()));
+
     // Legacy name - points to pink variant
     public static final RegistryObject<Block> WISTERIA_SAPLING = WISTERIA_SAPLING_PINK;
 
@@ -455,6 +488,28 @@ public class ModBlocks {
             .strength(3.0f, 3.0f)
             .requiresCorrectToolForDrops()));
 
+    public static final RegistryObject<Block> GRAVITY_FIELD_PROJECTOR = registerBlock("gravity_field_projector",
+        () -> new GravityFieldProjectorBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(4.0f, 6.0f)
+            .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> GRAVITY_BLOCK = registerBlock("gravity_block",
+        () -> new GravityBlock(BlockBehaviour.Properties.copy(Blocks.BARRIER)
+            .noCollission()
+            .noOcclusion()
+            .noLootTable()
+            .strength(-1.0f, 3600000.0f)
+            .noParticlesOnBreak()));
+
+    public static final RegistryObject<Block> BRIDGER_BLOCK = registerBlock("bridger_block",
+        () -> new BridgerBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(1.5f, 6.0f)
+            .noOcclusion()));
+
     /**
      * Helper method to register a block and its corresponding BlockItem
      */
@@ -462,6 +517,13 @@ public class ModBlocks {
         RegistryObject<T> toReturn = BLOCKS.register(name, block);
         registerBlockItem(name, toReturn);
         return toReturn;
+    }
+
+    /**
+     * Register a block without a corresponding BlockItem.
+     */
+    private static <T extends Block> RegistryObject<T> registerBlockWithoutItem(String name, Supplier<T> block) {
+        return BLOCKS.register(name, block);
     }
 
     /**

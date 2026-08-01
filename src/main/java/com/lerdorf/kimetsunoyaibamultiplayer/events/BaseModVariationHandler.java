@@ -6,9 +6,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVar
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.NichirinCooldownHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -41,6 +41,11 @@ public class BaseModVariationHandler {
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
         Player player = event.getEntity();
         ItemStack heldItem = player.getMainHandItem();
+
+        if (FearEffectHandler.isParalyzed(player)) {
+            blockBaseModFormUse(event, player, "");
+            return;
+        }
 
         // Only handle base mod nichirin swords (not our custom BreathingSwordItem)
         if (heldItem.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) {
@@ -162,7 +167,7 @@ public class BaseModVariationHandler {
             // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
             int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, baseCooldownTicks);
 
-            NichirinCooldownHelper.applyCooldownToAllNichirinSwords(player, cooldownTicks);
+            player.getCooldowns().addCooldown(heldItem.getItem(), cooldownTicks);
 
             if (Config.logDebug) {
                 if (cooldownTicks != baseCooldownTicks) {
@@ -186,7 +191,9 @@ public class BaseModVariationHandler {
         clearPendingBaseModUseState(player);
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.FAIL);
-        player.displayClientMessage(Component.literal(message), true);
+        if (message != null && !message.isEmpty()) {
+            player.displayClientMessage(Component.literal(message), true);
+        }
     }
 
     /**

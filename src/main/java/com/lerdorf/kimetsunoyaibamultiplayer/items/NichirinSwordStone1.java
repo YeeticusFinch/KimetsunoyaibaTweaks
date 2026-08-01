@@ -14,6 +14,8 @@ import java.util.List;
  */
 public class NichirinSwordStone1 extends BreathingSwordItem {
     private static final BreathingTechnique STONE_BREATHING = createStoneBreathing();
+    private static final double ATTACK_DAMAGE_MODIFIER = 10.0;
+    private static final double ATTACK_SPEED_MODIFIER = -3.2;
 
     public NichirinSwordStone1(Properties properties) {
         super(properties);
@@ -22,6 +24,16 @@ public class NichirinSwordStone1 extends BreathingSwordItem {
     @Override
     public BreathingTechnique getBreathingTechnique() {
         return STONE_BREATHING;
+    }
+
+    @Override
+    protected double getAttackDamageModifier() {
+        return ATTACK_DAMAGE_MODIFIER;
+    }
+
+    @Override
+    protected double getAttackSpeedModifier() {
+        return ATTACK_SPEED_MODIFIER;
     }
 
     private static BreathingTechnique createStoneBreathing() {

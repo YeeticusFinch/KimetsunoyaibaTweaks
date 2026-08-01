@@ -205,6 +205,11 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
             }
         }
 
+        ItemStack displaySword = SwordSheathRegistry.getSheathDisplayItem(sword);
+        if (displaySword.isEmpty()) {
+            displaySword = sword;
+        }
+
         // Ensure GeoItem sword renderers (e.g. love/kanroji) can resolve non-player entity context.
         // Without this, displayed sheathed swords may fall back to stack NBT idle animation.
         LivingEntity previousEntity = EntityRenderContext.getCurrentEntity();
@@ -214,7 +219,7 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
         }
         try {
             Minecraft.getInstance().getItemRenderer().renderStatic(
-                sword,
+                displaySword,
                 ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
                 packedLight,
                 OverlayTexture.NO_OVERLAY,

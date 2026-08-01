@@ -264,7 +264,7 @@ public class ModItems {
             "textures/armor/purple_andon_bakama.png"));
 
     public static final RegistryObject<Item> PURPLE_DEMON_SLAYER_UNIFORM_CHESTPLATE = ITEMS.register("purple_demon_slayer_uniform_chestplate",
-        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.PURPLE_SLAYER_UNIFORM,
             net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
             new Item.Properties().stacksTo(1),
             "textures/armor/purple_demonslayer_uniform_chestplate.png",
@@ -272,7 +272,7 @@ public class ModItems {
             "textures/armor/purple_uniform_boots.png"));
 
     public static final RegistryObject<Item> PURPLE_DEMON_SLAYER_UNIFORM_LEGGINGS = ITEMS.register("purple_demon_slayer_uniform_leggings",
-        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.PURPLE_SLAYER_UNIFORM,
             net.minecraft.world.item.ArmorItem.Type.LEGGINGS,
             new Item.Properties().stacksTo(1),
             "textures/armor/purple_demonslayer_uniform_chestplate.png",
@@ -280,7 +280,7 @@ public class ModItems {
             "textures/armor/purple_uniform_boots.png"));
 
     public static final RegistryObject<Item> PURPLE_DEMON_SLAYER_UNIFORM_BOOTS = ITEMS.register("purple_demon_slayer_uniform_boots",
-        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.PURPLE_SLAYER_UNIFORM,
             net.minecraft.world.item.ArmorItem.Type.BOOTS,
             new Item.Properties().stacksTo(1),
             "textures/armor/purple_demonslayer_uniform_chestplate.png",
@@ -288,7 +288,7 @@ public class ModItems {
             "textures/armor/purple_uniform_boots.png"));
 
     public static final RegistryObject<Item> UNIFORM_BOOTS_CHERRY = ITEMS.register("uniform_boots_cherry",
-        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.LOW_ARMOR_SLAYER_UNIFORM_BOOTS,
             net.minecraft.world.item.ArmorItem.Type.BOOTS,
             new Item.Properties().stacksTo(1),
             "geo/boots.geo.json",
@@ -297,7 +297,7 @@ public class ModItems {
             "textures/armor/uniform_boots_cherry.png"));
 
     public static final RegistryObject<Item> UNIFORM_BOOTS_GOLD = ITEMS.register("uniform_boots_gold",
-        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.SLAYER_UNIFORM,
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.LOW_ARMOR_SLAYER_UNIFORM_BOOTS,
             net.minecraft.world.item.ArmorItem.Type.BOOTS,
             new Item.Properties().stacksTo(1),
             "geo/boots.geo.json",
@@ -488,6 +488,8 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_VERTICAL_SLAB.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPRUCE_VERTICAL_SLAB.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPRUCE_SIDEWAYS_STAIRS.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TILE_VERTICAL_SLAB.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TILE_SIDEWAYS_STAIRS.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPRUCE_SIDEWAYS_FENCE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_1.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_2.get(),
@@ -506,6 +508,8 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_DARK_OAK_WALL.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SWORD_RACK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GRAVITY_BLOCK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BRIDGER_BLOCK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_PINK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_CYAN.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_LAVENDER.get(),

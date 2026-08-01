@@ -855,7 +855,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
     /**
      * Update ENTITY_REACH attribute based on equipped sword type.
-     * Kanroji sword = 15 blocks, Love sword = 13 blocks, others = default (3).
+     * Kanroji sword = 9 blocks, Love sword = 7.5 blocks, others = default (3).
      */
     private void updateEntityReachForSword(ItemStack swordStack) {
         AttributeInstance reachAttr = this.getAttribute(net.minecraftforge.common.ForgeMod.ENTITY_REACH.get());

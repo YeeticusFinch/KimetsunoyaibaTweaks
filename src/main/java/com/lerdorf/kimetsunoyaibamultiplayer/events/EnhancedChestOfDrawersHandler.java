@@ -84,6 +84,7 @@ public final class EnhancedChestOfDrawersHandler {
         if (clickedState.hasProperty(ChestOfDrawersBlock.WATERLOGGED)) {
             replacementState = replacementState.setValue(ChestOfDrawersBlock.WATERLOGGED, clickedState.getValue(ChestOfDrawersBlock.WATERLOGGED));
         }
+        replacementState = ChestOfDrawersBlock.withSampledGravity(replacementState, event.getLevel(), event.getPos());
 
         event.getLevel().setBlock(event.getPos(), replacementState, 3);
 

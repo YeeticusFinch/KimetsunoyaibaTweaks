@@ -118,7 +118,7 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> SONIC_CATALYST = registerSpecial("sonic_catalyst");
     public static final RegistryObject<Item> NIGHT_CATALYST = registerSpecial("night_catalyst");
     public static final RegistryObject<Item> DARK_STAR_CATALYST = registerSpecial("dark_star_catalyst");
-    public static final RegistryObject<Item> DARK_STAR = registerPlain("dark_star");
+    public static final RegistryObject<Item> DARK_STAR = registerHidden("dark_star");
     public static final RegistryObject<Item> INFERNAL_CATALYST = registerSpecial("infernal_catalyst");
     public static final RegistryObject<Item> FLYTRAP_CATALYST = registerSpecial("flytrap_catalyst");
     public static final RegistryObject<Item> GRAVE_CATALYST = registerSpecial("grave_catalyst");
@@ -165,6 +165,10 @@ public final class ModAlchemyItems {
 
     private static RegistryObject<Item> registerSpecial(String id) {
         return register(id, () -> new AlchemyItem(new Item.Properties(), true, tintOf(id)));
+    }
+
+    private static RegistryObject<Item> registerHidden(String id) {
+        return ITEMS.register(id, () -> new AlchemyItem(new Item.Properties(), false, tintOf(id)));
     }
 
     private static int tintOf(String path) {

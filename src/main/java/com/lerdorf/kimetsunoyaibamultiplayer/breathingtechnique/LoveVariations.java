@@ -361,7 +361,7 @@ public class LoveVariations {
 								List<LivingEntity> circleTargets = entity.level().getEntitiesOfClass(LivingEntity.class,
 										attackBox, e -> e != entity && e.isAlive());
 
-								float damage = DamageCalculator.calculateScaledDamage(entity, 3.0F);
+								float damage = (3.0F);
 								
 								for (LivingEntity target : circleTargets) {
 									boolean success = Damager.hurt(entity, target, damage);
@@ -478,7 +478,7 @@ public class LoveVariations {
                 		for (LivingEntity target : targets) {
                 			if (Math.random() < 0.4) {
 	                			//System.out.println("Trying to damage " + target.getName().getString());
-	                			float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
+	                			float damage = (8.0F);
 	                			boolean damaged = Damager.hurt(entity, target, damage);
 	                			//System.out.println("Damaging " + target.getName().getString() + " " + damaged);
 	                			if (serverLevel != null) {
@@ -553,7 +553,7 @@ public class LoveVariations {
             	float [][][] particlePointsSwingRight = ParticlePositions.sword_to_right.get("point_a");
             	float [][][] particlePointsRotate = ParticlePositions.sword_rotate.get("point_a");
 
-				float damage = DamageCalculator.calculateScaledDamage(entity, 10.0F);
+				float damage = (10.0F);
             	 // Set guard state (formId auto-injected as 22005)
                 GuardStateHelper.setGuardState(entity, damage*0.75f, formId);
 
@@ -644,7 +644,7 @@ public class LoveVariations {
                             for (Entity target : targets) {
                             	if (target instanceof LivingEntity le && EnhancedLoveForms.isTargetable(entity, le)) {
                             		MovementHelper.setVelocity(le, le.getDeltaMovement().add((le.position().subtract(entity.position())).normalize().scale(1.5f)));
-                            		Damager.hurt(entity, le, damage * 0.7f);
+                            		Damager.hurt(entity, le, damage * 0.4f);
                             		if (serverLevel != null)
 	                            		serverLevel.sendParticles(
 	        	        						ModParticles.LOVE_IMPACT.get(),
@@ -673,7 +673,7 @@ public class LoveVariations {
                             for (Entity target : targets) {
                             	if (target instanceof LivingEntity le && EnhancedLoveForms.isTargetable(entity, le)) {
                             		MovementHelper.setVelocity(le, le.getDeltaMovement().add((le.position().subtract(entity.position())).normalize().scale(1.5f)));
-                            		Damager.hurt(entity, le, damage*0.7f);
+                            		Damager.hurt(entity, le, damage*0.9f);
                             		if (serverLevel != null)
 	                            		serverLevel.sendParticles(
 	        	        						ModParticles.LOVE_IMPACT.get(),
@@ -702,7 +702,7 @@ public class LoveVariations {
                             for (Entity target : targets) {
                             	if (target instanceof LivingEntity le && EnhancedLoveForms.isTargetable(entity, le)) {
                             		MovementHelper.setVelocity(le, le.getDeltaMovement().add((le.position().subtract(entity.position())).normalize().scale(1.5f)));
-                            		Damager.hurt(entity, le, damage*0.7f);
+                            		Damager.hurt(entity, le, damage*0.4f);
                             		if (serverLevel != null)
 	                            		serverLevel.sendParticles(
 	        	        						ModParticles.LOVE_IMPACT.get(),

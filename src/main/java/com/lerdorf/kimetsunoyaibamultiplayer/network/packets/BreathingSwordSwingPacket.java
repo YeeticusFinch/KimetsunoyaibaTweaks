@@ -5,6 +5,7 @@ import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
@@ -14,6 +15,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
@@ -32,32 +34,45 @@ import net.minecraftforge.network.NetworkEvent;
 
 public class BreathingSwordSwingPacket {
     private final String animationName;
+    private final UUID excludedTargetId;
 
     public BreathingSwordSwingPacket() {
         this.animationName = "";
+        this.excludedTargetId = null;
     }
 
     public BreathingSwordSwingPacket(String animationName) {
+        this(animationName, null);
+    }
+
+    public BreathingSwordSwingPacket(String animationName, UUID excludedTargetId) {
         this.animationName = animationName != null ? animationName : "";
+        this.excludedTargetId = excludedTargetId;
     }
 
     public BreathingSwordSwingPacket(FriendlyByteBuf buf) {
         this.animationName = buf.readUtf(32767);
+        this.excludedTargetId = buf.readBoolean() ? buf.readUUID() : null;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUtf(this.animationName);
+        buf.writeBoolean(this.excludedTargetId != null);
+        if (this.excludedTargetId != null) {
+            buf.writeUUID(this.excludedTargetId);
+        }
     }
 
     private static final float DEFAULT_BOX_SIZE = 5f;
-    private static final float KANROJI_BOX_SIZE = 10f; // Increased range for Kanroji's whip sword
-    private static final float LOVE_BOX_SIZE = 8f;     // Love sword has slightly less range than Kanroji
+    private static final float KANROJI_BOX_SIZE = 9f; // Increased range for Mitsuri's whip sword
+    private static final float LOVE_BOX_SIZE = 7.5f;  // Love sword has slightly less range than Kanroji
     
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context ctx = supplier.get();
         ctx.enqueueWork(() -> {
             ServerPlayer player = ctx.getSender();
             if (player == null) return;
+            if (FearEffectHandler.isParalyzed(player)) return;
 
             ItemStack heldItem = player.getItemInHand(InteractionHand.MAIN_HAND);
             boolean isCustomSword = heldItem.getItem() instanceof BreathingSwordItem;
@@ -111,32 +126,20 @@ public class BreathingSwordSwingPacket {
 
             List<LivingEntity> targets = player.level().getEntitiesOfClass(
                 LivingEntity.class, attackBox,
-                e -> e != player && e.isAlive()
+                e -> e != player && e.isAlive() && (excludedTargetId == null || !e.getUUID().equals(excludedTargetId))
             );
 
             player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                     SoundSource.PLAYERS, 1.0F, 1.0F);
 
-            boolean isOffhandSwing = animationName.equals("left_sword_to_left")
-                    || animationName.equals("left_sword_to_right")
-                    || animationName.equals("left_sword_overhead");
-            boolean isDoubleOverheadSwing = animationName.equals("double_sword_overhead");
-
-            float damage;
-            if (isDoubleOverheadSwing) {
-                damage = AttackDamageHelper.getAverageDualWieldDamage(player);
-            } else if (isOffhandSwing) {
-                damage = AttackDamageHelper.getAttackDamageForHand(player, InteractionHand.OFF_HAND);
-            } else {
-                damage = AttackDamageHelper.getAttackDamageForHand(player, InteractionHand.MAIN_HAND);
-            }
+            float damage = AttackDamageHelper.getM1AoeDamageByStrength(player);
             for (LivingEntity target : targets) {
                 // Use smart targeting system to prevent friendly fire
                 if (!EnhancedLoveForms.isTargetable(player, target)) {
                     continue; // Skip non-targetable entities
                 }
 
-                Damager.hurt(player, target, damage);
+                Damager.hurt(player, target, damage, false, true);
 
                 // Spawn love_slash particle on hit for Kanroji/Love sword
                 if ((isKanrojiSword || isLoveSword) && player.level() instanceof ServerLevel serverLevel) {

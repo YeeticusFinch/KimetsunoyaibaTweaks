@@ -157,6 +157,10 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 		return "claw".equals(modelKey);
 	}
 
+	private String getGeometryModelKey() {
+		return "moon".equals(modelKey) ? "generic" : modelKey;
+	}
+
 	public ResourceLocation getModelResource() {
 		if (isNezukoClawModel()) {
 			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw_nezuko.geo.json");
@@ -165,7 +169,7 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw.geo.json");
 		}
 		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
-				"geo/sword_slash_" + modelKey + ".geo.json");
+				"geo/sword_slash_" + getGeometryModelKey() + ".geo.json");
 	}
 
 	public ResourceLocation getTextureResource() {
@@ -219,7 +223,7 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw.geo.json");
 		}
 		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
-				"geo/sword_slash_" + modelKey + ".geo.json");
+				"geo/sword_slash_" + getGeometryModelKey() + ".geo.json");
 	}
 
 	@Override

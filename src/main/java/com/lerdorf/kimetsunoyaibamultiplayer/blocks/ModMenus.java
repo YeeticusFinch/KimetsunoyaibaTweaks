@@ -15,6 +15,12 @@ public final class ModMenus {
     public static final RegistryObject<MenuType<SwordRackMenu>> SWORD_RACK =
         MENUS.register("sword_rack", () -> IForgeMenuType.create(SwordRackMenu::new));
 
+    public static final RegistryObject<MenuType<GravityBlockMenu>> GRAVITY_BLOCK =
+        MENUS.register("gravity_block", () -> IForgeMenuType.create(GravityBlockMenu::new));
+
+    public static final RegistryObject<MenuType<BridgerBlockMenu>> BRIDGER_BLOCK =
+        MENUS.register("bridger_block", () -> IForgeMenuType.create(BridgerBlockMenu::new));
+
     private ModMenus() {
     }
 

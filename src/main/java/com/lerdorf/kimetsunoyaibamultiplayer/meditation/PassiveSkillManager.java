@@ -32,6 +32,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 public final class PassiveSkillManager {
     public static final String NIGHTVISION_ID = "demon_nightvision";
@@ -178,6 +179,10 @@ public final class PassiveSkillManager {
     }
 
     public static boolean handleCustomBdaPassiveAttack(ServerPlayer player) {
+        return handleCustomBdaPassiveAttack(player, null);
+    }
+
+    public static boolean handleCustomBdaPassiveAttack(ServerPlayer player, UUID excludedTargetId) {
         if (!isDemon(player) || !isHoldingCustomBda(player)) {
             return false;
         }
@@ -197,14 +202,14 @@ public final class PassiveSkillManager {
         player.getPersistentData().putLong(DEMON_PASSIVE_ATTACK_TICK, now);
         if (martialArtsLevel > 0 && clawsLevel > 0) {
             if (player.getRandom().nextBoolean()) {
-                performMartialArtsAttack(player, martialArtsLevel);
+                performMartialArtsAttack(player, martialArtsLevel, excludedTargetId);
             } else {
-                performClawAttack(player, clawsLevel);
+                performClawAttack(player, clawsLevel, excludedTargetId);
             }
         } else if (martialArtsLevel > 0) {
-            performMartialArtsAttack(player, martialArtsLevel);
+            performMartialArtsAttack(player, martialArtsLevel, excludedTargetId);
         } else {
-            performClawAttack(player, clawsLevel);
+            performClawAttack(player, clawsLevel, excludedTargetId);
         }
         return true;
     }
@@ -273,7 +278,7 @@ public final class PassiveSkillManager {
         player.getFoodData().setFoodLevel(Math.max(0, player.getFoodData().getFoodLevel() - 1));
     }
 
-    private static void performMartialArtsAttack(ServerPlayer player, int level) {
+    private static void performMartialArtsAttack(ServerPlayer player, int level, UUID excludedTargetId) {
         int index = Math.floorMod(player.getPersistentData().getInt(MARTIAL_ART_INDEX), MARTIAL_ART_ANIMATIONS.length);
         String animation = MARTIAL_ART_ANIMATIONS[index];
         player.getPersistentData().putInt(MARTIAL_ART_INDEX, (index + 1) % MARTIAL_ART_ANIMATIONS.length);
@@ -282,10 +287,10 @@ public final class PassiveSkillManager {
         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
             SoundSource.PLAYERS, 1.0F, 1.0F);
         spawnImpact(player);
-        damageTargets(player, level, false);
+        damageTargets(player, level, false, excludedTargetId);
     }
 
-    private static void performClawAttack(ServerPlayer player, int level) {
+    private static void performClawAttack(ServerPlayer player, int level, UUID excludedTargetId) {
         int index = Math.floorMod(player.getPersistentData().getInt(CLAW_ART_INDEX), CLAW_ANIMATIONS.length);
         String animation = CLAW_ANIMATIONS[index];
         player.getPersistentData().putInt(CLAW_ART_INDEX, (index + 1) % CLAW_ANIMATIONS.length);
@@ -294,10 +299,10 @@ public final class PassiveSkillManager {
         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
             SoundSource.PLAYERS, 1.0F, 1.0F);
         ModNetworking.sendToAllClients(new MobSwordSlashPacket(player.getUUID(), normalizeSlashAnimation(animation), 0));
-        damageTargets(player, level, true);
+        damageTargets(player, level, true, excludedTargetId);
     }
 
-    private static void damageTargets(ServerPlayer player, int skillLevel, boolean claws) {
+    private static void damageTargets(ServerPlayer player, int skillLevel, boolean claws, UUID excludedTargetId) {
         Vec3 eyePos = player.position().add(0.0D, player.getEyeHeight(), 0.0D);
         Vec3 lookVec = player.getLookAngle().normalize();
         Vec3 frontPos = eyePos.add(lookVec.scale(DEFAULT_AOE_BOX_SIZE / 1.5F));
@@ -306,11 +311,10 @@ public final class PassiveSkillManager {
             frontPos.add(DEFAULT_AOE_BOX_SIZE / 2.0F, DEFAULT_AOE_BOX_SIZE / 2.0F, DEFAULT_AOE_BOX_SIZE / 2.0F)
         );
 
-        float damage = Math.max(1.0F, AttackDamageHelper.getAttackDamageForHand(player, InteractionHand.MAIN_HAND))
-            * damageScale(skillLevel);
+        float damage = AttackDamageHelper.getM1AoeDamageByStrength(player);
         double knockback = 0.18D + 0.12D * skillLevel;
         List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, attackBox,
-            entity -> entity != player && entity.isAlive());
+            entity -> entity != player && entity.isAlive() && (excludedTargetId == null || !entity.getUUID().equals(excludedTargetId)));
 
         for (LivingEntity target : targets) {
             if (DemonSleepExecutionHandler.isSleepingInBed(target) && !Damager.isDemon(target)) {
@@ -321,7 +325,7 @@ public final class PassiveSkillManager {
             if (!EnhancedLoveForms.isTargetable(player, target)) {
                 continue;
             }
-            Damager.hurt(player, target, damage);
+            Damager.hurt(player, target, damage, false, true);
             target.knockback(knockback, player.getX() - target.getX(), player.getZ() - target.getZ());
             if (claws) {
                 tryApplyClawTargetEffect(player, target, skillLevel);

@@ -284,7 +284,7 @@ public class SwampHandEntity extends Mob implements GeoEntity {
             // Calculate scaled damage if we have an owner, otherwise use base damage
             float damage = baseDamage;
             if (owner != null) {
-                damage = Damager.calculateScaledDamage(owner, baseDamage);
+                damage =(baseDamage);
             }
 
             // Apply damage using the owner as the source (if available)

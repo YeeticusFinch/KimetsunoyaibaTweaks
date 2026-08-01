@@ -12,6 +12,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticleHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesEntity;
@@ -340,10 +341,10 @@ public final class CombustibleBlood {
         }
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity); // IMPORTANT: THIS IS SO THAT NON-PLAYER ENTITIES LOOK AT THEIR TARGET BEFORE USING THEIR FORM
-        float damage = DamageCalculator.calculateScaledDamage(entity, 6F);
+        float damage = 6F;
         float halfDamage = damage * 0.5F;
-        GuardStateHelper.setGuardState(entity, damage, formId);
-        GuardStateHelper.setAttackState(entity, damage);
+        GuardStateHelper.setGuardState(entity, damage, formId, true);
+        GuardStateHelper.setAttackState(entity, damage, true);
 
         int duration = CRAZY_SCRATCHING_ATTACK_COUNT * CRAZY_SCRATCHING_ATTACK_INTERVAL_TICKS;
         AbilityScheduler.scheduleRepeating(entity, new Runnable() {
@@ -378,10 +379,10 @@ public final class CombustibleBlood {
         }
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity); // IMPORTANT: THIS IS SO THAT NON-PLAYER ENTITIES LOOK AT THEIR TARGET BEFORE USING THEIR FORM
-        float damage = DamageCalculator.calculateScaledDamage(entity, 12F);
+        float damage = 12;
         float halfDamage = damage * 0.5F;
-        GuardStateHelper.setGuardState(entity, damage, formId);
-        GuardStateHelper.setAttackState(entity, damage);
+        GuardStateHelper.setGuardState(entity, damage, formId, true);
+        GuardStateHelper.setAttackState(entity, damage, true);
 
         playAnimation(entity, "backflip", HEEL_BASH_ASCENT_TICKS);
         AbilityScheduler.scheduleRepeating(entity, () -> {
@@ -404,10 +405,10 @@ public final class CombustibleBlood {
         }
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity); // IMPORTANT: THIS IS SO THAT NON-PLAYER ENTITIES LOOK AT THEIR TARGET BEFORE USING THEIR FORM
-        float damage = DamageCalculator.calculateScaledDamage(entity, 11F);
+        float damage = 11;
         float halfDamage = damage * 0.5F;
-        GuardStateHelper.setGuardState(entity, damage, formId);
-        GuardStateHelper.setAttackState(entity, damage);
+        GuardStateHelper.setGuardState(entity, damage, formId, true);
+        GuardStateHelper.setAttackState(entity, damage, true);
 
         entity.teleportTo(entity.getX(), entity.getY() + EXPLODING_HEEL_BASH_TELEPORT_HEIGHT, entity.getZ());
         MovementHelper.setVelocity(entity, Vec3.ZERO);
@@ -421,10 +422,10 @@ public final class CombustibleBlood {
         }
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity); // IMPORTANT: THIS IS SO THAT NON-PLAYER ENTITIES LOOK AT THEIR TARGET BEFORE USING THEIR FORM
-        float damage = DamageCalculator.calculateScaledDamage(entity, 9F);
+        float damage = 9F;
         float halfDamage = damage * 0.5F;
-        GuardStateHelper.setGuardState(entity, damage, formId);
-        GuardStateHelper.setAttackState(entity, damage);
+        GuardStateHelper.setGuardState(entity, damage, formId, true);
+        GuardStateHelper.setAttackState(entity, damage, true);
 
         playAnimation(entity, "kick_flying", FLYING_KICK_ATTACK_TICKS);
         final Vec3 launchDirection = getSafeHorizontalLookVector(entity);
@@ -473,10 +474,10 @@ public final class CombustibleBlood {
         }
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity); // IMPORTANT: THIS IS SO THAT NON-PLAYER ENTITIES LOOK AT THEIR TARGET BEFORE USING THEIR FORM
-        float damage = DamageCalculator.calculateScaledDamage(entity, 10F);
+        float damage = 10F;
         float halfDamage = damage * 0.5F;
-        GuardStateHelper.setGuardState(entity, damage, formId);
-        GuardStateHelper.setAttackState(entity, damage);
+        GuardStateHelper.setGuardState(entity, damage, formId, true);
+        GuardStateHelper.setAttackState(entity, damage, true);
 
         playAnimation(entity, "sword_to_upper", NAILS_OF_FURY_TICKS);
         spawnNailsOfFurySlash((ServerLevel) level, entity);
@@ -503,10 +504,10 @@ public final class CombustibleBlood {
         }
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity); // IMPORTANT: THIS IS SO THAT NON-PLAYER ENTITIES LOOK AT THEIR TARGET BEFORE USING THEIR FORM
-        float damage = DamageCalculator.calculateScaledDamage(entity, 8F);
+        float damage = 8F;
         float halfDamage = damage * 0.5F;
-        GuardStateHelper.setGuardState(entity, damage, formId);
-        GuardStateHelper.setAttackState(entity, damage);
+        GuardStateHelper.setGuardState(entity, damage, formId, true);
+        GuardStateHelper.setAttackState(entity, damage, true);
 
         playAnimation(entity, "kick_left", FRENZIED_KICK_PHASE_TICKS);
         applyFrenziedUpwardKick(entity, FRENZIED_KICK_PHASE_TICKS / 2, halfDamage);
@@ -558,9 +559,9 @@ public final class CombustibleBlood {
 
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity); // IMPORTANT: THIS IS SO THAT NON-PLAYER ENTITIES LOOK AT THEIR TARGET BEFORE USING THEIR FORM
-        float damage = DamageCalculator.calculateScaledDamage(entity, 8F);
-        GuardStateHelper.setGuardState(entity, damage, formId);
-        GuardStateHelper.setAttackState(entity, damage);
+        float damage = 8F;
+        GuardStateHelper.setGuardState(entity, damage, formId, true);
+        GuardStateHelper.setAttackState(entity, damage, true);
         playAnimation(entity, "speed_attack_punch", EXPLODING_BLOOD_STRIKE_TICKS);
 
         final Vec3 strikeDirection = getSafeHorizontalLookVector(entity);
@@ -599,9 +600,9 @@ public final class CombustibleBlood {
 
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity);
-        float damage = DamageCalculator.calculateScaledDamage(entity, 9F);
-        GuardStateHelper.setGuardState(entity, damage, formId);
-        GuardStateHelper.setAttackState(entity, damage);
+        float damage = 9F;
+        GuardStateHelper.setGuardState(entity, damage, formId, true);
+        GuardStateHelper.setAttackState(entity, damage, true);
 
         Vec3 startPos = entity.position();
         Vec3 targetPos = findDropKickTeleportPosition(entity, serverLevel, DROP_KICK_RANGE);
@@ -631,9 +632,9 @@ public final class CombustibleBlood {
 
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity);
-        float damage = DamageCalculator.calculateScaledDamage(entity, 9F);
-        GuardStateHelper.setGuardState(entity, damage, formId);
-        GuardStateHelper.setAttackState(entity, damage);
+        float damage = 9F;
+        GuardStateHelper.setGuardState(entity, damage, formId, true);
+        GuardStateHelper.setAttackState(entity, damage, true);
         playAnimation(entity, "beast2", FIERY_SLASH_TICKS);
         spawnFierySlashX(serverLevel, entity);
 
@@ -652,9 +653,9 @@ public final class CombustibleBlood {
 
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity);
-        float damage = DamageCalculator.calculateScaledDamage(entity, 6F);
-        GuardStateHelper.setGuardState(entity, damage, formId);
-        GuardStateHelper.setAttackState(entity, damage);
+        float damage = 9F;
+        GuardStateHelper.setGuardState(entity, damage, formId, true);
+        GuardStateHelper.setAttackState(entity, damage, true);
         playAnimation(entity, "kick_rotate5", SPIN_KICK_TICKS);
 
         Vec3 vortexPos = entity.position().add(getSafeHorizontalLookVector(entity).scale(SPIN_KICK_VORTEX_DISTANCE));
@@ -670,7 +671,7 @@ public final class CombustibleBlood {
 
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity); // IMPORTANT: THIS IS SO THAT NON-PLAYER ENTITIES LOOK AT THEIR TARGET BEFORE USING THEIR FORM
-        float damage = DamageCalculator.calculateScaledDamage(entity, 6F);
+        float damage = 6F;
         float halfDamage = damage * 0.5F;
         GuardStateHelper.setGuardState(entity, damage, formId);
         GuardStateHelper.setAttackState(entity, damage);
@@ -831,7 +832,7 @@ public final class CombustibleBlood {
 
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity); // IMPORTANT: THIS IS SO THAT NON-PLAYER ENTITIES LOOK AT THEIR TARGET BEFORE USING THEIR FORM
-        float damage = DamageCalculator.calculateScaledDamage(entity, 6F);
+        float damage = 6F;
         GuardStateHelper.setGuardState(entity, damage, formId);
         GuardStateHelper.setAttackState(entity, damage);
         playAnimation(entity, "kick_right", HELLFIRE_KICK_TICKS);
@@ -1985,11 +1986,11 @@ public final class CombustibleBlood {
         return gameTime - lastAbilityUseTick <= 2L;
     }
 
-    private static void handlePlayerLeftClick(Player player) {
+    private static void handlePlayerLeftClick(Player player, Entity target) {
         if (!isCombustibleBloodMeleeItem(player.getMainHandItem()) || !markLeftClickHandled(player)) {
             return;
         }
-        playRegularMeleeCombo(player);
+        BloodDemonArtM1AttackHandler.performNezukoAttack(player, target != null ? target.getUUID() : null);
     }
 
     private static void playAnimation(LivingEntity entity, String animation, int duration) {
@@ -2018,7 +2019,7 @@ public final class CombustibleBlood {
                 && player.swinging
                 && player.swingTime == 0
                 && !shouldIgnoreSwingForAbilityUse(player)) {
-                handlePlayerLeftClick(player);
+                handlePlayerLeftClick(player, null);
             }
         }
 
@@ -2029,7 +2030,7 @@ public final class CombustibleBlood {
             }
 
             Player player = event.getEntity();
-            handlePlayerLeftClick(player);
+            handlePlayerLeftClick(player, event.getTarget());
         }
 
         @SubscribeEvent
@@ -2038,7 +2039,7 @@ public final class CombustibleBlood {
                 return;
             }
             if (isCombustibleBloodMeleeItem(event.getItemStack())) {
-                handlePlayerLeftClick(event.getEntity());
+                handlePlayerLeftClick(event.getEntity(), null);
             }
         }
 
@@ -2054,7 +2055,7 @@ public final class CombustibleBlood {
             }
 
             if (isCombustibleBloodMeleeItem(attacker.getMainHandItem())) {
-                playRegularMeleeCombo(attacker);
+                BloodDemonArtM1AttackHandler.performNezukoAttack(attacker, event.getEntity().getUUID());
             }
         }
     }

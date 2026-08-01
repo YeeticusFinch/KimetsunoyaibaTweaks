@@ -14,6 +14,7 @@ import java.util.List;
  */
 public class NichirinSwordInsect extends BreathingSwordItem {
     private static final BreathingTechnique INSECT_BREATHING = createInsectBreathing();
+    private static final double ATTACK_DAMAGE_MODIFIER = 2.5;
 
     public NichirinSwordInsect(Properties properties) {
         super(properties);
@@ -22,6 +23,11 @@ public class NichirinSwordInsect extends BreathingSwordItem {
     @Override
     public BreathingTechnique getBreathingTechnique() {
         return INSECT_BREATHING;
+    }
+
+    @Override
+    protected double getAttackDamageModifier() {
+        return ATTACK_DAMAGE_MODIFIER;
     }
 
     private static BreathingTechnique createInsectBreathing() {

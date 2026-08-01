@@ -1,0 +1,19 @@
+{
+  "sources": [
+    {
+      "type": "single",
+      "resource": "kimetsunoyaibamultiplayer:mob_effect/vermilion_eye",
+      "sprite": "kimetsunoyaibamultiplayer:vermilion_eye"
+    },
+    {
+      "type": "single",
+      "resource": "kimetsunoyaibamultiplayer:mob_effect/fear",
+      "sprite": "kimetsunoyaibamultiplayer:fear"
+    },
+    {
+      "type": "single",
+      "resource": "kimetsunoyaibamultiplayer:mob_effect/fear_cooldown",
+      "sprite": "kimetsunoyaibamultiplayer:fear_cooldown"
+    }
+  ]
+}

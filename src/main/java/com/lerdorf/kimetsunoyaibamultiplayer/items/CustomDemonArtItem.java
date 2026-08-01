@@ -74,6 +74,10 @@ public class CustomDemonArtItem extends GeckolibItem {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler.isParalyzed(player)) {
+            return InteractionResultHolder.fail(stack);
+        }
+
         if (level.isClientSide()) {
             return InteractionResultHolder.sidedSuccess(stack, true);
         }

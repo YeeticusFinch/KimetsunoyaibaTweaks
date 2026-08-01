@@ -8,7 +8,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingD
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.NichirinCooldownHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -34,6 +33,7 @@ public abstract class BreathingSwordItem extends SwordItem {
 
 	private static final double CUSTOM_DAMAGE = 6.5; // +4.5 attack damage (base punch is 1, +1 from entity base, total shown: +4.5)
     private static final double ATTACK_SPEED = -2.4F;
+    private static final double ATTACK_DAMAGE_MODIFIER = 3.5;
 
     public BreathingSwordItem(Properties properties) {
         // Pass 0 for attack damage - we override with custom attribute modifiers
@@ -44,6 +44,14 @@ public abstract class BreathingSwordItem extends SwordItem {
      * Get the breathing technique for this sword
      */
     public abstract BreathingTechnique getBreathingTechnique();
+
+    protected double getAttackDamageModifier() {
+        return ATTACK_DAMAGE_MODIFIER;
+    }
+
+    protected double getAttackSpeedModifier() {
+        return ATTACK_SPEED;
+    }
 
     protected String getTechniqueFormStateKey(BreathingTechnique technique) {
         return PlayerBreathingData.getTechniqueKey(technique != null ? technique.getName() : getClass().getName());
@@ -56,6 +64,10 @@ public abstract class BreathingSwordItem extends SwordItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         BreathingTechnique technique = getBreathingTechnique();
+
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler.isParalyzed(player)) {
+            return InteractionResultHolder.fail(stack);
+        }
 
         if (GuardStateHelper.isBaseModBreathingActiveOrOnCooldown(player)) {
             player.displayClientMessage(
@@ -168,7 +180,7 @@ public abstract class BreathingSwordItem extends SwordItem {
                         player, variation.getDisplayName(), technique.getTechniqueColor());
                     // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
-                    NichirinCooldownHelper.applyCooldownToAllNichirinSwords(player, cooldownTicks);
+                    player.getCooldowns().addCooldown(this, cooldownTicks);
                 }
 
                 // Send action bar message
@@ -212,7 +224,7 @@ public abstract class BreathingSwordItem extends SwordItem {
                         player, form.getDisplayName(), technique.getTechniqueColor());
                     // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
-                    NichirinCooldownHelper.applyCooldownToAllNichirinSwords(player, cooldownTicks);
+                    player.getCooldowns().addCooldown(this, cooldownTicks);
                 }
 
                 // Send action bar message (both sides for immediate feedback)
@@ -235,9 +247,9 @@ public abstract class BreathingSwordItem extends SwordItem {
 
             // Attack damage: base entity damage is 1, we add 4.5 to make the tooltip show "+4.5 Attack Damage"
             builder.put(Attributes.ATTACK_DAMAGE,
-                new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", 3.5, AttributeModifier.Operation.ADDITION));
+                new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", getAttackDamageModifier(), AttributeModifier.Operation.ADDITION));
             builder.put(Attributes.ATTACK_SPEED,
-                new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", ATTACK_SPEED, AttributeModifier.Operation.ADDITION));
+                new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", getAttackSpeedModifier(), AttributeModifier.Operation.ADDITION));
 
             return builder.build();
         }
@@ -257,6 +269,10 @@ public abstract class BreathingSwordItem extends SwordItem {
      * @param backward If true, cycle backward; if false, cycle forward
      */
     public void cycleForm(Player player, boolean backward) {
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler.isParalyzed(player)) {
+            return;
+        }
+
         BreathingTechnique technique = getBreathingTechnique();
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
         String styleKey = getTechniqueFormStateKey(technique);
@@ -336,9 +352,13 @@ public abstract class BreathingSwordItem extends SwordItem {
             // Only send on server to avoid duplicate messages
             if (!player.level().isClientSide && !com.lerdorf.kimetsunoyaibamultiplayer.Config.suppressFormCycleChat) {
                 player.sendSystemMessage(
-                    LocalizationHelper.breathingStyleFromFormId(form.getFormId(), technique.getName()).copy()
-                        .append(Component.literal(" "))
-                        .append(form.getDisplayName())
+                    LocalizationHelper.coloredBreathingSelection(
+                        form.getFormId(),
+                        technique.getName(),
+                        form.getDisplayName(),
+                        technique.getTechniqueColor(),
+                        technique.getFormColor()
+                    )
                 );
             }
         }

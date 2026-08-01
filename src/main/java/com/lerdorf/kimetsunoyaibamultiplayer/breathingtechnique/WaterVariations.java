@@ -134,7 +134,7 @@ public class WaterVariations {
             (entity, level, formId) -> {
                 // formId is automatically 102 (Water Second Form)
             	ServerLevel serverLevel = level.isClientSide() ? null : (ServerLevel) level;
-            	float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
+            	float damage = (22.0F);
             	GuardStateHelper.setGuardState(entity, damage, formId);
             	int tickDuration = 15;
             	
@@ -212,13 +212,13 @@ public class WaterVariations {
         BreathingFormVariation rollingWheel = new BreathingFormVariation(
             "Second Form: Rolling Water Wheel",
             "Water wheel that rolls like a wheel",
-            5,  // Longer cooldown
+            8,  // Longer cooldown
             (entity, level, formId) -> {
             	// formId is automatically 102 (Water Second Form)
             	ServerLevel serverLevel = level.isClientSide() ? null : (ServerLevel) level;
-            	float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
+            	float damage = (6.0F);
             	GuardStateHelper.setGuardState(entity, damage, formId);
-            	int tickDuration = 60;
+            	int tickDuration = 40;
             	final float originalStepHeight = 0.6f;
 				MovementHelper.setStepHeight(entity, 3);
             	
@@ -235,53 +235,55 @@ public class WaterVariations {
             		}
             		
             		if (tickCounter[0] % 2 == 0) {
-            			if (serverLevel != null) {
-                    		// Spawn a vertical circle of water particles centered on the player, 2 block radius
-                    		int c = 0;
-                    		for (float i = 0; i < 2*Math.PI; i+= 0.1) {
-                    			Vec3 rad = vel.normalize().scale(Math.cos(i)).add(new Vec3(0, Math.sin(i), 0));
-                    			for (float j = 2; j < 2.5; j+=0.2f) {
-                    				Vec3 pos = entity.getEyePosition().add(rad.scale(j));
-                        			serverLevel.sendParticles(
-                        					(net.minecraft.core.particles.SimpleParticleType)ForgeRegistries.PARTICLE_TYPES.getValue(new ResourceLocation("kimetsunoyaiba", "water")), //kimetsunoyaiba:particle_blue_smoke
-                    						pos.x, pos.y, pos.z,
-                    						2, 0.02, 0.02, 0.02, 0.02
-                    					);
-                    			}
-                    			
-                    			if ((c + tickCounter[0]) % 8 == 0) {
-                    				for (float j = 2; j < 3.5; j+=0.15f) {
-                        				Vec3 pos = entity.getEyePosition().add(rad.scale(j));
-                            			serverLevel.sendParticles(
-                            					ParticleTypes.CLOUD, // white spikes
-                        						pos.x, pos.y, pos.z,
-                        						1, 0.02, 0.02, 0.02, 0.02
-                        					);
-                        			}
-                    			}
-                    			
-                    			c++;
-                    		}
-                    	}
+                            if (serverLevel != null) {
+                                // Spawn a vertical circle of water particles centered on the player, 2 block radius
+                                int c = 0;
+                                for (float i = 0; i < 2 * Math.PI; i += 0.1) {
+                                    Vec3 rad = vel.normalize().scale(Math.cos(i)).add(new Vec3(0, Math.sin(i), 0));
+                                    for (float j = 2; j < 2.5; j += 0.2f) {
+                                        Vec3 pos = entity.getEyePosition().add(rad.scale(j));
+                                        serverLevel.sendParticles(
+                                                (net.minecraft.core.particles.SimpleParticleType) ForgeRegistries.PARTICLE_TYPES
+                                                        .getValue(new ResourceLocation("kimetsunoyaiba", "water")), //kimetsunoyaiba:particle_blue_smoke
+                                                pos.x, pos.y, pos.z,
+                                                2, 0.02, 0.02, 0.02, 0.02);
+                                    }
+
+                                    if ((c + tickCounter[0]) % 8 == 0) {
+                                        for (float j = 2; j < 3.5; j += 0.15f) {
+                                            Vec3 pos = entity.getEyePosition().add(rad.scale(j));
+                                            serverLevel.sendParticles(
+                                                    ParticleTypes.CLOUD, // white spikes
+                                                    pos.x, pos.y, pos.z,
+                                                    1, 0.02, 0.02, 0.02, 0.02);
+                                        }
+                                    }
+
+                                    c++;
+                                }
+                            }
             			
-            			AABB hitBox = entity.getBoundingBox().inflate(5.0);
-                        List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
+                            if (tickCounter[0] % 10 == 0) {
+                                AABB hitBox = entity.getBoundingBox().inflate(5.0);
+                                List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
 
-                        for (Entity target : targets) {
-                        	if (target instanceof LivingEntity livingTarget) {
-                                Damager.hurt(entity, livingTarget, damage);
-                                
-                                // Play an attack sound
-                                level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS,
-                						1.0F, 1.0F);
+                                for (Entity target : targets) {
+                                    if (target instanceof LivingEntity livingTarget) {
+                                        Damager.hurt(entity, livingTarget, damage);
 
-                                // Brief confusion
-                                //livingTarget.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0));
-                        	}
-                        	// Knockback away from center
-                            Vec3 knockbackDir = target.position().subtract(entity.position()).normalize();
-                            target.setDeltaMovement(target.getDeltaMovement().add(knockbackDir.scale(0.5)));
-                        }
+                                        // Play an attack sound
+                                        level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
+                                                SoundSource.PLAYERS,
+                                                1.0F, 1.0F);
+
+                                        // Brief confusion
+                                        //livingTarget.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0));
+                                    }
+                                    // Knockback away from center
+                                    Vec3 knockbackDir = target.position().subtract(entity.position()).normalize();
+                                    target.setDeltaMovement(target.getDeltaMovement().add(knockbackDir.scale(0.5)));
+                                }
+                            }
             		}
             		
             		tickCounter[0]++;

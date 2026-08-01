@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "kimetsunoyaibamultiplayer:block/bridger",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "kimetsunoyaibamultiplayer:block/bridger",
+      "x": 90
+    },
+    "facing=north": {
+      "model": "kimetsunoyaibamultiplayer:block/bridger"
+    },
+    "facing=south": {
+      "model": "kimetsunoyaibamultiplayer:block/bridger",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "kimetsunoyaibamultiplayer:block/bridger",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "kimetsunoyaibamultiplayer:block/bridger",
+      "y": 90
+    }
+  }
+}

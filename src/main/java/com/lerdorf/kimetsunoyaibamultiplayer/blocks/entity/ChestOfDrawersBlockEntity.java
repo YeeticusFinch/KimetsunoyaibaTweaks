@@ -312,12 +312,10 @@ public class ChestOfDrawersBlockEntity extends BlockEntity implements GeoBlockEn
     }
 
     private int resolveBottomSlot(Vec3 clickLocation) {
-        Direction facing = getBlockState().getValue(ChestOfDrawersBlock.FACING);
-        Direction right = facing.getClockWise();
-        double centerX = worldPosition.getX() + 0.5D;
-        double centerZ = worldPosition.getZ() + 0.5D;
-        double lateralOffset = (clickLocation.x - centerX) * right.getStepX()
-            + (clickLocation.z - centerZ) * right.getStepZ();
+        Direction right = ChestOfDrawersBlock.getRightDirection(getBlockState());
+        Vec3 center = Vec3.atCenterOf(worldPosition);
+        Vec3 fromCenter = clickLocation.subtract(center);
+        double lateralOffset = fromCenter.dot(ChestOfDrawersBlock.worldVector(right));
         return lateralOffset < 0.0D ? SLOT_BOTTOM_LEFT : SLOT_BOTTOM_RIGHT;
     }
 
@@ -326,7 +324,7 @@ public class ChestOfDrawersBlockEntity extends BlockEntity implements GeoBlockEn
             return true;
         }
 
-        Direction facing = getBlockState().getValue(ChestOfDrawersBlock.FACING);
+        Direction facing = ChestOfDrawersBlock.getFrontDirection(getBlockState());
         BlockState frontState = level.getBlockState(worldPosition.relative(facing));
         return frontState.isAir() || !frontState.blocksMotion();
     }
@@ -378,11 +376,11 @@ public class ChestOfDrawersBlockEntity extends BlockEntity implements GeoBlockEn
             return;
         }
 
-        Direction facing = getBlockState().getValue(ChestOfDrawersBlock.FACING);
-        Direction right = facing.getClockWise();
-        double x = worldPosition.getX() + 0.5 + facing.getStepX() * 1.0 + right.getStepX() * sideOffset;
-        double y = worldPosition.getY() + yOffset;
-        double z = worldPosition.getZ() + 0.5 + facing.getStepZ() * 1.0 + right.getStepZ() * sideOffset;
+        Vec3 localOffset = ChestOfDrawersBlock.localToWorld(getBlockState(), sideOffset, yOffset - 0.5D, 1.0D);
+        Vec3 position = Vec3.atCenterOf(worldPosition).add(localOffset);
+        double x = position.x;
+        double y = position.y;
+        double z = position.z;
 
         interaction.moveTo(x, y, z);
         CompoundTag interactionTag = interaction.saveWithoutId(new CompoundTag());
@@ -412,11 +410,9 @@ public class ChestOfDrawersBlockEntity extends BlockEntity implements GeoBlockEn
             return;
         }
 
-        ItemEntity entity = new ItemEntity(level,
-            worldPosition.getX() + 0.5,
-            worldPosition.getY() + 0.8,
-            worldPosition.getZ() + 0.5,
-            stack);
+        Vec3 spawnPos = Vec3.atCenterOf(worldPosition)
+            .add(ChestOfDrawersBlock.localToWorld(getBlockState(), 0.0D, 0.3D, 0.0D));
+        ItemEntity entity = new ItemEntity(level, spawnPos.x, spawnPos.y, spawnPos.z, stack);
         level.addFreshEntity(entity);
     }
 

@@ -88,6 +88,17 @@ public class EntityConfig {
     static {
         BUILDER.pop(); // quest_familiars
         BUILDER.pop(); // kasugai_crow
+
+        BUILDER.comment("Kizuki Fear Configuration")
+                .push("kizuki_fear");
+    }
+
+    private static final ForgeConfigSpec.BooleanValue KIZUKI_FEAR_ENABLED = BUILDER
+            .comment("Enable Kokushibo and Akaza fear auras and aggro fear")
+            .define("enabled", true);
+
+    static {
+        BUILDER.pop(); // kizuki_fear
         BUILDER.pop(); // entities
     }
 
@@ -109,6 +120,7 @@ public class EntityConfig {
     public static boolean crowImmuneToDamage = false;
     public static boolean orochiImmuneToDamage = false;
     public static boolean eyeFamiliarImmuneToDamage = false;
+    public static boolean kizukiFearEnabled = true;
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
@@ -128,6 +140,7 @@ public class EntityConfig {
         crowImmuneToDamage = QUEST_FAMILIAR_CROW_DAMAGE_IMMUNE.get();
         orochiImmuneToDamage = QUEST_FAMILIAR_OROCHI_DAMAGE_IMMUNE.get();
         eyeFamiliarImmuneToDamage = QUEST_FAMILIAR_EYE_DAMAGE_IMMUNE.get();
+        kizukiFearEnabled = KIZUKI_FEAR_ENABLED.get();
 
         Log.debug("EntityConfig loaded: crowEnhancements=" + crowEnhancementsEnabled +
                          ", flyingDodge=" + crowFlyingDodgeEnabled + ", flightHeight=" + crowFlightHeight +
@@ -135,6 +148,6 @@ public class EntityConfig {
                          ", questArrow=" + crowQuestArrowEnabled + ", waypoint=" + crowWaypointEnabled +
                          ", waypointDuration=" + crowWaypointDuration + ", autoDetect=" + crowAutoDetectQuests +
                          ", crowImmune=" + crowImmuneToDamage + ", orochiImmune=" + orochiImmuneToDamage +
-                         ", eyeImmune=" + eyeFamiliarImmuneToDamage);
+                         ", eyeImmune=" + eyeFamiliarImmuneToDamage + ", kizukiFear=" + kizukiFearEnabled);
     }
 }

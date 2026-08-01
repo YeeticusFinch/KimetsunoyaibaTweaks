@@ -24,6 +24,10 @@ public class SheathItems {
     public static final RegistryObject<Item> SWORD_SHEATH_KANROJI = ITEMS.register("sword_sheath_kanroji",
         () -> new Item(new Item.Properties().stacksTo(1)));
 
+    // Display-only Kanroji sword model used when the sword is sheathed on hips/backs/racks.
+    public static final RegistryObject<Item> NICHIRINSWORD_KANROJI_SHEATHED = ITEMS.register("nichirinsword_kanroji_sheathed",
+        () -> new Item(new Item.Properties().stacksTo(1)));
+
     // Rengoku-specific sheath
     public static final RegistryObject<Item> SWORD_SHEATH_RENGOKU = ITEMS.register("sword_sheath_rengoku",
         () -> new Item(new Item.Properties().stacksTo(1)));

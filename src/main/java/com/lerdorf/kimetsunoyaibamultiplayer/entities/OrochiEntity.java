@@ -223,7 +223,7 @@ public class OrochiEntity extends Wolf implements GeoEntity {
         }
         boolean result = false;
         if (target instanceof LivingEntity livingTarget) {
-            float damage = DamageCalculator.calculateScaledDamage(this, ATTACK_DAMAGE);
+            float damage = (ATTACK_DAMAGE);
             result = livingTarget.hurt(DamageCalculator.getDamageSource(this), damage);
             if (result) {
                 livingTarget.addEffect(new MobEffectInstance(MobEffects.POISON, POISON_DURATION_TICKS, 0), this);

@@ -52,8 +52,8 @@ import java.util.function.Consumer;
 public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements GeoItem {
     private static final BreathingTechnique LOVE_BREATHING = EnhancedLoveForms.createLoveBreathing();
 
-    private static final double ATTACK_DAMAGE = 6.0; // Slightly lower than normal swords
-    private static final double ATTACK_SPEED = -1.8; // Faster than normal swords (-2.4)
+    private static final double ATTACK_DAMAGE = 5.0; // Slightly lower than normal swords
+    private static final double ATTACK_SPEED = -2.0; // Faster than normal swords (-2.4)
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 

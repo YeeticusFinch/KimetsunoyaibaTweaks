@@ -375,7 +375,8 @@ public class BaseModBreathingExecutor {
 
         String descriptionId = item.getDescriptionId();
         return descriptionId.contains("kimetsunoyaiba.nichirinsword") ||
-               descriptionId.contains("kimetsunoyaiba.nitirintou");
+               descriptionId.contains("kimetsunoyaiba.nitirintou") ||
+               descriptionId.contains("kimetsunoyaiba.sword_kokushibo");
     }
 
     /**

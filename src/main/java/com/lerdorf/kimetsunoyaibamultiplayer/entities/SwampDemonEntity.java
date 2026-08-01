@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SwampDemonArt;
+import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import net.minecraft.world.damagesource.DamageSource;
@@ -435,7 +436,7 @@ public class SwampDemonEntity extends AbstractDemonEntity {
             if (SwampDemonArt.isPuddled(this)) {
                 SwampDemonArt.onPuddleAttack(this);
             } else {
-                SwampDemonArt.playRegularMeleeCombo(this);
+                BloodDemonArtM1AttackHandler.performSwampAttack(this, livingTarget.getUUID());
             }
             meleeAnimationTicks = 10;
         }

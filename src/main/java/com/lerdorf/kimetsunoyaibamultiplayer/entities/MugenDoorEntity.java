@@ -1,11 +1,9 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.compat.InfinityCastleCompat;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -41,10 +39,6 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  */
 public class MugenDoorEntity extends Mob implements GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private static final ResourceLocation MUGEN_CASTLE_DIMENSION_ID =
-        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mugen_castle_dimension");
-    private static final ResourceKey<Level> MUGEN_CASTLE_DIMENSION =
-        ResourceKey.create(Registries.DIMENSION, MUGEN_CASTLE_DIMENSION_ID);
 
     // Synced data for animation states
     private static final EntityDataAccessor<Boolean> DATA_OPEN =
@@ -181,7 +175,7 @@ public class MugenDoorEntity extends Mob implements GeoEntity {
     private void teleportToMugenCastle(ServerPlayer player) {
         try {
             // Check if door is in Mugen Castle dimension
-            boolean isInMugenCastle = this.level().dimension().equals(MUGEN_CASTLE_DIMENSION);
+            boolean isInMugenCastle = InfinityCastleCompat.isCastleDimension(this.level().dimension());
 
             ServerLevel targetDimension;
             String message;
@@ -192,7 +186,7 @@ public class MugenDoorEntity extends Mob implements GeoEntity {
                 message = "§aYou have returned to the overworld!";
             } else {
                 // Door is in overworld or other dimension → teleport to Mugen Castle
-                targetDimension = player.getServer().getLevel(MUGEN_CASTLE_DIMENSION);
+                targetDimension = InfinityCastleCompat.resolveCastleEntryLevel(player.getServer());
                 message = "§5You have been transported to the Mugen Castle!";
             }
 

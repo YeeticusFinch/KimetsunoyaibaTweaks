@@ -120,7 +120,7 @@ public class EnhancedMistForms {
             	
             	static String modelKey = "star"; // this is the name of the slash model
             	
-            	float damage = DamageCalculator.calculateScaledDamage(entity, 9.0F); // scale the damage based on potion effects
+            	float damage = (9.0F); // scale the damage based on potion effects
 
             	int tickDuration = 20; // form lasts 20 ticks
             	
@@ -265,7 +265,7 @@ public class EnhancedMistForms {
 				}
 
 				for (LivingEntity target : targets) {
-					float damage = DamageCalculator.calculateScaledDamage(entity, 9.0F);
+					float damage = (9.0F);
 					Damager.hurt(entity, target, damage);
 					//target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4));
 					//target.addEffect(new MobEffectInstance(MobEffects.DIG_SLOWDOWN, 160, 4));
@@ -320,7 +320,7 @@ public class EnhancedMistForms {
             "Perform eight slashes in super quick succession",
             5, // 5 second cooldown
             (entity, level, formId) -> {
-            	float damage = DamageCalculator.calculateScaledDamage(entity, 7F);
+            	float damage = (7F);
             	GuardStateHelper.setGuardState(entity, damage*2, formId);
                 //playEntityAnimation(entity, "sword_to_right");
                 
@@ -474,7 +474,7 @@ public class EnhancedMistForms {
             "Scatter enemies with a wide mist wave",
             4, // 4 second cooldown
             (entity, level, formId) -> {
-                float damage = DamageCalculator.calculateScaledDamage(entity, 7.0F);
+                float damage = (7.0F);
             	GuardStateHelper.setGuardState(entity, damage, formId);
                 playEntityAnimation(entity, "sword_rotate");
 
@@ -579,7 +579,7 @@ public class EnhancedMistForms {
             "Take a low stance and dash toward target with a powerful slash",
             4, // 4 second cooldown
             (entity, level, formId) -> {
-            	float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
+            	float damage = (12.0F);
             	GuardStateHelper.setGuardState(entity, damage, formId);
             	MovementHelper.lookAtTarget(entity);
 				shiftingFlowSlash(level, entity, 40, damage);
@@ -709,7 +709,7 @@ public class EnhancedMistForms {
             "Charge at target in zig-zag motion with barrage of slashes",
             6, // 6 second cooldown
             (entity, level, formId) -> {
-            	double damage = DamageCalculator.calculateScaledDamage(entity, 5F);
+            	double damage = (5F);
             	GuardStateHelper.setGuardState(entity, damage, formId);
             	GuardStateHelper.setAttackState(entity, damage);
 				
@@ -879,7 +879,7 @@ public class EnhancedMistForms {
             "Leap into air, charge forward with multiple slashes, then deliver circular vertical slash",
             7, // 7 second cooldown
             (entity, level, formId) -> {
-            	double damage = DamageCalculator.calculateScaledDamage(entity, 12F);
+            	double damage = (12F);
             	GuardStateHelper.setGuardState(entity, damage*2, formId);
                 playEntityAnimation(entity, "backstep");
                 
@@ -1367,7 +1367,7 @@ public class EnhancedMistForms {
         forms.add(sixthForm());    // 6th Form: Lunar Dispersing Mist
         forms.add(seventhForm());    // 7th Form: Obscuring Clouds (Muichiro's signature move)
 
-        return new BreathingTechnique("Mist Breathing", forms, "§7", "§b");
+        return new BreathingTechnique("Mist Breathing", forms, "§b", "§b");
     }
 
     /**
@@ -1386,6 +1386,6 @@ public class EnhancedMistForms {
         forms.add(sixthForm());    // 6th Form: Lunar Dispersing Mist
         // 7th Form excluded - Muichiro's signature technique
 
-        return new BreathingTechnique("Mist Breathing", forms, "§7", "§b");
+        return new BreathingTechnique("Mist Breathing", forms, "§b", "§b");
     }
 }

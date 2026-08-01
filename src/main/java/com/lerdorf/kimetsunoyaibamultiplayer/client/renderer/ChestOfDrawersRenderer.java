@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client.renderer;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ChestOfDrawersBlock;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ChestOfDrawersBlockEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.models.ChestOfDrawersModel;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -8,8 +9,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoBlockRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
@@ -18,6 +23,45 @@ public class ChestOfDrawersRenderer extends GeoBlockRenderer<ChestOfDrawersBlock
     public ChestOfDrawersRenderer(BlockEntityRendererProvider.Context context) {
         super(new ChestOfDrawersModel());
         addRenderLayer(new DrawerItemsLayer(this));
+    }
+
+    @Override
+    protected void rotateBlock(Direction facing, PoseStack poseStack) {
+        if (this.animatable == null) {
+            super.rotateBlock(facing, poseStack);
+            return;
+        }
+
+        BlockState state = this.animatable.getBlockState();
+        if (!state.hasProperty(ChestOfDrawersBlock.GRAVITY_DIRECTION)) {
+            super.rotateBlock(facing, poseStack);
+            return;
+        }
+
+        Direction down = ChestOfDrawersBlock.getDownDirection(state);
+        Direction front = ChestOfDrawersBlock.getFrontDirection(state);
+        if (down == Direction.DOWN) {
+            super.rotateBlock(front, poseStack);
+            return;
+        }
+
+        Vector3f desiredUp = vector(ChestOfDrawersBlock.getUpDirection(state));
+        Vector3f desiredFront = vector(front);
+        Quaternionf upRotation = new Quaternionf().rotationTo(new Vector3f(0.0F, 1.0F, 0.0F), desiredUp);
+        Vector3f rotatedFront = upRotation.transform(new Vector3f(0.0F, 0.0F, -1.0F));
+        float angle = (float) Math.atan2(
+            desiredUp.dot(rotatedFront.cross(desiredFront, new Vector3f())),
+            rotatedFront.dot(desiredFront)
+        );
+        Quaternionf frontRotation = new Quaternionf().fromAxisAngleRad(desiredUp, angle);
+
+        poseStack.translate(0.0D, 0.5D, 0.0D);
+        poseStack.mulPose(frontRotation.mul(upRotation));
+        poseStack.translate(0.0D, -0.5D, 0.0D);
+    }
+
+    private static Vector3f vector(Direction direction) {
+        return new Vector3f(direction.getStepX(), direction.getStepY(), direction.getStepZ());
     }
 
     private static class DrawerItemsLayer extends GeoRenderLayer<ChestOfDrawersBlockEntity> {

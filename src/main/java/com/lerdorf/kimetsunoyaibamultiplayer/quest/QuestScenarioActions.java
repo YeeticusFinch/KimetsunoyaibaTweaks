@@ -80,6 +80,11 @@ public final class QuestScenarioActions {
     private static final ResourceLocation YAHABA_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "yahaba");
     private static final ResourceLocation SWAMP_DEMON_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "swamp_demon");
     private static final ResourceLocation SATOKOS_BOW = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "satokos_bow");
+    private static final String KIDNAPPERS_BOG_MAIN_SWAMP_DEMON_TARGET = "swamp_demon_kidnappers_bog";
+    private static final String KIDNAPPERS_BOG_SATOKO_SWAMP_DEMON_TARGET = "swamp_demon_kidnappers_bog_satoko";
+    private static final String KIDNAPPERS_BOG_SWAMP_RESISTANCE_TAG = "KnYKidnappersBogSwampResistance10";
+    private static final int KIDNAPPERS_BOG_SWAMP_RESISTANCE_AMPLIFIER = 9;
+    private static final int SATOKOS_BOW_RESISTANCE_CHECK_INTERVAL_TICKS = 100;
     private static final double TAMAYO_RESTRAINED_DEMON_MAX_RADIUS = 10.0D;
     private static final double KAMANUE_FACE_PLAYER_RADIUS = 10.0D;
     private static final double KAZUMI_DUPLICATE_RADIUS = 50.0D;
@@ -772,8 +777,16 @@ public final class QuestScenarioActions {
 
         List<Entity> existing = serverLevel.getEntities((Entity) null,
             new net.minecraft.world.phys.AABB(center).inflate(128.0D),
-            entity -> "swamp_demon_kidnappers_bog".equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG)));
+            entity -> KIDNAPPERS_BOG_MAIN_SWAMP_DEMON_TARGET.equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG)));
         if (!existing.isEmpty()) {
+            if (hasSatokosBow(player, context)) {
+                removeKidnappersBogSwampDemonResistanceNear(player, 256.0D);
+            } else {
+                existing.stream()
+                    .filter(LivingEntity.class::isInstance)
+                    .map(LivingEntity.class::cast)
+                    .forEach(QuestScenarioActions::applyKidnappersBogSwampDemonResistance);
+            }
             return;
         }
 
@@ -783,16 +796,17 @@ public final class QuestScenarioActions {
         }
 
         BlockPos spawnPos = findRandomSurfacePosition(serverLevel, center, 28, 16);
-        entity.getPersistentData().putString(QUEST_TARGET_ID_TAG, "swamp_demon_kidnappers_bog");
+        entity.getPersistentData().putString(QUEST_TARGET_ID_TAG, KIDNAPPERS_BOG_MAIN_SWAMP_DEMON_TARGET);
         entity.setCustomName(Component.literal("Swamp Demon"));
         entity.setCustomNameVisible(true);
         entity.setPos(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D);
+        applyKidnappersBogSwampDemonResistance(entity);
         serverLevel.addFreshEntity(entity);
     }
 
     /**
-     * Spawns the quest-targeted swamp demon (Numa) near the player for the encounter step.
-     * This demon wears Satoko's Bow and is the kill target for the quest.
+     * Spawns the main quest-targeted swamp demon (Numa) near the player for the encounter step.
+     * The Satoko's Bow target is spawned separately inside the swamp domain.
      */
     public static void spawnSwampDemonEncounter(ServerPlayer player, QuestRuntimeContext context) {
         if (!(player.level() instanceof ServerLevel serverLevel)) {
@@ -802,8 +816,16 @@ public final class QuestScenarioActions {
         // Check if already spawned
         List<Entity> existing = serverLevel.getEntities((Entity) null,
             new net.minecraft.world.phys.AABB(player.blockPosition()).inflate(100.0D),
-            entity -> "swamp_demon_kidnappers_bog_satoko".equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG)));
+            entity -> KIDNAPPERS_BOG_MAIN_SWAMP_DEMON_TARGET.equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG)));
         if (!existing.isEmpty()) {
+            if (hasSatokosBow(player, context)) {
+                removeKidnappersBogSwampDemonResistanceNear(player, 256.0D);
+            } else {
+                existing.stream()
+                    .filter(LivingEntity.class::isInstance)
+                    .map(LivingEntity.class::cast)
+                    .forEach(QuestScenarioActions::applyKidnappersBogSwampDemonResistance);
+            }
             return;
         }
 
@@ -814,14 +836,86 @@ public final class QuestScenarioActions {
 
         // Spawn within 50 blocks of the player
         BlockPos spawnPos = findRandomSurfacePosition(serverLevel, player.blockPosition(), 50, 16);
-        demon.getPersistentData().putString(QUEST_TARGET_ID_TAG, "swamp_demon_kidnappers_bog_satoko");
+        demon.getPersistentData().putString(QUEST_TARGET_ID_TAG, KIDNAPPERS_BOG_MAIN_SWAMP_DEMON_TARGET);
         //demon.setCustomName(Component.literal("Numa, the Swamp Demon"));
         //demon.setCustomNameVisible(true);
         demon.setPos(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D);
         demon.setPersistenceRequired();
         demon.setTarget(player);
         demon.setHealth(demon.getMaxHealth());
+        applyKidnappersBogSwampDemonResistance(demon);
         serverLevel.addFreshEntity(demon);
+    }
+
+    public static void applyKidnappersBogSwampDemonResistance(LivingEntity entity) {
+        if (entity == null) {
+            return;
+        }
+        entity.addEffect(new MobEffectInstance(
+            MobEffects.DAMAGE_RESISTANCE,
+            Integer.MAX_VALUE,
+            KIDNAPPERS_BOG_SWAMP_RESISTANCE_AMPLIFIER,
+            false,
+            false,
+            false
+        ));
+        entity.getPersistentData().putBoolean(KIDNAPPERS_BOG_SWAMP_RESISTANCE_TAG, true);
+    }
+
+    public static void tickSatokosBowSwampDemonResistanceRemoval(ServerPlayer player) {
+        if (player == null || player.level().isClientSide() || player.tickCount % SATOKOS_BOW_RESISTANCE_CHECK_INTERVAL_TICKS != 0) {
+            return;
+        }
+        if (!hasSatokosBow(player, null)) {
+            return;
+        }
+        removeKidnappersBogSwampDemonResistanceNear(player, 256.0D);
+    }
+
+    public static void removeKidnappersBogSwampDemonResistanceNear(ServerPlayer player, double radius) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        AABB searchArea = new AABB(player.blockPosition()).inflate(radius);
+        List<SwampDemonEntity> demons = serverLevel.getEntitiesOfClass(
+            SwampDemonEntity.class,
+            searchArea,
+            demon -> demon.isAlive() && isKidnappersBogMainSwampDemon(demon)
+        );
+        for (SwampDemonEntity demon : demons) {
+            removeKidnappersBogSwampDemonResistance(demon);
+        }
+    }
+
+    private static void removeKidnappersBogSwampDemonResistance(LivingEntity entity) {
+        if (entity == null || !entity.getPersistentData().getBoolean(KIDNAPPERS_BOG_SWAMP_RESISTANCE_TAG)) {
+            return;
+        }
+        MobEffectInstance resistance = entity.getEffect(MobEffects.DAMAGE_RESISTANCE);
+        if (resistance != null && resistance.getAmplifier() == KIDNAPPERS_BOG_SWAMP_RESISTANCE_AMPLIFIER) {
+            entity.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+        }
+        entity.getPersistentData().remove(KIDNAPPERS_BOG_SWAMP_RESISTANCE_TAG);
+    }
+
+    public static boolean isKidnappersBogMainSwampDemon(Entity entity) {
+        return entity != null
+            && KIDNAPPERS_BOG_MAIN_SWAMP_DEMON_TARGET.equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG));
+    }
+
+    public static boolean isKidnappersBogSatokoSwampDemon(Entity entity) {
+        return entity != null
+            && KIDNAPPERS_BOG_SATOKO_SWAMP_DEMON_TARGET.equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG));
+    }
+
+    public static void giveSatokosBowReward(ServerPlayer player) {
+        if (player == null || hasSatokosBow(player, null)) {
+            return;
+        }
+        net.minecraft.world.item.Item bowItem = ForgeRegistries.ITEMS.getValue(SATOKOS_BOW);
+        if (bowItem != null) {
+            QuestItemHelper.addQuestItem(player, new ItemStack(bowItem));
+        }
     }
 
     public static BlockPos findNearestQuestEntity(ServerPlayer player, String targetKey, double radius) {

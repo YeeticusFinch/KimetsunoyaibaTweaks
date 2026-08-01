@@ -269,7 +269,15 @@ public class Damager {
 	 * @return true if damage was applied, false otherwise
 	 */
 	public static boolean hurt(LivingEntity source, LivingEntity target, float damage) {
-		return hurt(source, target, damage, false);
+		return hurt(source, target, damage, false, false, false);
+	}
+
+	public static boolean hurt(LivingEntity source, LivingEntity target, float damage, boolean resetInvulnerability) {
+		return hurt(source, target, damage, resetInvulnerability, false, false);
+	}
+
+	public static boolean hurt(LivingEntity source, LivingEntity target, float damage, boolean resetInvulnerability, boolean dontScale) {
+		return hurt(source, target, damage, resetInvulnerability, dontScale, false);
 	}
 
 
@@ -292,9 +300,10 @@ public class Damager {
 	 * @param damage The amount of damage to deal
 	 * @param resetInvulnerability If true, resets the target's invulnerability frames before applying damage,
 	 *                            allowing the target to be damaged even if they were recently hit (within 10 ticks)
+	 * @param dontScale If true, don't scale damage based on potion effects or difficulty
 	 * @return true if damage was applied, false otherwise
 	 */
-	public static boolean hurt(LivingEntity source, LivingEntity target, float damage, boolean resetInvulnerability) {
+	public static boolean hurt(LivingEntity source, LivingEntity target, float damage, boolean resetInvulnerability, boolean dontScale, boolean forceScale) {
 		if (source == null || target == null) {
 			return false;
 		}
@@ -314,11 +323,16 @@ public class Damager {
 		// Reset invulnerability frames if requested
 		// This allows the target to take damage even if they were recently damaged
 		if (resetInvulnerability) {
+			if (target.invulnerableTime > 0) // If during invulnerable frames, don't do the scaled damage
+				dontScale = true; 
 			target.invulnerableTime = 0;
 		}
 
+		if (forceScale)
+			dontScale = false;
+
 		// Apply difficulty scaling if source is not a player
-		float scaledDamage = calculateScaledDamage(source, damage);
+		float scaledDamage = dontScale ? damage : calculateScaledDamage(source, damage);
 		scaledDamage = applyMidasBonus(source, target, scaledDamage);
 
 		if (isDemonSlayer(source) && isDemonSlayer(target)) {
@@ -392,6 +406,7 @@ public class Damager {
 		// 	scaled *= 1.0f + (0.02f * level);
 		// }
 
+		//return baseDamage;
 		return DamageCalculator.calculateScaledDamage(source, baseDamage);
 	}
 

@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -39,6 +40,11 @@ public class KeyInputHandler {
                 return;
             if (mc.screen != null)
                 return;
+
+            if (FearEffectHandler.isParalyzed(mc.player)) {
+                clearCycleKeyMappings();
+                return;
+            }
 
             // DEBUG: Log that we're in the key handler
             /*
@@ -248,6 +254,11 @@ public class KeyInputHandler {
             if (event.getAction() != GLFW.GLFW_PRESS) return;
             if (mc.screen != null) return;
 
+            if (FearEffectHandler.isParalyzed(mc.player)) {
+                clearCycleKeyMappings();
+                return;
+            }
+
             // Check if variation cycle key is bound to this mouse button
             boolean variationCycleButton = ModKeyBindings.CYCLE_FORM_VARIATION != null &&
                     ModKeyBindings.CYCLE_FORM_VARIATION.matchesMouse(event.getButton());
@@ -403,5 +414,21 @@ public class KeyInputHandler {
             System.err.println("[KeyInputHandler] EXCEPTION: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private static void clearCycleKeyMappings() {
+        clearMapping(net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART);
+        clearMapping(ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD);
+        clearMapping(ModKeyBindings.CYCLE_FORM_VARIATION);
+    }
+
+    private static void clearMapping(net.minecraft.client.KeyMapping mapping) {
+        if (mapping == null) {
+            return;
+        }
+        while (mapping.consumeClick()) {
+            // Drain queued cycle presses while Fear paralysis is active.
+        }
+        mapping.setDown(false);
     }
 }

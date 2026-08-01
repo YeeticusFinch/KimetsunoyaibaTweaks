@@ -1,34 +1,9 @@
 {
-  "variants": {
-    "facing=north,waterlogged=false": {
-      "model": "kimetsunoyaibamultiplayer:block/chest_of_drawers"
-    },
-    "facing=east,waterlogged=false": {
-      "model": "kimetsunoyaibamultiplayer:block/chest_of_drawers",
-      "y": 90
-    },
-    "facing=south,waterlogged=false": {
-      "model": "kimetsunoyaibamultiplayer:block/chest_of_drawers",
-      "y": 180
-    },
-    "facing=west,waterlogged=false": {
-      "model": "kimetsunoyaibamultiplayer:block/chest_of_drawers",
-      "y": 270
-    },
-    "facing=north,waterlogged=true": {
-      "model": "kimetsunoyaibamultiplayer:block/chest_of_drawers"
-    },
-    "facing=east,waterlogged=true": {
-      "model": "kimetsunoyaibamultiplayer:block/chest_of_drawers",
-      "y": 90
-    },
-    "facing=south,waterlogged=true": {
-      "model": "kimetsunoyaibamultiplayer:block/chest_of_drawers",
-      "y": 180
-    },
-    "facing=west,waterlogged=true": {
-      "model": "kimetsunoyaibamultiplayer:block/chest_of_drawers",
-      "y": 270
+  "multipart": [
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/chest_of_drawers"
+      }
     }
-  }
+  ]
 }

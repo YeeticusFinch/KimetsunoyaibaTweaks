@@ -271,7 +271,7 @@ public class MistVariations {
                  
                  final String modelKey = SwordSlashModelRegistry.getModelKeyForSword(entity.getMainHandItem());
                  
-                 double damage = DamageCalculator.calculateScaledDamage(entity, 5F);
+                 double damage = (5F);
                  
                  AbilityScheduler.scheduleRepeating(entity, () -> {
                      fadeTickCounter[0]++;

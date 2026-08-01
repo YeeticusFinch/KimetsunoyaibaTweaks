@@ -20,7 +20,8 @@ public abstract class GenericItemLayerMixin {
     @Inject(
         method = "getStackForBone(Lsoftware/bernie/geckolib/cache/object/GeoBone;Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/world/item/ItemStack;",
         at = @At("RETURN"),
-        cancellable = true
+        cancellable = true,
+        remap = false
     )
     private void hideNichirinSwordWhenSheathed(GeoBone bone, LivingEntity entity,
                                                CallbackInfoReturnable<ItemStack> cir) {

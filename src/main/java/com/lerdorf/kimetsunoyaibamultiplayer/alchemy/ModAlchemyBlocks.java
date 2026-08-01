@@ -35,7 +35,14 @@ public final class ModAlchemyBlocks {
             .sound(SoundType.WOOD)
             .strength(1.5F, 2.0F)
             .noOcclusion()),
-        block -> new VialRackBlockItem(block.get(), new Item.Properties().stacksTo(1)));
+        block -> new VialRackBlockItem(block.get(), new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Block> PETRI_DISH = registerBlockWithoutItem("petri_dish",
+        () -> new PetriDishBlock(BlockBehaviour.Properties.copy(Blocks.GLASS)
+            .mapColor(MapColor.NONE)
+            .sound(SoundType.GLASS)
+            .instabreak()
+            .noOcclusion()));
 
     public static final RegistryObject<Block> IMMORTAL_DAISY = registerBlock("immortal_daisy",
         () -> new AlchemyFlowerBlock(() -> MobEffects.REGENERATION, 5,

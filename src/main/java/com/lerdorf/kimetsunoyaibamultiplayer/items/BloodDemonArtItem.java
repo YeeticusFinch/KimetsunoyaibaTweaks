@@ -54,6 +54,10 @@ public class BloodDemonArtItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler.isParalyzed(player)) {
+            return InteractionResultHolder.fail(stack);
+        }
+
         BloodDemonArtRegistry.RegisteredBloodDemonArt art = BloodDemonArtRegistry.getArt(artId);
         if (art == null) {
             return InteractionResultHolder.pass(stack);
@@ -133,6 +137,10 @@ public class BloodDemonArtItem extends Item {
     }
 
     public void cycleForm(Player player, ItemStack stack, int direction) {
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler.isParalyzed(player)) {
+            return;
+        }
+
         BloodDemonArtRegistry.RegisteredBloodDemonArt art = BloodDemonArtRegistry.getArt(artId);
         if (art == null) {
             return;

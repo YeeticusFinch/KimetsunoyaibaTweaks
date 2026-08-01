@@ -53,7 +53,7 @@ public class SidewaysLanternBlock extends Block {
     public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
         Direction face = state.getValue(FACING);
         BlockPos supportPos = pos.relative(face.getOpposite());
-        return level.getBlockState(supportPos).isFaceSturdy(level, supportPos, face);
+        return !level.getBlockState(supportPos).isAir();
     }
 
     @Override

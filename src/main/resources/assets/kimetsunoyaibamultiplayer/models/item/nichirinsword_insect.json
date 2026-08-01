@@ -4,7 +4,7 @@
 	"texture_size": [8, 8],
 	"textures": {
 		"0": "kimetsunoyaibamultiplayer:block/nichirinsword_withoutblade",
-		"1": "kimetsunoyaibamultiplayer:block/blade_normal",
+		"1": "kimetsunoyaibamultiplayer:block/blade_insect",
 		"particle": "kimetsunoyaibamultiplayer:block/nichirinsword_withoutblade"
 	},
 	"elements": [

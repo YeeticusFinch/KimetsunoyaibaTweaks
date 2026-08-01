@@ -29,6 +29,22 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("vial_rack",
             () -> BlockEntityType.Builder.of(VialRackBlockEntity::new, ModAlchemyBlocks.VIAL_RACK.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<PetriDishBlockEntity>> PETRI_DISH =
+        BLOCK_ENTITIES.register("petri_dish",
+            () -> BlockEntityType.Builder.of(PetriDishBlockEntity::new, ModAlchemyBlocks.PETRI_DISH.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<GravityFieldProjectorBlockEntity>> GRAVITY_FIELD_PROJECTOR =
+        BLOCK_ENTITIES.register("gravity_field_projector",
+            () -> BlockEntityType.Builder.of(GravityFieldProjectorBlockEntity::new, ModBlocks.GRAVITY_FIELD_PROJECTOR.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<GravityBlockEntity>> GRAVITY_BLOCK =
+        BLOCK_ENTITIES.register("gravity_block",
+            () -> BlockEntityType.Builder.of(GravityBlockEntity::new, ModBlocks.GRAVITY_BLOCK.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<BridgerBlockEntity>> BRIDGER_BLOCK =
+        BLOCK_ENTITIES.register("bridger_block",
+            () -> BlockEntityType.Builder.of(BridgerBlockEntity::new, ModBlocks.BRIDGER_BLOCK.get()).build(null));
+
     private ModBlockEntities() {
     }
 

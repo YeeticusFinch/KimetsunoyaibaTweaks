@@ -12,6 +12,9 @@ base {
     archivesName = mod_id
 }
 
+def mixinRefmapFile = layout.buildDirectory.file("generated/refmaps/kimetsunoyaibamultiplayer.refmap.json")
+def mixinTsrgFile = layout.buildDirectory.file('createMcpToSrg/output.tsrg')
+
 // Mojang ships Java 17 to end users in 1.18+, so your mod should target Java 17.
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
@@ -87,7 +90,7 @@ minecraft {
             
             //You have to set mixin propert if you want to run playerAnimator in development environment.
             property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            property 'mixin.env.refMapRemappingFile', mixinTsrgFile.get().asFile.absolutePath
         }
 
         server {
@@ -95,7 +98,7 @@ minecraft {
             args '--nogui'
             
             property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            property 'mixin.env.refMapRemappingFile', mixinTsrgFile.get().asFile.absolutePath
         }
 
         // This run config launches GameTestServer and runs all registered gametests, then exits.
@@ -143,6 +146,11 @@ repositories {
     maven {
         name 'BlameJared Maven'
         url 'https://maven.blamejared.com'
+    }
+    mavenCentral()
+    maven {
+        name 'Bawnorton Maven'
+        url 'https://maven.bawnorton.com/releases'
     }
 }
 
@@ -194,6 +202,11 @@ dependencies {
     runtimeOnly fg.deobf(files("libs/KimetsunoYaiba-ver3-forge-1.20.1.jar"))
     implementation fg.deobf("curse.maven:demonslayer-471263:7151280")
     runtimeOnly fg.deobf(files("../KnY-Worlds/build/libs/kny_worlds-1.0.0.jar"))
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.3"))
+    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.5.3")) {
+        jarJar.ranged(it, "[0.5.3,)")
+    }
+    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
 
     // ShoulderSurfing integration uses reflection - no compile-time dependency needed
 
@@ -225,6 +238,11 @@ tasks.named('processResources', ProcessResources).configure {
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
         expand replaceProperties + [project: project]
     }
+
+    dependsOn tasks.named('compileJava')
+    from(mixinRefmapFile) {
+        into ''
+    }
 }
 
 // Example for how to get properties into the manifest for reading at runtime.
@@ -249,6 +267,13 @@ tasks.named('jar', Jar).configure {
 // Work around intermittent Gradle incremental-compile cache write failures on some Windows setups.
 tasks.withType(JavaCompile).configureEach {
     options.incremental = false
+    dependsOn tasks.named('createMcpToSrg')
+    options.compilerArgs += [
+        "-AoutRefMapFile=${mixinRefmapFile.get().asFile.absolutePath}",
+        "-AreobfTsrgFile=${mixinTsrgFile.get().asFile.absolutePath}",
+        "-AdefaultObfuscationEnv=searge",
+        "-AmappingTypes=tsrg"
+    ]
 }
 
 // However if you are in a multi-project build, dev time needs unobfed jar files, so you can delay the obfuscation until publishing by doing:

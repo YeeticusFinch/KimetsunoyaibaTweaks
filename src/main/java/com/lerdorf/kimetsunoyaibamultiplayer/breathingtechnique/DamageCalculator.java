@@ -49,32 +49,47 @@ public class DamageCalculator {
     public static float calculateScaledDamage(LivingEntity entity, float baseDamage) {
         float damage = baseDamage;
         float damageScaler = 1;
-
-        // Strength effect: +3 damage per level
-        if (entity.hasEffect(MobEffects.DAMAGE_BOOST)) {
-            int strengthLevel = entity.getEffect(MobEffects.DAMAGE_BOOST).getAmplifier() + 1;
-            damage += 3.0F * strengthLevel;
+        boolean vanillaEffects = false;
+        
+        if (vanillaEffects) {// Vanilla Strength effect: +3 damage per level
+            if (entity.hasEffect(MobEffects.DAMAGE_BOOST)) {
+                int strengthLevel = entity.getEffect(MobEffects.DAMAGE_BOOST).getAmplifier() + 1;
+                damage += 3.0F * strengthLevel;
+            }
+        }
+        else {
+            if (entity.hasEffect(MobEffects.DAMAGE_BOOST)) {
+                int strengthLevel = entity.getEffect(MobEffects.DAMAGE_BOOST).getAmplifier() + 1;
+                damageScaler = (float) Math.max(1, Math.ceil(strengthLevel / 3)); // Strength 0-3 --> 1x, Strength 4-6 --> 2x, Strength 7-9 --> 3x...
+            }
         }
 
-        // Vermilion Eye effect: +30% damage
+        // Vermilion Eye effect: +25% damage
         if (entity.hasEffect(ModEffects.VERMILION_EYE.get())) {
-        	damageScaler = 1.3f; 
+            damageScaler *= 1.25f;
         }
 
         // Weakness effect: -4 damage per level
-        if (entity.hasEffect(MobEffects.WEAKNESS)) {
-            int weaknessLevel = entity.getEffect(MobEffects.WEAKNESS).getAmplifier() + 1;
-            //damage -= 4.0F * weaknessLevel;
-            damage *= Math.pow(0.8, weaknessLevel);
-            damage += (Math.pow(0.8, weaknessLevel) - 1) / 0.4;
+        if (vanillaEffects) {
+            if (entity.hasEffect(MobEffects.WEAKNESS)) {
+                int weaknessLevel = entity.getEffect(MobEffects.WEAKNESS).getAmplifier() + 1;
+                //damage -= 4.0F * weaknessLevel;
+                damage *= Math.pow(0.8, weaknessLevel);
+                damage += (Math.pow(0.8, weaknessLevel) - 1) / 0.4;
+            }
+        } else {
+            if (entity.hasEffect(MobEffects.WEAKNESS)) {
+                int weaknessLevel = entity.getEffect(MobEffects.WEAKNESS).getAmplifier() + 1;
+                damageScaler *= 1 - 0.333f * weaknessLevel;
+            }
         }
 
-		MobEffectInstance killingIntent = entity.getEffect(ModEffects.KILLING_INTENT.get());
-		if (killingIntent != null) {
-			int level = killingIntent.getAmplifier() + 1;
-			damageScaler *= 1.0f + (0.02f * level);
-		}
-        
+        MobEffectInstance killingIntent = entity.getEffect(ModEffects.KILLING_INTENT.get());
+        if (killingIntent != null) {
+            int level = killingIntent.getAmplifier() + 1;
+            damageScaler *= 1.0f + (0.02f * level);
+        }
+
         damageScaler = damageScaler * getDifficultyMultiplier(entity);
 
         // Ensure minimum damage of 0

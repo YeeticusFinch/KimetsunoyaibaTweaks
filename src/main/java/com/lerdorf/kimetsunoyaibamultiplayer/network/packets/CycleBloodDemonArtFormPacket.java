@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.customdemonart.CustomBloodDemonArtRuntime;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,6 +32,9 @@ public class CycleBloodDemonArtFormPacket {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null) {
+                return;
+            }
+            if (FearEffectHandler.isParalyzed(player)) {
                 return;
             }
 

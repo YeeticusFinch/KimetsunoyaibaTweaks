@@ -27,7 +27,8 @@ public class ServerLevelParticleMixin {
         method = "m_8767_(Lnet/minecraft/core/particles/ParticleOptions;DDDIDDDD)I",
         at = @At("HEAD"),
         cancellable = true,
-        require = 0  // Don't crash if method signature changes
+        require = 0,  // Don't crash if method signature changes
+        remap = false
     )
     private void cancelBaseModSwordSwingParticles(
             ParticleOptions particle,

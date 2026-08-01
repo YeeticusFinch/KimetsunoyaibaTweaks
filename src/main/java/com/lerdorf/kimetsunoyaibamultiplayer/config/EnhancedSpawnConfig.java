@@ -49,6 +49,12 @@ public class EnhancedSpawnConfig {
                     "- kimetsunoyaiba:nezuko -> kimetsunoyaibamultiplayer:nezuko")
             .define("replace_base_nezuko", true);
 
+    private static final ForgeConfigSpec.BooleanValue PREVENT_YORICHI_TYPE_ZERO_NATURAL_SPAWNS = BUILDER
+            .comment("Prevent Yorichi Type 0 from spawning naturally.",
+                    "When enabled, kimetsunoyaiba:yorichi_0 is blocked from natural spawning anywhere.",
+                    "Commands, spawn eggs, and other manual spawn paths are unaffected.")
+            .define("prevent_yorichi_type_0_natural_spawns", true);
+
     // ========== GENERIC SPAWN RATES ==========
     static {
         BUILDER.comment("Generic spawn rate reductions")
@@ -205,6 +211,7 @@ public class EnhancedSpawnConfig {
     public static boolean enhancedSpawningRules = true;  // Default to true
     public static boolean replaceBaseGenericDemonSlayers = true;
     public static boolean replaceBaseNezuko = true;
+    public static boolean preventYorichiTypeZeroNaturalSpawns = true;
     public static double genericDemonSpawnRate = 0.4;
     public static double genericDemonSlayerSpawnRate = 0.1;
     public static int maxEntityCheckRadius = 500;
@@ -244,6 +251,7 @@ public class EnhancedSpawnConfig {
         enhancedSpawningRules = ENHANCED_SPAWNING_RULES.get();
         replaceBaseGenericDemonSlayers = REPLACE_BASE_GENERIC_DEMON_SLAYERS.get();
         replaceBaseNezuko = REPLACE_BASE_NEZUKO.get();
+        preventYorichiTypeZeroNaturalSpawns = PREVENT_YORICHI_TYPE_ZERO_NATURAL_SPAWNS.get();
         genericDemonSpawnRate = GENERIC_DEMON_SPAWN_RATE.get();
         genericDemonSlayerSpawnRate = GENERIC_DEMON_SLAYER_SPAWN_RATE.get();
         maxEntityCheckRadius = MAX_ENTITY_CHECK_RADIUS.get();

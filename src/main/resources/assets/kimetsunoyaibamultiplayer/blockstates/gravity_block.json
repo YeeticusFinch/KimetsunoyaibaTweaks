@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "kimetsunoyaibamultiplayer:block/gravity_block"
+    },
+    "facing=down": {
+      "model": "kimetsunoyaibamultiplayer:block/gravity_block",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "kimetsunoyaibamultiplayer:block/gravity_block",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "kimetsunoyaibamultiplayer:block/gravity_block",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "kimetsunoyaibamultiplayer:block/gravity_block",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east": {
+      "model": "kimetsunoyaibamultiplayer:block/gravity_block",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

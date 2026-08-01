@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.compat.InfinityCastleCompat;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -35,6 +36,8 @@ import java.util.Random;
 public class EnhancedSpawnRulesHandler {
 
     private static final Random RANDOM = new Random();
+    private static final ResourceLocation YORICHI_TYPE_ZERO_ID =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "yorichi_0");
 
     /**
      * Main spawn event handler - applies all enhanced spawning rules
@@ -136,15 +139,21 @@ public class EnhancedSpawnRulesHandler {
      * Biome/dimension checks run BEFORE this, so designated areas can allow these entities.
      */
     private static boolean shouldDenyGenericSpawn(Mob entity, Level level, BlockPos pos) {
+        ResourceLocation entityId = EntityType.getKey(entity.getType());
+        if (EnhancedSpawnConfig.preventYorichiTypeZeroNaturalSpawns && YORICHI_TYPE_ZERO_ID.equals(entityId)) {
+            return true;
+        }
+
         ResourceLocation biomeId = EntityTagHelper.getCurrentBiome(entity);
 
         // Check if in a biome that allows special spawns
         boolean inMugenBiome = biomeId != null && biomeId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mugen_biome"));
+        boolean inInfinityCastle = InfinityCastleCompat.isCastleDimension(level.dimension());
 
-        // Twelve kizuki should never spawn naturally EXCEPT in mugen_biome
+        // Twelve kizuki should never spawn naturally except in designated demon areas.
         if (EntityTagHelper.isTwelveKizuki(entity)) {
-            if (inMugenBiome) {
-                return false; // Allow in mugen biome
+            if (inMugenBiome || inInfinityCastle) {
+                return false;
             }
             return true; // Deny elsewhere
         }
@@ -384,6 +393,10 @@ public class EnhancedSpawnRulesHandler {
      * Apply Mugen biome rules (twelve kizuki allowed, max 1 per type per 500 blocks)
      */
     private static boolean applyMugenBiomeRules(Mob entity, Level level, BlockPos pos) {
+        if (InfinityCastleCompat.isCastleDimension(level.dimension())) {
+            return false;
+        }
+
         // Allow twelve kizuki, but max 1 of each type per 500 blocks
         if (EntityTagHelper.isTwelveKizuki(entity)) {
             if (MaxEntityTracker.isMaxReached(level, pos, entity.getType(), 500, 1, true)) {
@@ -408,6 +421,10 @@ public class EnhancedSpawnRulesHandler {
     private static boolean shouldDenyByDayNight(Mob entity, Level level, BlockPos pos) {
         // Generic demons shouldn't spawn in direct sunlight during the day
         if (EntityTagHelper.isDemon(entity) && level.isDay()) {
+            if (InfinityCastleCompat.isCastleDimension(level.dimension())) {
+                return false;
+            }
+
             // Mugen biome allows demons regardless of day/night
             ResourceLocation biomeId = EntityTagHelper.getCurrentBiome(entity);
             if (biomeId != null && biomeId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mugen_biome"))) {
