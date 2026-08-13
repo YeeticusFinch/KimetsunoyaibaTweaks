@@ -35,6 +35,10 @@ public class Damager {
 			return false;
 		}
 
+		if (entity.getPersistentData().getBoolean("oni")) {
+			return false;
+		}
+
 		// Check if entity has the demon slayer corps NBT tag
 		if (entity.getPersistentData().getBoolean("kisatsutai")) {
 			return true;

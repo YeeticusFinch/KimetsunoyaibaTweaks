@@ -191,7 +191,7 @@ public class EnhancedBeastForms {
     }
 
     private static boolean hurtWithBeastBleeding(LivingEntity attacker, LivingEntity target, float damage, boolean resetInvulnerability, boolean dualWield) {
-        boolean hurt = Damager.hurt(attacker, target, damage, resetInvulnerability);
+        boolean hurt = Damager.hurt(attacker, target, damage, resetInvulnerability, false, true);
         if (hurt) {
             BleedingHandler.applyBeastBleeding(target, dualWield);
         }
@@ -206,8 +206,8 @@ public class EnhancedBeastForms {
             2, // 2 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = (twoSwords ? 12.0F : 6.0F);
-                GuardStateHelper.setGuardState(entity, twoSwords ? 12.0F : 6.0F, formId);
+                float damage = (twoSwords ? 16.0F : 12.0F);
+                GuardStateHelper.setGuardState(entity, twoSwords ? 15.0F : 11.0F, formId);
                 playEntityAnimation(entity, "breath_beast1");
                 setCancelAttackSwing(entity, true);
                 ServerLevel serverLevel = level instanceof ServerLevel ? (ServerLevel)level : null;
@@ -282,8 +282,8 @@ public class EnhancedBeastForms {
             2, // 2 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = (twoSwords ? 12.0F : 6.0F);
-                GuardStateHelper.setGuardState(entity, twoSwords ? 11.0F : 5.5F, formId);
+                float damage = (twoSwords ? 24.0F : 12.0F);
+                GuardStateHelper.setGuardState(entity, twoSwords ? 16.0F : 8F, formId);
                 if (twoSwords)
                 	playEntityAnimation(entity, "breath_beast2");
                 else
@@ -391,8 +391,8 @@ public class EnhancedBeastForms {
             2, // 2 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = (twoSwords ? 10.0F : 5.0F);
-                GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
+                float damage = (twoSwords ? 21.0F : 10.5F);
+                GuardStateHelper.setGuardState(entity, twoSwords ? 16.0F : 8.0F, formId);
                 if (twoSwords)
                 	playEntityAnimation(entity, "beast2");
                 else
@@ -503,8 +503,8 @@ public class EnhancedBeastForms {
             	
             	playEntityAnimation(entity, "beast4");
             	
-                float damage = (twoSwords ? 11.0F : 5.5f);
-                GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
+                float damage = (twoSwords ? 30.0F : 15f);
+                GuardStateHelper.setGuardState(entity, twoSwords ? 20.0F : 10.0F, formId);
                 
                 //setCancelAttackSwing(entity, true);
                 setCancelAttackSwing(entity, false); // we want the sword slaashes to happen
@@ -631,7 +631,7 @@ public class EnhancedBeastForms {
             3, // 3 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = (5.5F);
+                float damage = (4.0F);
                 GuardStateHelper.setGuardState(entity, twoSwords ? 11.0F : 5.5F, formId);
                 entity.setNoGravity(true);
                 
@@ -943,7 +943,7 @@ public class EnhancedBeastForms {
                             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 25, 4, true, false, true));
 
                             if (tick[0] % 5 == 0 && tick[0] < fullHitTick) {
-                                Damager.hurt(entity, target, damage * 0.3f, true);
+                                Damager.hurt(entity, target, damage * 0.333334f, true, false, true);
                             }
                         }
 
@@ -1016,8 +1016,8 @@ public class EnhancedBeastForms {
             5, // 5 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
-                float damage = (twoSwords ? 11.0F : 5.5F);
-                GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
+                float damage = 14F;
+                GuardStateHelper.setGuardState(entity, 14F, formId);
 
                 setCancelAttackSwing(entity, true);
                 ServerLevel serverLevel = level instanceof ServerLevel ? (ServerLevel)level : null;

@@ -456,13 +456,13 @@ public final class QuestGroupRegistry {
                             .onTick(QuestProgressionManager::tickPermanenceSlayersBloodVillageAmbush)
                             .customCheck(QuestProgressionManager::isPermanenceSlayersBloodCaptiveReady)
                             .onComplete((player, context) -> player.sendSystemMessage(
-                                Component.literal("§aQuest Updated: §fBring the captive Demon Slayer back to Kamanue.")))
+                                Component.literal("§aQuest Updated: §fReturn the Demon Slayer's remains to Kamanue.")))
                             .markerResolver((player, context) -> QuestProgressionManager.resolveSlayersBloodVillageMarker(player))
                             .build(),
                         QuestStepDefinition.builder(
                                 "bring_captive_to_kamanue",
-                                "Bring the Captive to Kamanue",
-                                "Bring the weakened Demon Slayer back to Kamanue.",
+                                "Return the Remains to Kamanue",
+                                "Bring the Demon Slayer's flesh back to Kamanue.",
                                 QuestStepType.CUSTOM
                             )
                             .onStart((player, context) -> QuestScenarioActions.ensureKamanueSpawned(player, context))
@@ -482,13 +482,13 @@ public final class QuestGroupRegistry {
                         QuestStepDefinition.builder(
                                 "study_slayer_breathing",
                                 "Speak with Kamanue",
-                                "Let Kamanue study the captive Demon Slayer's breathing technique.",
+                                "Give Kamanue the Demon Slayer's flesh.",
                                 QuestStepType.CUSTOM
                             )
                             .targetKey("kamanue")
                             .onStart((player, context) -> {
                                 QuestScenarioActions.ensureKamanueSpawned(player, context);
-                                player.sendSystemMessage(Component.literal("§7Speak with Kamanue when the captive is close."));
+                                player.sendSystemMessage(Component.literal("§7Speak with Kamanue while carrying the Demon Slayer's flesh."));
                             })
                             .onTick((player, context) -> {
                                 QuestScenarioActions.ensureKamanueSpawned(player, context);
@@ -501,8 +501,8 @@ public final class QuestGroupRegistry {
                             .build(),
                         QuestStepDefinition.builder(
                                 "kill_studied_slayer",
-                                "Defeat the Demon Slayer",
-                                "Kill the Demon Slayer after Kamanue restores their weapon.",
+                                "Defeat the Demonized Demon Slayer",
+                                "Kill the resurrected Demon Slayer.",
                                 QuestStepType.CUSTOM
                             )
                             .onTick(QuestProgressionManager::tickPermanenceSlayersBloodFinalFight)
@@ -514,7 +514,8 @@ public final class QuestGroupRegistry {
                     ),
                     new QuestRewardDefinition()
                         .experiencePoints(200)
-                        .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "blood_of_muzan"), 2)
+                        .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "blood_of_muzan"), 3)
+                        .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "cushion_red"), 1)
                 )
             )
         ));

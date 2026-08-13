@@ -55,6 +55,9 @@ public class EntityTagHelper {
      */
     public static boolean isDemon(Entity entity) {
         if (entity == null) return false;
+        if (entity.getPersistentData().getBoolean("oni")) {
+            return true;
+        }
         ResourceLocation entityId = getEntityTypeId(entity);
         return entity.getType().is(DEMON) || (entityId != null && DemonRegistry.isRegistered(entityId));
     }
@@ -72,6 +75,9 @@ public class EntityTagHelper {
      */
     public static boolean isDemonSlayer(Entity entity) {
         if (entity == null) return false;
+        if (entity.getPersistentData().getBoolean("oni")) {
+            return false;
+        }
         if (entity.getType().is(DEMON_SLAYER)) {
             return true;
         }
@@ -89,6 +95,9 @@ public class EntityTagHelper {
      */
     public static boolean isHashira(Entity entity) {
         if (entity == null) return false;
+        if (entity.getPersistentData().getBoolean("oni")) {
+            return false;
+        }
         if (entity.getType().is(TAG_HASHIRA)) {
             return true;
         }
@@ -102,6 +111,9 @@ public class EntityTagHelper {
      */
     public static boolean isFormerHashira(Entity entity) {
         if (entity == null) return false;
+        if (entity.getPersistentData().getBoolean("oni")) {
+            return false;
+        }
         return entity.getType().is(FORMER_HASHIRA);
     }
 
@@ -110,6 +122,9 @@ public class EntityTagHelper {
      */
     public static boolean isKamaboko(Entity entity) {
         if (entity == null) return false;
+        if (entity.getPersistentData().getBoolean("oni")) {
+            return false;
+        }
         if (entity.getType().is(KAMABOKO)) {
             return true;
         }

@@ -86,9 +86,19 @@ public class AlchemyJeiPlugin implements IModPlugin {
             BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:crude_vial")
         ));
         recipes.add(new AlchemyBrewingJeiRecipe(
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:calcite_powder"),
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:herbal_extract"),
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:botanical_vial")
+        ));
+        recipes.add(new AlchemyBrewingJeiRecipe(
             BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:fermented_orchid"),
             BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:crude_vial"),
             BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:refined_vial")
+        ));
+        recipes.add(new AlchemyBrewingJeiRecipe(
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:fermented_orchid"),
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:botanical_vial"),
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:distilled_vial")
         ));
         recipes.add(new AlchemyBrewingJeiRecipe(
             BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:immortal_daisy"),
@@ -122,6 +132,10 @@ public class AlchemyJeiPlugin implements IModPlugin {
         addInfusion(recipes, "kimetsunoyaibamultiplayer:illagers_extract", "kimetsunoyaibamultiplayer:bleeding_infusion");
         addInfusion(recipes, "kimetsunoyaibamultiplayer:blaze_extract", "kimetsunoyaibamultiplayer:fire_infusion");
         addInfusion(recipes, "kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:frozen_infusion");
+        addInfusion(recipes, "kimetsunoyaibamultiplayer:wisteria_extract", "kimetsunoyaibamultiplayer:wisteria_infusion");
+        addInfusion(recipes, "kimetsunoyaibamultiplayer:exorcistic_culture", "kimetsunoyaibamultiplayer:division_inhibition_infusion");
+        addInfusion(recipes, "kimetsunoyaibamultiplayer:proteolytic_culture", "kimetsunoyaibamultiplayer:cell_destruction_infusion");
+        addInfusion(recipes, "kimetsunoyaibamultiplayer:neurotoxic_culture", "kimetsunoyaibamultiplayer:immovable_infusion");
 
         for (BloodDemonArtAlchemyCatalog.CatalystDefinition definition : BloodDemonArtAlchemyCatalog.baseCatalystDefinitions()) {
             recipes.add(new AlchemyBrewingJeiRecipe(
@@ -138,6 +152,11 @@ public class AlchemyJeiPlugin implements IModPlugin {
         recipes.add(new AlchemyBrewingJeiRecipe(
             BloodDemonArtAlchemyCatalog.stack(ingredientId),
             BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:crude_vial"),
+            BloodDemonArtAlchemyCatalog.stack(outputId)
+        ));
+        recipes.add(new AlchemyBrewingJeiRecipe(
+            BloodDemonArtAlchemyCatalog.stack(ingredientId),
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:botanical_vial"),
             BloodDemonArtAlchemyCatalog.stack(outputId)
         ));
     }

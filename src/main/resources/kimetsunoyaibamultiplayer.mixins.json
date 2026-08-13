@@ -8,6 +8,7 @@
     "GrindstoneAlchemyInputMixin",
     "HurtByTargetGoalMixin",
     "LivingEntityFoodParticleMixin",
+    "BaseSunBreathingSunlightImmunityMixin",
     "ServerLevelParticleMixin",
     "CommandsMixin",
     "StructureTemplateMixin"

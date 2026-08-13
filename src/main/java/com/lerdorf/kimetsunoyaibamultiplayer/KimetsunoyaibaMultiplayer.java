@@ -180,6 +180,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.DemonSlayerConfig.SPEC, "kimetsunoyaibamultiplayer/demon_slayer.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBlocksConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_blocks.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordsmithVillageConfig.SPEC, "kimetsunoyaibamultiplayer/swordsmith_village.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.DemonRankingConfig.SPEC, "kimetsunoyaibamultiplayer/demon_ranking.toml");
         Log.alwaysWarn("[INIT] Registered config specs");
         Log.startupProbe("KimetsunoyaibaMultiplayer.<init>.end");
     }
@@ -206,6 +207,7 @@ public class KimetsunoyaibaMultiplayer
         event.enqueueWork(() -> {
             Log.startupProbe("KimetsunoyaibaMultiplayer.commonSetup.enqueueWork.start");
             com.lerdorf.kimetsunoyaibamultiplayer.alchemy.AlchemyBrewingRecipes.register();
+            com.lerdorf.kimetsunoyaibamultiplayer.alchemy.WisteriaIncenseDispenseBehavior.register();
             ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "fermented_orchid"),
                 com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyBlocks.POTTED_FERMENTED_ORCHID
@@ -213,6 +215,10 @@ public class KimetsunoyaibaMultiplayer
             ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "immortal_daisy"),
                 com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyBlocks.POTTED_IMMORTAL_DAISY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "wisteria_incense"),
+                com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyBlocks.POTTED_WISTERIA_INCENSE
             );
             ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "wisteria_sapling_pink"),
@@ -229,6 +235,78 @@ public class KimetsunoyaibaMultiplayer
             ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "wisteria_sapling_cream"),
                 com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WISTERIA_SAPLING_CREAM
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "white_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WHITE_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "red_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_RED_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "purple_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_PURPLE_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "yellow_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_YELLOW_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "blue_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_BLUE_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "lime_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_LIME_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "pink_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_PINK_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "orange_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_ORANGE_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "waxed_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WAXED_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "waxed_white_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WAXED_WHITE_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "waxed_red_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WAXED_RED_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "waxed_purple_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WAXED_PURPLE_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "waxed_yellow_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WAXED_YELLOW_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "waxed_blue_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WAXED_BLUE_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "waxed_lime_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WAXED_LIME_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "waxed_pink_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WAXED_PINK_SPIDER_LILY
+            );
+            ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "waxed_orange_spider_lily"),
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.POTTED_WAXED_ORANGE_SPIDER_LILY
             );
             // Register base mod style metadata and sword metadata for color change system
             com.lerdorf.kimetsunoyaibamultiplayer.api.BaseModRegistration.registerAll();
@@ -553,16 +631,19 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.commands.GiveBlackSwordCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SunBreathingLevelCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SpawnDemonSlayerCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.DemonizeCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TorilGateCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SwordsmithVillageCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.FinalSelectionCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.OreSelectCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SurvivalRaidCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.MeditationMenuCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.QuestCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugPlayerDimensionsCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.RepairHouseTamayoCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TestTamayoHouseCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.LocalPosCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.DemonRankCommand.register(event.getDispatcher());
         if (com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity.isEnabled()) {
             com.lerdorf.kimetsunoyaibamultiplayer.commands.KNYGravityCommand.register(event.getDispatcher());
         }
@@ -897,6 +978,7 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.BLOOD_FLAME.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BloodFlameParticle.Provider::new
             );
+            Log.alwaysWarn("[CLIENT PARTICLES] registered blood_flame provider");
 
             event.registerSpriteSet(
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.IMPACT.get(),
@@ -1304,6 +1386,8 @@ public class KimetsunoyaibaMultiplayer
                 }
 
                 boolean isEntityAttack = mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult;
+                boolean isBlockAttack = mc.hitResult != null
+                    && mc.hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK;
 
                 if (heldItem.getItem() == ModItems.CUSTOM_DEMON_ART.get()) {
                     java.util.UUID excludedTargetId = null;
@@ -1311,6 +1395,16 @@ public class KimetsunoyaibaMultiplayer
                         excludedTargetId = entityHit.getEntity().getUUID();
                     }
                     ModNetworking.sendToServer(new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CustomBdaPassiveAttackPacket(excludedTargetId));
+                    return;
+                }
+
+                if (com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CombustibleBlood.isCombustibleBloodMeleeItem(heldItem)
+                    && !isBlockAttack) {
+                    java.util.UUID excludedTargetId = null;
+                    if (mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
+                        excludedTargetId = entityHit.getEntity().getUUID();
+                    }
+                    ModNetworking.sendToServer(new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CombustibleBloodM1AttackPacket(excludedTargetId));
                     return;
                 }
                 

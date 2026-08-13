@@ -1,6 +1,10 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.meditation;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.BlueSpiderLilyTeaHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.DemonRankingConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.demonranking.DemonRank;
+import com.lerdorf.kimetsunoyaibamultiplayer.demonranking.DemonRankingSavedData;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
@@ -13,6 +17,8 @@ import net.minecraft.advancements.Advancement;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -20,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.UUID;
 
 public final class MeditationMenuService {
     public static final String SELECTED_TYPE_QUEST = "quest";
@@ -95,6 +102,12 @@ public final class MeditationMenuService {
 
         List<MeditationMenuData.InfoSection> infoSections = buildInfoSections(player);
         List<MeditationMenuData.QuestEntry> quests = QuestProgressionManager.buildQuestEntries(player, role);
+        if (role == PlayerRole.DEMON && DemonRankingConfig.isEnabled()) {
+            List<MeditationMenuData.QuestEntry> withBloodyBattle = new ArrayList<>();
+            withBloodyBattle.add(buildBloodyBattleEntry(player));
+            withBloodyBattle.addAll(quests);
+            quests = withBloodyBattle;
+        }
         List<MeditationMenuData.LocationEntry> locations = buildLocations(role);
         List<MeditationMenuData.PassiveSkillEntry> passiveSkills = PassiveSkillManager.buildEntries(player, role);
         int passiveSkillPoints = PassiveSkillManager.getAvailableSkillPoints(player, role);
@@ -188,7 +201,14 @@ public final class MeditationMenuService {
             )
         );
 
-        return List.of(demonsKilled, humansKilled);
+        MeditationMenuData.InfoSection blueSpiderLilyTea = new MeditationMenuData.InfoSection(
+            "blue_spider_lily_tea_days",
+            "Blue Spider Lily Tea Days",
+            BlueSpiderLilyTeaHandler.getTeaDays(player),
+            List.of()
+        );
+
+        return List.of(demonsKilled, humansKilled, blueSpiderLilyTea);
     }
 
     private static List<MeditationMenuData.LocationEntry> buildLocations(PlayerRole role) {
@@ -333,20 +353,59 @@ public final class MeditationMenuService {
     }
 
     private static String resolveKizukiRank(ServerPlayer player) {
-        String[] stringKeys = {"kizuki_rank", "kizukiRank", "moon_rank", "moonRank"};
-        for (String key : stringKeys) {
-            String value = player.getPersistentData().getString(key);
-            if (!value.isBlank()) {
-                return value;
+        DemonRank rank = DemonRankingSavedData.get(player.serverLevel()).getRankOf(player.getUUID());
+        return rank == null ? "None" : rank.displayName();
+    }
+
+    private static MeditationMenuData.QuestEntry buildBloodyBattleEntry(ServerPlayer player) {
+        DemonRankingSavedData data = DemonRankingSavedData.get(player.serverLevel());
+        DemonRank myRank = data.getRankOf(player.getUUID());
+
+        List<String> description = new ArrayList<>();
+        description.add("Your rank: " + (myRank == null ? "Unranked" : myRank.displayName()));
+
+        DemonRank targetRank = myRank == null ? DemonRank.LOWER_6 : myRank.above();
+        String progressText;
+        if (targetRank == null) {
+            description.add("Next target: none — you hold the highest rank.");
+            progressText = "Highest rank";
+        } else {
+            String targetName = describeHolder(player, data, targetRank);
+            description.add("Next target: " + targetRank.displayName() + " — " + targetName);
+            progressText = "Next: " + targetName;
+        }
+
+        description.add("");
+        description.add("Roster:");
+        for (DemonRank rank : DemonRank.values()) {
+            description.add(rank.displayName() + ": " + describeHolder(player, data, rank));
+        }
+
+        return new MeditationMenuData.QuestEntry(
+            "bloody_battle", "Bloody Battle", "Kizuki Rank", 0xAA0000,
+            description, List.of(), progressText, false, false
+        );
+    }
+
+    private static String describeHolder(ServerPlayer viewer, DemonRankingSavedData data, DemonRank rank) {
+        UUID holderId = data.getHolder(rank);
+        if (holderId != null) {
+            ServerPlayer holder = viewer.server.getPlayerList().getPlayer(holderId);
+            return holder != null ? holder.getName().getString() : "Offline player";
+        }
+        return entityDisplayName(rank) + " (entity)";
+    }
+
+    private static String entityDisplayName(DemonRank rank) {
+        for (RegistryObject<? extends net.minecraft.world.entity.EntityType<?>> entity : rank.fallbackEntities()) {
+            if (entity.isPresent()) {
+                ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(entity.get());
+                if (id != null) {
+                    return prettify(id.getPath());
+                }
             }
         }
-        if (player.getPersistentData().getBoolean("upper_moon")) {
-            return "Upper Moon";
-        }
-        if (player.getPersistentData().getBoolean("lower_moon")) {
-            return "Lower Moon";
-        }
-        return "None";
+        return "Unclaimed";
     }
 
     private static boolean hasNichirinOrTrainingSword(ServerPlayer player) {

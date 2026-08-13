@@ -153,6 +153,11 @@ public class MicroscopeStationSavedData extends SavedData {
         input.setItem(0, items.get(LENS_SLOT));
         input.setItem(1, items.get(ITEM_SLOT));
 
+        ItemStack dynamicOutput = BloodDemonArtAlchemyCatalog.microscopeOutput(items.get(ITEM_SLOT), level.random);
+        if (!dynamicOutput.isEmpty()) {
+            return dynamicOutput;
+        }
+
         List<MicroscopeRecipe> matches = new ArrayList<>();
         for (MicroscopeRecipe recipe : level.getRecipeManager().getAllRecipesFor(ModAlchemyRecipes.MICROSCOPE_TYPE)) {
             if (recipe.matches(input, level)) {

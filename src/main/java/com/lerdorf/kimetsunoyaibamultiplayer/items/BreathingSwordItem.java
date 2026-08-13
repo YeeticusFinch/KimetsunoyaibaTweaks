@@ -8,6 +8,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingD
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -180,7 +181,7 @@ public abstract class BreathingSwordItem extends SwordItem {
                         player, variation.getDisplayName(), technique.getTechniqueColor());
                     // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
-                    player.getCooldowns().addCooldown(this, cooldownTicks);
+                    PlayerAbilityCooldowns.addCooldown(player, this, cooldownTicks);
                 }
 
                 // Send action bar message
@@ -224,7 +225,7 @@ public abstract class BreathingSwordItem extends SwordItem {
                         player, form.getDisplayName(), technique.getTechniqueColor());
                     // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
-                    player.getCooldowns().addCooldown(this, cooldownTicks);
+                    PlayerAbilityCooldowns.addCooldown(player, this, cooldownTicks);
                 }
 
                 // Send action bar message (both sides for immediate feedback)

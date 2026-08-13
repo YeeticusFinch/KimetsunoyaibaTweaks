@@ -58,6 +58,7 @@ public class KanaeRenderer extends GeoEntityRenderer<KanaeEntity> {
         this.addRenderLayer(new GeoArmorLayer<>(this));
         this.addRenderLayer(new GeoEquipmentLayer<>(this));
         this.addRenderLayer(new GeoSwordDisplayLayer<>(this));
+        this.addRenderLayer(new DemonSlayerDemonEyesLayer<>(this, "geo/biped.geo.json", "animations/biped.animation.json"));
         this.scaleHeight = 1.0F;
         this.scaleWidth = 1.0F;
     }

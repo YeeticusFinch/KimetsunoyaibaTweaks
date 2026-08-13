@@ -49,6 +49,7 @@ public class DemonSlayerRenderer extends GeoEntityRenderer<DemonSlayerEntity> {
         this.addRenderLayer(new GeoArmorLayer<>(this));
         this.addRenderLayer(new GeoEquipmentLayer<>(this));
         this.addRenderLayer(new GeoSwordDisplayLayer<>(this));
+        this.addRenderLayer(new DemonSlayerDemonEyesLayer(this, "geo/biped.geo.json", "animations/biped.animation.json"));
     }
 
     @Override

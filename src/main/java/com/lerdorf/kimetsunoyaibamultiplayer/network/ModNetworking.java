@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AdjustPassiveSkillPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CloseDemonPropositionPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CombustibleBloodM1AttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CustomBdaPassiveAttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonEyesSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BloodDemonArtBuilderActionPacket;
@@ -282,6 +283,13 @@ public class ModNetworking {
                 .consumerMainThread(CustomBdaPassiveAttackPacket::handle)
                 .add();
 
+        int combustibleBloodM1AttackPacketId = id();
+        net.messageBuilder(CombustibleBloodM1AttackPacket.class, combustibleBloodM1AttackPacketId)
+                .decoder(CombustibleBloodM1AttackPacket::new)
+                .encoder(CombustibleBloodM1AttackPacket::toBytes)
+                .consumerMainThread(CombustibleBloodM1AttackPacket::handle)
+                .add();
+
         int swampPuddleStatePacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwampPuddleStatePacket.class, swampPuddleStatePacketId)
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwampPuddleStatePacket::new)
@@ -357,6 +365,13 @@ public class ModNetworking {
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateGravityBlockPacket::new)
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateGravityBlockPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateGravityBlockPacket::handle)
+                .add();
+
+        int demonRankSyncPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonRankSyncPacket.class, demonRankSyncPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonRankSyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonRankSyncPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonRankSyncPacket::handle)
                 .add();
     }
 

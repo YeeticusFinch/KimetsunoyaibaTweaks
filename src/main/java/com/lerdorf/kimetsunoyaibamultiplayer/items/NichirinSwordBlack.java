@@ -13,6 +13,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerColorChangeStyleHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SunBreathingLevelHelper;
 import net.minecraft.ChatFormatting;
@@ -442,7 +443,7 @@ public class NichirinSwordBlack extends BreathingSwordItem {
                     BreathingFormAnnouncementHelper.announceCustomForm(
                         player, variation.getDisplayName(), technique.getTechniqueColor());
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
-                    player.getCooldowns().addCooldown(this, cooldownTicks);
+                    PlayerAbilityCooldowns.addCooldown(player, this, cooldownTicks);
                 }
                 player.displayClientMessage(variation.getDisplayName().copy().withStyle(style -> style.withColor(0x55FFFF)), true);
                 return InteractionResultHolder.success(stack);
@@ -469,7 +470,7 @@ public class NichirinSwordBlack extends BreathingSwordItem {
                     BreathingFormAnnouncementHelper.announceCustomForm(
                         player, form.getDisplayName(), technique.getTechniqueColor());
                     int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, cooldownSeconds * 20);
-                    player.getCooldowns().addCooldown(this, cooldownTicks);
+                    PlayerAbilityCooldowns.addCooldown(player, this, cooldownTicks);
                 }
                 player.displayClientMessage(form.getDisplayName().copy().withStyle(style -> style.withColor(0x55FFFF)), true);
                 return InteractionResultHolder.success(stack);

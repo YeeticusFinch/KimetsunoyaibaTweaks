@@ -12,25 +12,26 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerP
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.StructureLocationCache;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SunBreathingLevelHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.SlayerFleshHelper;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.util.Mth;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.BossEvent;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -44,7 +45,9 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public final class QuestProgressionManager {
@@ -74,14 +77,14 @@ public final class QuestProgressionManager {
     private static final String SLAYERS_BLOOD_FINAL_KILLED = "KnYPermanenceSlayersBloodFinalKilled";
     private static final String SLAYERS_BLOOD_CAPTIVE_UUID = "KnYPermanenceSlayersBloodCaptiveUuid";
     private static final String SLAYERS_BLOOD_FINAL_UUID = "KnYPermanenceSlayersBloodFinalUuid";
+    private static final String SLAYERS_BLOOD_FLESH_STACK_TAG = "KnYPermanenceSlayersBloodFleshStack";
     private static final String SLAYERS_BLOOD_SLAYER_TAG = "slayers_blood_slayer";
-    private static final String SLAYERS_BLOOD_CAPTIVE_TAG = "slayers_blood_captive";
     private static final String SLAYERS_BLOOD_FINAL_TAG = "slayers_blood_final_slayer";
-    private static final float SLAYERS_BLOOD_CAPTIVE_DISARM_HEALTH_RATIO = 0.40F;
     private static final long SLAYERS_BLOOD_VILLAGE_REINFORCEMENT_INTERVAL = 20L * 60L;
     private static final double SLAYERS_BLOOD_VILLAGE_DETECTION_RADIUS = 96.0D;
     private static final double SLAYERS_BLOOD_INITIAL_SPAWN_RADIUS = 20.0D;
     private static final double SLAYERS_BLOOD_REINFORCEMENT_SPAWN_RADIUS = 40.0D;
+    private static final Map<UUID, ServerBossEvent> SLAYERS_BLOOD_BOSS_BARS = new HashMap<>();
     private static final int PERMANENCE_FIRST_TASTE_REQUIRED = 10;
     private static final int PERMANENCE_HUNGER_UNENDING_REQUIRED = 10;
     private static final TagKey<EntityType<?>> WOMAN =
@@ -96,6 +99,7 @@ public final class QuestProgressionManager {
     private static final String SWORDSMITH_NAV_KAKUSHI_TAG = "KnYSwordsmithVillageGuideKakushi";
     private static final int SWORDSMITH_NAV_MESSAGE_COOLDOWN_TICKS = 20 * 30;
     private static final double SWORDSMITH_KAKUSHI_SEARCH_RADIUS = 48.0D;
+    private static final double SWORDSMITH_KAKUSHI_SPAWN_GUARD_RADIUS = 20.0D;
     private static final ResourceLocation KAKUSHI_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "kakushi");
     private static final List<ResourceLocation> DEMON_HUNT_STRUCTURES = List.of(
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "village_swamp"),
@@ -237,6 +241,17 @@ public final class QuestProgressionManager {
 
         if (isPermanenceFirstTaste(context)) {
             handlePermanenceFirstTasteKill(player, victim, context);
+            return;
+        }
+
+        if (isPermanenceSlayersBloodTerrorize(context) && victim instanceof DemonSlayerEntity) {
+            for (ServerPlayer involved : getPlayersSharingSlayersBlood(player, 256.0D)) {
+                involved.getPersistentData().putBoolean(SLAYERS_BLOOD_CAPTIVE_READY, true);
+                involved.sendSystemMessage(Component.literal("§7The Demon Slayer falls. Return their remains to Kamanue."));
+            }
+            if (context.step().customCheck().test(player, context)) {
+                completeStep(player, context);
+            }
             return;
         }
 
@@ -473,46 +488,8 @@ public final class QuestProgressionManager {
 
     public static void handleSlayersBloodSlayerHurt(ServerPlayer player, LivingEntity target, float projectedHealth,
                                                     LivingHurtEvent event) {
-        if (!CustomProgressionConfig.isCustomProgressionEnabled() || player == null || !(target instanceof DemonSlayerEntity slayer)) {
-            return;
-        }
-        PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
-        if (role != PlayerRole.DEMON) {
-            return;
-        }
-        QuestRuntimeContext context = getOrInitializeContext(player, role);
-        if (!isPermanenceSlayersBloodTerrorize(context)) {
-            return;
-        }
-        String targetKey = slayer.getPersistentData().getString(QuestScenarioActions.QUEST_TARGET_ID_TAG);
-        if (!SLAYERS_BLOOD_SLAYER_TAG.equals(targetKey) || slayer.getPowerLevel() != 0) {
-            return;
-        }
-
-        float breakThreshold = slayer.getMaxHealth() * SLAYERS_BLOOD_CAPTIVE_DISARM_HEALTH_RATIO;
-        if (projectedHealth > breakThreshold) {
-            return;
-        }
-
-        float disarmedHealth = Math.max(1.0F, slayer.getMaxHealth() * SLAYERS_BLOOD_CAPTIVE_DISARM_HEALTH_RATIO);
-        if (event != null) {
-            event.setAmount(Math.max(0.0F, target.getHealth() - disarmedHealth));
-        }
-        slayer.setHealth(disarmedHealth);
-        slayer.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
-        slayer.getPersistentData().putString(QuestScenarioActions.QUEST_TARGET_ID_TAG, SLAYERS_BLOOD_CAPTIVE_TAG);
-        slayer.getPersistentData().putBoolean(SLAYERS_BLOOD_CAPTIVE_TAG, true);
-        slayer.setTarget(null);
-        slayer.setLastHurtByMob(null);
-        slayer.setNoAi(false);
-        slayer.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20 * 30, 2, false, true, true));
-        slayer.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 20 * 30, 3, false, true, true));
-
-        for (ServerPlayer involved : getPlayersSharingSlayersBlood(player, 256.0D)) {
-            involved.getPersistentData().putBoolean(SLAYERS_BLOOD_CAPTIVE_READY, true);
-            involved.getPersistentData().putUUID(SLAYERS_BLOOD_CAPTIVE_UUID, slayer.getUUID());
-            involved.sendSystemMessage(Component.literal("§7The Demon Slayer's sword breaks. Bring the captive back to Kamanue."));
-        }
+        // Slayer's Blood now requires killing the slayer. Keep this hook as a no-op so
+        // older event wiring no longer prevents the death at low health.
     }
 
     public static void markPermanenceFirstTasteCompleted(ServerPlayer player) {
@@ -582,8 +559,13 @@ public final class QuestProgressionManager {
         data.remove(SLAYERS_BLOOD_STUDY_COMPLETE);
         data.remove(SLAYERS_BLOOD_FINAL_KILLED);
         data.remove(SLAYERS_BLOOD_CAPTIVE_UUID);
+        data.remove(SLAYERS_BLOOD_FLESH_STACK_TAG);
+        if (data.contains(SLAYERS_BLOOD_FINAL_UUID)) {
+            removeSlayersBloodBossBar(data.getUUID(SLAYERS_BLOOD_FINAL_UUID));
+        }
         data.remove(SLAYERS_BLOOD_FINAL_UUID);
         QuestScenarioActions.resetSlayersBloodKamanueState(serverPlayer);
+        QuestScenarioActions.clearKamanueHeldItem(serverPlayer);
     }
 
     public static List<ServerPlayer> getPlayersSharingSlayersBlood(ServerPlayer source, double radius) {
@@ -650,7 +632,7 @@ public final class QuestProgressionManager {
 
         long lastSpawn = player.getPersistentData().getLong(SLAYERS_BLOOD_VILLAGE_LAST_SPAWN_TICK);
         if (lastSpawn <= 0L) {
-            spawnSlayersBloodVillageReinforcements(player, 3, SLAYERS_BLOOD_INITIAL_SPAWN_RADIUS);
+            spawnSlayersBloodVillageReinforcements(player, 4, SLAYERS_BLOOD_INITIAL_SPAWN_RADIUS);
             player.getPersistentData().putLong(SLAYERS_BLOOD_VILLAGE_LAST_SPAWN_TICK, now);
             player.sendSystemMessage(Component.literal("§7Your actions have attracted attention."));
             return;
@@ -676,10 +658,8 @@ public final class QuestProgressionManager {
     }
 
     public static boolean isPermanenceSlayersBloodCaptiveDelivered(ServerPlayer player, QuestRuntimeContext context) {
-        BlockPos kamanue = QuestScenarioActions.findKamanuePosition(player);
-        BlockPos captive = findPermanenceSlayersBloodCaptive(player);
-        return kamanue != null && captive != null && captive.distSqr(kamanue) <= 12.0D * 12.0D
-            || player.getPersistentData().getBoolean(SLAYERS_BLOOD_CAPTIVE_DELIVERED);
+        return player.getPersistentData().getBoolean(SLAYERS_BLOOD_CAPTIVE_DELIVERED)
+            || findDemonSlayerFleshSlot(player) >= 0;
     }
 
     public static boolean isPermanenceSlayersBloodStudyComplete(ServerPlayer player, QuestRuntimeContext context) {
@@ -690,9 +670,11 @@ public final class QuestProgressionManager {
             return false;
         }
         long startedAt = player.getPersistentData().getLong(SLAYERS_BLOOD_STUDY_START_TICK);
-        if (startedAt > 0L && player.level().getGameTime() >= startedAt + 30L * 7L + 10L) {
-            player.getPersistentData().putBoolean(SLAYERS_BLOOD_STUDY_COMPLETE, true);
-            return true;
+        if (startedAt > 0L && player.level().getGameTime() >= startedAt + 30L * 6L + 10L) {
+            if (spawnPermanenceSlayersBloodFinalSlayer(player)) {
+                player.getPersistentData().putBoolean(SLAYERS_BLOOD_STUDY_COMPLETE, true);
+                return true;
+            }
         }
         return false;
     }
@@ -706,6 +688,7 @@ public final class QuestProgressionManager {
             Entity entity = findFinalSlayerEntity(player);
             if (entity instanceof DemonSlayerEntity slayer) {
                 slayer.setTarget(player);
+                updateSlayersBloodBossBar(player, slayer);
             }
         }
     }
@@ -720,39 +703,34 @@ public final class QuestProgressionManager {
 
     private static void startPermanenceSlayersBloodStudy(ServerPlayer player, QuestRuntimeContext context) {
         if (!isPermanenceSlayersBloodStudy(context)
-            || !player.getPersistentData().getBoolean(SLAYERS_BLOOD_CAPTIVE_DELIVERED)
             || player.getPersistentData().getBoolean(SLAYERS_BLOOD_STUDY_STARTED)) {
             return;
         }
 
-        DemonSlayerEntity captive = findCaptiveSlayerEntity(player);
-        if (captive == null) {
-            player.sendSystemMessage(Component.literal("§7Kamanue needs the captive closer."));
+        DeliveredSlayerFlesh flesh = takeDemonSlayerFlesh(player);
+        if (flesh == null) {
+            player.sendSystemMessage(Component.literal("§7Kamanue needs the Demon Slayer's flesh."));
             return;
         }
+        player.getPersistentData().putBoolean(SLAYERS_BLOOD_CAPTIVE_DELIVERED, true);
+        storeSlayersBloodFlesh(player, flesh);
+        QuestScenarioActions.setKamanueHeldItem(player, flesh.stack());
 
         List<Component> messages = List.of(
-            Component.literal("§c[Kamanue] §fYou actually did it..."),
-            Component.literal("§c[Kamanue] §fGood. Very good. Bring them closer."),
-            Component.literal("§c[Kamanue] §fWe will study their breathing technique."),
-            Component.literal("§c[Kamanue] §fTheir breathing changes everything."),
-            Component.literal("§c[Kamanue] §fMore oxygen. Faster muscles. Stronger blood flow."),
-            Component.literal("§c[Kamanue] §fA fragile human body pushed beyond its limits."),
-            Component.literal("§c[Kamanue] §fThat is the secret of the Demon Slayers.")
+            Component.literal("§c[Kamanue] §fExcellent..."),
+            Component.literal("§c[Kamanue] §fThis one still has one last breath."),
+            Component.literal("§c[Kamanue] §fWatch carefully."),
+            Component.literal("§c[Kamanue] §fMuzan's blood reshapes the body..."),
+            Component.literal("§c[Kamanue] §f...and it rewrites its instincts."),
+            Component.literal("§c[Kamanue] §fEven on death's door, it still has potential.")
         );
         for (ServerPlayer involved : getPlayersSharingSlayersBlood(player, 256.0D)) {
             involved.getPersistentData().putBoolean(SLAYERS_BLOOD_STUDY_STARTED, true);
             involved.getPersistentData().putLong(SLAYERS_BLOOD_STUDY_START_TICK, involved.level().getGameTime());
-            involved.getPersistentData().putUUID(SLAYERS_BLOOD_FINAL_UUID, captive.getUUID());
+            involved.getPersistentData().putBoolean(SLAYERS_BLOOD_CAPTIVE_DELIVERED, true);
+            storeSlayersBloodFlesh(involved, flesh);
             QuestScenarioActions.sendDelayedMessages(involved, messages, 30);
         }
-
-        captive.getPersistentData().putString(QuestScenarioActions.QUEST_TARGET_ID_TAG, SLAYERS_BLOOD_FINAL_TAG);
-        captive.getPersistentData().putBoolean(SLAYERS_BLOOD_CAPTIVE_TAG, false);
-        captive.setNoAi(false);
-        captive.configurePowerLevelLoadout(Math.max(0, Math.min(1, captive.getPowerLevel())));
-        captive.setHealth(captive.getMaxHealth());
-        captive.setTarget(player);
     }
 
     private static void spawnSlayersBloodVillageReinforcements(ServerPlayer player, int count, double radius) {
@@ -775,7 +753,7 @@ public final class QuestProgressionManager {
         for (ServerPlayer involved : getPlayersSharingSlayersBlood(player, 256.0D)) {
             involved.sendSystemMessage(Component.literal("§7Your actions have attracted attention."));
         }
-        spawnSlayersBloodVillageReinforcements(player, 3, SLAYERS_BLOOD_INITIAL_SPAWN_RADIUS);
+        spawnSlayersBloodVillageReinforcements(player, 4, SLAYERS_BLOOD_INITIAL_SPAWN_RADIUS);
     }
 
     private static void spawnSingleVillageSlayer(ServerPlayer player, ServerLevel serverLevel, double radius) {
@@ -789,7 +767,7 @@ public final class QuestProgressionManager {
         BlockPos spawnPos = findSafeVillageSpawn(serverLevel, player.blockPosition(), Math.max(8, (int) Math.ceil(radius)));
         slayer.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D, 0.0F, 0.0F);
         slayer.finalizeSpawn(serverLevel, serverLevel.getCurrentDifficultyAt(spawnPos), MobSpawnType.MOB_SUMMONED, null, null);
-        slayer.configurePowerLevelLoadout(0);
+        slayer.configurePowerLevelLoadout(player.getRandom().nextInt(2));
         slayer.getPersistentData().putString(QuestScenarioActions.QUEST_TARGET_ID_TAG, SLAYERS_BLOOD_SLAYER_TAG);
         slayer.setTarget(player);
         slayer.setPersistenceRequired();
@@ -825,9 +803,8 @@ public final class QuestProgressionManager {
         return level.getEntitiesOfClass(LivingEntity.class, new AABB(village).inflate(SLAYERS_BLOOD_VILLAGE_DETECTION_RADIUS),
                 entity -> entity.isAlive()
                     && !entity.isRemoved()
-                    && EntityTagHelper.isDemonSlayer(entity)
-                    && entity instanceof DemonSlayerEntity slayer
-                    && slayer.getPowerLevel() == 0)
+                    && entity instanceof DemonSlayerEntity
+                    && EntityTagHelper.isDemonSlayer(entity))
             .stream()
             .findAny()
             .isPresent();
@@ -853,31 +830,6 @@ public final class QuestProgressionManager {
         for (ServerPlayer involved : getPlayersSharingSlayersBlood(player, 256.0D)) {
             involved.getPersistentData().putBoolean(flag, true);
         }
-    }
-
-    private static BlockPos findPermanenceSlayersBloodCaptive(ServerPlayer player) {
-        DemonSlayerEntity captive = findCaptiveSlayerEntity(player);
-        return captive == null ? null : captive.blockPosition();
-    }
-
-    private static DemonSlayerEntity findCaptiveSlayerEntity(ServerPlayer player) {
-        if (!(player.level() instanceof ServerLevel serverLevel)) {
-            return null;
-        }
-        if (player.getPersistentData().contains(SLAYERS_BLOOD_CAPTIVE_UUID)) {
-            UUID uuid = player.getPersistentData().getUUID(SLAYERS_BLOOD_CAPTIVE_UUID);
-            Entity entity = serverLevel.getEntity(uuid);
-            if (entity instanceof DemonSlayerEntity slayer && slayer.isAlive()) {
-                return slayer;
-            }
-        }
-        return serverLevel.getEntitiesOfClass(DemonSlayerEntity.class,
-                new AABB(player.blockPosition()).inflate(256.0D),
-                slayer -> slayer.isAlive()
-                    && SLAYERS_BLOOD_CAPTIVE_TAG.equals(slayer.getPersistentData().getString(QuestScenarioActions.QUEST_TARGET_ID_TAG)))
-            .stream()
-            .min(java.util.Comparator.comparingDouble(player::distanceToSqr))
-            .orElse(null);
     }
 
     public static BlockPos findNearestSlayersBloodSlayer(ServerPlayer player, String targetKey, int powerLevel, double radius) {
@@ -915,7 +867,7 @@ public final class QuestProgressionManager {
 
         BlockPos village = QuestScenarioActions.findNearestVanillaVillage(serverLevel, player.blockPosition());
         if (village == null) {
-            BlockPos slayer = findNearestSlayersBloodSlayer(player, SLAYERS_BLOOD_SLAYER_TAG, 0, 100.0D);
+            BlockPos slayer = findNearestSlayersBloodSlayer(player, SLAYERS_BLOOD_SLAYER_TAG, -1, 100.0D);
             return slayer;
         }
 
@@ -925,48 +877,18 @@ public final class QuestProgressionManager {
             return village;
         }
 
-        BlockPos slayer = findNearestSlayersBloodSlayer(player, SLAYERS_BLOOD_SLAYER_TAG, 0, 100.0D);
+        BlockPos slayer = findNearestSlayersBloodSlayer(player, SLAYERS_BLOOD_SLAYER_TAG, -1, 100.0D);
         if (slayer != null) {
             return slayer;
         }
 
         spawnSlayersBloodVillageReinforcement(player, SLAYERS_BLOOD_INITIAL_SPAWN_RADIUS);
-        slayer = findNearestSlayersBloodSlayer(player, SLAYERS_BLOOD_SLAYER_TAG, 0, 100.0D);
+        slayer = findNearestSlayersBloodSlayer(player, SLAYERS_BLOOD_SLAYER_TAG, -1, 100.0D);
         return slayer != null ? slayer : village;
     }
 
     public static boolean handleSlayersBloodCaptiveDeath(DemonSlayerEntity captive) {
-        if (!CustomProgressionConfig.isCustomProgressionEnabled() || captive == null) {
-            return false;
-        }
-        if (!(captive.level() instanceof ServerLevel serverLevel)) {
-            return false;
-        }
-        if (!SLAYERS_BLOOD_CAPTIVE_TAG.equals(captive.getPersistentData().getString(QuestScenarioActions.QUEST_TARGET_ID_TAG))) {
-            return false;
-        }
-
-        boolean handled = false;
-        UUID captiveUuid = captive.getUUID();
-        for (ServerPlayer player : serverLevel.players()) {
-            if (!player.getPersistentData().contains(SLAYERS_BLOOD_CAPTIVE_UUID)) {
-                continue;
-            }
-            if (!player.getPersistentData().getUUID(SLAYERS_BLOOD_CAPTIVE_UUID).equals(captiveUuid)) {
-                continue;
-            }
-
-            PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
-            QuestRuntimeContext context = getOrInitializeContext(player, role);
-            if (context == null || !isPermanenceSlayersBloodCaptiveReturn(context)) {
-                continue;
-            }
-
-            resetPermanenceSlayersBloodOnDeath(player);
-            player.sendSystemMessage(Component.literal("§cQuest Failed: §fThe captive Demon Slayer died. Return to terrorizing a village."));
-            handled = true;
-        }
-        return handled;
+        return false;
     }
 
     public static boolean handleSlayersBloodFinalSlayerDeath(DemonSlayerEntity finalSlayer) {
@@ -979,10 +901,15 @@ public final class QuestProgressionManager {
         if (!SLAYERS_BLOOD_FINAL_TAG.equals(finalSlayer.getPersistentData().getString(QuestScenarioActions.QUEST_TARGET_ID_TAG))) {
             return false;
         }
+        removeSlayersBloodBossBar(finalSlayer.getUUID());
 
         List<Component> messages = List.of(
             Component.literal("§c[Kamanue] §fYou've learned something important today."),
-            Component.literal("§c[Kamanue] §fTo defeat your enemy, you must first understand them.")
+            Component.literal("§c[Kamanue] §fThe greatest weapon of humanity..."),
+            Component.literal("§c[Kamanue] §f...can become one of demonkind's greatest assets."),
+            Component.literal("§c[Kamanue] §fTo defeat your enemy..."),
+            Component.literal("§c[Kamanue] §f...you must first understand them."),
+            Component.literal("§c[Kamanue] §fNow sit on this cushion and meditate.")
         );
 
         boolean handled = false;
@@ -1031,6 +958,164 @@ public final class QuestProgressionManager {
             .stream()
             .min(java.util.Comparator.comparingDouble(player::distanceToSqr))
             .orElse(null);
+    }
+
+    private static int findDemonSlayerFleshSlot(ServerPlayer player) {
+        for (int slot = 0; slot < player.getInventory().items.size(); slot++) {
+            ItemStack stack = player.getInventory().items.get(slot);
+            if (SlayerFleshHelper.isDemonSlayerFlesh(stack)) {
+                return slot;
+            }
+        }
+        return -1;
+    }
+
+    private static DeliveredSlayerFlesh takeDemonSlayerFlesh(ServerPlayer player) {
+        int slot = findDemonSlayerFleshSlot(player);
+        if (slot < 0) {
+            return null;
+        }
+        ItemStack stack = player.getInventory().items.get(slot);
+        SlayerFleshHelper.SlayerFleshData data = SlayerFleshHelper.read(stack);
+        if (data == null) {
+            return null;
+        }
+        ItemStack delivered = stack.copy();
+        delivered.setCount(1);
+        player.getInventory().removeItem(slot, 1);
+        player.getInventory().setChanged();
+        return new DeliveredSlayerFlesh(delivered, data);
+    }
+
+    private static void storeSlayersBloodFlesh(ServerPlayer player, DeliveredSlayerFlesh flesh) {
+        if (player == null || flesh == null || flesh.stack().isEmpty() || flesh.data() == null) {
+            return;
+        }
+        ItemStack stack = flesh.stack().copy();
+        stack.setCount(1);
+        player.getPersistentData().put(SLAYERS_BLOOD_FLESH_STACK_TAG, stack.save(new CompoundTag()));
+        storeSlayersBloodFleshData(player.getPersistentData(), flesh.data());
+    }
+
+    private static void storeSlayersBloodFleshData(CompoundTag target, SlayerFleshHelper.SlayerFleshData fleshData) {
+        if (target == null || fleshData == null) {
+            return;
+        }
+        target.putInt(SlayerFleshHelper.POWER_LEVEL_TAG, fleshData.powerLevel());
+        target.putInt(SlayerFleshHelper.LEVEL_TAG, fleshData.powerLevel());
+        target.putString(SlayerFleshHelper.BREATHING_STYLE_TAG, fleshData.breathingStyleId());
+        target.putBoolean(SlayerFleshHelper.FEMALE_TAG, fleshData.female());
+        target.putString(SlayerFleshHelper.GENDER_TAG, fleshData.female() ? "female" : "male");
+        target.putInt(SlayerFleshHelper.TEXTURE_INDEX_TAG, fleshData.textureIndex());
+        target.putInt(SlayerFleshHelper.SKIN_TAG, fleshData.textureIndex());
+    }
+
+    private static ItemStack getStoredSlayersBloodFleshStack(ServerPlayer player) {
+        if (player == null || !player.getPersistentData().contains(SLAYERS_BLOOD_FLESH_STACK_TAG, Tag.TAG_COMPOUND)) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack stack = ItemStack.of(player.getPersistentData().getCompound(SLAYERS_BLOOD_FLESH_STACK_TAG));
+        return SlayerFleshHelper.isDemonSlayerFlesh(stack) ? stack : ItemStack.EMPTY;
+    }
+
+    private static SlayerFleshHelper.SlayerFleshData getStoredSlayersBloodFleshData(ServerPlayer player) {
+        ItemStack stack = getStoredSlayersBloodFleshStack(player);
+        SlayerFleshHelper.SlayerFleshData fromStack = SlayerFleshHelper.read(stack);
+        if (fromStack != null) {
+            return fromStack;
+        }
+        CompoundTag data = player.getPersistentData();
+        if (!data.contains(SlayerFleshHelper.POWER_LEVEL_TAG) && !data.contains(SlayerFleshHelper.LEVEL_TAG)) {
+            return null;
+        }
+        boolean female = data.contains(SlayerFleshHelper.FEMALE_TAG)
+            ? data.getBoolean(SlayerFleshHelper.FEMALE_TAG)
+            : "female".equalsIgnoreCase(data.getString(SlayerFleshHelper.GENDER_TAG));
+        int powerLevel = data.contains(SlayerFleshHelper.POWER_LEVEL_TAG)
+            ? data.getInt(SlayerFleshHelper.POWER_LEVEL_TAG)
+            : data.getInt(SlayerFleshHelper.LEVEL_TAG);
+        int textureIndex = data.contains(SlayerFleshHelper.TEXTURE_INDEX_TAG)
+            ? data.getInt(SlayerFleshHelper.TEXTURE_INDEX_TAG)
+            : data.getInt(SlayerFleshHelper.SKIN_TAG);
+        return new SlayerFleshHelper.SlayerFleshData(
+            Math.max(0, powerLevel),
+            data.getString(SlayerFleshHelper.BREATHING_STYLE_TAG),
+            female,
+            Math.max(0, textureIndex)
+        );
+    }
+
+    private static boolean spawnPermanenceSlayersBloodFinalSlayer(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        Entity existing = findFinalSlayerEntity(player);
+        if (existing instanceof DemonSlayerEntity existingSlayer && existingSlayer.isAlive()) {
+            QuestScenarioActions.clearKamanueHeldItem(player);
+            return true;
+        }
+
+        SlayerFleshHelper.SlayerFleshData fleshData = getStoredSlayersBloodFleshData(player);
+        if (fleshData == null) {
+            return false;
+        }
+        int powerLevel = Mth.clamp(fleshData.powerLevel(), 0, 5);
+        String styleId = fleshData.breathingStyleId();
+        boolean female = fleshData.female();
+        int textureIndex = Math.max(0, fleshData.textureIndex());
+
+        DemonSlayerEntity slayer = (female ? ModEntities.DEMON_SLAYER_FEMALE : ModEntities.DEMON_SLAYER).get().create(serverLevel);
+        if (slayer == null) {
+            return false;
+        }
+
+        BlockPos kamanue = QuestScenarioActions.findKamanuePosition(player);
+        BlockPos center = kamanue == null ? player.blockPosition() : kamanue;
+        BlockPos spawnPos = findSafeVillageSpawn(serverLevel, center, 8);
+        slayer.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D,
+            player.getRandom().nextFloat() * 360.0F, 0.0F);
+        slayer.finalizeSpawn(serverLevel, serverLevel.getCurrentDifficultyAt(spawnPos), MobSpawnType.MOB_SUMMONED, null, null);
+        String swordId = SlayerFleshHelper.findSwordForStyle(styleId, serverLevel.getRandom());
+        if (swordId != null) {
+            slayer.setSwordId(swordId);
+        }
+        slayer.setTextureIndex(textureIndex);
+        slayer.configurePowerLevelLoadout(powerLevel);
+        slayer.demonize();
+        slayer.getPersistentData().putString(QuestScenarioActions.QUEST_TARGET_ID_TAG, SLAYERS_BLOOD_FINAL_TAG);
+        slayer.setCustomName(Component.literal("Demonized Demon Slayer"));
+        slayer.setCustomNameVisible(true);
+        slayer.setPersistenceRequired();
+        slayer.setTarget(player);
+        slayer.setHealth(slayer.getMaxHealth());
+        serverLevel.addFreshEntity(slayer);
+        QuestScenarioActions.clearKamanueHeldItem(player);
+
+        for (ServerPlayer involved : getPlayersSharingSlayersBlood(player, 256.0D)) {
+            involved.getPersistentData().putUUID(SLAYERS_BLOOD_FINAL_UUID, slayer.getUUID());
+        }
+        return true;
+    }
+
+    private static void updateSlayersBloodBossBar(ServerPlayer player, DemonSlayerEntity slayer) {
+        if (player == null || slayer == null || !slayer.isAlive()) {
+            return;
+        }
+        ServerBossEvent bossBar = SLAYERS_BLOOD_BOSS_BARS.computeIfAbsent(slayer.getUUID(), uuid ->
+            new ServerBossEvent(Component.literal("Demonized Demon Slayer"),
+                BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.PROGRESS));
+        bossBar.addPlayer(player);
+        bossBar.setProgress(Mth.clamp(slayer.getHealth() / Math.max(1.0F, slayer.getMaxHealth()), 0.0F, 1.0F));
+    }
+
+    private static void removeSlayersBloodBossBar(UUID slayerUuid) {
+        if (slayerUuid == null) {
+            return;
+        }
+        ServerBossEvent bossBar = SLAYERS_BLOOD_BOSS_BARS.remove(slayerUuid);
+        if (bossBar != null) {
+            bossBar.removeAllPlayers();
+        }
     }
 
     private static boolean isQuestProgressKey(String key) {
@@ -1324,6 +1409,12 @@ public final class QuestProgressionManager {
             return null;
         }
 
+        Mob nearbySpawnKakushi = findNearestKakushi(level, spawnPos, SWORDSMITH_KAKUSHI_SPAWN_GUARD_RADIUS);
+        if (nearbySpawnKakushi != null) {
+            configureSwordsmithGuideKakushi(nearbySpawnKakushi);
+            return nearbySpawnKakushi;
+        }
+
         Entity created = entityType.create(level);
         if (!(created instanceof Mob kakushi)) {
             return null;
@@ -1336,9 +1427,13 @@ public final class QuestProgressionManager {
     }
 
     private static Mob findSwordsmithGuideKakushi(ServerLevel level, BlockPos center) {
+        return findNearestKakushi(level, center, SWORDSMITH_KAKUSHI_SEARCH_RADIUS);
+    }
+
+    private static Mob findNearestKakushi(ServerLevel level, BlockPos center, double radius) {
         List<Mob> kakushi = level.getEntitiesOfClass(
             Mob.class,
-            new AABB(center).inflate(SWORDSMITH_KAKUSHI_SEARCH_RADIUS),
+            new AABB(center).inflate(radius),
             mob -> mob.isAlive() && KAKUSHI_ID.equals(EntityType.getKey(mob.getType()))
         );
         if (kakushi.isEmpty()) {
@@ -1441,6 +1536,9 @@ public final class QuestProgressionManager {
         }
     }
 
+    private record DeliveredSlayerFlesh(ItemStack stack, SlayerFleshHelper.SlayerFleshData data) {
+    }
+
     public static List<MeditationMenuData.QuestEntry> buildQuestEntries(ServerPlayer player, PlayerRole role) {
         QuestRuntimeContext active = getOrInitializeContext(player, role);
         List<MeditationMenuData.QuestEntry> entries = new ArrayList<>();
@@ -1528,6 +1626,130 @@ public final class QuestProgressionManager {
             return "";
         }
         return group.stages().get(0).name();
+    }
+
+    public static QuestStageListing getSelectedQuestStageListing(ServerPlayer player, PlayerRole role) {
+        if (!CustomProgressionConfig.isCustomProgressionEnabled()) {
+            return QuestStageListing.forDisabledProgression();
+        }
+
+        QuestRuntimeContext active = getOrInitializeContext(player, role);
+        QuestGroupDefinition group = resolveSelectedOrActiveGroup(player, role, active);
+        if (group == null) {
+            return QuestStageListing.forNoQuest();
+        }
+        if (group.stages().isEmpty()) {
+            return new QuestStageListing(group.id(), group.name(), List.of(), 0, false, false);
+        }
+
+        int currentStageNumber = active != null && active.group().id().equals(group.id())
+            ? active.stageIndex() + 1
+            : 0;
+        List<QuestStageInfo> stages = new ArrayList<>();
+        for (int i = 0; i < group.stages().size(); i++) {
+            QuestStageDefinition stage = group.stages().get(i);
+            stages.add(new QuestStageInfo(
+                i + 1,
+                stage.id(),
+                stage.name(),
+                stage.summary(),
+                stage.steps().size(),
+                currentStageNumber == i + 1
+            ));
+        }
+        return new QuestStageListing(group.id(), group.name(), stages, currentStageNumber, false, false);
+    }
+
+    public static SkipQuestStageResult skipSelectedQuestToStage(ServerPlayer player, PlayerRole role, int stageNumber) {
+        if (!CustomProgressionConfig.isCustomProgressionEnabled()) {
+            return SkipQuestStageResult.forDisabledProgression();
+        }
+
+        QuestRuntimeContext active = getOrInitializeContext(player, role);
+        QuestGroupDefinition group = resolveSelectedOrActiveGroup(player, role, active);
+        if (group == null) {
+            return SkipQuestStageResult.forNoQuest();
+        }
+        if (group.stages().isEmpty()) {
+            return SkipQuestStageResult.noStages(group.name());
+        }
+        if (stageNumber < 1 || stageNumber > group.stages().size()) {
+            return SkipQuestStageResult.invalidStage(group.name(), group.stages().size(), stageNumber);
+        }
+
+        int currentStageNumber = active != null && active.group().id().equals(group.id())
+            ? active.stageIndex() + 1
+            : 0;
+        if (currentStageNumber >= stageNumber) {
+            return SkipQuestStageResult.notAhead(group.name(), currentStageNumber, stageNumber);
+        }
+
+        QuestStageDefinition targetStage = group.stages().get(stageNumber - 1);
+        player.getPersistentData().putString(ACTIVE_GROUP_ID, group.id());
+        player.getPersistentData().putInt(ACTIVE_STAGE_INDEX, stageNumber - 1);
+        player.getPersistentData().putInt(ACTIVE_STEP_INDEX, 0);
+        player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, false);
+        player.getPersistentData().remove(STEP_TIME_BLOCKED_NOTICE_TICK);
+        player.getPersistentData().remove(STEP_RESTART_COOLDOWN_UNTIL);
+
+        return SkipQuestStageResult.success(group.name(), currentStageNumber, stageNumber, targetStage.name());
+    }
+
+    private static QuestGroupDefinition resolveSelectedOrActiveGroup(ServerPlayer player, PlayerRole role, QuestRuntimeContext active) {
+        CompoundTag data = player.getPersistentData();
+        if (MeditationMenuService.SELECTED_TYPE_QUEST.equals(data.getString("MeditationSelectedType"))) {
+            QuestGroupDefinition selected = QuestGroupRegistry.get(data.getString("MeditationSelectedId"));
+            if (selected != null && selected.isAvailableFor(role) && isQuestGroupUnlocked(player, selected)) {
+                return selected;
+            }
+        }
+        return active == null ? null : active.group();
+    }
+
+    public record QuestStageInfo(int number, String id, String name, String summary, int stepCount, boolean current) {
+    }
+
+    public record QuestStageListing(String groupId, String groupName, List<QuestStageInfo> stages,
+                                    int currentStageNumber, boolean disabled, boolean noQuest) {
+        public static QuestStageListing forDisabledProgression() {
+            return new QuestStageListing("", "", List.of(), 0, true, false);
+        }
+
+        public static QuestStageListing forNoQuest() {
+            return new QuestStageListing("", "", List.of(), 0, false, true);
+        }
+    }
+
+    public record SkipQuestStageResult(boolean success, boolean disabled, boolean noQuest, boolean noStages,
+                                       boolean invalidStage, boolean notAhead, String groupName, int currentStageNumber,
+                                       int targetStageNumber, int maxStageNumber, String targetStageName) {
+        public static SkipQuestStageResult success(String groupName, int currentStageNumber, int targetStageNumber,
+                                                   String targetStageName) {
+            return new SkipQuestStageResult(true, false, false, false, false, false, groupName, currentStageNumber,
+                targetStageNumber, 0, targetStageName);
+        }
+
+        public static SkipQuestStageResult forDisabledProgression() {
+            return new SkipQuestStageResult(false, true, false, false, false, false, "", 0, 0, 0, "");
+        }
+
+        public static SkipQuestStageResult forNoQuest() {
+            return new SkipQuestStageResult(false, false, true, false, false, false, "", 0, 0, 0, "");
+        }
+
+        public static SkipQuestStageResult noStages(String groupName) {
+            return new SkipQuestStageResult(false, false, false, true, false, false, groupName, 0, 0, 0, "");
+        }
+
+        public static SkipQuestStageResult invalidStage(String groupName, int maxStageNumber, int targetStageNumber) {
+            return new SkipQuestStageResult(false, false, false, false, true, false, groupName, 0, targetStageNumber,
+                maxStageNumber, "");
+        }
+
+        public static SkipQuestStageResult notAhead(String groupName, int currentStageNumber, int targetStageNumber) {
+            return new SkipQuestStageResult(false, false, false, false, false, true, groupName, currentStageNumber,
+                targetStageNumber, 0, "");
+        }
     }
 
     private static QuestRuntimeContext getOrInitializeContext(ServerPlayer player, PlayerRole role) {

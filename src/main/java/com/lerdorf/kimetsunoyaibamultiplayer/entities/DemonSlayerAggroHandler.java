@@ -154,6 +154,8 @@ public class DemonSlayerAggroHandler {
             true,
             false,
             target -> target != null && target.isAlive()
+                && target instanceof DemonSlayerEntity slayer
+                && !slayer.isDemonized()
                 && mob.distanceToSqr(target) <= (HOSTILE_SLAYER_SCAN_RANGE * HOSTILE_SLAYER_SCAN_RANGE)
         ));
 
@@ -277,6 +279,7 @@ public class DemonSlayerAggroHandler {
         LivingEntity currentTarget = mob.getTarget();
         if (currentTarget instanceof DemonSlayerEntity slayer
             && slayer.isAlive()
+            && !slayer.isDemonized()
             && mob.distanceToSqr(slayer) <= (HOSTILE_SLAYER_SCAN_RANGE * HOSTILE_SLAYER_SCAN_RANGE)) {
             return;
         }
@@ -342,6 +345,9 @@ public class DemonSlayerAggroHandler {
         if (mob instanceof UbuyashikiKidEntity) {
             return false;
         }
+        if (Damager.isDemon(mob)) {
+            return false;
+        }
 
         // Check our custom tags
         if (EntityTagHelper.isDemonSlayer(mob) || EntityTagHelper.isHashira(mob)) {
@@ -404,7 +410,7 @@ public class DemonSlayerAggroHandler {
     }
 
     private static boolean canDemonTargetSlayer(Mob demon, LivingEntity target) {
-        if (!(target instanceof DemonSlayerEntity) || !target.isAlive()) {
+        if (!(target instanceof DemonSlayerEntity slayer) || !target.isAlive() || slayer.isDemonized()) {
             return false;
         }
 

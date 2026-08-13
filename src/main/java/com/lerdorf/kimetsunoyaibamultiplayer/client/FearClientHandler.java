@@ -24,7 +24,6 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -81,7 +80,7 @@ public class FearClientHandler {
 
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        boolean fearActive = player != null && mc.level != null && player.hasEffect(ModEffects.FEAR.get());
+        boolean fearActive = player != null && mc.level != null && FearEffectHandler.getFearLevel(player) > 0;
         boolean paralysisActive = fearActive && FearEffectHandler.isParalyzed(player);
         updateOverlayAlpha(paralysisActive);
         updateOverlayPulse(paralysisActive || overlayAlpha > 0.01F);
@@ -168,7 +167,7 @@ public class FearClientHandler {
         }
 
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || !player.hasEffect(ModEffects.FEAR.get())) {
+        if (player == null || FearEffectHandler.getFearLevel(player) <= 0) {
             return;
         }
 
@@ -361,8 +360,7 @@ public class FearClientHandler {
     }
 
     private static int getDisplayedFearLevel(LocalPlayer player) {
-        MobEffectInstance effect = player.getEffect(ModEffects.FEAR.get());
-        return effect == null ? 0 : effect.getAmplifier() + 1;
+        return FearEffectHandler.getFearLevel(player);
     }
 
     private static void rerenderVisibleLivingEntities(Minecraft mc, PoseStack poseStack, float partialTick) {

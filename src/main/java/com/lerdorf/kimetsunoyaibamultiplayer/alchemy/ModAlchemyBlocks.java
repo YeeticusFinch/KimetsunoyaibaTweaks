@@ -44,6 +44,16 @@ public final class ModAlchemyBlocks {
             .instabreak()
             .noOcclusion()));
 
+    public static final RegistryObject<Block> WISTERIA_INCENSE = registerBlockWithItem("wisteria_incense",
+        () -> new WisteriaIncenseBlock(BlockBehaviour.Properties.copy(Blocks.DEAD_BUSH)
+            .mapColor(MapColor.PLANT)
+            .sound(SoundType.WOOD)
+            .instabreak()
+            .noCollission()
+            .noOcclusion()
+            .lightLevel(state -> state.getValue(WisteriaIncenseBlock.LIT) ? 3 : 0), false),
+        block -> new WisteriaIncenseBlockItem(block.get(), new Item.Properties()));
+
     public static final RegistryObject<Block> IMMORTAL_DAISY = registerBlock("immortal_daisy",
         () -> new AlchemyFlowerBlock(() -> MobEffects.REGENERATION, 5,
             BlockBehaviour.Properties.copy(Blocks.DANDELION)
@@ -69,6 +79,14 @@ public final class ModAlchemyBlocks {
     public static final RegistryObject<Block> POTTED_FERMENTED_ORCHID = registerBlockWithoutItem("potted_fermented_orchid",
         () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, FERMENTED_ORCHID,
             BlockBehaviour.Properties.copy(Blocks.POTTED_BLUE_ORCHID).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WISTERIA_INCENSE = registerBlockWithoutItem("potted_wisteria_incense",
+        () -> new WisteriaIncenseBlock(BlockBehaviour.Properties.copy(Blocks.POTTED_DEAD_BUSH)
+            .mapColor(MapColor.PLANT)
+            .sound(SoundType.WOOD)
+            .instabreak()
+            .noOcclusion()
+            .lightLevel(state -> state.getValue(WisteriaIncenseBlock.LIT) ? 3 : 0), true));
 
     private ModAlchemyBlocks() {
     }

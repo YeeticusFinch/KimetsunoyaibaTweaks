@@ -42,6 +42,7 @@ public class MuichiroRenderer extends GeoEntityRenderer<MuichiroEntity> {
 
         // Sword display on back/hip (GeoRenderLayer, matches player positioning)
         this.addRenderLayer(new GeoSwordDisplayLayer<>(this));
+        this.addRenderLayer(new DemonSlayerDemonEyesLayer<>(this, "geo/biped.geo.json", "animations/biped.animation.json"));
 
         // Scale to 80% to match Muichiro's younger appearance
         this.scaleHeight = 0.8F;

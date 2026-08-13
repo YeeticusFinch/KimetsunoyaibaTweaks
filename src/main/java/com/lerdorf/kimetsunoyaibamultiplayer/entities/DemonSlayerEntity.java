@@ -10,6 +10,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.SlayerFleshHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -182,15 +183,16 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
-            target -> !this.isFinalSelectionPathingActive() && DemonSlayerAggroHandler.isDemonTarget(target)));
+            target -> !this.isDemonized() && !this.isFinalSelectionPathingActive() && DemonSlayerAggroHandler.isDemonTarget(target)));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Monster.class, 10, true, false,
-            monster -> !this.isFinalSelectionPathingActive()
+            monster -> !this.isDemonized()
+                && !this.isFinalSelectionPathingActive()
                 && !DemonSlayerAggroHandler.isDemonTarget(monster)
                 && !EntityTagHelper.isDemonSlayer(monster)
                 && !EntityTagHelper.isHashira(monster)
                 && !EntityTagHelper.isKamaboko(monster)));
         this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-            (player) -> !this.isFinalSelectionPathingActive() && player.getPersistentData().getBoolean("oni")));
+            (player) -> !this.isDemonized() && !this.isFinalSelectionPathingActive() && player.getPersistentData().getBoolean("oni")));
     }
 
     @Override
@@ -260,6 +262,11 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
     public boolean isDisarmed() {
         return this.getPersistentData().getBoolean(SLAYERS_BLOOD_CAPTIVE_TAG);
+    }
+
+    @Override
+    protected void refreshPowerStateForDemonizedChange() {
+        configurePowerLevelLoadout(getPowerLevel());
     }
 
     @Override
@@ -654,6 +661,9 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
                 case 5 -> 95.0;
                 default -> 20.0;
             };
+            if (isDemonized()) {
+                health *= getDemonizedHealthMultiplier();
+            }
             maxHealth.setBaseValue(health);
             this.setHealth((float) health);
         }
@@ -680,8 +690,10 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
         // Strength (level 1+)
         if (powerLevel >= 1) {
-            int strengthLevel = (powerLevel - 1) * 2;
+            int strengthLevel = ((powerLevel - 1) * 2) + (isDemonized() ? 1 : 0);
             this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, strengthLevel, true, false));
+        } else if (isDemonized()) {
+            this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 0, true, false));
         }
     }
 
@@ -1050,7 +1062,9 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         String selectedDropId = DICE_STEAK_DROPS[this.random.nextInt(DICE_STEAK_DROPS.length)];
         Item dropItem = ForgeRegistries.ITEMS.getValue(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", selectedDropId));
         if (dropItem != null && dropItem != Items.AIR) {
-            this.spawnAtLocation(new ItemStack(dropItem));
+            ItemStack stack = new ItemStack(dropItem);
+            SlayerFleshHelper.applyDemonSlayerMetadata(stack, this);
+            this.spawnAtLocation(stack);
         }
     }
 

@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.compat.InfinityCastleCompat;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity;
 import com.lerdorf.kimetsunoyaibamultiplayer.gravity.field.GravityFieldManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
@@ -10,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
@@ -33,7 +35,6 @@ import java.util.Set;
 
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class InfinityCastleSpawnHandler {
-    private static final double KIZUKI_DUPLICATE_RADIUS = 200.0D;
     private static final double LOCAL_DEMON_CAP_RADIUS = 96.0D;
     private static final int LOCAL_DEMON_CAP = 18;
     private static final int SPAWN_INTERVAL_TICKS = 100;
@@ -59,7 +60,11 @@ public final class InfinityCastleSpawnHandler {
         }
 
         BlockPos pos = event.getPos();
-        if (isTwelveKizukiType(entityType) && hasSameKizukiNearby(serverLevel, entityType, pos)) {
+        if (shouldDenyCastleDemonSpawn(serverLevel, entityType, pos)) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
+        if (shouldRandomlyDenyCastleSpawnRate(serverLevel)) {
             event.setResult(Event.Result.DENY);
             return;
         }
@@ -85,7 +90,7 @@ public final class InfinityCastleSpawnHandler {
 
         BlockPos pos = mob.blockPosition();
         EntityType<?> entityType = mob.getType();
-        if (EntityTagHelper.isTwelveKizuki(mob) && hasSameKizukiNearby(serverLevel, entityType, pos)) {
+        if (shouldDenyCastleDemonSpawn(serverLevel, entityType, pos)) {
             event.setResult(Event.Result.DENY);
             return;
         }
@@ -110,7 +115,7 @@ public final class InfinityCastleSpawnHandler {
 
         BlockPos pos = BlockPos.containing(event.getX(), event.getY(), event.getZ());
         EntityType<?> entityType = mob.getType();
-        if (EntityTagHelper.isTwelveKizuki(mob) && hasSameKizukiNearby(serverLevel, entityType, pos)) {
+        if (shouldDenyCastleDemonSpawn(serverLevel, entityType, pos)) {
             cancelSpawn(event);
             return;
         }
@@ -137,6 +142,9 @@ public final class InfinityCastleSpawnHandler {
             if (!isCastle(level) || level.getDifficulty() == Difficulty.PEACEFUL) {
                 continue;
             }
+            if (isCastleDemonSpawnRateDisabled() || isCastleLoadedDemonCapReached(level)) {
+                continue;
+            }
             for (ServerPlayer player : level.players()) {
                 if (player.isSpectator() || player.isCreative()) {
                     continue;
@@ -148,6 +156,9 @@ public final class InfinityCastleSpawnHandler {
 
     private static void trySpawnNearPlayer(ServerLevel level, ServerPlayer player) {
         BlockPos playerPos = player.blockPosition();
+        if (isCastleDemonSpawnRateDisabled() || isCastleLoadedDemonCapReached(level)) {
+            return;
+        }
         if (countNearbyDemons(level, playerPos, LOCAL_DEMON_CAP_RADIUS) >= LOCAL_DEMON_CAP) {
             return;
         }
@@ -157,9 +168,10 @@ public final class InfinityCastleSpawnHandler {
             return;
         }
 
-        for (int attempt = 0; attempt < PLAYER_SPAWN_ATTEMPTS; attempt++) {
+        int spawnAttempts = getScaledPlayerSpawnAttempts(level);
+        for (int attempt = 0; attempt < spawnAttempts; attempt++) {
             EntityType<?> entityType = demonTypes.get(level.random.nextInt(demonTypes.size()));
-            if (isTwelveKizukiType(entityType) && hasSameKizukiNearby(level, entityType, playerPos)) {
+            if (shouldDenyCastleDemonSpawn(level, entityType, playerPos)) {
                 continue;
             }
 
@@ -168,7 +180,7 @@ public final class InfinityCastleSpawnHandler {
             if (spawnPos == null || player.distanceToSqr(spawnPos.getX() + 0.5D, spawnPos.getY() + 0.5D, spawnPos.getZ() + 0.5D) < MIN_PLAYER_DISTANCE * MIN_PLAYER_DISTANCE) {
                 continue;
             }
-            if (isTwelveKizukiType(entityType) && hasSameKizukiNearby(level, entityType, spawnPos)) {
+            if (shouldDenyCastleDemonSpawn(level, entityType, spawnPos)) {
                 continue;
             }
 
@@ -258,9 +270,95 @@ public final class InfinityCastleSpawnHandler {
             entity -> entity.isAlive() && entity instanceof Mob mob && EntityTagHelper.isDemon(mob)).size();
     }
 
+    private static boolean shouldDenyCastleDemonSpawn(ServerLevel level, EntityType<?> entityType, BlockPos pos) {
+        if (isCastleDemonSpawnRateDisabled() || isCastleLoadedDemonCapReached(level)) {
+            return true;
+        }
+        if (isMuzanType(entityType)) {
+            return hasMuzanNearby(level, pos);
+        }
+        return isTwelveKizukiType(entityType) && hasSameKizukiNearby(level, entityType, pos);
+    }
+
+    private static boolean isCastleDemonSpawnRateDisabled() {
+        return CustomProgressionConfig.getInfinityCastleDemonSpawnRate() <= 0.0D;
+    }
+
+    private static boolean shouldRandomlyDenyCastleSpawnRate(ServerLevel level) {
+        double spawnRate = CustomProgressionConfig.getInfinityCastleDemonSpawnRate();
+        return spawnRate < 1.0D && level.random.nextDouble() >= spawnRate;
+    }
+
+    private static int getScaledPlayerSpawnAttempts(ServerLevel level) {
+        double spawnRate = CustomProgressionConfig.getInfinityCastleDemonSpawnRate();
+        if (spawnRate <= 0.0D) {
+            return 0;
+        }
+        double scaled = PLAYER_SPAWN_ATTEMPTS * spawnRate;
+        int attempts = (int) Math.floor(scaled);
+        if (level.random.nextDouble() < scaled - attempts) {
+            attempts++;
+        }
+        return Math.max(1, attempts);
+    }
+
+    private static boolean isCastleLoadedDemonCapReached(ServerLevel level) {
+        int capPerPlayer = CustomProgressionConfig.getInfinityCastleDemonSpawnCapPerPlayer();
+        if (capPerPlayer <= 0) {
+            return true;
+        }
+        int playerCount = Math.max(1, level.players().size());
+        int maxLoadedDemons = capPerPlayer * playerCount;
+        return countLoadedCastleDemons(level) >= maxLoadedDemons;
+    }
+
+    private static int countLoadedCastleDemons(ServerLevel level) {
+        int count = 0;
+        for (Entity entity : level.getAllEntities()) {
+            if (entity.isAlive() && entity instanceof Mob mob && EntityTagHelper.isDemon(mob)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     private static boolean hasSameKizukiNearby(ServerLevel level, EntityType<?> entityType, BlockPos pos) {
-        return level.getEntities((Entity) null, new AABB(pos).inflate(KIZUKI_DUPLICATE_RADIUS),
-            entity -> entity.isAlive() && entity.getType() == entityType).size() > 0;
+        int radius = CustomProgressionConfig.getInfinityCastleUniqueDemonHorizontalRadius();
+        if (radius <= 0) {
+            return false;
+        }
+        return level.getEntities((Entity) null, horizontalSearchBox(level, pos, radius),
+            entity -> entity.isAlive()
+                && entity.getType() == entityType
+                && horizontalDistanceSqr(entity.blockPosition(), pos) <= (double) radius * radius).size() > 0;
+    }
+
+    private static boolean hasMuzanNearby(ServerLevel level, BlockPos pos) {
+        int radius = CustomProgressionConfig.getInfinityCastleUniqueDemonHorizontalRadius();
+        if (radius <= 0) {
+            return false;
+        }
+        return level.getEntities((Entity) null, horizontalSearchBox(level, pos, radius),
+            entity -> entity.isAlive()
+                && isMuzanType(entity.getType())
+                && horizontalDistanceSqr(entity.blockPosition(), pos) <= (double) radius * radius).size() > 0;
+    }
+
+    private static AABB horizontalSearchBox(ServerLevel level, BlockPos pos, double radius) {
+        return new AABB(
+            pos.getX() - radius,
+            level.getMinBuildHeight(),
+            pos.getZ() - radius,
+            pos.getX() + radius + 1.0D,
+            level.getMaxBuildHeight(),
+            pos.getZ() + radius + 1.0D
+        );
+    }
+
+    private static double horizontalDistanceSqr(BlockPos first, BlockPos second) {
+        double dx = first.getX() - second.getX();
+        double dz = first.getZ() - second.getZ();
+        return dx * dx + dz * dz;
     }
 
     private static boolean isCastle(ServerLevel level) {
@@ -288,6 +386,14 @@ public final class InfinityCastleSpawnHandler {
 
     private static boolean isTwelveKizukiType(EntityType<?> entityType) {
         return entityType != null && entityType.is(EntityTagHelper.TWELVE_KIZUKI);
+    }
+
+    private static boolean isMuzanType(EntityType<?> entityType) {
+        if (entityType == null) {
+            return false;
+        }
+        ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
+        return entityId != null && entityId.getPath().contains("muzan");
     }
 
     private static List<EntityType<?>> getDemonSpawnTypes() {

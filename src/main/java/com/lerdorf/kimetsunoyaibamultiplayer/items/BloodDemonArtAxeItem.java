@@ -8,6 +8,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SwampDemonArt;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -93,7 +94,7 @@ public class BloodDemonArtAxeItem extends AxeItem {
             SwampDemonArt.markAbilityUse(player);
             SwampDemonArt.handleAbilityItemUse(player, stack, form.getFormId());
             form.execute(player, level);
-            player.getCooldowns().addCooldown(this, Math.max(20, form.getCooldownSeconds() * 20));
+            PlayerAbilityCooldowns.addCooldown(player, this, Math.max(20, form.getCooldownSeconds() * 20));
         }
 
         int displayColor = getArtDisplayColor(artId);

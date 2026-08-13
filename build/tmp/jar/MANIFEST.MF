@@ -3,8 +3,8 @@ Specification-Title: kimetsunoyaibamultiplayer
 Specification-Vendor: carl_alex
 Specification-Version: 1
 Implementation-Title: Kimetsunoyaiba-Multiplayer
-Implementation-Version: 1.6.55
+Implementation-Version: 1.6.552
 Implementation-Vendor: carl_alex
-Implementation-Timestamp: 2026-07-29T08:01:44-0400
+Implementation-Timestamp: 2026-08-13T08:10:19-0400
 MixinConfigs: kimetsunoyaibamultiplayer.mixins.json
 

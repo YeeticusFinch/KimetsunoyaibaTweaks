@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.BlueSpiderLilyTeaHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonTargetingHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
@@ -147,7 +148,10 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
     }
 
     protected boolean canTargetNonDemonVictim(LivingEntity target) {
-        return target != null && target.isAlive() && !Damager.isDemon(target);
+        return target != null
+            && target.isAlive()
+            && !com.lerdorf.kimetsunoyaibamultiplayer.alchemy.AlchemyMedicineHandler.hasDemonicSaturation(this)
+            && !Damager.isDemon(target);
     }
 
     protected boolean isUsingLockedAnimation() {
@@ -161,6 +165,11 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         }
 
         if (isInBurningSunlight()) {
+            if (!BlueSpiderLilyTeaHandler.shouldAdvanceSunlightBurn(this)) {
+                BlueSpiderLilyTeaHandler.clearSkippedSunlightFire(this);
+                return;
+            }
+
             int burnTicks = this.entityData.get(SUNLIGHT_BURN_TICKS) + 1;
             this.entityData.set(SUNLIGHT_BURN_TICKS, burnTicks);
             this.setSecondsOnFire(2);
@@ -200,7 +209,8 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
 
     protected boolean isSunlightImmune() {
         ResourceLocation entityId = EntityType.getKey(this.getType());
-        return entityId != null && DemonRegistry.isSunlightImmune(entityId);
+        return com.lerdorf.kimetsunoyaibamultiplayer.alchemy.AlchemyMedicineHandler.hasSunlightImmunity(this)
+            || entityId != null && DemonRegistry.isSunlightImmune(entityId);
     }
 
     protected BloodDemonArtRegistry.RegisteredBloodDemonArt getBloodDemonArt() {

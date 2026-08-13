@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.ModGameRules;
+import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.BlueSpiderLilyTeaHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
@@ -149,6 +150,35 @@ public final class DemonTransformationHandler {
 
     public static boolean startTransformation(ServerPlayer player) {
         return startTransformation(player, false);
+    }
+
+    public static void applyMuzanBloodEquivalent(ServerPlayer player, int count) {
+        if (player == null || count <= 0) {
+            return;
+        }
+        if (Damager.isDemon(player)) {
+            consumeBaseMuzanBlood(player, count);
+            return;
+        }
+        if (!isTransforming(player) && !startTransformation(player)) {
+            return;
+        }
+        for (int i = 1; i < count; i++) {
+            increaseTransformationLevel(player);
+        }
+    }
+
+    public static void restoreHumanity(ServerPlayer player) {
+        if (player == null) {
+            return;
+        }
+        clearTransformationState(player);
+        resetDemonProgressionCounts(player);
+        player.getPersistentData().putBoolean("oni", false);
+        player.getPersistentData().remove("KnYMpSolarAscension");
+        player.getPersistentData().remove("KnYMpDemonicSaturation");
+        player.removeEffect(ModEffects.DEMONIC_SATURATION.get());
+        DemonEyesSyncHandler.broadcastState(player);
     }
 
     public static boolean startTransformationFromProposition(ServerPlayer player) {
@@ -405,10 +435,15 @@ public final class DemonTransformationHandler {
     }
 
     public static void tickSunlightBurn(ServerPlayer player) {
-        if (player == null || !Damager.isDemon(player) || !isInBurningSunlight(player)) {
+        if (player == null || !Damager.isDemon(player) || com.lerdorf.kimetsunoyaibamultiplayer.alchemy.AlchemyMedicineHandler.hasSunlightImmunity(player) || !isInBurningSunlight(player)) {
             if (player != null) {
                 player.getPersistentData().remove(DATA_SUNLIGHT_BURN_TICKS);
             }
+            return;
+        }
+
+        if (!BlueSpiderLilyTeaHandler.shouldAdvanceSunlightBurn(player)) {
+            BlueSpiderLilyTeaHandler.clearSkippedSunlightFire(player);
             return;
         }
 

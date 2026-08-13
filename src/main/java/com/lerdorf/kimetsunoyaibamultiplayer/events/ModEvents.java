@@ -18,6 +18,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidTriggerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.FamiliarEntityHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.SlayerFleshHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -32,6 +33,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -95,6 +97,17 @@ public class ModEvents {
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceTransformationRolePrecedence(serverPlayer);
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceDemonRolePrecedence(serverPlayer);
             PassiveSkillManager.tick(serverPlayer);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingTick(LivingEvent.LivingTickEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (entity.level().isClientSide() || !FamiliarEntityHelper.isKasugaiCrow(entity)) {
+            return;
+        }
+        if (entity.getAirSupply() < entity.getMaxAirSupply()) {
+            entity.setAirSupply(entity.getMaxAirSupply());
         }
     }
 
@@ -250,12 +263,15 @@ public class ModEvents {
             if (slayer.isFemale()) {
                 ItemStack stack = new ItemStack(ModItems.HUMAN_FLESH_4.get());
                 HumanFleshItem.setTexture(stack, getFemaleSlayerTexture(slayer));
+                SlayerFleshHelper.applyDemonSlayerMetadata(stack, slayer);
                 target.spawnAtLocation(stack);
             } else {
                 Item flesh2 = net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(
                     ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "human_flesh_2"));
                 if (flesh2 != null) {
-                    target.spawnAtLocation(new ItemStack(flesh2));
+                    ItemStack stack = new ItemStack(flesh2);
+                    SlayerFleshHelper.applyDemonSlayerMetadata(stack, slayer);
+                    target.spawnAtLocation(stack);
                 }
             }
             return;

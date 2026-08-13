@@ -10,6 +10,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.MugenDoorEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.OrochiEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.raids.CivilianStructureRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.StructureLocationCache;
 
 import net.minecraft.core.BlockPos;
@@ -27,6 +28,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
@@ -86,6 +88,10 @@ public final class QuestScenarioActions {
     private static final int KIDNAPPERS_BOG_SWAMP_RESISTANCE_AMPLIFIER = 9;
     private static final int SATOKOS_BOW_RESISTANCE_CHECK_INTERVAL_TICKS = 100;
     private static final double TAMAYO_RESTRAINED_DEMON_MAX_RADIUS = 10.0D;
+    private static final int SMALL_STRUCTURE_ANCHOR_MAX_DISTANCE = 96;
+    private static final int MEDIUM_STRUCTURE_ANCHOR_MAX_DISTANCE = 160;
+    private static final int LARGE_STRUCTURE_ANCHOR_MAX_DISTANCE = 512;
+    private static final int DEFAULT_STRUCTURE_ANCHOR_MAX_DISTANCE = 256;
     private static final double KAMANUE_FACE_PLAYER_RADIUS = 10.0D;
     private static final double KAZUMI_DUPLICATE_RADIUS = 50.0D;
     private static final double KAZUMI_QUEST_REUSE_RADIUS = 400.0D;
@@ -231,6 +237,21 @@ public final class QuestScenarioActions {
         return kamanue == null ? null : kamanue.blockPosition();
     }
 
+    public static void setKamanueHeldItem(ServerPlayer player, ItemStack stack) {
+        Entity kamanue = findKamanueForPlayer(player, 256.0D);
+        if (!(kamanue instanceof LivingEntity living)) {
+            return;
+        }
+        living.setItemSlot(EquipmentSlot.MAINHAND, stack == null ? ItemStack.EMPTY : stack.copy());
+        if (living instanceof Mob mob) {
+            mob.setDropChance(EquipmentSlot.MAINHAND, 0.0F);
+        }
+    }
+
+    public static void clearKamanueHeldItem(ServerPlayer player) {
+        setKamanueHeldItem(player, ItemStack.EMPTY);
+    }
+
     public static void ensureOrochiCompanion(ServerPlayer player) {
         if (!(player.level() instanceof ServerLevel serverLevel)) {
             return;
@@ -273,9 +294,9 @@ public final class QuestScenarioActions {
             Component.literal("§c[Kamanue] §fAh... another demon..."),
             Component.literal("§c[Kamanue] §fYou haven't fought many Demon Slayers yet, have you?"),
             Component.literal("§c[Kamanue] §fHumans are weak. Demon Slayers are different."),
-            Component.literal("§c[Kamanue] §fI want you to bring one here alive."),
-            Component.literal("§6[" + player.getName().getString() + "] §fAlive?"),
-            Component.literal("§c[Kamanue] §fYes. I want to observe one closely."),
+            Component.literal("§c[Kamanue] §fI want you to bring one here."),
+            Component.literal("§6[" + player.getName().getString() + "] §fDead?"),
+            Component.literal("§c[Kamanue] §fYes. I wish to study their dying breath."),
             Component.literal("§c[Kamanue] §fBring me a slayer and I'll teach you something useful.")
         );
         long now = player.level().getGameTime();
@@ -298,7 +319,7 @@ public final class QuestScenarioActions {
     public static void completeKamanueDialogue(ServerPlayer player, QuestRuntimeContext context) {
         player.getPersistentData().remove(KAMANUE_DIALOGUE_STARTED);
         player.getPersistentData().remove(KAMANUE_DIALOGUE_START_TICK);
-        player.sendSystemMessage(Component.literal("§aQuest Update: §fCapture a Demon Slayer and bring them to Kamanue."));
+        player.sendSystemMessage(Component.literal("§aQuest Update: §fKill a Demon Slayer and return their remains to Kamanue."));
     }
 
     public static void resetSlayersBloodDialogueState(ServerPlayer player) {
@@ -1404,12 +1425,12 @@ public final class QuestScenarioActions {
     }
 
     public enum TamayoHousePoint {
-        RECEPTION(0, 1, 0),
-        BASEMENT(2, -4, -1),
-        DEMON_VILLAGER(-1, -4, -1),
-        ATTACK_SPAWN(-18, 0, -3),
-        EXPLOSION(-6, 2, 4),
-        TRAPDOOR(5, 1, -4);
+        RECEPTION(15, 21, 17),
+        BASEMENT(13, 15, 17),
+        DEMON_VILLAGER(18, 15, 17),
+        ATTACK_SPAWN(34, 20, 18),
+        EXPLOSION(22, 21, 14),
+        TRAPDOOR(11, 20, 20);
 
         private final int offsetX;
         private final int offsetY;
@@ -1514,7 +1535,24 @@ public final class QuestScenarioActions {
         if (structurePos == null) {
             return fallbackCorner;
         }
+        int maxDistance = getStructureAnchorMaxDistance(structureId);
+        if (Math.abs(structurePos.getX() - origin.getX()) > maxDistance
+            || Math.abs(structurePos.getZ() - origin.getZ()) > maxDistance) {
+            return fallbackCorner;
+        }
         return new BlockPos(structurePos.getX(), fallbackCorner.getY(), structurePos.getZ());
+    }
+
+    private static int getStructureAnchorMaxDistance(ResourceLocation structureId) {
+        CivilianStructureRegistry.StructureSize size = CivilianStructureRegistry.getStructureSize(structureId);
+        if (size == null) {
+            return DEFAULT_STRUCTURE_ANCHOR_MAX_DISTANCE;
+        }
+        return switch (size) {
+            case SMALL -> SMALL_STRUCTURE_ANCHOR_MAX_DISTANCE;
+            case MEDIUM -> MEDIUM_STRUCTURE_ANCHOR_MAX_DISTANCE;
+            case LARGE -> LARGE_STRUCTURE_ANCHOR_MAX_DISTANCE;
+        };
     }
 
     private static int findStructureRotation(StructureStart structureStart) {

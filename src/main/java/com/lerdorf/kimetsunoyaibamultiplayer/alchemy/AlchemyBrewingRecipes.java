@@ -14,9 +14,19 @@ public final class AlchemyBrewingRecipes {
             "kimetsunoyaibamultiplayer:crude_vial"
         ));
         BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
+            "kimetsunoyaibamultiplayer:calcite_powder",
+            "kimetsunoyaibamultiplayer:herbal_extract",
+            "kimetsunoyaibamultiplayer:botanical_vial"
+        ));
+        BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
             "kimetsunoyaibamultiplayer:fermented_orchid",
             "kimetsunoyaibamultiplayer:crude_vial",
             "kimetsunoyaibamultiplayer:refined_vial"
+        ));
+        BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
+            "kimetsunoyaibamultiplayer:fermented_orchid",
+            "kimetsunoyaibamultiplayer:botanical_vial",
+            "kimetsunoyaibamultiplayer:distilled_vial"
         ));
         BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
             "kimetsunoyaibamultiplayer:immortal_daisy",
@@ -50,6 +60,10 @@ public final class AlchemyBrewingRecipes {
         registerInfusion("kimetsunoyaibamultiplayer:illagers_extract", "kimetsunoyaibamultiplayer:bleeding_infusion");
         registerInfusion("kimetsunoyaibamultiplayer:blaze_extract", "kimetsunoyaibamultiplayer:fire_infusion");
         registerInfusion("kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:frozen_infusion");
+        registerInfusion("kimetsunoyaibamultiplayer:wisteria_extract", "kimetsunoyaibamultiplayer:wisteria_infusion");
+        registerInfusion("kimetsunoyaibamultiplayer:exorcistic_culture", "kimetsunoyaibamultiplayer:division_inhibition_infusion");
+        registerInfusion("kimetsunoyaibamultiplayer:proteolytic_culture", "kimetsunoyaibamultiplayer:cell_destruction_infusion");
+        registerInfusion("kimetsunoyaibamultiplayer:neurotoxic_culture", "kimetsunoyaibamultiplayer:immovable_infusion");
 
         for (BloodDemonArtAlchemyCatalog.CatalystDefinition definition : BloodDemonArtAlchemyCatalog.baseCatalystDefinitions()) {
             BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
@@ -65,6 +79,11 @@ public final class AlchemyBrewingRecipes {
         BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
             ingredientId,
             "kimetsunoyaibamultiplayer:crude_vial",
+            outputId
+        ));
+        BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(
+            ingredientId,
+            "kimetsunoyaibamultiplayer:botanical_vial",
             outputId
         ));
     }

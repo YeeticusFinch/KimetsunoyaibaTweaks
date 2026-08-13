@@ -48,7 +48,7 @@
 					]
 				},
 				{
-					"name": "door inside",
+					"name": "doorinside",
 					"pivot": [0, 0, 0],
 					"cubes": [
 						{

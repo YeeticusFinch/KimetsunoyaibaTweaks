@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * Command to spawn a demon slayer entity with a specific breathing style and power level.
  *
- * Usage: /spawndemonslayer <breathing_style> <power_level> [male|female|random] [skin_number]
+ * Usage: /spawndemonslayer <breathing_style> <power_level> [male|female|random] [skin_number] [demonized]
  *
  * Examples:
  * - /spawndemonslayer water_breathing 0    (training sword, no armor)
@@ -61,12 +61,21 @@ public class SpawnDemonSlayerCommand {
                 .suggests(STYLE_SUGGESTIONS)
                 .then(Commands.argument("level", IntegerArgumentType.integer(0, 5))
                     .executes(SpawnDemonSlayerCommand::execute)
+                    .then(Commands.literal("demonized")
+                        .executes(SpawnDemonSlayerCommand::execute)
+                    )
                     .then(Commands.argument("gender", StringArgumentType.word())
                         .suggests(GENDER_SUGGESTIONS)
                         .executes(SpawnDemonSlayerCommand::execute)
+                        .then(Commands.literal("demonized")
+                            .executes(SpawnDemonSlayerCommand::execute)
+                        )
                         .then(Commands.argument("skin", IntegerArgumentType.integer(1, 6))
                             .suggests(SKIN_SUGGESTIONS)
                             .executes(SpawnDemonSlayerCommand::execute)
+                            .then(Commands.literal("demonized")
+                                .executes(SpawnDemonSlayerCommand::execute)
+                            )
                         )
                     )
                 )
@@ -81,6 +90,7 @@ public class SpawnDemonSlayerCommand {
         int powerLevel = IntegerArgumentType.getInteger(context, "level");
         String genderArg = getOptionalGender(context);
         Integer skinArg = getOptionalSkin(context);
+        boolean demonized = hasDemonizedLiteral(context);
         if (!genderArg.equals("male") && !genderArg.equals("female") && !genderArg.equals("random")) {
             source.sendFailure(Component.literal("\u00A7cInvalid gender. Use: male, female, or random"));
             return 0;
@@ -148,6 +158,9 @@ public class SpawnDemonSlayerCommand {
         // Set power level/loadout (our override allows 0-5) and apply stat bonuses
         entity.configurePowerLevelLoadout(powerLevel);
         entity.applyAttackSpeedBonus();
+        if (demonized) {
+            entity.demonize();
+        }
 
         // Add to world
         level.addFreshEntityWithPassengers(entity);
@@ -157,15 +170,15 @@ public class SpawnDemonSlayerCommand {
         String styleName = style != null ? style.getStyleName() : formatStyleName(styleId);
 
         source.sendSuccess(() -> Component.literal(
-            "\u00A7aSpawned " + (female ? "female" : "male") + " demon slayer" +
+            "\u00A7aSpawned " + (demonized ? "demonized " : "") + (female ? "female" : "male") + " demon slayer" +
             " [\u00A7e" + styleName + "\u00A7a]" +
             " power level \u00A7e" + powerLevel +
             "\u00A7a with sword \u00A7e" + swordId +
             "\u00A7a skin \u00A7e" + (textureIndex + 1)
         ), true);
 
-        Log.debug("[SpawnDemonSlayer] Spawned {} demon slayer, style={}, power={}, sword={}",
-            female ? "female" : "male", styleId, powerLevel, swordId);
+        Log.debug("[SpawnDemonSlayer] Spawned {}{} demon slayer, style={}, power={}, sword={}",
+            demonized ? "demonized " : "", female ? "female" : "male", styleId, powerLevel, swordId);
 
         return 1;
     }
@@ -228,6 +241,11 @@ public class SpawnDemonSlayerCommand {
         } catch (IllegalArgumentException ignored) {
             return null;
         }
+    }
+
+    private static boolean hasDemonizedLiteral(CommandContext<CommandSourceStack> context) {
+        return context.getNodes().stream()
+            .anyMatch(node -> "demonized".equals(node.getNode().getName()));
     }
 
     private static List<String> collectSpawnableStyleIds() {

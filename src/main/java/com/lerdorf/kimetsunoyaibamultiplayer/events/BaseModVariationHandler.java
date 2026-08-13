@@ -9,6 +9,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistr
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -167,7 +168,7 @@ public class BaseModVariationHandler {
             // Apply Vermilion Eye cooldown reduction if active (40% faster cooldowns)
             int cooldownTicks = VermilionEyeEffect.applyCooldownReductionTicks(player, baseCooldownTicks);
 
-            player.getCooldowns().addCooldown(heldItem.getItem(), cooldownTicks);
+            PlayerAbilityCooldowns.addCooldown(player, heldItem.getItem(), cooldownTicks);
 
             if (Config.logDebug) {
                 if (cooldownTicks != baseCooldownTicks) {

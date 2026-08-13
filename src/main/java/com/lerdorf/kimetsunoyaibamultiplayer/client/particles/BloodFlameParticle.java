@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client.particles;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
@@ -11,8 +12,11 @@ import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class BloodFlameParticle extends TextureSheetParticle {
     private static final int SPRITE_COUNT = 6;
+    private static final AtomicBoolean FIRST_CREATION_LOGGED = new AtomicBoolean(false);
 
     protected BloodFlameParticle(ClientLevel level, double x, double y, double z,
                                  double xSpeed, double ySpeed, double zSpeed, SpriteSet spriteSet) {
@@ -65,7 +69,7 @@ public class BloodFlameParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return CustomParticleRenderTypes.ADDITIVE_TRANSLUCENT;
+        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -74,12 +78,23 @@ public class BloodFlameParticle extends TextureSheetParticle {
 
         public Provider(SpriteSet spriteSet) {
             this.sprites = spriteSet;
+            Log.alwaysWarn("[CLIENT PARTICLES] blood_flame provider constructed");
         }
 
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
                                        double xSpeed, double ySpeed, double zSpeed) {
-            return new BloodFlameParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.sprites);
+            if (FIRST_CREATION_LOGGED.compareAndSet(false, true)) {
+                Log.alwaysWarn("[CLIENT PARTICLES] first blood_flame particle create request at {}, {}, {} speed {}, {}, {}",
+                    x, y, z, xSpeed, ySpeed, zSpeed);
+            }
+
+            try {
+                return new BloodFlameParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.sprites);
+            } catch (Throwable throwable) {
+                Log.alwaysError("[CLIENT PARTICLES] failed to create blood_flame particle: {}", throwable.toString());
+                throw throwable;
+            }
         }
     }
 }

@@ -3,10 +3,15 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -41,6 +46,11 @@ import java.util.UUID;
 public abstract class BreathingSlayerEntity extends PathfinderMob implements GeoEntity {
     private static final int NATURAL_REGEN_INTERVAL_TICKS = 100;
     private static final float NATURAL_REGEN_AMOUNT = 1.0F;
+    private static final String ONI_TAG = "oni";
+    private static final String DEMON_SLAYER_CORPS_TAG = "kisatsutai";
+    private static final double DEMONIZED_HEALTH_MULTIPLIER = 1.20D;
+    private static final int DEMONIZED_EFFECT_REFRESH_TICKS = 120;
+    private static final int[] DEMONIZED_EYE_CHOICES = {0, 1, 7};
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     // Synced data for current breathing form index
@@ -59,9 +69,14 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     // Synced data for power level (0-4 for generic slayers, 1-4 for named slayers)
     protected static final EntityDataAccessor<Integer> POWER_LEVEL =
         SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DEMONIZED =
+        SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DEMON_EYES_INDEX =
+        SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
 
     // Cooldown tracking for breathing forms (in ticks)
     private int breathingFormCooldown = 0;
+    private int demonizedSunlightBurnTicks = 0;
 
     // UUID for attribute modifiers (must be unique per attribute)
     private static final UUID SPEED_MODIFIER_UUID = UUID.fromString("7f3e5c6d-1a2b-4f9e-8d7c-6b5a4e3d2c1b");
@@ -115,6 +130,8 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         this.entityData.define(ANIMATION_TICKS, 0);
         this.entityData.define(ANIMATION_NAMESPACE, KimetsunoyaibaMultiplayer.MODID);
         this.entityData.define(POWER_LEVEL, 1); // Default to power level 1
+        this.entityData.define(DEMONIZED, false);
+        this.entityData.define(DEMON_EYES_INDEX, DEMONIZED_EYE_CHOICES[0]);
     }
 
     public int getCurrentFormIndex() {
@@ -142,6 +159,60 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         this.entityData.set(POWER_LEVEL, level);
     }
 
+    public boolean isDemonized() {
+        return this.entityData.get(DEMONIZED) || this.getPersistentData().getBoolean(ONI_TAG);
+    }
+
+    public void demonize() {
+        setDemonized(true);
+    }
+
+    public void setDemonized(boolean demonized) {
+        boolean wasDemonized = isDemonized();
+        this.entityData.set(DEMONIZED, demonized);
+        if (demonized) {
+            this.getPersistentData().putBoolean(ONI_TAG, true);
+            this.getPersistentData().remove(DEMON_SLAYER_CORPS_TAG);
+            if (!wasDemonized || !isAllowedDemonizedEyesIndex(getDemonEyesIndex())) {
+                setDemonEyesIndex(randomDemonizedEyesIndex());
+            }
+        } else {
+            this.getPersistentData().remove(ONI_TAG);
+            this.demonizedSunlightBurnTicks = 0;
+        }
+        refreshPowerStateForDemonizedChange();
+    }
+
+    protected void refreshPowerStateForDemonizedChange() {
+        applyPowerLevelBonuses(getPowerLevel());
+        apply2xAttackSpeed();
+    }
+
+    public int getDemonEyesIndex() {
+        return this.entityData.get(DEMON_EYES_INDEX);
+    }
+
+    public void setDemonEyesIndex(int index) {
+        this.entityData.set(DEMON_EYES_INDEX, isAllowedDemonizedEyesIndex(index) ? index : DEMONIZED_EYE_CHOICES[0]);
+    }
+
+    protected double getDemonizedHealthMultiplier() {
+        return DEMONIZED_HEALTH_MULTIPLIER;
+    }
+
+    private int randomDemonizedEyesIndex() {
+        return DEMONIZED_EYE_CHOICES[this.random.nextInt(DEMONIZED_EYE_CHOICES.length)];
+    }
+
+    private static boolean isAllowedDemonizedEyesIndex(int index) {
+        for (int allowed : DEMONIZED_EYE_CHOICES) {
+            if (allowed == index) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     protected void registerGoals() {
         // Priority 0: Breathing form attacks (highest priority)
@@ -167,11 +238,11 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
 
         // Target demons from kimetsunoyaiba mod (using comprehensive demon detection)
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
-            DemonSlayerAggroHandler::isDemonTarget));
+            target -> !this.isDemonized() && DemonSlayerAggroHandler.isDemonTarget(target)));
 
         // Target players who are demons (check NBT data)
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-            (player) -> player.getPersistentData().getBoolean("oni")));
+            (player) -> !this.isDemonized() && player.getPersistentData().getBoolean("oni")));
     }
 
     /**
@@ -196,6 +267,11 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
 
             if (shouldApplyNaturalRegen()) {
                 this.heal(NATURAL_REGEN_AMOUNT);
+            }
+            if (isDemonized()) {
+                tickDemonizedState();
+            } else {
+                this.demonizedSunlightBurnTicks = 0;
             }
         }
 
@@ -278,6 +354,9 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
                 case 4 -> 80.0;
                 default -> 40.0;
             };
+            if (isDemonized()) {
+                health *= getDemonizedHealthMultiplier();
+            }
             maxHealth.setBaseValue(health);
             this.setHealth((float) health);
         }
@@ -299,7 +378,10 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
 
         // Apply strength effect for power levels 2-4
         if (powerLevel >= 2) {
-            int strengthLevel = (powerLevel >= 4) ? 1 : 0; // Level 4 = Strength 2, Level 2-3 = Strength 1
+            int strengthLevel = ((powerLevel >= 4) ? 1 : 0) + (isDemonized() ? 1 : 0);
+            this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, strengthLevel, true, false));
+        } else if (isDemonized()) {
+            int strengthLevel = 0;
             this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, strengthLevel, true, false));
         }
     }
@@ -336,6 +418,9 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         tag.putInt("CurrentFormIndex", getCurrentFormIndex());
         tag.putInt("BreathingFormCooldown", this.breathingFormCooldown);
         tag.putInt("PowerLevel", getPowerLevel());
+        tag.putBoolean("Demonized", isDemonized());
+        tag.putInt("DemonEyesIndex", getDemonEyesIndex());
+        tag.putInt("DemonizedSunlightBurnTicks", this.demonizedSunlightBurnTicks);
     }
 
     @Override
@@ -343,6 +428,23 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         super.readAdditionalSaveData(tag);
         setCurrentFormIndex(tag.getInt("CurrentFormIndex"));
         this.breathingFormCooldown = tag.getInt("BreathingFormCooldown");
+        if (tag.contains("DemonEyesIndex")) {
+            setDemonEyesIndex(tag.getInt("DemonEyesIndex"));
+        }
+        if (tag.contains("DemonizedSunlightBurnTicks")) {
+            this.demonizedSunlightBurnTicks = Math.max(0, tag.getInt("DemonizedSunlightBurnTicks"));
+        }
+        boolean demonized = tag.getBoolean("Demonized") || this.getPersistentData().getBoolean(ONI_TAG);
+        this.entityData.set(DEMONIZED, demonized);
+        if (demonized) {
+            this.getPersistentData().putBoolean(ONI_TAG, true);
+            this.getPersistentData().remove(DEMON_SLAYER_CORPS_TAG);
+            if (!isAllowedDemonizedEyesIndex(getDemonEyesIndex())) {
+                setDemonEyesIndex(randomDemonizedEyesIndex());
+            }
+        } else {
+            this.getPersistentData().remove(ONI_TAG);
+        }
 
         // Restore power level and apply bonuses
         int powerLevel = tag.getInt("PowerLevel");
@@ -351,6 +453,63 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
             applyPowerLevelBonuses(powerLevel);
             apply2xAttackSpeed();
         }
+    }
+
+    private void tickDemonizedState() {
+        this.getPersistentData().putBoolean(ONI_TAG, true);
+        this.getPersistentData().remove(DEMON_SLAYER_CORPS_TAG);
+
+        if (this.tickCount % DEMONIZED_EFFECT_REFRESH_TICKS == 0 || !this.hasEffect(ModEffects.DEMON_TRANSFORMATION.get())) {
+            this.addEffect(new MobEffectInstance(ModEffects.DEMON_TRANSFORMATION.get(), DEMONIZED_EFFECT_REFRESH_TICKS + 40, 0, true, false, false));
+        }
+        if (this.tickCount % DEMONIZED_EFFECT_REFRESH_TICKS == 0 || !this.hasEffect(MobEffects.REGENERATION)) {
+            this.addEffect(new MobEffectInstance(MobEffects.REGENERATION, DEMONIZED_EFFECT_REFRESH_TICKS + 40, 0, true, false, false));
+        }
+
+        tickDemonizedSunlightBurn();
+    }
+
+    private void tickDemonizedSunlightBurn() {
+        if (com.lerdorf.kimetsunoyaibamultiplayer.alchemy.AlchemyMedicineHandler.hasSunlightImmunity(this)) {
+            this.demonizedSunlightBurnTicks = 0;
+            this.clearFire();
+            return;
+        }
+
+        if (isInBurningSunlight()) {
+            this.demonizedSunlightBurnTicks++;
+            this.setSecondsOnFire(2);
+
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(ParticleTypes.FLAME, getX(), getY(0.5D), getZ(), 4, 0.3D, 0.4D, 0.3D, 0.01D);
+                serverLevel.sendParticles(ParticleTypes.LAVA, getX(), getY(0.2D), getZ(), 2, 0.2D, 0.2D, 0.2D, 0.0D);
+            }
+
+            if (this.demonizedSunlightBurnTicks % 10 == 0 && this.demonizedSunlightBurnTicks <= 40) {
+                this.hurt(this.damageSources().onFire(), 10.0F);
+            }
+
+            if (this.demonizedSunlightBurnTicks >= 40) {
+                if (this.level() instanceof ServerLevel serverLevel) {
+                    serverLevel.sendParticles(ParticleTypes.EXPLOSION, getX(), getY(0.6D), getZ(), 12, 0.3D, 0.4D, 0.3D, 0.02D);
+                }
+                this.playSound(SoundEvents.GENERIC_EXPLODE, 1.0F, 1.1F);
+                this.discard();
+            }
+        } else {
+            this.demonizedSunlightBurnTicks = 0;
+        }
+    }
+
+    private boolean isInBurningSunlight() {
+        if (!(this.level() instanceof ServerLevel serverLevel) || !serverLevel.isDay()) {
+            return false;
+        }
+        if (this.isInWaterRainOrBubble() || this.isUnderWater()) {
+            return false;
+        }
+        BlockPos pos = this.blockPosition();
+        return serverLevel.canSeeSky(pos) && !serverLevel.isRainingAt(pos);
     }
 
     /**

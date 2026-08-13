@@ -88,7 +88,9 @@ public class SwordSlashModelRegistry {
         ANIMATED_TEXTURE_FRAMES.put("beast", 3);
         RANDOM_TEXTURE_SELECTION.add("beast");
 
-        // Nezuko claw slash visuals for Combustible Blood rupture attacks.
+        // Nezuko claw slash visuals for Combustible Blood rupture attacks and M1 claw swipes.
+        SWORD_TO_MODEL_MAP.put("combustible_blood", "claw_nezuko");
+        SWORD_TO_MODEL_MAP.put("blooddemonart_nezuko", "claw_nezuko");
         ANIMATED_TEXTURE_FRAMES.put("claw_nezuko", 6);
         ANIMATED_TEXTURE_FRAME_DELAY.put("claw_nezuko", 1);
 

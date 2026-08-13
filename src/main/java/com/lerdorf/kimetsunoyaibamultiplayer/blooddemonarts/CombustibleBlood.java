@@ -14,6 +14,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticleHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesSpawner;
@@ -24,6 +25,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
@@ -49,6 +51,7 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Vector3f;
 
 import java.util.HashSet;
@@ -58,6 +61,8 @@ import java.util.Set;
 
 public final class CombustibleBlood {
     public static final String ART_ID = "combustible_blood";
+    private static final ResourceLocation BASE_NEZUKO_BLOOD_ART =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "blooddemonart_nezuko");
 
     public static final int FORM_EXPLODING_BLOOD = 3400;
     public static final int FORM_EXPLODING_BLOOD_RUPTURE = 3401;
@@ -1954,12 +1959,18 @@ public final class CombustibleBlood {
         entity.getPersistentData().putLong(LAST_ABILITY_USE_TICK_TAG, serverLevel.getGameTime());
     }
 
-    private static boolean isCombustibleBloodMeleeItem(ItemStack stack) {
+    public static boolean isCombustibleBloodMeleeItem(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+
         Item item = stack.getItem();
         if (item instanceof BloodDemonArtItem bloodDemonArtItem) {
             return ART_ID.equals(bloodDemonArtItem.getArtId());
         }
-        return false;
+
+        ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(item);
+        return EnhancedBreathingConfig.enhancedCombustibleBlood && BASE_NEZUKO_BLOOD_ART.equals(itemId);
     }
 
     private static boolean markLeftClickHandled(Player player) {

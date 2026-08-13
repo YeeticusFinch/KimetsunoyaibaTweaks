@@ -462,6 +462,12 @@ public class ModItems {
     public static final RegistryObject<Item> UBUYASHIKI_INVITATION = ITEMS.register("ubuyashiki_invitation",
         () -> new UbuyashikiInvitationItem(new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> BLOOM_CALENDAR = ITEMS.register("bloom_calendar",
+        () -> new BloomCalendarItem(new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> SAKE = ITEMS.register("sake",
+        () -> new SakeItem(new Item.Properties().stacksTo(16)));
+
     // Favor Potion Items - Ubuyashiki (slayer protection - spawns slayers when attacked by demons/players)
     public static final RegistryObject<Item> FAVOR_OF_UBUYASHIKI_POTION_1 = ITEMS.register("favor_of_ubuyashiki_potion_1",
         () -> new FavorPotionItem(new Item.Properties().stacksTo(16), FavorPotionItem.FavorType.UBUYASHIKI, 1));
@@ -525,7 +531,25 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_PINK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_CYAN.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_LAVENDER.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_CREAM.get()
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PETALS_CREAM.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WHITE_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.RED_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.PURPLE_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.YELLOW_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BLUE_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.LIME_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.PINK_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.ORANGE_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WAXED_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WAXED_WHITE_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WAXED_RED_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WAXED_PURPLE_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WAXED_YELLOW_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WAXED_BLUE_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WAXED_LIME_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WAXED_PINK_SPIDER_LILY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WAXED_ORANGE_SPIDER_LILY.get()
                 );
 
                 addItems(output,
@@ -602,7 +626,7 @@ public class ModItems {
                     FAVOR_OF_UBUYASHIKI_POTION_3.get()
                 );
 
-                addItems(output, UBUYASHIKI_INVITATION.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
+                addItems(output, UBUYASHIKI_INVITATION.get(), BLOOM_CALENDAR.get(), SAKE.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
                     HUMAN_FLESH_3.get(), HUMAN_FLESH_4.get(), HUMAN_FLESH_5.get());
             })
             .build());

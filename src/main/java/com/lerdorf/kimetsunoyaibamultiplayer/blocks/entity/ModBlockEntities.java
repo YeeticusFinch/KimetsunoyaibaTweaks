@@ -33,6 +33,12 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("petri_dish",
             () -> BlockEntityType.Builder.of(PetriDishBlockEntity::new, ModAlchemyBlocks.PETRI_DISH.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<WisteriaIncenseBlockEntity>> WISTERIA_INCENSE =
+        BLOCK_ENTITIES.register("wisteria_incense",
+            () -> BlockEntityType.Builder.of(WisteriaIncenseBlockEntity::new,
+                ModAlchemyBlocks.WISTERIA_INCENSE.get(),
+                ModAlchemyBlocks.POTTED_WISTERIA_INCENSE.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<GravityFieldProjectorBlockEntity>> GRAVITY_FIELD_PROJECTOR =
         BLOCK_ENTITIES.register("gravity_field_projector",
             () -> BlockEntityType.Builder.of(GravityFieldProjectorBlockEntity::new, ModBlocks.GRAVITY_FIELD_PROJECTOR.get()).build(null));

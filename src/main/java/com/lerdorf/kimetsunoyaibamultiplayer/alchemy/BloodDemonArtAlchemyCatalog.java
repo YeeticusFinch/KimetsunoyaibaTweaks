@@ -29,6 +29,8 @@ public final class BloodDemonArtAlchemyCatalog {
     private static final int AMPLIFIER_RING_TINT = 0xD64A3A;
     private static final int BINDER_RING_TINT = 0xC0C7D1;
     private static final int OROCHI_ELIXIR_RING_TINT = 0x4A1D6F;
+    private static final int LEGENDARY_MEDICINE_RING_TINT = 0xB10F1A;
+    private static final String POTENCY_KEY = "Potency";
 
     private static final Map<String, Integer> ITEM_TINTS = Map.ofEntries(
         Map.entry("kimetsunoyaibamultiplayer:minced_human_flesh", 0xA64242),
@@ -42,9 +44,12 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:blood_sample", 0x8F1414),
         Map.entry("kimetsunoyaibamultiplayer:rotten_blood_sample", 0x556B2F),
         Map.entry("kimetsunoyaibamultiplayer:crude_vial", 0xB42E2E),
+        Map.entry("kimetsunoyaibamultiplayer:botanical_vial", 0x4E8F75),
+        Map.entry("kimetsunoyaibamultiplayer:distilled_vial", 0xD2F2EC),
         Map.entry("kimetsunoyaibamultiplayer:refined_vial", 0xC979D7),
         Map.entry("kimetsunoyaibamultiplayer:cruel_vial", 0x7A001C),
         Map.entry("kimetsunoyaibamultiplayer:catalytic_reagent", 0xF1E2A0),
+        Map.entry("kimetsunoyaibamultiplayer:antivenom", 0xE9F5E6),
         Map.entry("kimetsunoyaibamultiplayer:unidentified_human_extract", 0xC87A7A),
         Map.entry("kimetsunoyaibamultiplayer:unidentified_rotten_extract", 0x6F7E4A),
         Map.entry("kimetsunoyaibamultiplayer:adrenal_gland", 0xE36161),
@@ -70,6 +75,9 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:diamond_extract", 0xA9DDFE),
         Map.entry("kimetsunoyaibamultiplayer:yamato_orochi_extract", 0x5E9A6B),
         Map.entry("kimetsunoyaibamultiplayer:creeping_doom_extract", 0x6E4A3A),
+        Map.entry("kimetsunoyaibamultiplayer:herbal_extract", 0x1F6F8C),
+        Map.entry("kimetsunoyaibamultiplayer:doma_extract", 0xB7E8F0),
+        Map.entry("kimetsunoyaibamultiplayer:wisteria_extract", 0xB78CE6),
         Map.entry("kimetsunoyaibamultiplayer:infernal_culture", 0xE5622F),
         Map.entry("kimetsunoyaibamultiplayer:fortified_culture", 0x82A1BF),
         Map.entry("kimetsunoyaibamultiplayer:neural_culture", 0x8F6CE0),
@@ -79,7 +87,25 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:vitality_culture", 0x88D678),
         Map.entry("kimetsunoyaibamultiplayer:electrolytic_culture", 0x67C4E8),
         Map.entry("kimetsunoyaibamultiplayer:hemomimetic_culture", 0xB76584),
+        Map.entry("kimetsunoyaibamultiplayer:proteolytic_culture", 0xD7E7A2),
+        Map.entry("kimetsunoyaibamultiplayer:exorcistic_culture", 0xC8A9F0),
+        Map.entry("kimetsunoyaibamultiplayer:neurotoxic_culture", 0xEFE7D8),
+        Map.entry("kimetsunoyaibamultiplayer:demonic_genesis_culture", 0xB11220),
+        Map.entry("kimetsunoyaibamultiplayer:solar_genesis_culture", 0xF0D66A),
+        Map.entry("kimetsunoyaibamultiplayer:withered_spider_lily_culture", 0x1A1018),
+        Map.entry("kimetsunoyaibamultiplayer:saturation_culture", 0xC15036),
+        Map.entry("kimetsunoyaibamultiplayer:demonic_restoration_culture", 0xD8A0A8),
+        Map.entry("kimetsunoyaibamultiplayer:solar_smite_culture", 0xF4E172),
+        Map.entry("kimetsunoyaibamultiplayer:unidentified_blue_spider_lily_culture", 0x2D58B8),
+        Map.entry("kimetsunoyaibamultiplayer:unidentified_rainbow_lily_culture", 0xC46BCF),
+        Map.entry("kimetsunoyaibamultiplayer:demon_genesis_medicine", 0x9E0C18),
+        Map.entry("kimetsunoyaibamultiplayer:solar_ascension_cure", 0xF3C642),
+        Map.entry("kimetsunoyaibamultiplayer:demonic_hunger_cure", 0xC83A2A),
+        Map.entry("kimetsunoyaibamultiplayer:demonic_restoration_cure", 0xE89AA6),
+        Map.entry("kimetsunoyaibamultiplayer:solar_smite_serum", 0xF5DF64),
         Map.entry("kimetsunoyaibamultiplayer:familiar_tonic", 0x7C9E46),
+        Map.entry("kimetsunoyaibamultiplayer:blue_spider_lily_petals", 0x2D58B8),
+        Map.entry("kimetsunoyaibamultiplayer:blue_spider_lily_tea", 0x3A62D8),
         Map.entry("kimetsunoyaibamultiplayer:orochi_elixir", 0x173B22),
         Map.entry("kimetsunoyaibamultiplayer:damage_amplifier_vial", 0xD64A3A),
         Map.entry("kimetsunoyaibamultiplayer:defense_amplifier_vial", 0x6994C9),
@@ -99,6 +125,10 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:bleeding_infusion", 0x9F2A38),
         Map.entry("kimetsunoyaibamultiplayer:fire_infusion", 0xF26A18),
         Map.entry("kimetsunoyaibamultiplayer:frozen_infusion", 0xC4E7F2),
+        Map.entry("kimetsunoyaibamultiplayer:wisteria_infusion", 0xB062D8),
+        Map.entry("kimetsunoyaibamultiplayer:division_inhibition_infusion", 0x9D78D5),
+        Map.entry("kimetsunoyaibamultiplayer:cell_destruction_infusion", 0xE45C84),
+        Map.entry("kimetsunoyaibamultiplayer:immovable_infusion", 0xE4E2CB),
         Map.entry("kimetsunoyaibamultiplayer:wither_catalyst", 0x383838),
         Map.entry("kimetsunoyaibamultiplayer:stellar_catalyst", 0xE9EBCB),
         Map.entry("kimetsunoyaibamultiplayer:immortal_catalyst", 0xDBE8A8),
@@ -152,7 +182,13 @@ public final class BloodDemonArtAlchemyCatalog {
         new ExtractDefinition("minecraft:powder_snow_bucket", "kimetsunoyaibamultiplayer:powdered_snow_extract"),
         new ExtractDefinition("minecraft:diamond", "kimetsunoyaibamultiplayer:diamond_extract"),
         new ExtractDefinition("kimetsunoyaiba:blooddemonart_kamanue", "kimetsunoyaibamultiplayer:yamato_orochi_extract"),
-        new ExtractDefinition("kimetsunoyaibamultiplayer:creeping_doom", "kimetsunoyaibamultiplayer:creeping_doom_extract")
+        new ExtractDefinition("kimetsunoyaibamultiplayer:creeping_doom", "kimetsunoyaibamultiplayer:creeping_doom_extract"),
+        new ExtractDefinition("minecraft:grass", "kimetsunoyaibamultiplayer:herbal_extract"),
+        new ExtractDefinition("kimetsunoyaiba:handfan", "kimetsunoyaibamultiplayer:doma_extract"),
+        new ExtractDefinition("kimetsunoyaibamultiplayer:glowing_wisteria_leaves_pink", "kimetsunoyaibamultiplayer:wisteria_extract"),
+        new ExtractDefinition("kimetsunoyaibamultiplayer:glowing_wisteria_leaves_cyan", "kimetsunoyaibamultiplayer:wisteria_extract"),
+        new ExtractDefinition("kimetsunoyaibamultiplayer:glowing_wisteria_leaves_lavender", "kimetsunoyaibamultiplayer:wisteria_extract"),
+        new ExtractDefinition("kimetsunoyaibamultiplayer:glowing_wisteria_leaves_cream", "kimetsunoyaibamultiplayer:wisteria_extract")
     );
 
     private static final List<InfusionDefinition> INFUSIONS = List.of(
@@ -166,7 +202,11 @@ public final class BloodDemonArtAlchemyCatalog {
         new InfusionDefinition("kimetsunoyaibamultiplayer:scute_extract", "kimetsunoyaibamultiplayer:resistance_infusion", "minecraft:resistance", 8, 1),
         new InfusionDefinition("kimetsunoyaibamultiplayer:illagers_extract", "kimetsunoyaibamultiplayer:bleeding_infusion", "kimetsunoyaibamultiplayer:bleeding", 8, 1),
         new InfusionDefinition("kimetsunoyaibamultiplayer:blaze_extract", "kimetsunoyaibamultiplayer:fire_infusion", FIRE_INFUSION_EFFECT_ID, 8, 1),
-        new InfusionDefinition("kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:frozen_infusion", FROZEN_INFUSION_EFFECT_ID, 8, 1)
+        new InfusionDefinition("kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:frozen_infusion", FROZEN_INFUSION_EFFECT_ID, 8, 1),
+        new InfusionDefinition("kimetsunoyaibamultiplayer:wisteria_extract", "kimetsunoyaibamultiplayer:wisteria_infusion", "kimetsunoyaiba:wisteriapoison", 8, 1),
+        new InfusionDefinition("kimetsunoyaibamultiplayer:exorcistic_culture", "kimetsunoyaibamultiplayer:division_inhibition_infusion", "kimetsunoyaiba:regeneration_inhibition", 8, 1),
+        new InfusionDefinition("kimetsunoyaibamultiplayer:proteolytic_culture", "kimetsunoyaibamultiplayer:cell_destruction_infusion", "kimetsunoyaiba:cell_destruction", 8, 1),
+        new InfusionDefinition("kimetsunoyaibamultiplayer:neurotoxic_culture", "kimetsunoyaibamultiplayer:immovable_infusion", "kimetsunoyaiba:immvable", 8, 1)
     );
 
     private static final List<CatalystDefinition> CATALYSTS = List.of(
@@ -281,6 +321,9 @@ public final class BloodDemonArtAlchemyCatalog {
         if (matches(stack, "kimetsunoyaibamultiplayer:orochi_elixir")) {
             return OROCHI_ELIXIR_RING_TINT;
         }
+        if (AlchemyMedicineHandler.isLegendaryMedicine(stack)) {
+            return LEGENDARY_MEDICINE_RING_TINT;
+        }
         return 0xFFFFFF;
     }
 
@@ -288,7 +331,8 @@ public final class BloodDemonArtAlchemyCatalog {
         String id = id(stack);
         return isInfusion(stack) || isCatalyst(stack) || isAmplifier(stack)
             || "kimetsunoyaibamultiplayer:potion_effect_binder".equals(id)
-            || "kimetsunoyaibamultiplayer:orochi_elixir".equals(id);
+            || "kimetsunoyaibamultiplayer:orochi_elixir".equals(id)
+            || AlchemyMedicineHandler.isLegendaryMedicine(stack);
     }
 
     public static boolean isAlchemyTableDisplayContainer(ItemStack stack) {
@@ -316,6 +360,10 @@ public final class BloodDemonArtAlchemyCatalog {
             || path.contains("sample")
             || path.contains("infusion")
             || path.contains("catalyst")
+            || path.contains("antivenom")
+            || path.contains("medicine")
+            || path.contains("cure")
+            || path.contains("serum")
             || "potion_effect_binder".equals(path);
     }
 
@@ -346,7 +394,9 @@ public final class BloodDemonArtAlchemyCatalog {
     }
 
     public static boolean isUnidentifiedExtract(ItemStack stack) {
-        return MICROSCOPE_OUTPUTS.containsKey(id(stack));
+        return MICROSCOPE_OUTPUTS.containsKey(id(stack))
+            || matches(stack, "kimetsunoyaibamultiplayer:unidentified_blue_spider_lily_culture")
+            || matches(stack, "kimetsunoyaibamultiplayer:unidentified_rainbow_lily_culture");
     }
 
     public static boolean isInfusion(ItemStack stack) {
@@ -388,11 +438,79 @@ public final class BloodDemonArtAlchemyCatalog {
     }
 
     public static ItemStack microscopeOutput(ItemStack input, RandomSource random) {
+        if (matches(input, "kimetsunoyaibamultiplayer:unidentified_blue_spider_lily_culture")) {
+            return blueSpiderLilyCultureMicroscopeOutput(input, random);
+        }
+        if (matches(input, "kimetsunoyaibamultiplayer:unidentified_rainbow_lily_culture")) {
+            return rainbowLilyCultureMicroscopeOutput(input, random);
+        }
         List<String> outputs = MICROSCOPE_OUTPUTS.get(id(input));
         if (outputs == null || outputs.isEmpty()) {
             return ItemStack.EMPTY;
         }
         return stack(outputs.get(random.nextInt(outputs.size())));
+    }
+
+    private static ItemStack blueSpiderLilyCultureMicroscopeOutput(ItemStack input, RandomSource random) {
+        int potency = potency(input);
+        if (random.nextInt(100) < rareCultureChance(potency, 10, 2)) {
+            return stack("kimetsunoyaibamultiplayer:demonic_genesis_culture");
+        }
+        if (random.nextInt(100) < rareCultureChance(potency, 3, 7)) {
+            return stack("kimetsunoyaibamultiplayer:solar_genesis_culture");
+        }
+        return random.nextInt(100) < 60
+            ? stack("kimetsunoyaibamultiplayer:withered_spider_lily_culture")
+            : stack("kimetsunoyaibamultiplayer:neurotoxic_culture");
+    }
+
+    private static ItemStack rainbowLilyCultureMicroscopeOutput(ItemStack input, RandomSource random) {
+        int potency = potency(input);
+        if (random.nextInt(100) < rareCultureChance(potency, 10, 2)) {
+            return stack("kimetsunoyaibamultiplayer:demonic_restoration_culture");
+        }
+        if (random.nextInt(100) < rareCultureChance(potency, 3, 7)) {
+            return stack("kimetsunoyaibamultiplayer:solar_smite_culture");
+        }
+        int roll = random.nextInt(100);
+        if (potency >= 4) {
+            if (roll < 90) {
+                return stack("kimetsunoyaibamultiplayer:saturation_culture");
+            }
+            return roll < 95
+                ? stack("kimetsunoyaibamultiplayer:withered_spider_lily_culture")
+                : stack("kimetsunoyaibamultiplayer:herbal_culture");
+        }
+        if (roll < 40) {
+            return stack("kimetsunoyaibamultiplayer:withered_spider_lily_culture");
+        }
+        if (roll < 80) {
+            return stack("kimetsunoyaibamultiplayer:herbal_culture");
+        }
+        return stack("kimetsunoyaibamultiplayer:saturation_culture");
+    }
+
+    private static int rareCultureChance(int potency, int lowPotencyMultiplier, int highPotencyMultiplier) {
+        int clampedPotency = Math.max(0, potency);
+        return clampedPotency <= 4
+            ? clampedPotency * lowPotencyMultiplier
+            : clampedPotency * highPotencyMultiplier;
+    }
+
+    public static ItemStack withPotency(ItemStack stack, int potency) {
+        if (!stack.isEmpty()) {
+            stack.getOrCreateTag().putInt(POTENCY_KEY, Math.max(0, potency));
+        }
+        return stack;
+    }
+
+    public static int potency(ItemStack stack) {
+        return stack.hasTag() ? Math.max(0, stack.getTag().getInt(POTENCY_KEY)) : 0;
+    }
+
+    public static boolean isPotencyCulture(ItemStack stack) {
+        return matches(stack, "kimetsunoyaibamultiplayer:unidentified_blue_spider_lily_culture")
+            || matches(stack, "kimetsunoyaibamultiplayer:unidentified_rainbow_lily_culture");
     }
 
     public static ItemStack alchemyTableOutput(ItemStack first, ItemStack second) {
@@ -424,9 +542,35 @@ public final class BloodDemonArtAlchemyCatalog {
             }
         }
 
+        if ((matches(first, "minecraft:lily_of_the_valley") && matches(second, "kimetsunoyaibamultiplayer:botanical_vial"))
+            || (matches(second, "minecraft:lily_of_the_valley") && matches(first, "kimetsunoyaibamultiplayer:botanical_vial"))) {
+            return stack("kimetsunoyaibamultiplayer:antivenom");
+        }
+
         if ((matches(first, "kimetsunoyaibamultiplayer:orochi_scales") && matches(second, "kimetsunoyaibamultiplayer:familiar_tonic"))
             || (matches(second, "kimetsunoyaibamultiplayer:orochi_scales") && matches(first, "kimetsunoyaibamultiplayer:familiar_tonic"))) {
             return stack("kimetsunoyaibamultiplayer:orochi_elixir");
+        }
+
+        if ((matches(first, "kimetsunoyaibamultiplayer:demonic_genesis_culture") && matches(second, "kimetsunoyaibamultiplayer:cruel_vial"))
+            || (matches(second, "kimetsunoyaibamultiplayer:demonic_genesis_culture") && matches(first, "kimetsunoyaibamultiplayer:cruel_vial"))) {
+            return stack("kimetsunoyaibamultiplayer:demon_genesis_medicine");
+        }
+        if ((matches(first, "kimetsunoyaibamultiplayer:solar_genesis_culture") && matches(second, "kimetsunoyaibamultiplayer:cruel_vial"))
+            || (matches(second, "kimetsunoyaibamultiplayer:solar_genesis_culture") && matches(first, "kimetsunoyaibamultiplayer:cruel_vial"))) {
+            return stack("kimetsunoyaibamultiplayer:solar_ascension_cure");
+        }
+        if ((matches(first, "kimetsunoyaibamultiplayer:demonic_restoration_culture") && matches(second, "kimetsunoyaibamultiplayer:botanical_vial"))
+            || (matches(second, "kimetsunoyaibamultiplayer:demonic_restoration_culture") && matches(first, "kimetsunoyaibamultiplayer:botanical_vial"))) {
+            return stack("kimetsunoyaibamultiplayer:demonic_restoration_cure");
+        }
+        if ((matches(first, "kimetsunoyaibamultiplayer:solar_smite_culture") && matches(second, "kimetsunoyaibamultiplayer:botanical_vial"))
+            || (matches(second, "kimetsunoyaibamultiplayer:solar_smite_culture") && matches(first, "kimetsunoyaibamultiplayer:botanical_vial"))) {
+            return stack("kimetsunoyaibamultiplayer:solar_smite_serum");
+        }
+        if ((matches(first, "kimetsunoyaibamultiplayer:saturation_culture") && matches(second, "kimetsunoyaibamultiplayer:botanical_vial"))
+            || (matches(second, "kimetsunoyaibamultiplayer:saturation_culture") && matches(first, "kimetsunoyaibamultiplayer:botanical_vial"))) {
+            return stack("kimetsunoyaibamultiplayer:demonic_hunger_cure");
         }
 
         for (CatalystDefinition definition : CATALYSTS) {
@@ -491,8 +635,14 @@ public final class BloodDemonArtAlchemyCatalog {
         if (matches(ingredient, id(ModItems.HEMOLITH_DUST.get())) && matches(input, "kimetsunoyaibamultiplayer:blood_sample")) {
             return stack("kimetsunoyaibamultiplayer:crude_vial");
         }
+        if (matches(ingredient, "kimetsunoyaibamultiplayer:calcite_powder") && matches(input, "kimetsunoyaibamultiplayer:herbal_extract")) {
+            return stack("kimetsunoyaibamultiplayer:botanical_vial");
+        }
         if (matches(ingredient, "kimetsunoyaibamultiplayer:fermented_orchid") && matches(input, "kimetsunoyaibamultiplayer:crude_vial")) {
             return stack("kimetsunoyaibamultiplayer:refined_vial");
+        }
+        if (matches(ingredient, "kimetsunoyaibamultiplayer:fermented_orchid") && matches(input, "kimetsunoyaibamultiplayer:botanical_vial")) {
+            return stack("kimetsunoyaibamultiplayer:distilled_vial");
         }
         if (matches(ingredient, "kimetsunoyaibamultiplayer:immortal_daisy") && matches(input, "kimetsunoyaibamultiplayer:crude_vial")) {
             return stack("kimetsunoyaibamultiplayer:cruel_vial");
@@ -509,7 +659,8 @@ public final class BloodDemonArtAlchemyCatalog {
             return stack("kimetsunoyaibamultiplayer:catalytic_reagent");
         }
         for (InfusionDefinition definition : INFUSIONS) {
-            if (matches(ingredient, definition.inputId()) && matches(input, "kimetsunoyaibamultiplayer:crude_vial")) {
+            if (matches(ingredient, definition.inputId())
+                && (matches(input, "kimetsunoyaibamultiplayer:crude_vial") || matches(input, "kimetsunoyaibamultiplayer:botanical_vial"))) {
                 return stack(definition.outputId());
             }
         }
@@ -522,13 +673,18 @@ public final class BloodDemonArtAlchemyCatalog {
     }
 
     public static ItemStack containerReturn(ItemStack consumedStack) {
-        if (isInfusion(consumedStack) || isAmplifier(consumedStack) || isCatalyst(consumedStack)) {
+        if (isInfusion(consumedStack) || isAmplifier(consumedStack) || isCatalyst(consumedStack)
+            || matches(consumedStack, "kimetsunoyaibamultiplayer:antivenom")
+            || AlchemyMedicineHandler.isLegendaryMedicine(consumedStack)) {
             return stack("kimetsunoyaibamultiplayer:empty_vial");
         }
         if (matches(consumedStack, "kimetsunoyaibamultiplayer:orochi_elixir")
             || matches(consumedStack, "kimetsunoyaibamultiplayer:familiar_tonic")
             || matches(consumedStack, "kimetsunoyaibamultiplayer:catalytic_reagent")) {
             return stack("kimetsunoyaibamultiplayer:empty_vial");
+        }
+        if (matches(consumedStack, "kimetsunoyaibamultiplayer:blue_spider_lily_tea")) {
+            return new ItemStack(Items.BOWL);
         }
         if (consumedStack.is(Items.POTION)) {
             return new ItemStack(Items.GLASS_BOTTLE);
@@ -588,8 +744,12 @@ public final class BloodDemonArtAlchemyCatalog {
             return path.contains("empty") ? "empty_petri_dish" : "full_petri_dish";
         }
         if (path.contains("vial") || path.contains("elixir") || path.contains("tonic")
-            || path.contains("sample") || path.contains("infusion") || path.contains("catalyst")) {
+            || path.contains("sample") || path.contains("infusion") || path.contains("catalyst")
+            || path.contains("medicine") || path.contains("cure") || path.contains("serum")) {
             return path.contains("empty") ? "empty_vial" : "full_vial";
+        }
+        if (path.contains("antivenom")) {
+            return "full_vial";
         }
         return path;
     }

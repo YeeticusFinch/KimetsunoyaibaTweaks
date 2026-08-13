@@ -136,7 +136,8 @@ public class FinalSelectionProcedure {
     private static final long KANATA_WAYPOINT_REMINDER_TICKS = 200L;
     private static final long KAKUSHI_PROMPT_COOLDOWN_TICKS = 100L;
     private static final long KAKUSHI_CONFIRM_TIMEOUT_TICKS = 600L;
-    private static final double NPC_EXISTING_MATCH_DISTANCE_SQR = 9.0D;
+    private static final double NPC_EXISTING_SCAN_RADIUS = 10.0D;
+    private static final double NPC_EXISTING_MATCH_DISTANCE_SQR = NPC_EXISTING_SCAN_RADIUS * NPC_EXISTING_SCAN_RADIUS;
     private static final ResourceLocation DEMON_SLAYER_CORPS_ADVANCEMENT =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "demon_slayer_corps");
     private static final ResourceLocation COMPLETED_FINAL_SELECTION_ADVANCEMENT =
@@ -187,7 +188,7 @@ public class FinalSelectionProcedure {
     }
 
     private void spawnOrReuseCeremonyNpc(String role, BlockPos spawnPos) {
-        Entity existing = findOwnedCeremonyNpc(role, spawnPos);
+        Entity existing = findCeremonyNpcNearSpawn(role, spawnPos);
         if (existing != null) {
             if (ROLE_KANATA.equals(role)) {
                 kanataEntityId = existing.getUUID();
@@ -198,6 +199,8 @@ public class FinalSelectionProcedure {
             Log.debug("[FinalSelection] Reused {} at {}", role, spawnPos);
             return;
         }
+
+        cleanupStrayCeremonyNpcs(role, spawnPos);
 
         var npc = ROLE_KANATA.equals(role)
             ? ModEntities.KANATA.get().create(level)
@@ -281,20 +284,45 @@ public class FinalSelectionProcedure {
         return slayer.blockPosition().distSqr(TRAINEE_STAGING_CENTER) <= (TRAINEE_EXISTING_SCAN_RADIUS * TRAINEE_EXISTING_SCAN_RADIUS);
     }
 
-    private Entity findOwnedCeremonyNpc(String role, BlockPos expectedPos) {
-        AABB searchBounds = new AABB(expectedPos).inflate(8.0D);
+    private Entity findCeremonyNpcNearSpawn(String role, BlockPos expectedPos) {
+        AABB searchBounds = new AABB(expectedPos).inflate(NPC_EXISTING_SCAN_RADIUS);
         for (Entity entity : level.getEntities((Entity) null, searchBounds, candidate -> candidate != null && candidate.isAlive())) {
-            if (ROLE_KANATA.equals(role) && entity.getType() != ModEntities.KANATA.get()) {
+            if (!isCeremonyNpcRole(entity, role)) {
                 continue;
             }
-            if (ROLE_KIRIYA.equals(role) && entity.getType() != ModEntities.KIRIYA.get()) {
-                continue;
-            }
-            if (hasOwnedRole(entity, role) || entity.blockPosition().distSqr(expectedPos) <= NPC_EXISTING_MATCH_DISTANCE_SQR) {
+            if (entity.blockPosition().distSqr(expectedPos) <= NPC_EXISTING_MATCH_DISTANCE_SQR) {
                 return entity;
             }
         }
         return null;
+    }
+
+    private void cleanupStrayCeremonyNpcs(String role, BlockPos expectedPos) {
+        AABB worldBounds = new AABB(
+            -30_000_000.0D, level.getMinBuildHeight(), -30_000_000.0D,
+            30_000_000.0D, level.getMaxBuildHeight(), 30_000_000.0D
+        );
+
+        for (Entity entity : level.getEntities((Entity) null, worldBounds, candidate -> isCeremonyNpcRole(candidate, role))) {
+            if (entity.blockPosition().distSqr(expectedPos) <= NPC_EXISTING_MATCH_DISTANCE_SQR) {
+                continue;
+            }
+            entity.discard();
+            Log.debug("[FinalSelection] Removed stray {} before ceremony spawn", role);
+        }
+    }
+
+    private static boolean isCeremonyNpcRole(Entity entity, String role) {
+        if (entity == null || !entity.isAlive()) {
+            return false;
+        }
+        if (ROLE_KANATA.equals(role)) {
+            return entity.getType() == ModEntities.KANATA.get();
+        }
+        if (ROLE_KIRIYA.equals(role)) {
+            return entity.getType() == ModEntities.KIRIYA.get();
+        }
+        return false;
     }
 
     private static void markOwnedEntity(Entity entity, String role) {
@@ -911,11 +939,7 @@ public class FinalSelectionProcedure {
                 crow.setPos(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
             }
 
-            if (crow instanceof TamableAnimal tamable) {
-                tamable.tame(player);
-                tamable.setOwnerUUID(player.getUUID());
-                tamable.setPersistenceRequired();
-            }
+            tameKasugaiCrow(crow, player);
 
             level.addFreshEntity(crow);
         } catch (Exception e) {
@@ -1761,15 +1785,50 @@ public class FinalSelectionProcedure {
                 crow.setPos(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
             }
 
-            if (crow instanceof TamableAnimal tamable) {
-                tamable.tame(player);
-                tamable.setOwnerUUID(player.getUUID());
-                tamable.setPersistenceRequired();
-            }
+            tameKasugaiCrow(crow, player);
 
             level.addFreshEntity(crow);
         } catch (Exception e) {
             Log.debug("[FinalSelection] Failed to spawn/tame kasugai crow: {}", e.getMessage());
+        }
+    }
+
+    private static void tameKasugaiCrow(Entity crow, ServerPlayer player) {
+        if (crow == null || player == null) {
+            return;
+        }
+
+        if (crow instanceof TamableAnimal tamable) {
+            tamable.tame(player);
+            tamable.setOwnerUUID(player.getUUID());
+            tamable.setPersistenceRequired();
+        }
+
+        tryInvoke(crow, "tame", new Class<?>[] { net.minecraft.world.entity.player.Player.class }, player);
+        tryInvoke(crow, "setOwner", new Class<?>[] { net.minecraft.world.entity.player.Player.class }, player);
+        tryInvoke(crow, "setOwnerUUID", new Class<?>[] { UUID.class }, player.getUUID());
+        tryInvoke(crow, "setOwnerUuid", new Class<?>[] { UUID.class }, player.getUUID());
+        tryInvoke(crow, "setTame", new Class<?>[] { boolean.class }, true);
+        tryInvoke(crow, "setTamed", new Class<?>[] { boolean.class }, true);
+
+        CompoundTag tag = crow.saveWithoutId(new CompoundTag());
+        tag.putUUID("Owner", player.getUUID());
+        tag.putUUID("OwnerUUID", player.getUUID());
+        tag.putBoolean("Tame", true);
+        tag.putBoolean("Tamed", true);
+        tag.putBoolean("Sitting", false);
+        crow.load(tag);
+        if (crow instanceof Mob mob) {
+            mob.setPersistenceRequired();
+        }
+    }
+
+    private static void tryInvoke(Entity entity, String methodName, Class<?>[] parameterTypes, Object... args) {
+        try {
+            java.lang.reflect.Method method = entity.getClass().getMethod(methodName, parameterTypes);
+            method.setAccessible(true);
+            method.invoke(entity, args);
+        } catch (ReflectiveOperationException ignored) {
         }
     }
 

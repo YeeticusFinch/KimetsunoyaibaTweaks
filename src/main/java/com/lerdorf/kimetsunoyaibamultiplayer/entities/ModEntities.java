@@ -181,10 +181,9 @@ public class ModEntities {
     public static final RegistryObject<EntityType<MugenDoorEntity>> MUGEN_DOOR =
         ENTITY_TYPES.register("mugen_door",
             () -> EntityType.Builder.of(MugenDoorEntity::new, MobCategory.MISC)
-                .sized(1.0F, 2.0F) // Door-sized
+                .sized(3.0F, 3.0F)
                 .clientTrackingRange(64) // Visible from distance
                 .updateInterval(1) // Update every tick for smooth animation
-                .noSave() // Don't save to world (temporary entity)
                 .fireImmune()
                 .build("mugen_door"));
 

@@ -29,6 +29,8 @@ public final class AlchemyClientHandler {
             MenuScreens.register(ModAlchemyMenus.VIAL_RACK.get(), VialRackScreen::new);
             ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.ALCHEMY_TABLE.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.VIAL_RACK.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.WISTERIA_INCENSE.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.POTTED_WISTERIA_INCENSE.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.FERMENTED_ORCHID.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.POTTED_FERMENTED_ORCHID.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModAlchemyBlocks.IMMORTAL_DAISY.get(), RenderType.cutout());

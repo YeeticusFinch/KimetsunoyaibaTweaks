@@ -54,6 +54,18 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> FEAR_COOLDOWN = MOB_EFFECTS.register("fear_cooldown",
             FearCooldownEffect::new);
 
+    public static final RegistryObject<MobEffect> COURAGE = MOB_EFFECTS.register("courage",
+            CourageEffect::new);
+
+    public static final RegistryObject<MobEffect> DEMONIC_SATURATION = MOB_EFFECTS.register("demonic_saturation",
+            DemonicSaturationEffect::new);
+
+    public static final RegistryObject<MobEffect> DEMON_RESTORATION = MOB_EFFECTS.register("demon_restoration",
+            DemonRestorationEffect::new);
+
+    public static final RegistryObject<MobEffect> SUNLIGHT_RESISTANCE = MOB_EFFECTS.register("sunlight_resistance",
+            SunlightResistanceEffect::new);
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

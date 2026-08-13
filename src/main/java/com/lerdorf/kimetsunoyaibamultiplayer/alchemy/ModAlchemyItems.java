@@ -36,9 +36,12 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> BLOOD_SAMPLE = registerPlain("blood_sample");
     public static final RegistryObject<Item> ROTTEN_BLOOD_SAMPLE = registerPlain("rotten_blood_sample");
     public static final RegistryObject<Item> CRUDE_VIAL = registerPlain("crude_vial");
+    public static final RegistryObject<Item> BOTANICAL_VIAL = registerPlain("botanical_vial");
+    public static final RegistryObject<Item> DISTILLED_VIAL = registerPlain("distilled_vial");
     public static final RegistryObject<Item> REFINED_VIAL = registerPlain("refined_vial");
     public static final RegistryObject<Item> CRUEL_VIAL = registerPlain("cruel_vial");
     public static final RegistryObject<Item> CATALYTIC_REAGENT = registerPlain("catalytic_reagent");
+    public static final RegistryObject<Item> ANTIVENOM = registerPlain("antivenom");
 
     public static final RegistryObject<Item> UNIDENTIFIED_HUMAN_EXTRACT = registerPlain("unidentified_human_extract");
     public static final RegistryObject<Item> UNIDENTIFIED_ROTTEN_EXTRACT = registerPlain("unidentified_rotten_extract");
@@ -65,6 +68,9 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> POWDERED_SNOW_EXTRACT = registerPlain("powdered_snow_extract");
     public static final RegistryObject<Item> DIAMOND_EXTRACT = registerPlain("diamond_extract");
     public static final RegistryObject<Item> YAMATO_OROCHI_EXTRACT = registerPlain("yamato_orochi_extract");
+    public static final RegistryObject<Item> HERBAL_EXTRACT = registerPlain("herbal_extract");
+    public static final RegistryObject<Item> DOMA_EXTRACT = registerPlain("doma_extract");
+    public static final RegistryObject<Item> WISTERIA_EXTRACT = registerPlain("wisteria_extract");
 
     public static final RegistryObject<Item> INFERNAL_CULTURE = registerPlain("infernal_culture");
     public static final RegistryObject<Item> FORTIFIED_CULTURE = registerPlain("fortified_culture");
@@ -75,7 +81,27 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> VITALITY_CULTURE = registerPlain("vitality_culture");
     public static final RegistryObject<Item> ELECTROLYTIC_CULTURE = registerPlain("electrolytic_culture");
     public static final RegistryObject<Item> HEMOMIMETIC_CULTURE = registerPlain("hemomimetic_culture");
+    public static final RegistryObject<Item> PROTEOLYTIC_CULTURE = registerPlain("proteolytic_culture");
+    public static final RegistryObject<Item> EXORCISTIC_CULTURE = registerPlain("exorcistic_culture");
+    public static final RegistryObject<Item> NEUROTOXIC_CULTURE = registerPlain("neurotoxic_culture");
+    public static final RegistryObject<Item> DEMONIC_GENESIS_CULTURE = registerGlint("demonic_genesis_culture");
+    public static final RegistryObject<Item> SOLAR_GENESIS_CULTURE = registerGlint("solar_genesis_culture");
+    public static final RegistryObject<Item> WITHERED_SPIDER_LILY_CULTURE = registerPlain("withered_spider_lily_culture");
+    public static final RegistryObject<Item> SATURATION_CULTURE = registerPlain("saturation_culture");
+    public static final RegistryObject<Item> DEMONIC_RESTORATION_CULTURE = registerPlain("demonic_restoration_culture");
+    public static final RegistryObject<Item> SOLAR_SMITE_CULTURE = registerPlain("solar_smite_culture");
+    public static final RegistryObject<Item> UNIDENTIFIED_BLUE_SPIDER_LILY_CULTURE = registerPlain("unidentified_blue_spider_lily_culture");
+    public static final RegistryObject<Item> UNIDENTIFIED_RAINBOW_LILY_CULTURE = registerPlain("unidentified_rainbow_lily_culture");
     public static final RegistryObject<Item> FAMILIAR_TONIC = registerPlain("familiar_tonic");
+    public static final RegistryObject<Item> BLUE_SPIDER_LILY_PETALS = registerPlain("blue_spider_lily_petals");
+    public static final RegistryObject<Item> BLUE_SPIDER_LILY_TEA = register("blue_spider_lily_tea",
+        () -> new AlchemyItem(new Item.Properties().stacksTo(1), false, tintOf("blue_spider_lily_tea")));
+
+    public static final RegistryObject<Item> DEMON_GENESIS_MEDICINE = registerLegendary("demon_genesis_medicine");
+    public static final RegistryObject<Item> SOLAR_ASCENSION_CURE = registerLegendary("solar_ascension_cure");
+    public static final RegistryObject<Item> DEMONIC_HUNGER_CURE = registerLegendary("demonic_hunger_cure");
+    public static final RegistryObject<Item> DEMONIC_RESTORATION_CURE = registerLegendary("demonic_restoration_cure");
+    public static final RegistryObject<Item> SOLAR_SMITE_SERUM = registerLegendary("solar_smite_serum");
 
     public static final RegistryObject<Item> DAMAGE_AMPLIFIER_VIAL = registerSpecial("damage_amplifier_vial");
     public static final RegistryObject<Item> DEFENSE_AMPLIFIER_VIAL = registerSpecial("defense_amplifier_vial");
@@ -96,6 +122,10 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> BLEEDING_INFUSION = registerSpecial("bleeding_infusion");
     public static final RegistryObject<Item> FIRE_INFUSION = registerSpecial("fire_infusion");
     public static final RegistryObject<Item> FROZEN_INFUSION = registerSpecial("frozen_infusion");
+    public static final RegistryObject<Item> WISTERIA_INFUSION = registerSpecial("wisteria_infusion");
+    public static final RegistryObject<Item> DIVISION_INHIBITION_INFUSION = registerSpecial("division_inhibition_infusion");
+    public static final RegistryObject<Item> CELL_DESTRUCTION_INFUSION = registerSpecial("cell_destruction_infusion");
+    public static final RegistryObject<Item> IMMOVABLE_INFUSION = registerSpecial("immovable_infusion");
 
     public static final RegistryObject<Item> WITHER_CATALYST = registerSpecial("wither_catalyst");
     public static final RegistryObject<Item> STELLAR_CATALYST = registerSpecial("stellar_catalyst");
@@ -143,6 +173,7 @@ public final class ModAlchemyItems {
             .displayItems((parameters, output) -> {
                 output.accept(ModAlchemyBlocks.ALCHEMY_TABLE.get());
                 output.accept(ModAlchemyBlocks.VIAL_RACK.get());
+                output.accept(ModAlchemyBlocks.WISTERIA_INCENSE.get());
                 output.accept(ModAlchemyBlocks.FERMENTED_ORCHID.get());
                 output.accept(ModAlchemyBlocks.IMMORTAL_DAISY.get());
                 for (RegistryObject<Item> item : TAB_ITEMS) {
@@ -165,6 +196,14 @@ public final class ModAlchemyItems {
 
     private static RegistryObject<Item> registerSpecial(String id) {
         return register(id, () -> new AlchemyItem(new Item.Properties(), true, tintOf(id)));
+    }
+
+    private static RegistryObject<Item> registerGlint(String id) {
+        return register(id, () -> new GlintAlchemyItem(new Item.Properties(), tintOf(id)));
+    }
+
+    private static RegistryObject<Item> registerLegendary(String id) {
+        return register(id, () -> new LegendaryMedicineItem(new Item.Properties(), tintOf(id)));
     }
 
     private static RegistryObject<Item> registerHidden(String id) {

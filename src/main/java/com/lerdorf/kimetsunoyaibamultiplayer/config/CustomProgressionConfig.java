@@ -23,6 +23,9 @@ public class CustomProgressionConfig {
     // Keep demon state through death by replaying blood consumption on respawn
     public static ForgeConfigSpec.BooleanValue persistentDemonhood;
 
+    // Block the base mod's sun breathing shortcut to conquering sunlight
+    public static ForgeConfigSpec.BooleanValue disableSunBreathingSunlightImmunity;
+
     // Replace the base mod's muzan blood ore with hemolith ore
     public static ForgeConfigSpec.BooleanValue replaceMuzanBloodOre;
 
@@ -40,6 +43,9 @@ public class CustomProgressionConfig {
 
     // Prefer the KnY-Worlds infinity castle dimension when available
     public static ForgeConfigSpec.BooleanValue enableEnhancedInfinityCastle;
+    public static ForgeConfigSpec.DoubleValue infinityCastleDemonSpawnRate;
+    public static ForgeConfigSpec.IntValue infinityCastleDemonSpawnCapPerPlayer;
+    public static ForgeConfigSpec.IntValue infinityCastleUniqueDemonHorizontalRadius;
     
     // Toril gate worldgen guarantees
     public static ForgeConfigSpec.BooleanValue guaranteeTorilGateNearOrigin;
@@ -123,6 +129,20 @@ public class CustomProgressionConfig {
                     "Default: true")
             .define("persistent_demonhood", true);
 
+        disableSunBreathingSunlightImmunity = builder
+            .comment("Disable Sun Breathing sunlight immunity",
+                    "",
+                    "When enabled, the base mod's Sun Breathing and Hinokami Kagura procedures",
+                    "cannot award kimetsunoyaiba:overcome_sunlight.",
+                    "Because the base mod treats that advancement as sunlight immunity, this",
+                    "also prevents Sun Breathing from making demon players immune to sunlight.",
+                    "",
+                    "Solar Ascension Cure and 100 days of Blue Spider Lily Tea still grant",
+                    "sunlight immunity through the KnYMpSolarAscension NBT tag.",
+                    "",
+                    "Default: true")
+            .define("disable_sun_breathing_sunlight_immunity", true);
+
         replaceMuzanBloodOre = builder
             .comment("Replace base mod muzan blood ore with hemolith ore",
                     "",
@@ -185,6 +205,38 @@ public class CustomProgressionConfig {
                     "Default: true")
             .define("enable_enhanced_infinity_castle", true);
 
+        infinityCastleDemonSpawnRate = builder
+            .comment("Demon spawn rate multiplier inside the Infinity Castle.",
+                    "",
+                    "0.0 prevents natural/timed demon spawning in the Infinity Castle.",
+                    "0.5 is half the old timed spawn attempt rate.",
+                    "1.0 matches the old timed spawn attempt rate.",
+                    "Values above 1.0 increase timed spawn attempts.",
+                    "Commands, spawn eggs, mugen doors, and other manual spawn paths are unaffected.",
+                    "",
+                    "Default: 0.5")
+            .defineInRange("demon_spawn_rate", 0.5D, 0.0D, 10.0D);
+
+        infinityCastleDemonSpawnCapPerPlayer = builder
+            .comment("Maximum loaded demon entities allowed per player in the Infinity Castle.",
+                    "",
+                    "If the loaded demon count is at or above players * this value, natural/timed",
+                    "Infinity Castle demon spawning stops until the loaded count falls below the cap.",
+                    "Existing demons are not removed. Commands, spawn eggs, mugen doors, and other",
+                    "manual spawn paths are unaffected.",
+                    "",
+                    "Default: 70")
+            .defineInRange("demon_spawn_cap_per_player", 70, 0, 10000);
+
+        infinityCastleUniqueDemonHorizontalRadius = builder
+            .comment("Horizontal radius used to prevent duplicate unique demon spawns in the Infinity Castle.",
+                    "",
+                    "This ignores Y level. Twelve Kizuki check for another demon of the same type.",
+                    "Muzan entities check for any other Muzan entity in this horizontal radius.",
+                    "",
+                    "Default: 800")
+            .defineInRange("unique_demon_horizontal_radius", 800, 0, 10000);
+
         builder.pop();
 
         // Toril gate generation guarantees
@@ -229,5 +281,19 @@ public class CustomProgressionConfig {
 
     public static boolean isEnhancedInfinityCastleEnabled() {
         return enableEnhancedInfinityCastle != null && enableEnhancedInfinityCastle.get();
+    }
+
+    public static double getInfinityCastleDemonSpawnRate() {
+        return infinityCastleDemonSpawnRate == null ? 0.5D : Math.max(0.0D, infinityCastleDemonSpawnRate.get());
+    }
+
+    public static int getInfinityCastleDemonSpawnCapPerPlayer() {
+        return infinityCastleDemonSpawnCapPerPlayer == null ? 70 : Math.max(0, infinityCastleDemonSpawnCapPerPlayer.get());
+    }
+
+    public static int getInfinityCastleUniqueDemonHorizontalRadius() {
+        return infinityCastleUniqueDemonHorizontalRadius == null
+            ? 800
+            : Math.max(0, infinityCastleUniqueDemonHorizontalRadius.get());
     }
 }

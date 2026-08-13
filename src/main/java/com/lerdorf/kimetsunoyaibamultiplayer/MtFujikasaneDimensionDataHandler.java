@@ -5,6 +5,7 @@ import java.util.List;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.FinalSelectionProcedure;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.MtFujikasaneDaylightController;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityCategorization;
+import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.BlueSpiderLilyTeaHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.FinalSelectionRaidConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
@@ -524,6 +525,11 @@ public class MtFujikasaneDimensionDataHandler {
             }
 
             if (isInBurningSunlight(level, mob)) {
+                if (!BlueSpiderLilyTeaHandler.shouldAdvanceSunlightBurn(mob)) {
+                    BlueSpiderLilyTeaHandler.clearSkippedSunlightFire(mob);
+                    continue;
+                }
+
                 int burnTicks = mob.getPersistentData().getInt(MT_FUJIKASANE_SUN_BURN_TICKS_TAG) + 1;
                 mob.getPersistentData().putInt(MT_FUJIKASANE_SUN_BURN_TICKS_TAG, burnTicks);
 
@@ -580,6 +586,9 @@ public class MtFujikasaneDimensionDataHandler {
     }
 
     private static boolean isSunlightVulnerableDemon(Mob mob) {
+        if (com.lerdorf.kimetsunoyaibamultiplayer.alchemy.AlchemyMedicineHandler.hasSunlightImmunity(mob)) {
+            return false;
+        }
         ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
         if (entityId != null && com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry.isSunlightImmune(entityId)) {
             return false;

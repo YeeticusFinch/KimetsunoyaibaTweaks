@@ -14,6 +14,11 @@
       "type": "single",
       "resource": "kimetsunoyaibamultiplayer:mob_effect/fear_cooldown",
       "sprite": "kimetsunoyaibamultiplayer:fear_cooldown"
+    },
+    {
+      "type": "single",
+      "resource": "kimetsunoyaibamultiplayer:mob_effect/courage",
+      "sprite": "kimetsunoyaibamultiplayer:courage"
     }
   ]
 }

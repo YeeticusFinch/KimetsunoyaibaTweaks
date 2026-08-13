@@ -20,6 +20,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.events.BleedingHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -208,7 +209,7 @@ public final class CustomBloodDemonArtRuntime {
         }
 
         int cooldownTicks = Math.max(20, slot.cooldownSeconds() * 20);
-        player.getCooldowns().addCooldown(stack.getItem(), cooldownTicks);
+        PlayerAbilityCooldowns.addCooldown(player, stack.getItem(), cooldownTicks);
         CustomDemonArtItem.setDisplayInfo(stack, safeArtName(data), safeFormName(data, slotIndex), data.coreSettings().chatColor());
         Component display = selectedFormDisplay(data, slotIndex);
         player.displayClientMessage(display, true);

@@ -472,6 +472,231 @@ public class ModBlocks {
     // Legacy name - points to pink variant
     public static final RegistryObject<Block> WISTERIA_SAPLING = WISTERIA_SAPLING_PINK;
 
+    public static final RegistryObject<Block> SPIDER_LILY = registerBlock("spider_lily",
+        () -> new SpiderLilyBlock(true, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.PLANT)
+            .noCollission()
+            .randomTicks()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> WHITE_SPIDER_LILY = registerBlock("white_spider_lily",
+        () -> new SpiderLilyBlock(false, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.SNOW)
+            .noCollission()
+            .randomTicks()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> RED_SPIDER_LILY = registerBlock("red_spider_lily",
+        () -> new SpiderLilyBlock(false, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_RED)
+            .noCollission()
+            .randomTicks()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> PURPLE_SPIDER_LILY = registerBlock("purple_spider_lily",
+        () -> new SpiderLilyBlock(false, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_PURPLE)
+            .noCollission()
+            .randomTicks()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> YELLOW_SPIDER_LILY = registerBlock("yellow_spider_lily",
+        () -> new SpiderLilyBlock(false, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_YELLOW)
+            .noCollission()
+            .randomTicks()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> BLUE_SPIDER_LILY = registerBlock("blue_spider_lily",
+        () -> new SpiderLilyBlock(false, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_BLUE)
+            .noCollission()
+            .randomTicks()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> LIME_SPIDER_LILY = registerBlock("lime_spider_lily",
+        () -> new SpiderLilyBlock(false, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_LIGHT_GREEN)
+            .noCollission()
+            .randomTicks()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> PINK_SPIDER_LILY = registerBlock("pink_spider_lily",
+        () -> new SpiderLilyBlock(false, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_PINK)
+            .noCollission()
+            .randomTicks()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> ORANGE_SPIDER_LILY = registerBlock("orange_spider_lily",
+        () -> new SpiderLilyBlock(false, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_ORANGE)
+            .noCollission()
+            .randomTicks()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> WAXED_SPIDER_LILY = registerBlock("waxed_spider_lily",
+        () -> new SpiderLilyBlock(true, true, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.PLANT)
+            .noCollission()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> WAXED_WHITE_SPIDER_LILY = registerBlock("waxed_white_spider_lily",
+        () -> new SpiderLilyBlock(false, true, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.SNOW)
+            .noCollission()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> WAXED_RED_SPIDER_LILY = registerBlock("waxed_red_spider_lily",
+        () -> new SpiderLilyBlock(false, true, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_RED)
+            .noCollission()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> WAXED_PURPLE_SPIDER_LILY = registerBlock("waxed_purple_spider_lily",
+        () -> new SpiderLilyBlock(false, true, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_PURPLE)
+            .noCollission()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> WAXED_YELLOW_SPIDER_LILY = registerBlock("waxed_yellow_spider_lily",
+        () -> new SpiderLilyBlock(false, true, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_YELLOW)
+            .noCollission()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> WAXED_BLUE_SPIDER_LILY = registerBlock("waxed_blue_spider_lily",
+        () -> new SpiderLilyBlock(false, true, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_BLUE)
+            .noCollission()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> WAXED_LIME_SPIDER_LILY = registerBlock("waxed_lime_spider_lily",
+        () -> new SpiderLilyBlock(false, true, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_LIGHT_GREEN)
+            .noCollission()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> WAXED_PINK_SPIDER_LILY = registerBlock("waxed_pink_spider_lily",
+        () -> new SpiderLilyBlock(false, true, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_PINK)
+            .noCollission()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> WAXED_ORANGE_SPIDER_LILY = registerBlock("waxed_orange_spider_lily",
+        () -> new SpiderLilyBlock(false, true, BlockBehaviour.Properties.copy(Blocks.POPPY)
+            .mapColor(MapColor.COLOR_ORANGE)
+            .noCollission()
+            .instabreak()
+            .sound(SoundType.GRASS)
+            .offsetType(BlockBehaviour.OffsetType.XZ)));
+
+    public static final RegistryObject<Block> POTTED_SPIDER_LILY = registerBlockWithoutItem("potted_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WHITE_SPIDER_LILY = registerBlockWithoutItem("potted_white_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WHITE_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_RED_SPIDER_LILY = registerBlockWithoutItem("potted_red_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, RED_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_PURPLE_SPIDER_LILY = registerBlockWithoutItem("potted_purple_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, PURPLE_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_YELLOW_SPIDER_LILY = registerBlockWithoutItem("potted_yellow_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, YELLOW_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_BLUE_SPIDER_LILY = registerBlockWithoutItem("potted_blue_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, BLUE_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_LIME_SPIDER_LILY = registerBlockWithoutItem("potted_lime_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, LIME_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_PINK_SPIDER_LILY = registerBlockWithoutItem("potted_pink_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, PINK_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_ORANGE_SPIDER_LILY = registerBlockWithoutItem("potted_orange_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, ORANGE_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WAXED_SPIDER_LILY = registerBlockWithoutItem("potted_waxed_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WAXED_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WAXED_WHITE_SPIDER_LILY = registerBlockWithoutItem("potted_waxed_white_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WAXED_WHITE_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WAXED_RED_SPIDER_LILY = registerBlockWithoutItem("potted_waxed_red_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WAXED_RED_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WAXED_PURPLE_SPIDER_LILY = registerBlockWithoutItem("potted_waxed_purple_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WAXED_PURPLE_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WAXED_YELLOW_SPIDER_LILY = registerBlockWithoutItem("potted_waxed_yellow_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WAXED_YELLOW_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WAXED_BLUE_SPIDER_LILY = registerBlockWithoutItem("potted_waxed_blue_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WAXED_BLUE_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WAXED_LIME_SPIDER_LILY = registerBlockWithoutItem("potted_waxed_lime_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WAXED_LIME_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WAXED_PINK_SPIDER_LILY = registerBlockWithoutItem("potted_waxed_pink_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WAXED_PINK_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
+    public static final RegistryObject<Block> POTTED_WAXED_ORANGE_SPIDER_LILY = registerBlockWithoutItem("potted_waxed_orange_spider_lily",
+        () -> new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, WAXED_ORANGE_SPIDER_LILY,
+            BlockBehaviour.Properties.copy(Blocks.POTTED_POPPY).noOcclusion()));
+
     // Toril Gate marker block - invisible, placed inside gate structures to detect players
     public static final RegistryObject<Block> TORIL_GATE_MARKER = registerBlock("toril_gate_marker",
         () -> new TorilGateMarkerBlock(BlockBehaviour.Properties.copy(Blocks.AIR)

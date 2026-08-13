@@ -52,7 +52,15 @@ public class FearEffectHandler {
             return 0;
         }
         MobEffectInstance instance = entity.getEffect(ModEffects.FEAR.get());
-        return instance == null ? 0 : Math.max(1, Math.min(10, instance.getAmplifier() + 1));
+        if (instance == null) {
+            return 0;
+        }
+        int fearLevel = Math.max(1, Math.min(10, instance.getAmplifier() + 1));
+        MobEffectInstance courage = entity.getEffect(ModEffects.COURAGE.get());
+        if (courage != null) {
+            fearLevel -= Math.max(1, courage.getAmplifier() + 1);
+        }
+        return Math.max(0, fearLevel);
     }
 
     public static boolean grantFearWithCooldown(LivingEntity target, int displayedFearLevel, int durationTicks) {
@@ -62,6 +70,10 @@ public class FearEffectHandler {
 
         int level = Math.max(1, Math.min(10, displayedFearLevel));
         int amplifier = level - 1;
+        if (hasCourageAgainst(target, amplifier)) {
+            return false;
+        }
+
         MobEffectInstance cooldown = target.getEffect(ModEffects.FEAR_COOLDOWN.get());
         if (cooldown != null && cooldown.getAmplifier() >= amplifier) {
             return false;
@@ -70,6 +82,14 @@ public class FearEffectHandler {
         target.addEffect(new MobEffectInstance(ModEffects.FEAR.get(), durationTicks, amplifier, false, false, true));
         target.addEffect(new MobEffectInstance(ModEffects.FEAR_COOLDOWN.get(), durationTicks * 10, amplifier, false, false, true));
         return true;
+    }
+
+    public static boolean hasCourageAgainst(LivingEntity target, int fearAmplifier) {
+        if (target == null || !target.isAlive()) {
+            return false;
+        }
+        MobEffectInstance courage = target.getEffect(ModEffects.COURAGE.get());
+        return courage != null && courage.getAmplifier() >= fearAmplifier;
     }
 
     public static boolean isParalyzed(LivingEntity entity) {
