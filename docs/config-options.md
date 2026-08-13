@@ -2,10 +2,6 @@
 
 Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer`. Descriptions use the option comments from the source code.
 
-## Achievement / Advancement Suppression
-
-There is no broad config option that suppresses every base-mod achievement. The closest active option is `custom_progression.demon_slayer_initiation.disable_base_mod_demon_slayer_initiation` in `config/kimetsunoyaibamultiplayer/custom_progression.toml`. Its source comment says it disables base demon slayer initiation rewards/progression advancements and enables a managed datapack that hides related base advancement chat/toast.
-
 ## Registered Config Files
 
 - `config/kimetsunoyaibamultiplayer/common.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/Config.java`
