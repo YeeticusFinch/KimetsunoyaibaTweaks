@@ -14,11 +14,11 @@ public final class DemonEyesClientState {
     private DemonEyesClientState() {
     }
 
-    public static void setPlayerState(UUID playerId, boolean demon, int index) {
+    public static void setPlayerState(UUID playerId, boolean demon, int index, int hue) {
         if (playerId == null) {
             return;
         }
-        STATES.put(playerId, new PlayerDemonEyesState(demon, Math.max(0, index)));
+        STATES.put(playerId, new PlayerDemonEyesState(demon, Math.max(0, index), Math.floorMod(hue, 360)));
     }
 
     public static PlayerDemonEyesState getPlayerState(UUID playerId) {
@@ -29,6 +29,6 @@ public final class DemonEyesClientState {
         STATES.clear();
     }
 
-    public record PlayerDemonEyesState(boolean demon, int index) {
+    public record PlayerDemonEyesState(boolean demon, int index, int hue) {
     }
 }

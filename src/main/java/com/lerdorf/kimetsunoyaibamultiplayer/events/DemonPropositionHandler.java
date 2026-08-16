@@ -300,6 +300,7 @@ public final class DemonPropositionHandler {
             DemonTransformationHandler.startTransformationFromProposition(player);
             return;
         }
+        DemonTransformationHandler.clearHumanRestorationMarker(player);
         ItemStack muzanBlood = new ItemStack(KimetsunoyaibaModItems.BLOOD_OF_MUZAN.get());
         muzanBlood.finishUsingItem(player.level(), player);
         player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 100, 4, false, true, true));

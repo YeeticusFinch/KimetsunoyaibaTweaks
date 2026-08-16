@@ -22,6 +22,9 @@ public class MuichiroRenderer extends GeoEntityRenderer<MuichiroEntity> {
 
             @Override
             public ResourceLocation getTextureResource(MuichiroEntity entity) {
+                if (entity != null && entity.isDemonized() && entity.getDemonizedTextureOverride() != null) {
+                    return entity.getDemonizedTextureOverride();
+                }
                 // Use tokito texture from our mod's resources
                 return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "textures/entity/tokito.png");
             }

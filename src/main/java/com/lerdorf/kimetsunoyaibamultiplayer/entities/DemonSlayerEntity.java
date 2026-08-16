@@ -270,6 +270,11 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     }
 
     @Override
+    protected boolean shouldRandomizeDemonizedEyeHue() {
+        return true;
+    }
+
+    @Override
     public boolean canBeLeashed(Player player) {
         return this.isDisarmed() && super.canBeLeashed(player);
     }

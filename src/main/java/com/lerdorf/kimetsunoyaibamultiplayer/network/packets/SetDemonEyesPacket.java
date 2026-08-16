@@ -11,17 +11,25 @@ import java.util.function.Supplier;
 
 public class SetDemonEyesPacket {
     private final int eyesIndex;
+    private final int hue;
 
     public SetDemonEyesPacket(int eyesIndex) {
+        this(eyesIndex, DemonEyesHelper.DEFAULT_DEMON_EYES_HUE);
+    }
+
+    public SetDemonEyesPacket(int eyesIndex, int hue) {
         this.eyesIndex = Math.max(0, eyesIndex);
+        this.hue = DemonEyesHelper.normalizeHue(hue);
     }
 
     public SetDemonEyesPacket(FriendlyByteBuf buf) {
         this.eyesIndex = Math.max(0, buf.readVarInt());
+        this.hue = DemonEyesHelper.normalizeHue(buf.readVarInt());
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeVarInt(eyesIndex);
+        buf.writeVarInt(hue);
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
@@ -31,7 +39,7 @@ public class SetDemonEyesPacket {
             if (player == null || !Damager.isDemon(player)) {
                 return;
             }
-            DemonEyesHelper.setIndex(player, eyesIndex);
+            DemonEyesHelper.setStyle(player, eyesIndex, hue);
             DemonEyesSyncHandler.broadcastState(player);
         });
         context.setPacketHandled(true);

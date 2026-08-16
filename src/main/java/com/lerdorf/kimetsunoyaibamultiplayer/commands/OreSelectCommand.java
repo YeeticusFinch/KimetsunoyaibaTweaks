@@ -15,6 +15,7 @@ public final class OreSelectCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("oreselect")
+            .requires(source -> source.hasPermission(2))
             .executes(context -> {
                 ServerPlayer player = context.getSource().getPlayerOrException();
                 FinalSelectionProcedure.openStandaloneOreSelection(player);

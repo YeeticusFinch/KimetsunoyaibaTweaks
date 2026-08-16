@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -48,6 +49,8 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     private static final float NATURAL_REGEN_AMOUNT = 1.0F;
     private static final String ONI_TAG = "oni";
     private static final String DEMON_SLAYER_CORPS_TAG = "kisatsutai";
+    private static final String DEMON_EYES_INDEX_TAG = "DemonEyesIndex";
+    private static final String DEMON_EYES_HUE_TAG = "DemonEyesHue";
     private static final double DEMONIZED_HEALTH_MULTIPLIER = 1.20D;
     private static final int DEMONIZED_EFFECT_REFRESH_TICKS = 120;
     private static final int[] DEMONIZED_EYE_CHOICES = {0, 1, 7};
@@ -72,6 +75,8 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     private static final EntityDataAccessor<Boolean> DEMONIZED =
         SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DEMON_EYES_INDEX =
+        SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DEMON_EYES_HUE =
         SynchedEntityData.defineId(BreathingSlayerEntity.class, EntityDataSerializers.INT);
 
     // Cooldown tracking for breathing forms (in ticks)
@@ -132,6 +137,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         this.entityData.define(POWER_LEVEL, 1); // Default to power level 1
         this.entityData.define(DEMONIZED, false);
         this.entityData.define(DEMON_EYES_INDEX, DEMONIZED_EYE_CHOICES[0]);
+        this.entityData.define(DEMON_EYES_HUE, 0);
     }
 
     public int getCurrentFormIndex() {
@@ -174,10 +180,11 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
             this.getPersistentData().putBoolean(ONI_TAG, true);
             this.getPersistentData().remove(DEMON_SLAYER_CORPS_TAG);
             if (!wasDemonized || !isAllowedDemonizedEyesIndex(getDemonEyesIndex())) {
-                setDemonEyesIndex(randomDemonizedEyesIndex());
+                assignRandomDemonizedEyes();
             }
         } else {
             this.getPersistentData().remove(ONI_TAG);
+            setDemonEyesHue(0);
             this.demonizedSunlightBurnTicks = 0;
         }
         refreshPowerStateForDemonizedChange();
@@ -196,12 +203,44 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         this.entityData.set(DEMON_EYES_INDEX, isAllowedDemonizedEyesIndex(index) ? index : DEMONIZED_EYE_CHOICES[0]);
     }
 
+    public int getDemonEyesHue() {
+        return this.entityData.get(DEMON_EYES_HUE);
+    }
+
+    public void setDemonEyesHue(int hue) {
+        this.entityData.set(DEMON_EYES_HUE, Math.floorMod(hue, 360));
+    }
+
+    public ResourceLocation getDemonizedTextureOverride() {
+        return null;
+    }
+
+    public ResourceLocation getDemonizedEyesTextureOverride() {
+        return null;
+    }
+
     protected double getDemonizedHealthMultiplier() {
         return DEMONIZED_HEALTH_MULTIPLIER;
     }
 
+    protected boolean shouldRandomizeDemonizedEyeHue() {
+        return false;
+    }
+
+    private void assignRandomDemonizedEyes() {
+        setDemonEyesIndex(randomDemonizedEyesIndex());
+        setDemonEyesHue(randomDemonizedEyesHue());
+    }
+
     private int randomDemonizedEyesIndex() {
         return DEMONIZED_EYE_CHOICES[this.random.nextInt(DEMONIZED_EYE_CHOICES.length)];
+    }
+
+    private int randomDemonizedEyesHue() {
+        if (!shouldRandomizeDemonizedEyeHue() || !this.random.nextBoolean()) {
+            return 0;
+        }
+        return 1 + this.random.nextInt(359);
     }
 
     private static boolean isAllowedDemonizedEyesIndex(int index) {
@@ -419,7 +458,8 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         tag.putInt("BreathingFormCooldown", this.breathingFormCooldown);
         tag.putInt("PowerLevel", getPowerLevel());
         tag.putBoolean("Demonized", isDemonized());
-        tag.putInt("DemonEyesIndex", getDemonEyesIndex());
+        tag.putInt(DEMON_EYES_INDEX_TAG, getDemonEyesIndex());
+        tag.putInt(DEMON_EYES_HUE_TAG, getDemonEyesHue());
         tag.putInt("DemonizedSunlightBurnTicks", this.demonizedSunlightBurnTicks);
     }
 
@@ -428,8 +468,11 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         super.readAdditionalSaveData(tag);
         setCurrentFormIndex(tag.getInt("CurrentFormIndex"));
         this.breathingFormCooldown = tag.getInt("BreathingFormCooldown");
-        if (tag.contains("DemonEyesIndex")) {
-            setDemonEyesIndex(tag.getInt("DemonEyesIndex"));
+        if (tag.contains(DEMON_EYES_INDEX_TAG)) {
+            setDemonEyesIndex(tag.getInt(DEMON_EYES_INDEX_TAG));
+        }
+        if (tag.contains(DEMON_EYES_HUE_TAG)) {
+            setDemonEyesHue(tag.getInt(DEMON_EYES_HUE_TAG));
         }
         if (tag.contains("DemonizedSunlightBurnTicks")) {
             this.demonizedSunlightBurnTicks = Math.max(0, tag.getInt("DemonizedSunlightBurnTicks"));
@@ -440,10 +483,11 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
             this.getPersistentData().putBoolean(ONI_TAG, true);
             this.getPersistentData().remove(DEMON_SLAYER_CORPS_TAG);
             if (!isAllowedDemonizedEyesIndex(getDemonEyesIndex())) {
-                setDemonEyesIndex(randomDemonizedEyesIndex());
+                assignRandomDemonizedEyes();
             }
         } else {
             this.getPersistentData().remove(ONI_TAG);
+            setDemonEyesHue(0);
         }
 
         // Restore power level and apply bonuses

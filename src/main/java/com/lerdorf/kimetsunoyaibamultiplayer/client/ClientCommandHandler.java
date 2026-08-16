@@ -43,6 +43,7 @@ public class ClientCommandHandler {
         com.lerdorf.kimetsunoyaibamultiplayer.client.commands.SmallMistParticleCommand.register(dispatcher);
 
         LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("testanimc")
+            .requires(source -> source.hasPermission(2))
             .executes(context -> {
                 // Default: use sword_to_left
                 Minecraft mc = Minecraft.getInstance();

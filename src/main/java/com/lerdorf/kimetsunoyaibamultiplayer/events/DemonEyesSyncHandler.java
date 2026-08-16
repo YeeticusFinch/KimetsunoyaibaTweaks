@@ -55,7 +55,8 @@ public final class DemonEyesSyncHandler {
 
         boolean demon = Damager.isDemon(player);
         int eyesIndex = DemonEyesHelper.getOrCreateIndex(player);
-        SyncedDemonEyesState current = new SyncedDemonEyesState(demon, eyesIndex);
+        int hue = DemonEyesHelper.getHue(player);
+        SyncedDemonEyesState current = new SyncedDemonEyesState(demon, eyesIndex, hue);
         SyncedDemonEyesState previous = LAST_SYNCED_STATE.put(player.getUUID(), current);
         if (!current.equals(previous)) {
             broadcastState(player);
@@ -69,7 +70,7 @@ public final class DemonEyesSyncHandler {
 
     public static void broadcastState(ServerPlayer player) {
         DemonEyesSyncPacket packet = createPacket(player);
-        LAST_SYNCED_STATE.put(player.getUUID(), new SyncedDemonEyesState(packet.isDemon(), packet.getEyesIndex()));
+        LAST_SYNCED_STATE.put(player.getUUID(), new SyncedDemonEyesState(packet.isDemon(), packet.getEyesIndex(), packet.getHue()));
         ModNetworking.sendToAllClients(packet);
     }
 
@@ -82,9 +83,10 @@ public final class DemonEyesSyncHandler {
     private static DemonEyesSyncPacket createPacket(ServerPlayer player) {
         boolean demon = Damager.isDemon(player);
         int eyesIndex = DemonEyesHelper.getOrCreateIndex(player);
-        return new DemonEyesSyncPacket(player.getUUID(), demon, eyesIndex);
+        int hue = DemonEyesHelper.getHue(player);
+        return new DemonEyesSyncPacket(player.getUUID(), demon, eyesIndex, hue);
     }
 
-    private record SyncedDemonEyesState(boolean demon, int eyesIndex) {
+    private record SyncedDemonEyesState(boolean demon, int eyesIndex, int hue) {
     }
 }

@@ -49,6 +49,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import java.util.function.Predicate;
 
 public final class QuestScenarioActions {
@@ -62,6 +65,7 @@ public final class QuestScenarioActions {
     public static final String SLAYERS_BLOOD_DUNGEON_Z = "KnYPermanenceSlayersBloodDungeonZ";
     public static final String KIDNAPPERS_BOG_ACTIVE_TAG = "KnYKidnappersBogActive";
     public static final String SWAMP_DOMAIN_ENCOUNTER_STARTED_TAG = "KnYSwampDomainEncounterStarted";
+    public static final String KIDNAPPERS_BOG_QUEST_SWAMP_CLONE_TAG = "KnYKidnappersBogSwampClone";
     public static final String TAMAYO_HOUSE_X = "KnYTamayoHouseX";
     public static final String TAMAYO_HOUSE_Y = "KnYTamayoHouseY";
     public static final String TAMAYO_HOUSE_Z = "KnYTamayoHouseZ";
@@ -85,8 +89,12 @@ public final class QuestScenarioActions {
     private static final String KIDNAPPERS_BOG_MAIN_SWAMP_DEMON_TARGET = "swamp_demon_kidnappers_bog";
     private static final String KIDNAPPERS_BOG_SATOKO_SWAMP_DEMON_TARGET = "swamp_demon_kidnappers_bog_satoko";
     private static final String KIDNAPPERS_BOG_SWAMP_RESISTANCE_TAG = "KnYKidnappersBogSwampResistance10";
+    private static final String KIDNAPPERS_BOG_DAYLIGHT_PAUSED_TAG = "KnYKidnappersBogDaylightPaused";
+    private static final String KIDNAPPERS_BOG_PAUSED_DEMONS_TAG = "KnYKidnappersBogPausedDemons";
+    private static final String KIDNAPPERS_BOG_DAYLIGHT_PAUSE_NOTICE_TICK = "KnYKidnappersBogDaylightPauseNoticeTick";
     private static final int KIDNAPPERS_BOG_SWAMP_RESISTANCE_AMPLIFIER = 9;
     private static final int SATOKOS_BOW_RESISTANCE_CHECK_INTERVAL_TICKS = 100;
+    private static final long KIDNAPPERS_BOG_DAYLIGHT_PAUSE_NOTICE_INTERVAL = 20L * 30L;
     private static final double TAMAYO_RESTRAINED_DEMON_MAX_RADIUS = 10.0D;
     private static final int SMALL_STRUCTURE_ANCHOR_MAX_DISTANCE = 96;
     private static final int MEDIUM_STRUCTURE_ANCHOR_MAX_DISTANCE = 160;
@@ -868,6 +876,189 @@ public final class QuestScenarioActions {
         serverLevel.addFreshEntity(demon);
     }
 
+    public static boolean pauseKidnappersBogSwampDemonsForDaylight(ServerPlayer player, QuestRuntimeContext context,
+                                                                   List<ServerPlayer> involvedPlayers) {
+        if (player == null || player.server == null || context == null || hasSatokosBowInGroup(involvedPlayers)) {
+            return false;
+        }
+        ServerLevel overworld = player.server.getLevel(Level.OVERWORLD);
+        if (overworld == null || !overworld.isDay()) {
+            return false;
+        }
+
+        List<SwampDemonEntity> demons = findKidnappersBogOverworldSwampDemons(player, overworld, 320.0D);
+        ListTag savedDemons = new ListTag();
+        for (SwampDemonEntity demon : demons) {
+            savedDemons.add(savePausedKidnappersBogDemon(demon));
+        }
+
+        List<ServerPlayer> players = involvedPlayers == null || involvedPlayers.isEmpty()
+            ? List.of(player)
+            : involvedPlayers;
+        for (ServerPlayer involved : players) {
+            involved.getPersistentData().putBoolean(KIDNAPPERS_BOG_DAYLIGHT_PAUSED_TAG, true);
+            involved.getPersistentData().put(KIDNAPPERS_BOG_PAUSED_DEMONS_TAG, savedDemons.copy());
+            maybeSendKidnappersBogDaylightPauseMessage(involved);
+        }
+        for (SwampDemonEntity demon : demons) {
+            demon.discard();
+        }
+        return true;
+    }
+
+    public static boolean isKidnappersBogPausedForDaylight(ServerPlayer player) {
+        return player != null && player.getPersistentData().getBoolean(KIDNAPPERS_BOG_DAYLIGHT_PAUSED_TAG);
+    }
+
+    public static boolean resumeKidnappersBogSwampDemonsAfterDaylight(ServerPlayer player, QuestRuntimeContext context) {
+        if (player == null || player.server == null || context == null || !isKidnappersBogPausedForDaylight(player)) {
+            return false;
+        }
+        ServerLevel overworld = player.server.getLevel(Level.OVERWORLD);
+        if (overworld == null || !overworld.isNight()) {
+            return false;
+        }
+
+        ListTag savedDemons = player.getPersistentData().getList(KIDNAPPERS_BOG_PAUSED_DEMONS_TAG, Tag.TAG_COMPOUND);
+        boolean restoredAny = false;
+        for (int i = 0; i < savedDemons.size(); i++) {
+            if (restorePausedKidnappersBogDemon(player, overworld, savedDemons.getCompound(i))) {
+                restoredAny = true;
+            }
+        }
+        clearKidnappersBogDaylightPause(player);
+        if (!restoredAny) {
+            spawnSwampDemonEncounter(player, context);
+        }
+        player.sendSystemMessage(Component.literal("§7Night falls. The swamp demon resurfaces."));
+        return true;
+    }
+
+    public static void clearKidnappersBogDaylightPause(ServerPlayer player) {
+        if (player == null) {
+            return;
+        }
+        player.getPersistentData().remove(KIDNAPPERS_BOG_DAYLIGHT_PAUSED_TAG);
+        player.getPersistentData().remove(KIDNAPPERS_BOG_PAUSED_DEMONS_TAG);
+        player.getPersistentData().remove(KIDNAPPERS_BOG_DAYLIGHT_PAUSE_NOTICE_TICK);
+    }
+
+    public static void cleanupQuestStageEntities(ServerPlayer player, String groupId, String stageId) {
+        if (player == null || player.server == null || groupId == null || stageId == null) {
+            return;
+        }
+        if ("cruel".equals(groupId) && "kidnappers_bog".equals(stageId)) {
+            cleanupKidnappersBogEntities(player);
+        } else if ("cruel".equals(groupId) && "asakusa".equals(stageId)) {
+            cleanupAsakusaEntities(player);
+        } else if ("permanence".equals(groupId) && "slayers_blood".equals(stageId)) {
+            cleanupSlayersBloodEntities(player);
+        }
+    }
+
+    private static boolean hasSatokosBowInGroup(List<ServerPlayer> players) {
+        if (players == null) {
+            return false;
+        }
+        return players.stream().anyMatch(candidate -> hasSatokosBow(candidate, null));
+    }
+
+    private static void maybeSendKidnappersBogDaylightPauseMessage(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        long now = serverLevel.getGameTime();
+        long lastNotice = player.getPersistentData().getLong(KIDNAPPERS_BOG_DAYLIGHT_PAUSE_NOTICE_TICK);
+        if (now - lastNotice < KIDNAPPERS_BOG_DAYLIGHT_PAUSE_NOTICE_INTERVAL) {
+            return;
+        }
+        player.getPersistentData().putLong(KIDNAPPERS_BOG_DAYLIGHT_PAUSE_NOTICE_TICK, now);
+        player.sendSystemMessage(Component.literal("§7Daylight forces the swamp demon beneath the bog. The mission will resume at night."));
+    }
+
+    private static List<SwampDemonEntity> findKidnappersBogOverworldSwampDemons(ServerPlayer player, ServerLevel overworld,
+                                                                                double radius) {
+        BlockPos center = getStoredStructureCenter(player);
+        if (center == null) {
+            center = player.blockPosition();
+        }
+        AABB searchArea = new AABB(center).inflate(radius);
+        List<SwampDemonEntity> mainDemons = overworld.getEntitiesOfClass(
+            SwampDemonEntity.class,
+            searchArea,
+            demon -> demon.isAlive() && isKidnappersBogQuestSwampDemon(demon)
+        );
+        return overworld.getEntitiesOfClass(
+            SwampDemonEntity.class,
+            searchArea,
+            demon -> demon.isAlive()
+                && (isKidnappersBogQuestSwampDemon(demon)
+                || isNearbyKidnappersBogClone(demon, mainDemons, 64.0D))
+        );
+    }
+
+    private static boolean isNearbyKidnappersBogClone(SwampDemonEntity demon, List<SwampDemonEntity> mainDemons,
+                                                      double radius) {
+        if (demon == null || mainDemons == null || mainDemons.isEmpty()) {
+            return false;
+        }
+        if (!demon.isSplitClone() && !demon.getPersistentData().getBoolean(KIDNAPPERS_BOG_QUEST_SWAMP_CLONE_TAG)) {
+            return false;
+        }
+        double radiusSqr = radius * radius;
+        return mainDemons.stream().anyMatch(main -> main != demon && main.distanceToSqr(demon) <= radiusSqr);
+    }
+
+    private static CompoundTag savePausedKidnappersBogDemon(SwampDemonEntity demon) {
+        CompoundTag tag = new CompoundTag();
+        String targetKey = demon.getPersistentData().getString(QUEST_TARGET_ID_TAG);
+        tag.putString("TargetKey", targetKey == null || targetKey.isBlank()
+            ? KIDNAPPERS_BOG_MAIN_SWAMP_DEMON_TARGET
+            : targetKey);
+        tag.putFloat("Health", Math.max(1.0F, demon.getHealth()));
+        tag.putBoolean("SplitClone", demon.isSplitClone());
+        tag.putInt("TextureVariant", demon.getTextureVariant());
+        tag.putDouble("X", demon.getX());
+        tag.putDouble("Y", demon.getY());
+        tag.putDouble("Z", demon.getZ());
+        tag.putFloat("Yaw", demon.getYRot());
+        tag.putFloat("Pitch", demon.getXRot());
+        return tag;
+    }
+
+    private static boolean restorePausedKidnappersBogDemon(ServerPlayer player, ServerLevel overworld, CompoundTag tag) {
+        if (tag == null) {
+            return false;
+        }
+        SwampDemonEntity demon = ModEntities.SWAMP_DEMON.get().create(overworld);
+        if (demon == null) {
+            return false;
+        }
+        double x = tag.getDouble("X");
+        double y = tag.getDouble("Y");
+        double z = tag.getDouble("Z");
+        if (x == 0.0D && y == 0.0D && z == 0.0D) {
+            BlockPos center = getStoredStructureCenter(player);
+            if (center == null) {
+                center = player.blockPosition();
+            }
+            BlockPos spawnPos = findRandomSurfacePosition(overworld, center, 28, 16);
+            x = spawnPos.getX() + 0.5D;
+            y = spawnPos.getY();
+            z = spawnPos.getZ() + 0.5D;
+        }
+        demon.moveTo(x, y, z, tag.getFloat("Yaw"), tag.getFloat("Pitch"));
+        demon.getPersistentData().putString(QUEST_TARGET_ID_TAG, tag.getString("TargetKey"));
+        demon.getPersistentData().putBoolean(KIDNAPPERS_BOG_QUEST_SWAMP_CLONE_TAG, tag.getBoolean("SplitClone"));
+        demon.setSplitClone(tag.getBoolean("SplitClone"));
+        demon.setTextureVariant(tag.getInt("TextureVariant"));
+        demon.setPersistenceRequired();
+        demon.setTarget(player);
+        demon.setHealth(Math.min(Math.max(1.0F, tag.getFloat("Health")), demon.getMaxHealth()));
+        applyKidnappersBogSwampDemonResistance(demon);
+        return overworld.addFreshEntity(demon);
+    }
+
     public static void applyKidnappersBogSwampDemonResistance(LivingEntity entity) {
         if (entity == null) {
             return;
@@ -927,6 +1118,96 @@ public final class QuestScenarioActions {
     public static boolean isKidnappersBogSatokoSwampDemon(Entity entity) {
         return entity != null
             && KIDNAPPERS_BOG_SATOKO_SWAMP_DEMON_TARGET.equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG));
+    }
+
+    private static boolean isKidnappersBogQuestSwampDemon(Entity entity) {
+        return isKidnappersBogMainSwampDemon(entity)
+            || isKidnappersBogSatokoSwampDemon(entity)
+            || (entity != null && entity.getPersistentData().getBoolean(KIDNAPPERS_BOG_QUEST_SWAMP_CLONE_TAG));
+    }
+
+    private static void cleanupKidnappersBogEntities(ServerPlayer player) {
+        clearKidnappersBogDaylightPause(player);
+        for (ServerLevel level : player.server.getAllLevels()) {
+            BlockPos center = level.dimension().equals(Level.OVERWORLD)
+                ? getStoredStructureCenter(player)
+                : player.blockPosition();
+            if (center == null) {
+                center = player.blockPosition();
+            }
+            AABB searchArea = new AABB(center).inflate(512.0D);
+            List<Entity> entities = level.getEntities((Entity) null, searchArea,
+                entity -> isKidnappersBogQuestEntity(entity));
+            for (Entity entity : entities) {
+                entity.discard();
+            }
+        }
+    }
+
+    private static boolean isKidnappersBogQuestEntity(Entity entity) {
+        if (entity == null) {
+            return false;
+        }
+        return isKidnappersBogQuestSwampDemon(entity)
+            || "kazumi".equals(entity.getPersistentData().getString(QUEST_NPC_ID_TAG));
+    }
+
+    private static void cleanupAsakusaEntities(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        BlockPos anchor = getStoredTamayoHouseAnchor(player);
+        if (anchor == null) {
+            anchor = player.blockPosition();
+        }
+        List<Entity> entities = serverLevel.getEntities((Entity) null,
+            new AABB(anchor).inflate(256.0D),
+            entity -> isAsakusaQuestEntity(entity));
+        for (Entity entity : entities) {
+            entity.discard();
+        }
+    }
+
+    private static boolean isAsakusaQuestEntity(Entity entity) {
+        if (entity == null) {
+            return false;
+        }
+        String npcKey = entity.getPersistentData().getString(QUEST_NPC_ID_TAG);
+        String targetKey = entity.getPersistentData().getString(QUEST_TARGET_ID_TAG);
+        return "tamayo".equals(npcKey)
+            || "yushiro".equals(npcKey)
+            || "tamayo_restrained_demon".equals(npcKey)
+            || "susamaru_asakusa".equals(targetKey)
+            || "yahaba_asakusa".equals(targetKey);
+    }
+
+    private static void cleanupSlayersBloodEntities(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        BlockPos center = getStoredSlayersBloodDungeon(player);
+        if (center == null) {
+            center = player.blockPosition();
+        }
+        List<Entity> entities = serverLevel.getEntities((Entity) null,
+            new AABB(center).inflate(512.0D),
+            entity -> isSlayersBloodQuestEntity(entity));
+        for (Entity entity : entities) {
+            entity.discard();
+        }
+    }
+
+    private static boolean isSlayersBloodQuestEntity(Entity entity) {
+        if (entity == null) {
+            return false;
+        }
+        String npcKey = entity.getPersistentData().getString(QUEST_NPC_ID_TAG);
+        String targetKey = entity.getPersistentData().getString(QUEST_TARGET_ID_TAG);
+        return "kamanue".equals(npcKey)
+            || "kamanue".equals(targetKey)
+            || "hostile_kamanue".equals(targetKey)
+            || "slayers_blood_slayer".equals(targetKey)
+            || "slayers_blood_final_slayer".equals(targetKey);
     }
 
     public static void giveSatokosBowReward(ServerPlayer player) {

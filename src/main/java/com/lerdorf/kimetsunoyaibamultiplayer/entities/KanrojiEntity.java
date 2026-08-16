@@ -52,6 +52,10 @@ import javax.annotation.Nullable;
  * toughness: 2.0
  */
 public class KanrojiEntity extends BreathingSlayerEntity {
+    private static final ResourceLocation DEMONIZED_TEXTURE =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/entity/oni_kanroji.png");
+    private static final ResourceLocation DEMONIZED_EYES_TEXTURE =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/entity/oni_kanroji_eyes.png");
 	
 	private enum MarkState {
         NORMAL,         // No mark
@@ -190,6 +194,16 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 	public ItemStack getEquippedSword() {
 		return new ItemStack(ModItems.NICHIRINSWORD_KANROJI.get());
 	}
+
+    @Override
+    public ResourceLocation getDemonizedTextureOverride() {
+        return DEMONIZED_TEXTURE;
+    }
+
+    @Override
+    public ResourceLocation getDemonizedEyesTextureOverride() {
+        return DEMONIZED_EYES_TEXTURE;
+    }
 
 	@Override
 	public ItemStack[] getArmorEquipment() {

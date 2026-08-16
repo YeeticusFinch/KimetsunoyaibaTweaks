@@ -16,6 +16,7 @@ public class SmallMistParticleCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("smallmist")
+            .requires(source -> source.hasPermission(2))
             .then(Commands.argument("count", IntegerArgumentType.integer(1, 100))
                 .executes(context -> {
                     int count = IntegerArgumentType.getInteger(context, "count");

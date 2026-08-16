@@ -157,6 +157,10 @@ public final class QuestProgressionManager {
             player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, true);
         }
 
+        if (handleKidnappersBogDaylightPause(player, context)) {
+            return;
+        }
+
         step.onTick().accept(player, context);
         if (isPermanenceSlayersBlood(context)) {
             QuestScenarioActions.tickKamanueNeutrality(player, context);
@@ -590,6 +594,28 @@ public final class QuestProgressionManager {
             BlockPos candidateDungeon = QuestScenarioActions.getOrStoreSlayersBloodDungeon(candidate);
             if (sourceDungeon != null && candidateDungeon != null
                 && sourceDungeon.distSqr(candidateDungeon) <= 128.0D * 128.0D) {
+                players.add(candidate);
+            }
+        }
+        return players;
+    }
+
+    public static List<ServerPlayer> getPlayersSharingKidnappersBog(ServerPlayer source, double radius) {
+        List<ServerPlayer> players = new ArrayList<>();
+        if (source == null || !(source.level() instanceof ServerLevel serverLevel)) {
+            return players;
+        }
+        QuestRuntimeContext sourceContext = getOrInitializeContext(source, MeditationMenuService.resolveRoleForProgression(source));
+        if (!isCruelKidnappersBog(sourceContext)) {
+            return players;
+        }
+        double radiusSqr = radius * radius;
+        for (ServerPlayer candidate : serverLevel.players()) {
+            if (candidate.distanceToSqr(source) > radiusSqr) {
+                continue;
+            }
+            QuestRuntimeContext candidateContext = getOrInitializeContext(candidate, MeditationMenuService.resolveRoleForProgression(candidate));
+            if (isCruelKidnappersBog(candidateContext)) {
                 players.add(candidate);
             }
         }
@@ -1695,6 +1721,74 @@ public final class QuestProgressionManager {
         return SkipQuestStageResult.success(group.name(), currentStageNumber, stageNumber, targetStage.name());
     }
 
+    public static RestartQuestStageResult restartCurrentQuestStage(ServerPlayer player, PlayerRole role) {
+        if (!CustomProgressionConfig.isCustomProgressionEnabled()) {
+            return RestartQuestStageResult.forDisabledProgression();
+        }
+
+        QuestRuntimeContext active = getOrInitializeContext(player, role);
+        if (active == null) {
+            return RestartQuestStageResult.forNoQuest();
+        }
+
+        QuestScenarioActions.cleanupQuestStageEntities(player, active.group().id(), active.stage().id());
+        clearCurrentStagePersistentState(player, active);
+
+        player.getPersistentData().putString(ACTIVE_GROUP_ID, active.group().id());
+        player.getPersistentData().putInt(ACTIVE_STAGE_INDEX, active.stageIndex());
+        player.getPersistentData().putInt(ACTIVE_STEP_INDEX, 0);
+        player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, false);
+        player.getPersistentData().remove(STEP_TIME_BLOCKED_NOTICE_TICK);
+        player.getPersistentData().remove(STEP_RESTART_COOLDOWN_UNTIL);
+
+        return RestartQuestStageResult.success(active.group().name(), active.stageIndex() + 1, active.stage().name());
+    }
+
+    private static void clearCurrentStagePersistentState(ServerPlayer player, QuestRuntimeContext context) {
+        CompoundTag data = player.getPersistentData();
+        data.remove("KnYDelayedMessages");
+        data.remove("KnYDelayedMessageIndex");
+
+        if ("cruel".equals(context.group().id()) && "kidnappers_bog".equals(context.stage().id())) {
+            clearKeysWithPrefixes(data, "KnYKazumi", "KnYKidnappersBog", "KnYSwamp");
+            data.remove("KnYEnteredSwampDomain");
+            data.remove(QuestScenarioActions.CURRENT_STRUCTURE_X);
+            data.remove(QuestScenarioActions.CURRENT_STRUCTURE_Y);
+            data.remove(QuestScenarioActions.CURRENT_STRUCTURE_Z);
+        } else if ("cruel".equals(context.group().id()) && "asakusa".equals(context.stage().id())) {
+            clearKeysWithPrefixes(data, "KnYTamayo", "KnYSusamaru", "KnYYahaba", "KnYYushiro");
+        } else if ("permanence".equals(context.group().id()) && "first_taste_of_blood".equals(context.stage().id())) {
+            data.remove(PERMANENCE_FIRST_TASTE_EATEN);
+            data.remove(PERMANENCE_FIRST_TASTE_KILLS);
+        } else if ("permanence".equals(context.group().id()) && "hunger_unending".equals(context.stage().id())) {
+            data.remove(PERMANENCE_HUNGER_UNENDING_EATEN);
+            data.remove(PERMANENCE_HUNGER_UNENDING_SLEEP_KILLS);
+        } else if ("permanence".equals(context.group().id()) && "slayers_blood".equals(context.stage().id())) {
+            resetPermanenceSlayersBloodOnDeath(player);
+            data.remove(SLAYERS_BLOOD_AMBUSH_SPAWNED);
+            data.remove(SLAYERS_BLOOD_CAPTIVE_READY);
+            data.remove(SLAYERS_BLOOD_CAPTIVE_DELIVERED);
+            data.remove(SLAYERS_BLOOD_STUDY_STARTED);
+            data.remove(SLAYERS_BLOOD_STUDY_START_TICK);
+            data.remove(SLAYERS_BLOOD_STUDY_COMPLETE);
+            data.remove(SLAYERS_BLOOD_FINAL_KILLED);
+            data.remove(SLAYERS_BLOOD_CAPTIVE_UUID);
+            data.remove(SLAYERS_BLOOD_FLESH_STACK_TAG);
+        }
+    }
+
+    private static void clearKeysWithPrefixes(CompoundTag data, String... prefixes) {
+        List<String> keys = new ArrayList<>(data.getAllKeys());
+        for (String key : keys) {
+            for (String prefix : prefixes) {
+                if (key.startsWith(prefix)) {
+                    data.remove(key);
+                    break;
+                }
+            }
+        }
+    }
+
     private static QuestGroupDefinition resolveSelectedOrActiveGroup(ServerPlayer player, PlayerRole role, QuestRuntimeContext active) {
         CompoundTag data = player.getPersistentData();
         if (MeditationMenuService.SELECTED_TYPE_QUEST.equals(data.getString("MeditationSelectedType"))) {
@@ -1752,6 +1846,21 @@ public final class QuestProgressionManager {
         }
     }
 
+    public record RestartQuestStageResult(boolean success, boolean disabled, boolean noQuest, String groupName,
+                                          int stageNumber, String stageName) {
+        public static RestartQuestStageResult success(String groupName, int stageNumber, String stageName) {
+            return new RestartQuestStageResult(true, false, false, groupName, stageNumber, stageName);
+        }
+
+        public static RestartQuestStageResult forDisabledProgression() {
+            return new RestartQuestStageResult(false, true, false, "", 0, "");
+        }
+
+        public static RestartQuestStageResult forNoQuest() {
+            return new RestartQuestStageResult(false, false, true, "", 0, "");
+        }
+    }
+
     private static QuestRuntimeContext getOrInitializeContext(ServerPlayer player, PlayerRole role) {
         if (!CustomProgressionConfig.isCustomProgressionEnabled()) {
             return null;
@@ -1806,6 +1915,42 @@ public final class QuestProgressionManager {
             case WAIT_FOR_NIGHT -> player.level().isNight();
             case CUSTOM -> step.customCheck().test(player, context);
         };
+    }
+
+    private static boolean handleKidnappersBogDaylightPause(ServerPlayer player, QuestRuntimeContext context) {
+        if (!isCruelKidnappersBogPreSatokosBow(context)) {
+            QuestScenarioActions.clearKidnappersBogDaylightPause(player);
+            return false;
+        }
+
+        List<ServerPlayer> involved = getPlayersSharingKidnappersBog(player, 256.0D);
+        if (involved.isEmpty()) {
+            involved = List.of(player);
+        }
+        boolean anyPlayerHasBow = involved.stream().anyMatch(candidate -> QuestScenarioActions.hasSatokosBow(candidate, context));
+        if (anyPlayerHasBow) {
+            QuestScenarioActions.clearKidnappersBogDaylightPause(player);
+            QuestScenarioActions.removeKidnappersBogSwampDemonResistanceNear(player, 256.0D);
+            return false;
+        }
+
+        ServerLevel overworld = player.server == null ? null : player.server.getLevel(net.minecraft.world.level.Level.OVERWORLD);
+        if (overworld == null) {
+            return false;
+        }
+
+        if (QuestScenarioActions.isKidnappersBogPausedForDaylight(player)) {
+            if (overworld.isNight()) {
+                QuestScenarioActions.resumeKidnappersBogSwampDemonsAfterDaylight(player, context);
+                return false;
+            }
+            return true;
+        }
+
+        if (overworld.isDay()) {
+            return QuestScenarioActions.pauseKidnappersBogSwampDemonsForDaylight(player, context, involved);
+        }
+        return false;
     }
 
     private static boolean isStepStartTimeSatisfied(ServerPlayer player, QuestStepDefinition step) {
@@ -2065,6 +2210,18 @@ public final class QuestProgressionManager {
             && "permanence".equals(context.group().id())
             && "hunger_unending".equals(context.stage().id())
             && "feed_without_detection".equals(context.step().id());
+    }
+
+    private static boolean isCruelKidnappersBog(QuestRuntimeContext context) {
+        return context != null
+            && "cruel".equals(context.group().id())
+            && "kidnappers_bog".equals(context.stage().id());
+    }
+
+    private static boolean isCruelKidnappersBogPreSatokosBow(QuestRuntimeContext context) {
+        return isCruelKidnappersBog(context)
+            && ("encounter_swamp_demon".equals(context.step().id())
+            || "kill_swamp_demon".equals(context.step().id()));
     }
 
     private static boolean isPermanenceSlayersBlood(QuestRuntimeContext context) {

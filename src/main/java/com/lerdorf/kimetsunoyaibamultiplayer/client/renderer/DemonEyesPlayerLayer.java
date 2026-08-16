@@ -34,15 +34,16 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
         RenderType renderType = CustomRenderTypes.geoEntityTranslucentEmissive(
             DemonEyesResourceHelper.getTexture(state.index())
         );
+        float[] tint = DemonEyesResourceHelper.getHueTint(state.hue());
         VertexConsumer consumer = buffer.getBuffer(renderType);
         getParentModel().renderToBuffer(
             poseStack,
             consumer,
             0xF000F0,
             LivingEntityRenderer.getOverlayCoords(player, 0.0F),
-            1.0F,
-            1.0F,
-            1.0F,
+            tint[0],
+            tint[1],
+            tint[2],
             1.0F
         );
     }

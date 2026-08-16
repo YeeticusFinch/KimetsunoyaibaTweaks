@@ -20,6 +20,9 @@ public class MuichiroFPRenderer extends GeoEntityRenderer<MuichiroFullPotentialE
 
             @Override
             public ResourceLocation getTextureResource(MuichiroFullPotentialEntity entity) {
+                if (entity != null && entity.isDemonized() && entity.getDemonizedTextureOverride() != null) {
+                    return entity.getDemonizedTextureOverride();
+                }
                 return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "textures/entity/tokito_fp.png");
             }
 

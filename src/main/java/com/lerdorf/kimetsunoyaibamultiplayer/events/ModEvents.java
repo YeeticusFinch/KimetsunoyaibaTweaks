@@ -59,6 +59,8 @@ public class ModEvents {
         PlayerBreathingData.loadFromNBT(player);
         if (player instanceof ServerPlayer serverPlayer) {
             DemonTransformationHandler.restorePersistentDemonhood(serverPlayer);
+            DemonTransformationHandler.enforceHumanRestoration(serverPlayer);
+            DemonTransformationHandler.enforceSunlightImmunityRequiresDemon(serverPlayer);
         }
         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceTransformationRolePrecedence(serverPlayer);
@@ -88,12 +90,23 @@ public class ModEvents {
     }
 
     @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+            DemonTransformationHandler.restorePersistentDemonhood(serverPlayer);
+            DemonTransformationHandler.enforceHumanRestoration(serverPlayer);
+            DemonTransformationHandler.enforceSunlightImmunityRequiresDemon(serverPlayer);
+        }
+    }
+
+    @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()) {
             return;
         }
         if (event.player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             DemonTransformationHandler.restorePersistentDemonhood(serverPlayer);
+            DemonTransformationHandler.enforceHumanRestoration(serverPlayer);
+            DemonTransformationHandler.enforceSunlightImmunityRequiresDemon(serverPlayer);
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceTransformationRolePrecedence(serverPlayer);
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceDemonRolePrecedence(serverPlayer);
             PassiveSkillManager.tick(serverPlayer);

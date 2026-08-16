@@ -26,6 +26,7 @@ public class GiveBlackSwordCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> command = Commands.literal("giveblacksword")
+            .requires(source -> source.hasPermission(2))
             .then(Commands.argument("style", StringArgumentType.word())
                 .suggests(STYLE_SUGGESTIONS)
                 .executes(context -> execute(

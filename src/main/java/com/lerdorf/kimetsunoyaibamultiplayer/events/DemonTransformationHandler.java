@@ -3,10 +3,12 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.ModGameRules;
+import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.AlchemyMedicineHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.BlueSpiderLilyTeaHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.SunlightImmunityHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModItems;
 import net.minecraft.advancements.Advancement;
@@ -38,9 +40,11 @@ public final class DemonTransformationHandler {
     public static final String DEMON_TRANSFORMATION_TAG = "demon_transformation";
     public static final String MUZAN_BLOOD_CONSUMED_KEY = "KnYMpMuzanBloodConsumed";
     public static final String HUMANS_CONSUMED_KEY = "KnYMpHumansConsumed";
+    public static final String HUMAN_RESTORATION_KEY = "KnYMpHumanRestoration";
     private static final String PERSISTENT_DEMONHOOD_PENDING_KEY = "KnYMpPersistentDemonhoodPending";
     private static final String PERSISTENT_DEMONHOOD_MUZAN_BLOOD_KEY = "KnYMpPersistentDemonhoodMuzanBlood";
     private static final String PERSISTENT_DEMONHOOD_HUMANS_KEY = "KnYMpPersistentDemonhoodHumansConsumed";
+    private static final String PERSISTENT_DEMONHOOD_SUNLIGHT_IMMUNITY_KEY = "KnYMpPersistentDemonhoodSunlightImmunity";
 
     private static final String DATA_ACTIVE = "KnYMpCustomDemonTransformActive";
     private static final String DATA_LAST_DURATION = "KnYMpCustomDemonTransformLastDuration";
@@ -66,6 +70,34 @@ public final class DemonTransformationHandler {
         ResourceLocation.parse("kimetsunoyaiba:kinoto"),
         ResourceLocation.parse("kimetsunoyaiba:kinoe"),
         ResourceLocation.parse("kimetsunoyaiba:hashira")
+    );
+    private static final List<ResourceLocation> DEMONHOOD_ADVANCEMENTS = List.of(
+        ResourceLocation.parse("kimetsunoyaiba:become_demon"),
+        ResourceLocation.parse("kimetsunoyaiba:strongest"),
+        ResourceLocation.parse("kimetsunoyaiba:upper_rank_1"),
+        ResourceLocation.parse("kimetsunoyaiba:upper_rank_2"),
+        ResourceLocation.parse("kimetsunoyaiba:upper_rank_3"),
+        ResourceLocation.parse("kimetsunoyaiba:upper_rank_4"),
+        ResourceLocation.parse("kimetsunoyaiba:upper_rank_5"),
+        ResourceLocation.parse("kimetsunoyaiba:upper_rank_6"),
+        ResourceLocation.parse("kimetsunoyaiba:lower_rank_1"),
+        ResourceLocation.parse("kimetsunoyaiba:lower_rank_2"),
+        ResourceLocation.parse("kimetsunoyaiba:lower_rank_3"),
+        ResourceLocation.parse("kimetsunoyaiba:lower_rank_4"),
+        ResourceLocation.parse("kimetsunoyaiba:lower_rank_5"),
+        ResourceLocation.parse("kimetsunoyaiba:lower_rank_6"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_upper_1"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_upper_2"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_upper_3"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_upper_4"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_upper_5"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_upper_6"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_lower_1"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_lower_2"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_lower_3"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_lower_4"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_lower_5"),
+        ResourceLocation.parse("kimetsunoyaiba:bloody_battle_lower_6")
     );
 
     private DemonTransformationHandler() {
@@ -172,17 +204,69 @@ public final class DemonTransformationHandler {
         if (player == null) {
             return;
         }
+        player.getPersistentData().putBoolean(HUMAN_RESTORATION_KEY, true);
+        enforceHumanRestoration(player);
+    }
+
+    public static void enforceHumanRestoration(ServerPlayer player) {
+        if (player == null || !player.getPersistentData().getBoolean(HUMAN_RESTORATION_KEY)) {
+            return;
+        }
+        CompoundTag data = player.getPersistentData();
+        boolean changed = data.getBoolean(DATA_ACTIVE)
+            || data.contains(DATA_LAST_DURATION)
+            || data.contains(DATA_LAST_AMPLIFIER)
+            || data.contains(DATA_SUNLIGHT_BURN_TICKS)
+            || player.getTags().contains(ONI_TRANSFORM_TAG)
+            || player.getTags().contains(DEMON_TRANSFORMATION_TAG)
+            || player.hasEffect(ModEffects.DEMON_TRANSFORMATION.get())
+            || player.hasEffect(MobEffects.MOVEMENT_SLOWDOWN)
+            || player.hasEffect(MobEffects.WEAKNESS)
+            || player.hasEffect(MobEffects.HUNGER);
         clearTransformationState(player);
+        changed |= data.contains(PERSISTENT_DEMONHOOD_PENDING_KEY)
+            || data.contains(PERSISTENT_DEMONHOOD_MUZAN_BLOOD_KEY)
+            || data.contains(PERSISTENT_DEMONHOOD_HUMANS_KEY)
+            || data.contains(PERSISTENT_DEMONHOOD_SUNLIGHT_IMMUNITY_KEY);
+        clearPersistentDemonhoodData(data);
+        changed |= getTrackedMuzanBlood(player) > 0 || getTrackedHumansConsumed(player) > 0;
         resetDemonProgressionCounts(player);
-        player.getPersistentData().putBoolean("oni", false);
-        player.getPersistentData().remove("KnYMpSolarAscension");
-        player.getPersistentData().remove("KnYMpDemonicSaturation");
+        changed |= data.getBoolean("oni");
+        data.putBoolean("oni", false);
+        changed |= data.contains(AlchemyMedicineHandler.SUNLIGHT_IMMUNITY_KEY);
+        data.remove(AlchemyMedicineHandler.SUNLIGHT_IMMUNITY_KEY);
+        changed |= data.contains(AlchemyMedicineHandler.DEMONIC_SATURATION_KEY) || player.hasEffect(ModEffects.DEMONIC_SATURATION.get());
+        data.remove(AlchemyMedicineHandler.DEMONIC_SATURATION_KEY);
         player.removeEffect(ModEffects.DEMONIC_SATURATION.get());
-        DemonEyesSyncHandler.broadcastState(player);
+        changed |= revokeDemonhoodAdvancements(player);
+        changed |= SunlightImmunityHelper.hasBaseOvercomeSunlightAdvancement(player);
+        SunlightImmunityHelper.revokeBaseOvercomeSunlightAdvancement(player);
+        SunlightImmunityHelper.revokeSunlightImmunityAdvancement(player);
+        if (changed) {
+            DemonEyesSyncHandler.broadcastState(player);
+        }
+    }
+
+    public static void enforceSunlightImmunityRequiresDemon(ServerPlayer player) {
+        if (player == null
+            || Damager.isDemon(player)
+            || isPersistentDemonhoodPending(player)
+            || !player.getPersistentData().getBoolean(AlchemyMedicineHandler.SUNLIGHT_IMMUNITY_KEY)) {
+            return;
+        }
+        player.getPersistentData().remove(AlchemyMedicineHandler.SUNLIGHT_IMMUNITY_KEY);
+        SunlightImmunityHelper.revokeBaseOvercomeSunlightAdvancement(player);
+        SunlightImmunityHelper.revokeSunlightImmunityAdvancement(player);
     }
 
     public static boolean startTransformationFromProposition(ServerPlayer player) {
         return startTransformation(player, true);
+    }
+
+    public static void clearHumanRestorationMarker(ServerPlayer player) {
+        if (player != null) {
+            player.getPersistentData().remove(HUMAN_RESTORATION_KEY);
+        }
     }
 
     private static boolean startTransformation(ServerPlayer player, boolean grantGraceResistance) {
@@ -190,6 +274,7 @@ public final class DemonTransformationHandler {
             return false;
         }
 
+        clearHumanRestorationMarker(player);
         int duration = calculateTransformationDuration(player);
         player.getPersistentData().putBoolean(DATA_ACTIVE, true);
         player.getPersistentData().putInt(DATA_LAST_DURATION, duration);
@@ -227,6 +312,11 @@ public final class DemonTransformationHandler {
             return;
         }
 
+        if (player.getPersistentData().getBoolean(HUMAN_RESTORATION_KEY)) {
+            enforceHumanRestoration(player);
+            return;
+        }
+        enforceSunlightImmunityRequiresDemon(player);
         tickSunlightBurn(player);
 
         boolean active = player.getPersistentData().getBoolean(DATA_ACTIVE);
@@ -279,14 +369,31 @@ public final class DemonTransformationHandler {
     }
 
     public static void capturePersistentDemonhood(Player original, Player clone) {
-        if (!isPersistentDemonhoodEnabled() || original == null || clone == null || !Damager.isDemon(original)) {
+        if (clone == null) {
             return;
         }
 
         CompoundTag cloneData = clone.getPersistentData();
+        clearPersistentDemonhoodData(cloneData);
+        if (original != null && original.getPersistentData().getBoolean(HUMAN_RESTORATION_KEY)) {
+            cloneData.putBoolean(HUMAN_RESTORATION_KEY, true);
+            cloneData.remove(AlchemyMedicineHandler.SUNLIGHT_IMMUNITY_KEY);
+            return;
+        }
+
+        if (!isPersistentDemonhoodEnabled() || original == null || clone == null || !Damager.isDemon(original)) {
+            cloneData.remove(AlchemyMedicineHandler.SUNLIGHT_IMMUNITY_KEY);
+            return;
+        }
+
+        cloneData.remove(HUMAN_RESTORATION_KEY);
         cloneData.putBoolean(PERSISTENT_DEMONHOOD_PENDING_KEY, true);
         cloneData.putInt(PERSISTENT_DEMONHOOD_MUZAN_BLOOD_KEY, getTrackedMuzanBlood(original));
         cloneData.putInt(PERSISTENT_DEMONHOOD_HUMANS_KEY, getTrackedHumansConsumed(original));
+        cloneData.putBoolean(
+            PERSISTENT_DEMONHOOD_SUNLIGHT_IMMUNITY_KEY,
+            original.getPersistentData().getBoolean(AlchemyMedicineHandler.SUNLIGHT_IMMUNITY_KEY)
+        );
     }
 
     public static boolean restorePersistentDemonhood(ServerPlayer player) {
@@ -301,10 +408,10 @@ public final class DemonTransformationHandler {
 
         int muzanBlood = Math.max(0, data.getInt(PERSISTENT_DEMONHOOD_MUZAN_BLOOD_KEY));
         int humansConsumed = Math.max(0, data.getInt(PERSISTENT_DEMONHOOD_HUMANS_KEY));
+        boolean sunlightImmune = data.getBoolean(PERSISTENT_DEMONHOOD_SUNLIGHT_IMMUNITY_KEY);
 
-        data.remove(PERSISTENT_DEMONHOOD_PENDING_KEY);
-        data.remove(PERSISTENT_DEMONHOOD_MUZAN_BLOOD_KEY);
-        data.remove(PERSISTENT_DEMONHOOD_HUMANS_KEY);
+        clearPersistentDemonhoodData(data);
+        data.remove(HUMAN_RESTORATION_KEY);
 
         setTrackedMuzanBlood(player, 0);
         setTrackedHumansConsumed(player, 0);
@@ -313,6 +420,11 @@ public final class DemonTransformationHandler {
         }
         setTrackedHumansConsumed(player, humansConsumed);
         player.getPersistentData().putBoolean("oni", true);
+        if (sunlightImmune) {
+            player.getPersistentData().putBoolean(AlchemyMedicineHandler.SUNLIGHT_IMMUNITY_KEY, true);
+        } else {
+            player.getPersistentData().remove(AlchemyMedicineHandler.SUNLIGHT_IMMUNITY_KEY);
+        }
         DemonEyesSyncHandler.broadcastState(player);
         return true;
     }
@@ -419,6 +531,7 @@ public final class DemonTransformationHandler {
 
     public static void consumeBaseMuzanBlood(ServerPlayer player, int count) {
         int consumedCount = Math.max(1, count);
+        clearHumanRestorationMarker(player);
         for (int i = 0; i < consumedCount; i++) {
             ItemStack baseBlood = new ItemStack(KimetsunoyaibaModItems.BLOOD_OF_MUZAN.get());
             baseBlood.finishUsingItem(player.level(), player);
@@ -524,6 +637,31 @@ public final class DemonTransformationHandler {
     public static void resetDemonProgressionCounts(Player player) {
         resetTrackedMuzanBlood(player);
         resetTrackedHumansConsumed(player);
+    }
+
+    private static void clearPersistentDemonhoodData(CompoundTag data) {
+        data.remove(PERSISTENT_DEMONHOOD_PENDING_KEY);
+        data.remove(PERSISTENT_DEMONHOOD_MUZAN_BLOOD_KEY);
+        data.remove(PERSISTENT_DEMONHOOD_HUMANS_KEY);
+        data.remove(PERSISTENT_DEMONHOOD_SUNLIGHT_IMMUNITY_KEY);
+    }
+
+    private static boolean revokeDemonhoodAdvancements(ServerPlayer player) {
+        if (player == null || player.server == null) {
+            return false;
+        }
+        boolean revokedAny = false;
+        for (ResourceLocation id : DEMONHOOD_ADVANCEMENTS) {
+            Advancement advancement = player.server.getAdvancements().getAdvancement(id);
+            if (advancement == null) {
+                continue;
+            }
+            for (String criterion : player.getAdvancements().getOrStartProgress(advancement).getCompletedCriteria()) {
+                player.getAdvancements().revoke(advancement, criterion);
+                revokedAny = true;
+            }
+        }
+        return revokedAny;
     }
 
     private static void clearNearbyDemonAggro(ServerPlayer player) {

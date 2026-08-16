@@ -49,12 +49,11 @@ public final class QuestProgressionHandler {
             QuestProgressionManager.handlePlayerDeath(deadPlayer, role);
         }
 
-        if (!(event.getSource().getEntity() instanceof ServerPlayer player) || player.level().isClientSide()) {
-            return;
+        ServerPlayer player = event.getSource().getEntity() instanceof ServerPlayer attacker ? attacker : null;
+        if (player != null && !player.level().isClientSide()) {
+            PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
+            QuestProgressionManager.handleKill(player, event.getEntity(), role);
         }
-
-        PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
-        QuestProgressionManager.handleKill(player, event.getEntity(), role);
 
         // Check if the killed entity is the quest-targeted swamp demon
         String targetKey = event.getEntity().getPersistentData().getString(

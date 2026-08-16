@@ -56,6 +56,9 @@ public class KanrojiRenderer extends GeoEntityRenderer<KanrojiEntity> {
 
             @Override
             public ResourceLocation getTextureResource(KanrojiEntity entity) {
+                if (entity != null && entity.isDemonized() && entity.getDemonizedTextureOverride() != null) {
+                    return entity.getDemonizedTextureOverride();
+                }
                 // Use kanroji texture from base mod's namespace
                 // This ensures resourcepack texture overrides work automatically
                 return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "textures/entities/kanroji.png");

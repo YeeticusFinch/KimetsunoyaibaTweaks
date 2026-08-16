@@ -52,6 +52,11 @@ import javax.annotation.Nullable;
  * - Armor: 6.0, Armor toughness: 2.0
  */
 public class MuichiroEntity extends BreathingSlayerEntity {
+    private static final ResourceLocation DEMONIZED_TEXTURE =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/entity/oni_tokito.png");
+    private static final ResourceLocation DEMONIZED_EYES_TEXTURE =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/entity/oni_tokito_eyes.png");
+
     private enum MarkState {
         NORMAL,         // No mark
         TRANSFORMING,   // Currently transforming (5 seconds)
@@ -282,6 +287,16 @@ public class MuichiroEntity extends BreathingSlayerEntity {
     @Override
     public ItemStack getEquippedSword() {
         return new ItemStack(ModItems.NICHIRINSWORD_MUICHIRO.get());
+    }
+
+    @Override
+    public ResourceLocation getDemonizedTextureOverride() {
+        return DEMONIZED_TEXTURE;
+    }
+
+    @Override
+    public ResourceLocation getDemonizedEyesTextureOverride() {
+        return DEMONIZED_EYES_TEXTURE;
     }
 
     @Override

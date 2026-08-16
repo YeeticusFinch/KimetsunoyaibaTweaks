@@ -51,12 +51,14 @@ public class MeditationMenuScreen extends Screen {
     private Rect2i passiveSkillsButtonBounds;
     private Rect2i passiveSkillsBackButtonBounds;
     private int localDemonEyesIndex;
+    private int localDemonEyesHue;
     private boolean passiveSkillsOpen;
 
     public MeditationMenuScreen(MeditationMenuData data) {
         super(Component.literal("Meditation"));
         this.data = data;
         this.localDemonEyesIndex = data.demonEyesIndex();
+        this.localDemonEyesHue = data.demonEyesHue();
     }
 
     public MeditationMenuScreen refreshed(MeditationMenuData newData) {
@@ -70,6 +72,7 @@ public class MeditationMenuScreen extends Screen {
         screen.expandedInfoSections.clear();
         screen.expandedInfoSections.addAll(expandedInfoSections);
         screen.localDemonEyesIndex = localDemonEyesIndex;
+        screen.localDemonEyesHue = localDemonEyesHue;
         screen.passiveSkillsOpen = passiveSkillsOpen;
         return screen;
     }
@@ -393,9 +396,10 @@ public class MeditationMenuScreen extends Screen {
             int contentTop = cardTop - yOffset;
             guiGraphics.drawString(font, "Demon Customization", cardLeft + 8, contentTop + 8, 0xF5D18A, false);
             guiGraphics.drawString(font, "Adjust the glowing demon-eyes overlay on your player skin.", cardLeft + 8, contentTop + 24, 0xF0E3C2, false);
-            guiGraphics.drawString(font, "Current style: " + localDemonEyesIndex, cardLeft + 8, contentTop + 36, 0xCBE7C8, false);
+            guiGraphics.drawString(font, "Current style: " + DemonEyesResourceHelper.getLabel(localDemonEyesIndex), cardLeft + 8, contentTop + 36, 0xCBE7C8, false);
+            guiGraphics.drawString(font, "Hue: " + localDemonEyesHue, cardLeft + 8, contentTop + 48, 0xCBE7C8, false);
 
-            int buttonTop = contentTop + 48;
+            int buttonTop = contentTop + 60;
             Rect2i demonEyes = new Rect2i(cardLeft + 8, buttonTop, cardRight - cardLeft - 16, buttonHeight);
             renderButton(guiGraphics, demonEyes, "Change Demon Eyes", 0xFF8A6A3E, 0x1D1208);
             if (isVerticallyVisible(demonEyes, clipTop, clipBottom)) {
@@ -599,7 +603,7 @@ public class MeditationMenuScreen extends Screen {
                     }
                 }
                 if (demonEyesButtonBounds != null && contains(demonEyesButtonBounds, mouseX, mouseY)) {
-                    minecraft.setScreen(new DemonEyesCustomizationScreen(this, localDemonEyesIndex));
+                    minecraft.setScreen(new DemonEyesCustomizationScreen(this, localDemonEyesIndex, localDemonEyesHue));
                     return true;
                 }
                 if (bloodDemonArtBuilderButtonBounds != null && contains(bloodDemonArtBuilderButtonBounds, mouseX, mouseY)) {
@@ -691,8 +695,9 @@ public class MeditationMenuScreen extends Screen {
         return true;
     }
 
-    public void updateLocalDemonEyesIndex(int demonEyesIndex) {
+    public void updateLocalDemonEyesStyle(int demonEyesIndex, int demonEyesHue) {
         this.localDemonEyesIndex = demonEyesIndex;
+        this.localDemonEyesHue = demonEyesHue;
     }
 
     private void toggleInfoSection(String id) {
@@ -816,7 +821,8 @@ public class MeditationMenuScreen extends Screen {
             type,
             id,
             data.demonPlayer(),
-            localDemonEyesIndex
+            localDemonEyesIndex,
+            localDemonEyesHue
         ));
         newScreen.activeTab = Tab.NAVIGATION;
         minecraft.setScreen(newScreen);

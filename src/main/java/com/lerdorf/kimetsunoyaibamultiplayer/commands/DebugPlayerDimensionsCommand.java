@@ -13,7 +13,7 @@ public class DebugPlayerDimensionsCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("debugplayerdims")
-            .requires(source -> source.hasPermission(0))
+            .requires(source -> source.hasPermission(2))
             .executes(context -> printStatus(context.getSource()))
             .then(Commands.literal("clear")
                 .executes(context -> clearOverride(context.getSource())))

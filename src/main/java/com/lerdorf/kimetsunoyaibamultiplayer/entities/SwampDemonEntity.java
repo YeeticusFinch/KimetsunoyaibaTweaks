@@ -311,6 +311,17 @@ public class SwampDemonEntity extends AbstractDemonEntity {
             clone.moveTo(this.getX() + Math.cos(angle) * distance, cloneY, this.getZ() + Math.sin(angle) * distance, this.getYRot(), this.getXRot());
             clone.setTextureVariant(i == 0 ? 2 : 3);
             clone.setSplitClone(true);
+            String questTarget = this.getPersistentData().getString(
+                com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG);
+            if (!questTarget.isBlank()) {
+                clone.getPersistentData().putString(
+                    com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG,
+                    questTarget);
+                clone.getPersistentData().putBoolean(
+                    com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.KIDNAPPERS_BOG_QUEST_SWAMP_CLONE_TAG,
+                    true);
+                clone.setPersistenceRequired();
+            }
             clone.setHealth(Math.min(sharedHealth, clone.getMaxHealth()));
             clone.setTarget(this.getTarget());
             serverLevel.addFreshEntity(clone);

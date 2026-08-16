@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonEyesPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.DemonEyesHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -18,12 +19,14 @@ public class DemonEyesCustomizationScreen extends Screen {
     private final MeditationMenuScreen meditationScreen;
     private List<Integer> availableIndices = List.of(DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX);
     private int currentIndex = DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX;
+    private int currentHue = DemonEyesHelper.DEFAULT_DEMON_EYES_HUE;
 
-    public DemonEyesCustomizationScreen(MeditationMenuScreen parent, int initialIndex) {
+    public DemonEyesCustomizationScreen(MeditationMenuScreen parent, int initialIndex, int initialHue) {
         super(Component.literal("Demon Eyes"));
         this.parent = parent;
         this.meditationScreen = parent;
         this.currentIndex = initialIndex;
+        this.currentHue = DemonEyesHelper.normalizeHue(initialHue);
     }
 
     @Override
@@ -39,8 +42,9 @@ public class DemonEyesCustomizationScreen extends Screen {
         addRenderableWidget(Button.builder(Component.literal(">"), button -> cycle(1))
             .bounds(centerX + 72, buttonY, 20, 20)
             .build());
+        addRenderableWidget(new HueSlider(centerX - 80, buttonY + 26, 160, 20));
         addRenderableWidget(Button.builder(Component.literal("Done"), button -> onClose())
-            .bounds(centerX - 40, buttonY + 30, 80, 20)
+            .bounds(centerX - 40, buttonY + 56, 80, 20)
             .build());
     }
 
@@ -51,13 +55,13 @@ public class DemonEyesCustomizationScreen extends Screen {
         int left = this.width / 2 - 120;
         int top = this.height / 2 - 96;
         int right = this.width / 2 + 120;
-        int bottom = this.height / 2 + 112;
+        int bottom = this.height / 2 + 150;
 
         guiGraphics.fill(left - 3, top - 3, right + 3, bottom + 3, 0xAA050505);
         guiGraphics.fill(left, top, right, bottom, 0xF11B1412);
         guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, top + 12, 0xFFE8C8);
-        guiGraphics.drawCenteredString(this.font, Component.literal("Style " + currentIndex), this.width / 2, top + 28, 0xFFF3E3);
-        guiGraphics.drawCenteredString(this.font, Component.literal("Scroll through demon eye overlays."), this.width / 2, top + 42, 0xFFC9B7A5);
+        guiGraphics.drawCenteredString(this.font, Component.literal(DemonEyesResourceHelper.getLabel(currentIndex)), this.width / 2, top + 28, 0xFFF3E3);
+        guiGraphics.drawCenteredString(this.font, Component.literal("Hue " + currentHue), this.width / 2, top + 42, 0xFFC9B7A5);
 
         Minecraft minecraft = Minecraft.getInstance();
         Player player = minecraft.player;
@@ -93,12 +97,13 @@ public class DemonEyesCustomizationScreen extends Screen {
         }
         int next = Math.floorMod(currentPosition + direction, availableIndices.size());
         currentIndex = availableIndices.get(next);
-        meditationScreen.updateLocalDemonEyesIndex(currentIndex);
+        currentHue = DemonEyesHelper.DEFAULT_DEMON_EYES_HUE;
+        meditationScreen.updateLocalDemonEyesStyle(currentIndex, currentHue);
         Player player = Minecraft.getInstance().player;
         if (player != null) {
-            DemonEyesClientState.setPlayerState(player.getUUID(), true, currentIndex);
+            DemonEyesClientState.setPlayerState(player.getUUID(), true, currentIndex, currentHue);
         }
-        ModNetworking.sendToServer(new SetDemonEyesPacket(currentIndex));
+        ModNetworking.sendToServer(new SetDemonEyesPacket(currentIndex, currentHue));
     }
 
     private int normalizeIndex(int index) {
@@ -109,5 +114,33 @@ public class DemonEyesCustomizationScreen extends Screen {
             return DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX;
         }
         return availableIndices.get(0);
+    }
+
+    private void setHue(int hue) {
+        currentHue = DemonEyesHelper.normalizeHue(hue);
+        meditationScreen.updateLocalDemonEyesStyle(currentIndex, currentHue);
+        Player player = Minecraft.getInstance().player;
+        if (player != null) {
+            DemonEyesClientState.setPlayerState(player.getUUID(), true, currentIndex, currentHue);
+        }
+        ModNetworking.sendToServer(new SetDemonEyesPacket(currentIndex, currentHue));
+    }
+
+    private class HueSlider extends AbstractSliderButton {
+        HueSlider(int x, int y, int width, int height) {
+            super(x, y, width, height, Component.empty(), currentHue / 359.0D);
+            updateMessage();
+        }
+
+        @Override
+        protected void updateMessage() {
+            setMessage(Component.literal("Hue: " + currentHue));
+        }
+
+        @Override
+        protected void applyValue() {
+            setHue((int) Math.round(this.value * 359.0D));
+            updateMessage();
+        }
     }
 }

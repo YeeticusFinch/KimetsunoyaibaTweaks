@@ -88,7 +88,8 @@ public final class MeditationMenuService {
                 "",
                 "",
                 false,
-                DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX
+                DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX,
+                DemonEyesHelper.DEFAULT_DEMON_EYES_HUE
             );
         }
 
@@ -99,6 +100,7 @@ public final class MeditationMenuService {
         String kizukiRank = resolveKizukiRank(player);
         boolean demonPlayer = role == PlayerRole.DEMON;
         int demonEyesIndex = DemonEyesHelper.getOrCreateIndex(player);
+        int demonEyesHue = DemonEyesHelper.getHue(player);
 
         List<MeditationMenuData.InfoSection> infoSections = buildInfoSections(player);
         List<MeditationMenuData.QuestEntry> quests = QuestProgressionManager.buildQuestEntries(player, role);
@@ -132,7 +134,7 @@ public final class MeditationMenuService {
         locations = applyLocationSelection(locations, selectedType, selectedId);
 
         return new MeditationMenuData(role.getDisplayName(), rank, muzanBlood, humansConsumed, kizukiRank,
-            infoSections, quests, locations, passiveSkills, passiveSkillPoints, selectedType, selectedId, demonPlayer, demonEyesIndex);
+            infoSections, quests, locations, passiveSkills, passiveSkillPoints, selectedType, selectedId, demonPlayer, demonEyesIndex, demonEyesHue);
     }
 
     public static void saveSelection(ServerPlayer player, String type, String id) {

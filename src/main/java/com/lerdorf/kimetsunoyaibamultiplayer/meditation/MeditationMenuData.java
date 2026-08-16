@@ -20,12 +20,13 @@ public class MeditationMenuData {
     private final String selectedId;
     private final boolean demonPlayer;
     private final int demonEyesIndex;
+    private final int demonEyesHue;
 
     public MeditationMenuData(String role, String rank, String muzanBlood, String humansConsumed, String kizukiRank,
                               List<InfoSection> infoSections, List<QuestEntry> quests, List<LocationEntry> locations,
                               List<PassiveSkillEntry> passiveSkills,
                               int passiveSkillPoints,
-                              String selectedType, String selectedId, boolean demonPlayer, int demonEyesIndex) {
+                              String selectedType, String selectedId, boolean demonPlayer, int demonEyesIndex, int demonEyesHue) {
         this.role = role;
         this.rank = rank;
         this.muzanBlood = muzanBlood;
@@ -40,6 +41,7 @@ public class MeditationMenuData {
         this.selectedId = selectedId;
         this.demonPlayer = demonPlayer;
         this.demonEyesIndex = demonEyesIndex;
+        this.demonEyesHue = demonEyesHue;
     }
 
     public MeditationMenuData(FriendlyByteBuf buf) {
@@ -57,6 +59,7 @@ public class MeditationMenuData {
         this.selectedId = buf.readUtf();
         this.demonPlayer = buf.readBoolean();
         this.demonEyesIndex = buf.readVarInt();
+        this.demonEyesHue = buf.readVarInt();
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -74,6 +77,7 @@ public class MeditationMenuData {
         buf.writeUtf(selectedId);
         buf.writeBoolean(demonPlayer);
         buf.writeVarInt(demonEyesIndex);
+        buf.writeVarInt(demonEyesHue);
     }
 
     private static List<String> readStringList(FriendlyByteBuf buf) {
@@ -146,6 +150,10 @@ public class MeditationMenuData {
 
     public int demonEyesIndex() {
         return demonEyesIndex;
+    }
+
+    public int demonEyesHue() {
+        return demonEyesHue;
     }
 
     public record InfoSection(String id, String title, int count, List<InfoSection> children) {
