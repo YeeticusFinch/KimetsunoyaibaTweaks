@@ -25,8 +25,10 @@ This guide explains how to use the Kimetsu no Yaiba Multiplayer mod as a library
 11. [Registering Breathing Form Variations](#registering-breathing-form-variations)
 12. [Creating Custom Entities](#creating-custom-entities)
 13. [API Reference](#api-reference)
-14. [Best Practices](#best-practices)
-15. [Troubleshooting](#troubleshooting)
+14. [Custom Sword Slash Models](#custom-sword-slash-models)
+15. [Sword Sheaths and Display Offsets](#sword-sheaths-and-display-offsets)
+16. [Best Practices](#best-practices)
+17. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -706,6 +708,7 @@ private static BreathingForm firstForm() {
         (entity, level, formId) -> {
             // formId is automatically 30001 - use it for GuardStateHelper
             GuardStateHelper.setGuardState(entity, 8.0, formId);
+            GuardStateHelper.setAttackState(entity, 8.0);
 
             // Play animation
             AnimationHelper.playAnimation(entity, "sword_to_left");
@@ -721,8 +724,7 @@ private static BreathingForm firstForm() {
 
             // Deal damage
             for (LivingEntity target : targets) {
-                float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
-                Damager.hurt(entity, target, damage);
+                Damager.hurt(entity, target, 8.0F);
             }
 
             // Spawn particles (server-side only)
@@ -736,6 +738,9 @@ private static BreathingForm firstForm() {
             // Play sound
             level.playSound(null, entity.blockPosition(),
                 SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 1.0F);
+
+            AbilityScheduler.scheduleOnce(entity,
+                () -> GuardStateHelper.clearGuardState(entity), 10);
         }
     );
 }
@@ -766,6 +771,7 @@ private static BreathingForm secondForm() {
             // Schedule repeating attacks
             AbilityScheduler.scheduleRepeating(entity, () -> {
                 Vec3 lookVec = entity.getLookAngle();
+                GuardStateHelper.setAttackState(entity, 6.0);
 
                 // Move forward
                 MovementHelper.setVelocity(entity,
@@ -778,14 +784,14 @@ private static BreathingForm secondForm() {
                     e -> e != entity && e.isAlive());
 
                 for (LivingEntity target : targets) {
-                    float damage = DamageCalculator.calculateScaledDamage(entity, 6.0F);
-                    Damager.hurt(entity, target, damage);
+                    Damager.hurt(entity, target, 6.0F, true);
                 }
             }, attackInterval, totalTicks);
 
             // Reset step height after ability ends
             AbilityScheduler.scheduleOnce(entity, () -> {
                 MovementHelper.setStepHeight(entity, 0.6F);
+                GuardStateHelper.clearGuardState(entity);
             }, totalTicks + 1);
         }
     );
@@ -837,8 +843,7 @@ private static BreathingForm thirdForm() {
                     e -> e != entity && e.isAlive());
 
                 for (LivingEntity target : targets) {
-                    float damage = DamageCalculator.calculateScaledDamage(entity, 12.0F);
-                    Damager.hurt(entity, target, damage);
+                    Damager.hurt(entity, target, 12.0F);
                     target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 100, 0));
                 }
 
@@ -871,8 +876,7 @@ private static BreathingForm fourthForm() {
                 e -> e != entity && e.isAlive());
 
             for (LivingEntity target : targets) {
-                float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
-                Damager.hurt(entity, target, damage);
+                Damager.hurt(entity, target, 8.0F);
 
                 // Apply debuffs
                 target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 4));
@@ -1300,6 +1304,58 @@ public class ClientSetup {
 }
 ```
 
+### Creating Demon Entities
+
+For addon demons, extend `AbstractDemonEntity` when you want the shared demon behavior: `oni` NBT, sunlight burn handling, non-demon targeting, GeckoLib animation hooks, and optional Blood Demon Art execution.
+
+```java
+package com.yourmod.entities;
+
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.level.Level;
+
+public class FrostDemonEntity extends AbstractDemonEntity {
+    public FrostDemonEntity(EntityType<? extends Monster> entityType, Level level) {
+        super(entityType, level);
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return AbstractDemonEntity.createDemonAttributes()
+            .add(Attributes.MAX_HEALTH, 50.0D)
+            .add(Attributes.ATTACK_DAMAGE, 8.0D)
+            .add(Attributes.MOVEMENT_SPEED, 0.30D);
+    }
+}
+```
+
+Register attributes the same way as other mobs:
+
+```java
+event.put(ModEntities.FROST_DEMON.get(), FrostDemonEntity.createAttributes().build());
+```
+
+Then register the entity with `DemonRegistry` through `KnYAPI` during common setup. This makes `Damager.isDemon()` recognize it and registers raid/categorization metadata.
+
+```java
+@SubscribeEvent
+public static void onCommonSetup(FMLCommonSetupEvent event) {
+    event.enqueueWork(() -> {
+        KnYAPI.registerDemon(
+            "yourmodid:frost_demon",
+            EntityPowerScale.MEDIUM_DEMON,
+            false,          // sunlightImmune
+            "frost_art"     // optional Blood Demon Art ID, or null
+        );
+    });
+}
+```
+
+If the entity should not use `AbstractDemonEntity`, make sure it is still discoverable as a demon by registering it with `KnYAPI.registerDemon()`, adding it to the `kimetsunoyaiba:demon` entity type tag, or setting the `oni` persistent NBT where appropriate.
+
 ---
 
 ## API Reference
@@ -1313,7 +1369,7 @@ Main entry point for the API.
 KnYAPI.createSword(swordId)
 
 // Create breathing forms
-KnYAPI.createForm(name, description, cooldown, effect)
+KnYAPI.createForm(formId, name, description, cooldown, effect)
 KnYAPI.createTechnique(name, forms)
 
 // Animations
@@ -1325,14 +1381,31 @@ KnYAPI.playAnimationOnLayer(player, animationName, maxTicks, speed, layer)
 KnYAPI.scheduleOnce(player, action, delayTicks)
 KnYAPI.scheduleRepeating(player, action, intervalTicks, durationTicks)
 
-// Damage calculation
+// Damage calculation for non-Damager uses
 KnYAPI.calculateScaledDamage(player, baseDamage)
+
+// Demon registration
+KnYAPI.registerDemon(entityId, powerScale)
+KnYAPI.registerDemon(entityId, powerScale, sunlightImmune)
+KnYAPI.registerDemon(entityId, powerScale, sunlightImmune, bloodDemonArtId)
 
 // Style Metadata Registration
 KnYAPI.registerStyleMetadata(styleId, parentStyleId, colorChangeEligible, oreSelectionEligible)
 KnYAPI.getStyleMetadata(styleId)
 KnYAPI.getColorChangeEligibleStyles()
 KnYAPI.getOreSelectionEligibleStyles()
+
+// Sword display offsets
+KnYAPI.addSwordPositionOverride(itemId, position)
+KnYAPI.registerSwordOffsets(itemId, offsets)
+KnYAPI.registerSwordOffsets(itemId, slot, offsets)
+
+// Sword slash visuals
+KnYAPI.registerSlashModel(swordItemPath, modelKey)
+KnYAPI.registerSlashModelNamespace(modelKey, namespace)
+KnYAPI.registerAnimatedSlashTexture(modelKey, frameCount, ticksPerFrame)
+KnYAPI.registerRandomSlashTexture(modelKey, textureCount)
+KnYAPI.setSlashTextureRandomSelection(modelKey, useRandom)
 ```
 
 ### NichirinSwordBuilder
@@ -1384,34 +1457,55 @@ ParticleHelper.spawnCircleParticles(level, center, radius, particle, count)
 DamageCalculator.calculateScaledDamage(entity, baseDamage)
 ```
 
+Use `DamageCalculator.calculateScaledDamage()` only when you need a scaled number for non-damage state such as guard strength, preview text, or custom logic that does not call `Damager.hurt()`.
+
 #### Damager
 
-The `Damager` class provides safe damage application that prevents event recursion issues. There are two versions:
+The `Damager` class provides safe damage application for abilities and entity attacks. It handles KnY damage scaling internally, applies Midas bonuses, records damage history, respects custom friendly-fire checks for demon slayers, and uses the correct damage source.
+
+Pass the base damage amount to `Damager.hurt()`. Do not pre-scale with `DamageCalculator.calculateScaledDamage()` before calling it, or the hit will be scaled twice.
 
 ```java
-// Original version - uses default invulnerability frames
+// Standard hit: scales damage and uses normal invulnerability frames
 Damager.hurt(LivingEntity source, LivingEntity target, float damage)
 
-// New version - with invulnerability control
+// Rapid hit: reset target invulnerability frames before damage
 Damager.hurt(LivingEntity source, LivingEntity target, float damage, boolean resetInvulnerability)
+
+// Advanced: reset invulnerability and optionally skip scaling
+Damager.hurt(LivingEntity source, LivingEntity target, float damage,
+             boolean resetInvulnerability, boolean dontScale)
+
+// Advanced: force scaling even when resetInvulnerability would otherwise skip it
+Damager.hurt(LivingEntity source, LivingEntity target, float damage,
+             boolean resetInvulnerability, boolean dontScale, boolean forceScale)
 ```
 
 **Parameters:**
 - `source` - The entity dealing the damage (attacker)
 - `target` - The entity receiving the damage
-- `damage` - Amount of damage to deal
-- `resetInvulnerability` - If true, resets invulnerability frames allowing rapid successive hits
+- `damage` - Base damage amount to deal
+- `resetInvulnerability` - If true, sets `target.invulnerableTime = 0` before applying damage
+- `dontScale` - If true, uses `damage` as-is instead of applying `Damager.calculateScaledDamage()`
+- `forceScale` - If true, overrides `dontScale` and forces normal scaling
 
 **Reset Invulnerability:**
 
 By default, when an entity takes damage, they get **10 ticks (~0.5 seconds) of invulnerability frames** where they cannot be damaged again. This prevents the same attack from hitting multiple times.
 
-However, for **rapid multi-hit attacks** (like Love Breathing's whip flurry or Mist Breathing's continuous slashes), you may want every hit to deal damage. Set `resetInvulnerability = true` to override the invulnerability frames.
+For **rapid multi-hit attacks** like whip flurries or continuous slashes, set `resetInvulnerability = true` so each scheduled hit can land. If the target was already in invulnerability frames, `Damager.hurt(..., true)` automatically treats that hit as unscaled to avoid repeatedly applying scaling during the same iframe window. Use the six-argument overload with `forceScale = true` only when the ability intentionally needs scaled damage on every rapid hit.
+
+**Scaling Options:**
+
+- Default: `Damager.hurt(source, target, 8.0F)` scales the base damage once.
+- Fixed damage: `Damager.hurt(source, target, 8.0F, false, true)` skips scaling.
+- Rapid fixed damage: `Damager.hurt(source, target, 2.0F, true, true)` bypasses iframes and skips scaling.
+- Rapid forced scaled damage: `Damager.hurt(source, target, 2.0F, true, false, true)` bypasses iframes and scales every hit.
 
 **Examples:**
 
 ```java
-// Standard single-hit attack - use default invulnerability
+// Standard single-hit attack - scaled once by Damager
 Damager.hurt(player, target, 10.0f);
 
 // Multi-hit combo - reset invulnerability for each hit
@@ -1437,6 +1531,46 @@ AbilityScheduler.scheduleRepeating(player, () -> {
 
 **Important:** Overusing `resetInvulnerability = true` can make attacks feel unfair or cause excessive damage. Use it intentionally for forms designed as rapid multi-hit attacks.
 
+#### Demon and Target Checks
+
+```java
+Damager.isDemon(entity)
+Damager.isDemonSlayer(entity)
+Damager.isHostile(target, attacker)
+Damager.isNeutral(entity)
+Damager.isAngry(entity)
+Damager.isAngry(entity, target)
+```
+
+Use `Damager.isDemon(LivingEntity)` in breathing form abilities when you need a demonized variant:
+
+```java
+float damage = Damager.isDemon(entity) ? 10.0F : 7.0F;
+String animation = Damager.isDemon(entity) ? "demonized_slash" : "sword_to_left";
+
+playEntityAnimation(entity, animation);
+Damager.hurt(entity, target, damage);
+```
+
+`isDemon()` checks demon players, base KnY demon tags, twelve kizuki tags, the `oni` NBT fallback, and addon demons registered through `DemonRegistry`.
+
+#### GuardStateHelper
+
+```java
+GuardStateHelper.setGuardState(entity, defensivePower, formId)
+GuardStateHelper.setGuardState(entity, defensivePower, formId, scale)
+GuardStateHelper.setAttackState(entity, offensiveDamage)
+GuardStateHelper.setAttackState(entity, offensiveDamage, scale)
+GuardStateHelper.enableContinuousDefense(entity)
+GuardStateHelper.clearAttackFlag(entity)
+GuardStateHelper.clearDamageValue(entity)
+GuardStateHelper.clearGuardState(entity)
+```
+
+Call `setGuardState()` when an ability starts so the base KnY clash system can use the entity's `Damage` and `guard` NBT. Call `setAttackState()` during active hit frames when the entity is attacking. Always call `clearGuardState()` when the form ends or is interrupted.
+
+The `scale` parameter controls whether the guard/attack `Damage` NBT is pre-scaled. This is separate from `Damager.hurt()`: guard values are not applied through `Damager`, so scaling them here is appropriate. Use `scale = false` when you need a fixed guard strength.
+
 #### AbilityScheduler
 ```java
 AbilityScheduler.scheduleOnce(entity, task, delayTicks)
@@ -1452,7 +1586,7 @@ KnYEffects.getColdEffect()  // Returns the Cold mob effect from base mod
 
 ## Custom Sword Slash Models
 
-The KnY Multiplayer mod supports custom 3D sword slash effects that display when using breathing forms. You can create custom slash models for your breathing style.
+The KnY Multiplayer mod supports custom 3D sword slash effects that display when using breathing forms. Addons register a sword item path to a slash model key, then provide the matching model and texture assets.
 
 ### Available Slash Models
 
@@ -1461,6 +1595,12 @@ Built-in model keys:
 - `mist` - Mist breathing slash
 - `love` - Love breathing slash
 - `sound` - Sound breathing slash
+- `water` - Animated water slash
+- `flame` - Animated flame slash
+- `flower` - Animated flower slash
+- `wind` - Random wind slash variants
+- `beast` - Random beast slash variants
+- `moon` - Moon slash
 
 ### Creating a Custom Slash Model
 
@@ -1482,82 +1622,74 @@ Create a texture for your slash:
 assets/yourmodid/textures/entity/sword_slash_yourbreathing.png
 ```
 
+Animated and random-variant textures use numbered files:
+
+```
+assets/yourmodid/textures/entity/sword_slash_yourbreathing0.png
+assets/yourmodid/textures/entity/sword_slash_yourbreathing1.png
+assets/yourmodid/textures/entity/sword_slash_yourbreathing2.png
+```
+
 Tips:
 - Use bright, saturated colors
 - Add transparency for glow effects
 - Size: 64x64 or 128x128 recommended
 
-#### Step 3: Create the Model Class
+#### Step 3: Register the Slash Mapping
 
-```java
-package com.yourmod.client.models;
-
-import com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModel;
-import net.minecraft.resources.ResourceLocation;
-
-public class YourBreathingSlashModel extends SwordSlashModel {
-
-    public YourBreathingSlashModel() {
-        super("yourbreathing");
-    }
-
-    @Override
-    public ResourceLocation getModelResource() {
-        return new ResourceLocation("yourmodid", "geo/sword_slash_yourbreathing.geo.json");
-    }
-
-    @Override
-    public ResourceLocation getTextureResource() {
-        return new ResourceLocation("yourmodid", "textures/entity/sword_slash_yourbreathing.png");
-    }
-}
-```
-
-#### Step 4: Register with the Slash Renderer
-
-Register your custom model during client setup:
+Register your model key during client setup. The API call is safe from common setup too, but only executes on the client.
 
 ```java
 @Mod.EventBusSubscriber(modid = YourMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ClientSetup {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
-        // Register custom slash model
-        SwordSlashRenderer.registerModel("yourbreathing", () -> new YourBreathingSlashModel());
+        event.enqueueWork(() -> {
+            KnYAPI.registerSlashModelNamespace("yourbreathing", YourMod.MODID);
+            KnYAPI.registerSlashModel("nichirinsword_yourbreathing", "yourbreathing");
+
+            // Optional: sequential animation through numbered textures.
+            KnYAPI.registerAnimatedSlashTexture("yourbreathing", 3, 2);
+
+            // Optional alternative: choose one numbered texture at spawn time.
+            // KnYAPI.registerRandomSlashTexture("yourbreathing", 3);
+        });
     }
 }
 ```
 
+`registerSlashModel()` takes the item path, not the full item ID. For `yourmodid:nichirinsword_yourbreathing`, pass `nichirinsword_yourbreathing`.
+
 ### Using Slash Models in Forms
 
-To render a slash effect during a breathing form:
+For multiplayer synchronization, trigger slashes from the server with one of the raw render packets. The packet attaches the slash to the source entity and applies rotation/position offsets on the client.
 
 ```java
 private static BreathingForm firstForm() {
     return new BreathingForm(
+        30001,
         "First Form: Your Attack",
         "Description",
         5,
-        (entity, level) -> {
+        (entity, level, formId) -> {
             // Play animation
             playEntityAnimation(entity, "sword_to_left");
 
-            // Render slash model (client-side only)
-            if (level.isClientSide && entity instanceof Player player) {
-                Vec3 slashPos = entity.position().add(entity.getLookAngle().scale(1.5)).add(0, 1.2, 0);
-
-                SwordSlashRenderer.render(
-                    new PoseStack(),
-                    Minecraft.getInstance().renderBuffers().bufferSource(),
-                    slashPos,
-                    entity.getYRot(),      // yaw
-                    entity.getXRot(),      // pitch
-                    0,                      // roll
-                    1.5f,                   // scale
-                    0.5f,                   // progress (0.0 to 1.0)
-                    "yourbreathing",        // model key
-                    0xF000F0               // packed light (full bright)
-                );
+            if (!level.isClientSide) {
+                ModNetworking.sendToAllClients(new RawSlashRenderPacket(
+                    "yourbreathing",       // model key
+                    0.0F,                  // slash angle
+                    180.0F,                // arc range
+                    150,                   // duration milliseconds
+                    0.0F, 0.0F, 0.0F,      // yaw, pitch, roll offsets
+                    1.0F,                  // radius scale
+                    1.0F,                  // size scale
+                    0.0F,                  // angle offset
+                    false,                 // reverse/flip horizontal
+                    entity.getUUID(),
+                    "sword_to_left",       // animation name used for bone tracking
+                    new Vec3(0.0D, 1.2D, 0.0D) // local position offset
+                ));
             }
 
             // Deal damage, spawn particles, etc.
@@ -1566,25 +1698,16 @@ private static BreathingForm firstForm() {
 }
 ```
 
-### Slash Model via Network Packet
-
-For multiplayer synchronization, use the `RawSlashRenderPacket`:
+Use the orientation-specific packets when the slash should be constrained to a horizontal or vertical arc:
 
 ```java
-// Server-side: Send slash render to all clients
-if (!level.isClientSide) {
-    Vec3 pos = entity.position().add(entity.getLookAngle().scale(1.5)).add(0, 1.2, 0);
+new RawHorizontalSlashRenderPacket(modelKey, verticalOffset, arcRange, duration,
+    yawOffset, pitchOffset, rollOffset, radiusScale, sizeScale, angleOffset,
+    reverse, entity.getUUID(), animationName, posOffset);
 
-    ModNetworking.sendToAllClients(new RawSlashRenderPacket(
-        pos.x, pos.y, pos.z,
-        entity.getYRot(),
-        entity.getXRot(),
-        0,              // roll
-        1.5f,           // scale
-        20,             // duration ticks
-        "yourbreathing" // model key
-    ));
-}
+new RawVerticalSlashRenderPacket(modelKey, verticalOffset, arcRange, duration,
+    yawOffset, pitchOffset, rollOffset, radiusScale, sizeScale, angleOffset,
+    reverse, entity.getUUID(), animationName, posOffset);
 ```
 
 ### Configuration
@@ -1604,19 +1727,100 @@ globalPitchOffset = 0.0
 globalRollOffset = 0.0
 ```
 
+## Sword Sheaths and Display Offsets
+
+Custom swords can register sheath items, sheathed display overrides, hip/back placement, and per-position transform offsets.
+
+### Registering Sheaths
+
+Register sheaths during client setup:
+
+```java
+@Mod.EventBusSubscriber(modid = YourMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+public class ClientSetup {
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            SwordSheathRegistry.registerPersistentSheath(
+                ModItems.NICHIRINSWORD_YOURBREATHING.get(),
+                ModItems.SWORD_SHEATH_YOURBREATHING.get()
+            );
+
+            // Use this for sheaths that disappear while the sword is drawn.
+            // SwordSheathRegistry.registerTemporarySheath(sword, sheath);
+
+            // Optional: render a different item model while the sword is sheathed.
+            SwordSheathRegistry.registerSheathDisplayOverride(
+                ModItems.NICHIRINSWORD_YOURBREATHING.get(),
+                ModItems.NICHIRINSWORD_YOURBREATHING_SHEATHED.get()
+            );
+        });
+    }
+}
+```
+
+- `registerPersistentSheath()` keeps the sheath visible when the sword is drawn.
+- `registerTemporarySheath()` hides the sheath while the sword is drawn.
+- `setDefaultSheath()` sets a fallback sheath for swords without a custom entry.
+
+### Sheath Model Offsets
+
+Use `SheathModelRenderer.registerSheathOffsets()` for sheath-only transforms:
+
+```java
+SheathModelRenderer.registerSheathOffsets(
+    ModItems.SWORD_SHEATH_YOURBREATHING.get(),
+    new SheathModelRenderer.SheathOffsets(
+        0.0D, 0.03D, -0.02D,  // translate X/Y/Z
+        0.0D, 0.0D, 8.0D,     // rotate X/Y/Z in degrees
+        1.05D                 // uniform scale
+    )
+);
+```
+
+`registerSheathScale()` still exists for legacy code, but `registerSheathOffsets()` is preferred because it controls translation, rotation, and scale.
+
+### Sword Display Position and Offsets
+
+Use the `KnYAPI` sword display helpers when a sword needs a custom hip/back location:
+
+```java
+KnYAPI.addSwordPositionOverride(
+    "yourmodid:nichirinsword_yourbreathing",
+    SwordDisplayConfig.SwordDisplayPosition.HIP
+);
+
+KnYAPI.registerSwordOffsets(
+    "yourmodid:nichirinsword_yourbreathing",
+    SwordDisplayConfig.SwordDisplaySlot.HIP_LEFT,
+    new SwordDisplayConfig.SwordOffsets(
+        0.02D, -0.04D, 0.0D,  // translate X/Y/Z
+        0.0D, 0.0D, -5.0D     // rotate X/Y/Z
+    )
+);
+```
+
+Use `SwordDisplaySlot.HIP_LEFT`, `HIP_RIGHT`, `BACK_LEFT`, and `BACK_RIGHT` for position-specific tuning. The legacy `KnYAPI.registerSwordOffsets(itemId, offsets)` applies one offset everywhere. Sword display scale is controlled by the shared sword display config, while sheath-only scale can be adjusted through `SheathModelRenderer.SheathOffsets`.
+
 ---
 
 ## Best Practices
 
-### 1. Always Use Scaled Damage
+### 1. Use Damager for Ability Damage
 
 ```java
-// Good - scales with player's attack damage attribute
+// Good - Damager scales once and applies KnY targeting/friendly-fire rules
+Damager.hurt(entity, target, 8.0F);
+
+// Good for non-damage guard state, where Damager is not involved
+GuardStateHelper.setGuardState(entity, 8.0F, formId);
+
+// Bad - bypasses KnY damage helpers, damage history, and custom rules
+target.hurt(level.damageSources().playerAttack(player), 8.0F);
+
+// Bad - damage is scaled before Damager scales it again
 float damage = DamageCalculator.calculateScaledDamage(entity, 8.0F);
 Damager.hurt(entity, target, damage);
-
-// Bad - fixed damage ignores equipment/effects
-target.hurt(level.damageSources().playerAttack(player), 8.0F);
 ```
 
 ### 2. Server-Side Particle Spawning
