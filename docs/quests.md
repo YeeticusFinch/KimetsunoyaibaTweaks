@@ -152,6 +152,27 @@ Tamayo: And if my research succeeds… perhaps this endless tragedy can finally 
 
 ### Mission No.3 - Tsuzumi Mansion
 
+The player(s) will venture to the nearest Tsuzumi Mansion structure.
+
+"Your Kasugai Crow has received new orders."
+"Kids are trapped in a building with demons, they need rescuing before it's too late."
+
+Step 1: Travel to Tsuzumi Mansion
+The waypoint will point to the nearest Tsuzumi Mansion structure
+
+Step 2: Talk to Teruko and Shoichi
+
+Teruko: Help! A demon has kidnapped our older brother Kiyoshi!
+Shoichi: Kiyoshi is trapped in the mansion! Please help us kind sir!
+
+Step 3: Find Kiyoshi
+Kiyoshi is hiding inside a closet in the mansion.
+
+Step 4: Defeat Kyogai 
+
+
+
+
 ### Mission No.4 - Mount Natagumo
 
 ### Mission No.5 - Rehabilitation Training
