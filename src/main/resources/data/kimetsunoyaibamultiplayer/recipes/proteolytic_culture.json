@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:vitality_culture"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:fermented_orchid"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:bone_dust"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:red_spider_lily"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:proteolytic_culture"
+  }
+}

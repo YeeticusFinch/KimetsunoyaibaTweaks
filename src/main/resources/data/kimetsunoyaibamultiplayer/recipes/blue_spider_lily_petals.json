@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:blue_spider_lily"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:blue_spider_lily_petals",
+    "count": 3
+  }
+}

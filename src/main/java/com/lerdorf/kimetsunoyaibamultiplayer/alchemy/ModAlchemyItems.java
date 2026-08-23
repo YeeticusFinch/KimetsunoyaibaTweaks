@@ -123,6 +123,7 @@ public final class ModAlchemyItems {
     public static final RegistryObject<Item> FIRE_INFUSION = registerSpecial("fire_infusion");
     public static final RegistryObject<Item> FROZEN_INFUSION = registerSpecial("frozen_infusion");
     public static final RegistryObject<Item> WISTERIA_INFUSION = registerSpecial("wisteria_infusion");
+    public static final RegistryObject<Item> WISTERIA_RESISTANCE_CURE = registerSpecial("wisteria_resistance_cure");
     public static final RegistryObject<Item> DIVISION_INHIBITION_INFUSION = registerSpecial("division_inhibition_infusion");
     public static final RegistryObject<Item> CELL_DESTRUCTION_INFUSION = registerSpecial("cell_destruction_infusion");
     public static final RegistryObject<Item> IMMOVABLE_INFUSION = registerSpecial("immovable_infusion");

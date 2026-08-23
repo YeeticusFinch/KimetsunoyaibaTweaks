@@ -161,6 +161,10 @@ public final class QuestProgressionManager {
             return;
         }
 
+        if (isCruelAsakusa(context)) {
+            QuestScenarioActions.tickAsakusaNpcPeace(player, context);
+        }
+
         step.onTick().accept(player, context);
         if (isPermanenceSlayersBlood(context)) {
             QuestScenarioActions.tickKamanueNeutrality(player, context);
@@ -329,6 +333,14 @@ public final class QuestProgressionManager {
         return "asakusa".equals(context.stage().id()) && HOUSE_TAMAYO.equals(structureId);
     }
 
+    public static boolean isCruelAsakusaActiveForPlayer(ServerPlayer player) {
+        if (!CustomProgressionConfig.isCustomProgressionEnabled() || player == null) {
+            return false;
+        }
+        QuestRuntimeContext context = getOrInitializeContext(player, MeditationMenuService.resolveRoleForProgression(player));
+        return isCruelAsakusa(context);
+    }
+
     public static boolean shouldSuppressOmenForQuestKill(ServerPlayer player, LivingEntity victim) {
         if (!CustomProgressionConfig.isCustomProgressionEnabled() || player == null || victim == null) {
             return false;
@@ -366,9 +378,8 @@ public final class QuestProgressionManager {
             && "asakusa".equals(context.stage().id())
             && "defeat_susamaru_and_yahaba".equals(context.step().id())) {
             QuestScenarioActions.resetTamayoHouseFailure(player);
-            player.getPersistentData().putInt(ACTIVE_STEP_INDEX, context.stepIndex());
-            player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, false);
-            player.sendSystemMessage(Component.literal("§cQuest Failed: §fYou were slain while defending Tamayo. Return to Tamayo's House and try again."));
+            restartCurrentQuestStageAfterDelay(player, 100);
+            player.sendSystemMessage(Component.literal("§cQuest Failed: §fYou were slain while defending Tamayo. Restarting Asakusa from the beginning."));
         }
     }
 
@@ -379,6 +390,18 @@ public final class QuestProgressionManager {
         player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, false);
         long now = player.level().getGameTime();
         player.getPersistentData().putLong(STEP_RESTART_COOLDOWN_UNTIL, now + Math.max(0, cooldownTicks));
+    }
+
+    public static RestartQuestStageResult restartCurrentQuestStageAfterDelay(ServerPlayer player, int cooldownTicks) {
+        if (player == null) {
+            return RestartQuestStageResult.forNoQuest();
+        }
+        RestartQuestStageResult result = restartCurrentQuestStage(player, MeditationMenuService.resolveRoleForProgression(player));
+        if (result.success()) {
+            long now = player.level().getGameTime();
+            player.getPersistentData().putLong(STEP_RESTART_COOLDOWN_UNTIL, now + Math.max(0, cooldownTicks));
+        }
+        return result;
     }
 
     public static void handleHumanFleshConsumed(ServerPlayer player, ItemStack stack, PlayerRole role) {
@@ -1757,6 +1780,7 @@ public final class QuestProgressionManager {
             data.remove(QuestScenarioActions.CURRENT_STRUCTURE_Z);
         } else if ("cruel".equals(context.group().id()) && "asakusa".equals(context.stage().id())) {
             clearKeysWithPrefixes(data, "KnYTamayo", "KnYSusamaru", "KnYYahaba", "KnYYushiro");
+            data.remove("KnYDoctorsRequestUnlocked");
         } else if ("permanence".equals(context.group().id()) && "first_taste_of_blood".equals(context.stage().id())) {
             data.remove(PERMANENCE_FIRST_TASTE_EATEN);
             data.remove(PERMANENCE_FIRST_TASTE_KILLS);
@@ -2216,6 +2240,12 @@ public final class QuestProgressionManager {
         return context != null
             && "cruel".equals(context.group().id())
             && "kidnappers_bog".equals(context.stage().id());
+    }
+
+    private static boolean isCruelAsakusa(QuestRuntimeContext context) {
+        return context != null
+            && "cruel".equals(context.group().id())
+            && "asakusa".equals(context.stage().id());
     }
 
     private static boolean isCruelKidnappersBogPreSatokosBow(QuestRuntimeContext context) {

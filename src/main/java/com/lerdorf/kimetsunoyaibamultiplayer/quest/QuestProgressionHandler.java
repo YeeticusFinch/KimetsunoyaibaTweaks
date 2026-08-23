@@ -13,9 +13,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -79,6 +81,21 @@ public final class QuestProgressionHandler {
 
         PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
         QuestProgressionManager.handleHumanFleshConsumed(player, event.getItem(), role);
+    }
+
+    @SubscribeEvent
+    public static void onLivingChangeTarget(LivingChangeTargetEvent event) {
+        if (!(event.getEntity() instanceof Mob mob)
+            || !(event.getNewTarget() instanceof ServerPlayer player)
+            || player.level().isClientSide()) {
+            return;
+        }
+        if (!QuestProgressionManager.isCruelAsakusaActiveForPlayer(player)
+            || !QuestScenarioActions.isAsakusaCompanionNpc(mob)) {
+            return;
+        }
+        QuestScenarioActions.clearMobTargeting(mob, player);
+        event.setCanceled(true);
     }
 
     @SubscribeEvent

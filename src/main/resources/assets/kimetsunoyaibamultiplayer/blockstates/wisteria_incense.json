@@ -1,0 +1,12 @@
+{
+  "multipart": [
+    { "when": { "burn_stage": "0" }, "apply": { "model": "kimetsunoyaibamultiplayer:block/wisteria_incense" } },
+    { "when": { "burn_stage": "1" }, "apply": { "model": "kimetsunoyaibamultiplayer:block/wisteria_incense_1" } },
+    { "when": { "burn_stage": "2" }, "apply": { "model": "kimetsunoyaibamultiplayer:block/wisteria_incense_2" } },
+    { "when": { "burn_stage": "3" }, "apply": { "model": "kimetsunoyaibamultiplayer:block/wisteria_incense_3" } },
+    { "when": { "burn_stage": "4" }, "apply": { "model": "kimetsunoyaibamultiplayer:block/wisteria_incense_4" } },
+    { "when": { "burn_stage": "5" }, "apply": { "model": "kimetsunoyaibamultiplayer:block/wisteria_incense_5" } },
+    { "when": { "burn_stage": "6" }, "apply": { "model": "kimetsunoyaibamultiplayer:block/wisteria_incense_6" } },
+    { "when": { "burn_stage": "7" }, "apply": { "model": "kimetsunoyaibamultiplayer:block/wisteria_incense_7" } }
+  ]
+}

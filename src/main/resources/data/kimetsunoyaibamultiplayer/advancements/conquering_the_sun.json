@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaibamultiplayer:blue_spider_lily"
+    },
+    "title": {
+      "translate": "advancement.kimetsunoyaibamultiplayer.conquering_the_sun.title"
+    },
+    "description": {
+      "translate": "advancement.kimetsunoyaibamultiplayer.conquering_the_sun.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "sunlight_immunity": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

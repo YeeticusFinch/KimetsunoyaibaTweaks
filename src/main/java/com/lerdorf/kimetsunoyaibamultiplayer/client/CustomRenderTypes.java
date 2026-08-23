@@ -114,19 +114,48 @@ public class CustomRenderTypes extends RenderType {
      * Use this instead of geoEntityAdditive when you need smooth alpha blending.
      */
     public static RenderType geoEntityTranslucentEmissive(ResourceLocation texture) {
+            CompositeState renderState = CompositeState.builder()
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER) // Emissive shader for glow
+                            .setTextureState(new TextureStateShard(texture, false, false)) // Texture
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY) // TRANSLUCENT BLENDING - proper alpha support
+                            .setLightmapState(LIGHTMAP) // Use lightmap
+                            .setOverlayState(OVERLAY) // Required for entity format
+                            .setCullState(NO_CULL) // Don't cull faces
+                            .setWriteMaskState(COLOR_DEPTH_WRITE) // Write both color and depth for proper sorting
+                            .setOutputState(TRANSLUCENT_TARGET) // Render to translucent target
+                            .createCompositeState(true); // Affects outline
+
+            return create(
+                            "geo_entity_translucent_emissive",
+                            DefaultVertexFormat.NEW_ENTITY,
+                            VertexFormat.Mode.QUADS,
+                            256,
+                            true,
+                            true,
+                            renderState);
+    }
+    
+    public static RenderType geoEntityTranslucentFullbright(ResourceLocation texture) {
         CompositeState renderState = CompositeState.builder()
-                .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER) // Emissive shader for glow
-                .setTextureState(new TextureStateShard(texture, false, false)) // Texture
-                .setTransparencyState(TRANSLUCENT_TRANSPARENCY) // TRANSLUCENT BLENDING - proper alpha support
-                .setLightmapState(LIGHTMAP) // Use lightmap
-                .setOverlayState(OVERLAY) // Required for entity format
-                .setCullState(NO_CULL) // Don't cull faces
-                .setWriteMaskState(COLOR_DEPTH_WRITE) // Write both color and depth for proper sorting
-                .setOutputState(TRANSLUCENT_TARGET) // Render to translucent target
-                .createCompositeState(true); // Affects outline
+                // IMPORTANT:
+                // Use the ordinary entity translucent shader.
+                // Iris/Oculus knows how to substitute this path.
+                .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+
+                .setTextureState(new TextureStateShard(texture, false, false))
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                .setLightmapState(LIGHTMAP)
+                .setOverlayState(OVERLAY)
+                .setCullState(NO_CULL)
+
+                // Keep this if you need the overlay itself to write depth.
+                .setWriteMaskState(COLOR_DEPTH_WRITE)
+
+                .setOutputState(TRANSLUCENT_TARGET)
+                .createCompositeState(true);
 
         return create(
-                "geo_entity_translucent_emissive",
+                "geo_entity_translucent_fullbright",
                 DefaultVertexFormat.NEW_ENTITY,
                 VertexFormat.Mode.QUADS,
                 256,
@@ -134,5 +163,5 @@ public class CustomRenderTypes extends RenderType {
                 true,
                 renderState
         );
-    }
+        }
 }

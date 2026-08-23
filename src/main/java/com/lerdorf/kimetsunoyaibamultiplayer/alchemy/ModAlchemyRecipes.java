@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.UnwaxSpiderLilyRecipe;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.WaxSpiderLilyRecipe;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.SakeRecipe;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.TippedKunaiRecipe;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -38,6 +39,9 @@ public final class ModAlchemyRecipes {
 
     public static final RegistryObject<RecipeSerializer<SakeRecipe>> SAKE_SERIALIZER =
         RECIPE_SERIALIZERS.register("sake", () -> new SimpleCraftingRecipeSerializer<>(SakeRecipe::new));
+
+    public static final RegistryObject<RecipeSerializer<TippedKunaiRecipe>> TIPPED_KUNAI_SERIALIZER =
+        RECIPE_SERIALIZERS.register("tipped_kunai", () -> new SimpleCraftingRecipeSerializer<>(TippedKunaiRecipe::new));
 
     public static final RecipeType<AlchemyTableRecipe> ALCHEMY_TABLE_TYPE = createType("alchemy_table");
     public static final RecipeType<MicroscopeRecipe> MICROSCOPE_TYPE = createType("microscope");

@@ -8,6 +8,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyBlocks;
 import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyRecipes;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
@@ -136,6 +137,26 @@ public class AlchemyJeiPlugin implements IModPlugin {
         addInfusion(recipes, "kimetsunoyaibamultiplayer:exorcistic_culture", "kimetsunoyaibamultiplayer:division_inhibition_infusion");
         addInfusion(recipes, "kimetsunoyaibamultiplayer:proteolytic_culture", "kimetsunoyaibamultiplayer:cell_destruction_infusion");
         addInfusion(recipes, "kimetsunoyaibamultiplayer:neurotoxic_culture", "kimetsunoyaibamultiplayer:immovable_infusion");
+        recipes.add(new AlchemyBrewingJeiRecipe(
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:vitality_culture"),
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:wisteria_infusion"),
+            wisteriaResistanceCure(WisteriaResistanceHelper.DEFAULT_DURATION_SECONDS, WisteriaResistanceHelper.DEFAULT_AMPLIFIER)
+        ));
+        recipes.add(new AlchemyBrewingJeiRecipe(
+            BloodDemonArtAlchemyCatalog.stack("minecraft:glowstone_dust"),
+            wisteriaResistanceCure(WisteriaResistanceHelper.DEFAULT_DURATION_SECONDS, WisteriaResistanceHelper.DEFAULT_AMPLIFIER),
+            wisteriaResistanceCure(WisteriaResistanceHelper.DEFAULT_DURATION_SECONDS, WisteriaResistanceHelper.DEFAULT_AMPLIFIER + 1)
+        ));
+        recipes.add(new AlchemyBrewingJeiRecipe(
+            BloodDemonArtAlchemyCatalog.stack("minecraft:glowstone_dust"),
+            wisteriaResistanceCure(WisteriaResistanceHelper.DEFAULT_DURATION_SECONDS, WisteriaResistanceHelper.DEFAULT_AMPLIFIER + 1),
+            wisteriaResistanceCure(WisteriaResistanceHelper.DEFAULT_DURATION_SECONDS, WisteriaResistanceHelper.MAX_AMPLIFIER)
+        ));
+        recipes.add(new AlchemyBrewingJeiRecipe(
+            BloodDemonArtAlchemyCatalog.stack("minecraft:redstone"),
+            wisteriaResistanceCure(WisteriaResistanceHelper.DEFAULT_DURATION_SECONDS, WisteriaResistanceHelper.DEFAULT_AMPLIFIER),
+            wisteriaResistanceCure(WisteriaResistanceHelper.EXTENDED_DURATION_SECONDS, WisteriaResistanceHelper.DEFAULT_AMPLIFIER)
+        ));
 
         for (BloodDemonArtAlchemyCatalog.CatalystDefinition definition : BloodDemonArtAlchemyCatalog.baseCatalystDefinitions()) {
             recipes.add(new AlchemyBrewingJeiRecipe(
@@ -159,5 +180,13 @@ public class AlchemyJeiPlugin implements IModPlugin {
             BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:botanical_vial"),
             BloodDemonArtAlchemyCatalog.stack(outputId)
         ));
+    }
+
+    private static ItemStack wisteriaResistanceCure(int durationSeconds, int amplifier) {
+        return BloodDemonArtAlchemyCatalog.withInfusionProperties(
+            BloodDemonArtAlchemyCatalog.stack("kimetsunoyaibamultiplayer:wisteria_resistance_cure"),
+            durationSeconds,
+            amplifier
+        );
     }
 }

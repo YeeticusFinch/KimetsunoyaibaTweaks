@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.alchemy;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.customdemonart.CustomBloodDemonArtSavedData;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
@@ -31,6 +32,8 @@ public final class BloodDemonArtAlchemyCatalog {
     private static final int OROCHI_ELIXIR_RING_TINT = 0x4A1D6F;
     private static final int LEGENDARY_MEDICINE_RING_TINT = 0xB10F1A;
     private static final String POTENCY_KEY = "Potency";
+    private static final String INFUSION_DURATION_SECONDS_KEY = "InfusionDurationSeconds";
+    private static final String INFUSION_AMPLIFIER_KEY = "InfusionAmplifier";
 
     private static final Map<String, Integer> ITEM_TINTS = Map.ofEntries(
         Map.entry("kimetsunoyaibamultiplayer:minced_human_flesh", 0xA64242),
@@ -126,6 +129,7 @@ public final class BloodDemonArtAlchemyCatalog {
         Map.entry("kimetsunoyaibamultiplayer:fire_infusion", 0xF26A18),
         Map.entry("kimetsunoyaibamultiplayer:frozen_infusion", 0xC4E7F2),
         Map.entry("kimetsunoyaibamultiplayer:wisteria_infusion", 0xB062D8),
+        Map.entry("kimetsunoyaibamultiplayer:wisteria_resistance_cure", 0xC88AF0),
         Map.entry("kimetsunoyaibamultiplayer:division_inhibition_infusion", 0x9D78D5),
         Map.entry("kimetsunoyaibamultiplayer:cell_destruction_infusion", 0xE45C84),
         Map.entry("kimetsunoyaibamultiplayer:immovable_infusion", 0xE4E2CB),
@@ -204,6 +208,13 @@ public final class BloodDemonArtAlchemyCatalog {
         new InfusionDefinition("kimetsunoyaibamultiplayer:blaze_extract", "kimetsunoyaibamultiplayer:fire_infusion", FIRE_INFUSION_EFFECT_ID, 8, 1),
         new InfusionDefinition("kimetsunoyaibamultiplayer:powdered_snow_extract", "kimetsunoyaibamultiplayer:frozen_infusion", FROZEN_INFUSION_EFFECT_ID, 8, 1),
         new InfusionDefinition("kimetsunoyaibamultiplayer:wisteria_extract", "kimetsunoyaibamultiplayer:wisteria_infusion", "kimetsunoyaiba:wisteriapoison", 8, 1),
+        new InfusionDefinition(
+            "kimetsunoyaibamultiplayer:vitality_culture",
+            "kimetsunoyaibamultiplayer:wisteria_resistance_cure",
+            "kimetsunoyaibamultiplayer:wisteria_resistance",
+            WisteriaResistanceHelper.DEFAULT_DURATION_SECONDS,
+            WisteriaResistanceHelper.DEFAULT_AMPLIFIER
+        ),
         new InfusionDefinition("kimetsunoyaibamultiplayer:exorcistic_culture", "kimetsunoyaibamultiplayer:division_inhibition_infusion", "kimetsunoyaiba:regeneration_inhibition", 8, 1),
         new InfusionDefinition("kimetsunoyaibamultiplayer:proteolytic_culture", "kimetsunoyaibamultiplayer:cell_destruction_infusion", "kimetsunoyaiba:cell_destruction", 8, 1),
         new InfusionDefinition("kimetsunoyaibamultiplayer:neurotoxic_culture", "kimetsunoyaibamultiplayer:immovable_infusion", "kimetsunoyaiba:immvable", 8, 1)
@@ -504,6 +515,14 @@ public final class BloodDemonArtAlchemyCatalog {
         return stack;
     }
 
+    public static ItemStack withInfusionProperties(ItemStack stack, int durationSeconds, int amplifier) {
+        if (!stack.isEmpty()) {
+            stack.getOrCreateTag().putInt(INFUSION_DURATION_SECONDS_KEY, Math.max(1, durationSeconds));
+            stack.getOrCreateTag().putInt(INFUSION_AMPLIFIER_KEY, Math.max(0, amplifier));
+        }
+        return stack;
+    }
+
     public static int potency(ItemStack stack) {
         return stack.hasTag() ? Math.max(0, stack.getTag().getInt(POTENCY_KEY)) : 0;
     }
@@ -604,6 +623,9 @@ public final class BloodDemonArtAlchemyCatalog {
     }
 
     public static int infusionDurationSeconds(ItemStack stack) {
+        if (stack.hasTag() && stack.getTag().contains(INFUSION_DURATION_SECONDS_KEY)) {
+            return Math.max(1, stack.getTag().getInt(INFUSION_DURATION_SECONDS_KEY));
+        }
         String id = id(stack);
         for (InfusionDefinition definition : INFUSIONS) {
             if (definition.outputId().equals(id)) {
@@ -614,6 +636,9 @@ public final class BloodDemonArtAlchemyCatalog {
     }
 
     public static int infusionAmplifier(ItemStack stack) {
+        if (stack.hasTag() && stack.getTag().contains(INFUSION_AMPLIFIER_KEY)) {
+            return Math.max(0, stack.getTag().getInt(INFUSION_AMPLIFIER_KEY));
+        }
         String id = id(stack);
         for (InfusionDefinition definition : INFUSIONS) {
             if (definition.outputId().equals(id)) {

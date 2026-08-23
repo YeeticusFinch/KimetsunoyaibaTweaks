@@ -2,6 +2,9 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.DemonRankingConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.demonranking.DemonRank;
+import com.lerdorf.kimetsunoyaibamultiplayer.demonranking.DemonRankingSavedData;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonEyesSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.DemonEyesHelper;
@@ -56,7 +59,8 @@ public final class DemonEyesSyncHandler {
         boolean demon = Damager.isDemon(player);
         int eyesIndex = DemonEyesHelper.getOrCreateIndex(player);
         int hue = DemonEyesHelper.getHue(player);
-        SyncedDemonEyesState current = new SyncedDemonEyesState(demon, eyesIndex, hue);
+        int rankTier = getRankTier(player);
+        SyncedDemonEyesState current = new SyncedDemonEyesState(demon, eyesIndex, hue, rankTier);
         SyncedDemonEyesState previous = LAST_SYNCED_STATE.put(player.getUUID(), current);
         if (!current.equals(previous)) {
             broadcastState(player);
@@ -70,7 +74,7 @@ public final class DemonEyesSyncHandler {
 
     public static void broadcastState(ServerPlayer player) {
         DemonEyesSyncPacket packet = createPacket(player);
-        LAST_SYNCED_STATE.put(player.getUUID(), new SyncedDemonEyesState(packet.isDemon(), packet.getEyesIndex(), packet.getHue()));
+        LAST_SYNCED_STATE.put(player.getUUID(), new SyncedDemonEyesState(packet.isDemon(), packet.getEyesIndex(), packet.getHue(), packet.getRankTier()));
         ModNetworking.sendToAllClients(packet);
     }
 
@@ -84,9 +88,18 @@ public final class DemonEyesSyncHandler {
         boolean demon = Damager.isDemon(player);
         int eyesIndex = DemonEyesHelper.getOrCreateIndex(player);
         int hue = DemonEyesHelper.getHue(player);
-        return new DemonEyesSyncPacket(player.getUUID(), demon, eyesIndex, hue);
+        int rankTier = getRankTier(player);
+        return new DemonEyesSyncPacket(player.getUUID(), demon, eyesIndex, hue, rankTier);
     }
 
-    private record SyncedDemonEyesState(boolean demon, int eyesIndex, int hue) {
+    private static int getRankTier(ServerPlayer player) {
+        if (!DemonRankingConfig.isEnabled()) {
+            return -1;
+        }
+        DemonRank rank = DemonRankingSavedData.get(player.serverLevel()).getRankOf(player.getUUID());
+        return rank == null ? -1 : rank.tier();
+    }
+
+    private record SyncedDemonEyesState(boolean demon, int eyesIndex, int hue, int rankTier) {
     }
 }

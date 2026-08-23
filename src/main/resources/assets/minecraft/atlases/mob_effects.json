@@ -19,6 +19,11 @@
       "type": "single",
       "resource": "kimetsunoyaibamultiplayer:mob_effect/courage",
       "sprite": "kimetsunoyaibamultiplayer:courage"
+    },
+    {
+      "type": "single",
+      "resource": "kimetsunoyaibamultiplayer:mob_effect/wisteria_resistance",
+      "sprite": "kimetsunoyaibamultiplayer:wisteria_resistance"
     }
   ]
 }

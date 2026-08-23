@@ -1,0 +1,12 @@
+{
+  "type": "kimetsunoyaibamultiplayer:microscope",
+  "lens": {
+    "item": "kimetsunoyaibamultiplayer:amethyst_lens"
+  },
+  "sample": {
+    "item": "kimetsunoyaibamultiplayer:unidentified_rainbow_lily_culture"
+  },
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:withered_spider_lily_culture"
+  }
+}

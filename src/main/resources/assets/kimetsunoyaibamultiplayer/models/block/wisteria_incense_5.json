@@ -1,0 +1,7 @@
+{
+  "parent": "kimetsunoyaibamultiplayer:block/wisteria_incense",
+  "textures": {
+    "0": "kimetsunoyaibamultiplayer:block/wisteria_incense_5",
+    "particle": "kimetsunoyaibamultiplayer:block/wisteria_incense_5"
+  }
+}

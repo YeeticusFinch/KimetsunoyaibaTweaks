@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "minecraft:cherry_grove",
+  "features": "kimetsunoyaibamultiplayer:spider_lily_patch",
+  "step": "vegetal_decoration"
+}

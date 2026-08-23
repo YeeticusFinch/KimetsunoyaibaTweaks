@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.biome;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -102,7 +103,7 @@ public class WisteriaForestProtectionHandler {
         }
 
         // Check if the attacker is a demon
-        if (!EntityTagHelper.isDemon(entity)) {
+        if (!EntityTagHelper.isDemon(entity) || WisteriaResistanceHelper.hasResistance(entity)) {
             return;
         }
 
@@ -145,7 +146,7 @@ public class WisteriaForestProtectionHandler {
         }
 
         // Check if in any wisteria forest
-        if (isInWisteriaForest(mob)) {
+        if (isInWisteriaForest(mob) && !WisteriaResistanceHelper.hasResistance(mob)) {
             // Despawn immediately
             mob.discard();
 
@@ -194,7 +195,7 @@ public class WisteriaForestProtectionHandler {
         // Check if this is a twelve kizuki demon
         if (!EntityTagHelper.isTwelveKizuki(mob)) {
             // For regular demons, just check if they're in any wisteria forest and clear their target
-            if (EntityTagHelper.isDemon(mob) && isInWisteriaForest(mob)) {
+            if (EntityTagHelper.isDemon(mob) && isInWisteriaForest(mob) && !WisteriaResistanceHelper.hasResistance(mob)) {
                 // Clear target and make them flee
                 if (mob.getTarget() != null) {
                     mob.setTarget(null);
@@ -204,7 +205,7 @@ public class WisteriaForestProtectionHandler {
         }
 
         // Check if in any wisteria forest
-        if (isInWisteriaForest(mob)) {
+        if (isInWisteriaForest(mob) && !WisteriaResistanceHelper.hasResistance(mob)) {
             // Despawn immediately
             mob.discard();
 

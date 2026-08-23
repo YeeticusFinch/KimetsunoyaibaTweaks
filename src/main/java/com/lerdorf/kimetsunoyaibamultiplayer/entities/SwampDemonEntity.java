@@ -313,10 +313,12 @@ public class SwampDemonEntity extends AbstractDemonEntity {
             clone.setSplitClone(true);
             String questTarget = this.getPersistentData().getString(
                 com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG);
-            if (!questTarget.isBlank()) {
+            if (com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.shouldPropagateQuestTargetToSwampDemonClone(questTarget)) {
                 clone.getPersistentData().putString(
                     com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.QUEST_TARGET_ID_TAG,
                     questTarget);
+            }
+            if (!questTarget.isBlank()) {
                 clone.getPersistentData().putBoolean(
                     com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions.KIDNAPPERS_BOG_QUEST_SWAMP_CLONE_TAG,
                     true);

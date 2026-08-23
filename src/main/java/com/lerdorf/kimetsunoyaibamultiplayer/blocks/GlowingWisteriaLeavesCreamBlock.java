@@ -75,6 +75,11 @@ public class GlowingWisteriaLeavesCreamBlock extends LeavesBlock {
      * Apply debilitating effects to nearby demons (no damage)
      */
     private void scareNearbyMonsters(Level level, BlockPos pos) {
+        if (level != null) {
+            com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaRepellentHelper.applyBlockAura(level, pos);
+            return;
+        }
+
         // Define search area (6 blocks in all directions)
         AABB searchBox = new AABB(pos).inflate(6.0);
 
@@ -98,15 +103,15 @@ public class GlowingWisteriaLeavesCreamBlock extends LeavesBlock {
             // Apply effects based on distance (NO DAMAGE)
             if (distance < 3.0) {
                 // Very close: Extreme slowness and poison
-                demon.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 9, false, false)); // Extreme slowness
+                com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper.addMovementSlowdownUnlessResistant(demon, 100, 9, false, false); // Extreme slowness
                 if (wisteriaPoison != null) {
-                    demon.addEffect(new MobEffectInstance(wisteriaPoison, 100, 4, false, false)); // Strong poison
+                    com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper.addWisteriaPoisonEffect(demon, 100, 4, false, true, true); // Strong poison
                 }
             } else if (distance < 6.0) {
                 // Medium range: Heavy slowness and moderate poison
-                demon.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 4, false, false)); // Heavy slowness
+                com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper.addMovementSlowdownUnlessResistant(demon, 100, 4, false, false); // Heavy slowness
                 if (wisteriaPoison != null) {
-                    demon.addEffect(new MobEffectInstance(wisteriaPoison, 100, 2, false, false)); // Moderate poison
+                    com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper.addWisteriaPoisonEffect(demon, 100, 2, false, true, true); // Moderate poison
                 }
             }
         }
@@ -122,14 +127,19 @@ public class GlowingWisteriaLeavesCreamBlock extends LeavesBlock {
 
         // If a demon touches the leaves directly, apply extreme debuffs (includes players turned into demons)
         if (entity instanceof LivingEntity living && com.lerdorf.kimetsunoyaibamultiplayer.Damager.isDemon(living)) {
+            if (level != null) {
+                com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaRepellentHelper.applyEffectsFromSource(level, pos, living, com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaRepellentHelper.AURA_DURATION_TICKS);
+                return;
+            }
+
             // Get wisteria poison effect from KnY mod
             net.minecraft.world.effect.MobEffect wisteriaPoison =
                 com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects.getWisteriaPoisonEffect();
 
             // Apply maximum slowness and strong poison (10 seconds) - NO DAMAGE
-            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 9, false, false)); // Maximum slowness
+            com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper.addMovementSlowdownUnlessResistant(living, 200, 9, false, false); // Maximum slowness
             if (wisteriaPoison != null) {
-                living.addEffect(new MobEffectInstance(wisteriaPoison, 200, 5, false, false)); // Very strong poison
+                com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper.addWisteriaPoisonEffect(living, 200, 5, false, true, true); // Very strong poison
             }
         }
     }

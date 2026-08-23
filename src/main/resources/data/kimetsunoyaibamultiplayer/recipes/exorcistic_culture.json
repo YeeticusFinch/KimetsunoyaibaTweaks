@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:herbal_culture"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:wisteria_sapling_pink"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:wisteria_sapling_cyan"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:wisteria_sapling_lavender"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:wisteria_sapling_cream"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:exorcistic_culture"
+  }
+}

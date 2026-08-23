@@ -171,34 +171,28 @@ public class WisteriaPetalsBlock extends Block implements BonemealableBlock {
 
         // If a demon touches the petals, damage and debuff them (includes players turned into demons)
         if (entity instanceof LivingEntity living && com.lerdorf.kimetsunoyaibamultiplayer.Damager.isDemon(living)) {
-            // Deal 1.5 hearts of damage (3.0) every second (20 ticks)
-            if (level.getGameTime() % 20 == 0) {
-                living.hurt(level.damageSources().magic(), 3.0f);
+            boolean sourceInForest = com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaRepellentHelper.isInWisteriaForest(level, pos);
+
+            com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaRepellentHelper.applyPetalDamage(level, pos, living);
+
+            com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaRepellentHelper.applyEffectsFromSource(
+                level,
+                pos,
+                living,
+                com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaRepellentHelper.AURA_DURATION_TICKS
+            );
+
+            if (!sourceInForest
+                || !living.position().closerThan(net.minecraft.world.phys.Vec3.atCenterOf(pos), com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaRepellentHelper.pushRange(level, pos))
+                || com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper.hasResistance(living)) {
+                return;
             }
-
-            // Get wisteria poison effect from KnY mod
-            net.minecraft.world.effect.MobEffect wisteriaPoison =
-                com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects.getWisteriaPoisonEffect();
-
-            // Apply fear effects (8 seconds)
-            living.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 160, 1, false, false));
-            living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 160, 1, false, false));
-            if (wisteriaPoison != null) {
-                living.addEffect(new MobEffectInstance(wisteriaPoison, 160, 1, false, false));
-            }
-
-            // Push demon away from petals
-            double dx = living.getX() - (pos.getX() + 0.5);
-            double dz = living.getZ() - (pos.getZ() + 0.5);
-            double distance = Math.sqrt(dx * dx + dz * dz);
-
-            if (distance > 0 && distance < 2) {
-                double pushStrength = 0.25;
-                double normalizedX = dx / distance;
-                double normalizedZ = dz / distance;
-
-                living.push(normalizedX * pushStrength, 0.1, normalizedZ * pushStrength);
-            }
+            com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaRepellentHelper.pushAwayFromSource(
+                living,
+                net.minecraft.world.phys.Vec3.atCenterOf(pos),
+                0.25D,
+                0.1D
+            );
         }
     }
 

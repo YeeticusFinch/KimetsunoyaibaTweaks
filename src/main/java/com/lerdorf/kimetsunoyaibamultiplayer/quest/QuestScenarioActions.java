@@ -72,6 +72,9 @@ public final class QuestScenarioActions {
     public static final String TAMAYO_HOUSE_ROTATION = "KnYTamayoHouseRotation";
     private static final String TAMAYO_HOUSE_TEST_ACTIVE = "KnYTamayoHouseTestActive";
     private static final String TAMAYO_HOUSE_TEST_END_TICK = "KnYTamayoHouseTestEndTick";
+    private static final String TAMAYO_MEDICINE_DIALOGUE_STARTED = "KnYTamayoMedicineDialogueStarted";
+    private static final String TAMAYO_MEDICINE_DIALOGUE_START_TICK = "KnYTamayoMedicineDialogueStartTick";
+    private static final long TAMAYO_MEDICINE_DIALOGUE_COMPLETE_TICKS = 55L * 8L + 10L;
     private static final String BASE_MOD_NAMESPACE = "kimetsunoyaiba";
     private static final String MOD_NAMESPACE = "kimetsunoyaibamultiplayer";
 
@@ -1120,6 +1123,23 @@ public final class QuestScenarioActions {
             && KIDNAPPERS_BOG_SATOKO_SWAMP_DEMON_TARGET.equals(entity.getPersistentData().getString(QUEST_TARGET_ID_TAG));
     }
 
+    public static boolean shouldPropagateQuestTargetToSwampDemonClone(String targetKey) {
+        return KIDNAPPERS_BOG_MAIN_SWAMP_DEMON_TARGET.equals(targetKey);
+    }
+
+    public static boolean isKidnappersBogMainSwampDemonAliveNear(ServerPlayer player, Entity center, double radius) {
+        if (!(player.level() instanceof ServerLevel serverLevel) || center == null) {
+            return false;
+        }
+        AABB searchArea = new AABB(center.blockPosition()).inflate(radius);
+        List<SwampDemonEntity> demons = serverLevel.getEntitiesOfClass(
+            SwampDemonEntity.class,
+            searchArea,
+            demon -> demon.isAlive() && isKidnappersBogMainSwampDemon(demon)
+        );
+        return !demons.isEmpty();
+    }
+
     private static boolean isKidnappersBogQuestSwampDemon(Entity entity) {
         return isKidnappersBogMainSwampDemon(entity)
             || isKidnappersBogSatokoSwampDemon(entity)
@@ -1469,6 +1489,7 @@ public final class QuestScenarioActions {
         ensureTamayoHouseNpc(player, "yushiro", YUSHIRO_ID, getTamayoHousePoint(player, TamayoHousePoint.RECEPTION));
         moveTamayoHouseNpc(player, "tamayo", getTamayoHousePoint(player, TamayoHousePoint.RECEPTION), "KnYTamayoReceptionStartTick", 6.0D);
         moveTamayoHouseNpc(player, "yushiro", getTamayoHousePoint(player, TamayoHousePoint.RECEPTION), "KnYYushiroReceptionStartTick", 6.0D);
+        tickAsakusaNpcPeace(player, context);
     }
 
     public static boolean isTamayoReceptionReady(ServerPlayer player, QuestRuntimeContext context) {
@@ -1496,6 +1517,7 @@ public final class QuestScenarioActions {
         BlockPos target = getTamayoHousePoint(player, TamayoHousePoint.BASEMENT);
         moveTamayoHouseNpc(player, "tamayo", target, "KnYTamayoBasementStartTick", 3.0D);
         moveTamayoHouseNpc(player, "yushiro", target, "KnYYushiroBasementStartTick", 3.0D);
+        tickAsakusaNpcPeace(player, context);
     }
 
     public static boolean isTamayoBasementReady(ServerPlayer player, QuestRuntimeContext context) {
@@ -1507,7 +1529,16 @@ public final class QuestScenarioActions {
     }
 
     public static void sendTamayoBasementDialogue(ServerPlayer player, QuestRuntimeContext context) {
-        player.getPersistentData().putBoolean("KnYDoctorsRequestUnlocked", true);
+        startTamayoMedicineDialogue(player, context);
+    }
+
+    public static void startTamayoMedicineDialogue(ServerPlayer player, QuestRuntimeContext context) {
+        if (!(player.level() instanceof ServerLevel serverLevel)
+            || player.getPersistentData().getBoolean(TAMAYO_MEDICINE_DIALOGUE_STARTED)) {
+            return;
+        }
+        player.getPersistentData().putBoolean(TAMAYO_MEDICINE_DIALOGUE_STARTED, true);
+        player.getPersistentData().putLong(TAMAYO_MEDICINE_DIALOGUE_START_TICK, serverLevel.getGameTime());
         sendDelayedMessages(player, List.of(
             Component.literal("§d[Tamayo] §fNot all demons desire violence."),
             Component.literal("§d[Tamayo] §fSome of us struggle endlessly against Muzan Kibutsuji's influence."),
@@ -1517,9 +1548,25 @@ public final class QuestScenarioActions {
             Component.literal("§5[Yushiro] §fUnlike the Demon Slayers, she actually seeks a permanent solution."),
             Component.literal("§d[Tamayo] §fHowever... ordinary demon blood is not enough."),
             Component.literal("§d[Tamayo] §fThe Twelve Kizuki possess blood far closer to Muzan's own."),
-            Component.literal("§d[Tamayo] §fIf samples from the Kizuki can be obtained... my research may finally progress."),
-            Component.literal("§bSide Quest Unlocked: §fDoctor's Request")
+            Component.literal("§d[Tamayo] §fIf samples from the Kizuki can be obtained... my research may finally progress.")
         ), 55);
+    }
+
+    public static boolean isTamayoMedicineDialogueComplete(ServerPlayer player, QuestRuntimeContext context) {
+        if (!(player.level() instanceof ServerLevel serverLevel)
+            || !player.getPersistentData().getBoolean(TAMAYO_MEDICINE_DIALOGUE_STARTED)) {
+            return false;
+        }
+        long startedAt = player.getPersistentData().getLong(TAMAYO_MEDICINE_DIALOGUE_START_TICK);
+        return startedAt > 0L && serverLevel.getGameTime() >= startedAt + TAMAYO_MEDICINE_DIALOGUE_COMPLETE_TICKS;
+    }
+
+    public static void completeTamayoMedicineDialogue(ServerPlayer player, QuestRuntimeContext context) {
+        player.getPersistentData().putBoolean("KnYDoctorsRequestUnlocked", true);
+        player.getPersistentData().remove(TAMAYO_MEDICINE_DIALOGUE_STARTED);
+        player.getPersistentData().remove(TAMAYO_MEDICINE_DIALOGUE_START_TICK);
+        player.sendSystemMessage(Component.literal("§bSide Quest Unlocked: §fDoctor's Request"));
+        sendTamayoAmbushPrelude(player, context);
     }
 
     public static void sendTamayoAmbushPrelude(ServerPlayer player, QuestRuntimeContext context) {
@@ -1534,6 +1581,7 @@ public final class QuestScenarioActions {
         BlockPos target = getTamayoHousePoint(player, TamayoHousePoint.RECEPTION);
         moveTamayoHouseNpc(player, "tamayo", target, "KnYTamayoReturnStartTick", 3.0D);
         moveTamayoHouseNpc(player, "yushiro", target, "KnYYushiroReturnStartTick", 3.0D);
+        tickAsakusaNpcPeace(player, context);
     }
 
     public static boolean isTamayoReturnReady(ServerPlayer player, QuestRuntimeContext context) {
@@ -1559,12 +1607,13 @@ public final class QuestScenarioActions {
     }
 
     public static void tickSusamaruYahabaAttack(ServerPlayer player, QuestRuntimeContext context) {
+        ensureTamayoAndYushiroAtReception(player, context);
         spawnSusamaruAndYahaba(player, context);
         if (!isTamayoAliveNearHouse(player)) {
-            player.sendSystemMessage(Component.literal("§cQuest Failed: §fTamayo was slain. Return to Tamayo's House and try again."));
+            player.sendSystemMessage(Component.literal("§cQuest Failed: §fTamayo was slain. Restarting Asakusa from the beginning."));
             resetTamayoHouseFailure(player);
             resetSusamaruYahabaAttack(player, context);
-            QuestProgressionManager.scheduleCurrentStepRestart(player, 100);
+            QuestProgressionManager.restartCurrentQuestStageAfterDelay(player, 100);
         }
     }
 
@@ -1663,6 +1712,19 @@ public final class QuestScenarioActions {
         return getCurrentStructureLocalPosition(player);
     }
 
+    public static BlockPos findNearestTamayoHousePoint(ServerPlayer player, TamayoHousePoint point) {
+        if (!(player.level() instanceof ServerLevel serverLevel) || point == null) {
+            return null;
+        }
+        BlockPos anchor = findTamayoHouseAnchor(serverLevel, player.blockPosition());
+        if (anchor == null) {
+            return null;
+        }
+        int rotation = inferTamayoHouseRotation(serverLevel, anchor);
+        int[] rotated = rotateOffset(point.offsetX, point.offsetZ, rotation);
+        return new BlockPos(anchor.getX() + rotated[0], anchor.getY() + point.offsetY, anchor.getZ() + rotated[1]);
+    }
+
     public static BlockPos getCurrentStructureLocalPosition(ServerPlayer player) {
         if (!(player.level() instanceof ServerLevel serverLevel)) {
             return null;
@@ -1736,6 +1798,11 @@ public final class QuestScenarioActions {
     }
 
     private static BlockPos findTamayoHouseAnchor(ServerLevel serverLevel, BlockPos origin) {
+        StructureLocalContext current = findCurrentStructureLocalContext(serverLevel, origin);
+        if (current != null && TAMAYO_HOUSE.equals(current.structureId)) {
+            return current.anchor;
+        }
+
         StructureLocalContext context = StructureLocationCache.getStructureAt(serverLevel, origin)
             .filter(cached -> TAMAYO_HOUSE.equals(cached.structureId))
             .map(cached -> new StructureLocalContext(
@@ -1884,6 +1951,7 @@ public final class QuestScenarioActions {
         if (existing != null) {
             existing.getPersistentData().putString(QUEST_NPC_ID_TAG, npcKey);
             makePersistent(existing);
+            pacifyTamayoHouseNpc(existing);
             return;
         }
 
@@ -1899,6 +1967,7 @@ public final class QuestScenarioActions {
         entity.getPersistentData().putString(QUEST_NPC_ID_TAG, npcKey);
         entity.setPos(fallbackPos.getX() + 0.5D, fallbackPos.getY(), fallbackPos.getZ() + 0.5D);
         makePersistent(entity);
+        pacifyTamayoHouseNpc(entity);
         serverLevel.addFreshEntity(entity);
     }
 
@@ -1941,13 +2010,14 @@ public final class QuestScenarioActions {
         if (npc == null) {
             return;
         }
+        pacifyTamayoHouseNpc(npc);
 
         if (!player.getPersistentData().contains(startTickKey)) {
             player.getPersistentData().putLong(startTickKey, serverLevel.getGameTime());
         }
 
-        double maxDistanceSqr = teleportDistance * teleportDistance;
-        if (npc.blockPosition().distSqr(target) <= maxDistanceSqr) {
+        double arrivalDistance = Math.min(teleportDistance, 1.5D);
+        if (npc.blockPosition().distSqr(target) <= arrivalDistance * arrivalDistance) {
             return;
         }
 
@@ -1960,6 +2030,63 @@ public final class QuestScenarioActions {
         if (npc instanceof Mob mob) {
             mob.setNoAi(false);
             mob.getNavigation().moveTo(target.getX() + 0.5D, target.getY(), target.getZ() + 0.5D, 1.15D);
+        }
+    }
+
+    public static void tickAsakusaNpcPeace(ServerPlayer player, QuestRuntimeContext context) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        BlockPos anchor = getStoredTamayoHouseAnchor(player);
+        if (anchor == null) {
+            anchor = player.blockPosition();
+        }
+        List<Mob> companions = serverLevel.getEntitiesOfClass(
+            Mob.class,
+            new AABB(anchor).inflate(160.0D),
+            mob -> mob.isAlive() && isAsakusaCompanionNpc(mob)
+        );
+        for (Mob companion : companions) {
+            ResourceLocation typeId = ForgeRegistries.ENTITY_TYPES.getKey(companion.getType());
+            if (TAMAYO_ID.equals(typeId)) {
+                companion.getPersistentData().putString(QUEST_NPC_ID_TAG, "tamayo");
+            } else if (YUSHIRO_ID.equals(typeId)) {
+                companion.getPersistentData().putString(QUEST_NPC_ID_TAG, "yushiro");
+            }
+            clearMobTargeting(companion, null);
+        }
+    }
+
+    public static boolean isAsakusaCompanionNpc(Entity entity) {
+        if (entity == null) {
+            return false;
+        }
+        String npcKey = entity.getPersistentData().getString(QUEST_NPC_ID_TAG);
+        ResourceLocation typeId = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+        return "tamayo".equals(npcKey)
+            || "yushiro".equals(npcKey)
+            || TAMAYO_ID.equals(typeId)
+            || YUSHIRO_ID.equals(typeId);
+    }
+
+    public static void clearMobTargeting(Mob mob, LivingEntity target) {
+        if (mob == null) {
+            return;
+        }
+        LivingEntity currentTarget = mob.getTarget();
+        if (target == null || currentTarget == null || currentTarget.is(target)) {
+            mob.setTarget(null);
+        }
+        LivingEntity lastHurtBy = mob.getLastHurtByMob();
+        if (target == null || lastHurtBy == null || lastHurtBy.is(target)) {
+            mob.setLastHurtByMob(null);
+        }
+        mob.setAggressive(false);
+    }
+
+    private static void pacifyTamayoHouseNpc(Entity entity) {
+        if (entity instanceof Mob mob) {
+            clearMobTargeting(mob, null);
         }
     }
 

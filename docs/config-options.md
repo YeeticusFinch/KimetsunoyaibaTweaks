@@ -47,10 +47,14 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 | `common.enable-sword-clashing` | Enable sword clashing system where attacks can be deflected or mitigated |
 | `common.enable-nichirin-sprint-animation` | Enable custom sprint animation when holding a nichirin sword |
 | `common.disable-base-mod-sword-swing-particles` | Disable sword swing particles from the base KimetsunoYaiba mod (left-click particles only, does not affect breathing form or right-click particles) |
+| `common.show-backstep-hud` | Show the base KimetsunoYaiba backstep charge HUD icon and count |
+| `common.backstep-hud-offset-x` | Horizontal offset as a percentage of the GUI-scaled window width for the backstep charge HUD. 0 keeps the base mod position. |
+| `common.backstep-hud-offset-y` | Vertical offset as a percentage of the GUI-scaled window height for the backstep charge HUD. 0 keeps the base mod position. |
 | `common.breathing-form-announcements.players-announce-breathing-forms` | Announce breathing forms used by players in chat to nearby players |
 | `common.breathing-form-announcements.entities-announce-breathing-forms` | Announce breathing forms used by entities in chat to nearby players |
 | `common.breathing-form-announcements.breathing-form-announcement-radius` | Radius in blocks for breathing form chat announcements |
 | `common.mob-slash-broadcast-range` | Max distance in blocks to send mob sword slash packets to clients<br>Lower to reduce network traffic; Default: 100 |
+| `common.wisteria-incense-max-poison-amplifier` | Maximum MobEffect amplifier for wisteria poison from overlapping lit wisteria incense auras<br>Default: 50; Range: 0-255 |
 | `common.kanroji-entity-hand-offset-x` | X offset for Kanroji entity sword position to compensate for model alignment (in pixels, divided by 16) |
 | `common.kanroji-entity-hand-offset-y` | Y offset for Kanroji entity sword position to compensate for model alignment (in pixels, divided by 16) |
 | `common.kanroji-entity-hand-offset-z` | Z offset for Kanroji entity sword position to compensate for model alignment (in pixels, divided by 16) |

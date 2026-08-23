@@ -215,6 +215,8 @@ public class ModItems {
         () -> new CustomDemonArtItem(new Item.Properties()));
     public static final RegistryObject<Item> PUDDLE = ITEMS.register("puddle",
         () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> TIPPED_KUNAI = ITEMS.register("tipped_kunai",
+        () -> new TippedKunaiItem(new Item.Properties().stacksTo(64)));
     public static final RegistryObject<Item> HUMAN_FLESH_3 = ITEMS.register("human_flesh_3",
         () -> new HumanFleshItem(
             new Item.Properties().stacksTo(64).food(
@@ -626,7 +628,7 @@ public class ModItems {
                     FAVOR_OF_UBUYASHIKI_POTION_3.get()
                 );
 
-                addItems(output, UBUYASHIKI_INVITATION.get(), BLOOM_CALENDAR.get(), SAKE.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
+                addItems(output, UBUYASHIKI_INVITATION.get(), BLOOM_CALENDAR.get(), SAKE.get(), TIPPED_KUNAI.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
                     HUMAN_FLESH_3.get(), HUMAN_FLESH_4.get(), HUMAN_FLESH_5.get());
             })
             .build());

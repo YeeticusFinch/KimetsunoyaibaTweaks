@@ -386,6 +386,15 @@ public class ModEntities {
                 .fireImmune()
                 .build("spine"));
 
+    public static final RegistryObject<EntityType<KunaiEntity>> KUNAI =
+        ENTITY_TYPES.register("kunai",
+            () -> EntityType.Builder.<KunaiEntity>of(KunaiEntity::new, MobCategory.MISC)
+                .sized(0.25F, 0.25F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .build("kunai"));
+
     /**
      * Invisible temporary mount used so players can sit on cushion blocks from the base mod.
      */

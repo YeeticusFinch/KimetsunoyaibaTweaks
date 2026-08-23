@@ -67,6 +67,18 @@ public class Config
             .comment("Disable sword swing particles from the base KimetsunoYaiba mod (left-click particles only, does not affect breathing form or right-click particles)")
             .define("disable-base-mod-sword-swing-particles", false);
 
+    private static final ForgeConfigSpec.BooleanValue SHOW_BACKSTEP_HUD = BUILDER
+            .comment("Show the base KimetsunoYaiba backstep charge HUD icon and count")
+            .define("show-backstep-hud", true);
+
+    private static final ForgeConfigSpec.DoubleValue BACKSTEP_HUD_OFFSET_X = BUILDER
+            .comment("Horizontal offset as a percentage of the GUI-scaled window width for the backstep charge HUD. 0 keeps the base mod position.")
+            .defineInRange("backstep-hud-offset-x", 0.0, -100.0, 100.0);
+
+    private static final ForgeConfigSpec.DoubleValue BACKSTEP_HUD_OFFSET_Y = BUILDER
+            .comment("Vertical offset as a percentage of the GUI-scaled window height for the backstep charge HUD. 0 keeps the base mod position.")
+            .defineInRange("backstep-hud-offset-y", 0.0, -100.0, 100.0);
+
     static {
         BUILDER.comment("Breathing form announcements")
                 .push("breathing-form-announcements");
@@ -93,6 +105,10 @@ public class Config
             .comment("Max distance in blocks to send mob sword slash packets to clients",
                      "Lower to reduce network traffic; Default: 100")
             .defineInRange("mob-slash-broadcast-range", 100.0, 8.0, 512.0);
+
+    private static final ForgeConfigSpec.IntValue WISTERIA_INCENSE_MAX_POISON_AMPLIFIER = BUILDER
+            .comment("Maximum MobEffect amplifier for wisteria poison from overlapping lit wisteria incense auras")
+            .defineInRange("wisteria-incense-max-poison-amplifier", 50, 0, 255);
 
     // Kanroji entity sword rendering offsets
     private static final ForgeConfigSpec.DoubleValue KANROJI_ENTITY_HAND_OFFSET_X = BUILDER
@@ -137,10 +153,14 @@ public class Config
     public static boolean enableSwordClashing;
     public static boolean enableNichirinSprintAnimation;
     public static boolean disableBaseModSwordSwingParticles;
+    public static boolean showBackstepHud;
+    public static double backstepHudOffsetX;
+    public static double backstepHudOffsetY;
     public static boolean playersAnnounceBreathingForms;
     public static boolean entitiesAnnounceBreathingForms;
     public static double breathingFormAnnouncementRadius;
     public static double mobSlashBroadcastRange;
+    public static int wisteriaIncenseMaxPoisonAmplifier = 50;
     public static double kanrojiEntityHandOffsetX;
     public static double kanrojiEntityHandOffsetY;
     public static double kanrojiEntityHandOffsetZ;
@@ -181,11 +201,15 @@ public class Config
         enableSwordClashing = ENABLE_SWORD_CLASHING.get();
         enableNichirinSprintAnimation = ENABLE_NICHIRIN_SPRINT_ANIMATION.get();
         disableBaseModSwordSwingParticles = DISABLE_BASE_MOD_SWORD_SWING_PARTICLES.get();
+        showBackstepHud = SHOW_BACKSTEP_HUD.get();
+        backstepHudOffsetX = BACKSTEP_HUD_OFFSET_X.get();
+        backstepHudOffsetY = BACKSTEP_HUD_OFFSET_Y.get();
         playersAnnounceBreathingForms = PLAYERS_ANNOUNCE_BREATHING_FORMS.get();
         entitiesAnnounceBreathingForms = ENTITIES_ANNOUNCE_BREATHING_FORMS.get();
         breathingFormAnnouncementRadius = BREATHING_FORM_ANNOUNCEMENT_RADIUS.get();
         Log.info("[KnY-MP] Config loaded - disableBaseModSwordSwingParticles: {}", disableBaseModSwordSwingParticles);
         mobSlashBroadcastRange = MOB_SLASH_BROADCAST_RANGE.get();
+        wisteriaIncenseMaxPoisonAmplifier = WISTERIA_INCENSE_MAX_POISON_AMPLIFIER.get();
         kanrojiEntityHandOffsetX = KANROJI_ENTITY_HAND_OFFSET_X.get();
         kanrojiEntityHandOffsetY = KANROJI_ENTITY_HAND_OFFSET_Y.get();
         kanrojiEntityHandOffsetZ = KANROJI_ENTITY_HAND_OFFSET_Z.get();

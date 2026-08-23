@@ -204,6 +204,7 @@ public final class QuestGroupRegistry {
                                 // Complete when player has bow, dialog started, and is near Kazumi
                                 if (!QuestScenarioActions.hasSatokosBow(player, context)) return false;
                                 if (!player.getPersistentData().getBoolean("KnYKazumiReturnDialogStarted")) return false;
+                                if (QuestScenarioActions.isKidnappersBogMainSwampDemonAliveNear(player, player, 512.0D)) return false;
                                 BlockPos kazumiPos = QuestScenarioActions.findNearestQuestEntity(player, "kazumi", 10.0D);
                                 return kazumiPos != null && player.blockPosition().distSqr(kazumiPos) < 100.0D;
                             })
@@ -244,7 +245,7 @@ public final class QuestGroupRegistry {
                             })
                             .onComplete(QuestScenarioActions::storeTamayoHouseContext)
                             .markerResolver((player, context) ->
-                                QuestScenarioActions.findNearestStructure(player.serverLevel(), player.blockPosition(), HOUSE_TAMAYO))
+                                QuestScenarioActions.findNearestTamayoHousePoint(player, QuestScenarioActions.TamayoHousePoint.RECEPTION))
                             .build(),
 
                         QuestStepDefinition.builder(
@@ -278,7 +279,23 @@ public final class QuestGroupRegistry {
                             })
                             .onTick(QuestScenarioActions::tickTamayoBasementBriefing)
                             .customCheck(QuestScenarioActions::isTamayoBasementReady)
-                            .onComplete(QuestScenarioActions::sendTamayoBasementDialogue)
+                            .markerResolver((player, context) ->
+                                QuestScenarioActions.getTamayoHousePoint(player, QuestScenarioActions.TamayoHousePoint.BASEMENT))
+                            .build(),
+
+                        QuestStepDefinition.builder(
+                                "learn_demon_medicine",
+                                "Learn About Demon Medicine",
+                                "Listen to Tamayo explain her research into demon blood.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(QuestScenarioActions::startTamayoMedicineDialogue)
+                            .onTick((player, context) -> {
+                                QuestScenarioActions.tickTamayoBasementBriefing(player, context);
+                                QuestScenarioActions.startTamayoMedicineDialogue(player, context);
+                            })
+                            .customCheck(QuestScenarioActions::isTamayoMedicineDialogueComplete)
+                            .onComplete(QuestScenarioActions::completeTamayoMedicineDialogue)
                             .markerResolver((player, context) ->
                                 QuestScenarioActions.getTamayoHousePoint(player, QuestScenarioActions.TamayoHousePoint.BASEMENT))
                             .build(),
@@ -290,10 +307,7 @@ public final class QuestGroupRegistry {
                                 QuestStepType.CUSTOM
                             )
                             .requiredTimeOfDay(false)
-                            .onStart((player, context) -> {
-                                QuestScenarioActions.sendTamayoAmbushPrelude(player, context);
-                                QuestScenarioActions.tickTamayoReturnToReception(player, context);
-                            })
+                            .onStart(QuestScenarioActions::tickTamayoReturnToReception)
                             .onTick(QuestScenarioActions::tickTamayoReturnToReception)
                             .customCheck(QuestScenarioActions::isTamayoReturnReady)
                             .markerResolver((player, context) ->
@@ -317,6 +331,24 @@ public final class QuestGroupRegistry {
                     new QuestRewardDefinition()
                         .experiencePoints(75)
                         .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "yen"), 20)
+                ),
+                new QuestStageDefinition(
+                    "tsuzumi_mansion",
+                    "Mission No.3 - Tsuzumi Mansion",
+                    "This mission is WIP and will be released in a future update.",
+                    List.of(
+                        QuestStepDefinition.builder(
+                                "tsuzumi_mansion_wip",
+                                "Tsuzumi Mansion",
+                                "This mission is WIP and will be released in a future update.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart((player, context) ->
+                                player.sendSystemMessage(Component.literal("§7Mission No.3 - Tsuzumi Mansion is WIP and will be released in a future update.")))
+                            .customCheck((player, context) -> false)
+                            .build()
+                    ),
+                    new QuestRewardDefinition()
                 )
             )
         ));

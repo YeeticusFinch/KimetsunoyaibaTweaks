@@ -64,6 +64,9 @@ public final class AlchemyBrewingRecipes {
         registerInfusion("kimetsunoyaibamultiplayer:exorcistic_culture", "kimetsunoyaibamultiplayer:division_inhibition_infusion");
         registerInfusion("kimetsunoyaibamultiplayer:proteolytic_culture", "kimetsunoyaibamultiplayer:cell_destruction_infusion");
         registerInfusion("kimetsunoyaibamultiplayer:neurotoxic_culture", "kimetsunoyaibamultiplayer:immovable_infusion");
+        BrewingRecipeRegistry.addRecipe(new WisteriaResistanceCureBrewingRecipe(WisteriaResistanceCureBrewingRecipe.Kind.BASE));
+        BrewingRecipeRegistry.addRecipe(new WisteriaResistanceCureBrewingRecipe(WisteriaResistanceCureBrewingRecipe.Kind.POTENCY));
+        BrewingRecipeRegistry.addRecipe(new WisteriaResistanceCureBrewingRecipe(WisteriaResistanceCureBrewingRecipe.Kind.DURATION));
 
         for (BloodDemonArtAlchemyCatalog.CatalystDefinition definition : BloodDemonArtAlchemyCatalog.baseCatalystDefinitions()) {
             BrewingRecipeRegistry.addRecipe(new AlchemyBrewingRecipe(

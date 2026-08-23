@@ -66,6 +66,9 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> SUNLIGHT_RESISTANCE = MOB_EFFECTS.register("sunlight_resistance",
             SunlightResistanceEffect::new);
 
+    public static final RegistryObject<MobEffect> WISTERIA_RESISTANCE = MOB_EFFECTS.register("wisteria_resistance",
+            WisteriaResistanceEffect::new);
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

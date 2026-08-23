@@ -14,16 +14,22 @@ public class DemonEyesSyncPacket {
     private final boolean demon;
     private final int eyesIndex;
     private final int hue;
+    private final int rankTier;
 
     public DemonEyesSyncPacket(UUID playerUUID, boolean demon, int eyesIndex) {
-        this(playerUUID, demon, eyesIndex, 0);
+        this(playerUUID, demon, eyesIndex, 0, -1);
     }
 
     public DemonEyesSyncPacket(UUID playerUUID, boolean demon, int eyesIndex, int hue) {
+        this(playerUUID, demon, eyesIndex, hue, -1);
+    }
+
+    public DemonEyesSyncPacket(UUID playerUUID, boolean demon, int eyesIndex, int hue, int rankTier) {
         this.playerUUID = playerUUID;
         this.demon = demon;
         this.eyesIndex = eyesIndex;
         this.hue = Math.floorMod(hue, 360);
+        this.rankTier = rankTier;
     }
 
     public DemonEyesSyncPacket(FriendlyByteBuf buf) {
@@ -31,6 +37,7 @@ public class DemonEyesSyncPacket {
         this.demon = buf.readBoolean();
         this.eyesIndex = buf.readVarInt();
         this.hue = Math.floorMod(buf.readVarInt(), 360);
+        this.rankTier = buf.readVarInt();
     }
 
     public void toBytes(FriendlyByteBuf buf) {
@@ -38,6 +45,7 @@ public class DemonEyesSyncPacket {
         buf.writeBoolean(demon);
         buf.writeVarInt(eyesIndex);
         buf.writeVarInt(hue);
+        buf.writeVarInt(rankTier);
     }
 
     public boolean isDemon() {
@@ -52,11 +60,15 @@ public class DemonEyesSyncPacket {
         return hue;
     }
 
+    public int getRankTier() {
+        return rankTier;
+    }
+
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() ->
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-                DemonEyesClientState.setPlayerState(playerUUID, demon, eyesIndex, hue)
+                DemonEyesClientState.setPlayerState(playerUUID, demon, eyesIndex, hue, rankTier)
             )
         );
         context.setPacketHandled(true);

@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_lavender"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:empty_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:wisteria_extract"
+  }
+}

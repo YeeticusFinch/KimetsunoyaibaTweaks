@@ -1,16 +1,14 @@
 package com.lerdorf.kimetsunoyaibamultiplayer;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.util.WisteriaResistanceHelper;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * Handles wisteria biome protection - prevents demons from entering wisteria forests
@@ -43,15 +41,13 @@ public class WisteriaBiomeHandler {
                biomeLoc.equals(WISTERIA_FOREST);
     }
 
-    /**
-     * DISABLED: Biome-wide damage has been removed.
-     * Only the wisteria blocks themselves (leaves and petals) should damage demons,
-     * not the biome as a whole. This allows demons to safely fly above or dig under
-     * wisteria forests without being affected.
-     */
-    // @SubscribeEvent
-    // public static void onEntityTick(LivingEvent.LivingTickEvent event) {
-    //     // This event handler has been disabled.
-    //     // Wisteria protection now only comes from direct contact with wisteria blocks.
-    // }
+    @SubscribeEvent
+    public static void onEntityTick(LivingEvent.LivingTickEvent event) {
+        LivingEntity entity = event.getEntity();
+        if (entity.level().isClientSide || entity.tickCount % 20 != 0 || !Damager.isDemon(entity) || !isInWisteriaForest(entity)) {
+            return;
+        }
+
+        WisteriaResistanceHelper.addWisteriaPoisonEffect(entity, 160, 0, false, true, true);
+    }
 }

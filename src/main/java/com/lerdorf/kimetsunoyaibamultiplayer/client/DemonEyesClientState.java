@@ -15,10 +15,16 @@ public final class DemonEyesClientState {
     }
 
     public static void setPlayerState(UUID playerId, boolean demon, int index, int hue) {
+        PlayerDemonEyesState current = getPlayerState(playerId);
+        int rankTier = current == null ? -1 : current.rankTier();
+        setPlayerState(playerId, demon, index, hue, rankTier);
+    }
+
+    public static void setPlayerState(UUID playerId, boolean demon, int index, int hue, int rankTier) {
         if (playerId == null) {
             return;
         }
-        STATES.put(playerId, new PlayerDemonEyesState(demon, Math.max(0, index), Math.floorMod(hue, 360)));
+        STATES.put(playerId, new PlayerDemonEyesState(demon, Math.max(0, index), Math.floorMod(hue, 360), rankTier));
     }
 
     public static PlayerDemonEyesState getPlayerState(UUID playerId) {
@@ -29,6 +35,6 @@ public final class DemonEyesClientState {
         STATES.clear();
     }
 
-    public record PlayerDemonEyesState(boolean demon, int index, int hue) {
+    public record PlayerDemonEyesState(boolean demon, int index, int hue, int rankTier) {
     }
 }

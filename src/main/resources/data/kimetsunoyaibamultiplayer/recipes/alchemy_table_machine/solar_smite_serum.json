@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:solar_smite_culture"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:botanical_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:solar_smite_serum"
+  }
+}

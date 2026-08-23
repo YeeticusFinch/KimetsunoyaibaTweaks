@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "minecraft:lily_of_the_valley"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:botanical_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:antivenom"
+  }
+}

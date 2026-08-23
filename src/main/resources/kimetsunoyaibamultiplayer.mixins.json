@@ -15,9 +15,11 @@
   ],
   "client": [
     "BridgerPreviewFallingBlockMixin",
+    "ClientLevelParticleThrottleMixin",
     "GenericItemLayerMixin",
     "BaseInosukeModelMixin",
     "BaseInosukeRendererMixin",
+    "BaseBackstepHudOverlayMixin",
     "EntityGlowingMixin",
     "DustParticleMixin",
     "EntityRenderDispatcherAccessor",

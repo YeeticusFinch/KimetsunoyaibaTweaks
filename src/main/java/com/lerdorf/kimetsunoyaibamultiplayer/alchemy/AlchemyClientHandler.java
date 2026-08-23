@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.AlchemyTableRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.PetriDishBlockRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.VialRackRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.WisteriaIncenseBlockRenderer;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -43,6 +44,7 @@ public final class AlchemyClientHandler {
         event.registerBlockEntityRenderer(ModBlockEntities.ALCHEMY_TABLE.get(), AlchemyTableRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.VIAL_RACK.get(), VialRackRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.PETRI_DISH.get(), PetriDishBlockRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.WISTERIA_INCENSE.get(), WisteriaIncenseBlockRenderer::new);
     }
 
     @SubscribeEvent

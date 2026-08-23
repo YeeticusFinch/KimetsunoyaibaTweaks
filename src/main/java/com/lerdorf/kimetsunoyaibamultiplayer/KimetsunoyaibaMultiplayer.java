@@ -157,6 +157,7 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBlocksConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SwordsmithVillageConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.ClientParticleConfig.class);
         com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.register(modEventBus);
         Log.alwaysWarn("[INIT] Registered config event handlers");
 
@@ -181,6 +182,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBlocksConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_blocks.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordsmithVillageConfig.SPEC, "kimetsunoyaibamultiplayer/swordsmith_village.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.DemonRankingConfig.SPEC, "kimetsunoyaibamultiplayer/demon_ranking.toml");
+        context.registerConfig(ModConfig.Type.CLIENT, com.lerdorf.kimetsunoyaibamultiplayer.config.ClientParticleConfig.SPEC, "kimetsunoyaibamultiplayer/client_particles.toml");
         Log.alwaysWarn("[INIT] Registered config specs");
         Log.startupProbe("KimetsunoyaibaMultiplayer.<init>.end");
     }
@@ -978,7 +980,6 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.BLOOD_FLAME.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BloodFlameParticle.Provider::new
             );
-            Log.alwaysWarn("[CLIENT PARTICLES] registered blood_flame provider");
 
             event.registerSpriteSet(
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.IMPACT.get(),
@@ -1026,6 +1027,8 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BeastSlashesRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SPINE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SpineRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KUNAI.get(),
+                    context -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<>(context));
 
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.LOVE_TORNADO.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.LoveTornadoRenderer::new);

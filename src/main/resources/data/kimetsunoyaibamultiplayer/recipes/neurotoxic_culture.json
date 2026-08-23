@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "kimetsunoyaibamultiplayer:vitality_culture"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:white_spider_lily"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:fermented_orchid"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:calcite_powder"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:neurotoxic_culture"
+  }
+}

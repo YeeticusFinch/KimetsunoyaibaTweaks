@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "minecraft:oxeye_daisy"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:immortal_extract"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:immortal_daisy"
+  }
+}

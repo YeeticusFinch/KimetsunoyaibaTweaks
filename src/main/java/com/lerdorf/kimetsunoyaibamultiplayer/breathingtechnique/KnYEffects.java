@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -15,6 +16,7 @@ public class KnYEffects {
     private static final ResourceLocation COOL_TIME = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "cool_time");
     private static final ResourceLocation COOLTIME_2 = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "cooltime_2");
     private static final ResourceLocation WISTERIA_POISON = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "wisteriapoison");
+    private static final ResourceLocation REGENERATION_INHIBITION = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "regeneration_inhibition");
     private static final ResourceLocation IMMVABLE = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "immvable");
 
     /**
@@ -67,6 +69,20 @@ public class KnYEffects {
      */
     public static MobEffect getWisteriaPoisonEffect() {
         return ForgeRegistries.MOB_EFFECTS.getValue(WISTERIA_POISON);
+    }
+
+    public static boolean addVisibleWisteriaPoisonEffect(LivingEntity entity, int durationTicks, int amplifier) {
+        MobEffect wisteriaPoison = getWisteriaPoisonEffect();
+        if (entity == null || wisteriaPoison == null) {
+            return false;
+        }
+
+        entity.addEffect(new MobEffectInstance(wisteriaPoison, durationTicks, amplifier, false, true, true));
+        return true;
+    }
+
+    public static MobEffect getRegenerationInhibitionEffect() {
+        return ForgeRegistries.MOB_EFFECTS.getValue(REGENERATION_INHIBITION);
     }
 
     public static MobEffect getImmvableEffect() {

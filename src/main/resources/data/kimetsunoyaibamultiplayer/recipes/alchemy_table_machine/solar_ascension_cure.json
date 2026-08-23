@@ -1,0 +1,13 @@
+{
+  "type": "kimetsunoyaibamultiplayer:alchemy_table",
+  "first": {
+    "item": "kimetsunoyaibamultiplayer:solar_genesis_culture"
+  },
+  "second": {
+    "item": "kimetsunoyaibamultiplayer:cruel_vial"
+  },
+  "unordered": true,
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:solar_ascension_cure"
+  }
+}
