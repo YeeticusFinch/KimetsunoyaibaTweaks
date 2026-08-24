@@ -166,11 +166,14 @@ Teruko: Help! A demon has kidnapped our older brother Kiyoshi!
 Shoichi: Kiyoshi is trapped in the mansion! Please help us kind sir!
 
 Step 3: Find Kiyoshi
+The inside of Tsuzumi Mansion is built like a maze.
 Kiyoshi is hiding inside a closet in the mansion.
 
 Step 4: Defeat Kyogai 
+If Kiyoshi dies then the quest fails and must be restarted.
 
-
+Step 5: Exit the Tsuzumi Mansion
+Exit the mansion and bring Kiyoshi back to his siblings (Teruko and Shoichi).
 
 
 ### Mission No.4 - Mount Natagumo
