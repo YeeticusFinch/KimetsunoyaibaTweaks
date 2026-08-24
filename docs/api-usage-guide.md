@@ -1,4 +1,4 @@
-# KnY Multiplayer - API Usage Guide
+# KnY Tweaks - API Usage Guide
 
 **Version:** 1.6.x
 **Minecraft:** 1.20.1
@@ -1987,11 +1987,30 @@ if (level instanceof ServerLevel serverLevel) {
 // Reset gravity after aerial abilities
 entity.setNoGravity(false);
 
-// Reset step height after movement abilities
+// Reset step height after movement abilities (0.6 is default step height)
 MovementHelper.setStepHeight(entity, 0.6F);
+// Or if you are storing the original step height
+MovementHelper.setStepHeight(entity, originalStepHeight);
 
 // Remove tags when done
 entity.removeTag("AbilityActive");
+
+
+// Clear the guard state when done
+GuardStateHelper.clearGuardState(entity);
+
+// Clear the cancel attack swing flag when done
+setCancelAttackSwing(entity, false);
+```
+
+Example Cleanup (using ability scheduler to schedule after the ability is done):
+```
+               // Schedule cleanup
+                AbilityScheduler.scheduleOnce(entity, () -> {
+                	MovementHelper.setStepHeight(entity, 0.6f);
+                    GuardStateHelper.clearGuardState(entity);
+                    setCancelAttackSwing(entity, false);
+                }, totalTicks+2);
 ```
 
 ### 4. Entity-Agnostic Forms
