@@ -3,16 +3,28 @@ package com.lerdorf.kimetsunoyaibamultiplayer.api;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.*;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import java.util.Collections;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Main API entry point for the Kimetsu no Yaiba Multiplayer mod.
@@ -28,9 +40,19 @@ import java.util.Map;
  * @since 1.0.0
  */
 public final class KnYAPI {
+    public static final String NBT_DEMON_SLAYER = "kisatsutai";
+    public static final String NBT_DEMON = "oni";
+    public static final String NBT_COMBAT_STYLE_ID = "KnYCombatStyleId";
+    public static final String NBT_COMBAT_SWORD_ID = "KnYCombatSwordId";
+    public static final String NBT_CAN_USE_BREATHING_FORMS = "KnYCanUseBreathingForms";
 
     private KnYAPI() {
         // Utility class, no instantiation
+    }
+
+    @FunctionalInterface
+    public interface ProcedureFormHandler {
+        void execute(LivingEntity entity, Level level, int formId);
     }
 
     // ==================== Style Metadata Registration ====================
@@ -105,6 +127,84 @@ public final class KnYAPI {
     }
 
     /**
+     * Register a breathing style from generated code.
+     *
+     * This adapter combines style metadata registration and the breathing style registry call.
+     * Call it during common setup/enqueueWork after all forms for this style have been created.
+     */
+    public static BreathingStyleRegistry.RegisteredBreathingStyle registerProcedureBreathingStyle(
+            String styleId,
+            String styleName,
+            int styleRange,
+            ParticleOptions defaultParticle,
+            List<BreathingForm> forms) {
+        return registerProcedureBreathingStyle(
+            styleId,
+            styleName,
+            styleRange,
+            defaultParticle,
+            null,
+            true,
+            true,
+            forms,
+            Collections.emptyMap()
+        );
+    }
+
+    /**
+     * Register a breathing style from generated code with metadata options.
+     */
+    public static BreathingStyleRegistry.RegisteredBreathingStyle registerProcedureBreathingStyle(
+            String styleId,
+            String styleName,
+            int styleRange,
+            ParticleOptions defaultParticle,
+            String parentStyleId,
+            boolean colorChangeEligible,
+            boolean oreSelectionEligible,
+            List<BreathingForm> forms,
+            Map<String, String> replaceAnimations) {
+        if (!StyleMetadataRegistry.isRegistered(styleId)) {
+            StyleMetadataRegistry.register(styleId, emptyToNull(parentStyleId), colorChangeEligible, oreSelectionEligible);
+        }
+
+        BreathingTechnique technique = new BreathingTechnique(styleName, forms);
+        return BreathingStyleRegistry.register(
+            styleId,
+            styleName,
+            technique,
+            styleRange,
+            defaultParticle,
+            replaceAnimations != null ? replaceAnimations : Collections.emptyMap()
+        );
+    }
+
+    /**
+     * Register a breathing style from generated code using a particle registry ID.
+     */
+    public static BreathingStyleRegistry.RegisteredBreathingStyle registerProcedureBreathingStyle(
+            String styleId,
+            String styleName,
+            int styleRange,
+            String defaultParticleId,
+            String parentStyleId,
+            boolean colorChangeEligible,
+            boolean oreSelectionEligible,
+            List<BreathingForm> forms) {
+        return registerProcedureBreathingStyle(
+            styleId,
+            styleName,
+            styleRange,
+            resolveParticle(defaultParticleId, ParticleTypes.CLOUD),
+            parentStyleId,
+            colorChangeEligible,
+            oreSelectionEligible,
+            forms,
+            Collections.emptyMap()
+        );
+    }
+
+    /**
      * Get a registered breathing style by ID.
      *
      * @param styleId The unique identifier
@@ -161,6 +261,103 @@ public final class KnYAPI {
         return DemonRegistry.register(ResourceLocation.parse(entityId), scale, sunlightImmune, bloodDemonArtId);
     }
 
+    // ==================== Demon Slayer Entity Combat Registration ====================
+
+    /**
+     * Register combat metadata for an addon Demon Slayer-style entity.
+     *
+     * This does not register the Forge EntityType. It marks the entity type for KnY combat
+     * categorization and stores defaults that generated spawn/finalize code can apply with
+     * applyDemonSlayerEntityCombat().
+     */
+    public static DemonSlayerEntityCombatRegistry.CombatProfile registerDemonSlayerEntityCombat(
+            String entityId,
+            EntityPowerScale powerScale,
+            String breathingStyleId,
+            String defaultSwordId,
+            boolean canUseBreathingForms,
+            boolean demonized) {
+        return DemonSlayerEntityCombatRegistry.register(
+            ResourceLocation.parse(entityId),
+            powerScale,
+            breathingStyleId,
+            defaultSwordId,
+            canUseBreathingForms,
+            demonized
+        );
+    }
+
+    public static DemonSlayerEntityCombatRegistry.CombatProfile getDemonSlayerEntityCombat(String entityId) {
+        return DemonSlayerEntityCombatRegistry.get(ResourceLocation.parse(entityId));
+    }
+
+    /**
+     * Apply a registered combat profile to a living entity instance.
+     *
+     * Generated entities should call this once after spawn data is initialized. For the built-in
+     * DemonSlayerEntity/BreathingSlayerEntity classes this also sets power and sword fields.
+     * For ordinary LivingEntity subclasses it writes the KnY NBT tags and equips the default sword.
+     */
+    public static boolean applyDemonSlayerEntityCombat(LivingEntity entity) {
+        if (entity == null) {
+            return false;
+        }
+
+        ResourceLocation entityId = net.minecraft.world.entity.EntityType.getKey(entity.getType());
+        return applyDemonSlayerEntityCombat(entity, entityId);
+    }
+
+    public static boolean applyDemonSlayerEntityCombat(LivingEntity entity, String entityId) {
+        return entityId != null && applyDemonSlayerEntityCombat(entity, ResourceLocation.parse(entityId));
+    }
+
+    public static boolean applyDemonSlayerEntityCombat(LivingEntity entity, ResourceLocation entityId) {
+        if (entity == null || entityId == null) {
+            return false;
+        }
+
+        DemonSlayerEntityCombatRegistry.CombatProfile profile = DemonSlayerEntityCombatRegistry.get(entityId);
+        if (profile == null) {
+            return false;
+        }
+
+        entity.getPersistentData().putBoolean(NBT_CAN_USE_BREATHING_FORMS, profile.canUseBreathingForms());
+        if (profile.getBreathingStyleId() != null) {
+            entity.getPersistentData().putString(NBT_COMBAT_STYLE_ID, profile.getBreathingStyleId());
+        }
+        if (profile.getDefaultSwordId() != null) {
+            entity.getPersistentData().putString(NBT_COMBAT_SWORD_ID, profile.getDefaultSwordId());
+        }
+
+        if (profile.isDemonized()) {
+            entity.getPersistentData().putBoolean(NBT_DEMON, true);
+            entity.getPersistentData().remove(NBT_DEMON_SLAYER);
+        } else {
+            entity.getPersistentData().putBoolean(NBT_DEMON_SLAYER, true);
+            entity.getPersistentData().remove(NBT_DEMON);
+        }
+
+        if (entity instanceof DemonSlayerEntity demonSlayer) {
+            if (profile.getDefaultSwordId() != null) {
+                demonSlayer.setSwordId(profile.getDefaultSwordId());
+            }
+            demonSlayer.setPowerLevel(powerLevelFromScale(profile.getPowerScale()));
+            demonSlayer.setDemonized(profile.isDemonized());
+        } else if (entity instanceof BreathingSlayerEntity breathingSlayer) {
+            breathingSlayer.setPowerLevel(powerLevelFromScale(profile.getPowerScale()));
+            breathingSlayer.setDemonized(profile.isDemonized());
+        }
+
+        if (profile.getDefaultSwordId() != null) {
+            ItemStack swordStack = getSwordStack(profile.getDefaultSwordId());
+            if (!swordStack.isEmpty()) {
+                entity.setItemSlot(EquipmentSlot.MAINHAND, swordStack);
+            }
+        }
+
+        return true;
+    }
+
     // ==================== Sword Registration ====================
 
     /**
@@ -171,6 +368,120 @@ public final class KnYAPI {
      */
     public static NichirinSwordBuilder createSword(String swordId) {
         return NichirinSwordBuilder.create(swordId);
+    }
+
+    /**
+     * Register a generated Nichirin sword using a compact adapter.
+     *
+     * This still takes the owning mod's DeferredRegister because Forge item registration must be
+     * attached to that mod's event bus. The adapter hides the KnY builder chain from generated code.
+     */
+    public static RegistryObject<Item> registerSword(
+            DeferredRegister<Item> itemRegistry,
+            String swordId,
+            String styleId,
+            BreathingTechnique technique,
+            int styleRange,
+            ParticleOptions defaultParticle,
+            SwordRegistry.SwordCategory category,
+            int swordLevel,
+            int durability) {
+        return registerSword(
+            itemRegistry,
+            swordId,
+            styleId,
+            technique,
+            styleRange,
+            defaultParticle,
+            null,
+            null,
+            category,
+            swordLevel,
+            durability,
+            true,
+            Collections.emptyMap()
+        );
+    }
+
+    /**
+     * Register a generated Nichirin sword with all common generated-code options.
+     */
+    public static RegistryObject<Item> registerSword(
+            DeferredRegister<Item> itemRegistry,
+            String swordId,
+            String styleId,
+            BreathingTechnique technique,
+            int styleRange,
+            ParticleOptions defaultParticle,
+            ParticleOptions swordParticle,
+            SoundEvent swingSound,
+            SwordRegistry.SwordCategory category,
+            int swordLevel,
+            int durability,
+            boolean registerToCreativeTab,
+            Map<String, String> replaceAnimations) {
+        NichirinSwordBuilder builder = createSword(swordId)
+            .breathingStyle(styleId, technique)
+            .styleRange(styleRange)
+            .defaultParticle(defaultParticle)
+            .category(category)
+            .swordLevel(swordLevel)
+            .durability(durability)
+            .registerToCreativeTab(registerToCreativeTab)
+            .replaceAnimations(replaceAnimations != null ? replaceAnimations : Collections.emptyMap());
+
+        if (swordParticle != null) {
+            builder.swordParticle(swordParticle);
+        }
+        if (swingSound != null) {
+            builder.swingSound(swingSound);
+        }
+
+        return builder.build(itemRegistry);
+    }
+
+    /**
+     * Register a generated Nichirin sword using registry-id strings for MCreator templates.
+     */
+    public static RegistryObject<Item> registerSword(
+            DeferredRegister<Item> itemRegistry,
+            String swordId,
+            String styleId,
+            BreathingTechnique technique,
+            int styleRange,
+            String defaultParticleId,
+            String category,
+            int swordLevel,
+            int durability) {
+        return registerSword(
+            itemRegistry,
+            swordId,
+            styleId,
+            technique,
+            styleRange,
+            resolveParticle(defaultParticleId, ParticleTypes.CLOUD),
+            parseSwordCategory(category),
+            swordLevel,
+            durability
+        );
+    }
+
+    /**
+     * Register metadata for an item that was created outside the KnY sword builder.
+     */
+    public static SwordMetadataRegistry.SwordMetadata registerSwordMetadata(
+            String swordId,
+            String styleId,
+            int swordLevel) {
+        return SwordMetadataRegistry.registerLazy(swordId, styleId, swordLevel);
+    }
+
+    public static SwordMetadataRegistry.SwordMetadata registerSwordMetadata(
+            String swordId,
+            String styleId,
+            int swordLevel,
+            boolean dualWielding) {
+        return SwordMetadataRegistry.registerLazy(swordId, styleId, swordLevel, dualWielding);
     }
 
     /**
@@ -243,6 +554,60 @@ public final class KnYAPI {
         SwordDisplayConfig.registerSwordOffsets(itemId, slot, offsets);
     }
 
+    /**
+     * Register a sheath item for a sword by item registry IDs.
+     * Client-side only; safe to call from common setup.
+     */
+    public static void registerSheath(String swordItemId, String sheathItemId, boolean persistsWhenDrawn) {
+        if (!net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            return;
+        }
+
+        Item sword = getItem(swordItemId);
+        Item sheath = getItem(sheathItemId);
+        if (sword != null && sheath != null) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry.registerSheath(
+                sword,
+                sheath,
+                persistsWhenDrawn
+            );
+        }
+    }
+
+    public static void registerPersistentSheath(String swordItemId, String sheathItemId) {
+        registerSheath(swordItemId, sheathItemId, true);
+    }
+
+    public static void registerTemporarySheath(String swordItemId, String sheathItemId) {
+        registerSheath(swordItemId, sheathItemId, false);
+    }
+
+    public static void registerDefaultSheath(String sheathItemId) {
+        if (!net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            return;
+        }
+
+        Item sheath = getItem(sheathItemId);
+        if (sheath != null) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry.setDefaultSheath(sheath);
+        }
+    }
+
+    public static void registerSheathDisplayOverride(String swordItemId, String displayAsItemId) {
+        if (!net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            return;
+        }
+
+        Item sword = getItem(swordItemId);
+        Item displayAs = getItem(displayAsItemId);
+        if (sword != null && displayAs != null) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry.registerSheathDisplayOverride(
+                sword,
+                displayAs
+            );
+        }
+    }
+
     // ==================== Helper Utilities ====================
 
     /**
@@ -263,6 +628,64 @@ public final class KnYAPI {
             int cooldownSeconds,
             BreathingForm.FormEffect effect) {
         return new BreathingForm(formId, name, description, cooldownSeconds, effect);
+    }
+
+    /**
+     * Create a breathing form from generated procedure code without importing BreathingForm.FormEffect.
+     */
+    public static BreathingForm registerProcedureBreathingForm(
+            int formId,
+            String name,
+            String description,
+            int cooldownSeconds,
+            ProcedureFormHandler handler) {
+        ProcedureFormHandler safeHandler = handler != null ? handler : (entity, level, id) -> {};
+        return new BreathingForm(formId, name, description, cooldownSeconds, safeHandler::execute);
+    }
+
+    /**
+     * Register a breathing form variation for a base form ID.
+     * Call during common setup/enqueueWork after the base form exists.
+     */
+    public static BreathingFormVariation registerProcedureVariation(
+            int baseFormId,
+            String name,
+            String description,
+            int cooldownSeconds,
+            ProcedureFormHandler handler,
+            Set<String> applicableSwordIds) {
+        ProcedureFormHandler safeHandler = handler != null ? handler : (entity, level, id) -> {};
+        BreathingFormVariation variation = new BreathingFormVariation(
+            name,
+            description,
+            cooldownSeconds,
+            safeHandler::execute,
+            applicableSwordIds != null ? applicableSwordIds : Collections.emptySet()
+        );
+        VariationRegistry.register(baseFormId, variation);
+        return variation;
+    }
+
+    /**
+     * Register a breathing form variation using a base form name.
+     */
+    public static BreathingFormVariation registerProcedureVariation(
+            String baseFormName,
+            String name,
+            String description,
+            int cooldownSeconds,
+            ProcedureFormHandler handler,
+            Set<String> applicableSwordIds) {
+        ProcedureFormHandler safeHandler = handler != null ? handler : (entity, level, id) -> {};
+        BreathingFormVariation variation = new BreathingFormVariation(
+            name,
+            description,
+            cooldownSeconds,
+            safeHandler::execute,
+            applicableSwordIds != null ? applicableSwordIds : Collections.emptySet()
+        );
+        VariationRegistry.register(baseFormName, variation);
+        return variation;
     }
 
     /**
@@ -567,6 +990,68 @@ public final class KnYAPI {
         if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
             com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry.registerModelNamespace(modelKey, namespace);
         }
+    }
+
+    // ==================== Generated-Code Helpers ====================
+
+    public static ParticleOptions resolveParticle(String particleId, ParticleOptions fallback) {
+        ResourceLocation id = ResourceLocation.tryParse(particleId);
+        if (id == null) {
+            return fallback;
+        }
+
+        var particleType = ForgeRegistries.PARTICLE_TYPES.getValue(id);
+        return particleType instanceof ParticleOptions particle ? particle : fallback;
+    }
+
+    private static SwordRegistry.SwordCategory parseSwordCategory(String category) {
+        if (category == null || category.isBlank()) {
+            return SwordRegistry.SwordCategory.NICHIRIN;
+        }
+
+        try {
+            return SwordRegistry.SwordCategory.valueOf(category.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            return SwordRegistry.SwordCategory.NICHIRIN;
+        }
+    }
+
+    private static ItemStack getSwordStack(String swordId) {
+        SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(swordId);
+        if (registeredSword != null) {
+            return new ItemStack(registeredSword.getSwordItem());
+        }
+
+        SwordMetadataRegistry.SwordMetadata metadata = SwordMetadataRegistry.getMetadata(swordId);
+        if (metadata != null && metadata.getSwordItem() != null) {
+            return new ItemStack(metadata.getSwordItem());
+        }
+
+        Item item = getItem(swordId);
+        return item != null ? new ItemStack(item) : ItemStack.EMPTY;
+    }
+
+    private static Item getItem(String itemId) {
+        ResourceLocation id = ResourceLocation.tryParse(itemId);
+        return id != null ? ForgeRegistries.ITEMS.getValue(id) : null;
+    }
+
+    private static String emptyToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    private static int powerLevelFromScale(EntityPowerScale scale) {
+        if (scale == null) {
+            return 1;
+        }
+
+        return switch (scale) {
+            case GENERIC_SLAYER -> 1;
+            case NAMED_SLAYER -> 3;
+            case HARD_SLAYER, HASHIRA -> 4;
+            case SUPER_HASHIRA -> 5;
+            default -> 1;
+        };
     }
 
     // ==================== Version Info ====================

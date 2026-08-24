@@ -14,21 +14,22 @@ This guide explains how to use the Kimetsu no Yaiba Multiplayer mod as a library
 
 1. [Getting Started](#getting-started)
 2. [Adding as a Dependency](#adding-as-a-dependency)
-3. [Creating Nichirin Swords](#creating-nichirin-swords)
-4. [Sword Levels](#sword-levels)
-5. [Style Metadata Registry](#style-metadata-registry)
-6. [Sword Metadata Registry](#sword-metadata-registry)
-7. [Color Change System](#color-change-system)
-8. [Custom Progression Configuration](#custom-progression-configuration)
-9. [Training Sword System](#training-sword-system)
-10. [Creating Breathing Styles](#creating-breathing-styles)
-11. [Registering Breathing Form Variations](#registering-breathing-form-variations)
-12. [Creating Custom Entities](#creating-custom-entities)
-13. [API Reference](#api-reference)
-14. [Custom Sword Slash Models](#custom-sword-slash-models)
-15. [Sword Sheaths and Display Offsets](#sword-sheaths-and-display-offsets)
-16. [Best Practices](#best-practices)
-17. [Troubleshooting](#troubleshooting)
+3. [Generated-Code and MCreator Adapters](#generated-code-and-mcreator-adapters)
+4. [Creating Nichirin Swords](#creating-nichirin-swords)
+5. [Sword Levels](#sword-levels)
+6. [Style Metadata Registry](#style-metadata-registry)
+7. [Sword Metadata Registry](#sword-metadata-registry)
+8. [Color Change System](#color-change-system)
+9. [Custom Progression Configuration](#custom-progression-configuration)
+10. [Training Sword System](#training-sword-system)
+11. [Creating Breathing Styles](#creating-breathing-styles)
+12. [Registering Breathing Form Variations](#registering-breathing-form-variations)
+13. [Creating Custom Entities](#creating-custom-entities)
+14. [API Reference](#api-reference)
+15. [Custom Sword Slash Models](#custom-sword-slash-models)
+16. [Sword Sheaths and Display Offsets](#sword-sheaths-and-display-offsets)
+17. [Best Practices](#best-practices)
+18. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -118,9 +119,111 @@ The `ordering="AFTER"` is critical - ensures KnY Multiplayer loads first.
 
 ---
 
-## MCreator Integration
+## Generated-Code and MCreator Adapters
 
-MCreator can use the KimetsunoYaiba Tweaks API with some additional setup. This requires using MCreator's custom code features.
+MCreator plugins and other generated-code tools should prefer the adapter methods on `KnYAPI`. These methods keep generated code short and avoid importing internal implementation classes.
+
+### Using the KnY Tweaks MCreator Plugin
+
+The companion MCreator plugin provides KnY-specific procedure blocks and an External API entry named `kny_tweaks`. It is intended for MCreator workspaces targeting **Forge 1.20.1**.
+
+The plugin can found here:
+https://mcreator.net/plugin/124570/kimetsunoyaiba-tweaks
+
+It can also be found here:
+https://github.com/YeeticusFinch/KnyTweaksMCreator/releases/
+
+#### Install the Plugin
+
+1. Build or zip the plugin folder so the ZIP root contains `plugin.json`, `apis/`, `procedures/`, `generators/`, and `lang/`.
+2. Put the plugin ZIP into your MCreator user plugins folder: `.mcreator/plugins`.
+3. Open MCreator and go to **Preferences** -> **Manage plugins**.
+4. Make sure plugins are enabled, then restart MCreator if prompted.
+5. Open or create a Forge 1.20.1 workspace.
+
+When developing locally from this repository, the plugin project is expected beside this repo at `../KnyTweaksMCreator`.
+
+#### Enable the KnY API in a Workspace
+
+1. Open **Workspace Settings**.
+2. Go to **External APIs**.
+3. Enable **Kimetsunoyaiba Tweaks** / `kny_tweaks`.
+4. Regenerate code and build the workspace.
+
+The plugin API entry adds the compile dependencies for the base Demon Slayer mod, GeckoLib, and Kimetsunoyaiba Tweaks. It also adds Forge runtime dependency entries for `kimetsunoyaiba` and `kimetsunoyaibamultiplayer` so missing mods fail with a normal dependency error instead of a `ClassNotFoundException`.
+
+#### Procedure Blocks
+
+After the API is enabled, a **KnY Tweaks** procedure category is available. The blocks generate calls into `KnYAPI`, `Damager`, and the public helper classes.
+
+Useful blocks include:
+
+- Set breathing form cooldown.
+- Damage entities in a radius using `Damager.hurt`.
+- Dash an entity forward.
+- Apply bleeding.
+- Spawn a breathing slash.
+- Register slash models, namespaces, animated textures, and random textures.
+- Set guard state and reset guard state.
+- Get the currently equipped Nichirin sword.
+- Get the current breathing form ID from `breathes`.
+- Check whether an entity is using a breathing style ID.
+- Check whether an entity is a demon using `Damager.isDemon`.
+- Register sword sheaths, sheathed display overrides, sword positions, and offsets.
+
+The damage blocks pass base damage into `Damager.hurt`. Do not pre-scale damage in the procedure, because `Damager.hurt` already performs scaling internally unless the block/template explicitly asks it not to.
+
+#### Breathing Form Workflow
+
+For generated breathing styles, the intended workflow is:
+
+1. Create a **KnY Breathing Form** mod element or generated form definition.
+2. Set its form ID, name, description, and cooldown.
+3. Use **On use** to call an MCreator procedure.
+4. Build that procedure visually with KnY blocks such as dash, slash, guard, damage radius, particles, and sounds.
+5. Register the form with `KnYAPI.registerProcedureBreathingForm()`.
+6. Register the style with `KnYAPI.registerProcedureBreathingStyle()` during common setup.
+
+The generated form callback should call the MCreator procedure, while the KnY API owns the breathing-style architecture:
+
+```java
+BreathingForm firstForm = KnYAPI.registerProcedureBreathingForm(
+    4101,
+    "First Form: Frozen Lake",
+    "A fast frozen slash.",
+    5,
+    (entity, level, formId) -> FrostFirstFormProcedure.execute(entity)
+);
+```
+
+#### Demonized Variants
+
+Use the **is entity a demon** block or `Damager.isDemon(entity)` to branch inside form procedures:
+
+```java
+if (Damager.isDemon(entity)) {
+    FrostDemonizedProcedure.execute(entity);
+} else {
+    FrostFirstFormProcedure.execute(entity);
+}
+```
+
+This is the recommended pattern for demonized variants of breathing forms.
+
+#### Custom Mod Elements
+
+Procedure blocks are the first stable part of the plugin. Custom mod elements should generate code through the new adapter APIs:
+
+- `KnYAPI.registerProcedureBreathingStyle(...)`
+- `KnYAPI.registerProcedureBreathingForm(...)`
+- `KnYAPI.registerProcedureVariation(...)`
+- `KnYAPI.registerSword(...)`
+- `KnYAPI.registerSwordMetadata(...)`
+- `KnYAPI.registerSheath(...)`
+- `KnYAPI.registerDemonSlayerEntityCombat(...)`
+- `KnYAPI.applyDemonSlayerEntityCombat(...)`
+
+Forge item and entity registration still belongs to the generated addon mod. The adapters hide KnY-specific registry details, but the generated mod still needs to register its own `Item`, `EntityType`, attributes, renderer, and event-bus hooks in the normal Forge/MCreator phases.
 
 ### Step 1: Add Dependencies to MCreator
 
@@ -156,84 +259,113 @@ Edit `src/main/resources/META-INF/mods.toml` and add the dependency:
     side="BOTH"
 ```
 
-### Step 3: Create Custom Code Elements
+### Step 3: Use the Adapter APIs
 
-MCreator requires custom code elements to use the API:
+Procedure blocks can generate direct calls to these adapters.
 
-#### Option A: Custom Procedure (Recommended)
+#### Breathing Forms
 
-1. Create a new **Procedure**
-2. Click the **<>** button to switch to code view
-3. Write your breathing form logic:
+Use `registerProcedureBreathingForm()` when generated code needs to wrap an MCreator procedure callback:
 
 ```java
-// In a custom procedure
-import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
-import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.*;
-
-public class YourProcedure {
-    public static void execute(Entity entity) {
-        if (entity instanceof Player player) {
-            // Play animation
-            KnYAPI.playAnimation(player, "sword_to_left");
-
-            // Deal damage to nearby enemies
-            // ... your logic here
-        }
-    }
-}
+BreathingForm firstForm = KnYAPI.registerProcedureBreathingForm(
+    4101,
+    "First Form: Frozen Lake",
+    "A fast frozen slash.",
+    5,
+    (entity, level, formId) -> FrostFirstFormProcedure.execute(entity)
+);
 ```
 
-#### Option B: Custom Element for Sword Registration
+#### Breathing Styles
 
-1. Create a **Custom Element** (requires MCreator 2023.1+)
-2. Use the full sword builder pattern:
+Use `registerProcedureBreathingStyle()` during common setup/enqueueWork after forms are created. This registers both style metadata and the breathing style:
 
 ```java
-package net.yourmod.item;
-
-import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
-import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.world.item.Item;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
-
-public class ModSwords {
-    public static final DeferredRegister<Item> ITEMS =
-        DeferredRegister.create(ForgeRegistries.ITEMS, "yourmodid");
-
-    public static final RegistryObject<Item> MY_SWORD =
-        KnYAPI.createSword("my_sword")
-            .breathingStyle("my_breathing", YourBreathingForms.create())
-            .styleRange(6000)  // Use even thousands
-            .defaultParticle(ParticleTypes.FLAME)
-            .category(SwordRegistry.SwordCategory.NICHIRIN)
-            .swordLevel(0)     // REQUIRED: 0=base, 1=named, 2=hashira
-            .durability(2000)
-            .build(ITEMS);
-}
+BreathingStyleRegistry.RegisteredBreathingStyle frostStyle =
+    KnYAPI.registerProcedureBreathingStyle(
+        "frost_breathing",
+        "Frost Breathing",
+        4100,
+        "minecraft:snowflake",
+        "water_breathing",
+        true,
+        true,
+        List.of(firstForm)
+    );
 ```
 
-### Limitations in MCreator
+#### Swords
 
-- **No visual editors**: Breathing forms must be coded manually
-- **Custom code only**: Cannot use MCreator's block-based procedures for API calls
-- **Manual registration**: Items need custom registration code
-- **Debugging harder**: Less IDE support than IntelliJ/Eclipse
+Forge items still need the owning mod's `DeferredRegister<Item>`, but generated code no longer needs the builder chain:
 
-### Recommended Approach
+```java
+RegistryObject<Item> frostSword = KnYAPI.registerSword(
+    ITEMS,
+    "nichirinsword_frost",
+    "frost_breathing",
+    KnYAPI.createTechnique("Frost Breathing", List.of(firstForm)),
+    4100,
+    "minecraft:snowflake",
+    "NICHIRIN",
+    0,
+    2000
+);
+```
 
-For complex addons with multiple breathing styles and entities, consider:
-1. Start in MCreator for basic mod structure
-2. Export to IntelliJ IDEA or Eclipse for API integration
-3. Use the full development environment for breathing forms
+If MCreator already generated a regular item and you only need metadata for entity loadouts, use:
 
-### Alternative: Hybrid Approach
+```java
+KnYAPI.registerSwordMetadata("yourmod:nichirinsword_frost", "frost_breathing", 0);
+```
 
-1. Create basic items/blocks in MCreator's visual editor
-2. Add custom code elements for KnY API integration
-3. Use MCreator procedures for non-API logic (sounds, particles, etc.)
+#### Variations
+
+Use `registerProcedureVariation()` during common setup after the base form exists:
+
+```java
+KnYAPI.registerProcedureVariation(
+    4101,
+    "Frozen Lake: Demonized",
+    "A demonized variant of the first form.",
+    4,
+    (entity, level, formId) -> FrostDemonizedProcedure.execute(entity),
+    Set.of("nichirinsword_frost")
+);
+```
+
+#### Sheaths and Display
+
+Generated setup code can register sheath mappings and offsets without importing client registries:
+
+```java
+KnYAPI.registerPersistentSheath("yourmod:nichirinsword_frost", "yourmod:frost_sheath");
+KnYAPI.registerSheathDisplayOverride("yourmod:nichirinsword_frost", "yourmod:nichirinsword_frost_sheathed");
+KnYAPI.addSwordPositionOverride("yourmod:nichirinsword_frost", SwordDisplayPosition.BACK);
+KnYAPI.registerSwordOffsets(
+    "yourmod:nichirinsword_frost",
+    new SwordDisplayConfig.SwordOffsets(0.0, 0.1, 0.0, 0.0, 15.0, 0.0)
+);
+```
+
+#### Demon Slayer Entities
+
+Entity types still belong to the addon. Register the KnY combat profile during common setup, then apply it once when the entity spawns:
+
+```java
+KnYAPI.registerDemonSlayerEntityCombat(
+    "yourmod:frost_slayer",
+    EntityPowerScale.GENERIC_SLAYER,
+    "frost_breathing",
+    "yourmod:nichirinsword_frost",
+    true,
+    false
+);
+
+KnYAPI.applyDemonSlayerEntityCombat(livingEntity);
+```
+
+`applyDemonSlayerEntityCombat()` writes the KnY combat NBT, equips the default sword when it can resolve one, and configures built-in `DemonSlayerEntity` / `BreathingSlayerEntity` instances when applicable.
 
 ---
 
@@ -316,18 +448,18 @@ public class ModItems {
 
 **Important:** Use EVEN thousands to avoid conflicts with Slytharis addon (which uses odd thousands).
 
-| Range | Status |
-|-------|--------|
-| 0-2000 | Reserved (base mod - includes Sun Breathing at 2000) |
-| 3000, 5000, 7000... | Reserved for Slytharis (odd thousands) |
-| 4000 | KnY-Extra-Additions: Alcohol Breathing |
-| 4100 | KnY-Extra-Additions: Forest Breathing |
-| 4200 | KnY-Extra-Additions: Frost Breathing |
-| 4300 | KnY-Extra-Additions: Ice Breathing |
-| 6000+ | Used by KNY X (Star Breathing) |
-| 8000+ | Available for your addon |
-| 20000 | KnY Tweaks: Enhanced Mist Breathing |
-| 22000 | KnY Tweaks: Enhanced Love Breathing |
+| Range               | Status                                               |
+| ------------------- | ---------------------------------------------------- |
+| 0-2000              | Reserved (base mod - includes Sun Breathing at 2000) |
+| 3000, 5000, 7000... | Reserved for Slytharis (odd thousands)               |
+| 4000                | KnY-Extra-Additions: Alcohol Breathing               |
+| 4100                | KnY-Extra-Additions: Forest Breathing                |
+| 4200                | KnY-Extra-Additions: Frost Breathing                 |
+| 4300                | KnY-Extra-Additions: Ice Breathing                   |
+| 6000+               | Used by KNY X (Star Breathing)                       |
+| 8000+               | Available for your addon                             |
+| 20000               | KnY Tweaks: Enhanced Mist Breathing                  |
+| 22000               | KnY Tweaks: Enhanced Love Breathing                  |
 
 **Pattern:** Use even thousands (4000, 6000, 8000...) with hundreds for sub-styles (4100, 4200, 6100, 6200...).
 
@@ -339,11 +471,11 @@ Sword levels categorize swords by their power tier and determine their eligibili
 
 ### Level Definitions
 
-| Level | Name | Description | Color Change Eligible |
-|-------|------|-------------|----------------------|
-| **0** | Base | Generic breathing swords (e.g., `nichirinsword_water`) | Yes |
-| **1** | Named Character | Swords tied to specific characters (e.g., `nichirinsword_tanjiro`) | No |
-| **2** | Hashira | Elite swords from Hashira (e.g., `nichirinsword_rengoku`) | No |
+| Level | Name            | Description                                                        | Color Change Eligible |
+| ----- | --------------- | ------------------------------------------------------------------ | --------------------- |
+| **0** | Base            | Generic breathing swords (e.g., `nichirinsword_water`)             | Yes                   |
+| **1** | Named Character | Swords tied to specific characters (e.g., `nichirinsword_tanjiro`) | No                    |
+| **2** | Hashira         | Elite swords from Hashira (e.g., `nichirinsword_rengoku`)          | No                    |
 
 ### Setting Sword Level
 
@@ -467,6 +599,7 @@ The Sword Metadata Registry tracks base mod swords (from KimetsunoYaiba) that ar
 ### When to Use This
 
 Use `SwordMetadataRegistry` when:
+
 - Registering base mod swords for color change eligibility
 - Tracking swords that aren't `BreathingSwordItem` instances
 - Querying swords by style and level
@@ -529,15 +662,18 @@ List<SwordMetadataRegistry.SwordMetadata> eligibleSwords =
 The following base mod swords are automatically registered by `BaseModRegistration`:
 
 **Level 0 (Base Swords - Color Change Eligible):**
+
 - `nichirinsword_water`, `nichirinsword_flame`, `nichirinsword_wind`
 - `nichirinsword_mist`, `nichirinsword_thunder`, `nichirinsword_stone`
 - `nichirinsword_love`, `nichirinsword_serpent`, `nichirinsword_sound`
 - `nichirinsword_insect`, `nichirinsword_flower`, `nichirinsword_black`
 
 **Level 1 (Named Character Swords):**
+
 - `nichirinsword_tanjiro`, `nichirinsword_inosuke`
 
 **Level 2 (Hashira Swords):**
+
 - `nichirinsword_rengoku`, `nichirinsword_uzui`, `nichirinsword_shinobu`
 - `nichirinsword_iguro`, `nichirinsword_sanemi`, `nichirinsword_tokito`
 - `nichirinsword_kanroji`, `nichirinsword_gyomei`
@@ -681,6 +817,7 @@ public class FrostBreathingForms {
 **IMPORTANT**: Each breathing form requires a unique form ID.
 
 **Form ID Ranges:**
+
 - **0-1999**: Reserved (base KimetsunoYaiba mod forms)
   - Example: 102 = Water Second Form, 701 = Mist First Form
 - **20000-21999**: Kimetsunoyaiba Tweaks internal forms
@@ -690,6 +827,7 @@ public class FrostBreathingForms {
   - Choose a unique range (e.g., 30000-30999 for your "Frost Breathing")
 
 **Why Form IDs Matter:**
+
 - Required for `GuardStateHelper.setGuardState()` (defensive power during forms)
 - Used by the variation system to register alternate forms
 - Only specified ONCE in the constructor - automatically passed to your effect
@@ -954,6 +1092,7 @@ From `player-animation-lib`:
 ```
 
 Animation layers:
+
 - **Layer 3000**: Base animations (main ability)
 - **Layer 4000**: Overlay animations (attacks during abilities)
 
@@ -962,6 +1101,7 @@ Animation layers:
 ## Registering Breathing Form Variations
 
 **Variations** allow you to create alternate versions of existing breathing forms. They work with both:
+
 - **Base mod forms** (0-1999 form IDs from KimetsunoYaiba mod)
 - **Custom forms** (30000+ form IDs from your mod or other mods)
 
@@ -1037,6 +1177,7 @@ public class WaterBreathingVariations {
 ```
 
 **Base Mod Form IDs:**
+
 - Water Breathing: 101-111 (First-Eleventh Form)
 - Beast Breathing: 201-211
 - Thunder Breathing: 301-306
@@ -1048,7 +1189,7 @@ public class WaterBreathingVariations {
 - Sound Breathing: 901-905
 - Love Breathing: 1501-1505
 
-*(Full list in `BaseModStyleMapping.java`)*
+_(Full list in `BaseModStyleMapping.java`)_
 
 ### Registering Variations for Custom Forms
 
@@ -1436,6 +1577,7 @@ NichirinSwordBuilder.create(swordId)
 ### Helper Classes
 
 #### MovementHelper
+
 ```java
 MovementHelper.setVelocity(entity, x, y, z)
 MovementHelper.setVelocity(entity, vec3)
@@ -1445,6 +1587,7 @@ MovementHelper.stepUp(entity, x, y, z)
 ```
 
 #### ParticleHelper
+
 ```java
 ParticleHelper.spawnForwardThrust(level, start, direction, distance, particle, count)
 ParticleHelper.spawnHorizontalArc(level, center, yaw, pitch, radius, increment, arc, step, offset, particle, count)
@@ -1453,6 +1596,7 @@ ParticleHelper.spawnCircleParticles(level, center, radius, particle, count)
 ```
 
 #### DamageCalculator
+
 ```java
 DamageCalculator.calculateScaledDamage(entity, baseDamage)
 ```
@@ -1482,6 +1626,7 @@ Damager.hurt(LivingEntity source, LivingEntity target, float damage,
 ```
 
 **Parameters:**
+
 - `source` - The entity dealing the damage (attacker)
 - `target` - The entity receiving the damage
 - `damage` - Base damage amount to deal
@@ -1572,12 +1717,14 @@ Call `setGuardState()` when an ability starts so the base KnY clash system can u
 The `scale` parameter controls whether the guard/attack `Damage` NBT is pre-scaled. This is separate from `Damager.hurt()`: guard values are not applied through `Damager`, so scaling them here is appropriate. Use `scale = false` when you need a fixed guard strength.
 
 #### AbilityScheduler
+
 ```java
 AbilityScheduler.scheduleOnce(entity, task, delayTicks)
 AbilityScheduler.scheduleRepeating(entity, task, intervalTicks, durationTicks)
 ```
 
 #### KnYEffects
+
 ```java
 KnYEffects.getColdEffect()  // Returns the Cold mob effect from base mod
 ```
@@ -1591,6 +1738,7 @@ The KnY Multiplayer mod supports custom 3D sword slash effects that display when
 ### Available Slash Models
 
 Built-in model keys:
+
 - `generic` - Default slash effect
 - `mist` - Mist breathing slash
 - `love` - Love breathing slash
@@ -1631,6 +1779,7 @@ assets/yourmodid/textures/entity/sword_slash_yourbreathing2.png
 ```
 
 Tips:
+
 - Use bright, saturated colors
 - Add transparency for glow effects
 - Size: 64x64 or 128x128 recommended
@@ -1863,21 +2012,21 @@ player.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA).ifPresent(dat
 
 ### 5. Appropriate Cooldowns
 
-| Form Type | Recommended Cooldown |
-|-----------|---------------------|
-| Basic attack | 2-5 seconds |
-| Dash/movement | 5-8 seconds |
-| Multi-phase | 8-12 seconds |
-| Ultimate | 20-30 seconds |
+| Form Type     | Recommended Cooldown |
+| ------------- | -------------------- |
+| Basic attack  | 2-5 seconds          |
+| Dash/movement | 5-8 seconds          |
+| Multi-phase   | 8-12 seconds         |
+| Ultimate      | 20-30 seconds        |
 
 ### 6. Damage Guidelines
 
-| Attack Type | Base Damage |
-|-------------|-------------|
-| Light attack | 3-5 |
-| Medium attack | 6-8 |
-| Heavy attack | 10-12 |
-| Ultimate | 15+ |
+| Attack Type   | Base Damage |
+| ------------- | ----------- |
+| Light attack  | 3-5         |
+| Medium attack | 6-8         |
+| Heavy attack  | 10-12       |
+| Ultimate      | 15+         |
 
 ### 7. Debug Logging
 
