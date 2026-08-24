@@ -150,7 +150,7 @@ When developing locally from this repository, the plugin project is expected bes
 3. Enable **Kimetsunoyaiba Tweaks** / `kny_tweaks`.
 4. Regenerate code and build the workspace.
 
-The plugin API entry adds the compile dependencies for the base Demon Slayer mod, GeckoLib, and Kimetsunoyaiba Tweaks. It also adds Forge runtime dependency entries for `kimetsunoyaiba` and `kimetsunoyaibamultiplayer` so missing mods fail with a normal dependency error instead of a `ClassNotFoundException`.
+The plugin API entry adds the compile dependencies for the base Demon Slayer mod, GeckoLib, and Kimetsunoyaiba Tweaks. Add the Forge runtime dependency entries for `kimetsunoyaiba` and `kimetsunoyaibamultiplayer` in `mods.toml` so missing mods fail with a normal dependency error instead of a `ClassNotFoundException`.
 
 #### Procedure Blocks
 
@@ -239,8 +239,9 @@ repositories {
 }
 
 dependencies {
-    implementation fg.deobf("curse.maven:demonslayer-471263:7151280")
-    implementation fg.deobf("maven.modrinth:kimetsunoyaiba-tweaks:1.6.2999")
+    implementation "curse.maven:demonslayer-471263:7151280"
+    implementation "software.bernie.geckolib:geckolib-forge-1.20.1:4.4.9"
+    implementation "maven.modrinth:kimetsunoyaiba-tweaks:1.6.556"
 }
 ```
 
@@ -2004,6 +2005,7 @@ setCancelAttackSwing(entity, false);
 ```
 
 Example Cleanup (using ability scheduler to schedule after the ability is done):
+
 ```
                // Schedule cleanup
                 AbilityScheduler.scheduleOnce(entity, () -> {
