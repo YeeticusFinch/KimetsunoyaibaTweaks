@@ -168,6 +168,7 @@ Shoichi: Kiyoshi is trapped in the mansion! Please help us kind sir!
 Step 3: Find Kiyoshi
 The inside of Tsuzumi Mansion is built like a maze.
 Kiyoshi is hiding inside a closet in the mansion.
+Inside the Tsuzumi Mansion there are regular demons, tongue demons, and horned demons.
 
 Step 4: Defeat Kyogai 
 If Kiyoshi dies then the quest fails and must be restarted.
