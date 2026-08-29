@@ -48,9 +48,10 @@ public class BiomeConfig {
         .comment("Cluster size for wisteria forest biome replacement (1-10)")
         .comment("When a replacement starts, this many adjacent biome points are also replaced")
         .comment("Higher values create larger, more continuous wisteria forests")
-        .comment("1 = small patches, 3-5 = medium forests, 7-10 = huge forests")
-        .comment("RECOMMENDED: 5-7 for large impressive forests")
-        .defineInRange("wisteriaForestClusterSize", 6, 1, 10);
+        .comment("1 = small patches, 4-6 = medium forests, 8-10 = huge forests")
+        .comment("Total world coverage is limited by the replacement chances, not this value")
+        .comment("RECOMMENDED: 8 for large impressive forests that stay rare")
+        .defineInRange("wisteriaForestClusterSize", 8, 1, 10);
 
     // Legacy size/frequency settings (currently not used with replacement approach)
     private static final ForgeConfigSpec.DoubleValue WISTERIA_FOREST_CYAN_SIZE_MULTIPLIER = BUILDER

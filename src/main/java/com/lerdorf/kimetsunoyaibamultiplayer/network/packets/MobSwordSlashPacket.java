@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.SwordParticleHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CombustibleBlood;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
@@ -74,7 +75,10 @@ public class MobSwordSlashPacket {
 
         // Use the entity's main-hand item to determine particles/model
         ItemStack swordItem = living.getMainHandItem();
-        ParticleOptions particleType = SwordParticleMapping.getParticleForSword(swordItem);
+        ParticleOptions particleType = SwordParticleMapping.getParticleForSword(
+            swordItem,
+            SwordParticleHandler.isDemonizedParticleWielder(living)
+        );
         if (particleType == null) {
             if (swordItem.getItem() == ModItems.CUSTOM_DEMON_ART.get()
                 || CombustibleBlood.isCombustibleBloodMeleeItem(swordItem)) {

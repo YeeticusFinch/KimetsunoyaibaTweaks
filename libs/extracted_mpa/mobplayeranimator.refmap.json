@@ -1,0 +1,132 @@
+{
+  "mappings": {
+    "me/Thelnfamous1/mobplayeranimator/mixin/MobMixin": {
+      "tick": "Lnet/minecraft/world/entity/Mob;m_8119_()V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/AbstractZombieModelMixin": {
+      "Lnet/minecraft/client/model/AnimationUtils;animateZombieArms(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102102_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V",
+      "setupAnim": "Lnet/minecraft/client/model/AbstractZombieModel;m_6973_(Lnet/minecraft/world/entity/monster/Monster;FFFFF)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/EntityModelMixin": {
+      "copyPropertiesTo": "Lnet/minecraft/client/model/EntityModel;m_102624_(Lnet/minecraft/client/model/EntityModel;)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/EntityRendererDispatcherMixin": {
+      "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;getRenderer(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/client/renderer/entity/EntityRenderer;": "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;m_114382_(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/client/renderer/entity/EntityRenderer;",
+      "render": "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;m_114384_(Lnet/minecraft/world/entity/Entity;DDDFFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/HierarchicalModelMixin": {
+      "renderToBuffer": "Lnet/minecraft/client/model/HierarchicalModel;m_7695_(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/HumanoidModelMixin": {
+      "<init>(Lnet/minecraft/client/model/geom/ModelPart;Ljava/util/function/Function;)V": "Lnet/minecraft/client/model/HumanoidModel;<init>(Lnet/minecraft/client/model/geom/ModelPart;Ljava/util/function/Function;)V",
+      "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V": "Lnet/minecraft/client/model/HumanoidModel;m_6973_(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/IllagerModelMixin": {
+      "<init>": "Lnet/minecraft/client/model/IllagerModel;<init>(Lnet/minecraft/client/model/geom/ModelPart;)V",
+      "Lnet/minecraft/client/model/AnimationUtils;animateZombieArms(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102102_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V",
+      "Lnet/minecraft/client/model/AnimationUtils;swingWeaponDown(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/world/entity/Mob;FF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102091_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/world/entity/Mob;FF)V",
+      "setupAnim": "Lnet/minecraft/client/model/IllagerModel;m_6973_(Lnet/minecraft/world/entity/monster/AbstractIllager;FFFFF)V",
+      "setupAnim(Lnet/minecraft/world/entity/monster/AbstractIllager;FFFFF)V": "Lnet/minecraft/client/model/IllagerModel;m_6973_(Lnet/minecraft/world/entity/monster/AbstractIllager;FFFFF)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/LivingEntityRendererMixin": {
+      "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V": "Lnet/minecraft/client/model/EntityModel;m_7695_(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V",
+      "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V": "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;m_7392_(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+      "setupRotations": "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;m_7523_(Lnet/minecraft/world/entity/LivingEntity;Lcom/mojang/blaze3d/vertex/PoseStack;FFF)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/MobRendererMixin": {
+      "render(Lnet/minecraft/world/entity/Mob;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V": "Lnet/minecraft/client/renderer/entity/MobRenderer;m_7392_(Lnet/minecraft/world/entity/Mob;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/ModelPartAccessor": {
+      "children": "f_104213_:Ljava/util/Map;"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/PiglinModelMixin": {
+      "Lnet/minecraft/client/model/AnimationUtils;animateZombieArms(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102102_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V",
+      "Lnet/minecraft/client/model/AnimationUtils;swingWeaponDown(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/world/entity/Mob;FF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102091_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/world/entity/Mob;FF)V",
+      "Lnet/minecraft/client/model/PiglinModel;holdWeaponHigh(Lnet/minecraft/world/entity/Mob;)V": "Lnet/minecraft/client/model/PiglinModel;m_103360_(Lnet/minecraft/world/entity/Mob;)V",
+      "Lnet/minecraft/client/model/geom/ModelPart;loadPose(Lnet/minecraft/client/model/geom/PartPose;)V": "Lnet/minecraft/client/model/geom/ModelPart;m_171322_(Lnet/minecraft/client/model/geom/PartPose;)V",
+      "setupAnim": "Lnet/minecraft/client/model/PiglinModel;m_6973_(Lnet/minecraft/world/entity/Mob;FFFFF)V",
+      "setupAttackAnimation": "Lnet/minecraft/client/model/PiglinModel;m_7884_(Lnet/minecraft/world/entity/Mob;F)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/PlayerModelMixin_Mob": {
+      "Lnet/minecraft/client/model/geom/ModelPart;copyFrom(Lnet/minecraft/client/model/geom/ModelPart;)V": "Lnet/minecraft/client/model/geom/ModelPart;m_104315_(Lnet/minecraft/client/model/geom/ModelPart;)V",
+      "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V": "Lnet/minecraft/client/model/PlayerModel;m_6973_(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/SkeletonModelMixin": {
+      "Lnet/minecraft/client/model/HumanoidModel;setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V": "Lnet/minecraft/client/model/HumanoidModel;m_6973_(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V",
+      "setupAnim(Lnet/minecraft/world/entity/Mob;FFFFF)V": "Lnet/minecraft/client/model/SkeletonModel;m_6973_(Lnet/minecraft/world/entity/Mob;FFFFF)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/ZombieVillagerModelMixin": {
+      "Lnet/minecraft/client/model/AnimationUtils;animateZombieArms(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102102_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V",
+      "setupAnim": "Lnet/minecraft/client/model/ZombieVillagerModel;m_6973_(Lnet/minecraft/world/entity/monster/Zombie;FFFFF)V"
+    },
+    "me/Thelnfamous1/mobplayeranimator/mixin/client/compat/modulargolems/HumanoidGolemModelMixin": {
+      "Ldev/xkmc/modulargolems/content/entity/humanoid/HumanoidGolemEntity;isAggressive()Z": "Ldev/xkmc/modulargolems/content/entity/humanoid/HumanoidGolemEntity;m_5912_()Z"
+    }
+  },
+  "data": {
+    "searge": {
+      "me/Thelnfamous1/mobplayeranimator/mixin/MobMixin": {
+        "tick": "Lnet/minecraft/world/entity/Mob;m_8119_()V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/AbstractZombieModelMixin": {
+        "Lnet/minecraft/client/model/AnimationUtils;animateZombieArms(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102102_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V",
+        "setupAnim": "Lnet/minecraft/client/model/AbstractZombieModel;m_6973_(Lnet/minecraft/world/entity/monster/Monster;FFFFF)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/EntityModelMixin": {
+        "copyPropertiesTo": "Lnet/minecraft/client/model/EntityModel;m_102624_(Lnet/minecraft/client/model/EntityModel;)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/EntityRendererDispatcherMixin": {
+        "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;getRenderer(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/client/renderer/entity/EntityRenderer;": "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;m_114382_(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/client/renderer/entity/EntityRenderer;",
+        "render": "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;m_114384_(Lnet/minecraft/world/entity/Entity;DDDFFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/HierarchicalModelMixin": {
+        "renderToBuffer": "Lnet/minecraft/client/model/HierarchicalModel;m_7695_(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/HumanoidModelMixin": {
+        "<init>(Lnet/minecraft/client/model/geom/ModelPart;Ljava/util/function/Function;)V": "Lnet/minecraft/client/model/HumanoidModel;<init>(Lnet/minecraft/client/model/geom/ModelPart;Ljava/util/function/Function;)V",
+        "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V": "Lnet/minecraft/client/model/HumanoidModel;m_6973_(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/IllagerModelMixin": {
+        "<init>": "Lnet/minecraft/client/model/IllagerModel;<init>(Lnet/minecraft/client/model/geom/ModelPart;)V",
+        "Lnet/minecraft/client/model/AnimationUtils;animateZombieArms(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102102_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V",
+        "Lnet/minecraft/client/model/AnimationUtils;swingWeaponDown(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/world/entity/Mob;FF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102091_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/world/entity/Mob;FF)V",
+        "setupAnim": "Lnet/minecraft/client/model/IllagerModel;m_6973_(Lnet/minecraft/world/entity/monster/AbstractIllager;FFFFF)V",
+        "setupAnim(Lnet/minecraft/world/entity/monster/AbstractIllager;FFFFF)V": "Lnet/minecraft/client/model/IllagerModel;m_6973_(Lnet/minecraft/world/entity/monster/AbstractIllager;FFFFF)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/LivingEntityRendererMixin": {
+        "Lnet/minecraft/client/model/EntityModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V": "Lnet/minecraft/client/model/EntityModel;m_7695_(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;IIFFFF)V",
+        "render(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V": "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;m_7392_(Lnet/minecraft/world/entity/LivingEntity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+        "setupRotations": "Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;m_7523_(Lnet/minecraft/world/entity/LivingEntity;Lcom/mojang/blaze3d/vertex/PoseStack;FFF)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/MobRendererMixin": {
+        "render(Lnet/minecraft/world/entity/Mob;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V": "Lnet/minecraft/client/renderer/entity/MobRenderer;m_7392_(Lnet/minecraft/world/entity/Mob;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/ModelPartAccessor": {
+        "children": "f_104213_:Ljava/util/Map;"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/PiglinModelMixin": {
+        "Lnet/minecraft/client/model/AnimationUtils;animateZombieArms(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102102_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V",
+        "Lnet/minecraft/client/model/AnimationUtils;swingWeaponDown(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/world/entity/Mob;FF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102091_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/world/entity/Mob;FF)V",
+        "Lnet/minecraft/client/model/PiglinModel;holdWeaponHigh(Lnet/minecraft/world/entity/Mob;)V": "Lnet/minecraft/client/model/PiglinModel;m_103360_(Lnet/minecraft/world/entity/Mob;)V",
+        "Lnet/minecraft/client/model/geom/ModelPart;loadPose(Lnet/minecraft/client/model/geom/PartPose;)V": "Lnet/minecraft/client/model/geom/ModelPart;m_171322_(Lnet/minecraft/client/model/geom/PartPose;)V",
+        "setupAnim": "Lnet/minecraft/client/model/PiglinModel;m_6973_(Lnet/minecraft/world/entity/Mob;FFFFF)V",
+        "setupAttackAnimation": "Lnet/minecraft/client/model/PiglinModel;m_7884_(Lnet/minecraft/world/entity/Mob;F)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/PlayerModelMixin_Mob": {
+        "Lnet/minecraft/client/model/geom/ModelPart;copyFrom(Lnet/minecraft/client/model/geom/ModelPart;)V": "Lnet/minecraft/client/model/geom/ModelPart;m_104315_(Lnet/minecraft/client/model/geom/ModelPart;)V",
+        "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V": "Lnet/minecraft/client/model/PlayerModel;m_6973_(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/SkeletonModelMixin": {
+        "Lnet/minecraft/client/model/HumanoidModel;setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V": "Lnet/minecraft/client/model/HumanoidModel;m_6973_(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V",
+        "setupAnim(Lnet/minecraft/world/entity/Mob;FFFFF)V": "Lnet/minecraft/client/model/SkeletonModel;m_6973_(Lnet/minecraft/world/entity/Mob;FFFFF)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/ZombieVillagerModelMixin": {
+        "Lnet/minecraft/client/model/AnimationUtils;animateZombieArms(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V": "Lnet/minecraft/client/model/AnimationUtils;m_102102_(Lnet/minecraft/client/model/geom/ModelPart;Lnet/minecraft/client/model/geom/ModelPart;ZFF)V",
+        "setupAnim": "Lnet/minecraft/client/model/ZombieVillagerModel;m_6973_(Lnet/minecraft/world/entity/monster/Zombie;FFFFF)V"
+      },
+      "me/Thelnfamous1/mobplayeranimator/mixin/client/compat/modulargolems/HumanoidGolemModelMixin": {
+        "Ldev/xkmc/modulargolems/content/entity/humanoid/HumanoidGolemEntity;isAggressive()Z": "Ldev/xkmc/modulargolems/content/entity/humanoid/HumanoidGolemEntity;m_5912_()Z"
+      }
+    }
+  }
+}

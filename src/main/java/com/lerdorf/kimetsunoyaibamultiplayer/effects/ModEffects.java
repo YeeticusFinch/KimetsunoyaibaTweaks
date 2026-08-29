@@ -69,6 +69,10 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> WISTERIA_RESISTANCE = MOB_EFFECTS.register("wisteria_resistance",
             WisteriaResistanceEffect::new);
 
+    // Puppetry effect - Spider Family quest: entity becomes Mother/Rui's puppet
+    public static final RegistryObject<MobEffect> PUPPETRY = MOB_EFFECTS.register("puppetry",
+            PuppetryEffect::new);
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

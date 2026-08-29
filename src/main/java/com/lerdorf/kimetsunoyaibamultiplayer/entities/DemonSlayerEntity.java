@@ -688,8 +688,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
 
         // Resistance (level 1+)
         if (powerLevel >= 2) {
-            int resistanceLevel = powerLevel - 2;
-            if (resistanceLevel > 4) resistanceLevel = 4;
+            int resistanceLevel = Math.min(MAX_RESISTANCE_AMPLIFIER, powerLevel - 2);
             this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, resistanceLevel, true, false));
         }
 

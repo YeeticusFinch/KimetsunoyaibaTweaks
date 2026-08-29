@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SwampDemonArt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -548,6 +549,298 @@ public final class QuestGroupRegistry {
                         .experiencePoints(200)
                         .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "blood_of_muzan"), 3)
                         .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "cushion_red"), 1)
+                ),
+                new QuestStageDefinition(
+                    "spider_family",
+                    "Stage No.4 - The Spider Family",
+                    "A spider familiar begs you to rescue a demon child from demon slayers, and bring her home to Mount Natagumo.",
+                    List.of(
+                        QuestStepDefinition.builder(
+                                "find_demon_child",
+                                "Find the Demon Child",
+                                "A spider familiar will find you. Find Ryoko, the demon child surrounded by demon slayers.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::startFindDemonChild)
+                            .customCheck((player, context) ->
+                                !SpiderFamilyScenario.hasRyokoDied(player, context))
+                            .markerResolver(SpiderFamilyScenario::resolveRyokoMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "protect_ryoko",
+                                "Protect Ryoko",
+                                "Kill the demon slayers before they kill the demon child. If Ryoko dies, the quest fails.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickProtectRyoko)
+                            .customCheck(SpiderFamilyScenario::areAllCaptorsDead)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "talk_to_ryoko",
+                                "Talk to Ryoko",
+                                "Speak with the demon child you saved.",
+                                QuestStepType.CUSTOM
+                            )
+                            .targetKey("spider_family_ryoko")
+                            .onTick(SpiderFamilyScenario::tickEscortRyoko)
+                            .customCheck(SpiderFamilyScenario::hasTalkedToRyoko)
+                            .markerResolver(SpiderFamilyScenario::resolveRyokoMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "escort_ryoko",
+                                "Take Ryoko to Mount Natagumo",
+                                "Bring Ryoko home to her mother on Mount Natagumo. If she dies, the quest fails.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickEscortRyoko)
+                            .customCheck(SpiderFamilyScenario::hasEscortedRyokoToNatagumo)
+                            .markerResolver(SpiderFamilyScenario::resolveNatagumoMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "talk_to_mother",
+                                "Talk to Ryoko's Mother",
+                                "Bring Ryoko to her worried mother.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::startTalkToMother)
+                            .onTick(SpiderFamilyScenario::tickMotherReunion)
+                            .customCheck(SpiderFamilyScenario::hasMotherReunionFinished)
+                            .markerResolver((player, context) -> {
+                                Entity mother = SpiderFamilyScenario.findQuestEntityByUuid(player,
+                                    SpiderFamilyScenario.MOTHER_UUID_KEY);
+                                return mother == null ? null : mother.blockPosition();
+                            })
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "join_spider_family",
+                                "Join the Spider Family",
+                                "Meet the Spider Family at their home and accept Rui's offer of Spider Demon Blood.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::ensureFamilyGathered)
+                            .onTick(SpiderFamilyScenario::tickJoinFamily)
+                            .customCheck(SpiderFamilyScenario::hasJoinedFamily)
+                            .markerResolver(SpiderFamilyScenario::resolveFamilyMarker)
+                            .build()
+                    ),
+                    new QuestRewardDefinition()
+                        .experiencePoints(400)
+                        .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "blood_of_muzan"), 1)
+                ),
+                new QuestStageDefinition(
+                    "demonweb_prince",
+                    "Stage No.5 - Demonweb Prince",
+                    "The Spider Family's trust is broken. Choose a side: Daughter or Rui.",
+                    List.of(
+                        // Step 1: Witness Daughter's punishment
+                        QuestStepDefinition.builder(
+                                "witness_punishment",
+                                "Witness Daughter's Punishment",
+                                "The family has gathered in the courtyard. Rui will dispense punishment.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::startPunishment)
+                            .onTick(SpiderFamilyScenario::tickPunishment)
+                            .customCheck(SpiderFamilyScenario::hasWitnessedPunishment)
+                            .markerResolver(SpiderFamilyScenario::resolveNatagumoMarker)
+                            .build(),
+                        // Step 2: Talk to Daughter
+                        QuestStepDefinition.builder(
+                                "talk_to_daughter",
+                                "Talk to Daughter",
+                                "Daughter wants to speak with you in private.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickTalkToDaughter)
+                            .customCheck(SpiderFamilyScenario::hasTalkedToDaughterAfterPunishment)
+                            .markerResolver(SpiderFamilyScenario::resolveRyokoMarker)
+                            .build(),
+                        // Step 3: Talk to Rui + path choice (strike one of them)
+                        QuestStepDefinition.builder(
+                                "choose_path",
+                                "Choose a Path",
+                                "Rui demands Daughter's death. Strike Rui to side with Daughter, or strike Daughter to prove loyalty to Rui.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickTalkToRuiChoice)
+                            .customCheck(SpiderFamilyScenario::isPathChosen)
+                            .onComplete(SpiderFamilyScenario::lockInPath)
+                            .markerResolver(SpiderFamilyScenario::resolveFamilyMarker)
+                            .build(),
+
+                        // ==================== Daughter path ====================
+                        QuestStepDefinition.builder(
+                                "dp_terrorize_village",
+                                "Terrorize a Village",
+                                "Wearing your spider demon transformation, attack a village until demon slayers arrive, then destroy them.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::startTerrorizeVillage)
+                            .onTick(SpiderFamilyScenario::tickTerrorizeVillage)
+                            .customCheck(SpiderFamilyScenario::isTerrorizeVillageComplete)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "dp_return_natagumo",
+                                "Return to Mount Natagumo",
+                                "Head back to Mount Natagumo... but something is being said about you.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickReturnOverhear)
+                            .customCheck(SpiderFamilyScenario::hasOverheardConversation)
+                            .markerResolver(SpiderFamilyScenario::resolveNatagumoMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "dp_survive_wrath",
+                                "Survive Rui's Wrath",
+                                "Run! Find Mother and beg for her aid while demon slayers descend on the mountain.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickSurviveWrath)
+                            .customCheck(SpiderFamilyScenario::hasSurvivedWrathReachedMother)
+                            .markerResolver(SpiderFamilyScenario::resolveFamilyMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "dp_gather_allies",
+                                "Gather Allies",
+                                "Plead your case to Mother.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickMotherAlliesDialogue)
+                            .customCheck(SpiderFamilyScenario::hasAlliesDialogueDone)
+                            .markerResolver(SpiderFamilyScenario::resolveFamilyMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "dp_circus_of_horrors",
+                                "Circus of Horrors",
+                                "Destroy all 10 demon slayer puppets descending upon you.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::startCircusOfHorrors)
+                            .onTick(SpiderFamilyScenario::tickCircusOfHorrors)
+                            .customCheck(SpiderFamilyScenario::isCircusComplete)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "dp_confront_daughter",
+                                "Confront Daughter",
+                                "Daughter wants to flee now that Mother is dead. Shinobu has other plans...",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::startConfrontDaughterDPath)
+                            .customCheck((player, context) -> true)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "dp_finish_started",
+                                "Finish What You Started",
+                                "Lure Giyu to Rui. Run from Giyu and find Rui - Giyu will do the rest.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickFinishWhatYouStartedDPath)
+                            .customCheck(SpiderFamilyScenario::isRuiDead)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "dp_flee",
+                                "Flee Mount Natagumo",
+                                "Escape the Mount Natagumo biome without dying.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickFleeMountNatagumo)
+                            .customCheck(SpiderFamilyScenario::hasFledMountNatagumo)
+                            .build(),
+
+                        // ==================== Rui path ====================
+                        QuestStepDefinition.builder(
+                                "rp_confront_daughter",
+                                "Confront Daughter",
+                                "Find Daughter. She has been fully healed... and she knows what you did.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::startConfrontDaughterRPath)
+                            .onTick(SpiderFamilyScenario::tickConfrontDaughterRPath)
+                            .customCheck(SpiderFamilyScenario::hasFatherBeenDefeated)
+                            .markerResolver(SpiderFamilyScenario::resolveRyokoMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "rp_find_daughter_village",
+                                "Find Daughter at the Village",
+                                "Follow the trail to the nearest village, where the villagers hang in cocoons.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::startFindDaughterAtVillage)
+                            .onTick(SpiderFamilyScenario::tickVillageScene)
+                            .customCheck(SpiderFamilyScenario::hasVillageScenePlayed)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "rp_defeat_slayers",
+                                "Defeat the Demon Slayers",
+                                "Fight off the ambush!",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickDefeatVillageSlayers)
+                            .customCheck(SpiderFamilyScenario::areVillageSlayersDefeated)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "rp_warn_family",
+                                "Warn the Spider Family",
+                                "Race back to Mount Natagumo and warn Mother of the coming attack.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickWarnFamily)
+                            .customCheck(SpiderFamilyScenario::hasWarnedFamily)
+                            .markerResolver(SpiderFamilyScenario::resolveNatagumoMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "rp_army_of_puppets",
+                                "Build the Army of Puppets",
+                                "Lure 15 demon slayers within 5 blocks of the hidden Spider Manifestations.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::startArmyOfPuppets)
+                            .onTick(SpiderFamilyScenario::tickArmyOfPuppets)
+                            .customCheck(SpiderFamilyScenario::isArmyComplete)
+                            .onComplete(SpiderFamilyScenario::completeArmyOfPuppets)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "rp_rui_arrives",
+                                "Report to Rui",
+                                "Rui has arrived. Await his orders.",
+                                QuestStepType.CUSTOM
+                            )
+                            .customCheck(SpiderFamilyScenario::hasArmyRuiArrived)
+                            .markerResolver(SpiderFamilyScenario::resolveFamilyMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "rp_finish_started",
+                                "Finish What You Started",
+                                "Kill Daughter. She is guarded by Zenitsu and demon slayers - this is a boss battle.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(SpiderFamilyScenario::startBossDaughter)
+                            .customCheck(SpiderFamilyScenario::isBossDaughterDead)
+                            .markerResolver(SpiderFamilyScenario::resolveRyokoMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "rp_report_back",
+                                "Report Back to Rui",
+                                "Return to Rui... if you can evade Zenitsu.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickReportBackToRui)
+                            .customCheck(SpiderFamilyScenario::hasReportedBackToRui)
+                            .markerResolver(SpiderFamilyScenario::resolveFamilyMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "rp_flee",
+                                "Flee Mount Natagumo",
+                                "Escape the Mount Natagumo biome without dying.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onTick(SpiderFamilyScenario::tickFleeMountNatagumo)
+                            .customCheck(SpiderFamilyScenario::hasFledMountNatagumo)
+                            .build()
+                    ),
+                    new QuestRewardDefinition()
+                        .experiencePoints(800)
+                        .item(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "blood_of_muzan"), 4)
                 )
             )
         ));

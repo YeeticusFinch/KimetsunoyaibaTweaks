@@ -264,7 +264,8 @@ public class EnhancedLoveForms {
             "First Form: Shivers of First Love",
             "Multi-directional rapid slashes with the whip",
             5, // 5 second cooldown
-            (entity, level, formId) -> {
+				(entity, level, formId) -> {
+					boolean isDemon = Damager.isDemon(entity);
             	final ServerLevel serverLevel = level instanceof ServerLevel ? ((ServerLevel)level) : null;
 
                 // Set guard state (formId auto-injected as 22001)
@@ -330,7 +331,7 @@ public class EnhancedLoveForms {
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
                 		            new EnergyParticleOptions(
-                		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) :new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ),
                 		            pos.x, pos.y, pos.z,
@@ -498,7 +499,9 @@ public class EnhancedLoveForms {
 
 				final float damage = (10.0F);
             	 // Set guard state (formId auto-injected as 22002)
-                GuardStateHelper.setGuardState(entity, 8.0, formId);
+					GuardStateHelper.setGuardState(entity, 8.0, formId);
+				
+					boolean isDemon = Damager.isDemon(entity);
 
                 // Play player animation
                 playEntityAnimation(entity, "love_second_form");
@@ -546,7 +549,7 @@ public class EnhancedLoveForms {
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
                 		            new EnergyParticleOptions(
-                		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ),
                 		            pos.x, pos.y, pos.z,
@@ -636,6 +639,8 @@ public class EnhancedLoveForms {
 
                 // Trigger whip animation (client-side)
                 triggerWhipAnimation(entity, "love_third_form", 1.0);
+
+					boolean isDemon = Damager.isDemon(entity);
 
                 // Prevent normal attack swing
                 setCancelAttackSwing(entity, true);
@@ -761,7 +766,7 @@ public class EnhancedLoveForms {
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
                 		            new EnergyParticleOptions(
-                		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ),
                 		            pos.x, pos.y, pos.z,
@@ -947,6 +952,8 @@ public class EnhancedLoveForms {
                 	
                 	float damage = (24.0F);
 
+					boolean isDemon = Damager.isDemon(entity);
+
                 	// Set guard state
                 	GuardStateHelper.setGuardState(entity, damage, formId);
 
@@ -1034,7 +1041,7 @@ public class EnhancedLoveForms {
                     					Vec3 pos = le.position().add(1.5f*Math.sin(i), 1, 1.5f*Math.cos(i));
                     					serverLevel.sendParticles(
                             		            new EnergyParticleOptions(
-                            		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                            		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                             		                1.8f                           // scale
                             		            ),
                             		            pos.x, pos.y, pos.z,
@@ -1081,7 +1088,7 @@ public class EnhancedLoveForms {
                     			// Spawn pink dust particle at pos
                     			serverLevel.sendParticles(
                     		            new EnergyParticleOptions(
-                    		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                    		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                     		                1.8f                           // scale
                     		            ),
                     		            pos.x, pos.y, pos.z,
@@ -1132,6 +1139,8 @@ public class EnhancedLoveForms {
 				float damage = (10.0F);
             	 // Set guard state (formId auto-injected as 22005)
                 GuardStateHelper.setGuardState(entity, damage * 0.8f, formId);
+
+					boolean isDemon = Damager.isDemon(entity);
 
                 // Play player animation
                 playEntityAnimation(entity, "love_fifth_form");
@@ -1218,7 +1227,7 @@ public class EnhancedLoveForms {
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
                 		            new EnergyParticleOptions(
-                		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.8f                           // scale
                 		            ),
                 		            pos.x, pos.y, pos.z,
@@ -1409,7 +1418,7 @@ public class EnhancedLoveForms {
                 				if (Math.random() < 0.3) {
                 					serverLevel.sendParticles(
                         		            new EnergyParticleOptions(
-                        		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                        		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                         		                2.5f                           // scale
                         		            ),
                         		            pos.x, pos.y, pos.z,
@@ -1483,7 +1492,7 @@ public class EnhancedLoveForms {
             "Spinning tornado whip attack",
             5,
             (entity, level, formId) -> {
-                // TODO: Implement sixth form
+				boolean isDemon = Damager.isDemon(entity);
             	float damage = (10.0F);
             	ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
             	float [][][] particlePoints = ParticlePositions.sixth_form.get("point_a");
@@ -1593,7 +1602,7 @@ public class EnhancedLoveForms {
                     			// Spawn pink dust particle at pos
                     			serverLevel.sendParticles(
                     		            new EnergyParticleOptions(
-                    		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+                    		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                     		                1.2f                           // scale
                     		            ),
                     		            pos.x, pos.y, pos.z,

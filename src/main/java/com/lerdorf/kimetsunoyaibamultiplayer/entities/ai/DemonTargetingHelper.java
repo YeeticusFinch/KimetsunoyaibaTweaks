@@ -80,6 +80,8 @@ public final class DemonTargetingHelper {
             searchBox,
             player -> isTargetableNonDemonPlayer(demon, player, targetPredicate)
                 && demon.distanceToSqr(player) <= range * range
+                && (!com.lerdorf.kimetsunoyaibamultiplayer.Config.requireLineOfSightAggro
+                    || demon.getSensing().hasLineOfSight(player))
         );
 
         return players.stream()

@@ -337,6 +337,30 @@ public class ModEntities {
                 .updateInterval(2)
                 .build("nezuko"));
 
+    public static final RegistryObject<EntityType<DaughterEntity>> DAUGHTER =
+        ENTITY_TYPES.register("daughter",
+            () -> EntityType.Builder.of(DaughterEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.95F)
+                .clientTrackingRange(10)
+                .updateInterval(2)
+                .build("daughter"));
+
+    public static final RegistryObject<EntityType<SilkRibbonEntity>> SILK_RIBBON =
+        ENTITY_TYPES.register("silk_ribbon",
+            () -> EntityType.Builder.<SilkRibbonEntity>of(SilkRibbonEntity::new, MobCategory.MISC)
+                .sized(0.5F, 0.5F)
+                .clientTrackingRange(48)
+                .updateInterval(1)
+                .build("silk_ribbon"));
+
+    public static final RegistryObject<EntityType<DissolutionCocoonEntity>> DISSOLUTION_COCOON =
+        ENTITY_TYPES.register("dissolution_cocoon",
+            () -> EntityType.Builder.<DissolutionCocoonEntity>of(DissolutionCocoonEntity::new, MobCategory.MISC)
+                .sized(1.1F, 2.1F)
+                .clientTrackingRange(32)
+                .updateInterval(2)
+                .build("dissolution_cocoon"));
+
     public static final RegistryObject<EntityType<SwampPuddleEntity>> SWAMP_PUDDLE =
         ENTITY_TYPES.register("swamp_puddle",
             () -> EntityType.Builder.<SwampPuddleEntity>of(SwampPuddleEntity::new, MobCategory.MISC)
@@ -408,6 +432,17 @@ public class ModEntities {
                 .build("cushion_seat"));
 
     /**
+     * Invisible mount used so players and mobs can sit on bench blocks.
+     */
+    public static final RegistryObject<EntityType<BenchSeatEntity>> BENCH_SEAT =
+        ENTITY_TYPES.register("bench_seat",
+            () -> EntityType.Builder.of(BenchSeatEntity::new, MobCategory.MISC)
+                .sized(0.01F, 0.01F)
+                .clientTrackingRange(16)
+                .updateInterval(1)
+                .build("bench_seat"));
+
+    /**
      * Register entity types to the mod event bus
      */
     public static void register(IEventBus eventBus) {
@@ -442,6 +477,9 @@ public class ModEntities {
             event.put(DEMON_PILLAGER.get(), DemonPillagerEntity.createAttributes().build());
             event.put(DEMON_VINDICATOR.get(), DemonVindicatorEntity.createAttributes().build());
             event.put(SWAMP_DEMON.get(), SwampDemonEntity.createAttributes().build());
+            event.put(DAUGHTER.get(), DaughterEntity.createAttributes().build());
+            event.put(SILK_RIBBON.get(), SilkRibbonEntity.createAttributes().build());
+            event.put(DISSOLUTION_COCOON.get(), DissolutionCocoonEntity.createAttributes().build());
             event.put(NEZUKO.get(), NezukoEntity.createAttributes().build());
 
             // Register attributes for Kanae and Kanawo
@@ -473,6 +511,9 @@ public class ModEntities {
 
             // Register attributes for Swamp Hand (temporary attack effect)
             event.put(SWAMP_HAND.get(), SwampHandEntity.createAttributes().build());
+
+            // Register attributes for invisible bench seat mount
+            event.put(BENCH_SEAT.get(), BenchSeatEntity.createAttributes().build());
 
             // Register attributes for invisible cushion seat mount
             event.put(CUSHION_SEAT.get(), CushionSeatEntity.createAttributes().build());

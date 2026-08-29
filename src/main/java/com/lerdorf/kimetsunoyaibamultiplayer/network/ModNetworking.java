@@ -13,6 +13,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OrochiDismountPacke
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenDemonPropositionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PuppetLineSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonPropositionStatePacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonEyesPacket;
@@ -297,6 +298,13 @@ public class ModNetworking {
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwampPuddleStatePacket::handle)
                 .add();
 
+        int nezukoBoxSyncPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.NezukoBoxSyncPacket.class, nezukoBoxSyncPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.NezukoBoxSyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.NezukoBoxSyncPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.NezukoBoxSyncPacket::handle)
+                .add();
+
         int debugPlayerDimensionsPacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DebugPlayerDimensionsPacket.class, debugPlayerDimensionsPacketId)
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DebugPlayerDimensionsPacket::new)
@@ -372,6 +380,13 @@ public class ModNetworking {
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonRankSyncPacket::new)
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonRankSyncPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonRankSyncPacket::handle)
+                .add();
+
+        int puppetLineSyncPacketId = id();
+        net.messageBuilder(PuppetLineSyncPacket.class, puppetLineSyncPacketId)
+                .decoder(PuppetLineSyncPacket::new)
+                .encoder(PuppetLineSyncPacket::toBytes)
+                .consumerMainThread(PuppetLineSyncPacket::handle)
                 .add();
     }
 

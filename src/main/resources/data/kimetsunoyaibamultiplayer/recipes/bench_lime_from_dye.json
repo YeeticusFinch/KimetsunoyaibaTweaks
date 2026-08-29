@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    {
+      "item": "minecraft:lime_dye"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:bench"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:bench_lime",
+    "count": 1
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "kimetsunoyaibamultiplayer:wisteria_forest",
+  "features": "kimetsunoyaibamultiplayer:spider_lily_patch",
+  "step": "vegetal_decoration"
+}

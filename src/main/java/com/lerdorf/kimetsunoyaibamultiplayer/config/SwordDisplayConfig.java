@@ -163,6 +163,37 @@ public class SwordDisplayConfig {
 
     static {
         BUILDER.pop(); // back_position
+        BUILDER.comment("Nezuko Box Back Display Configuration")
+                .push("nezuko_box");
+    }
+
+    private static final ForgeConfigSpec.BooleanValue RENDER_NEZUKO_BOX = BUILDER
+            .comment("Render the Nezuko box on a player's back when the item is anywhere in their hotbar")
+            .define("render", true);
+    private static final ForgeConfigSpec.DoubleValue NEZUKO_BOX_SCALE = BUILDER
+            .comment("Scale multiplier for the Nezuko box back render")
+            .defineInRange("scale", 0.65, 0.1, 5.0);
+    private static final ForgeConfigSpec.DoubleValue NEZUKO_BOX_TRANSLATE_X = BUILDER
+            .comment("Nezuko box X translation after attaching to the torso/body")
+            .defineInRange("translate_x", 0.0, -5.0, 5.0);
+    private static final ForgeConfigSpec.DoubleValue NEZUKO_BOX_TRANSLATE_Y = BUILDER
+            .comment("Nezuko box Y translation after attaching to the torso/body")
+            .defineInRange("translate_y", -0.25, -5.0, 5.0);
+    private static final ForgeConfigSpec.DoubleValue NEZUKO_BOX_TRANSLATE_Z = BUILDER
+            .comment("Nezuko box Z translation after attaching to the torso/body")
+            .defineInRange("translate_z", 0.0, -5.0, 5.0);
+    private static final ForgeConfigSpec.DoubleValue NEZUKO_BOX_ROTATE_X = BUILDER
+            .comment("Nezuko box X rotation in degrees after attaching to the torso/body")
+            .defineInRange("rotate_x", 0.0, -360.0, 360.0);
+    private static final ForgeConfigSpec.DoubleValue NEZUKO_BOX_ROTATE_Y = BUILDER
+            .comment("Nezuko box Y rotation in degrees after attaching to the torso/body")
+            .defineInRange("rotate_y", 0.0, -360.0, 360.0);
+    private static final ForgeConfigSpec.DoubleValue NEZUKO_BOX_ROTATE_Z = BUILDER
+            .comment("Nezuko box Z rotation in degrees after attaching to the torso/body")
+            .defineInRange("rotate_z", 180, -360.0, 360.0);
+
+    static {
+        BUILDER.pop(); // nezuko_box
         BUILDER.comment("Entity Display Overrides (non-player)")
                 .push("entity_display");
         BUILDER.comment("Back display overrides for entities")
@@ -315,6 +346,16 @@ public class SwordDisplayConfig {
     public static double backRightRotateY;
     public static double backRightRotateX;
 
+    // Nezuko box display values
+    public static boolean renderNezukoBox;
+    public static double nezukoBoxScale;
+    public static double nezukoBoxTranslateX;
+    public static double nezukoBoxTranslateY;
+    public static double nezukoBoxTranslateZ;
+    public static double nezukoBoxRotateX;
+    public static double nezukoBoxRotateY;
+    public static double nezukoBoxRotateZ;
+
     // Entity display overrides (non-player)
     public static double entityBackTranslateOffsetX;
     public static double entityBackTranslateOffsetY;
@@ -383,6 +424,15 @@ public class SwordDisplayConfig {
         backRightRotateZ = BACK_RIGHT_ROTATE_Z.get();
         backRightRotateY = BACK_RIGHT_ROTATE_Y.get();
         backRightRotateX = BACK_RIGHT_ROTATE_X.get();
+
+        renderNezukoBox = RENDER_NEZUKO_BOX.get();
+        nezukoBoxScale = NEZUKO_BOX_SCALE.get();
+        nezukoBoxTranslateX = NEZUKO_BOX_TRANSLATE_X.get();
+        nezukoBoxTranslateY = NEZUKO_BOX_TRANSLATE_Y.get();
+        nezukoBoxTranslateZ = NEZUKO_BOX_TRANSLATE_Z.get();
+        nezukoBoxRotateX = NEZUKO_BOX_ROTATE_X.get();
+        nezukoBoxRotateY = NEZUKO_BOX_ROTATE_Y.get();
+        nezukoBoxRotateZ = NEZUKO_BOX_ROTATE_Z.get();
 
         // Load entity display overrides
         entityBackTranslateOffsetX = ENTITY_BACK_TRANSLATE_OFFSET_X.get();

@@ -47,6 +47,8 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 | `common.enable-sword-clashing` | Enable sword clashing system where attacks can be deflected or mitigated |
 | `common.enable-nichirin-sprint-animation` | Enable custom sprint animation when holding a nichirin sword |
 | `common.disable-base-mod-sword-swing-particles` | Disable sword swing particles from the base KimetsunoYaiba mod (left-click particles only, does not affect breathing form or right-click particles) |
+| `common.demonized-breathing-styles` | Demons (entities or demonized players) using Serpent Breathing emit black dust particles instead of white ones. Default: true |
+| `common.require-line-of-sight-aggro` | Require line of sight for demon/demon-slayer aggro<br>When enabled, demons and demon slayers (from the base mod and this mod) cannot aggro entities they cannot see, e.g. a demon far underground will not target a player on the surface. Default: true |
 | `common.show-backstep-hud` | Show the base KimetsunoYaiba backstep charge HUD icon and count |
 | `common.backstep-hud-offset-x` | Horizontal offset as a percentage of the GUI-scaled window width for the backstep charge HUD. 0 keeps the base mod position. |
 | `common.backstep-hud-offset-y` | Vertical offset as a percentage of the GUI-scaled window height for the backstep charge HUD. 0 keeps the base mod position. |

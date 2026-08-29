@@ -47,7 +47,7 @@ public class DebugParticlesCommand {
                 player.sendSystemMessage(Component.literal("  - Is Kimetsunoyaiba Sword: " + SwordParticleMapping.isKimetsunoyaibaSword(mainHand)));
 
                 if (SwordParticleMapping.isKimetsunoyaibaSword(mainHand)) {
-                    var particleType = SwordParticleMapping.getParticleForSword(mainHand);
+                    var particleType = SwordParticleMapping.getParticleForSword(mainHand, player);
                     if (particleType != null) {
                         String particleId = BuiltInRegistries.PARTICLE_TYPE.getKey(particleType.getType()).toString();
                         player.sendSystemMessage(Component.literal("  - Particle: " + particleId));

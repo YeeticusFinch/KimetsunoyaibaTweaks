@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.blocks;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.ModAlchemyItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.WisteriaIncenseBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -128,6 +129,19 @@ public class SpiderLilyBlock extends FlowerBlock {
                 if (!player.getAbilities().instabuild) {
                     stack.shrink(1);
                 }
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+
+        if (!waxed && stack.is(Items.SHEARS) && state.is(ModBlocks.BLUE_SPIDER_LILY.get())) {
+            if (!level.isClientSide && level instanceof ServerLevel serverLevel) {
+                int petalCount = 1 + serverLevel.random.nextInt(3);
+                popResource(serverLevel, pos, new ItemStack(ModAlchemyItems.BLUE_SPIDER_LILY_PETALS.get(), petalCount));
+                recordUnbloomLock(serverLevel, pos);
+                level.setBlock(pos, ModBlocks.SPIDER_LILY.get().defaultBlockState(), Block.UPDATE_ALL);
+                level.playSound(null, pos, SoundEvents.BEEHIVE_SHEAR, SoundSource.BLOCKS, 1.0F, 1.0F);
+                serverLevel.sendParticles(ParticleTypes.HAPPY_VILLAGER, pos.getX() + 0.5D, pos.getY() + 0.6D, pos.getZ() + 0.5D, 8, 0.25D, 0.25D, 0.25D, 0.0D);
+                stack.hurtAndBreak(1, player, brokenPlayer -> brokenPlayer.broadcastBreakEvent(hand));
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
         }

@@ -1,20 +1,26 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.particles;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordMetadataRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.mojang.logging.LogUtils;
 import org.joml.Vector3f;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,6 +39,8 @@ public class SwordParticleMapping {
     //private static final Log Log = LogUtils.getLog();
 
     private static final Map<String, ResourceLocation> SWORD_TO_PARTICLE_MAP = new HashMap<>();
+    private static final ParticleOptions DEMONIZED_SERPENT_PARTICLE =
+        new DustParticleOptions(new Vector3f(0.0F, 0.0F, 0.0F), 1.0F);
 
     static {
         // Initialize hardcoded mappings for specific sword types
@@ -129,16 +137,28 @@ public class SwordParticleMapping {
      * @return ParticleOptions for the particle to spawn, or null if no particle should be spawned
      */
     public static ParticleOptions getParticleForSword(ItemStack swordItem) {
+        return getParticleForSword(swordItem, false);
+    }
+
+    public static ParticleOptions getParticleForSword(ItemStack swordItem, LivingEntity wielder) {
+        return getParticleForSword(swordItem, isDemonizedWielder(wielder));
+    }
+
+    public static ParticleOptions getParticleForSword(ItemStack swordItem, boolean demonizedWielder) {
         if (swordItem.isEmpty()) {
             return null;
+        }
+
+        if (demonizedWielder && shouldUseDemonizedSerpentParticle(swordItem)) {
+            Log.debug("Using demonized serpent particle for sword: " + BuiltInRegistries.ITEM.getKey(swordItem.getItem()));
+            return DEMONIZED_SERPENT_PARTICLE;
         }
 
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(swordItem.getItem());
         String itemIdString = itemId.toString();
 
         // First, check if this sword is registered in the SwordRegistry
-        var registeredSword = com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry
-            .getSword(swordItem.getItem());
+        var registeredSword = SwordRegistry.getSword(swordItem.getItem());
         if (registeredSword != null) {
             ParticleOptions effectiveParticle = registeredSword.getEffectiveParticle();
             if (effectiveParticle != null) {
@@ -200,6 +220,46 @@ public class SwordParticleMapping {
         if (Config.logDebug)
         	Log.debug("No particle found for sword {}, using fallback particle", itemId);
         return ParticleTypes.CLOUD;
+    }
+
+    public static boolean isSerpentBreathingSword(ItemStack swordItem) {
+        if (swordItem == null || swordItem.isEmpty()) {
+            return false;
+        }
+
+        SwordRegistry.RegisteredSword registeredSword = SwordRegistry.getSword(swordItem.getItem());
+        if (registeredSword != null && "serpent_breathing".equals(registeredSword.getStyleId())) {
+            return true;
+        }
+
+        SwordMetadataRegistry.SwordMetadata metadata = SwordMetadataRegistry.getMetadata(swordItem.getItem());
+        if (metadata != null && "serpent_breathing".equals(metadata.getStyleId())) {
+            return true;
+        }
+
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(swordItem.getItem());
+        if (itemId == null) {
+            return false;
+        }
+
+        String path = itemId.getPath().toLowerCase(Locale.ROOT);
+        if (!path.startsWith("nichirinsword")) {
+            return false;
+        }
+
+        return path.contains("serpent") || path.contains("iguro") || path.contains("snake");
+    }
+
+    private static boolean shouldUseDemonizedSerpentParticle(ItemStack swordItem) {
+        return Config.demonizedBreathingStyles && isSerpentBreathingSword(swordItem);
+    }
+
+    private static boolean isDemonizedWielder(LivingEntity wielder) {
+        if (wielder == null) {
+            return false;
+        }
+        return Damager.isDemon(wielder)
+            || (wielder instanceof BreathingSlayerEntity slayer && slayer.isDemonized());
     }
 
     /**

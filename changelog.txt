@@ -1,0 +1,148 @@
+1.6.558
+- Fixed a render glitch with the silk spray
+- Made the cocoon model a little bigger
+- Made the dissolution cocoon ability easier to land hits with
+- Fixed the nezuko box rendering when equipped
+- Added the ability to use shears on a blue spider lily
+- Fixed the Puppetry potion effect
+- Fixed the immortal demon slayers glitch
+- Fixed the issue where fire resistance granted sunlight immunity
+- Added the bench block (for the new mugen train which will come later)
+
+1.6.557
+- Added config option for changing the aggro handler for demons and demon slayers to require line of sunlight
+- Started adding demonized breathing forms: serpent breathing recolor
+- Began adding the new Spider Family quests for the demon quest line
+- Added Rui's sister / Ryoko and her blood demon art
+- Added Puppetry potion effect
+- Added Golden Haori, Tanjuro Hair, Golden Sword, Cherry Blossom Sword, and Bamboo Sword
+- Added dual wielding capabilities to base sound breathing sword
+- Added muzan blood drop suppression for non-kizuki demon entities
+- Fixed the crash from rejecting demon proposition while wearing armor
+
+1.6.556
+- Added config option for moving / disabling the backstep hud
+- Added Wisteria Resistance cure
+- Implemented the new Wisteria Forest and Wisterian Incense effects to make them more deadly
+- Added Wisteria Resistance Cure
+- Added particle rendering settings (for reducing how many particles are rendered to the client)
+
+1.6.555
+- Fixed Asakusa Quest (Tamayo's house quest)
+- Fixed rain glitch with sunlight immunity
+- Fixed wisteria poisoning glitch with sunlight immunity
+
+1.6.554
+- Fixed the Unidentified Blue Spider Lily Culture recipe to accept up to 6 blue spider lilies
+- Added eye kanji overlays for ranked demon players
+- Fixed sunlight immunity glitch where demons take sunlight damage in water (for real this time)
+- Fixed the blood flame particle
+
+1.6.553
+- Fixed sunlight immunity glitch where demons take sunlight damage in water
+- Fixed the glitch where the demon cure would revert itself on dimension change
+- Made the following commands require OP level 2: /giveblacksword, /oreselect, /debugplayerdims, /smallmist, and /testanimc
+- Added custom skins for demonized muichiro, demonized kanroji, and demonized inosuke
+- Added hue slider for changing eye color (for demon players)
+- Fixed the crafting recipe for Unidentified Blue Spider Lily Culture (hopefully)
+
+1.6.552
+- Fixed missing texture for moon breathing sword slash
+- Improved Infinity Castle demon spawning (and made it configurable)
+- Fixed sunlight immunity
+- Added config option to enable/disable orca's sunbreathing granting sunlight immunity
+
+1.6.551
+- Implemented custom renderer for mugen doors
+- Began implementing the new Kizuki ranking system
+- Added 6 different kinds of spider lilies
+- Added Herbal Extract, Botanical Vial, Antivenom, Exorcistic Infusion, Wisteria Infusion, Cell Destruction Infusion
+- Made infusions drinkable
+- Added wisteria incense
+- Added Bloom Calendar (for tracking the blooming cycle of spider lilies)
+- Enhanced Beast Breathing Rebalancing (forms 1-8)
+- Demonized demon slayer entities
+- Improved the Slayer's Blood demon quest
+- Fixed Nezuko BDA M1 attacks
+- Added Sake (for fear resistance)
+- Cooldowns are shortened to 40 ticks for players in creative mode
+- Fixed some glitches in final selection (Ubuyashiki twins spawning too many times, crow spawning untamed...)
+
+1.6.55
+- Added fear effect and fear cooldown effect
+- Kizuki demons and demon kings grant the fear effect depending on their power level
+- Fixed pillar1 and pillar2 endcap for bridger
+- Added M1 AOE for Nezuko BDA, Vindicator BDA, and Swamp BDA
+- Demon spawning in new infinity castle
+- Gravity-aware spawning rules
+- Chest of drawers rotates with gravity
+
+1.6.549
+- Water Breathing Variations Rebalancing
+- Love Breathing forms rebalanced
+- Flower Breathing forms rebalanced
+- New pillars for the bridger block (for Sepulchral Void)
+- Fixed form cycling colors for enhanced breathing forms
+
+1.6.548
+- M1 AOE damage rebalancing
+- M1 direct hit double damage scaling glitch fixed
+- Fixed the arm directions for upside down fences
+
+1.6.547
+- Minor item and block changes
+- Enhanced infinity castle early implementation (requires kny_worlds v1.0.1 or above)
+- Rebalancing of ability damage, fixed the double damage scaling glitch
+- Rebalancing for attack damage, attack speed, and armor values of various items
+
+1.6.546
+- Addressed ticking entity crash when a kizuki transforms a player into a demon
+- Fixed the issue where nichirin swords were getting cooldowns when you backstep
+- Swamp demon in kidnapper's bog cannot get killed before retrieving the Satoko's Bow
+
+1.6.545
+- Fixed compatibility with Spawn Egg Information and OmniMobs
+- Fixed a crash with breaking gravity blocks
+- Fixed the downward stairs in the bridger block
+
+1.6.544
+- Implemented gravity block (uses GravityAPI as optional dependency)
+- Added more bridge types for the infinity castle's bridger system
+- Added gravity blocks to the sideways bridges
+
+1.6.543
+- Began implementing the gravity changer from SolomonLib (uses GravityAPI as optional dependency)
+- Fixed empty vial rack stacking
+- Fixed the grindstone recipes (bone dust and calcite dust)
+- Updated base sword blade textures
+- Added sideways tile stair and vertical tile slab
+- Made petri dishes placeable (up to 3 petri dishes per block)
+
+1.6.542
+- Removed the automatic shaping for sideways spruce stairs
+  - If you want to shape it, you'll need the debug stick
+- Demon Player sleeping procedure is fixed (so they can sleep to skip the day)  
+- Slayer's Blood quest improvements
+  - Disarming a demon slayer during this quest now gives that demon slayer some resistance
+- Added sideways lanterns
+- Added Nezuko to enhaanced spawning (so that she doesn't always spawn naturally and clap demons)
+
+1.6.541
+- Added some rotated blocks:
+  - Vertical spruce slabs
+  - Sideways spruce fences
+  - Sideways spruce stairs
+- Added sword racks
+  - Sword racks can be placed on the ground or on the wall, and they can hold 3 swords
+- Improved the familiars (Kasugai crows, orochi, eye familiars...)
+  - Familiars now have the option of being unkillable (in the config)
+  - Familiars now have 50 HP and 20 armor, making them less likely to die on you
+  - Familiars should be better at teleporting to you when they get out of range
+    - They now look for a safe location to teleport, so they won't fall to their death if they teleport to you while you're flying
+- Made the alchemy table rotateable
+- Added wisteria pressure plate, wisteria button, wisteria stairs, wisteria slabs, wisteria fences, and wisteria fence gates
+- Added black scarlet ore as a possible drop for mining scarlet ore
+- Bugfixes and improvements for Slayer's Blood Quest Stage
+  - Kamanue now spawns with extra resistance during Slayer's Blood Quest Stage
+  - Dissarmed demon slayers are no longer immune to damage and no longer have glitched movement
+- Added Kanawo's sword sheath

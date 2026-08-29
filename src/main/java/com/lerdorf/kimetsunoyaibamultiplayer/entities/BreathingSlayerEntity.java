@@ -45,6 +45,7 @@ import java.util.UUID;
  * Uses PlayerAnimator/MobPlayerAnimator for breathing technique animations
  */
 public abstract class BreathingSlayerEntity extends PathfinderMob implements GeoEntity {
+    protected static final int MAX_RESISTANCE_AMPLIFIER = 2; // Resistance III
     private static final int NATURAL_REGEN_INTERVAL_TICKS = 100;
     private static final float NATURAL_REGEN_AMOUNT = 1.0F;
     private static final String ONI_TAG = "oni";
@@ -380,7 +381,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
      * Level 1: Speed 2, Resistance 1, 40 HP
      * Level 2: Speed 3, Resistance 2, Strength 1, 60 HP
      * Level 3: Speed 4, Resistance 3, Strength 1, 70 HP
-     * Level 4: Speed 6, Resistance 4, Strength 2, 80 HP
+     * Level 4: Speed 6, Resistance 3, Strength 2, 80 HP
      */
     private void applyPowerLevelBonuses(int powerLevel) {
         // Set max health based on power level
@@ -412,7 +413,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, speedLevel, true, false));
 
         // Apply resistance effect based on power level
-        int resistanceLevel = powerLevel - 1; // Level 1 = Resistance 1, etc.
+        int resistanceLevel = Math.min(MAX_RESISTANCE_AMPLIFIER, powerLevel - 1);
         this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, resistanceLevel, true, false));
 
         // Apply strength effect for power levels 2-4
@@ -530,7 +531,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
             }
 
             if (this.demonizedSunlightBurnTicks % 10 == 0 && this.demonizedSunlightBurnTicks <= 40) {
-                this.hurt(this.damageSources().onFire(), 10.0F);
+                com.lerdorf.kimetsunoyaibamultiplayer.util.SunlightImmunityHelper.hurtSunlightBurn(this, 10.0F);
             }
 
             if (this.demonizedSunlightBurnTicks >= 40) {

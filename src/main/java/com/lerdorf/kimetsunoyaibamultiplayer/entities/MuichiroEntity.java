@@ -46,7 +46,7 @@ import javax.annotation.Nullable;
  *
  * Stats from NBT data:
  * - HP: 135 (base)
- * - Speed 2 (amplifier 0), Strength 11 (amplifier 10), Resistance 4 (amplifier 3)
+ * - Speed 2 (amplifier 0), Strength 11 (amplifier 10), Resistance 3 (amplifier 2)
  * - Movement speed: 0.32 + 60% from Speed 2
  * - Attack damage: 1.0 + 36.0 from Strength 11
  * - Armor: 6.0, Armor toughness: 2.0
@@ -197,10 +197,10 @@ public class MuichiroEntity extends BreathingSlayerEntity {
         this.removeEffect(MobEffects.DAMAGE_BOOST);
         this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 11, true, false));
 
-        // Restore base Resistance 4 (was temporarily boosted to 100 during transformation)
+        // Restore base Resistance 3 (was temporarily boosted during transformation)
         // Don't upgrade resistance permanently - mark already makes him strong enough
         this.removeEffect(MobEffects.DAMAGE_RESISTANCE);
-        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 3, true, false));
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, MAX_RESISTANCE_AMPLIFIER, true, false));
 
         // Animation will naturally transition back to idle when the kneel animation expires
     }
@@ -363,8 +363,8 @@ public class MuichiroEntity extends BreathingSlayerEntity {
         // Strength 11 (amplifier 10 = Strength XI)
         this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 10, true, false));
 
-        // Resistance 4 (amplifier 3 = Resistance IV)
-        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 3, true, false));
+        // Resistance 3 (amplifier 2 = Resistance III)
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, MAX_RESISTANCE_AMPLIFIER, true, false));
 
         // Set persistence required (don't despawn)
         this.setPersistenceRequired();
@@ -430,12 +430,12 @@ public class MuichiroEntity extends BreathingSlayerEntity {
                 // Apply upgraded stats with mark (only Strength upgrades, Resistance stays at base)
                 this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, 0, true, false));
                 this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 11, true, false));
-                this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 3, true, false));
+                this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, MAX_RESISTANCE_AMPLIFIER, true, false));
             } else {
                 // Apply base stats without mark
                 this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, 0, true, false));
                 this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 10, true, false));
-                this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 3, true, false));
+                this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, MAX_RESISTANCE_AMPLIFIER, true, false));
             }
         }
     }

@@ -253,7 +253,21 @@ public class ModEvents {
     @SubscribeEvent
     public static void onLivingDrops(LivingDropsEvent event) {
         LivingEntity target = event.getEntity();
-        if (target.level().isClientSide() || !DemonTransformationHandler.isCustomDemonInitiationEnabled()) {
+        if (target.level().isClientSide()) {
+            return;
+        }
+
+        // Independent suppression: non-kizuki demons never drop muzan blood.
+        // This applies regardless of which muzan blood item variant drops
+        // (base mod's or ours) and to base mod demons and our demons alike.
+        if (CustomProgressionConfig.isSuppressNonKizukiMuzanBloodDropsEnabled()
+            && Damager.isDemon(target)
+            && !EntityTagHelper.isTwelveKizuki(target)) {
+            event.getDrops().removeIf(drop -> isMuzanBlood(drop));
+            return;
+        }
+
+        if (!DemonTransformationHandler.isCustomDemonInitiationEnabled()) {
             return;
         }
 

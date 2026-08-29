@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "building",
+  "ingredients": [
+    {
+      "item": "minecraft:red_dye"
+    },
+    {
+      "item": "kimetsunoyaibamultiplayer:bench"
+    }
+  ],
+  "result": {
+    "item": "kimetsunoyaibamultiplayer:bench_red",
+    "count": 1
+  }
+}

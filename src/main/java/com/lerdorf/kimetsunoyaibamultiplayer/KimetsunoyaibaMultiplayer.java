@@ -460,6 +460,13 @@ public class KimetsunoyaibaMultiplayer
             com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonVindicatorEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampDemonEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.NezukoEntity.registerBloodDemonArt();
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.DaughterEntity.registerBloodDemonArt();
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:daughter",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_DEMON,
+                false,
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.DaughterEntity.BLOOD_DEMON_ART_ID
+            );
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:demon_creeper",
                 com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_DEMON,
@@ -646,6 +653,7 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TestTamayoHouseCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.LocalPosCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.DemonRankCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.SpiderPuppetCommand.register(event.getDispatcher());
         if (com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity.isEnabled()) {
             com.lerdorf.kimetsunoyaibamultiplayer.commands.KNYGravityCommand.register(event.getDispatcher());
         }
@@ -943,6 +951,11 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.BRIDGER_BLOCK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.BridgerBlockScreen::new
                 );
+                net.minecraft.client.renderer.item.ItemProperties.register(
+                    com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems.NEZUKO_BOX.get(),
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "open"),
+                    (stack, level, entity, seed) -> com.lerdorf.kimetsunoyaibamultiplayer.items.NezukoBoxItem.isOpen(stack) ? 1.0F : 0.0F
+                );
             });
 		if (Config.logDebug)
             Log.info("Animation sync system initialized for client");
@@ -1050,6 +1063,12 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SwampDemonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.NEZUKO.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NezukoRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DAUGHTER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DaughterRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SILK_RIBBON.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SilkRibbonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DISSOLUTION_COCOON.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DissolutionCocoonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SWAMP_PUDDLE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SwampPuddleRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SWAMP_HAND.get(),

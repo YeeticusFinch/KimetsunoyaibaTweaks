@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "kimetsunoyaibamultiplayer:block/bench_black",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "kimetsunoyaibamultiplayer:block/bench_black",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "kimetsunoyaibamultiplayer:block/bench_black",
+      "y": 270
+    },
+    "facing=north": {
+      "model": "kimetsunoyaibamultiplayer:block/bench_black"
+    }
+  }
+}

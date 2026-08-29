@@ -1,0 +1,50 @@
+modLoader = "javafml" #mandatory
+loaderVersion = "[47,)" #mandatory This is typically bumped every Minecraft version by Forge. See https://files.minecraftforge.net/ for a list of versions.
+license = "C0-1.0" # Review your options at https://choosealicense.com/.
+#issueTrackerURL="https://change.me.to.your.issue.tracker.example.invalid/" #optional
+[[mods]] #mandatory
+modId = "mobplayeranimator" #mandatory
+version = "1.3.3" #mandatory
+displayName = "Mob Player Animator" #mandatory
+#updateJSONURL="https://change.me.example.invalid/updates.json" #optional (see https://mcforge.readthedocs.io/en/latest/gettingstarted/autoupdate/)
+#displayURL="https://change.me.to.your.mods.homepage.example.invalid/" #optional (displayed in the mod UI)
+logoFile = "mobplayeranimator.png" #optional (needs to be in the root of your mod jar (root of your 'resources' folder))
+credits = "KosmX" #optional
+authors = "Thelnfamous1" #optional
+description = '''An add-on mod to Player Animator that allows it to work with (humanoid) mobs.''' #mandatory (Supports multiline text)
+[[dependencies.mobplayeranimator]] #optional
+modId = "forge" #mandatory
+mandatory = true #mandatory
+versionRange = "[47,)" #mandatory
+ordering = "NONE" # The order that this dependency should load in relation to your mod, required to be either 'BEFORE' or 'AFTER' if the dependency is not mandatory
+side = "BOTH" # Side this dependency is applied on - 'BOTH', 'CLIENT' or 'SERVER'
+[[dependencies.mobplayeranimator]]
+modId = "minecraft"
+mandatory = true
+versionRange = "[1.20.1, 1.21)"
+ordering = "NONE"
+side = "BOTH"
+[[dependencies.mobplayeranimator]]
+modId="playeranimator"
+mandatory=true
+versionRange="[1,)"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.mobplayeranimator]]
+modId="cloth_config"
+mandatory=true
+versionRange="[11.0.0,)"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.mobplayeranimator]]
+modId = "guardvillagers"
+mandatory = false
+versionRange = "[1.6.1,)"
+ordering = "NONE"
+side = "BOTH"
+[[dependencies.mobplayeranimator]]
+modId = "entity_model_features"
+mandatory = false
+versionRange = "[2.2.6,)"
+ordering = "NONE"
+side = "CLIENT"

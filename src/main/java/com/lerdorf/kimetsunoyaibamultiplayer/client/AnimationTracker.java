@@ -279,7 +279,10 @@ public class AnimationTracker {
             ResourceLocation particleTypeId = null;
 
             if (SwordParticleMapping.isKimetsunoyaibaSword(mainHandItem)) {
-                var particleType = SwordParticleMapping.getParticleForSword(mainHandItem);
+                var particleType = SwordParticleMapping.getParticleForSword(
+                    mainHandItem,
+                    SwordParticleHandler.isDemonizedParticleWielder(player)
+                );
                 if (particleType != null) {
                     particleTypeId = net.minecraft.core.registries.BuiltInRegistries.PARTICLE_TYPE.getKey(particleType.getType());
                 }

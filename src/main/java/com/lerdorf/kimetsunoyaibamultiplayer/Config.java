@@ -67,6 +67,16 @@ public class Config
             .comment("Disable sword swing particles from the base KimetsunoYaiba mod (left-click particles only, does not affect breathing form or right-click particles)")
             .define("disable-base-mod-sword-swing-particles", false);
 
+    private static final ForgeConfigSpec.BooleanValue DEMONIZED_BREATHING_STYLES = BUILDER
+            .comment("Demons (entities or demonized players) using Serpent Breathing emit black dust particles instead of white ones")
+            .define("demonized-breathing-styles", true);
+
+    private static final ForgeConfigSpec.BooleanValue REQUIRE_LINE_OF_SIGHT_AGGRO = BUILDER
+            .comment("Require line of sight for demon/demon-slayer aggro",
+                     "When enabled, demons and demon slayers (from the base mod and this mod) cannot aggro",
+                     "entities they cannot see, e.g. a demon far underground will not target a player on the surface.")
+            .define("require-line-of-sight-aggro", true);
+
     private static final ForgeConfigSpec.BooleanValue SHOW_BACKSTEP_HUD = BUILDER
             .comment("Show the base KimetsunoYaiba backstep charge HUD icon and count")
             .define("show-backstep-hud", true);
@@ -153,6 +163,8 @@ public class Config
     public static boolean enableSwordClashing;
     public static boolean enableNichirinSprintAnimation;
     public static boolean disableBaseModSwordSwingParticles;
+    public static boolean demonizedBreathingStyles;
+    public static boolean requireLineOfSightAggro;
     public static boolean showBackstepHud;
     public static double backstepHudOffsetX;
     public static double backstepHudOffsetY;
@@ -201,6 +213,8 @@ public class Config
         enableSwordClashing = ENABLE_SWORD_CLASHING.get();
         enableNichirinSprintAnimation = ENABLE_NICHIRIN_SPRINT_ANIMATION.get();
         disableBaseModSwordSwingParticles = DISABLE_BASE_MOD_SWORD_SWING_PARTICLES.get();
+        demonizedBreathingStyles = DEMONIZED_BREATHING_STYLES.get();
+        requireLineOfSightAggro = REQUIRE_LINE_OF_SIGHT_AGGRO.get();
         showBackstepHud = SHOW_BACKSTEP_HUD.get();
         backstepHudOffsetX = BACKSTEP_HUD_OFFSET_X.get();
         backstepHudOffsetY = BACKSTEP_HUD_OFFSET_Y.get();

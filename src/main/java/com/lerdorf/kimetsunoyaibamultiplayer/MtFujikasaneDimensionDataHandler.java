@@ -560,7 +560,7 @@ public class MtFujikasaneDimensionDataHandler {
                 );
 
                 if (burnTicks % 10 == 0 && burnTicks <= 40 && !mob.isRemoved()) {
-                    mob.hurt(mob.damageSources().onFire(), 10.0F);
+                    com.lerdorf.kimetsunoyaibamultiplayer.util.SunlightImmunityHelper.hurtSunlightBurn(mob, 10.0F);
                 }
 
                 if (burnTicks >= 40 && mob.isAlive() && !mob.isRemoved()) {

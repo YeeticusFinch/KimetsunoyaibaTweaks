@@ -706,6 +706,133 @@ public class ModBlocks {
             .strength(-1.0f, 3600000.0f)
             .noParticlesOnBreak()));
 
+    // Bench - dyeable cushion variants (default + 16 dye colors)
+    public static final RegistryObject<Block> BENCH = registerBlock("bench",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_WHITE = registerBlock("bench_white",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.SNOW)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_ORANGE = registerBlock("bench_orange",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_ORANGE)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_MAGENTA = registerBlock("bench_magenta",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_MAGENTA)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_LIGHT_BLUE = registerBlock("bench_light_blue",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_LIGHT_BLUE)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_YELLOW = registerBlock("bench_yellow",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_YELLOW)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_LIME = registerBlock("bench_lime",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_LIGHT_GREEN)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_PINK = registerBlock("bench_pink",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_PINK)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_GRAY = registerBlock("bench_gray",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_GRAY)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_LIGHT_GRAY = registerBlock("bench_light_gray",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_LIGHT_GRAY)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_CYAN = registerBlock("bench_cyan",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_CYAN)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_PURPLE = registerBlock("bench_purple",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_PURPLE)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_BLUE = registerBlock("bench_blue",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_BLUE)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_BROWN = registerBlock("bench_brown",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_BROWN)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_GREEN = registerBlock("bench_green",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_GREEN)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_RED = registerBlock("bench_red",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_RED)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BENCH_BLACK = registerBlock("bench_black",
+        () -> new BenchBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.COLOR_BLACK)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    /** All bench variants, in creative-tab display order (default first, then dye order). */
+    public static final java.util.List<RegistryObject<Block>> BENCH_VARIANTS = java.util.List.of(
+        BENCH, BENCH_WHITE, BENCH_ORANGE, BENCH_MAGENTA, BENCH_LIGHT_BLUE, BENCH_YELLOW,
+        BENCH_LIME, BENCH_PINK, BENCH_GRAY, BENCH_LIGHT_GRAY, BENCH_CYAN, BENCH_PURPLE,
+        BENCH_BLUE, BENCH_BROWN, BENCH_GREEN, BENCH_RED, BENCH_BLACK
+    );
+
     public static final RegistryObject<Block> HEMOLITH_ORE = registerBlock("hemolith_ore",
         () -> new Block(BlockBehaviour.Properties.copy(Blocks.STONE)
             .mapColor(MapColor.STONE)

@@ -77,6 +77,16 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_BLACK = ITEMS.register("nichirinsword_black",
         () -> new NichirinSwordBlack(new Item.Properties().stacksTo(1).durability(2000)));
 
+    public static final RegistryObject<Item> NICHIRINSWORD_GOLD = ITEMS.register("nichirinsword_gold",
+        () -> new NichirinSwordGold(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_CHERRY = ITEMS.register("nichirinsword_cherry",
+        () -> new NichirinSwordCherry(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_BAMBOO = ITEMS.register("nichirinsword_bamboo",
+        () -> new NichirinSwordBamboo(new Item.Properties().stacksTo(1).durability(2000)));
+
+
     public static final RegistryObject<Item> NICHIRIN_ORE = ITEMS.register("nichirin_ore",
         () -> new NichirinOreItem(new Item.Properties().stacksTo(64)));
 
@@ -85,6 +95,9 @@ public class ModItems {
 
     public static final RegistryObject<Item> YEN = ITEMS.register("yen",
         () -> new Item(new Item.Properties().stacksTo(999)));
+
+    public static final RegistryObject<Item> NEZUKO_BOX = ITEMS.register("nezuko_box",
+        () -> new NezukoBoxItem(new Item.Properties().stacksTo(1)));
 
     // Spawn eggs
     public static final RegistryObject<Item> MUICHIRO_SPAWN_EGG = ITEMS.register("muichiro_spawn_egg",
@@ -153,6 +166,12 @@ public class ModItems {
             0x211833, 0xD8C4FF,
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> DAUGHTER_SPAWN_EGG = ITEMS.register("daughter_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DAUGHTER,
+            0xE8E4DC, 0x8A3B3B, // Pale silk-white body, dark red spots
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> DEMON_SLAYER_SPAWN_EGG = ITEMS.register("demon_slayer_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER,
@@ -211,6 +230,9 @@ public class ModItems {
     public static final RegistryObject<Item> COMBUSTIBLE_BLOOD = ITEMS.register("combustible_blood",
         () -> new BloodDemonArtItem(com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CombustibleBlood.ART_ID,
             7.0F, 1.6F, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> DAUGHTER_DEMON_ART = ITEMS.register("daughter_demon_art",
+        () -> new DaughterDemonArtItem(com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SilkManipulation.ART_ID,
+            4.0F, 1.6F, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CUSTOM_DEMON_ART = ITEMS.register("custom_demon_art",
         () -> new CustomDemonArtItem(new Item.Properties()));
     public static final RegistryObject<Item> PUDDLE = ITEMS.register("puddle",
@@ -402,6 +424,16 @@ public class ModItems {
             net.minecraft.world.item.ArmorItem.Type.HELMET,
             new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> HAORI_GOLD = ITEMS.register("haori_gold",
+        () -> new GoldenHaoriItem(CosmeticArmorMaterial.MUICHIRO_HAORI,
+            net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> HAIR_TANJURO = ITEMS.register("hair_tanjuro",
+        () -> new TanjuroHairItem(CosmeticArmorMaterial.MUICHIRO_FP_HAIR,
+            net.minecraft.world.item.ArmorItem.Type.HELMET,
+            new Item.Properties().stacksTo(1)));
+
     public static final RegistryObject<Item> BLINDFOLD = ITEMS.register("blindfold",
         () -> new BlindfoldItem(CosmeticArmorMaterial.COSMETIC,
             net.minecraft.world.item.ArmorItem.Type.HELMET,
@@ -516,6 +548,23 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_DARK_OAK_WALL.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SWORD_RACK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_WHITE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_ORANGE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_MAGENTA.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_LIGHT_BLUE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_YELLOW.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_LIME.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_PINK.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_GRAY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_LIGHT_GRAY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_CYAN.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_PURPLE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BLUE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BROWN.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_GREEN.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_RED.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BLACK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GRAVITY_BLOCK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BRIDGER_BLOCK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_PINK.get(),
@@ -575,7 +624,9 @@ public class ModItems {
                     CLOTHES_MUICHIRO_FP_CHESTPLATE.get(),
                     UNIFORM_MUICHIRO_FP_CHESTPLATE.get(),
                     HAORI_UROKODAKI.get(),
+                    HAORI_GOLD.get(),
                     HAIR_MUICHIRO_FP.get(),
+                    HAIR_TANJURO.get(),
                     BLINDFOLD.get(),
                     SATOKOS_BOW.get(),
                     HAHNAFUDA_SIMPLE.get()
@@ -604,7 +655,8 @@ public class ModItems {
                     CREEPER_DEMON_ART.get(),
                     VINDICATOR_DEMON_ART.get(),
                     SWAMP_DEMON_ART.get(),
-                    COMBUSTIBLE_BLOOD.get()
+                    COMBUSTIBLE_BLOOD.get(),
+                    DAUGHTER_DEMON_ART.get()
                 );
                 addOptionalSpawnEggs(output);
 
@@ -628,7 +680,7 @@ public class ModItems {
                     FAVOR_OF_UBUYASHIKI_POTION_3.get()
                 );
 
-                addItems(output, UBUYASHIKI_INVITATION.get(), BLOOM_CALENDAR.get(), SAKE.get(), TIPPED_KUNAI.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
+                addItems(output, UBUYASHIKI_INVITATION.get(), BLOOM_CALENDAR.get(), SAKE.get(), TIPPED_KUNAI.get(), NEZUKO_BOX.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
                     HUMAN_FLESH_3.get(), HUMAN_FLESH_4.get(), HUMAN_FLESH_5.get());
             })
             .build());
@@ -648,6 +700,11 @@ public class ModItems {
             }
         }
 
+        // Gold nichirin sword now uses the golden/senior style via SwordRegistry,
+        // but keep it in the tab explicitly if not registry-managed.
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_GOLD.get());
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_CHERRY.get());
+        addIfNotRegistryManaged(swords, NICHIRINSWORD_BAMBOO.get());
         addIfNotRegistryManaged(swords, NICHIRINSWORD_BEAST.get());
         addIfNotRegistryManaged(swords, NICHIRINSWORD_INOSUKE.get());
         addIfNotRegistryManaged(swords, NICHIRINSWORD_STONE1.get());
@@ -794,6 +851,24 @@ public class ModItems {
             com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
             net.minecraft.core.particles.ParticleTypes.HEART,
             null, null, true, 0
+        );
+
+        // Sakura (Cherry Blossom) Breathing sword
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_cherry",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_CHERRY.get(),
+            "sakura_breathing",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            null, null, null, true, 0
+        );
+
+        // Bamboo Breathing sword
+        com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+            "nichirinsword_bamboo",
+            (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_BAMBOO.get(),
+            "bamboo_breathing",
+            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+            null, null, null, true, 0
         );
 
         // Black nichirin sword (style assigned per-item stack at use time)

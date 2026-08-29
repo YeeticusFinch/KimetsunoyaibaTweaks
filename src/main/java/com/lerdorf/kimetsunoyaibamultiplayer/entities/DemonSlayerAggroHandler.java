@@ -294,6 +294,8 @@ public class DemonSlayerAggroHandler {
 
     /**
      * Find the nearest demon within scan range.
+     * Requires line of sight so demons hiding behind walls / far underground
+     * are not aggroed through terrain (fixes ranged-aggro-through-walls).
      */
     private static LivingEntity findNearestDemon(Mob slayer) {
         AABB searchBox = slayer.getBoundingBox().inflate(SCAN_RANGE);
@@ -302,6 +304,8 @@ public class DemonSlayerAggroHandler {
             LivingEntity.class,
             searchBox,
             entity -> entity != slayer && entity.isAlive() && isDemonTarget(entity)
+                && (!com.lerdorf.kimetsunoyaibamultiplayer.Config.requireLineOfSightAggro
+                    || slayer.getSensing().hasLineOfSight(entity))
         );
 
         if (nearbyEntities.isEmpty()) {
@@ -324,6 +328,8 @@ public class DemonSlayerAggroHandler {
                 && slayer.isAlive()
                 && canDemonTargetSlayer(demon, slayer)
                 && demon.distanceToSqr(slayer) <= (range * range)
+                && (!com.lerdorf.kimetsunoyaibamultiplayer.Config.requireLineOfSightAggro
+                    || demon.getSensing().hasLineOfSight(slayer))
         );
 
         if (nearbySlayers.isEmpty()) {

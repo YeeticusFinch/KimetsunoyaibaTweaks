@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.alchemy;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.blocks.BlueSpiderLilyShearingRecipe;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.UnwaxSpiderLilyRecipe;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.WaxSpiderLilyRecipe;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.SakeRecipe;
@@ -30,6 +31,9 @@ public final class ModAlchemyRecipes {
 
     public static final RegistryObject<RecipeSerializer<UnwaxSpiderLilyRecipe>> UNWAX_SPIDER_LILY_SERIALIZER =
         RECIPE_SERIALIZERS.register("unwax_spider_lily", () -> new SimpleCraftingRecipeSerializer<>(UnwaxSpiderLilyRecipe::new));
+
+    public static final RegistryObject<RecipeSerializer<BlueSpiderLilyShearingRecipe>> BLUE_SPIDER_LILY_SHEARING_SERIALIZER =
+        RECIPE_SERIALIZERS.register("blue_spider_lily_shearing", () -> new SimpleCraftingRecipeSerializer<>(BlueSpiderLilyShearingRecipe::new));
 
     public static final RegistryObject<RecipeSerializer<UnidentifiedBlueSpiderLilyCultureRecipe>> UNIDENTIFIED_BLUE_SPIDER_LILY_CULTURE_SERIALIZER =
         RECIPE_SERIALIZERS.register("unidentified_blue_spider_lily_culture", () -> new SimpleCraftingRecipeSerializer<>(UnidentifiedBlueSpiderLilyCultureRecipe::new));

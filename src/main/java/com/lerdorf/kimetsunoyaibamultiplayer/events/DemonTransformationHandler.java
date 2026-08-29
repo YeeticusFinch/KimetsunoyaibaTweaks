@@ -572,7 +572,7 @@ public final class DemonTransformationHandler {
 
         if (burnTicks % 10 == 0) {
             player.playSound(SoundEvents.GENERIC_EXTINGUISH_FIRE, 1.0F, 0.9F);
-            player.hurt(player.damageSources().onFire(), 10.0F);
+            SunlightImmunityHelper.hurtSunlightBurn(player, 10.0F);
         }
     }
 

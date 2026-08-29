@@ -21,6 +21,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -315,11 +316,13 @@ public final class DemonPropositionHandler {
         try {
             player.invulnerableTime = 0;
             DamageSource source = DamageCalculator.getDamageSource(attacker);
-            player.hurt(source, Float.MAX_VALUE);
-            if (player.isAlive()) {
-                player.setHealth(0.0F);
-                player.die(source);
+            player.setLastHurtByMob(attacker);
+            if (attacker instanceof Player attackingPlayer) {
+                player.setLastHurtByPlayer(attackingPlayer);
             }
+            player.getCombatTracker().recordDamage(source, Math.max(player.getHealth(), 1.0F));
+            player.setHealth(0.0F);
+            player.die(source);
         } finally {
             player.getPersistentData().putBoolean(BYPASS_FATAL_PROPOSITION_KEY, false);
         }

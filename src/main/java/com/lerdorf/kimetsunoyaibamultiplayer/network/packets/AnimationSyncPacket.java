@@ -43,6 +43,10 @@ public class AnimationSyncPacket {
     }
 
     public AnimationSyncPacket(UUID playerUUID, ResourceLocation animationId, int currentTick, int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData, ItemStack swordItem, ResourceLocation particleType) {
+        this(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, swordItem, particleType, 1.0f, 3000);
+    }
+
+    public AnimationSyncPacket(UUID playerUUID, ResourceLocation animationId, int currentTick, int animationLength, boolean isLooping, boolean stopAnimation, KeyframeAnimation animationData, ItemStack swordItem, ResourceLocation particleType, float speed, int layerPriority) {
         this.playerUUID = playerUUID;
         this.animationId = animationId;
         this.currentTick = currentTick;
@@ -52,8 +56,8 @@ public class AnimationSyncPacket {
         this.animationData = animationData;
         this.swordItem = swordItem != null ? swordItem : ItemStack.EMPTY;
         this.particleType = particleType;
-        this.speed = 1.0f; // Default speed
-        this.layerPriority = 3000; // Default layer
+        this.speed = speed;
+        this.layerPriority = layerPriority;
     }
 
     // Constructor with speed and layer priority
@@ -161,7 +165,19 @@ public class AnimationSyncPacket {
                     }
 
                     // Relay with speed and layer priority
-                    AnimationSyncPacket relayPacket = new AnimationSyncPacket(playerUUID, animationId, currentTick, animationLength, isLooping, stopAnimation, animationData, speed, layerPriority);
+                    AnimationSyncPacket relayPacket = new AnimationSyncPacket(
+                        playerUUID,
+                        animationId,
+                        currentTick,
+                        animationLength,
+                        isLooping,
+                        stopAnimation,
+                        animationData,
+                        swordItem,
+                        particleType,
+                        speed,
+                        layerPriority
+                    );
                     com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToAllClientsExcept(relayPacket, sender);
 
                     if (Config.logDebug) {

@@ -76,6 +76,9 @@ public class SwordSlashModelRegistry {
         SWORD_TO_MODEL_MAP.put("nichirinsword_bamboo", "wind");
         SWORD_TO_MODEL_MAP.put("nichirinsword_bamboo_2", "wind");
 
+        // Our bamboo breathing sword uses the regular straight slash model (generic)
+        SWORD_TO_MODEL_MAP.put("kimetsunoyaibamultiplayer:nichirinsword_bamboo", "generic");
+
         // Register wind with 3 texture variants, using random selection (not animated)
         ANIMATED_TEXTURE_FRAMES.put("wind", 3);
         RANDOM_TEXTURE_SELECTION.add("wind");
@@ -107,6 +110,9 @@ public class SwordSlashModelRegistry {
         // Register animated texture for flower breathing (5 frames, 2 ticks per frame)
         ANIMATED_TEXTURE_FRAMES.put("flower", 5);
         ANIMATED_TEXTURE_FRAME_DELAY.put("flower", 2);
+
+        // Sakura (Cherry Blossom) Breathing sword - uses the flower slash model
+        SWORD_TO_MODEL_MAP.put("nichirinsword_cherry", "flower");
 
         // Register sound breathing sword to use sound model
         SWORD_TO_MODEL_MAP.put("nichirinsword_sound", "sound");
@@ -180,7 +186,12 @@ public class SwordSlashModelRegistry {
             }
         }
 
-        // Check registered models
+        // Check registered models (full ID first, then path)
+        if (SWORD_TO_MODEL_MAP.containsKey(fullId)) {
+            String modelKey = SWORD_TO_MODEL_MAP.get(fullId);
+            Log.debug("Found registered model for " + fullId + ": " + modelKey);
+            return modelKey;
+        }
         if (SWORD_TO_MODEL_MAP.containsKey(itemPath)) {
             String modelKey = SWORD_TO_MODEL_MAP.get(itemPath);
             Log.debug("Found registered model for " + itemPath + ": " + modelKey);

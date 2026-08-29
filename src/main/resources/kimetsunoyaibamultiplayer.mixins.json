@@ -7,10 +7,13 @@
   "mixins": [
     "GrindstoneAlchemyInputMixin",
     "HurtByTargetGoalMixin",
+    "NearestAttackableTargetGoalMixin",
     "LivingEntityFoodParticleMixin",
     "BaseSunBreathingSunlightImmunityMixin",
+    "BaseFireResistanceSunlightImmunityMixin",
     "ServerLevelParticleMixin",
     "CommandsMixin",
+    "DemonizedSerpentParticlesMixin",
     "StructureTemplateMixin"
   ],
   "client": [
@@ -21,6 +24,7 @@
     "BaseInosukeRendererMixin",
     "BaseBackstepHudOverlayMixin",
     "EntityGlowingMixin",
+    "PuppetGeoBoneCaptureMixin",
     "DustParticleMixin",
     "EntityRenderDispatcherAccessor",
     "FearGameRendererMixin"

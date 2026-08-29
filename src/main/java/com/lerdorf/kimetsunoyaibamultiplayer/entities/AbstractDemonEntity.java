@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.BlueSpiderLilyTeaHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.SunlightImmunityHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonTargetingHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
@@ -180,7 +181,7 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
             }
 
             if (burnTicks % 10 == 0 && burnTicks <= 40) {
-                this.hurt(this.damageSources().onFire(), 10.0F);
+                SunlightImmunityHelper.hurtSunlightBurn(this, 10.0F);
             }
 
             if (burnTicks >= 40) {

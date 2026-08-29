@@ -47,7 +47,7 @@ import javax.annotation.Nullable;
  *
  * Stats from NBT data:
  * - HP: 155 (base)
- * - Speed 2 (amplifier 0), Strength 11 (amplifier 10), Resistance 4 (amplifier 3)
+ * - Speed 2 (amplifier 0), Strength 11 (amplifier 10), Resistance 3 (amplifier 2)
  * - Movement speed: 0.32 + 60% from Speed 2
  * - Attack damage: 1.0 + 36.0 from Strength 11
  * - Armor: 6.0, Armor toughness: 2.0
@@ -195,10 +195,10 @@ public class MuichiroFullPotentialEntity extends BreathingSlayerEntity {
         this.removeEffect(MobEffects.DAMAGE_BOOST);
         this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 15, true, false));
 
-        // Restore base Resistance 4 (was temporarily boosted to 100 during transformation)
+        // Restore base Resistance 3 (was temporarily boosted during transformation)
         // Don't upgrade resistance permanently - mark already makes him strong enough
         this.removeEffect(MobEffects.DAMAGE_RESISTANCE);
-        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 3, true, false));
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, MAX_RESISTANCE_AMPLIFIER, true, false));
 
         // Animation will naturally transition back to idle when the kneel animation expires
     }
@@ -359,8 +359,8 @@ public class MuichiroFullPotentialEntity extends BreathingSlayerEntity {
         // Full-potential mark state starts with Strength 16 (amplifier 15)
         this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 15, true, false));
 
-        // Resistance 4 (amplifier 3 = Resistance IV)
-        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 3, true, false));
+        // Resistance 3 (amplifier 2 = Resistance III)
+        this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, MAX_RESISTANCE_AMPLIFIER, true, false));
 
         // Trigger full visual demon slayer mark transformation procedure on spawn.
         // This runs kneel + particles + charging sounds + immovable lock, then permanently activates mark.
@@ -428,7 +428,7 @@ public class MuichiroFullPotentialEntity extends BreathingSlayerEntity {
             // Full potential remains permanently marked.
             this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, 0, true, false));
             this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 16, true, false));
-            this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, 3, true, false));
+            this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, MAX_RESISTANCE_AMPLIFIER, true, false));
             net.minecraft.world.effect.MobEffect markEffect =
                     ForgeRegistries.MOB_EFFECTS.getValue(ResourceLocation.tryBuild("kimetsunoyaiba", "potion_demon_slayer_mark"));
             if (markEffect != null) {

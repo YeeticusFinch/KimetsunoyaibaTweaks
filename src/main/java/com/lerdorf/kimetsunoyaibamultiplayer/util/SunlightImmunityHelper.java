@@ -42,6 +42,30 @@ public final class SunlightImmunityHelper {
             && CustomProgressionConfig.disableSunBreathingSunlightImmunity.get();
     }
 
+    /**
+     * Whether the Fire Resistance potion effect should grant demons sunlight
+     * immunity (base mod behavior). Defaults to true until the config loads.
+     */
+    public static boolean isFireResistanceSunlightImmunityEnabled() {
+        return CustomProgressionConfig.fireResistanceGivesSunlightImmunity == null
+            || CustomProgressionConfig.fireResistanceGivesSunlightImmunity.get();
+    }
+
+    /**
+     * Applies sunlight burn damage. When Fire Resistance sunlight immunity is
+     * suppressed (config off), a generic damage source is used so the vanilla
+     * Fire Resistance effect cannot nullify the burn.
+     */
+    public static boolean hurtSunlightBurn(LivingEntity entity, float amount) {
+        if (entity == null || entity.level().isClientSide || entity.isRemoved()) {
+            return false;
+        }
+        DamageSource source = isFireResistanceSunlightImmunityEnabled()
+            ? entity.damageSources().onFire()
+            : entity.damageSources().generic();
+        return entity.hurt(source, amount);
+    }
+
     public static boolean isOvercomeSunlightAdvancement(Advancement advancement) {
         return advancement != null && BASE_OVERCOME_SUNLIGHT_ADVANCEMENT.equals(advancement.getId());
     }

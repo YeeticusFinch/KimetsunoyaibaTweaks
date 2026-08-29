@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.DemonEyesPlayerLayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.NezukoBoxBackLayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.SwordDisplayRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.GeoSwordDisplayLayer;
 import net.minecraft.client.Minecraft;
@@ -73,6 +74,7 @@ public class SwordDisplayRendererSetup {
 
         if (renderer instanceof PlayerRenderer playerRenderer) {
             playerRenderer.addLayer(new DemonEyesPlayerLayer(playerRenderer));
+            playerRenderer.addLayer(new NezukoBoxBackLayer(playerRenderer));
             playerRenderer.addLayer(new SwordDisplayRenderer(
                 playerRenderer,
                 Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()

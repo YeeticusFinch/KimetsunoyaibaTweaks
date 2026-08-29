@@ -1,0 +1,36 @@
+
+
+["Custom NPCs Compatibility"]
+	#Enable Custom NPCs mod compatibility.
+	#When enabled, NPCs holding nichirin swords or blood demon arts will use those abilities when attacking.
+	enableCustomNPCCompat = true
+	#Cooldown multiplier for NPCs.
+	#Multiplies the base cooldown of breathing forms and demon arts for NPCs.
+	#1.0 = same as players, 2.0 = twice as long, 0.5 = half as long
+	#Range: 0.1 ~ 10.0
+	npcCooldownMultiplier = 1.0
+	#Probability that an NPC will use an ability when attacking (if not on cooldown).
+	#0.0 = never use abilities, 1.0 = always use abilities, 0.8 = 80% chance
+	#Range: 0.0 ~ 1.0
+	npcTriggerChance = 1.0
+	#Enable debug logging for NPC ability usage.
+	#Prints detailed information to console when NPCs trigger abilities.
+	debugNPCAbilities = true
+
+	["Custom NPCs Compatibility"."Form Selection Weights"]
+		#Weighted probability for form selection. Lower forms are used more often.
+		#These weights determine how often each form tier is selected.
+		#Higher values = more likely to be selected.
+		#Weight for Form 1 (First Form)
+		#Range: 0.0 ~ 100.0
+		form1Weight = 40.0
+		#Weight for Form 2 (Second Form)
+		#Range: 0.0 ~ 100.0
+		form2Weight = 25.0
+		#Weight for Form 3 (Third Form)
+		#Range: 0.0 ~ 100.0
+		form3Weight = 15.0
+		#Weight for Form 4+ (Fourth Form and higher)
+		#This weight is divided equally among all remaining forms
+		#Range: 0.0 ~ 100.0
+		form4PlusWeight = 20.0

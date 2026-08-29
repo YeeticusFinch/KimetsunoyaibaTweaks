@@ -20,11 +20,17 @@ public class CustomProgressionConfig {
     // Custom demon initiation flow
     public static ForgeConfigSpec.BooleanValue customDemonInitiation;
 
+    // Suppress muzan blood drops from demons without the twelve kizuki tag
+    public static ForgeConfigSpec.BooleanValue suppressNonKizukiMuzanBloodDrops;
+
     // Keep demon state through death by replaying blood consumption on respawn
     public static ForgeConfigSpec.BooleanValue persistentDemonhood;
 
     // Block the base mod's sun breathing shortcut to conquering sunlight
     public static ForgeConfigSpec.BooleanValue disableSunBreathingSunlightImmunity;
+
+    // Whether the Fire Resistance potion effect grants demons sunlight immunity
+    public static ForgeConfigSpec.BooleanValue fireResistanceGivesSunlightImmunity;
 
     // Replace the base mod's muzan blood ore with hemolith ore
     public static ForgeConfigSpec.BooleanValue replaceMuzanBloodOre;
@@ -119,6 +125,19 @@ public class CustomProgressionConfig {
                     "kimetsunoyaibamultiplayer:blood_of_muzan.")
             .define("custom_demon_initiation", true);
 
+        suppressNonKizukiMuzanBloodDrops = builder
+            .comment("Suppress Muzan blood drops from non-Twelve-Kizuki demons",
+                    "",
+                    "When enabled, any demon entity that does not have the twelve kizuki tag",
+                    "cannot drop Muzan blood on death. This covers both the base mod's",
+                    "muzan blood / blood_of_muzan items and this mod's blood_of_muzan item,",
+                    "and applies to base mod demons and this mod's demons alike.",
+                    "",
+                    "Twelve Kizuki demons are unaffected and keep dropping Muzan blood.",
+                    "",
+                    "Default: true")
+            .define("suppress_non_kizuki_muzan_blood_drops", true);
+
         persistentDemonhood = builder
             .comment("Persistent Demonhood",
                     "",
@@ -142,6 +161,20 @@ public class CustomProgressionConfig {
                     "",
                     "Default: true")
             .define("disable_sun_breathing_sunlight_immunity", true);
+
+        fireResistanceGivesSunlightImmunity = builder
+            .comment("Fire Resistance gives Sunlight Immunity",
+                    "",
+                    "When enabled, demons (entities and players) with the Fire Resistance",
+                    "potion effect are immune to sunlight damage, matching base mod behavior.",
+                    "",
+                    "When disabled (default), the base mod's Fire Resistance sunlight immunity",
+                    "is suppressed: a demon without actual sunlight immunity (Solar Ascension",
+                    "Cure, Blue Spider Lily progression) will still burn when exposed to",
+                    "sunlight even while under the Fire Resistance effect.",
+                    "",
+                    "Default: false")
+            .define("fire_resistance_gives_sunlight_immunity", false);
 
         replaceMuzanBloodOre = builder
             .comment("Replace base mod muzan blood ore with hemolith ore",
@@ -269,6 +302,10 @@ public class CustomProgressionConfig {
 
     public static boolean isCustomProgressionEnabled() {
         return disableBaseModDemonSlayerInitiation != null && disableBaseModDemonSlayerInitiation.get();
+    }
+
+    public static boolean isSuppressNonKizukiMuzanBloodDropsEnabled() {
+        return suppressNonKizukiMuzanBloodDrops != null && suppressNonKizukiMuzanBloodDrops.get();
     }
 
     public static int getHumanFleshPerEffectiveMuzanBlood() {

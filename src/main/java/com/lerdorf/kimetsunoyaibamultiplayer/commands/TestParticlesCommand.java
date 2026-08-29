@@ -28,7 +28,7 @@ public class TestParticlesCommand {
             if (SwordParticleMapping.isKimetsunoyaibaSword(mainHand)) {
                 // Send info about the sword and its particle
                 String swordType = SwordParticleMapping.getSwordTypeName(mainHand);
-                var particleType = SwordParticleMapping.getParticleForSword(mainHand);
+                var particleType = SwordParticleMapping.getParticleForSword(mainHand, player);
 
                 if (particleType != null) {
                     ResourceLocation particleId = BuiltInRegistries.PARTICLE_TYPE.getKey(particleType.getType());

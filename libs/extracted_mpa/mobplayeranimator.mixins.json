@@ -1,0 +1,34 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "me.Thelnfamous1.mobplayeranimator.mixin",
+  "refmap": "mobplayeranimator.refmap.json",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "AnimationStackAccessor",
+    "MobMixin"
+  ],
+  "client": [
+    "client.AbstractZombieModelMixin",
+    "client.EntityModelMixin",
+    "client.EntityRendererDispatcherMixin",
+    "client.HierarchicalModelMixin",
+    "client.HumanoidMobRendererMixin",
+    "client.HumanoidModelMixin",
+    "client.IllagerModelMixin",
+    "client.LivingEntityRendererMixin",
+    "client.MobRendererMixin",
+    "client.ModelPartAccessor",
+    "client.PiglinModelMixin",
+    "client.PlayerModelMixin_Mob",
+    "client.SkeletonModelMixin",
+    "client.ZombieVillagerModelMixin",
+    "client.compat.minecraft_comes_alive_reborn.VillagerEntityBaseModelMCAMixin"
+  ],
+  "server": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
+

@@ -1,15 +1,19 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client.particles;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonEyesClientState;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
@@ -75,7 +79,7 @@ public class SwordParticleHandler {
         }
 
         // Get particle type for this sword
-        ParticleOptions particleType = SwordParticleMapping.getParticleForSword(swordItem);
+        ParticleOptions particleType = SwordParticleMapping.getParticleForSword(swordItem, isDemonizedParticleWielder(entity));
         if (particleType == null) {
             Log.debug("No particle type found for sword");
             return;
@@ -197,6 +201,23 @@ public class SwordParticleHandler {
      */
     public static void forceSpawnParticles(LivingEntity entity, ItemStack swordItem, String animationName) {
         spawnSwordParticles(entity, swordItem, animationName, -1);
+    }
+
+    public static boolean isDemonizedParticleWielder(LivingEntity entity) {
+        if (entity == null) {
+            return false;
+        }
+        if (Damager.isDemon(entity)) {
+            return true;
+        }
+        if (entity instanceof BreathingSlayerEntity slayer && slayer.isDemonized()) {
+            return true;
+        }
+        if (entity instanceof Player) {
+            DemonEyesClientState.PlayerDemonEyesState state = DemonEyesClientState.getPlayerState(entity.getUUID());
+            return state != null && state.demon();
+        }
+        return false;
     }
 
     private static String resolveBaseAnimationName(ItemStack swordItem, String animationName) {

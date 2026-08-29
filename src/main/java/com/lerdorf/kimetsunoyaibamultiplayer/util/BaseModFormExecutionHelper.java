@@ -203,6 +203,22 @@ public final class BaseModFormExecutionHelper {
             return Math.max((formId % 100) - 1, 0);
         }
 
+        // Golden/senior breathing: base runtime uses breathes 1000-1004 with
+        // select = form number (1000 -> select 0, 1001 -> select 1, etc.).
+        if (formId >= 1000 && formId <= 1004) {
+            return formId - 1000;
+        }
+
+        // Sakura/Cherry Blossom breathing: base runtime 1801-1810, select = form number.
+        if (formId >= 1801 && formId <= 1810) {
+            return (formId % 100) - 1;
+        }
+
+        // Bamboo breathing: base runtime 1701-1712, select = form number.
+        if (formId >= 1701 && formId <= 1712) {
+            return (formId % 100) - 1;
+        }
+
         int[] forms = BaseModStyleMapping.getFormsForStyle(styleRange);
 
         for (int i = 0; i < forms.length; i++) {
@@ -248,10 +264,13 @@ public final class BaseModFormExecutionHelper {
             case 700 -> "kimetsunoyaiba:nichirinsword_mist";
             case 800 -> "kimetsunoyaiba:nichirinsword_serpent";
             case 900, 1300 -> "kimetsunoyaiba:nichirinsword_sound";
+            case 1000 -> "kimetsunoyaiba:nichirinsword_senior";
             case 1100 -> "kimetsunoyaiba:nichirinswordmoon";
             case 1200 -> "kimetsunoyaiba:nichirinsword_sun";
             case 1400 -> "kimetsunoyaiba:nichirinsword_insect";
             case 1500 -> "kimetsunoyaiba:nichirinsword_love";
+            case 1700 -> "kimetsunoyaiba:nichirinsword_bamboo";
+            case 1800 -> "kimetsunoyaiba:nichirinsword_cherry_blossom";
             default -> null;
         };
 
@@ -442,7 +461,7 @@ public final class BaseModFormExecutionHelper {
         }
 
         // Guard against ID overlap: runtime 903 is also used by mapped insect forms.
-        if (isSoundStyleOriginalForm(originalFormId) && isSoundForm5Runtime(runtimeFormId)) {
+        if (isGuardedSoundStyleOriginalForm(originalFormId) && isSoundForm5Runtime(runtimeFormId)) {
             applySoundForm5Movement(entity);
             return;
         }
@@ -564,6 +583,10 @@ public final class BaseModFormExecutionHelper {
 
     private static boolean isSoundStyleOriginalForm(int formId) {
         return formId >= 901 && formId <= 904;
+    }
+
+    private static boolean isGuardedSoundStyleOriginalForm(int formId) {
+        return isSoundStyleOriginalForm(formId);
     }
 
     private static boolean isSoundForm5Original(int formId) {
@@ -1035,16 +1058,47 @@ public final class BaseModFormExecutionHelper {
     /**
      * Sound Breathing Fifth Form (String Performance):
      * Move forward at walk speed while preserving Y velocity.
+     * Dual-wielding two sound swords doubles the dash power, mirroring the base
+     * mod's BreathesOto5Procedure which checks both hands for nichirinsword_uzui.
      */
     private static void applySoundForm5Movement(LivingEntity entity) {
         final int token = nextMovementToken(entity, SOUND_MOVEMENT_TOKEN_TAG);
+        final boolean dualWield = isDualWieldingSoundSwords(entity);
+        final double speed = dualWield ? 0.24D : 0.12D;
+        final int duration = dualWield ? 40 : 20;
         AbilityScheduler.scheduleRepeating(entity, () -> {
             if (!entity.isAlive() || !isMovementTokenActive(entity, SOUND_MOVEMENT_TOKEN_TAG, token)) {
                 return;
             }
 
-            setHorizontalVelocityPreserveY(entity, 0.12);
-        }, 1, 20);
+            setHorizontalVelocityPreserveY(entity, speed);
+        }, 1, duration);
+    }
+
+    /**
+     * True when BOTH hands hold sound breathing swords (our sound sword or the
+     * base mod's uzui sword). Mirrors the base mod dual-wield check for
+     * Sound Breathing Fifth Form: String Performance.
+     */
+    public static boolean isDualWieldingSoundSwords(LivingEntity entity) {
+        if (entity == null) {
+            return false;
+        }
+        return isSoundSword(entity.getMainHandItem()) && isSoundSword(entity.getOffhandItem());
+    }
+
+    private static boolean isSoundSword(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        if (id == null) {
+            return false;
+        }
+        String key = id.toString();
+        return key.equals("kimetsunoyaiba:nichirinsword_uzui")
+            || key.equals("kimetsunoyaiba:nichirinsword_sound")
+            || key.equals("kimetsunoyaibamultiplayer:nichirinsword_sound");
     }
 
     /**
