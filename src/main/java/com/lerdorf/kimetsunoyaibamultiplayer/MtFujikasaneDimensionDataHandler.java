@@ -9,6 +9,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.BlueSpiderLilyTeaHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.FinalSelectionRaidConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.SunlightImmunityHelper;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -597,12 +598,7 @@ public class MtFujikasaneDimensionDataHandler {
     }
 
     private static boolean isInBurningSunlight(ServerLevel level, Mob mob) {
-        if (mob.isInWaterRainOrBubble() || mob.isUnderWater()) {
-            return false;
-        }
-
-        BlockPos pos = mob.blockPosition();
-        return level.canSeeSky(pos) && !level.isRainingAt(pos);
+        return SunlightImmunityHelper.isInBurningSunlight(mob);
     }
 
     /**

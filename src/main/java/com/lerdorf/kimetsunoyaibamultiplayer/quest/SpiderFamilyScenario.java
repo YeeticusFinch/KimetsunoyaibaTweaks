@@ -47,11 +47,11 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID)
 public final class SpiderFamilyScenario {
 
-    // ==================== Entity IDs (base mod) ====================
+    // ==================== Entity IDs ====================
     private static final ResourceLocation RUI_ID =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "rui");
     private static final ResourceLocation MOTHER_ID =
-        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "rui_mother");
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "mother");
     private static final ResourceLocation FATHER_ID =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "rui_father");
     private static final ResourceLocation BROTHER_ID =

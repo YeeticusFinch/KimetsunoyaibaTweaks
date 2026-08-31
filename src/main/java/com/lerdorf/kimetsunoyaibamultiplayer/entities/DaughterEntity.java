@@ -268,13 +268,19 @@ public class DaughterEntity extends AbstractDemonEntity {
     }
 
     @Override
+    protected String resolveWalkAnimation() {
+        return "walk_female";
+    }
+
+    @Override
     protected float getBloodDemonArtUseChance() {
         return 1.0F;
     }
 
     @Override
     protected void tickBloodDemonArt() {
-        if (isInHumanForm()) {
+        if (isInHumanForm()
+            || com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(this)) {
             return;
         }
 

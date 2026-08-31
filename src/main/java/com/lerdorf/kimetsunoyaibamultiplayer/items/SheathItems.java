@@ -52,6 +52,10 @@ public class SheathItems {
     public static final RegistryObject<Item> SWORD_SHEATH_KOKUSHIBO = ITEMS.register("sword_sheath_kokushibo",
         () -> new Item(new Item.Properties().stacksTo(1)));
 
+    // Gold-specific sheath
+    public static final RegistryObject<Item> SWORD_SHEATH_GOLD = ITEMS.register("sword_sheath_gold",
+        () -> new Item(new Item.Properties().stacksTo(1)));
+
     /**
      * Registers sheath items to the mod event bus
      */

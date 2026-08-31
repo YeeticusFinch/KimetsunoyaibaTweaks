@@ -77,6 +77,10 @@ public class BloodDemonArtAxeItem extends AxeItem {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
 
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(player)) {
+            return InteractionResultHolder.fail(stack);
+        }
+
         if (player.getCooldowns().isOnCooldown(this)) {
             if (level.isClientSide) {
                 player.displayClientMessage(Component.literal("This ability is still on cooldown")

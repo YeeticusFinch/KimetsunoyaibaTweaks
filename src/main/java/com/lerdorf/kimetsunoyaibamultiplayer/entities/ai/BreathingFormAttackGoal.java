@@ -45,6 +45,10 @@ public class BreathingFormAttackGoal extends Goal {
             return false;
         }
 
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(this.entity)) {
+            return false;
+        }
+
         if (this.entity instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity demonSlayer
             && (demonSlayer.isActionLocked() || demonSlayer.isDisarmed())) {
             return false;

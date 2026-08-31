@@ -9,6 +9,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -29,6 +30,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -53,7 +55,8 @@ import java.util.UUID;
  *   Demon-owned puppets also auto-aggro demon slayers / humans / non-demon players,
  *   pathfinding towards them while hovering.
  * - Players with the effect have no control of their character for the duration.
- * - Every hit taken subtracts 40 seconds from the remaining duration.
+ * - Every hit taken subtracts 30 seconds from the remaining duration, with a
+ *   15-tick cooldown between penalties.
  * - On expiry everything is cleared and reverted.
  */
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID)
@@ -69,16 +72,22 @@ public final class PuppetryHandler {
     private static final String PLAYER_LOCKED_KEY = "KnYPuppetPlayerLocked";
     private static final String HAD_NO_GRAVITY_KEY = "KnYPuppetHadNoGravity";
     private static final String ATTACK_COOLDOWN_KEY = "KnYPuppetAttackCooldown";
+    private static final String DAMAGE_PENALTY_COOLDOWN_KEY = "KnYPuppetDamagePenaltyCooldown";
+    private static final String OWNER_LOOKUP_MISSING_TICKS_KEY = "KnYPuppetOwnerLookupMissingTicks";
 
     private static final double MAX_ANCHOR_DISTANCE = 20.0D;
     private static final double MAX_ANCHOR_DISTANCE_SQR = MAX_ANCHOR_DISTANCE * MAX_ANCHOR_DISTANCE;
     private static final int LINE_ANCHOR_COUNT = 10;
-    private static final int DAMAGE_DURATION_PENALTY_TICKS = 40 * 20; // 40 seconds
+    private static final int DAMAGE_DURATION_PENALTY_TICKS = 30 * 20; // 30 seconds
+    private static final int DAMAGE_PENALTY_COOLDOWN_TICKS = 15;
     private static final double DEMON_OWNED_AGGRO_RANGE = 32.0D;
     private static final double PUPPET_FLY_SPEED = 0.36D;
+    /** Slow return drift speed when the puppet is idle (blocks/tick). */
+    private static final double PUPPET_RETURN_SPEED = 0.06D;
     private static final double PUPPET_ATTACK_RANGE_SQR = 9.0D;
     private static final double PUPPET_STOP_RANGE_SQR = 4.0D;
     private static final int PUPPET_ATTACK_INTERVAL_TICKS = 20;
+    private static final int OWNER_LOOKUP_GRACE_TICKS = 40;
 
     private PuppetryHandler() {
     }
@@ -103,6 +112,9 @@ public final class PuppetryHandler {
         CompoundTag data = target.getPersistentData();
         if (owner != null && owner.isAlive()) {
             data.putUUID(OWNER_KEY, owner.getUUID());
+            if (owner instanceof Player player) {
+                player.sendSystemMessage(Component.literal(target.getName().getString() + " is now your puppet."));
+            }
         }
         syncPuppetryLines(target, false);
         Log.debugVisible("[PuppetryLines] Applied puppetry to {} id={} owner={} anchors={}",
@@ -127,18 +139,32 @@ public final class PuppetryHandler {
         data.remove(ANCHOR_X_KEY);
         data.remove(ANCHOR_Y_KEY);
         data.remove(ANCHOR_Z_KEY);
-        data.remove(LINE_ANCHORS_KEY);
+        boolean webTraversalActive = entity.hasEffect(ModEffects.WEB_TRAVERSAL.get());
+        if (!webTraversalActive) {
+            data.remove(LINE_ANCHORS_KEY);
+        }
         data.remove(OWNER_KEY);
         data.remove(MOB_PUPPETED_KEY);
         data.remove(PLAYER_LOCKED_KEY);
         data.remove(HAD_NO_GRAVITY_KEY);
         data.remove(ATTACK_COOLDOWN_KEY);
-        syncPuppetryLines(entity, true);
+        data.remove(DAMAGE_PENALTY_COOLDOWN_KEY);
+        data.remove(OWNER_LOOKUP_MISSING_TICKS_KEY);
+        if (webTraversalActive) {
+            syncLineAnchors(entity);
+        } else {
+            syncPuppetryLines(entity, true);
+        }
     }
 
     public static boolean hasPuppetry(LivingEntity entity) {
         return entity != null && !entity.level().isClientSide()
             && entity.hasEffect(ModEffects.PUPPETRY.get());
+    }
+
+    /** Returns true on either side while the entity is prevented from using abilities. */
+    public static boolean isAbilityUseBlocked(LivingEntity entity) {
+        return entity != null && entity.hasEffect(ModEffects.PUPPETRY.get());
     }
 
     /** Resolves the stored puppet owner, or null if dead/despawned/invalid. */
@@ -147,7 +173,16 @@ public final class PuppetryHandler {
         if (!data.hasUUID(OWNER_KEY) || !(puppet.level() instanceof ServerLevel serverLevel)) {
             return null;
         }
-        Entity owner = serverLevel.getEntity(data.getUUID(OWNER_KEY));
+        UUID ownerUuid = data.getUUID(OWNER_KEY);
+        Entity owner = serverLevel.getEntity(ownerUuid);
+        if (owner == null && serverLevel.getServer() != null) {
+            for (ServerLevel loadedLevel : serverLevel.getServer().getAllLevels()) {
+                owner = loadedLevel.getEntity(ownerUuid);
+                if (owner != null) {
+                    break;
+                }
+            }
+        }
         if (!(owner instanceof LivingEntity living) || !living.isAlive()) {
             return null;
         }
@@ -170,13 +205,25 @@ public final class PuppetryHandler {
             ensureLineAnchorsStored(entity);
             syncPuppetryLines(entity, false);
         }
+        int damagePenaltyCooldown = data.getInt(DAMAGE_PENALTY_COOLDOWN_KEY);
+        if (damagePenaltyCooldown > 0) {
+            data.putInt(DAMAGE_PENALTY_COOLDOWN_KEY, damagePenaltyCooldown - 1);
+        }
 
-        // Owner gone -> effect ends immediately
-        if (getPuppetOwner(entity) == null) {
+        // Allow brief owner lookup gaps caused by entity/dimension updates, but
+        // still end the effect once the owner is genuinely unavailable.
+        LivingEntity owner = getPuppetOwner(entity);
+        if (owner == null) {
+            int missingTicks = data.getInt(OWNER_LOOKUP_MISSING_TICKS_KEY) + 1;
+            data.putInt(OWNER_LOOKUP_MISSING_TICKS_KEY, missingTicks);
+            if (missingTicks <= OWNER_LOOKUP_GRACE_TICKS) {
+                return;
+            }
             entity.removeEffect(ModEffects.PUPPETRY.get());
             clearPuppetry(entity);
             return;
         }
+        data.remove(OWNER_LOOKUP_MISSING_TICKS_KEY);
 
         if (!data.getBoolean(MOB_PUPPETED_KEY)) {
             data.putBoolean(MOB_PUPPETED_KEY, true);
@@ -185,10 +232,6 @@ public final class PuppetryHandler {
 
         enforceAnchorLeash(entity);
 
-        LivingEntity owner = getPuppetOwner(entity);
-        if (owner == null) {
-            return; // handled next tick
-        }
         tickPuppet(entity, owner);
     }
 
@@ -268,13 +311,41 @@ public final class PuppetryHandler {
                 mob.xxa = 0.0F;
                 mob.zza = 0.0F;
             }
-            puppet.setDeltaMovement(Vec3.ZERO);
+            driftBackToAnchor(puppet);
             puppet.fallDistance = 0.0F;
         }
 
         if (puppet instanceof Player player) {
             enforcePlayerControlLock(player);
         }
+    }
+
+    /**
+     * Idle drift: when the puppet has no target/aggro, it is slowly dragged
+     * back toward the anchor position saved when the effect was applied
+     * (like a puppet reeling itself back onto its strings).
+     */
+    private static void driftBackToAnchor(LivingEntity puppet) {
+        Vec3 anchor = getAnchor(puppet);
+        if (anchor == null) {
+            puppet.setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        // Aim for the anchor's original center height so it settles where it stood
+        Vec3 home = anchor.add(0.0D, puppet.getBbHeight() * 0.5D, 0.0D);
+        Vec3 toHome = home.subtract(puppet.position().add(0.0D, puppet.getBbHeight() * 0.5D, 0.0D));
+        if (toHome.lengthSqr() < 0.0625D) { // within 0.25 blocks: rest
+            puppet.setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        Vec3 move = toHome.normalize().scale(PUPPET_RETURN_SPEED);
+        if (puppet.horizontalCollision) {
+            move = move.add(0.0D, 0.22D, 0.0D); // climb over obstacles like movePuppetToward
+        }
+        puppet.setDeltaMovement(move);
+        puppet.move(MoverType.SELF, move);
+        puppet.hurtMarked = true;
+        puppet.fallDistance = 0.0F;
     }
 
     private static void movePuppetToward(LivingEntity puppet, LivingEntity desiredTarget) {
@@ -558,13 +629,36 @@ public final class PuppetryHandler {
         if (instance == null) {
             return;
         }
+        CompoundTag data = entity.getPersistentData();
+        if (data.getInt(DAMAGE_PENALTY_COOLDOWN_KEY) > 0) {
+            return;
+        }
         int remaining = instance.getDuration() - DAMAGE_DURATION_PENALTY_TICKS;
         if (remaining <= 0) {
             entity.removeEffect(ModEffects.PUPPETRY.get()); // triggers cleanup below
         } else {
             entity.forceAddEffect(new MobEffectInstance(ModEffects.PUPPETRY.get(), remaining,
                 instance.getAmplifier(), false, false, true), null);
+            data.putInt(DAMAGE_PENALTY_COOLDOWN_KEY, DAMAGE_PENALTY_COOLDOWN_TICKS);
         }
+    }
+
+    /** Ensures the shared server-selected anchors are sent to tracking clients. */
+    public static void syncLineAnchors(LivingEntity target) {
+        if (target == null || target.level().isClientSide()) {
+            return;
+        }
+        ensureLineAnchorsStored(target);
+        syncPuppetryLines(target, false);
+    }
+
+    /** Removes the shared line anchors and tells clients to stop rendering them. */
+    public static void clearLineAnchors(LivingEntity target) {
+        if (target == null || target.level().isClientSide()) {
+            return;
+        }
+        target.getPersistentData().remove(LINE_ANCHORS_KEY);
+        syncPuppetryLines(target, true);
     }
 
     // ==================== External application (/effect give, splash potions) ====================
@@ -601,7 +695,8 @@ public final class PuppetryHandler {
         if (!(event.getTarget() instanceof LivingEntity target) || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        if (!target.hasEffect(ModEffects.PUPPETRY.get())) {
+        if (!target.hasEffect(ModEffects.PUPPETRY.get())
+            && !target.hasEffect(ModEffects.WEB_TRAVERSAL.get())) {
             return;
         }
         ensureLineAnchorsStored(target);
@@ -620,7 +715,34 @@ public final class PuppetryHandler {
 
     @SubscribeEvent
     public static void onEffectRemove(net.minecraftforge.event.entity.living.MobEffectEvent.Remove event) {
-        handleEffectEnd(event.getEntity(), new MobEffectInstance(ModEffects.PUPPETRY.get(), 1));
+        if (event.getEffect() == ModEffects.PUPPETRY.get()) {
+            handleEffectEnd(event.getEntity(), new MobEffectInstance(ModEffects.PUPPETRY.get(), 1));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingDeath(LivingDeathEvent event) {
+        LivingEntity entity = event.getEntity();
+        try {
+            if (entity.hasEffect(ModEffects.PUPPETRY.get())) {
+                entity.removeEffect(ModEffects.PUPPETRY.get());
+            } else if (hasPuppetryState(entity)) {
+                clearPuppetry(entity);
+            }
+        } catch (Exception ex) {
+            System.err.println("[PuppetryHandler] Failed to clean up Puppetry on death: " + ex);
+        }
+    }
+
+    private static boolean hasPuppetryState(LivingEntity entity) {
+        CompoundTag data = entity.getPersistentData();
+        return data.contains(ANCHOR_X_KEY) || data.contains(ANCHOR_Y_KEY)
+            || data.contains(ANCHOR_Z_KEY) || data.contains(OWNER_KEY)
+            || data.contains(LINE_ANCHORS_KEY) || data.contains(MOB_PUPPETED_KEY)
+            || data.contains(PLAYER_LOCKED_KEY) || data.contains(HAD_NO_GRAVITY_KEY)
+            || data.contains(ATTACK_COOLDOWN_KEY)
+            || data.contains(DAMAGE_PENALTY_COOLDOWN_KEY)
+            || data.contains(OWNER_LOOKUP_MISSING_TICKS_KEY);
     }
 
     private static void handleEffectEnd(Entity entity, MobEffectInstance instance) {

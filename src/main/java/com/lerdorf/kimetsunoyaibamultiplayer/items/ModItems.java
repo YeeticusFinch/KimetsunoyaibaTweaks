@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.items;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CreepingRuin;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.DemonwebPuppetry;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.VindicatorsBane;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -172,6 +173,12 @@ public class ModItems {
             0xE8E4DC, 0x8A3B3B, // Pale silk-white body, dark red spots
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> MOTHER_SPAWN_EGG = ITEMS.register("mother_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MOTHER,
+            0xE8E4DC, 0x5A1F2B,
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> DEMON_SLAYER_SPAWN_EGG = ITEMS.register("demon_slayer_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER,
@@ -233,6 +240,9 @@ public class ModItems {
     public static final RegistryObject<Item> DAUGHTER_DEMON_ART = ITEMS.register("daughter_demon_art",
         () -> new DaughterDemonArtItem(com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SilkManipulation.ART_ID,
             4.0F, 1.6F, new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> MOTHER_DEMON_ART = ITEMS.register("mother_demon_art",
+        () -> new BloodDemonArtItem(DemonwebPuppetry.ART_ID, 4.0F, 1.6F,
+            new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CUSTOM_DEMON_ART = ITEMS.register("custom_demon_art",
         () -> new CustomDemonArtItem(new Item.Properties()));
     public static final RegistryObject<Item> PUDDLE = ITEMS.register("puddle",
@@ -652,11 +662,14 @@ public class ModItems {
                     DEMON_VINDICATOR_SPAWN_EGG.get(),
                     SWAMP_DEMON_SPAWN_EGG.get(),
                     NEZUKO_SPAWN_EGG.get(),
+                    DAUGHTER_SPAWN_EGG.get(),
+                    MOTHER_SPAWN_EGG.get(),
                     CREEPER_DEMON_ART.get(),
                     VINDICATOR_DEMON_ART.get(),
                     SWAMP_DEMON_ART.get(),
                     COMBUSTIBLE_BLOOD.get(),
-                    DAUGHTER_DEMON_ART.get()
+                    DAUGHTER_DEMON_ART.get(),
+                    MOTHER_DEMON_ART.get()
                 );
                 addOptionalSpawnEggs(output);
 

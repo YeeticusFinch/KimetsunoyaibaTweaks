@@ -66,6 +66,10 @@ public abstract class BreathingSwordItem extends SwordItem {
         ItemStack stack = player.getItemInHand(hand);
         BreathingTechnique technique = getBreathingTechnique();
 
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(player)) {
+            return InteractionResultHolder.fail(stack);
+        }
+
         if (com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler.isParalyzed(player)) {
             return InteractionResultHolder.fail(stack);
         }

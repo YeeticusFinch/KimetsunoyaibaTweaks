@@ -177,7 +177,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_breathing.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomNPCConfig.SPEC, "kimetsunoyaibamultiplayer/customnpcs.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.VariationConfig.SPEC, "kimetsunoyaibamultiplayer/variations.toml");
-        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.SPEC, "kimetsunoyaibamultiplayer/custom_progression.toml");
+        context.registerConfig(ModConfig.Type.SERVER, com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.SPEC, "kimetsunoyaibamultiplayer/custom_progression.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.DemonSlayerConfig.SPEC, "kimetsunoyaibamultiplayer/demon_slayer.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBlocksConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_blocks.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordsmithVillageConfig.SPEC, "kimetsunoyaibamultiplayer/swordsmith_village.toml");
@@ -461,11 +461,18 @@ public class KimetsunoyaibaMultiplayer
             com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampDemonEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.NezukoEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.DaughterEntity.registerBloodDemonArt();
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.MotherEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:daughter",
                 com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_DEMON,
                 false,
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.DaughterEntity.BLOOD_DEMON_ART_ID
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:mother",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.HARD_BOSS_DEMON,
+                false,
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.MotherEntity.BLOOD_DEMON_ART_ID
             );
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:demon_creeper",
@@ -1065,6 +1072,8 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NezukoRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DAUGHTER.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DaughterRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MOTHER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MotherRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SILK_RIBBON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SilkRibbonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DISSOLUTION_COCOON.get(),

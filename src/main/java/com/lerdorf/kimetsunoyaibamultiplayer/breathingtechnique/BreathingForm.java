@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -54,6 +55,9 @@ public class BreathingForm {
      * This allows GuardStateHelper to automatically use the correct form ID.
      */
     public void execute(net.minecraft.world.entity.LivingEntity entity, net.minecraft.world.level.Level level) {
+        if (PuppetryHandler.isAbilityUseBlocked(entity)) {
+            return;
+        }
         effect.execute(entity, level, this.formId);
     }
 

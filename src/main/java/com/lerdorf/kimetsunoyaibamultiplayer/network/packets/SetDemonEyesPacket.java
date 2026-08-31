@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonEyesSyncHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.DemonEyesHelper;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,7 +37,9 @@ public class SetDemonEyesPacket {
         NetworkEvent.Context context = supplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
-            if (player == null || !Damager.isDemon(player)) {
+            if (player == null || !Damager.isDemon(player)
+                || (eyesIndex == DemonEyesHelper.EMPTY_DEMON_EYES_INDEX
+                    && !CustomProgressionConfig.isEmptyDemonEyesAllowed())) {
                 return;
             }
             DemonEyesHelper.setStyle(player, eyesIndex, hue);

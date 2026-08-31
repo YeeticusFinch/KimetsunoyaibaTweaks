@@ -56,7 +56,8 @@ public final class PuppetBoneCache {
     /** Whether bone matrices should be captured for this entity this frame. */
     public static boolean needsCapture(LivingEntity entity) {
         return entity != null && entity.level().isClientSide()
-            && entity.hasEffect(ModEffects.PUPPETRY.get());
+            && (entity.hasEffect(ModEffects.PUPPETRY.get())
+                || entity.hasEffect(ModEffects.WEB_TRAVERSAL.get()));
     }
 
     /**

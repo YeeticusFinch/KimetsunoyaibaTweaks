@@ -5,18 +5,27 @@ import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 
 public final class SunlightImmunityHelper {
+    private static final TagKey<EntityType<?>> ENCLOSED_VEHICLES = TagKey.create(
+        Registries.ENTITY_TYPE,
+        ResourceLocation.fromNamespaceAndPath("forge", "enclosed")
+    );
+
     public static final ResourceLocation BASE_OVERCOME_SUNLIGHT_ADVANCEMENT =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "overcome_sunlight");
     public static final ResourceLocation SUNLIGHT_IMMUNITY_ADVANCEMENT =
@@ -186,27 +195,49 @@ public final class SunlightImmunityHelper {
         if (entity == null || !(entity.level() instanceof ServerLevel serverLevel) || !serverLevel.isDay()) {
             return false;
         }
-        return isSkyExposed(serverLevel, entity.blockPosition())
-            || isSkyExposed(serverLevel, BlockPos.containing(entity.getX(), entity.getEyeY(), entity.getZ()))
-            || isSkyExposed(serverLevel, BlockPos.containing(entity.getX(), entity.getY() + entity.getBbHeight(), entity.getZ()));
+        return isInSunlightExposure(serverLevel, entity, false);
     }
 
     public static boolean isInSunlightExposureIgnoringRain(LivingEntity entity) {
         if (entity == null || !(entity.level() instanceof ServerLevel serverLevel) || !serverLevel.isDay()) {
             return false;
         }
-        return isSkyExposedIgnoringRain(serverLevel, entity.blockPosition())
-            || isSkyExposedIgnoringRain(serverLevel, BlockPos.containing(entity.getX(), entity.getEyeY(), entity.getZ()))
-            || isSkyExposedIgnoringRain(serverLevel, BlockPos.containing(entity.getX(), entity.getY() + entity.getBbHeight(), entity.getZ()));
+        return isInSunlightExposure(serverLevel, entity, true);
+    }
+
+    public static boolean isEnclosedVehicle(Entity entity) {
+        return entity != null && entity.getType().is(ENCLOSED_VEHICLES);
+    }
+
+    private static boolean isInSunlightExposure(ServerLevel level, LivingEntity entity, boolean ignoringRain) {
+        Entity vehicle = entity.getVehicle();
+        if (isEnclosedVehicle(vehicle)) {
+            return false;
+        }
+
+        if (isEntitySkyExposed(level, entity, ignoringRain)) {
+            return true;
+        }
+        return vehicle != null && isEntitySkyExposed(level, vehicle, ignoringRain);
+    }
+
+    private static boolean isEntitySkyExposed(ServerLevel level, Entity entity, boolean ignoringRain) {
+        return isSkyExposed(level, entity.blockPosition(), ignoringRain)
+            || isSkyExposed(level, BlockPos.containing(entity.getX(), entity.getEyeY(), entity.getZ()), ignoringRain)
+            || isSkyExposed(level, BlockPos.containing(entity.getX(), entity.getY() + entity.getBbHeight(), entity.getZ()), ignoringRain);
     }
 
     private static boolean isSkyExposed(ServerLevel level, BlockPos pos) {
+        return isSkyExposed(level, pos, false);
+    }
+
+    private static boolean isSkyExposed(ServerLevel level, BlockPos pos, boolean ignoringRain) {
         if (level.canSeeSky(pos)) {
-            return !level.isRainingAt(pos);
+            return ignoringRain || !level.isRainingAt(pos);
         }
 
         BlockPos exposedFluidSurface = findSkyExposedFluidSurface(level, pos);
-        return exposedFluidSurface != null && !level.isRainingAt(exposedFluidSurface);
+        return exposedFluidSurface != null && (ignoringRain || !level.isRainingAt(exposedFluidSurface));
     }
 
     private static boolean isSkyExposedIgnoringRain(ServerLevel level, BlockPos pos) {

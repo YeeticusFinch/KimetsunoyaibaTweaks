@@ -73,6 +73,9 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> PUPPETRY = MOB_EFFECTS.register("puppetry",
             PuppetryEffect::new);
 
+    public static final RegistryObject<MobEffect> WEB_TRAVERSAL = MOB_EFFECTS.register("web_traversal",
+            WebTraversalEffect::new);
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
@@ -47,8 +48,7 @@ public final class PuppetLineRenderer {
     private static final double MIN_ENDPOINT_RADIUS = 20.0D;
     private static final double MAX_ENDPOINT_RADIUS = 30.0D;
     private static final double LINE_LENGTH = 20.0D;
-    /** 20% of the original 0.035F thickness (halved again from 40%). */
-    private static final float LINE_HALF_WIDTH = 0.007F;
+    private static final float LINE_HALF_WIDTH = 0.002F; // puppet line thickness
 
     private static final Vec3[] BODY_ANCHORS = {
         new Vec3(0.0D, 0.96D, 0.0D),   // head
@@ -137,7 +137,8 @@ public final class PuppetLineRenderer {
                 continue;
             }
             Vec3[] endpoints = getEndpoints(puppet);
-            if (endpoints == null && !puppet.hasEffect(ModEffects.PUPPETRY.get())) {
+            if (endpoints == null && !puppet.hasEffect(ModEffects.PUPPETRY.get())
+                && !puppet.hasEffect(ModEffects.WEB_TRAVERSAL.get())) {
                 continue;
             }
 
@@ -197,7 +198,11 @@ public final class PuppetLineRenderer {
     private static Vec3 resolveBoneAnchor(LivingEntity puppet, int lineIndex, Vec3 puppetPos,
                                           float yRotRad, double width, double height) {
         String boneName = ANCHOR_BONES[lineIndex % ANCHOR_BONES.length];
-        PuppetBoneCache.Vec3 bone = PuppetBoneCache.getBone(puppet, boneName);
+        // The local player is not rendered in first person, and player model
+        // capture matrices are camera-relative in third person. Use the live
+        // entity position so the line origin remains in global world space.
+        PuppetBoneCache.Vec3 bone = puppet instanceof Player
+            ? null : PuppetBoneCache.getBone(puppet, boneName);
         if (bone != null) {
             return new Vec3(bone.x(), bone.y(), bone.z());
         }

@@ -193,6 +193,12 @@ public class SheathRegistration {
             SheathItems.SWORD_SHEATH_IGURO.get()
         );
 
+        // Register gold sheath for the gold sword (persistent)
+        SwordSheathRegistry.registerPersistentSheath(
+            ModItems.NICHIRINSWORD_GOLD.get(),
+            SheathItems.SWORD_SHEATH_GOLD.get()
+        );
+
         // Register custom sheath scales (legacy API)
         SheathModelRenderer.registerSheathScale(SheathItems.SWORD_SHEATH_IGURO.get(), 1.31f);
 

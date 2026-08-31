@@ -360,7 +360,8 @@ public class SwampDemonEntity extends AbstractDemonEntity {
 
     @Override
     protected void tickBloodDemonArt() {
-        if (SwampDemonArt.isMtFujikasane(this.level())) {
+        if (SwampDemonArt.isMtFujikasane(this.level())
+            || com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(this)) {
             return;
         }
 

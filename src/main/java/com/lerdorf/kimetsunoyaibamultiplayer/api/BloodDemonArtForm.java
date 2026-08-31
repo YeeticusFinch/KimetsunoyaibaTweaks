@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.api;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
@@ -48,6 +49,9 @@ public class BloodDemonArtForm {
     }
 
     public void execute(LivingEntity entity, Level level) {
+        if (PuppetryHandler.isAbilityUseBlocked(entity)) {
+            return;
+        }
         effect.execute(entity, level, formId);
     }
 

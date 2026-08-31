@@ -345,6 +345,14 @@ public class ModEntities {
                 .updateInterval(2)
                 .build("daughter"));
 
+    public static final RegistryObject<EntityType<MotherEntity>> MOTHER =
+        ENTITY_TYPES.register("mother",
+            () -> EntityType.Builder.of(MotherEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.95F)
+                .clientTrackingRange(64)
+                .updateInterval(2)
+                .build("mother"));
+
     public static final RegistryObject<EntityType<SilkRibbonEntity>> SILK_RIBBON =
         ENTITY_TYPES.register("silk_ribbon",
             () -> EntityType.Builder.<SilkRibbonEntity>of(SilkRibbonEntity::new, MobCategory.MISC)
@@ -478,6 +486,7 @@ public class ModEntities {
             event.put(DEMON_VINDICATOR.get(), DemonVindicatorEntity.createAttributes().build());
             event.put(SWAMP_DEMON.get(), SwampDemonEntity.createAttributes().build());
             event.put(DAUGHTER.get(), DaughterEntity.createAttributes().build());
+            event.put(MOTHER.get(), MotherEntity.createAttributes().build());
             event.put(SILK_RIBBON.get(), SilkRibbonEntity.createAttributes().build());
             event.put(DISSOLUTION_COCOON.get(), DissolutionCocoonEntity.createAttributes().build());
             event.put(NEZUKO.get(), NezukoEntity.createAttributes().build());

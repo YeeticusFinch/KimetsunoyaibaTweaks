@@ -112,6 +112,9 @@ public class BloodDemonArtExecutor {
         if (npc == null || heldItem == null || heldItem.isEmpty() || npc.level().isClientSide) {
             return false;
         }
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(npc)) {
+            return false;
+        }
 
         try {
             Item item = heldItem.getItem();

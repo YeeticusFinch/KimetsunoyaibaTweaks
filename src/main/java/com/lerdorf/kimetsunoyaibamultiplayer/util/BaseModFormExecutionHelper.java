@@ -8,6 +8,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler;
 import net.minecraft.util.Mth;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
@@ -63,7 +64,8 @@ public final class BaseModFormExecutionHelper {
      * @param formId Base-mod form ID (e.g. 601, 801, 901, 1401)
      */
     public static void executeBaseModForm(LivingEntity entity, Level level, int formId) {
-        if (entity == null || level == null || level.isClientSide) {
+        if (entity == null || level == null || level.isClientSide
+            || PuppetryHandler.isAbilityUseBlocked(entity)) {
             return;
         }
 

@@ -57,6 +57,11 @@ public class BaseModVariationHandler {
             return; // Not a nichirin sword
         }
 
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(player)) {
+            blockBaseModFormUse(event, player, "§cYou cannot use breathing forms while puppeted.");
+            return;
+        }
+
         // While one of our custom forms is still active, base-mod right-click form usage must be blocked.
         if (GuardStateHelper.isCustomBreathingActive(player)) {
             blockBaseModFormUse(event, player, "§cYou cannot use base mod forms while a custom breathing form is active.");

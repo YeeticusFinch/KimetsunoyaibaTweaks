@@ -29,7 +29,7 @@ public abstract class BaseFireResistanceSunlightImmunityMixin {
         ),
         require = 0
     )
-    private boolean kimetsunoyaibamultiplayer$suppressFireResistanceSunlightImmunity(
+    private static boolean kimetsunoyaibamultiplayer$suppressFireResistanceSunlightImmunity(
             LivingEntity entity,
             MobEffect effect) {
         if (MobEffects.FIRE_RESISTANCE.equals(effect)

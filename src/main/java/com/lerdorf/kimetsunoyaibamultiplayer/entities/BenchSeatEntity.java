@@ -12,10 +12,12 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -25,12 +27,15 @@ import net.minecraftforge.network.NetworkHooks;
  * Invisible mount used so players and mobs can sit on bench blocks.
  *
  * The seat entity positions itself at the bench's cushion surface and faces
- * the direction the bench is oriented (cushion direction). Discards itself
- * once the bench block is gone or it has no passengers.
+ * the direction the bench is oriented (cushion direction). Riders can rotate
+ * their view up to +/- 90 degrees from the bench's facing direction. Discards
+ * itself once the bench block is gone or it has no passengers.
  */
 public class BenchSeatEntity extends Mob {
-    // Seat surface of the bench model is at y=10.5/16 of the block
-    private static final double SEAT_Y_OFFSET = 0.55D;
+    // Seat entity hovers at the bench surface; the rider is placed half a
+    // block below that so they sit at ~0.4 blocks above the floor.
+    private static final double SEAT_Y_OFFSET = 0.4D;
+    private static final double RIDER_Y_OFFSET = -0.5D;
 
     private static final EntityDataAccessor<BlockPos> SEAT_POS =
         SynchedEntityData.defineId(BenchSeatEntity.class, EntityDataSerializers.BLOCK_POS);
@@ -63,6 +68,11 @@ public class BenchSeatEntity extends Mob {
         seat.entityData.set(SEAT_POS, pos.immutable());
         seat.entityData.set(FACING, facing);
         seat.refreshSeatPosition();
+        // The seat entity itself faces the same direction as the bench
+        float yaw = facing.toYRot();
+        seat.setYRot(yaw);
+        seat.setYHeadRot(yaw);
+        seat.setYBodyRot(yaw);
         return seat;
     }
 
@@ -106,7 +116,7 @@ public class BenchSeatEntity extends Mob {
 
     @Override
     public void onPassengerTurned(Entity passenger) {
-        passenger.setYRot(getFacing().toYRot());
+        // Passengers can look around freely while seated - no yaw forcing.
     }
 
     @Override
@@ -115,14 +125,12 @@ public class BenchSeatEntity extends Mob {
             return;
         }
 
-        passenger.setYBodyRot(getFacing().toYRot());
-
-        Vec3 seatPos = position().add(0.0D, 0.0D, 0.0D);
+        Vec3 seatPos = position().add(0.0D, RIDER_Y_OFFSET, 0.0D);
         moveFunction.accept(passenger, seatPos.x, seatPos.y, seatPos.z);
     }
 
     @Override
-    public Vec3 getDismountLocationForPassenger(net.minecraft.world.entity.LivingEntity passenger) {
+    public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
         // Dismount off the front of the bench
         Direction facing = getFacing();
         BlockPos pos = getSeatPos();

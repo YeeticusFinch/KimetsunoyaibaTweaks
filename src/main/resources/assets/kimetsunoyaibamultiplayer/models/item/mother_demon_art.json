@@ -1,0 +1,111 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+	"texture_size": [64, 64],
+	"textures": {
+		"1": "kimetsunoyaibamultiplayer:item/mother_demon_art",
+		"particle": "kimetsunoyaibamultiplayer:item/mother_demon_art"
+	},
+	"elements": [
+		{
+			"name": "right_arm",
+			"from": [5.75, 3.75, 1.75],
+			"to": [9.25, 8.25, 14.25],
+			"rotation": {"angle": 0, "axis": "x", "origin": [7.875, 6, 8]},
+			"faces": {
+				"north": {"uv": [12.75, 8, 12, 9], "rotation": 180, "texture": "#1"},
+				"east": {"uv": [10.25, 9, 11.25, 12], "rotation": 270, "texture": "#1"},
+				"south": {"uv": [12, 9, 11.25, 8], "texture": "#1"},
+				"west": {"uv": [12, 9, 13, 12], "rotation": 90, "texture": "#1"},
+				"up": {"uv": [11.25, 9, 12, 12], "rotation": 180, "texture": "#1"},
+				"down": {"uv": [13, 9, 13.75, 12], "texture": "#1"}
+			}
+		},
+		{
+			"name": "right_arm",
+			"from": [6.75, 4, 2],
+			"to": [9.75, 8, 14],
+			"rotation": {"angle": 0, "axis": "x", "origin": [7.875, 6, 8]},
+			"faces": {
+				"north": {"uv": [12.75, 8, 12, 9], "rotation": 180, "texture": "#1"},
+				"east": {"uv": [10.25, 9, 11.25, 12], "rotation": 270, "texture": "#1"},
+				"south": {"uv": [12, 9, 11.25, 8], "texture": "#1"},
+				"west": {"uv": [12, 9, 13, 12], "rotation": 90, "texture": "#1"},
+				"up": {"uv": [11.25, 9, 12, 12], "rotation": 180, "texture": "#1"},
+				"down": {"uv": [13, 9, 13.75, 12], "texture": "#1"}
+			}
+		},
+		{
+			"name": "armorRightArm",
+			"from": [6, 4, 2],
+			"to": [9, 8, 14],
+			"rotation": {"angle": 0, "axis": "x", "origin": [7.875, 6, 8]},
+			"faces": {
+				"north": {"uv": [13.25, 7, 14, 8], "texture": "#1"},
+				"east": {"uv": [10, 7, 13, 8], "texture": "#1"},
+				"south": {"uv": [17, 7, 17.75, 8], "texture": "#1"},
+				"west": {"uv": [11, 7, 14, 8], "texture": "#1"},
+				"up": {"uv": [12.125, 8, 11.375, 5], "texture": "#1"},
+				"down": {"uv": [12.875, 5, 12.125, 8], "texture": "#1"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"translation": [0, 0.25, 5.75],
+			"scale": [0, 0, 0]
+		},
+		"thirdperson_lefthand": {
+			"translation": [0, 0.25, 5.75],
+			"scale": [0, 0, 0]
+		},
+		"firstperson_righthand": {
+			"rotation": [23.25, 0, 0],
+			"translation": [1.75, 1.75, 0]
+		},
+		"firstperson_lefthand": {
+			"rotation": [37.5, 0, 0],
+			"translation": [0, 2.75, 0]
+		},
+		"ground": {
+			"rotation": [52.1, 2.51, 5.14],
+			"translation": [0, 1.5, 0]
+		},
+		"gui": {
+			"rotation": [130.48, -31.49, 11.69],
+			"translation": [0, -1.75, 0],
+			"scale": [1.5, 1.5, 1.5]
+		},
+		"fixed": {
+			"rotation": [90, 0, 0],
+			"scale": [1.4, 1.4, 1.4]
+		},
+		"on_shelf": {
+			"rotation": [90, 0, 0],
+			"scale": [1.4, 1.4, 1.4]
+		}
+	},
+	"groups": [
+		{
+			"name": "right_arm",
+			"origin": [5, 22, 0],
+			"color": 2,
+			"children": [
+				0,
+				1,
+				{
+					"name": "armorRightArm",
+					"origin": [5, 22, 0],
+					"color": 3,
+					"children": [2]
+				},
+				{
+					"name": "itemMainHand",
+					"origin": [6, 12, -2],
+					"color": 4,
+					"children": []
+				}
+			]
+		}
+	]
+}

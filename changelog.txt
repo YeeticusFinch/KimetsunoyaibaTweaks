@@ -1,3 +1,19 @@
+1.6.561
+- Added more demon eyes for players to choose from
+- Added blank demon eyes (for if you don't want demon eyes)
+- Updated the cherry blossom sword texture
+
+1.6.56
+- Added Mother entity and her blood demon art
+- ADded Web Traversal potion effect
+- Fixed glitch where puppetted demon slayers can cut their own threads
+- Fixed glitch where puppetted demon slayers can use breathing styles
+- Sitting on an entity no longer grants sunlight immunity
+
+1.6.559
+- Fixed sitting position on the new bench
+- Fixed rendering glitches on the bench
+
 1.6.558
 - Fixed a render glitch with the silk spray
 - Made the cocoon model a little bigger
@@ -5,9 +21,11 @@
 - Fixed the nezuko box rendering when equipped
 - Added the ability to use shears on a blue spider lily
 - Fixed the Puppetry potion effect
+  - Use `/spiderpuppet` to try it out
 - Fixed the immortal demon slayers glitch
 - Fixed the issue where fire resistance granted sunlight immunity
 - Added the bench block (for the new mugen train which will come later)
+- Fixed texture for Golden Haori
 
 1.6.557
 - Added config option for changing the aggro handler for demons and demon slayers to require line of sunlight

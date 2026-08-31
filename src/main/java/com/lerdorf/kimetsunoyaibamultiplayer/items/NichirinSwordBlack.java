@@ -372,6 +372,10 @@ public class NichirinSwordBlack extends BreathingSwordItem {
             return InteractionResultHolder.pass(stack);
         }
 
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(player)) {
+            return InteractionResultHolder.fail(stack);
+        }
+
         if (com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler.isParalyzed(player)) {
             return InteractionResultHolder.fail(stack);
         }

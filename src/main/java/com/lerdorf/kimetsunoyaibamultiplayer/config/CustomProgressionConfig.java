@@ -26,6 +26,9 @@ public class CustomProgressionConfig {
     // Keep demon state through death by replaying blood consumption on respawn
     public static ForgeConfigSpec.BooleanValue persistentDemonhood;
 
+    // Allow players to select the texture with no eye markings
+    public static ForgeConfigSpec.BooleanValue allowEmptyDemonEyes;
+
     // Block the base mod's sun breathing shortcut to conquering sunlight
     public static ForgeConfigSpec.BooleanValue disableSunBreathingSunlightImmunity;
 
@@ -147,6 +150,15 @@ public class CustomProgressionConfig {
                     "",
                     "Default: true")
             .define("persistent_demonhood", true);
+
+        allowEmptyDemonEyes = builder
+            .comment("Allow Empty Demon Eyes",
+                    "",
+                    "When enabled, demon players can select the demon_eyes_empty texture",
+                    "from the Demon Eyes customization screen.",
+                    "",
+                    "Default: true")
+            .define("allow_empty_demon_eyes", true);
 
         disableSunBreathingSunlightImmunity = builder
             .comment("Disable Sun Breathing sunlight immunity",
@@ -314,6 +326,10 @@ public class CustomProgressionConfig {
 
     public static boolean isPersistentDemonhoodEnabled() {
         return persistentDemonhood != null && persistentDemonhood.get();
+    }
+
+    public static boolean isEmptyDemonEyesAllowed() {
+        return allowEmptyDemonEyes == null || allowEmptyDemonEyes.get();
     }
 
     public static boolean isEnhancedInfinityCastleEnabled() {

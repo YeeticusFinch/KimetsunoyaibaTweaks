@@ -6,6 +6,7 @@ public final class DemonEyesHelper {
     public static final String DEMON_EYES_INDEX_KEY = "DemonEyesIndex";
     public static final String DEMON_EYES_HUE_KEY = "DemonEyesHue";
     public static final int DEFAULT_DEMON_EYES_INDEX = 2;
+    public static final int EMPTY_DEMON_EYES_INDEX = 1011;
     public static final int DEFAULT_DEMON_EYES_HUE = 0;
 
     private DemonEyesHelper() {

@@ -17970,6 +17970,30 @@
 					}
 				}
 			}
+		},
+		"sit": {
+			"loop": true,
+			"bones": {
+				"cloak": {
+					"rotation": [-60, 0, 0],
+					"position": [0, 1, 1]
+				},
+				"right_leg": {
+					"rotation": [-67.42266, 4.61854, 1.91757]
+				},
+				"left_leg": {
+					"rotation": [-67.42266, -4.61854, -1.91757]
+				},
+				"body": {
+					"position": [0, -9, 0]
+				},
+				"right_arm": {
+					"rotation": [-22.5, 0, 22.5]
+				},
+				"left_arm": {
+					"rotation": [-22.5, 0, -22.5]
+				}
+			}
 		}
 	}
 }

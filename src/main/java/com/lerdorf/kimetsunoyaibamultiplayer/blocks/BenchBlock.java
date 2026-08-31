@@ -32,10 +32,23 @@ import org.jetbrains.annotations.Nullable;
 public class BenchBlock extends Block {
     public static final DirectionProperty FACING = DirectionProperty.create("facing", Direction.Plane.HORIZONTAL);
 
-    // Seat surface model pieces (seat top at y=10.5, backrest slab at z=14..16 up to y=26)
-    private static final VoxelShape SHAPE = Shapes.or(
-        Block.box(0.0D, 0.0D, 0.0D, 16.0D, 10.5D, 16.0D),
-        Block.box(0.0D, 10.5D, 13.0D, 16.0D, 26.0D, 16.0D)
+    // Seat surface model pieces (seat top at y=8.5, backrest slab at z=14..16 up to y=23).
+    // The model's backrest sits at the north side in local space, matching facing=north.
+    private static final VoxelShape SHAPE_NORTH = Shapes.or(
+        Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.5D, 16.0D),
+        Block.box(0.0D, 8.5D, 13.0D, 16.0D, 23.0D, 16.0D)
+    );
+    private static final VoxelShape SHAPE_SOUTH = Shapes.or(
+        Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.5D, 16.0D),
+        Block.box(0.0D, 8.5D, 0.0D, 16.0D, 23.0D, 3.0D)
+    );
+    private static final VoxelShape SHAPE_WEST = Shapes.or(
+        Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.5D, 16.0D),
+        Block.box(13.0D, 8.5D, 0.0D, 16.0D, 23.0D, 16.0D)
+    );
+    private static final VoxelShape SHAPE_EAST = Shapes.or(
+        Block.box(0.0D, 0.0D, 0.0D, 16.0D, 8.5D, 16.0D),
+        Block.box(0.0D, 8.5D, 0.0D, 3.0D, 23.0D, 16.0D)
     );
 
     public BenchBlock(Properties properties) {
@@ -56,7 +69,13 @@ public class BenchBlock extends Block {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
+        return switch (state.getValue(FACING)) {
+            case NORTH -> SHAPE_NORTH;
+            case SOUTH -> SHAPE_SOUTH;
+            case WEST -> SHAPE_WEST;
+            case EAST -> SHAPE_EAST;
+            default -> SHAPE_NORTH;
+        };
     }
 
     @Override

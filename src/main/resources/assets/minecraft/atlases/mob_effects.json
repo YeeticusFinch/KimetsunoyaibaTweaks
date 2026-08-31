@@ -24,6 +24,11 @@
       "type": "single",
       "resource": "kimetsunoyaibamultiplayer:mob_effect/wisteria_resistance",
       "sprite": "kimetsunoyaibamultiplayer:wisteria_resistance"
+    },
+    {
+      "type": "single",
+      "resource": "minecraft:block/cobweb",
+      "sprite": "kimetsunoyaibamultiplayer:web_traversal"
     }
   ]
 }

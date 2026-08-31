@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.DemonRankingConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.demonranking.DemonRank;
 import com.lerdorf.kimetsunoyaibamultiplayer.demonranking.DemonRankingSavedData;
@@ -57,7 +58,7 @@ public final class DemonEyesSyncHandler {
         }
 
         boolean demon = Damager.isDemon(player);
-        int eyesIndex = DemonEyesHelper.getOrCreateIndex(player);
+        int eyesIndex = getAllowedEyesIndex(player);
         int hue = DemonEyesHelper.getHue(player);
         int rankTier = getRankTier(player);
         SyncedDemonEyesState current = new SyncedDemonEyesState(demon, eyesIndex, hue, rankTier);
@@ -86,10 +87,20 @@ public final class DemonEyesSyncHandler {
 
     private static DemonEyesSyncPacket createPacket(ServerPlayer player) {
         boolean demon = Damager.isDemon(player);
-        int eyesIndex = DemonEyesHelper.getOrCreateIndex(player);
+        int eyesIndex = getAllowedEyesIndex(player);
         int hue = DemonEyesHelper.getHue(player);
         int rankTier = getRankTier(player);
         return new DemonEyesSyncPacket(player.getUUID(), demon, eyesIndex, hue, rankTier);
+    }
+
+    private static int getAllowedEyesIndex(ServerPlayer player) {
+        int eyesIndex = DemonEyesHelper.getOrCreateIndex(player);
+        if (!CustomProgressionConfig.isEmptyDemonEyesAllowed()
+            && eyesIndex == DemonEyesHelper.EMPTY_DEMON_EYES_INDEX) {
+            eyesIndex = DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX;
+            DemonEyesHelper.setIndex(player, eyesIndex);
+        }
+        return eyesIndex;
     }
 
     private static int getRankTier(ServerPlayer player) {

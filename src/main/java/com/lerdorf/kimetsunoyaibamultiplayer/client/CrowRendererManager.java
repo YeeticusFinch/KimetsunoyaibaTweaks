@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CrowGeoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.AfterImageRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DarkStarRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BenchSeatRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.CushionSeatRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerFemaleRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerRenderer;
@@ -68,6 +69,9 @@ public class CrowRendererManager {
 
         // Register no-op renderer for invisible cushion seat mount
         event.registerEntityRenderer(ModEntities.CUSHION_SEAT.get(), CushionSeatRenderer::new);
+
+        // Register no-op renderer for invisible bench seat mount
+        event.registerEntityRenderer(ModEntities.BENCH_SEAT.get(), BenchSeatRenderer::new);
 
         // Register renderers for generic demon slayers
         event.registerEntityRenderer(ModEntities.DEMON_SLAYER.get(), DemonSlayerRenderer::new);

@@ -11,6 +11,7 @@
     "LivingEntityFoodParticleMixin",
     "BaseSunBreathingSunlightImmunityMixin",
     "BaseFireResistanceSunlightImmunityMixin",
+    "BaseSunlightVehicleMixin",
     "ServerLevelParticleMixin",
     "CommandsMixin",
     "DemonizedSerpentParticlesMixin",

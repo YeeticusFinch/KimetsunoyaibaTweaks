@@ -12,7 +12,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.util.SunlightImmunityHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModItems;
 import net.minecraft.advancements.Advancement;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -577,14 +576,7 @@ public final class DemonTransformationHandler {
     }
 
     private static boolean isInBurningSunlight(ServerPlayer player) {
-        if (!(player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) || !serverLevel.isDay()) {
-            return false;
-        }
-        if (player.isInWaterRainOrBubble() || player.isUnderWater()) {
-            return false;
-        }
-        BlockPos pos = player.blockPosition();
-        return serverLevel.canSeeSky(pos) && !serverLevel.isRainingAt(pos);
+        return SunlightImmunityHelper.isInBurningSunlight(player);
     }
 
     public static int getEffectiveMuzanBlood(Player player) {

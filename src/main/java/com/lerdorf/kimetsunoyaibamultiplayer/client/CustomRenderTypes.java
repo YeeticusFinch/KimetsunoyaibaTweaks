@@ -121,7 +121,12 @@ public class CustomRenderTypes extends RenderType {
                             .setLightmapState(LIGHTMAP) // Use lightmap
                             .setOverlayState(OVERLAY) // Required for entity format
                             .setCullState(NO_CULL) // Don't cull faces
-                            .setWriteMaskState(COLOR_DEPTH_WRITE) // Write both color and depth for proper sorting
+                            // Depth WRITE off: overlays drawn with this type sit exactly on top of
+                            // entity geometry (e.g. demon eye overlays on the player skin). Writing
+                            // depth there makes them z-fight with the skin (visible as flickering
+                            // when the player holds an item and the skin/item draw order shifts).
+                            // Emissive glow overlays never need to occlude, so color-only write.
+                            .setWriteMaskState(COLOR_WRITE) // Write colors only - no depth
                             .setOutputState(TRANSLUCENT_TARGET) // Render to translucent target
                             .createCompositeState(true); // Affects outline
 

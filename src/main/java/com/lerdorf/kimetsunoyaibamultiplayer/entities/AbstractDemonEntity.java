@@ -11,7 +11,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonTargetingHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -50,6 +49,8 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         SynchedEntityData.defineId(AbstractDemonEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> SUNLIGHT_BURN_TICKS =
         SynchedEntityData.defineId(AbstractDemonEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> SITTING =
+        SynchedEntityData.defineId(AbstractDemonEntity.class, EntityDataSerializers.BOOLEAN);
 
     private static final ResourceLocation[] MUZAN_BLOOD_ITEM_IDS = new ResourceLocation[] {
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "muzan_blood"),
@@ -93,6 +94,15 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         this.entityData.define(CURRENT_ANIMATION, "idle");
         this.entityData.define(ANIMATION_TICKS, 0);
         this.entityData.define(SUNLIGHT_BURN_TICKS, 0);
+        this.entityData.define(SITTING, false);
+    }
+
+    public boolean isInSittingPose() {
+        return this.entityData.get(SITTING);
+    }
+
+    public void setInSittingPose(boolean sitting) {
+        this.entityData.set(SITTING, sitting);
     }
 
     @Override
@@ -116,6 +126,9 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
     }
 
     protected void tickBloodDemonArt() {
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(this)) {
+            return;
+        }
         BloodDemonArtRegistry.RegisteredBloodDemonArt art = getBloodDemonArt();
         LivingEntity target = getTarget();
         if (art == null || target == null || !target.isAlive() || bloodDemonArtCooldownTicks > 0 || isUsingLockedAnimation()) {
@@ -198,14 +211,7 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
     }
 
     protected boolean isInBurningSunlight() {
-        if (!(this.level() instanceof ServerLevel serverLevel) || !serverLevel.isDay()) {
-            return false;
-        }
-        if (this.isInWaterRainOrBubble() || this.isUnderWater()) {
-            return false;
-        }
-        BlockPos pos = this.blockPosition();
-        return serverLevel.canSeeSky(pos) && !serverLevel.isRainingAt(pos);
+        return SunlightImmunityHelper.isInBurningSunlight(this);
     }
 
     protected boolean isSunlightImmune() {
@@ -327,6 +333,10 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         controllers.add(new AnimationController<>(this, "controller", 0, state -> {
             if (this.isDeadOrDying()) {
                 return state.setAndContinue(RawAnimation.begin().thenPlay("death"));
+            }
+
+            if (this.isInSittingPose()) {
+                return state.setAndContinue(RawAnimation.begin().thenLoop("sit"));
             }
 
             String anim = getCurrentAnimation();

@@ -245,6 +245,9 @@ public class DemonCreeperEntity extends AbstractDemonEntity {
 
     @Override
     protected void tickBloodDemonArt() {
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(this)) {
+            return;
+        }
         BloodDemonArtRegistry.RegisteredBloodDemonArt art = getBloodDemonArt();
         LivingEntity target = getTarget();
         if (art == null || target == null || !target.isAlive() || getBloodDemonArtCooldownTicks() > 0 || isUsingLockedAnimation()) {

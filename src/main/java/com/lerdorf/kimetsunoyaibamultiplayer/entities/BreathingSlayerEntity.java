@@ -4,7 +4,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -547,14 +546,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
     }
 
     private boolean isInBurningSunlight() {
-        if (!(this.level() instanceof ServerLevel serverLevel) || !serverLevel.isDay()) {
-            return false;
-        }
-        if (this.isInWaterRainOrBubble() || this.isUnderWater()) {
-            return false;
-        }
-        BlockPos pos = this.blockPosition();
-        return serverLevel.canSeeSky(pos) && !serverLevel.isRainingAt(pos);
+        return com.lerdorf.kimetsunoyaibamultiplayer.util.SunlightImmunityHelper.isInBurningSunlight(this);
     }
 
     /**

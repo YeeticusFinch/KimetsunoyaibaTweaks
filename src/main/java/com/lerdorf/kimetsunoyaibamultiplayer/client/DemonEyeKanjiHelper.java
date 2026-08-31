@@ -110,6 +110,10 @@ public final class DemonEyeKanjiHelper {
         placements.put(DemonEyesResourceHelper.DAUGHTER_EYES_INDEX, new EyeKanjiPlacement(-1.65D, 1.72D, 1.30D, 1.30D, 0.00D));
         placements.put(DemonEyesResourceHelper.DAUGHTER_EYES_1_INDEX, new EyeKanjiPlacement(-1.65D, 0.25D, 1.50D, 1.30D, 0.00D));
         placements.put(DemonEyesResourceHelper.RYOKO_EYES_INDEX, new EyeKanjiPlacement(-1.05D, 1.50D, 0.90D, 0.90D, 0.00D));
+        EyeKanjiPlacement justinPlacement = new EyeKanjiPlacement(-1.50D, 1.00D, 1.00D, 1.00D, 0.00D);
+        placements.put(DemonEyesResourceHelper.JUSTIN_EYES_0_INDEX, justinPlacement);
+        placements.put(DemonEyesResourceHelper.JUSTIN_EYES_1_INDEX, justinPlacement);
+        placements.put(DemonEyesResourceHelper.JUSTIN_EYES_2_INDEX, justinPlacement);
 
         return Map.copyOf(placements);
     }
