@@ -20,6 +20,9 @@ public class ModSounds {
     // Mugen door sound
     public static final RegistryObject<SoundEvent> DEMON_SLAYER_DOOR_OPEN = registerSoundEvent("demon_slayer_door_open");
 
+    // Music discs
+    public static final RegistryObject<SoundEvent> DISC_TANJIRO_VS_ENMU = registerSoundEvent("disc_tanjiro_vs_enmu");
+
     private static RegistryObject<SoundEvent> registerSoundEvent(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

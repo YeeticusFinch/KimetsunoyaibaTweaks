@@ -100,6 +100,10 @@ public class SwordSlashModelRegistry {
         // Demon passive Claws use the custom BDA item but render a claw slash model.
         SWORD_TO_MODEL_MAP.put("custom_demon_art", "claw");
 
+        // Daughter and Mother's blood demon arts use the web slash model.
+        SWORD_TO_MODEL_MAP.put("daughter_demon_art", "web");
+        SWORD_TO_MODEL_MAP.put("mother_demon_art", "web");
+
         // Register flower breathing swords to use flower model (animated texture)
         // Covers both base mod and our mod variants (registry matches by path, not namespace)
         SWORD_TO_MODEL_MAP.put("nichirinsword_flower", "flower");

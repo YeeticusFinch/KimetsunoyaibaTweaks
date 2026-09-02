@@ -1160,7 +1160,7 @@ public final class SwampDemonArt {
         return true;
     }
 
-    private static boolean shouldIgnoreSwingForAbilityUse(Player player) {
+    public static boolean shouldIgnoreSwingForAbilityUse(Player player) {
         if (!(player.level() instanceof ServerLevel serverLevel)) {
             return false;
         }

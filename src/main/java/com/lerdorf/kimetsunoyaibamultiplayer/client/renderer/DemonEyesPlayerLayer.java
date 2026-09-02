@@ -19,13 +19,44 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
 
 public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
     private static final double HEAD_FRONT_Z = -4.08D / 16.0D;
     private static final double SKIN_PIXEL = 1.0D / 16.0D;
 
+    private static final float OVERLAY_INFLATION = 0.02F;
+
+    private final PlayerModel<AbstractClientPlayer> normalOverlayModel;
+    private final PlayerModel<AbstractClientPlayer> slimOverlayModel;
+
     public DemonEyesPlayerLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
         super(parent);
+
+        normalOverlayModel = new PlayerModel<>(
+            LayerDefinition.create(
+                PlayerModel.createMesh(
+                    new CubeDeformation(OVERLAY_INFLATION),
+                    false
+                ),
+                64,
+                64
+            ).bakeRoot(),
+            false
+        );
+
+        slimOverlayModel = new PlayerModel<>(
+            LayerDefinition.create(
+                PlayerModel.createMesh(
+                    new CubeDeformation(OVERLAY_INFLATION),
+                    true
+                ),
+                64,
+                64
+            ).bakeRoot(),
+            true
+        );
     }
 
     @Override
@@ -40,17 +71,44 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
         if (state == null || !state.demon()) {
             return;
         }
-
+        /*
         RenderType renderType = CustomRenderTypes.geoEntityTranslucentEmissive(
             DemonEyeKanjiHelper.getEyeOverlayTexture(state.index(), state.rankTier())
         );
         float[] tint = DemonEyesResourceHelper.getHueTint(state.hue());
         VertexConsumer consumer = buffer.getBuffer(renderType);
-        getParentModel().renderToBuffer(
+        */
+        ResourceLocation texture = DemonEyeKanjiHelper.getEyeOverlayTexture(state.index(), state.rankTier());
+        float[] tint = DemonEyesResourceHelper.getHueTint(state.hue());
+        //RenderType renderType = RenderType.entityCutoutNoCullZOffset(texture); // works in 3rd person but not in inventory
+        //VertexConsumer consumer = buffer.getBuffer(RenderType.eyes(texture));
+        // VertexConsumer consumer = buffer.getBuffer(renderType);
+        // getParentModel().renderToBuffer(
+        //     poseStack,
+        //     consumer,
+        //     0xF000F0,
+        //     OverlayTexture.NO_OVERLAY,
+        //     tint[0],
+        //     tint[1],
+        //     tint[2],
+        //     1.0F
+        // );
+        boolean slim = "slim".equals(player.getModelName());
+
+        PlayerModel<AbstractClientPlayer> overlayModel = slim ? slimOverlayModel : normalOverlayModel;
+
+        // Copy the current player's pose/animation into the inflated model
+        getParentModel().copyPropertiesTo(overlayModel);
+
+        RenderType renderType = RenderType.entityCutoutNoCull(texture);
+
+        VertexConsumer consumer = buffer.getBuffer(renderType);
+
+        overlayModel.renderToBuffer(
             poseStack,
             consumer,
             0xF000F0,
-            LivingEntityRenderer.getOverlayCoords(player, 0.0F),
+            OverlayTexture.NO_OVERLAY,
             tint[0],
             tint[1],
             tint[2],

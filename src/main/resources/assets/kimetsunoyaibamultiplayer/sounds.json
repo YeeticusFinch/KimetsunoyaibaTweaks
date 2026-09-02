@@ -34,5 +34,14 @@
         "stream": false
       }
     ]
+  },
+  "disc_tanjiro_vs_enmu": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.disc_tanjiro_vs_enmu",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:disc_tanjiro_vs_enmu",
+        "stream": true
+      }
+    ]
   }
 }

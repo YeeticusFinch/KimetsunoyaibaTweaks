@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CreepingRuin;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.DemonwebPuppetry;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.VindicatorsBane;
+import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -12,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.RecordItem;
 import net.minecraft.world.item.Tiers;
 import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -512,6 +514,10 @@ public class ModItems {
     public static final RegistryObject<Item> SAKE = ITEMS.register("sake",
         () -> new SakeItem(new Item.Properties().stacksTo(16)));
 
+    public static final RegistryObject<Item> DISC_TANJIRO_VS_ENMU = ITEMS.register("disc_tanjiro_vs_enmu",
+        () -> new RecordItem(13, ModSounds.DISC_TANJIRO_VS_ENMU.get(),
+            new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 347));
+
     // Favor Potion Items - Ubuyashiki (slayer protection - spawns slayers when attacked by demons/players)
     public static final RegistryObject<Item> FAVOR_OF_UBUYASHIKI_POTION_1 = ITEMS.register("favor_of_ubuyashiki_potion_1",
         () -> new FavorPotionItem(new Item.Properties().stacksTo(16), FavorPotionItem.FavorType.UBUYASHIKI, 1));
@@ -693,7 +699,7 @@ public class ModItems {
                     FAVOR_OF_UBUYASHIKI_POTION_3.get()
                 );
 
-                addItems(output, UBUYASHIKI_INVITATION.get(), BLOOM_CALENDAR.get(), SAKE.get(), TIPPED_KUNAI.get(), NEZUKO_BOX.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
+                addItems(output, UBUYASHIKI_INVITATION.get(), BLOOM_CALENDAR.get(), SAKE.get(), DISC_TANJIRO_VS_ENMU.get(), TIPPED_KUNAI.get(), NEZUKO_BOX.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
                     HUMAN_FLESH_3.get(), HUMAN_FLESH_4.get(), HUMAN_FLESH_5.get());
             })
             .build());

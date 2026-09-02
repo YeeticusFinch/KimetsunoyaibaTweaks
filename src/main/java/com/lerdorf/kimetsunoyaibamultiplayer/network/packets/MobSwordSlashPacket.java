@@ -28,33 +28,45 @@ public class MobSwordSlashPacket {
     private final UUID entityUUID;
     private final String animationName;
     private final int animationTick;
+    private final String modelKey;
 
     public MobSwordSlashPacket(UUID entityUUID, String animationName, int animationTick) {
+        this(entityUUID, animationName, animationTick, null);
+    }
+
+    public MobSwordSlashPacket(UUID entityUUID, String animationName, int animationTick, String modelKey) {
         this.entityUUID = entityUUID;
         this.animationName = animationName;
         this.animationTick = animationTick;
+        this.modelKey = modelKey;
     }
 
     public MobSwordSlashPacket(FriendlyByteBuf buf) {
         this.entityUUID = buf.readUUID();
         this.animationName = buf.readUtf(256);
         this.animationTick = buf.readVarInt();
+        this.modelKey = buf.readBoolean() ? buf.readUtf(64) : null;
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         buf.writeUUID(entityUUID);
         buf.writeUtf(animationName, 256);
         buf.writeVarInt(animationTick);
+        buf.writeBoolean(modelKey != null);
+        if (modelKey != null) {
+            buf.writeUtf(modelKey, 64);
+        }
     }
 
     public boolean handle(Supplier<NetworkEvent.Context> supplier) {
         NetworkEvent.Context ctx = supplier.get();
-        ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> handleClient(entityUUID, animationName, animationTick)));
+        ctx.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+            () -> () -> handleClient(entityUUID, animationName, animationTick, modelKey)));
         ctx.setPacketHandled(true);
         return true;
     }
 
-    private static void handleClient(UUID entityUUID, String animationName, int animationTick) {
+    private static void handleClient(UUID entityUUID, String animationName, int animationTick, String modelKeyOverride) {
         var level = ClientPacketHandler.getClientLevel();
         if (!(level instanceof ClientLevel clientLevel)) return;
 
@@ -75,10 +87,11 @@ public class MobSwordSlashPacket {
 
         // Use the entity's main-hand item to determine particles/model
         ItemStack swordItem = living.getMainHandItem();
-        ParticleOptions particleType = SwordParticleMapping.getParticleForSword(
-            swordItem,
-            SwordParticleHandler.isDemonizedParticleWielder(living)
-        );
+        ParticleOptions particleType = modelKeyOverride != null ? ParticleTypes.CLOUD
+            : SwordParticleMapping.getParticleForSword(
+                swordItem,
+                SwordParticleHandler.isDemonizedParticleWielder(living)
+            );
         if (particleType == null) {
             if (swordItem.getItem() == ModItems.CUSTOM_DEMON_ART.get()
                 || CombustibleBlood.isCombustibleBloodMeleeItem(swordItem)) {
@@ -92,6 +105,7 @@ public class MobSwordSlashPacket {
         }
 
         // Delegate to BonePositionTracker which will select model vs particles
-        BonePositionTracker.spawnRadialRibbonParticles(living, swordItem, animationName, animationTick, particleType);
+        BonePositionTracker.spawnRadialRibbonParticles(living, swordItem, animationName, animationTick,
+            particleType, modelKeyOverride);
     }
 }

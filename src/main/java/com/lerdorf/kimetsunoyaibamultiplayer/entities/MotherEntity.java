@@ -1,8 +1,10 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.DemonwebPuppetry;
+import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,6 +14,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
@@ -32,9 +35,12 @@ public class MotherEntity extends AbstractDemonEntity {
     private static final String SITTING_STONE_Z_KEY = "KnYMotherSittingStoneZ";
     private static final String SITTING_STONE_PLACED_KEY = "KnYMotherSittingStonePlaced";
     private static final int ABILITY_COOLDOWN_TICKS = 100;
-    private static final double ENEMY_ALERT_RANGE = 10.0D;
+    private static final double WEB_MELEE_RANGE = 5.0D;
+    private static final int WEB_MELEE_COOLDOWN_TICKS = 10;
     private static final double SAFE_DISTANCE = 20.0D;
     private static final double ESCAPE_SPEED = 0.45D;
+
+    private int webMeleeCooldownTicks;
 
     public MotherEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -56,7 +62,8 @@ public class MotherEntity extends AbstractDemonEntity {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(1, new WaterAvoidingRandomStrollGoal(this, 0.8D));
+        this.goalSelector.addGoal(2, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
@@ -69,7 +76,27 @@ public class MotherEntity extends AbstractDemonEntity {
 
     @Override
     protected void tickBloodDemonArt() {
-        // Mother uses the forms according to her own behavior state.
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(this)
+            || getExternalBloodDemonArtCooldownTicks() > 0
+            || DemonwebPuppetry.hasActiveManifestation(this)
+            || isUsingLockedAnimation()
+            || !(level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+            return;
+        }
+
+        LivingEntity target = getTarget();
+        if (!DemonwebPuppetry.isValidManifestationTarget(this, target)) {
+            target = DemonwebPuppetry.findNearestEnemy(this, serverLevel, 200.0D, false);
+        }
+        if (target == null || distanceToSqr(target) <= WEB_MELEE_RANGE * WEB_MELEE_RANGE) {
+            return;
+        }
+
+        faceTarget(target);
+        if (DemonwebPuppetry.spawnManifestation(this, target, serverLevel)) {
+            setTarget(target);
+            setExternalBloodDemonArtCooldownTicks(ABILITY_COOLDOWN_TICKS);
+        }
     }
 
     @Override
@@ -101,16 +128,35 @@ public class MotherEntity extends AbstractDemonEntity {
             return;
         }
 
+        if (webMeleeCooldownTicks > 0) {
+            webMeleeCooldownTicks--;
+        }
         setSprinting(false);
+        if (!DemonwebPuppetry.hasWebTraversal(this)) {
+            setNoGravity(false);
+        }
+
+        LivingEntity closeEnemy = DemonwebPuppetry.findNearestEnemy(this,
+            (net.minecraft.server.level.ServerLevel) level(), (int) WEB_MELEE_RANGE, false);
+        LivingEntity currentTarget = getTarget();
+        if (closeEnemy == null && DemonwebPuppetry.isValidManifestationTarget(this, currentTarget)
+            && distanceToSqr(currentTarget) <= WEB_MELEE_RANGE * WEB_MELEE_RANGE) {
+            closeEnemy = currentTarget;
+        }
+        if (closeEnemy != null) {
+            setTarget(closeEnemy);
+            if (webMeleeCooldownTicks <= 0
+                && BloodDemonArtM1AttackHandler.performWebSlashAttack(this, closeEnemy.getUUID())) {
+                webMeleeCooldownTicks = WEB_MELEE_COOLDOWN_TICKS;
+            }
+        }
+
         if (DemonwebPuppetry.hasWebTraversal(this)) {
             tickWebTraversalEscape();
             return;
         }
 
-        LivingEntity closeEnemy = DemonwebPuppetry.findNearestEnemy(this, (net.minecraft.server.level.ServerLevel) level(),
-            ENEMY_ALERT_RANGE, false);
         if (closeEnemy != null) {
-            setTarget(closeEnemy);
             DemonwebPuppetry.activateWebTraversal(this);
             stopSitting();
             tickWebTraversalEscape();
@@ -120,24 +166,8 @@ public class MotherEntity extends AbstractDemonEntity {
         LivingEntity visibleEnemy = DemonwebPuppetry.findVisibleEnemy(this);
         if (visibleEnemy != null) {
             setTarget(visibleEnemy);
-            if (getExternalBloodDemonArtCooldownTicks() <= 0) {
-                DemonwebPuppetry.applyPuppetryToTarget(this, visibleEnemy);
-                setExternalBloodDemonArtCooldownTicks(ABILITY_COOLDOWN_TICKS);
-            }
             sitOnStone();
             return;
-        }
-
-        if (DemonwebPuppetry.countPuppets(this) == 0
-            && !DemonwebPuppetry.hasActiveManifestation(this)
-            && getExternalBloodDemonArtCooldownTicks() <= 0) {
-            LivingEntity distantEnemy = DemonwebPuppetry.findNearestEnemy(this,
-                (net.minecraft.server.level.ServerLevel) level(), 200.0D, false);
-            if (distantEnemy != null) {
-                DemonwebPuppetry.spawnManifestation(this, distantEnemy,
-                    (net.minecraft.server.level.ServerLevel) level());
-                setExternalBloodDemonArtCooldownTicks(ABILITY_COOLDOWN_TICKS);
-            }
         }
 
         sitOnStone();
@@ -152,6 +182,11 @@ public class MotherEntity extends AbstractDemonEntity {
             DemonwebPuppetry.activateWebTraversal(this);
         }
         return hurt;
+    }
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource source) {
+        return super.causeFallDamage(fallDistance, damageMultiplier * 0.1F, source);
     }
 
     private void tickWebTraversalEscape() {
@@ -179,6 +214,7 @@ public class MotherEntity extends AbstractDemonEntity {
 
         if (!needsDistance) {
             DemonwebPuppetry.deactivateWebTraversal(this);
+            setNoGravity(false);
             sitOnStone();
             return;
         }
@@ -193,11 +229,16 @@ public class MotherEntity extends AbstractDemonEntity {
     }
 
     private void sitOnStone() {
+        if (!ensureSittingStone()) {
+            setInSittingPose(false);
+            setNoGravity(false);
+            return;
+        }
+
         setSprinting(false);
         setInSittingPose(true);
         getNavigation().stop();
         setDeltaMovement(Vec3.ZERO);
-        ensureSittingStone();
     }
 
     private void stopSitting() {
@@ -205,9 +246,9 @@ public class MotherEntity extends AbstractDemonEntity {
         clearSittingStone();
     }
 
-    private void ensureSittingStone() {
+    private boolean ensureSittingStone() {
         if (!(level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
-            return;
+            return false;
         }
         var data = getPersistentData();
         BlockPos stonePos;
@@ -222,18 +263,70 @@ public class MotherEntity extends AbstractDemonEntity {
             data.putInt(SITTING_STONE_Z_KEY, stonePos.getZ());
         }
 
-        if (data.getBoolean(SITTING_STONE_PLACED_KEY)
-            && !serverLevel.getBlockState(stonePos).is(Blocks.STONE)) {
-            serverLevel.setBlock(stonePos, Blocks.STONE.defaultBlockState(), 3);
-        } else if (!data.getBoolean(SITTING_STONE_PLACED_KEY)
-            && serverLevel.getBlockState(stonePos).isAir()) {
-            serverLevel.setBlock(stonePos, Blocks.STONE.defaultBlockState(), 3);
-            data.putBoolean(SITTING_STONE_PLACED_KEY, true);
+        if (data.getBoolean(SITTING_STONE_PLACED_KEY)) {
+            if (!serverLevel.getBlockState(stonePos).is(Blocks.STONE)
+                || !hasSolidSupport(serverLevel, stonePos)) {
+                if (serverLevel.getBlockState(stonePos).is(Blocks.STONE)) {
+                    serverLevel.removeBlock(stonePos, false);
+                }
+                clearSittingStoneData(data);
+                return false;
+            }
+            setPos(stonePos.getX() + 0.5D, stonePos.getY() + 1.0D, stonePos.getZ() + 0.5D);
+            return true;
         }
 
-        if (data.getBoolean(SITTING_STONE_PLACED_KEY)) {
+        // A naturally generated stone directly below her is also a valid seat.
+        if (serverLevel.getBlockState(blockPosition().below()).is(Blocks.STONE)) {
+            clearSittingStoneData(data);
+            return true;
+        } else if (serverLevel.getBlockState(stonePos).isAir()
+            && hasSolidSupport(serverLevel, stonePos)) {
+            serverLevel.setBlock(stonePos, Blocks.STONE.defaultBlockState(), 3);
+            data.putBoolean(SITTING_STONE_PLACED_KEY, true);
             setPos(stonePos.getX() + 0.5D, stonePos.getY() + 1.0D, stonePos.getZ() + 0.5D);
+            return true;
         }
+
+        clearSittingStoneData(data);
+        return false;
+    }
+
+    private boolean hasSolidSupport(net.minecraft.server.level.ServerLevel level, BlockPos stonePos) {
+        for (Direction direction : Direction.values()) {
+            BlockPos supportPos = stonePos.relative(direction);
+            var supportState = level.getBlockState(supportPos);
+            if (supportState.isAir() || !supportState.getFluidState().isEmpty()) {
+                continue;
+            }
+            if (!supportState.getCollisionShape(level, supportPos).isEmpty()
+                || supportState.isSolid()
+                || supportState.isSolidRender(level, supportPos)
+                || supportState.is(BlockTags.LEAVES)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void clearSittingStoneData(net.minecraft.nbt.CompoundTag data) {
+        data.remove(SITTING_STONE_X_KEY);
+        data.remove(SITTING_STONE_Y_KEY);
+        data.remove(SITTING_STONE_Z_KEY);
+        data.remove(SITTING_STONE_PLACED_KEY);
+    }
+
+    private void faceTarget(LivingEntity target) {
+        getLookControl().setLookAt(target, 180.0F, 180.0F);
+        double dx = target.getX() - getX();
+        double dz = target.getZ() - getZ();
+        double dy = target.getEyeY() - getEyeY();
+        double horizontal = Math.sqrt(dx * dx + dz * dz);
+        float yaw = (float) (Math.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
+        float pitch = (float) (-(Math.atan2(dy, horizontal) * (180.0D / Math.PI)));
+        setYRot(yaw);
+        setYHeadRot(yaw);
+        setXRot(pitch);
     }
 
     private void clearSittingStone() {

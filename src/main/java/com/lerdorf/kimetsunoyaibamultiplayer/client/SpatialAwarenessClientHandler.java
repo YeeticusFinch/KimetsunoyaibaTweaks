@@ -6,6 +6,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.OrochiEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OrochiDismountPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WebTraversalInputPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.DemonwebPuppetry;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
 import net.minecraft.client.Minecraft;
@@ -74,7 +76,25 @@ public class SpatialAwarenessClientHandler {
     @SubscribeEvent
     public static void onMovementInput(MovementInputUpdateEvent event) {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || !player.hasEffect(ModEffects.SPATIAL_AWARENESS.get())) {
+        if (player == null) {
+            return;
+        }
+
+        if (player.hasEffect(ModEffects.WEB_TRAVERSAL.get())) {
+            float forwardInput = event.getInput().forwardImpulse;
+            float strafeInput = event.getInput().leftImpulse;
+            boolean jumping = event.getInput().jumping;
+            boolean descending = event.getInput().shiftKeyDown;
+            DemonwebPuppetry.applyWebTraversalMovement(player, forwardInput, strafeInput, jumping, descending);
+            ModNetworking.sendToServer(new WebTraversalInputPacket(forwardInput, strafeInput, jumping, descending));
+            event.getInput().forwardImpulse = 0.0f;
+            event.getInput().leftImpulse = 0.0f;
+            event.getInput().jumping = false;
+            event.getInput().shiftKeyDown = false;
+            return;
+        }
+
+        if (!player.hasEffect(ModEffects.SPATIAL_AWARENESS.get())) {
             return;
         }
 

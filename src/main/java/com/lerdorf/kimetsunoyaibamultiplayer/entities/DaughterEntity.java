@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SilkManipulation;
+import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -53,12 +54,16 @@ public class DaughterEntity extends AbstractDemonEntity {
     private static final double IDEAL_RANGED_DISTANCE_SQ = IDEAL_RANGED_DISTANCE * IDEAL_RANGED_DISTANCE;
     private static final double MAX_RANGED_DISTANCE = 40.0D;
     private static final double MAX_RANGED_DISTANCE_SQ = MAX_RANGED_DISTANCE * MAX_RANGED_DISTANCE;
+    private static final double WEB_MELEE_RANGE = 5.0D;
+    private static final int WEB_MELEE_COOLDOWN_TICKS = 10;
 
     private static final EntityDataAccessor<Boolean> HUMAN_FORM =
         SynchedEntityData.defineId(DaughterEntity.class, EntityDataSerializers.BOOLEAN);
 
     /** How long the human disguise lasts once engaged (-1 = indefinite). */
     private static final int DEFAULT_DISGUISE_TICKS = 20 * 120;
+
+    private int webMeleeCooldownTicks;
 
     public DaughterEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -129,6 +134,10 @@ public class DaughterEntity extends AbstractDemonEntity {
     public void tick() {
         super.tick();
 
+        if (!level().isClientSide && webMeleeCooldownTicks > 0) {
+            webMeleeCooldownTicks--;
+        }
+
         if (!level().isClientSide && isInHumanForm()) {
             CompoundTag data = this.getPersistentData();
             if (data.contains("DaughterDisguiseTicks")) {
@@ -138,6 +147,15 @@ public class DaughterEntity extends AbstractDemonEntity {
                 } else {
                     data.putInt("DaughterDisguiseTicks", ticks);
                 }
+            }
+
+        }
+
+        if (!level().isClientSide && !isInHumanForm()) {
+            LivingEntity target = getTarget();
+            if (target != null && target.isAlive()
+                && distanceToSqr(target) <= WEB_MELEE_RANGE * WEB_MELEE_RANGE) {
+                doHurtTarget(target);
             }
         }
     }
@@ -229,11 +247,19 @@ public class DaughterEntity extends AbstractDemonEntity {
 
     @Override
     public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
-        // Attacking someone breaks the disguise.
-        if (isInHumanForm()) {
-            revealDemonForm();
+        if (!(target instanceof LivingEntity livingTarget)
+            || isInHumanForm()
+            || distanceToSqr(livingTarget) > WEB_MELEE_RANGE * WEB_MELEE_RANGE
+            || isUsingLockedAnimation()
+            || webMeleeCooldownTicks > 0) {
+            return false;
         }
-        return super.doHurtTarget(target);
+
+        if (BloodDemonArtM1AttackHandler.performWebSlashAttack(this, livingTarget.getUUID())) {
+            webMeleeCooldownTicks = WEB_MELEE_COOLDOWN_TICKS;
+            return true;
+        }
+        return false;
     }
 
     @Override

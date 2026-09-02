@@ -27,6 +27,7 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * A white (or acid-tinted) silk ribbon that travels from the caster's hand
@@ -85,7 +86,13 @@ public class SilkRibbonEntity extends Mob {
     @Nullable
     private java.util.UUID casterUuid = null;
     @Nullable
+    private UUID targetEntityUuid = null;
+    @Nullable
+    private LivingEntity targetEntity = null;
+    @Nullable
     private Vec3 targetPoint = null;
+
+    private boolean targetLocked = false;
 
     private int ticksAlive = 0;
     private int maxAgeTicks = 100; // safety kill switch
@@ -99,6 +106,7 @@ public class SilkRibbonEntity extends Mob {
     private boolean fadingOut = false;
     private int fadeOutTicksRemaining = 0;
     private static final int FADE_OUT_TICKS = 10; // half second linger
+    private static final double TARGET_LOCK_DISTANCE_SQR = 9.0D;
 
     /** Erratic-but-smooth lateral wobble seeds. */
     private double wobbleAmpXZ = 0.9D;
@@ -130,11 +138,14 @@ public class SilkRibbonEntity extends Mob {
      * Spawn a ribbon at the caster's hand position heading toward targetPoint.
      */
     public static SilkRibbonEntity spawn(Level level, LivingEntity caster, Vec3 start, Vec3 targetPoint,
-                                         RibbonKind kind, float damage, boolean cocoonOnHit) {
+                                         RibbonKind kind, float damage, boolean cocoonOnHit,
+                                         @Nullable LivingEntity targetEntity) {
         SilkRibbonEntity ribbon = new SilkRibbonEntity(ModEntities.SILK_RIBBON.get(), level);
         ribbon.setPos(start.x, start.y, start.z);
         ribbon.casterUuid = caster.getUUID();
         ribbon.targetPoint = targetPoint;
+        ribbon.targetEntity = targetEntity;
+        ribbon.targetEntityUuid = targetEntity != null ? targetEntity.getUUID() : null;
         ribbon.damage = damage;
         ribbon.cocoonOnHit = cocoonOnHit;
         ribbon.entityData.set(KIND, kind.id());
@@ -234,31 +245,43 @@ public class SilkRibbonEntity extends Mob {
             return;
         }
 
-        // Desired direction: toward the target point (re-aimed each tick so it
-        // tracks crosshair targets), plus a smooth sinusoidal wobble for the
-        // erratic silk feel. The aim direction is low-pass filtered so the
-        // handoff between "homing" and "coasting" (once past the target) does
-        // NOT snap the heading - that snap was the source of the visible shake.
+        // Once close enough, stop adding wobble and follow the target's live
+        // center point. Before that handoff, keep the characteristic spiral.
         Vec3 pos = position();
-        Vec3 rawAim = targetPoint != null && !hasPassedTarget(pos)
-            ? targetPoint.subtract(pos).normalize()
-            : (getDeltaMovement().lengthSqr() > 1.0E-4D ? getDeltaMovement().normalize() : new Vec3(0, 0, 1));
-        if (smoothedAim == null) {
-            smoothedAim = rawAim;
-        } else {
-            smoothedAim = smoothedAim.scale(0.6D).add(rawAim.scale(0.4D)).normalize();
+        double speed = 1.84D; // 60% faster so the ribbon reaches its target quickly
+        LivingEntity liveTarget = resolveTargetEntity();
+        Vec3 velocity;
+        if (liveTarget != null && !targetLocked
+            && pos.distanceToSqr(entityCenter(liveTarget)) <= TARGET_LOCK_DISTANCE_SQR) {
+            targetLocked = true;
         }
 
-        int age = ticksAlive;
-        Vec3 perpendicularA = new Vec3(-smoothedAim.z, 0.0D, smoothedAim.x).normalize();
-        Vec3 perpendicularB = smoothedAim.cross(perpendicularA).normalize();
+        if (liveTarget != null && targetLocked) {
+            Vec3 toTarget = entityCenter(liveTarget).subtract(pos);
+            Vec3 directAim = toTarget.lengthSqr() > 1.0E-4D
+                ? toTarget.normalize()
+                : (getDeltaMovement().lengthSqr() > 1.0E-4D ? getDeltaMovement().normalize() : Vec3.ZERO);
+            smoothedAim = directAim;
+            velocity = directAim.scale(speed);
+        } else {
+            Vec3 rawAim = targetPoint != null && !hasPassedTarget(pos)
+                ? targetPoint.subtract(pos).normalize()
+                : (getDeltaMovement().lengthSqr() > 1.0E-4D ? getDeltaMovement().normalize() : new Vec3(0, 0, 1));
+            if (smoothedAim == null) {
+                smoothedAim = rawAim;
+            } else {
+                smoothedAim = smoothedAim.scale(0.6D).add(rawAim.scale(0.4D)).normalize();
+            }
 
-        double amp = wobbleAmpXZ * Math.min(1.0D, age / 6.0D);
-        Vec3 wobble = perpendicularA.scale(Math.sin(age * wobbleFreq + wobblePhaseA) * amp)
-            .add(perpendicularB.scale(Math.sin(age * wobbleFreq * 0.7D + wobblePhaseB) * amp * 0.6D));
+            int age = ticksAlive;
+            Vec3 perpendicularA = new Vec3(-smoothedAim.z, 0.0D, smoothedAim.x).normalize();
+            Vec3 perpendicularB = smoothedAim.cross(perpendicularA).normalize();
 
-        double speed = 1.84D; // 60% faster so the ribbon reaches its target quickly
-        Vec3 velocity = smoothedAim.add(wobble.normalize().scale(Math.min(amp, 0.45D))).normalize().scale(speed);
+            double amp = wobbleAmpXZ * Math.min(1.0D, age / 6.0D);
+            Vec3 wobble = perpendicularA.scale(Math.sin(age * wobbleFreq + wobblePhaseA) * amp)
+                .add(perpendicularB.scale(Math.sin(age * wobbleFreq * 0.7D + wobblePhaseB) * amp * 0.6D));
+            velocity = smoothedAim.add(wobble.normalize().scale(Math.min(amp, 0.45D))).normalize().scale(speed);
+        }
         setDeltaMovement(velocity);
 
         Vec3 newPos = pos.add(velocity);
@@ -350,6 +373,26 @@ public class SilkRibbonEntity extends Mob {
             return false;
         }
         return toTarget.dot(motion) < 0.0D || toTarget.length() < 0.8D;
+    }
+
+    @Nullable
+    private LivingEntity resolveTargetEntity() {
+        if (targetEntity != null && targetEntity.isAlive() && !targetEntity.isRemoved()) {
+            return targetEntity;
+        }
+        if (targetEntityUuid == null || !(level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        Entity entity = serverLevel.getEntity(targetEntityUuid);
+        if (entity instanceof LivingEntity living && living.isAlive() && !living.isRemoved()) {
+            targetEntity = living;
+            return living;
+        }
+        return null;
+    }
+
+    private static Vec3 entityCenter(LivingEntity entity) {
+        return entity.position().add(0.0D, entity.getBbHeight() * 0.5D, 0.0D);
     }
 
     @Nullable
@@ -491,6 +534,10 @@ public class SilkRibbonEntity extends Mob {
         if (tag.hasUUID("Caster")) {
             this.casterUuid = tag.getUUID("Caster");
         }
+        if (tag.hasUUID("TargetEntity")) {
+            this.targetEntityUuid = tag.getUUID("TargetEntity");
+        }
+        this.targetLocked = tag.getBoolean("TargetLocked");
         if (tag.contains("Kind")) {
             this.entityData.set(KIND, tag.getInt("Kind"));
         }
@@ -514,6 +561,10 @@ public class SilkRibbonEntity extends Mob {
         if (casterUuid != null) {
             tag.putUUID("Caster", casterUuid);
         }
+        if (targetEntityUuid != null) {
+            tag.putUUID("TargetEntity", targetEntityUuid);
+        }
+        tag.putBoolean("TargetLocked", targetLocked);
         if (targetPoint != null) {
             tag.putDouble("TargetX", targetPoint.x);
             tag.putDouble("TargetY", targetPoint.y);

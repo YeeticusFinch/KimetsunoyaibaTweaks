@@ -1,7 +1,25 @@
+1.6.562
+- Fixed demon eyes rendering in eye selector and inventory
+- Improved Web Traversal
+- Improved silk spray
+
 1.6.561
 - Added more demon eyes for players to choose from
 - Added blank demon eyes (for if you don't want demon eyes)
 - Updated the cherry blossom sword texture
+- Added option to disable futons
+- Added M1 attack for Daughter and Mother blood demon arts
+- Added mother's demon eyes
+- Fixed the flickering demon eyes glitch with embeddium/oculus
+- Fixed flickering hair render glitch with the new mother and daughter entities
+- Fixed tag glitch with demons from tweaks (mother and daughter counted as both human and demon)
+- Fixed the glitch where killing demons from tweaks would give you ubuyashiki's invitation
+- Improved Mother
+  - She can no longer instantly grant Puppetry
+  - She can now use melee attacks
+  - She can no longer place her stone block high up in the air
+- Improved Daughter
+  - She can now use melee attacks
 
 1.6.56
 - Added Mother entity and her blood demon art

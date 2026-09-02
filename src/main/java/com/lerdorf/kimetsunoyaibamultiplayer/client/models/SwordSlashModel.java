@@ -161,12 +161,19 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 		return "moon".equals(modelKey) ? "generic" : modelKey;
 	}
 
+	private boolean isWebModel() {
+		return "web".equals(modelKey);
+	}
+
 	public ResourceLocation getModelResource() {
 		if (isNezukoClawModel()) {
 			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw_nezuko.geo.json");
 		}
 		if (isClawModel()) {
 			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw.geo.json");
+		}
+		if (isWebModel()) {
+			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/slash_web.geo.json");
 		}
 		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"geo/sword_slash_" + getGeometryModelKey() + ".geo.json");
@@ -221,6 +228,9 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 		}
 		if (isClawModel()) {
 			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/claw.geo.json");
+		}
+		if (isWebModel()) {
+			return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(), "geo/slash_web.geo.json");
 		}
 		return ResourceLocation.fromNamespaceAndPath(getResourceNamespace(),
 				"geo/sword_slash_" + getGeometryModelKey() + ".geo.json");

@@ -2304,6 +2304,9 @@ public final class QuestProgressionManager {
         if (victim == null) {
             return false;
         }
+        if (EntityTagHelper.isDemon(victim)) {
+            return false;
+        }
         if (victim instanceof Player player) {
             return !player.getPersistentData().getBoolean("oni");
         }

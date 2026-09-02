@@ -183,6 +183,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordsmithVillageConfig.SPEC, "kimetsunoyaibamultiplayer/swordsmith_village.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.DemonRankingConfig.SPEC, "kimetsunoyaibamultiplayer/demon_ranking.toml");
         context.registerConfig(ModConfig.Type.CLIENT, com.lerdorf.kimetsunoyaibamultiplayer.config.ClientParticleConfig.SPEC, "kimetsunoyaibamultiplayer/client_particles.toml");
+        context.registerConfig(ModConfig.Type.SERVER, com.lerdorf.kimetsunoyaibamultiplayer.config.FutonConfig.SPEC, "kimetsunoyaibamultiplayer/futon.toml");
         Log.alwaysWarn("[INIT] Registered config specs");
         Log.startupProbe("KimetsunoyaibaMultiplayer.<init>.end");
     }

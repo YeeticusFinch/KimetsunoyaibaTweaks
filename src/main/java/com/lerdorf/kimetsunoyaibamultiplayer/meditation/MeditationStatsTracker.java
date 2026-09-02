@@ -133,6 +133,10 @@ public final class MeditationStatsTracker {
     }
 
     private static boolean isTrackedHuman(LivingEntity victim, ResourceLocation victimId) {
+        if (EntityTagHelper.isDemon(victim)) {
+            return false;
+        }
+
         return victim instanceof Player ||
             isKakushi(victimId) ||
             EntityTagHelper.isSwordSmith(victim) ||

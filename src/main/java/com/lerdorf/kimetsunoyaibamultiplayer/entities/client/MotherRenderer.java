@@ -29,5 +29,7 @@ public class MotherRenderer extends GeoEntityRenderer<MotherEntity> {
                     "animations/biped.animation.json");
             }
         });
+        this.addRenderLayer(new EyesGlowLayer<>(this, "geo/biped_female_2.geo.json",
+            "textures/entity/demon_eyes_mother.png", "animations/biped.animation.json"));
     }
 }

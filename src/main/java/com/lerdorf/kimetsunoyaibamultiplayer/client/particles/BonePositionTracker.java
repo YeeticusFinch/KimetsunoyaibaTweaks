@@ -275,6 +275,11 @@ public class BonePositionTracker {
 	 */
 	public static void spawnRadialRibbonParticles(LivingEntity entity, net.minecraft.world.item.ItemStack swordItem,
 			String animationName, int animationTick, ParticleOptions particleType) {
+		spawnRadialRibbonParticles(entity, swordItem, animationName, animationTick, particleType, null);
+	}
+
+	public static void spawnRadialRibbonParticles(LivingEntity entity, net.minecraft.world.item.ItemStack swordItem,
+			String animationName, int animationTick, ParticleOptions particleType, String modelKeyOverride) {
 		Log.debug("spawnRadialRibbonParticles called: entity=" + entity + ", anim=" + animationName + ", tick="
 				+ animationTick);
 
@@ -324,7 +329,7 @@ public class BonePositionTracker {
 		if (SwordSwingConfig.useSwordSwingModel && !isKanrojiSword) {
 			Log.debug("Using 3D sword slash model rendering");
 			float progress = getAnimationProgress(entity, animationTick);
-			spawnModelForAnimation(level, entity, swordItem, animationName, progress);
+			spawnModelForAnimation(level, entity, swordItem, animationName, progress, modelKeyOverride);
 			return; // Skip particle rendering
 		}
 
@@ -734,7 +739,8 @@ public class BonePositionTracker {
 	}
 
 	private static void spawnModelForAnimation(ClientLevel level, LivingEntity entity,
-			net.minecraft.world.item.ItemStack swordItem, String animationName, float progress) {
+			net.minecraft.world.item.ItemStack swordItem, String animationName, float progress,
+			String modelKeyOverride) {
 
 		// Check for cancellation
 		if (entity.getCapability(KimetsunoyaibaMultiplayer.SWORD_WIELDER_DATA)
@@ -743,7 +749,8 @@ public class BonePositionTracker {
 		}
 
 		// Get model key for this sword
-		String modelKey = com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry
+		String modelKey = modelKeyOverride != null ? modelKeyOverride
+			: com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry
 				.getModelKeyForSword(swordItem);
 
 		UUID entityId = entity.getUUID();

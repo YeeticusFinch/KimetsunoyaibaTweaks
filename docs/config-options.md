@@ -2,28 +2,36 @@
 
 Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer`. Descriptions use the option comments from the source code.
 
+Side labels use Forge's config registration type:
+
+- `COMMON`: loaded on both the client and server. These options are not server-authoritative and may be used by either side.
+- `SERVER`: loaded from the server/world configuration and controlled by the server. These options affect server gameplay.
+- `CLIENT`: loaded only by the local client. These options affect only local rendering or presentation.
+
 ## Registered Config Files
 
-- `config/kimetsunoyaibamultiplayer/common.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/Config.java`
-- `config/kimetsunoyaibamultiplayer/sword_slash.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordSwingConfig.java`
-- `config/kimetsunoyaibamultiplayer/particles.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/ParticleConfig.java`
-- `config/kimetsunoyaibamultiplayer/entities.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EntityConfig.java`
-- `config/kimetsunoyaibamultiplayer/sword_display.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordDisplayConfig.java`
-- `config/kimetsunoyaibamultiplayer/sword_rack.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordRackConfig.java`
-- `config/kimetsunoyaibamultiplayer/biomes.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/BiomeConfig.java`
-- `config/kimetsunoyaibamultiplayer/spawn_rates.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SpawnRateConfig.java`
-- `config/kimetsunoyaibamultiplayer/enhanced_spawning.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedSpawnConfig.java`
-- `config/kimetsunoyaibamultiplayer/raids.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/RaidConfig.java`
-- `config/kimetsunoyaibamultiplayer/survival_raids.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SurvivalRaidConfig.java`
-- `config/kimetsunoyaibamultiplayer/final_selection_raids.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/FinalSelectionRaidConfig.java`
-- `config/kimetsunoyaibamultiplayer/enhanced_breathing.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedBreathingConfig.java`
-- `config/kimetsunoyaibamultiplayer/customnpcs.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/CustomNPCConfig.java`
-- `config/kimetsunoyaibamultiplayer/variations.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/VariationConfig.java`
-- `config/kimetsunoyaibamultiplayer/custom_progression.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/CustomProgressionConfig.java` (SERVER)
-- `config/kimetsunoyaibamultiplayer/demon_slayer.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/DemonSlayerConfig.java`
-- `config/kimetsunoyaibamultiplayer/enhanced_blocks.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedBlocksConfig.java`
-- `config/kimetsunoyaibamultiplayer/swordsmith_village.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordsmithVillageConfig.java`
-- `config/kimetsunoyaibamultiplayer/demon_ranking.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/DemonRankingConfig.java`
+- `config/kimetsunoyaibamultiplayer/common.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/Config.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/sword_slash.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordSwingConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/particles.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/ParticleConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/entities.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EntityConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/sword_display.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordDisplayConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/sword_rack.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordRackConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/biomes.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/BiomeConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/spawn_rates.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SpawnRateConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/enhanced_spawning.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedSpawnConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/raids.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/RaidConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/survival_raids.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SurvivalRaidConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/final_selection_raids.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/FinalSelectionRaidConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/enhanced_breathing.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedBreathingConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/customnpcs.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/CustomNPCConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/variations.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/VariationConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/custom_progression.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/CustomProgressionConfig.java` (`SERVER`)
+- `config/kimetsunoyaibamultiplayer/demon_slayer.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/DemonSlayerConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/enhanced_blocks.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedBlocksConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/swordsmith_village.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordsmithVillageConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/demon_ranking.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/DemonRankingConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/client_particles.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/ClientParticleConfig.java` (`CLIENT`)
+- `config/kimetsunoyaibamultiplayer/futon.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/FutonConfig.java` (`SERVER`)
 
 ## Options
 
@@ -31,6 +39,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/Config.java`
 - Config file: `config/kimetsunoyaibamultiplayer/common.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -61,10 +70,21 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 | `common.kanroji-entity-hand-offset-y` | Y offset for Kanroji entity sword position to compensate for model alignment (in pixels, divided by 16) |
 | `common.kanroji-entity-hand-offset-z` | Z offset for Kanroji entity sword position to compensate for model alignment (in pixels, divided by 16) |
 
+### FutonConfig
+
+- Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/FutonConfig.java`
+- Config file: `config/kimetsunoyaibamultiplayer/futon.toml`
+- Side: `SERVER` (server-side gameplay)
+
+| Option path | Description |
+| --- | --- |
+| `disable_futon_time_skip` | Disable the base mod futon's shift-right-click time skip. When enabled, shift-right-clicking `kimetsunoyaiba:futon_2` does not advance server time. Regular right-clicking still toggles between `futon` and `futon_2`.<br>Default: false |
+
 ### FirstPersonSwordSwingConfig
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/FirstPersonSwordSwingConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/common.toml` (embedded in `Config.java`)
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -87,6 +107,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/BiomeConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/biomes.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -110,6 +131,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/CustomNPCConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/customnpcs.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -132,6 +154,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/CustomProgressionConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/custom_progression.toml`
+- Side: `SERVER` (server-side gameplay)
 
 | Option path | Description |
 | --- | --- |
@@ -156,6 +179,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/DemonRankingConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/demon_ranking.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -166,6 +190,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/DemonSlayerConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/demon_slayer.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -175,6 +200,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedBlocksConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/enhanced_blocks.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -185,6 +211,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedBreathingConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/enhanced_breathing.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -215,6 +242,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedSpawnConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/enhanced_spawning.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -257,6 +285,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EntityConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/entities.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -281,6 +310,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/FinalSelectionRaidConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/final_selection_raids.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -305,6 +335,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/ParticleConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/particles.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -325,6 +356,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/RaidConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/raids.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -356,6 +388,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SpawnRateConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/spawn_rates.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -467,6 +500,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SurvivalRaidConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/survival_raids.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -485,6 +519,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordDisplayConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/sword_display.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -548,6 +583,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordRackConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/sword_rack.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -592,6 +628,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordSwingConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/sword_slash.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -648,6 +685,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordsmithVillageConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/swordsmith_village.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
@@ -658,15 +696,27 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/VariationConfig.java`
 - Config file: `config/kimetsunoyaibamultiplayer/variations.toml`
+- Side: `COMMON` (client and server)
 
 | Option path | Description |
 | --- | --- |
 | `variations.variationBlacklist` | Blacklist of disabled variation IDs<br>Variations are ENABLED by default. Add IDs here to DISABLE specific variations.<br>Variation ID format: "styleId:formIndex:variationIndex"<br>Examples:<br>- "mist_breathing:0:1" = First variation of Mist Breathing First Form<br>- "mist_breathing:1:2" = Second variation of Mist Breathing Second Form<br>To disable all variations for a form, blacklist all indices:<br>["mist_breathing:0:1", "mist_breathing:0:2", "mist_breathing:0:3"]<br>Default: [] (all variations enabled) |
 
+### ClientParticleConfig
+
+- Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/ClientParticleConfig.java`
+- Config file: `config/kimetsunoyaibamultiplayer/client_particles.toml`
+- Side: `CLIENT` (local client only)
+
+| Option path | Description |
+| --- | --- |
+| `particles.ability-particle-render-percent` | Percentage of KimetsunoYaiba and KimetsunoYaiba Multiplayer ability particles to render on this client. 100 renders all eligible particles, 50 renders about every other particle, and 0 suppresses them all. |
+
 ### GravityConfig
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/GravityConfig.java`
 - Config file: Not registered as a Forge config file in `KimetsunoyaibaMultiplayer.java`
+- Side: `NOT REGISTERED` (no active client or server config file)
 
 | Option path | Description |
 | --- | --- |
@@ -682,6 +732,7 @@ Generated from Forge config declarations in `src/main/java/com/lerdorf/kimetsuno
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/MitsuriSwordConfig.java`
 - Config file: Not registered as a Forge config file in `KimetsunoyaibaMultiplayer.java`
+- Side: `NOT REGISTERED` (no active client or server config file)
 
 | Option path | Description |
 | --- | --- |

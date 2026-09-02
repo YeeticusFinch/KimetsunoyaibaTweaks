@@ -75,13 +75,21 @@ public final class BloodDemonArtM1AttackHandler {
     }
 
     public static boolean performNichirinLikeSlashAttack(LivingEntity attacker, UUID excludedTargetId) {
+        return performSlashAttack(attacker, excludedTargetId, null);
+    }
+
+    public static boolean performWebSlashAttack(LivingEntity attacker, UUID excludedTargetId) {
+        return performSlashAttack(attacker, excludedTargetId, "web");
+    }
+
+    private static boolean performSlashAttack(LivingEntity attacker, UUID excludedTargetId, String modelKey) {
         if (!markHandledThisTick(attacker)) {
             return false;
         }
 
         String animation = chooseNichirinLikeAnimation(attacker);
         playAnimation(attacker, animation, 10);
-        ModNetworking.sendToAllClients(new MobSwordSlashPacket(attacker.getUUID(), normalizeSlashAnimation(animation), 0));
+        ModNetworking.sendToAllClients(new MobSwordSlashPacket(attacker.getUUID(), normalizeSlashAnimation(animation), 0, modelKey));
         attacker.level().playSound(null, attacker.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
             SoundSource.PLAYERS, 1.0F, 1.0F);
         applyWeakAttackState(attacker);

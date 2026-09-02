@@ -114,6 +114,8 @@ public final class DemonEyeKanjiHelper {
         placements.put(DemonEyesResourceHelper.JUSTIN_EYES_0_INDEX, justinPlacement);
         placements.put(DemonEyesResourceHelper.JUSTIN_EYES_1_INDEX, justinPlacement);
         placements.put(DemonEyesResourceHelper.JUSTIN_EYES_2_INDEX, justinPlacement);
+        placements.put(DemonEyesResourceHelper.MOTHER_EYES_INDEX,
+            new EyeKanjiPlacement(-1.49D, 1.50D, 1.00D, 1.00D, 0.00D));
 
         return Map.copyOf(placements);
     }

@@ -5,12 +5,16 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DissolutionCocoonEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DaughterEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.SilkRibbonEntity;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -70,10 +74,10 @@ public final class SilkManipulation {
 
     private static void executeSilkSpray(LivingEntity caster, Level level, int formId) {
         Vec3 start = caster.getEyePosition().add(caster.getLookAngle().scale(0.6D)).subtract(0.0D, 0.25D, 0.0D);
-        Vec3 target = resolveAimPoint(caster, SILK_SPRAY_RANGE);
+        AimResolution aim = resolveSilkAim(caster, level, SILK_SPRAY_RANGE);
 
-        SilkRibbonEntity ribbon = SilkRibbonEntity.spawn(level, caster, start, target,
-            SilkRibbonEntity.RibbonKind.SILK, SILK_SPRAY_DAMAGE, false);
+        SilkRibbonEntity ribbon = SilkRibbonEntity.spawn(level, caster, start, aim.point(),
+            SilkRibbonEntity.RibbonKind.SILK, SILK_SPRAY_DAMAGE, false, aim.entity());
 
         if (!level.addFreshEntity(ribbon)) {
             return;
@@ -101,7 +105,7 @@ public final class SilkManipulation {
 
             SilkRibbonEntity ribbon = SilkRibbonEntity.spawn(level, caster, start,
                 start.add(spreadAim.scale(ACID_SPRAY_RANGE)),
-                SilkRibbonEntity.RibbonKind.ACID, ACID_SPRAY_DAMAGE, false);
+                SilkRibbonEntity.RibbonKind.ACID, ACID_SPRAY_DAMAGE, false, null);
             ribbon.setAcidDarkGreen(darkGreen);
             if (!level.addFreshEntity(ribbon)) {
                 continue;
@@ -114,10 +118,10 @@ public final class SilkManipulation {
 
     private static void executeDissolutionCocoon(LivingEntity caster, Level level, int formId) {
         Vec3 start = caster.getEyePosition().add(caster.getLookAngle().scale(0.6D)).subtract(0.0D, 0.15D, 0.0D);
-        Vec3 target = resolveAimPoint(caster, 20.0D);
+        AimResolution aim = resolveSilkAim(caster, level, 20.0D);
 
-        SilkRibbonEntity ribbon = SilkRibbonEntity.spawn(level, caster, start, target,
-            SilkRibbonEntity.RibbonKind.SILK, 2.0F, true);
+        SilkRibbonEntity ribbon = SilkRibbonEntity.spawn(level, caster, start, aim.point(),
+            SilkRibbonEntity.RibbonKind.SILK, 2.0F, true, aim.entity());
 
         if (!level.addFreshEntity(ribbon)) {
             return;
@@ -129,16 +133,33 @@ public final class SilkManipulation {
 
     // ==================== Helpers ====================
 
-    /**
-     * Resolve the point under the crosshair (entity preferred, else block surface,
-     * else max-range point).
-     */
-    private static Vec3 resolveAimPoint(LivingEntity caster, double range) {
-        HitResult hit = caster.pick(range, 1.0F, false);
-        if (hit.getType() != HitResult.Type.MISS) {
-            return hit.getLocation();
+    /** Raytrace a silk shot, retaining a living entity hit for the ribbon to lock onto. */
+    private static AimResolution resolveSilkAim(LivingEntity caster, Level level, double range) {
+        Vec3 start = caster.getEyePosition();
+        LivingEntity daughterTarget = caster instanceof DaughterEntity daughter ? daughter.getTarget() : null;
+        Vec3 maxEnd = daughterTarget != null && daughterTarget.isAlive()
+            ? entityCenter(daughterTarget)
+            : start.add(caster.getLookAngle().scale(range));
+
+        BlockHitResult blockHit = level.clip(new ClipContext(
+            start, maxEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
+        Vec3 rayEnd = blockHit.getType() == HitResult.Type.MISS ? maxEnd : blockHit.getLocation();
+
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
+            level, caster, start, rayEnd, new AABB(start, rayEnd).inflate(1.0D),
+            entity -> entity != caster && entity instanceof LivingEntity living
+                && living.isAlive() && !living.isSpectator());
+        if (entityHit != null && entityHit.getEntity() instanceof LivingEntity living) {
+            return new AimResolution(entityCenter(living), living);
         }
-        return caster.getEyePosition().add(resolveAimDirection(caster, range).scale(range));
+        return new AimResolution(rayEnd, null);
+    }
+
+    private static Vec3 entityCenter(LivingEntity entity) {
+        return entity.position().add(0.0D, entity.getBbHeight() * 0.5D, 0.0D);
+    }
+
+    private record AimResolution(Vec3 point, LivingEntity entity) {
     }
 
     private static Vec3 resolveAimDirection(LivingEntity caster, double range) {

@@ -222,6 +222,7 @@ public class ModEvents {
         }
 
         if (source instanceof net.minecraft.server.level.ServerPlayer serverPlayer &&
+            !Damager.isDemon(serverPlayer) &&
             CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()) {
             ResourceLocation targetId = net.minecraft.world.entity.EntityType.getKey(target.getType());
             if (targetId != null && DemonRegistry.isRegistered(targetId)) {

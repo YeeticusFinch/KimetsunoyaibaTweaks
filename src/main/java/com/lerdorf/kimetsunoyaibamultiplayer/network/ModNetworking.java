@@ -19,6 +19,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonProposition
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonEyesPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectMeditationTargetPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WebTraversalInputPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -387,6 +388,13 @@ public class ModNetworking {
                 .decoder(PuppetLineSyncPacket::new)
                 .encoder(PuppetLineSyncPacket::toBytes)
                 .consumerMainThread(PuppetLineSyncPacket::handle)
+                .add();
+
+        int webTraversalInputPacketId = id();
+        net.messageBuilder(WebTraversalInputPacket.class, webTraversalInputPacketId)
+                .decoder(WebTraversalInputPacket::new)
+                .encoder(WebTraversalInputPacket::toBytes)
+                .consumerMainThread(WebTraversalInputPacket::handle)
                 .add();
     }
 
