@@ -432,6 +432,28 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
                 key -> RawAnimation.begin().thenLoop(key));
             return state.setAndContinue(loop);
         }));
+
+        if (hasAnimationOverlay()) {
+            controllers.add(new AnimationController<>(this, "overlay", 0, state -> {
+                String overlay = getAnimationOverlay();
+                if (overlay == null || overlay.isEmpty()) {
+                    return PlayState.STOP;
+                }
+
+                return state.setAndContinue(RawAnimation.begin().thenLoop(overlay));
+            }));
+        }
+    }
+
+    /**
+     * Optional animation layer for actions that should not replace locomotion.
+     */
+    protected boolean hasAnimationOverlay() {
+        return false;
+    }
+
+    protected String getAnimationOverlay() {
+        return null;
     }
 
     protected String resolveIdleAnimation() {

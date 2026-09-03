@@ -2,6 +2,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -22,6 +24,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Arrow;
+import net.minecraft.world.item.CrossbowItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -36,8 +39,12 @@ public class DemonPillagerEntity extends AbstractDemonEntity {
     private static final ItemStack CROSSBOW_STACK = new ItemStack(Items.CROSSBOW);
     private static final ItemStack IRON_SWORD_STACK = new ItemStack(Items.IRON_SWORD);
     private static final String[] SWORD_ATTACK_ANIMATIONS = {"sword_to_left", "sword_to_right", "sword_overhead"};
+    private static final int CROSSBOW_LOAD_TICKS = 10;
+    private static final int CROSSBOW_AIM_TICKS = 10;
+    private static final int CROSSBOW_SHOOT_TICKS = 10;
 
     private int meleeAnimationTicks = 0;
+    private int crossbowLoadingTicks = 0;
     private int aimTicks = 0;
     private int rangedCooldownTicks = 25;
     private int swordSprintTicks = 0;
@@ -89,7 +96,8 @@ public class DemonPillagerEntity extends AbstractDemonEntity {
 
     private void updateWeaponMode() {
         ItemStack desired = isSwordMode() ? IRON_SWORD_STACK : CROSSBOW_STACK;
-        if (!ItemStack.isSameItemSameTags(this.getMainHandItem(), desired)) {
+        // Do not replace a charged crossbow with the uncharged template stack.
+        if (this.getMainHandItem().getItem() != desired.getItem()) {
             this.setItemSlot(EquipmentSlot.MAINHAND, desired.copy());
         }
     }
@@ -100,6 +108,33 @@ public class DemonPillagerEntity extends AbstractDemonEntity {
         }
 
         LivingEntity target = this.getTarget();
+        if (isSwordMode()) {
+            if (crossbowLoadingTicks > 0) {
+                crossbowLoadingTicks = 0;
+                if ("crossbow_load".equals(getCurrentAnimation())) {
+                    playGeckoAnimation("idle", 0);
+                }
+            }
+            aimTicks = 0;
+            return;
+        }
+
+        if (crossbowLoadingTicks > 0) {
+            if (target == null || !target.isAlive()) {
+                crossbowLoadingTicks = 0;
+                playGeckoAnimation("idle", 0);
+                return;
+            }
+
+            holdPositionForCrossbowLoading(target);
+            crossbowLoadingTicks--;
+            if (crossbowLoadingTicks == 0) {
+                loadCrossbow();
+                aimTicks = CROSSBOW_AIM_TICKS;
+            }
+            return;
+        }
+
         if (aimTicks <= 0) {
             return;
         }
@@ -109,7 +144,6 @@ public class DemonPillagerEntity extends AbstractDemonEntity {
             return;
         }
 
-        this.getNavigation().stop();
         this.getLookControl().setLookAt(target, 30.0F, 30.0F);
         aimTicks--;
         if (aimTicks <= 0) {
@@ -119,6 +153,11 @@ public class DemonPillagerEntity extends AbstractDemonEntity {
 
     private void fireCrossbowAt(LivingEntity target) {
         if (this.level().isClientSide || !this.isAlive()) {
+            return;
+        }
+
+        ItemStack crossbow = this.getMainHandItem();
+        if (!(crossbow.getItem() instanceof CrossbowItem) || !CrossbowItem.isCharged(crossbow)) {
             return;
         }
 
@@ -132,8 +171,32 @@ public class DemonPillagerEntity extends AbstractDemonEntity {
         arrow.setCritArrow(false);
         arrow.pickup = Arrow.Pickup.DISALLOWED;
         this.level().addFreshEntity(arrow);
+        crossbow.getOrCreateTag().remove("ChargedProjectiles");
+        CrossbowItem.setCharged(crossbow, false);
+        this.playGeckoAnimation("crossbow_shoot", CROSSBOW_SHOOT_TICKS);
         this.playSound(SoundEvents.CROSSBOW_SHOOT, 1.0F, 0.95F + (this.getRandom().nextFloat() * 0.1F));
         this.rangedCooldownTicks = 35;
+    }
+
+    private void holdPositionForCrossbowLoading(LivingEntity target) {
+        this.getNavigation().stop();
+        if (target != null) {
+            this.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        }
+        this.setSprinting(false);
+        this.setDeltaMovement(0.0D, this.getDeltaMovement().y, 0.0D);
+    }
+
+    private void loadCrossbow() {
+        ItemStack crossbow = this.getMainHandItem();
+        if (!(crossbow.getItem() instanceof CrossbowItem)) {
+            return;
+        }
+
+        ListTag projectiles = new ListTag();
+        projectiles.add(new ItemStack(Items.ARROW).save(new CompoundTag()));
+        crossbow.getOrCreateTag().put("ChargedProjectiles", projectiles);
+        CrossbowItem.setCharged(crossbow, true);
     }
 
     private void tickSwordSprint() {
@@ -190,20 +253,38 @@ public class DemonPillagerEntity extends AbstractDemonEntity {
         return aimTicks > 0;
     }
 
+    public boolean isCrossbowLoading() {
+        return crossbowLoadingTicks > 0;
+    }
+
+    public boolean isCrossbowLoaded() {
+        return this.getMainHandItem().getItem() instanceof CrossbowItem
+            && CrossbowItem.isCharged(this.getMainHandItem());
+    }
+
     public int getRangedCooldownTicks() {
         return rangedCooldownTicks;
     }
 
     public void startAimingShot() {
-        if (aimTicks > 0 || isSwordMode()) {
+        if (crossbowLoadingTicks > 0 || aimTicks > 0 || isSwordMode() || isCrossbowLoaded()) {
             return;
         }
 
-        aimTicks = 10;
-        playGeckoAnimation("aim", 10);
-        this.getNavigation().stop();
-        this.setSprinting(false);
+        crossbowLoadingTicks = CROSSBOW_LOAD_TICKS;
+        holdPositionForCrossbowLoading(this.getTarget());
+        playGeckoAnimation("crossbow_load", CROSSBOW_LOAD_TICKS);
         this.playSound(SoundEvents.CROSSBOW_LOADING_START, 0.8F, 0.9F + (this.getRandom().nextFloat() * 0.1F));
+    }
+
+    @Override
+    protected boolean hasAnimationOverlay() {
+        return true;
+    }
+
+    @Override
+    protected String getAnimationOverlay() {
+        return isCrossbowLoaded() ? "crossbow_aim" : null;
     }
 
     @Override
@@ -213,7 +294,7 @@ public class DemonPillagerEntity extends AbstractDemonEntity {
 
     @Override
     protected boolean isUsingLockedAnimation() {
-        return super.isUsingLockedAnimation() || aimTicks > 0;
+        return super.isUsingLockedAnimation() || crossbowLoadingTicks > 0;
     }
 
     @Override
@@ -313,7 +394,7 @@ public class DemonPillagerEntity extends AbstractDemonEntity {
             }
 
             demon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            if (demon.isAimingShot()) {
+            if (demon.isCrossbowLoading()) {
                 demon.getNavigation().stop();
                 return;
             }

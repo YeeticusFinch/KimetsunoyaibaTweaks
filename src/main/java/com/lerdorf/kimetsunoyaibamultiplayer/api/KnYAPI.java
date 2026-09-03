@@ -5,7 +5,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.*;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonEyesSyncHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.DemonEyesHelper;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
@@ -13,6 +15,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -529,6 +532,55 @@ public final class KnYAPI {
      */
     public static Collection<SwordRegistry.RegisteredSword> getAllSwords() {
         return SwordRegistry.getAllSwords();
+    }
+
+    // ==================== Demon Eyes ====================
+
+    /**
+     * Set a player's demon-eye style, hue, and placement offsets.
+     * Offsets are skin pixels; positive X moves right and positive Y moves up.
+     * Server players are synchronized to all clients automatically.
+     */
+    public static void setDemonEyes(Player player, int eyesIndex, int hue, float offsetX, float offsetY) {
+        DemonEyesHelper.setStyle(player, eyesIndex, hue, offsetX, offsetY);
+        syncDemonEyes(player);
+    }
+
+    public static void setDemonEyesIndex(Player player, int eyesIndex) {
+        DemonEyesHelper.setIndex(player, eyesIndex);
+        syncDemonEyes(player);
+    }
+
+    public static void setDemonEyesHue(Player player, int hue) {
+        DemonEyesHelper.setHue(player, hue);
+        syncDemonEyes(player);
+    }
+
+    public static void setDemonEyesOffsets(Player player, float offsetX, float offsetY) {
+        DemonEyesHelper.setOffsets(player, offsetX, offsetY);
+        syncDemonEyes(player);
+    }
+
+    public static int getDemonEyesIndex(Player player) {
+        return DemonEyesHelper.getStoredIndex(player);
+    }
+
+    public static int getDemonEyesHue(Player player) {
+        return DemonEyesHelper.getHue(player);
+    }
+
+    public static float getDemonEyesOffsetX(Player player) {
+        return DemonEyesHelper.getOffsetX(player);
+    }
+
+    public static float getDemonEyesOffsetY(Player player) {
+        return DemonEyesHelper.getOffsetY(player);
+    }
+
+    private static void syncDemonEyes(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            DemonEyesSyncHandler.broadcastState(serverPlayer);
+        }
     }
 
     /**

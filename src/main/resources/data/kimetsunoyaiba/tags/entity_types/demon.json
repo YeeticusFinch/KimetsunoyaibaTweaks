@@ -8,6 +8,7 @@
     "kimetsunoyaibamultiplayer:swamp_demon",
     "kimetsunoyaibamultiplayer:mother",
     "kimetsunoyaibamultiplayer:daughter",
+    "kimetsunoyaibamultiplayer:mantis_demon",
     { "id": "kimetsu:akaza", "required": false },
     { "id": "kimetsu:daki", "required": false },
     { "id": "kimetsu:demon_nakime", "required": false },

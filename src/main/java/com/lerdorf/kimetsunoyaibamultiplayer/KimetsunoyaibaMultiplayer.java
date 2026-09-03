@@ -505,6 +505,12 @@ public class KimetsunoyaibaMultiplayer
                 false,
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.SwampDemonEntity.BLOOD_DEMON_ART_ID
             );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:mantis_demon",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_DEMON,
+                false,
+                null
+            );
 
             Log.info("Registered built-in swords in SwordRegistry");
             Log.startupProbe("KimetsunoyaibaMultiplayer.commonSetup.enqueueWork.end");
@@ -1075,6 +1081,8 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DaughterRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MOTHER.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MotherRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MANTIS_DEMON.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MantisDemonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SILK_RIBBON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SilkRibbonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DISSOLUTION_COCOON.get(),

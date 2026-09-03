@@ -8,6 +8,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonSleepExecutionHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DaughterEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ImpactParticleOptions;
@@ -88,7 +89,11 @@ public final class BloodDemonArtM1AttackHandler {
         }
 
         String animation = chooseNichirinLikeAnimation(attacker);
-        playAnimation(attacker, animation, 10);
+        if (attacker instanceof DaughterEntity daughter) {
+            daughter.playGeckoAnimation(animation, 10);
+        } else {
+            playAnimation(attacker, animation, 10);
+        }
         ModNetworking.sendToAllClients(new MobSwordSlashPacket(attacker.getUUID(), normalizeSlashAnimation(animation), 0, modelKey));
         attacker.level().playSound(null, attacker.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
             SoundSource.PLAYERS, 1.0F, 1.0F);

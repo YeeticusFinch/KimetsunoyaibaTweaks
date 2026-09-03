@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.PoseStack.Pose;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -104,16 +105,7 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
 
         VertexConsumer consumer = buffer.getBuffer(renderType);
 
-        overlayModel.renderToBuffer(
-            poseStack,
-            consumer,
-            0xF000F0,
-            OverlayTexture.NO_OVERLAY,
-            tint[0],
-            tint[1],
-            tint[2],
-            1.0F
-        );
+        renderHead(poseStack, consumer, overlayModel.head, state.offsetX(), state.offsetY(), tint);
 
         renderKanji(poseStack, buffer, state);
     }
@@ -131,8 +123,8 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
             ResourceLocation rightTexture = DemonEyeKanjiHelper.getRightTexture(state.rankTier());
             ResourceLocation leftTexture = DemonEyeKanjiHelper.getLeftTexture(state.rankTier());
             if (rightTexture != null && leftTexture != null) {
-                renderKanjiQuad(poseStack, buffer, rightTexture, placement.xOffset(), placement.yOffset(), width, height, placement.rotation());
-                renderKanjiQuad(poseStack, buffer, leftTexture, -placement.xOffset(), placement.yOffset(), width, height, -placement.rotation());
+                renderKanjiQuad(poseStack, buffer, rightTexture, placement.xOffset(), placement.yOffset(), width, height, placement.rotation(), state.offsetX(), state.offsetY());
+                renderKanjiQuad(poseStack, buffer, leftTexture, -placement.xOffset(), placement.yOffset(), width, height, -placement.rotation(), state.offsetX(), state.offsetY());
                 return;
             }
         }
@@ -141,13 +133,15 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
         if (texture == null) {
             return;
         }
-        renderKanjiQuad(poseStack, buffer, texture, placement.xOffset(), placement.yOffset(), width, height, placement.rotation());
+        renderKanjiQuad(poseStack, buffer, texture, placement.xOffset(), placement.yOffset(), width, height, placement.rotation(), state.offsetX(), state.offsetY());
     }
 
     private void renderKanjiQuad(PoseStack poseStack, MultiBufferSource buffer, ResourceLocation texture,
-                                 double xOffset, double yOffset, double width, double height, double rotation) {
+                                 double xOffset, double yOffset, double width, double height, double rotation,
+                                 float eyeOffsetX, float eyeOffsetY) {
         poseStack.pushPose();
         getParentModel().head.translateAndRotate(poseStack);
+        poseStack.translate(eyeOffsetX * SKIN_PIXEL, -eyeOffsetY * SKIN_PIXEL, 0.0D);
         poseStack.translate(xOffset * SKIN_PIXEL, (-4.0D + yOffset) * SKIN_PIXEL, HEAD_FRONT_Z);
         if (rotation != 0.0D) {
             poseStack.mulPose(Axis.ZP.rotationDegrees((float) rotation));
@@ -168,6 +162,39 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
         vertex(consumer, matrix, normal, halfWidth, -halfHeight, 0.0F, 1.0F, 0.0F);
         vertex(consumer, matrix, normal, -halfWidth, -halfHeight, 0.0F, 0.0F, 0.0F);
         poseStack.popPose();
+    }
+
+    private static void renderHead(PoseStack poseStack, VertexConsumer consumer, ModelPart head,
+                                   float offsetX, float offsetY, float[] tint) {
+        poseStack.pushPose();
+        head.translateAndRotate(poseStack);
+        poseStack.translate(offsetX * SKIN_PIXEL, -offsetY * SKIN_PIXEL, 0.0D);
+
+        float x = head.x;
+        float y = head.y;
+        float z = head.z;
+        float xRot = head.xRot;
+        float yRot = head.yRot;
+        float zRot = head.zRot;
+        try {
+            // The head transform is already on the pose stack, so render only its cubes here.
+            head.x = 0.0F;
+            head.y = 0.0F;
+            head.z = 0.0F;
+            head.xRot = 0.0F;
+            head.yRot = 0.0F;
+            head.zRot = 0.0F;
+            head.render(poseStack, consumer, 0xF000F0, OverlayTexture.NO_OVERLAY,
+                tint[0], tint[1], tint[2], 1.0F);
+        } finally {
+            head.x = x;
+            head.y = y;
+            head.z = z;
+            head.xRot = xRot;
+            head.yRot = yRot;
+            head.zRot = zRot;
+            poseStack.popPose();
+        }
     }
 
     private static void vertex(VertexConsumer consumer, Matrix4f matrix, Matrix3f normal,

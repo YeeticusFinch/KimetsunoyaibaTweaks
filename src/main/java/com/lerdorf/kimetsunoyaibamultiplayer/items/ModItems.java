@@ -181,6 +181,12 @@ public class ModItems {
             0xE8E4DC, 0x5A1F2B,
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> MANTIS_DEMON_SPAWN_EGG = ITEMS.register("mantis_demon_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MANTIS_DEMON,
+            0x4B3325, 0xD7A84B,
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> DEMON_SLAYER_SPAWN_EGG = ITEMS.register("demon_slayer_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER,
@@ -670,6 +676,7 @@ public class ModItems {
                     NEZUKO_SPAWN_EGG.get(),
                     DAUGHTER_SPAWN_EGG.get(),
                     MOTHER_SPAWN_EGG.get(),
+                    MANTIS_DEMON_SPAWN_EGG.get(),
                     CREEPER_DEMON_ART.get(),
                     VINDICATOR_DEMON_ART.get(),
                     SWAMP_DEMON_ART.get(),

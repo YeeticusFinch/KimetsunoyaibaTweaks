@@ -6,11 +6,14 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SilkManipulation;
 import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DaughterBackstepGoal;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -64,6 +67,8 @@ public class DaughterEntity extends AbstractDemonEntity {
     private static final int DEFAULT_DISGUISE_TICKS = 20 * 120;
 
     private int webMeleeCooldownTicks;
+    private int backstepFollowupTicks;
+    private java.util.UUID backstepTargetId;
 
     public DaughterEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -195,12 +200,13 @@ public class DaughterEntity extends AbstractDemonEntity {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new DaughterKeepDistanceGoal(this));
-        this.goalSelector.addGoal(2, new DaughterRangedCombatGoal(this, 1.0D));
-        this.goalSelector.addGoal(3, new DaughterFallbackMeleeGoal(this, 1.05D));
-        this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 0.9D));
-        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(1, new DaughterBackstepGoal(this));
+        this.goalSelector.addGoal(2, new DaughterKeepDistanceGoal(this));
+        this.goalSelector.addGoal(3, new DaughterRangedCombatGoal(this, 1.0D));
+        this.goalSelector.addGoal(4, new DaughterFallbackMeleeGoal(this, 1.05D));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.9D));
+        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
 
@@ -299,6 +305,12 @@ public class DaughterEntity extends AbstractDemonEntity {
     }
 
     @Override
+    protected double getSprintEnterSpeed(boolean currentlySprintingAnim) {
+        // Daughter only uses sprinting when a combat goal explicitly requests it.
+        return Double.MAX_VALUE;
+    }
+
+    @Override
     protected float getBloodDemonArtUseChance() {
         return 1.0F;
     }
@@ -307,6 +319,18 @@ public class DaughterEntity extends AbstractDemonEntity {
     protected void tickBloodDemonArt() {
         if (isInHumanForm()
             || com.lerdorf.kimetsunoyaibamultiplayer.effects.PuppetryHandler.isAbilityUseBlocked(this)) {
+            return;
+        }
+
+        if (backstepFollowupTicks > 0) {
+            LivingEntity target = getBackstepTarget();
+            if (target != null) {
+                faceCombatTarget(target);
+            }
+            backstepFollowupTicks--;
+            if (backstepFollowupTicks == 0) {
+                executeBackstepFollowup(target);
+            }
             return;
         }
 
@@ -331,6 +355,86 @@ public class DaughterEntity extends AbstractDemonEntity {
         if (form.getFormId() == SilkManipulation.FORM_SILK_SPRAY) {
             setBloodDemonArtCooldownTicks(SILK_SPRAY_COOLDOWN_TICKS);
         } else {
+            setBloodDemonArtCooldownTicks(Math.max(SILK_SPRAY_COOLDOWN_TICKS, form.getCooldownSeconds() * 20));
+        }
+    }
+
+    public LivingEntity getNearbyCombatEnemy() {
+        LivingEntity[] candidates = {getTarget(), getLastHurtByMob(), getLastHurtMob()};
+        LivingEntity closest = null;
+        double closestDistanceSq = 15.0D * 15.0D;
+        for (LivingEntity candidate : candidates) {
+            if (!isRecentCombatCandidate(candidate) || candidate == this) {
+                continue;
+            }
+            double distanceSq = distanceToSqr(candidate);
+            if (distanceSq <= closestDistanceSq) {
+                closest = candidate;
+                closestDistanceSq = distanceSq;
+            }
+        }
+        return closest;
+    }
+
+    public void startBackstep(LivingEntity target) {
+        if (target == null) {
+            return;
+        }
+
+        faceCombatTarget(target);
+        Vec3 away = position().subtract(target.position());
+        away = new Vec3(away.x, 0.0D, away.z).normalize();
+        if (away.lengthSqr() < 1.0E-4D) {
+            Vec3 look = getLookAngle();
+            away = new Vec3(-look.x, 0.0D, -look.z).normalize();
+        }
+
+        setDeltaMovement(new Vec3(away.x * 1.0D, 0.45D, away.z * 1.0D));
+        getNavigation().stop();
+        hurtMarked = true;
+        playGeckoAnimation("backstep", 8);
+        backstepTargetId = target.getUUID();
+        backstepFollowupTicks = 8;
+    }
+
+    private boolean isRecentCombatCandidate(LivingEntity candidate) {
+        if (candidate == null || !candidate.isAlive()) {
+            return false;
+        }
+        if (candidate == getTarget()) {
+            return true;
+        }
+        if (candidate == getLastHurtByMob()) {
+            return tickCount - getLastHurtByMobTimestamp() <= 200;
+        }
+        return candidate == getLastHurtMob() && tickCount - getLastHurtMobTimestamp() <= 200;
+    }
+
+    private LivingEntity getBackstepTarget() {
+        if (backstepTargetId == null || !(level() instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        Entity entity = serverLevel.getEntity(backstepTargetId);
+        return entity instanceof LivingEntity living && living.isAlive() ? living : null;
+    }
+
+    private void executeBackstepFollowup(LivingEntity target) {
+        backstepTargetId = null;
+        if (target == null || distanceToSqr(target) > MAX_RANGED_DISTANCE_SQ) {
+            return;
+        }
+
+        faceCombatTarget(target);
+        BloodDemonArtRegistry.RegisteredBloodDemonArt art = getBloodDemonArt();
+        if (art == null) {
+            return;
+        }
+
+        int formId = random.nextBoolean()
+            ? SilkManipulation.FORM_SILK_SPRAY : SilkManipulation.FORM_DISSOLUTION_COCOON;
+        BloodDemonArtForm form = art.getTechnique().getForm(formId);
+        if (form != null) {
+            form.execute(this, level());
             setBloodDemonArtCooldownTicks(Math.max(SILK_SPRAY_COOLDOWN_TICKS, form.getCooldownSeconds() * 20));
         }
     }
@@ -409,7 +513,7 @@ public class DaughterEntity extends AbstractDemonEntity {
 
         @Override
         public boolean canUse() {
-            LivingEntity target = daughter.getTarget();
+            LivingEntity target = daughter.getNearbyCombatEnemy();
             if (target == null || !target.isAlive() || daughter.isInHumanForm()) {
                 return false;
             }
@@ -423,7 +527,7 @@ public class DaughterEntity extends AbstractDemonEntity {
 
         @Override
         public boolean canContinueToUse() {
-            LivingEntity target = daughter.getTarget();
+            LivingEntity target = daughter.getNearbyCombatEnemy();
             return target != null
                 && target.isAlive()
                 && !daughter.isInHumanForm()
@@ -441,11 +545,12 @@ public class DaughterEntity extends AbstractDemonEntity {
         public void stop() {
             awayPos = null;
             repathTicks = 0;
+            daughter.setSprinting(false);
         }
 
         @Override
         public void tick() {
-            LivingEntity target = daughter.getTarget();
+            LivingEntity target = daughter.getNearbyCombatEnemy();
             if (target == null) {
                 return;
             }

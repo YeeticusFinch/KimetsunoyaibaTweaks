@@ -25,11 +25,12 @@ This guide explains how to use the Kimetsu no Yaiba Multiplayer mod as a library
 11. [Creating Breathing Styles](#creating-breathing-styles)
 12. [Registering Breathing Form Variations](#registering-breathing-form-variations)
 13. [Creating Custom Entities](#creating-custom-entities)
-14. [API Reference](#api-reference)
-15. [Custom Sword Slash Models](#custom-sword-slash-models)
-16. [Sword Sheaths and Display Offsets](#sword-sheaths-and-display-offsets)
-17. [Best Practices](#best-practices)
-18. [Troubleshooting](#troubleshooting)
+14. [Demon Eyes](#demon-eyes)
+15. [API Reference](#api-reference)
+16. [Custom Sword Slash Models](#custom-sword-slash-models)
+17. [Sword Sheaths and Display Offsets](#sword-sheaths-and-display-offsets)
+18. [Best Practices](#best-practices)
+19. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -1499,6 +1500,72 @@ public static void onCommonSetup(FMLCommonSetupEvent event) {
 If the entity should not use `AbstractDemonEntity`, make sure it is still discoverable as a demon by registering it with `KnYAPI.registerDemon()`, adding it to the `kimetsunoyaiba:demon` entity type tag, or setting the `oni` persistent NBT where appropriate.
 
 ---
+
+## Demon Eyes
+
+The demon-eye system applies a selected eye texture to demon players. Eye overlays are rendered on a separate player model whose head is slightly inflated to prevent z-fighting with the normal player skin. The eye offsets move that inflated head and the rank kanji together; they do not change the player's position, hitbox, or actual player model.
+
+### Selecting and Updating Eyes
+
+Use the server-safe methods on `KnYAPI` when changing a player's eyes from an addon. These methods persist the values and automatically broadcast the updated state when the player is a `ServerPlayer`.
+
+```java
+import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
+
+// Values are skin pixels. Positive X moves right; positive Y moves up.
+KnYAPI.setDemonEyes(player, 2, 120, 0.25F, -0.5F);
+
+// Individual values can also be changed without replacing the others.
+KnYAPI.setDemonEyesIndex(player, 2);
+KnYAPI.setDemonEyesHue(player, 120);
+KnYAPI.setDemonEyesOffsets(player, 0.25F, -0.5F);
+```
+
+The eye index is an integer resource index. The hue is normalized to the range `0` through `359`. Offsets accept any finite floating-point skin-pixel value. An offset of `1.0F` is one skin pixel, or `1 / 16` model units. Non-finite values such as `NaN` and infinity are replaced with `0.0F`.
+
+The corresponding getters are available through `KnYAPI`:
+
+```java
+int index = KnYAPI.getDemonEyesIndex(player);
+int hue = KnYAPI.getDemonEyesHue(player);
+float offsetX = KnYAPI.getDemonEyesOffsetX(player);
+float offsetY = KnYAPI.getDemonEyesOffsetY(player);
+```
+
+These values only render while the player is recognized as a demon. The API does not change demon status; use the normal demon transformation or `oni` state system separately.
+
+### Finding Available Eye Styles
+
+The available eye list is discovered from client resources, so it must be queried on the client side:
+
+```java
+import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonEyesResourceHelper;
+
+List<Integer> availableEyes = DemonEyesResourceHelper.getAvailableIndices();
+```
+
+`getAvailableIndices()` returns the integer indices found in the installed `demon_eyes_<index>.png` resources, along with supported named eye styles. The list can differ between client resource packs or addon installations. `DemonEyesResourceHelper` is client-only and must not be referenced from common or dedicated-server code. An addon should select one of those indices and send the selection through its server-side logic using `KnYAPI.setDemonEyesIndex` or `KnYAPI.setDemonEyes`.
+
+### NBT Storage
+
+The values are stored in the player's persistent NBT using these keys:
+
+| Key | Type | Meaning |
+| --- | --- | --- |
+| `DemonEyesIndex` | Integer | Selected eye resource index |
+| `DemonEyesHue` | Integer | Hue in degrees, normalized to `0` through `359` |
+| `DemonEyesOffsetX` | Float | Horizontal offset in skin pixels |
+| `DemonEyesOffsetY` | Float | Vertical offset in skin pixels; positive values move up |
+
+`DemonEyesHelper` contains the low-level getters and setters, including `setStyle` and `setOffsets`. Those methods update persistent NBT but do not themselves broadcast a packet. Addons should prefer the matching `KnYAPI` methods so multiplayer clients are updated. Values are copied during `PlayerEvent.Clone` when a player respawns or changes dimensions through the clone flow.
+
+### Synchronization
+
+`DemonEyesSyncPacket` is the server-to-client packet. It contains the player UUID, demon flag, eye index, hue, rank tier, `offsetX`, and `offsetY`. `DemonEyesSyncHandler` sends it on login, tracking, and whenever the server-side state changes. The packet handler stores the values in the client-only `DemonEyesClientState`, keyed by player UUID.
+
+`SetDemonEyesPacket` is the client-to-server packet used by the built-in eye selector. It also carries the two floating-point offsets. The server accepts it only from a demon player, validates the empty-eyes restriction, persists all four eye settings, and calls `DemonEyesSyncHandler.broadcastState`.
+
+Addon code normally should not construct either packet directly. Call the `KnYAPI` setters on the server instead; they update NBT and invoke the same broadcast path. The renderer reads the synchronized client state, copies the current player pose to the inflated overlay model, renders only its head with the requested offset, and applies that same head-local offset before rendering the kanji quad.
 
 ## API Reference
 

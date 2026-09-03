@@ -61,7 +61,9 @@ public final class DemonEyesSyncHandler {
         int eyesIndex = getAllowedEyesIndex(player);
         int hue = DemonEyesHelper.getHue(player);
         int rankTier = getRankTier(player);
-        SyncedDemonEyesState current = new SyncedDemonEyesState(demon, eyesIndex, hue, rankTier);
+        float offsetX = DemonEyesHelper.getOffsetX(player);
+        float offsetY = DemonEyesHelper.getOffsetY(player);
+        SyncedDemonEyesState current = new SyncedDemonEyesState(demon, eyesIndex, hue, rankTier, offsetX, offsetY);
         SyncedDemonEyesState previous = LAST_SYNCED_STATE.put(player.getUUID(), current);
         if (!current.equals(previous)) {
             broadcastState(player);
@@ -75,7 +77,10 @@ public final class DemonEyesSyncHandler {
 
     public static void broadcastState(ServerPlayer player) {
         DemonEyesSyncPacket packet = createPacket(player);
-        LAST_SYNCED_STATE.put(player.getUUID(), new SyncedDemonEyesState(packet.isDemon(), packet.getEyesIndex(), packet.getHue(), packet.getRankTier()));
+        LAST_SYNCED_STATE.put(player.getUUID(), new SyncedDemonEyesState(
+            packet.isDemon(), packet.getEyesIndex(), packet.getHue(), packet.getRankTier(),
+            packet.getOffsetX(), packet.getOffsetY()
+        ));
         ModNetworking.sendToAllClients(packet);
     }
 
@@ -90,7 +95,9 @@ public final class DemonEyesSyncHandler {
         int eyesIndex = getAllowedEyesIndex(player);
         int hue = DemonEyesHelper.getHue(player);
         int rankTier = getRankTier(player);
-        return new DemonEyesSyncPacket(player.getUUID(), demon, eyesIndex, hue, rankTier);
+        float offsetX = DemonEyesHelper.getOffsetX(player);
+        float offsetY = DemonEyesHelper.getOffsetY(player);
+        return new DemonEyesSyncPacket(player.getUUID(), demon, eyesIndex, hue, rankTier, offsetX, offsetY);
     }
 
     private static int getAllowedEyesIndex(ServerPlayer player) {
@@ -111,6 +118,7 @@ public final class DemonEyesSyncHandler {
         return rank == null ? -1 : rank.tier();
     }
 
-    private record SyncedDemonEyesState(boolean demon, int eyesIndex, int hue, int rankTier) {
+    private record SyncedDemonEyesState(boolean demon, int eyesIndex, int hue, int rankTier,
+                                        float offsetX, float offsetY) {
     }
 }
