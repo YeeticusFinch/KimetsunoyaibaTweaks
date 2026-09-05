@@ -1,3 +1,8 @@
+1.6.564
+- Added demons for all the other default skins (ari, efe, noor...)
+- Made civilian protection less demon slayer spammy (max 5 demon slayers from civilian protection instead of 10)
+- Added more attacks and abilities to the Mantis Demon
+
 1.6.563
 - Added ability to input offsets for your demon eyes
 - Improved daughter (she can now backstep, and she has better animations)

@@ -120,6 +120,11 @@ public class GuardianSpawnHandler {
         ServerLevel level = (ServerLevel) victim.level();
         BlockPos spawnPos = victim.blockPosition();
 
+        // Stop adding protectors once five demon slayers are nearby.
+        if (countNearbyDemonSlayers(level, spawnPos, 50) >= 5) {
+            return;
+        }
+
         try {
             // Twelve kizuki attacked - rare chance for hashira or kamaboko
             if (isTwelveKizuki) {
@@ -176,6 +181,18 @@ public class GuardianSpawnHandler {
         RECENT_SPAWN_ATTEMPTS.entrySet().removeIf(entry ->
             currentTime - entry.getValue() > SPAWN_COOLDOWN_MS * 2
         );
+    }
+
+    private static int countNearbyDemonSlayers(ServerLevel level, BlockPos center, int radius) {
+        return level.getEntitiesOfClass(
+            LivingEntity.class,
+            new net.minecraft.world.phys.AABB(center).inflate(radius),
+            entity -> entity != null && entity.isAlive() && (
+                EntityTagHelper.isDemonSlayer(entity) ||
+                EntityTagHelper.isHashira(entity) ||
+                EntityTagHelper.isKamaboko(entity)
+            )
+        ).size();
     }
 
     private static boolean wasWitnessedByAwakeCivilian(LivingEntity victim, LivingEntity attacker) {

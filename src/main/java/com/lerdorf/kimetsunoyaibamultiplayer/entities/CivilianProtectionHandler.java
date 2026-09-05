@@ -74,41 +74,33 @@ public class CivilianProtectionHandler {
             return; // Don't spawn protectors during raids
         }
 
-        // Count nearby demon slayers within 50 blocks
+        // Stop adding protectors once five demon slayers are nearby.
         int nearbySlayerCount = countNearbyDemonSlayers(level, near, 50);
 
-        // If 10+ demon slayers nearby, don't spawn any more
-        if (nearbySlayerCount >= 10) {
-            return;
-        }
-
-        // Calculate spawn chance multiplier based on nearby slayers
-        double spawnChanceMultiplier = 1.0;
         if (nearbySlayerCount >= 5) {
-            // 5-9 demon slayers: significantly reduce spawn chance (20% of normal)
-            spawnChanceMultiplier = 0.2;
+            return;
         }
 
         boolean isDemon = EntityTagHelper.isDemon(threat);
         boolean isKizuki = EntityTagHelper.isTwelveKizuki(threat);
 
         if (isKizuki) {
-            // Chance to spawn a hashira, Nezuko, and/or a kamaboko (with multiplier)
-            if (RNG.nextDouble() < EnhancedSpawnConfig.hashiraSpawnChance * spawnChanceMultiplier) {
+            // Chance to spawn a hashira, Nezuko, and/or a kamaboko
+            if (RNG.nextDouble() < EnhancedSpawnConfig.hashiraSpawnChance) {
                 ResourceLocation hashiraId = pickRandomHashiraId();
                 if (hashiraId != null) {
                     spawnById(level, near, hashiraId);
                 }
             }
-            if (RNG.nextDouble() < EnhancedSpawnConfig.hashiraSpawnChance * spawnChanceMultiplier) {
+            if (RNG.nextDouble() < EnhancedSpawnConfig.hashiraSpawnChance) {
                 spawnById(level, near, ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "nezuko"));
             }
-            if (RNG.nextDouble() < EnhancedSpawnConfig.kamabokoSpawnChance * spawnChanceMultiplier) {
+            if (RNG.nextDouble() < EnhancedSpawnConfig.kamabokoSpawnChance) {
                 spawnById(level, near, ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", pickRandomKamaboko()));
             }
         } else if (isDemon) {
-            // Spawn a small group of generic demon slayers (with multiplier)
-            if (RNG.nextDouble() < EnhancedSpawnConfig.demonSlayerSpawnChance * spawnChanceMultiplier) {
+            // Spawn a small group of generic demon slayers
+            if (RNG.nextDouble() < EnhancedSpawnConfig.demonSlayerSpawnChance) {
                 int count = clamp(EnhancedSpawnConfig.demonSlayerGroupSizeMin, EnhancedSpawnConfig.demonSlayerGroupSizeMax, 2);
                 for (int i = 0; i < count; i++) {
                     spawnById(level, near.offset(RNG.nextInt(7) - 3, 0, RNG.nextInt(7) - 3),
@@ -125,7 +117,7 @@ public class CivilianProtectionHandler {
         List<LivingEntity> nearbyEntities = level.getEntitiesOfClass(
             LivingEntity.class,
             new net.minecraft.world.phys.AABB(center).inflate(radius),
-            entity -> entity != null && (
+            entity -> entity != null && entity.isAlive() && (
                 EntityTagHelper.isDemonSlayer(entity) ||
                 EntityTagHelper.isHashira(entity) ||
                 EntityTagHelper.isKamaboko(entity)

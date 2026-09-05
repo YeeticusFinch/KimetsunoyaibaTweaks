@@ -15,6 +15,13 @@ This document lists all demon entities from the Kimetsu no Yaiba Minecraft mod, 
 - goldfishbig
 - demon_5
 - demon_4
+- demon_efe
+- demon_ari
+- demon_kai
+- demon_makena
+- demon_noor
+- demon_sunny
+- demon_zuri
 - demon_3
 - demon_2
 - demon_9
@@ -160,11 +167,11 @@ This document lists all demon entities from the Kimetsu no Yaiba Minecraft mod, 
 - **Equipment**: None
 
 ### Demon2
-- **Health**: 40.0
+- **Health**: 40.0 for easy demons; 60.0 for Makena
 - **Attack Damage**: 3.0
-- **Movement Speed**: 0.3
-- **Armor**: 0.3
-- **Armor Toughness**: 0.3
+- **Movement Speed**: 0.3 for easy demons; 0.28 for Makena
+- **Armor**: 5.0 for easy demons; 12.0 for Makena
+- **Armor Toughness**: 0.3 for easy demons; 1.0 for Makena
 - **Equipment**: None
 
 ### Demon3
@@ -184,6 +191,16 @@ This document lists all demon entities from the Kimetsu no Yaiba Minecraft mod, 
 - **Armor Toughness**: 1.2
 - **Equipment**: None
 - **Special Notes**: Higher health and armor compared to lower-numbered demons
+
+### Named demons
+- **Entities**: demon_efe, demon_ari, demon_kai, demon_makena, demon_noor, demon_sunny, demon_zuri
+- **Health**: 40.0
+- **Attack Damage**: 3.0
+- **Movement Speed**: 0.3
+- **Armor**: 0.3
+- **Armor Toughness**: 0.3
+- **Equipment**: None
+- **Special Notes**: Use the shared biped model and animations with individual skin and eye overlays. Makena is categorized as a medium demon; the other six are easy demons.
 
 ### Demon5
 - **Health**: 88.0

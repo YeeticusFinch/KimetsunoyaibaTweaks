@@ -16,6 +16,8 @@ import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
+import java.util.function.Function;
+
 public class EyesGlowLayer<T extends LivingEntity & GeoEntity> extends GeoRenderLayer<T> {
     private static final float PULSE_PERIOD_TICKS = 40.0F;
     private static final float BASE_BRIGHTNESS = 1.35F;
@@ -24,11 +26,24 @@ public class EyesGlowLayer<T extends LivingEntity & GeoEntity> extends GeoRender
     private final float brightnessMultiplier;
 
     public EyesGlowLayer(GeoRenderer<T> renderer, String modelPath, String texturePath, String animationPath) {
-        this(renderer, modelPath, texturePath, animationPath, 1.0F);
+        this(renderer, modelPath, animationPath,
+            entity -> ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, texturePath), 1.0F);
     }
 
     public EyesGlowLayer(GeoRenderer<T> renderer, String modelPath, String texturePath, String animationPath,
                          float brightnessMultiplier) {
+        this(renderer, modelPath, animationPath,
+            entity -> ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, texturePath),
+            brightnessMultiplier);
+    }
+
+    public EyesGlowLayer(GeoRenderer<T> renderer, String modelPath, String animationPath,
+                         Function<T, ResourceLocation> textureProvider) {
+        this(renderer, modelPath, animationPath, textureProvider, 1.0F);
+    }
+
+    private EyesGlowLayer(GeoRenderer<T> renderer, String modelPath, String animationPath,
+                          Function<T, ResourceLocation> textureProvider, float brightnessMultiplier) {
         super(renderer);
         this.brightnessMultiplier = brightnessMultiplier;
         this.overlayModel = new GeoModel<>() {
@@ -39,7 +54,7 @@ public class EyesGlowLayer<T extends LivingEntity & GeoEntity> extends GeoRender
 
             @Override
             public ResourceLocation getTextureResource(T animatable) {
-                return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, texturePath);
+                return textureProvider.apply(animatable);
             }
 
             @Override

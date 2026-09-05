@@ -114,8 +114,23 @@ public final class DemonEyeKanjiHelper {
         placements.put(DemonEyesResourceHelper.JUSTIN_EYES_0_INDEX, justinPlacement);
         placements.put(DemonEyesResourceHelper.JUSTIN_EYES_1_INDEX, justinPlacement);
         placements.put(DemonEyesResourceHelper.JUSTIN_EYES_2_INDEX, justinPlacement);
-        placements.put(DemonEyesResourceHelper.MOTHER_EYES_INDEX,
-            new EyeKanjiPlacement(-1.49D, 1.50D, 1.00D, 1.00D, 0.00D));
+        placements.put(DemonEyesResourceHelper.MOTHER_EYES_INDEX, new EyeKanjiPlacement(-1.49D, 1.50D, 1.00D, 1.00D, 0.00D));
+
+        placements.put(DemonEyesResourceHelper.ARI_EYES_INDEX,
+            new EyeKanjiPlacement(-1.50D, 0.50D, 0.90D, 0.90D, 0.00D));
+        placements.put(DemonEyesResourceHelper.EFE_EYES_INDEX,
+            new EyeKanjiPlacement(-1.50D, 0.50D, 0.90D, 0.90D, 0.00D));
+        placements.put(DemonEyesResourceHelper.KAI_EYES_INDEX,
+            new EyeKanjiPlacement(-1.50D, 0.50D, 0.90D, 0.90D, 0.00D));
+        placements.put(DemonEyesResourceHelper.MAKENA_EYES_INDEX,
+            new EyeKanjiPlacement(-2.00D, 0.50D, 0.90D, 0.90D, 0.00D));
+        placements.put(DemonEyesResourceHelper.NOOR_EYES_INDEX,
+            new EyeKanjiPlacement(-1.50D, 0.50D, 0.90D, 0.90D, 0.00D));
+        placements.put(DemonEyesResourceHelper.SUNNY_EYES_INDEX,
+            new EyeKanjiPlacement(-1.95D, 0.50D, 0.90D, 0.90D, 0.00D));
+        placements.put(DemonEyesResourceHelper.ZURI_EYES_INDEX,
+            new EyeKanjiPlacement(-1.55D, 0.50D, 0.90D, 0.90D, 0.00D));
+
 
         return Map.copyOf(placements);
     }

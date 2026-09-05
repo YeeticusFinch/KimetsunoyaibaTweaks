@@ -31,6 +31,13 @@ public final class DemonEyesResourceHelper {
     public static final int JUSTIN_EYES_1_INDEX = 1013;
     public static final int JUSTIN_EYES_2_INDEX = 1014;
     public static final int MOTHER_EYES_INDEX = 1015;
+    public static final int EFE_EYES_INDEX = 1016;
+    public static final int ARI_EYES_INDEX = 1017;
+    public static final int KAI_EYES_INDEX = 1018;
+    public static final int MAKENA_EYES_INDEX = 1019;
+    public static final int NOOR_EYES_INDEX = 1020;
+    public static final int SUNNY_EYES_INDEX = 1021;
+    public static final int ZURI_EYES_INDEX = 1022;
     private static final List<NamedEyesStyle> NAMED_STYLES = List.of(
         new NamedEyesStyle(KANROJI_EYES_INDEX, "Kanroji", "textures/entity/oni_kanroji_eyes.png", "textures/entity/oni_kanroji_eyes_kanji.png", "textures/entity/oni_kanroji_eyes_double_kanji.png"),
         new NamedEyesStyle(KANROJI_EYES_1_INDEX, "Kanroji 1", "textures/entity/oni_kanroji_eyes_1.png", "textures/entity/oni_kanroji_eyes_kanji_1.png", "textures/entity/oni_kanroji_eyes_double_kanji_1.png"),
@@ -45,7 +52,14 @@ public final class DemonEyesResourceHelper {
         new NamedEyesStyle(JUSTIN_EYES_0_INDEX, "Justin 0", "textures/entity/demon_eyes_justin_0.png", null, null),
         new NamedEyesStyle(JUSTIN_EYES_1_INDEX, "Justin 1", "textures/entity/demon_eyes_justin_1.png", null, null),
         new NamedEyesStyle(JUSTIN_EYES_2_INDEX, "Justin 2", "textures/entity/demon_eyes_justin_2.png", null, null),
-        new NamedEyesStyle(MOTHER_EYES_INDEX, "Mother", "textures/entity/demon_eyes_mother.png", null, null)
+        new NamedEyesStyle(MOTHER_EYES_INDEX, "Mother", "textures/entity/demon_eyes_mother.png", null, null),
+        new NamedEyesStyle(EFE_EYES_INDEX, "Efe", "textures/entity/demon_eyes_efe.png", null, null),
+        new NamedEyesStyle(ARI_EYES_INDEX, "Ari", "textures/entity/demon_eyes_ari.png", null, null),
+        new NamedEyesStyle(KAI_EYES_INDEX, "Kai", "textures/entity/demon_eyes_kai.png", null, null),
+        new NamedEyesStyle(MAKENA_EYES_INDEX, "Makena", "textures/entity/demon_eyes_makena.png", null, null),
+        new NamedEyesStyle(NOOR_EYES_INDEX, "Noor", "textures/entity/demon_eyes_noor.png", null, null),
+        new NamedEyesStyle(SUNNY_EYES_INDEX, "Sunny", "textures/entity/demon_eyes_sunny.png", null, null),
+        new NamedEyesStyle(ZURI_EYES_INDEX, "Zuri", "textures/entity/demon_eyes_zuri.png", null, null)
     );
 
     private DemonEyesResourceHelper() {

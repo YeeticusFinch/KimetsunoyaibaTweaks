@@ -209,6 +209,7 @@ public class KimetsunoyaibaMultiplayer
         // Register our built-in swords in the SwordRegistry (must be done after items are registered)
         event.enqueueWork(() -> {
             Log.startupProbe("KimetsunoyaibaMultiplayer.commonSetup.enqueueWork.start");
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.NamedDemonEntity.registerSpawnPlacements();
             com.lerdorf.kimetsunoyaibamultiplayer.alchemy.AlchemyBrewingRecipes.register();
             com.lerdorf.kimetsunoyaibamultiplayer.alchemy.WisteriaIncenseDispenseBehavior.register();
             ((net.minecraft.world.level.block.FlowerPotBlock) net.minecraft.world.level.block.Blocks.FLOWER_POT).addPlant(
@@ -508,6 +509,48 @@ public class KimetsunoyaibaMultiplayer
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:mantis_demon",
                 com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_DEMON,
+                false,
+                null
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_efe",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.EASY_DEMON,
+                false,
+                null
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_ari",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.EASY_DEMON,
+                false,
+                null
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_kai",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.EASY_DEMON,
+                false,
+                null
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_makena",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_DEMON,
+                false,
+                null
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_noor",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.EASY_DEMON,
+                false,
+                null
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_sunny",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.EASY_DEMON,
+                false,
+                null
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:demon_zuri",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.EASY_DEMON,
                 false,
                 null
             );
@@ -1083,6 +1126,20 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MotherRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MANTIS_DEMON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MantisDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_EFE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_ARI.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_KAI.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_MAKENA.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_NOOR.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SUNNY.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_ZURI.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SILK_RIBBON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SilkRibbonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DISSOLUTION_COCOON.get(),

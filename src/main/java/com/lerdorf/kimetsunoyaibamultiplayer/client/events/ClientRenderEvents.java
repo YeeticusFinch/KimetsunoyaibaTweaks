@@ -12,6 +12,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.DualLayerSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker.SlashRenderRequest;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.MantisDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -153,6 +154,10 @@ public class ClientRenderEvents {
 
             // Calculate scale (use sizeScaler for raw slashes, default 2.5f for standard slashes)
             float scale = (req.isRawSlash || req.isRawHorizontal || req.isRawVertical) ? (2.5f * req.sizeScaler) : 2.5f;
+            if (!req.isRawSlash && !req.isRawHorizontal && !req.isRawVertical
+                && req.entity instanceof MantisDemonEntity && "claw".equals(req.modelKey)) {
+                scale *= 2.0F;
+            }
 
             // Determine if we should flip the texture horizontally based on animation direction
             // For animations that spin in the opposite direction, we flip the texture using the "reverse" animation

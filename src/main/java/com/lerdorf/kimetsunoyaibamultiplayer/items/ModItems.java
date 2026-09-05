@@ -187,6 +187,41 @@ public class ModItems {
             0x4B3325, 0xD7A84B,
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> DEMON_EFE_SPAWN_EGG = ITEMS.register("demon_efe_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_EFE,
+            0x6B5A55, 0xD24A5A, new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_ARI_SPAWN_EGG = ITEMS.register("demon_ari_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_ARI,
+            0xB98A7D, 0xF0D4BE, new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_KAI_SPAWN_EGG = ITEMS.register("demon_kai_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_KAI,
+            0x242128, 0x8D6E97, new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_MAKENA_SPAWN_EGG = ITEMS.register("demon_makena_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_MAKENA,
+            0x4E5549, 0xE7A32A, new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_NOOR_SPAWN_EGG = ITEMS.register("demon_noor_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_NOOR,
+            0x243D49, 0xA82B2C, new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_SUNNY_SPAWN_EGG = ITEMS.register("demon_sunny_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SUNNY,
+            0x4C6C84, 0xD8E7EA, new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DEMON_ZURI_SPAWN_EGG = ITEMS.register("demon_zuri_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_ZURI,
+            0x6B536A, 0xE8C6B5, new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> DEMON_SLAYER_SPAWN_EGG = ITEMS.register("demon_slayer_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER,
@@ -674,10 +709,17 @@ public class ModItems {
                     DEMON_VINDICATOR_SPAWN_EGG.get(),
                     SWAMP_DEMON_SPAWN_EGG.get(),
                     NEZUKO_SPAWN_EGG.get(),
-                    DAUGHTER_SPAWN_EGG.get(),
-                    MOTHER_SPAWN_EGG.get(),
-                    MANTIS_DEMON_SPAWN_EGG.get(),
-                    CREEPER_DEMON_ART.get(),
+                     DAUGHTER_SPAWN_EGG.get(),
+                     MOTHER_SPAWN_EGG.get(),
+                     MANTIS_DEMON_SPAWN_EGG.get(),
+                     DEMON_EFE_SPAWN_EGG.get(),
+                     DEMON_ARI_SPAWN_EGG.get(),
+                     DEMON_KAI_SPAWN_EGG.get(),
+                     DEMON_MAKENA_SPAWN_EGG.get(),
+                     DEMON_NOOR_SPAWN_EGG.get(),
+                     DEMON_SUNNY_SPAWN_EGG.get(),
+                     DEMON_ZURI_SPAWN_EGG.get(),
+                     CREEPER_DEMON_ART.get(),
                     VINDICATOR_DEMON_ART.get(),
                     SWAMP_DEMON_ART.get(),
                     COMBUSTIBLE_BLOOD.get(),

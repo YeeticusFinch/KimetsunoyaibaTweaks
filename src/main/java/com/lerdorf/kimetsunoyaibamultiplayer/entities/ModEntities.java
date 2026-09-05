@@ -289,6 +289,62 @@ public class ModEntities {
                 .updateInterval(3)
                 .build("demon_slayer_female"));
 
+    public static final RegistryObject<EntityType<NamedDemonEntity>> DEMON_EFE =
+        ENTITY_TYPES.register("demon_efe",
+            () -> EntityType.Builder.of(NamedDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("demon_efe"));
+
+    public static final RegistryObject<EntityType<NamedDemonEntity>> DEMON_ARI =
+        ENTITY_TYPES.register("demon_ari",
+            () -> EntityType.Builder.of(NamedDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("demon_ari"));
+
+    public static final RegistryObject<EntityType<NamedDemonEntity>> DEMON_KAI =
+        ENTITY_TYPES.register("demon_kai",
+            () -> EntityType.Builder.of(NamedDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("demon_kai"));
+
+    public static final RegistryObject<EntityType<NamedDemonEntity>> DEMON_MAKENA =
+        ENTITY_TYPES.register("demon_makena",
+            () -> EntityType.Builder.of(NamedDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("demon_makena"));
+
+    public static final RegistryObject<EntityType<NamedDemonEntity>> DEMON_NOOR =
+        ENTITY_TYPES.register("demon_noor",
+            () -> EntityType.Builder.of(NamedDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("demon_noor"));
+
+    public static final RegistryObject<EntityType<NamedDemonEntity>> DEMON_SUNNY =
+        ENTITY_TYPES.register("demon_sunny",
+            () -> EntityType.Builder.of(NamedDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("demon_sunny"));
+
+    public static final RegistryObject<EntityType<NamedDemonEntity>> DEMON_ZURI =
+        ENTITY_TYPES.register("demon_zuri",
+            () -> EntityType.Builder.of(NamedDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("demon_zuri"));
+
     public static final RegistryObject<EntityType<DemonCreeperEntity>> DEMON_CREEPER =
         ENTITY_TYPES.register("demon_creeper",
             () -> EntityType.Builder.of(DemonCreeperEntity::new, MobCategory.MONSTER)
@@ -539,6 +595,14 @@ public class ModEntities {
             // Register attributes for generic demon slayers (male and female)
             event.put(DEMON_SLAYER.get(), DemonSlayerEntity.createAttributes().build());
             event.put(DEMON_SLAYER_FEMALE.get(), DemonSlayerEntity.createAttributes().build());
+
+            event.put(DEMON_EFE.get(), NamedDemonEntity.createAttributes().build());
+            event.put(DEMON_ARI.get(), NamedDemonEntity.createAttributes().build());
+            event.put(DEMON_KAI.get(), NamedDemonEntity.createAttributes().build());
+            event.put(DEMON_MAKENA.get(), NamedDemonEntity.createMakenaAttributes().build());
+            event.put(DEMON_NOOR.get(), NamedDemonEntity.createAttributes().build());
+            event.put(DEMON_SUNNY.get(), NamedDemonEntity.createAttributes().build());
+            event.put(DEMON_ZURI.get(), NamedDemonEntity.createAttributes().build());
 
             if (Config.logDebug)
             Log.info("Entity attributes registered successfully");

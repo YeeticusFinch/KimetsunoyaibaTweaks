@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.config.ParticleConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordSwingConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.MantisDemonEntity;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -256,6 +257,9 @@ public class BonePositionTracker {
 	private static int resolveSlashTint(String modelKey, LivingEntity entity) {
 		if (!"claw".equals(modelKey) || entity == null) {
 			return 0xFFFFFF;
+		}
+		if (entity instanceof MantisDemonEntity) {
+			return 0x1B5E20;
 		}
 		net.minecraft.world.item.ItemStack stack = entity.getMainHandItem();
 		if (stack.getItem() == ModItems.CUSTOM_DEMON_ART.get()) {
@@ -799,6 +803,19 @@ public class BonePositionTracker {
 		case "double_sword_overhead":
 			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, false, entityId, animationName, entity);
 			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, true, entityId, animationName, entity);
+			break;
+		case "mantis_swing_0":
+			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, false, entityId, animationName, entity);
+			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, true, entityId, animationName, entity);
+			break;
+		case "mantis_swing_1":
+			renderVerticalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, true, entityId, animationName, entity);
+			break;
+		case "mantis_swing_2":
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, false, true, entityId, animationName, entity);
+			break;
+		case "mantis_swing_3":
+			renderHorizontalSlashModel(level, entityPos, yawRad, entityHeight, progress, modelKey, true, false, entityId, animationName, entity);
 			break;
 		case "beast2":
 			// mainhand sword to right

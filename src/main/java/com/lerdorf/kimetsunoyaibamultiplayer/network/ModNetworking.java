@@ -149,6 +149,13 @@ public class ModNetworking {
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket::handle)
                 .add();
 
+        int mantisSpinSlashPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MantisSpinSlashPacket.class, mantisSpinSlashPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MantisSpinSlashPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MantisSpinSlashPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MantisSpinSlashPacket::handle)
+                .add();
+
         // Register whip animation packet (bidirectional)
         int whipAnimationPacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WhipAnimationPacket.class, whipAnimationPacketId)
