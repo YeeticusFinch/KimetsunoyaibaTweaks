@@ -98,7 +98,8 @@ public final class DemonEyeKanjiHelper {
         placements.put(7, new EyeKanjiPlacement(-2.20D, 1.62D, 1.30D, 1.30D, 0.00D));
         placements.put(8, new EyeKanjiPlacement(-1.95D, 0.02D, 1.70D, 1.70D, 0.00D));
         placements.put(9, new EyeKanjiPlacement(-1.95D, -0.48D, 1.00D, 1.00D, 0.00D));
-        placements.put(10, new EyeKanjiPlacement(-1.45D, 0.62D, 0.80D, 0.80D, 0.00D));
+        //placements.put(10, new EyeKanjiPlacement(-1.45D, 0.62D, 0.80D, 0.80D, 0.00D));
+        placements.put(10, new EyeKanjiPlacement(-1.65D, 0.62D, 0.80D, 0.80D, 0.00D));
         placements.put(11, new EyeKanjiPlacement(0.00D, 1.47D, 1.30D, 1.30D, 0.00D));
 
         placements.put(DemonEyesResourceHelper.KANROJI_EYES_INDEX, new EyeKanjiPlacement(-2.00D, 1.75D, 1.30D, 1.30D, 0.00D));
