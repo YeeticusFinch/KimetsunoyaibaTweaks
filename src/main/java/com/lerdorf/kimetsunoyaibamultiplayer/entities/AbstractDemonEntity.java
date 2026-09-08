@@ -30,6 +30,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -115,7 +116,9 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
 
         if (!level().isClientSide) {
             tickSunlightBurn();
-            DemonTargetingHelper.retargetToCloserNonDemonPlayer(this, this::canTargetNonDemonVictim);
+            if (!isRetaliatingAgainstDemonPlayer(getTarget())) {
+                DemonTargetingHelper.retargetToCloserNonDemonPlayer(this, this::canTargetNonDemonVictim);
+            }
             tickBloodDemonArt();
         }
 
@@ -165,7 +168,31 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         return target != null
             && target.isAlive()
             && !com.lerdorf.kimetsunoyaibamultiplayer.alchemy.AlchemyMedicineHandler.hasDemonicSaturation(this)
-            && !Damager.isDemon(target);
+            && (!Damager.isDemon(target) || EntityTagHelper.isCivilian(target)
+                || isRetaliatingAgainstDemonPlayer(target));
+    }
+
+    protected boolean isRetaliatingAgainstDemonPlayer(LivingEntity target) {
+        return target instanceof Player
+            && Damager.isDemon(target)
+            && target == getLastHurtByMob()
+            && tickCount - getLastHurtByMobTimestamp() <= 200;
+    }
+
+    private void setDemonPlayerRetaliationTarget(LivingEntity attacker) {
+        if (attacker instanceof Player && Damager.isDemon(attacker)) {
+            setLastHurtByMob(attacker);
+            setTarget(attacker);
+        }
+    }
+
+    @Override
+    public boolean hurt(DamageSource source, float amount) {
+        boolean damaged = super.hurt(source, amount);
+        if (damaged && !level().isClientSide && source.getEntity() instanceof LivingEntity attacker) {
+            setDemonPlayerRetaliationTarget(attacker);
+        }
+        return damaged;
     }
 
     protected boolean isUsingLockedAnimation() {
@@ -267,9 +294,14 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         if (other == this) {
             return true;
         }
-        if (other instanceof LivingEntity living && !Damager.isDemonSlayer(living)) {
-            if (Damager.isDemon(living) || living instanceof Monster) {
-                return true;
+        if (other instanceof LivingEntity living) {
+            if (isRetaliatingAgainstDemonPlayer(living) || EntityTagHelper.isCivilian(living)) {
+                return false;
+            }
+            if (!Damager.isDemonSlayer(living)) {
+                if (Damager.isDemon(living) || living instanceof Monster) {
+                    return true;
+                }
             }
         }
         return super.isAlliedTo(other);
@@ -419,8 +451,12 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
                 this.movementAnimationSwitchCooldownTicks--;
             }
 
+            if (!desiredMovementAnim.equals(resolveIdleAnimation())) {
+                desiredAnimSpeed *= getMovementAnimationSpeedMultiplier();
+            }
             this.smoothedAnimationSpeed = (this.smoothedAnimationSpeed * 0.70D) + (desiredAnimSpeed * 0.30D);
-            state.getController().setAnimationSpeed(clamp(this.smoothedAnimationSpeed, 0.9D, 2.8D));
+            state.getController().setAnimationSpeed(clamp(this.smoothedAnimationSpeed,
+                getMinimumMovementAnimationSpeed(), getMaximumMovementAnimationSpeed()));
             String currentLoop = state.getController().getCurrentAnimation() == null
                 ? null
                 : state.getController().getCurrentAnimation().animation().name();
@@ -474,6 +510,18 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
 
     protected boolean isSprintAnimation(String animation) {
         return "sprint".equals(animation);
+    }
+
+    protected double getMovementAnimationSpeedMultiplier() {
+        return 1.0D;
+    }
+
+    protected double getMinimumMovementAnimationSpeed() {
+        return 0.9D;
+    }
+
+    protected double getMaximumMovementAnimationSpeed() {
+        return 2.8D;
     }
 
     protected boolean isBaseMovementAnimation(String animation) {

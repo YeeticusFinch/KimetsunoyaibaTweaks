@@ -16,12 +16,18 @@ public final class EntitySkinLayersConfig {
         ).push("entity_skin_layers");
     }
 
-    public static final PartConfig HEAD = definePart("head", "Head / hat layer offsets");
-    public static final PartConfig TORSO = definePart("torso", "Torso / jacket layer offsets");
-    public static final PartConfig RIGHT_ARM = definePart("right_arm", "Right sleeve layer offsets");
-    public static final PartConfig LEFT_ARM = definePart("left_arm", "Left sleeve layer offsets");
-    public static final PartConfig RIGHT_LEG = definePart("right_leg", "Right pants layer offsets");
-    public static final PartConfig LEFT_LEG = definePart("left_leg", "Left pants layer offsets");
+    public static final PartConfig HEAD = definePart("head", "Head / hat layer offsets",
+            0.0, 1.5, 0.0, 0.0, 0.0, 180.0);
+    public static final PartConfig TORSO = definePart("torso", "Torso / jacket layer offsets",
+            0.0, 1.6, 0.0, 0.0, 0.0, 180.0);
+    public static final PartConfig RIGHT_ARM = definePart("right_arm", "Right sleeve layer offsets",
+            0.3, 1.42, 0.0, 0.0, 0.0, 180.0);
+    public static final PartConfig LEFT_ARM = definePart("left_arm", "Left sleeve layer offsets",
+            -0.3, 1.42, 0.0, 0.0, 0.0, 180.0);
+    public static final PartConfig RIGHT_LEG = definePart("right_leg", "Right pants layer offsets",
+            0.13, 0.75, 0.0, 0.0, 0.0, 180.0);
+    public static final PartConfig LEFT_LEG = definePart("left_leg", "Left pants layer offsets",
+            -0.13, 0.75, 0.0, 0.0, 0.0, 180.0);
 
     static {
         BUILDER.pop();
@@ -29,26 +35,29 @@ public final class EntitySkinLayersConfig {
 
     public static final ForgeConfigSpec SPEC = BUILDER.build();
 
-    private static PartConfig definePart(String name, String comment) {
+    private static PartConfig definePart(String name, String comment,
+                                         double translateXDefault, double translateYDefault,
+                                         double translateZDefault, double rotateXDefault,
+                                         double rotateYDefault, double rotateZDefault) {
         BUILDER.comment(comment).push(name);
         ForgeConfigSpec.DoubleValue translateX = BUILDER
                 .comment("Local X translation in model units")
-                .defineInRange("translate_x", 0.0, -5.0, 5.0);
+                .defineInRange("translate_x", translateXDefault, -5.0, 5.0);
         ForgeConfigSpec.DoubleValue translateY = BUILDER
                 .comment("Local Y translation in model units")
-                .defineInRange("translate_y", 0.0, -5.0, 5.0);
+                .defineInRange("translate_y", translateYDefault, -5.0, 5.0);
         ForgeConfigSpec.DoubleValue translateZ = BUILDER
                 .comment("Local Z translation in model units")
-                .defineInRange("translate_z", 0.0, -5.0, 5.0);
+                .defineInRange("translate_z", translateZDefault, -5.0, 5.0);
         ForgeConfigSpec.DoubleValue rotateX = BUILDER
                 .comment("Local X rotation in degrees")
-                .defineInRange("rotate_x", 0.0, -360.0, 360.0);
+                .defineInRange("rotate_x", rotateXDefault, -360.0, 360.0);
         ForgeConfigSpec.DoubleValue rotateY = BUILDER
                 .comment("Local Y rotation in degrees")
-                .defineInRange("rotate_y", 0.0, -360.0, 360.0);
+                .defineInRange("rotate_y", rotateYDefault, -360.0, 360.0);
         ForgeConfigSpec.DoubleValue rotateZ = BUILDER
                 .comment("Local Z rotation in degrees")
-                .defineInRange("rotate_z", 0.0, -360.0, 360.0);
+                .defineInRange("rotate_z", rotateZDefault, -360.0, 360.0);
         BUILDER.pop();
         return new PartConfig(translateX, translateY, translateZ, rotateX, rotateY, rotateZ);
     }

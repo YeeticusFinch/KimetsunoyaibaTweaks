@@ -60,6 +60,7 @@ public class EntityCategorization {
         registerDemon("rui_father", EntityPowerScale.HARD_DEMON);
         registerDemon("susamaru", EntityPowerScale.HARD_DEMON);
         registerDemon("yahaba", EntityPowerScale.HARD_DEMON);
+        registerMultiplayerDemon("six_eye_demon", EntityPowerScale.HARD_DEMON);
 
         registerDemon("demon_6", EntityPowerScale.MEDIUM_BOSS_DEMON);
         registerDemon("demon_7", EntityPowerScale.MEDIUM_BOSS_DEMON);
@@ -199,6 +200,11 @@ public class EntityCategorization {
      * Register a kimetsunoyaibamultiplayer demon slayer entity.
      */
     private static void registerMultiplayerSlayer(String path, EntityPowerScale scale) {
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", path);
+        ENTITY_SCALES.put(id, scale);
+    }
+
+    private static void registerMultiplayerDemon(String path, EntityPowerScale scale) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", path);
         ENTITY_SCALES.put(id, scale);
     }

@@ -51,6 +51,10 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("bridger_block",
             () -> BlockEntityType.Builder.of(BridgerBlockEntity::new, ModBlocks.BRIDGER_BLOCK.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<SixEyeDemonHeadBlockEntity>> SIX_EYE_DEMON_HEAD =
+        BLOCK_ENTITIES.register("six_eye_demon_head",
+            () -> BlockEntityType.Builder.of(SixEyeDemonHeadBlockEntity::new, ModBlocks.SIX_EYE_DEMON_HEAD.get()).build(null));
+
     private ModBlockEntities() {
     }
 

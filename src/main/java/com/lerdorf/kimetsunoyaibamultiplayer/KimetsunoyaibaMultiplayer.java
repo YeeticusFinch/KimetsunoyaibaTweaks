@@ -515,6 +515,12 @@ public class KimetsunoyaibaMultiplayer
                 null
             );
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:six_eye_demon",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.HARD_DEMON,
+                false,
+                null
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:demon_efe",
                 com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.EASY_DEMON,
                 false,
@@ -1128,6 +1134,8 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MotherRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MANTIS_DEMON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MantisDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SIX_EYE_DEMON.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SixEyeDemonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_EFE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_ARI.get(),
@@ -1172,6 +1180,10 @@ public class KimetsunoyaibaMultiplayer
             event.registerBlockEntityRenderer(
                 com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.GRAVITY_BLOCK.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.GravityBlockRenderer::new
+            );
+            event.registerBlockEntityRenderer(
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.SIX_EYE_DEMON_HEAD.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.SixEyeDemonHeadRenderer::new
             );
 
             if (Config.logDebug)

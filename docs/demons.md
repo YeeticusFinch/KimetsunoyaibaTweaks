@@ -56,6 +56,7 @@ This document lists all demon entities from the Kimetsu no Yaiba Minecraft mod, 
 - rui
 - rui_brother
 - temple_demon
+- six_eye_demon
 
 ## Detailed Demon Attributes
 
@@ -165,6 +166,16 @@ This document lists all demon entities from the Kimetsu no Yaiba Minecraft mod, 
 - **Armor**: 0.3
 - **Armor Toughness**: 0.3
 - **Equipment**: None
+
+### Six-Eye Demon
+- **Health**: 180.0
+- **Attack Damage**: 12.0
+- **Movement Speed**: 0.30
+- **Armor**: 16.0
+- **Armor Toughness**: 2.0
+- **Knockback Resistance**: 0.5
+- **Power Scale**: HARD_DEMON
+- **Notes**: Uses the oversized six-eye biped model; has a six-hit guarded AOE combo, bite, backstep dodge, choke, and headbutt charge. The headbutt launches forward with a 3-block step height and explosion/crit particles. It has no Blood Demon Art.
 
 ### Demon2
 - **Health**: 40.0 for easy demons; 60.0 for Makena

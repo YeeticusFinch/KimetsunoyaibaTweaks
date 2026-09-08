@@ -38,6 +38,7 @@ public final class DemonEyesResourceHelper {
     public static final int NOOR_EYES_INDEX = 1020;
     public static final int SUNNY_EYES_INDEX = 1021;
     public static final int ZURI_EYES_INDEX = 1022;
+    public static final int SIX_EYE_DEMON_EYES_INDEX = 1023;
     private static final List<NamedEyesStyle> NAMED_STYLES = List.of(
         new NamedEyesStyle(KANROJI_EYES_INDEX, "Kanroji", "textures/entity/oni_kanroji_eyes.png", "textures/entity/oni_kanroji_eyes_kanji.png", "textures/entity/oni_kanroji_eyes_double_kanji.png"),
         new NamedEyesStyle(KANROJI_EYES_1_INDEX, "Kanroji 1", "textures/entity/oni_kanroji_eyes_1.png", "textures/entity/oni_kanroji_eyes_kanji_1.png", "textures/entity/oni_kanroji_eyes_double_kanji_1.png"),
@@ -59,7 +60,9 @@ public final class DemonEyesResourceHelper {
         new NamedEyesStyle(MAKENA_EYES_INDEX, "Makena", "textures/entity/demon_eyes_makena.png", null, null),
         new NamedEyesStyle(NOOR_EYES_INDEX, "Noor", "textures/entity/demon_eyes_noor.png", null, null),
         new NamedEyesStyle(SUNNY_EYES_INDEX, "Sunny", "textures/entity/demon_eyes_sunny.png", null, null),
-        new NamedEyesStyle(ZURI_EYES_INDEX, "Zuri", "textures/entity/demon_eyes_zuri.png", null, null)
+        new NamedEyesStyle(ZURI_EYES_INDEX, "Zuri", "textures/entity/demon_eyes_zuri.png", null, null),
+        new NamedEyesStyle(SIX_EYE_DEMON_EYES_INDEX, "Six-Eye Demon", "textures/entity/six_eye_demon_eyes.png",
+            "textures/entity/six_eye_demon_eyes_kanji.png", null)
     );
 
     private DemonEyesResourceHelper() {

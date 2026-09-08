@@ -102,6 +102,11 @@ public class ModItems {
     public static final RegistryObject<Item> NEZUKO_BOX = ITEMS.register("nezuko_box",
         () -> new NezukoBoxItem(new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> SIX_EYE_DEMON_HEAD = ITEMS.register("six_eye_demon_head",
+        () -> new SixEyeDemonHeadItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIX_EYE_DEMON_HEAD.get(),
+            new Item.Properties().stacksTo(1)));
+
     // Spawn eggs
     public static final RegistryObject<Item> MUICHIRO_SPAWN_EGG = ITEMS.register("muichiro_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
@@ -185,6 +190,12 @@ public class ModItems {
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MANTIS_DEMON,
             0x4B3325, 0xD7A84B,
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> SIX_EYE_DEMON_SPAWN_EGG = ITEMS.register("six_eye_demon_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SIX_EYE_DEMON,
+            0x17251A, 0x1B5E20,
             new Item.Properties().stacksTo(64)));
 
     public static final RegistryObject<Item> DEMON_EFE_SPAWN_EGG = ITEMS.register("demon_efe_spawn_egg",
@@ -622,8 +633,9 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_GREEN.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_RED.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BLACK.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GRAVITY_BLOCK.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BRIDGER_BLOCK.get(),
+                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GRAVITY_BLOCK.get(),
+                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BRIDGER_BLOCK.get(),
+                     SIX_EYE_DEMON_HEAD.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_PINK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_CYAN.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_LAVENDER.get(),
@@ -712,6 +724,7 @@ public class ModItems {
                      DAUGHTER_SPAWN_EGG.get(),
                      MOTHER_SPAWN_EGG.get(),
                      MANTIS_DEMON_SPAWN_EGG.get(),
+                     SIX_EYE_DEMON_SPAWN_EGG.get(),
                      DEMON_EFE_SPAWN_EGG.get(),
                      DEMON_ARI_SPAWN_EGG.get(),
                      DEMON_KAI_SPAWN_EGG.get(),

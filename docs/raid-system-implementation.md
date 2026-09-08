@@ -157,7 +157,7 @@ RaidRegistry (WorldSavedData)
 |-------|-------------|----------|
 | `EASY_DEMON` | Weak demons | demon, demon_2, demon_3, spider_demon |
 | `MEDIUM_DEMON` | Mid-tier demons | demon_4, demon_5, demon_9, temple_demon, swamp_demon |
-| `HARD_DEMON` | Strong demons | demon_6-10, hand_demon, dice_steak_senior_demon, rui family, susamaru, yahaba |
+| `HARD_DEMON` | Strong demons | demon_8, demon_10, six_eye_demon, hand_demon, dice_steak_senior_demon, rui family, susamaru, yahaba |
 | `EASY_BOSS_DEMON` | Lower moons (weak) | kyogai, kamanue, rui, mukago |
 | `MEDIUM_BOSS_DEMON` | Lower moons (strong) | wakuraba, rokuro, hairo, enmu |
 | `HARD_BOSS_DEMON` | Upper moons | daki, kaigaku, gyokko, hantengu, nakime, akaza, doma, kokushibo |

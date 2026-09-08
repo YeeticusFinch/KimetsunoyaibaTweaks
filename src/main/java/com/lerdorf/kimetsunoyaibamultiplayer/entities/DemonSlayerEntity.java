@@ -147,11 +147,6 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     private double smoothedAnimationSpeed = 1.0D;
     private static final java.util.Map<String, RawAnimation> LOOPING_MOVEMENT_ANIMATIONS = new java.util.HashMap<>();
 
-    /**
-     * Holds info about an eligible sword for random selection.
-     */
-    private record EligibleSword(String swordId, String styleId, Item item) {}
-
     public DemonSlayerEntity(EntityType<? extends PathfinderMob> entityType, Level level) {
         super(entityType, level);
     }
@@ -520,8 +515,8 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     /**
      * Collect all eligible swords (level 0, obtainable) from both registries.
      */
-    private List<EligibleSword> collectEligibleSwordsForStyle(String styleId) {
-        List<EligibleSword> eligible = new ArrayList<>();
+    private List<String> collectEligibleSwordsForStyle(String styleId) {
+        List<String> eligible = new ArrayList<>();
         Set<String> seenItemIds = new LinkedHashSet<>();
 
         // From SwordRegistry (this mod + addons)
@@ -536,7 +531,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
                 if (seenItemIds.add(itemIdStr)) {
                     if (sword.getCategory() == SwordRegistry.SwordCategory.NICHIRIN
                         && isAllowedForRandomSpawn(sword.getSwordId(), itemIdStr)) {
-                        eligible.add(new EligibleSword(sword.getSwordId(), sword.getStyleId(), swordItem));
+                        eligible.add(sword.getSwordId());
                     }
                 }
             }
@@ -553,7 +548,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
                         continue;
                     }
                     if (isAllowedForRandomSpawn(meta.getSwordId(), itemIdStr)) {
-                        eligible.add(new EligibleSword(meta.getSwordId(), meta.getStyleId(), item));
+                        eligible.add(meta.getSwordId());
                     }
                 }
             }
@@ -577,7 +572,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         return true;
     }
 
-    private EligibleSword chooseRandomLevelZeroSwordByStyle() {
+    private String chooseRandomLevelZeroSwordByStyle() {
         List<String> stylesToTry = collectSpawnableStyleIds();
         // Fisher-Yates shuffle using Minecraft RandomSource
         for (int i = stylesToTry.size() - 1; i > 0; i--) {
@@ -588,7 +583,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         }
 
         for (String styleId : stylesToTry) {
-            List<EligibleSword> swords = collectEligibleSwordsForStyle(styleId);
+            List<String> swords = collectEligibleSwordsForStyle(styleId);
             if (!swords.isEmpty()) {
                 return swords.get(this.random.nextInt(swords.size()));
             }
@@ -600,20 +595,19 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     private void assignValidSwordWithRetries() {
         String previousSword = getSwordId();
         for (int attempt = 0; attempt < MAX_SWORD_ASSIGN_RETRIES; attempt++) {
-            EligibleSword chosen = chooseRandomLevelZeroSwordByStyle();
+            String chosen = chooseRandomLevelZeroSwordByStyle();
             if (chosen == null) {
                 break;
             }
 
-            setSwordId(chosen.swordId());
-            ItemStack resolved = getSwordStackById(chosen.swordId());
+            setSwordId(chosen);
+            ItemStack resolved = getSwordStackById(chosen);
             if (!resolved.isEmpty()) {
-                Log.debug("[DemonSlayer] Chose sword: {} (style: {})", chosen.swordId(), chosen.styleId());
+                Log.debug("[DemonSlayer] Chose sword: {}", chosen);
                 return;
             }
 
-            Log.warn("[DemonSlayer] Failed to resolve sword for style {} (swordId={}), retrying with a different style",
-                chosen.styleId(), chosen.swordId());
+            Log.warn("[DemonSlayer] Failed to resolve sword (swordId={}), retrying with a different style", chosen);
         }
 
         // Restore previous value if retries failed, then clear to avoid stale/invalid sword id usage.
@@ -752,16 +746,16 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     }
 
     private void initializeSuperSeniorSwordSet() {
-        java.util.Map<String, List<EligibleSword>> swordsByStyle = new java.util.HashMap<>();
+        java.util.Map<String, List<String>> swordsByStyle = new java.util.HashMap<>();
         for (String styleId : collectSpawnableStyleIds()) {
-            List<EligibleSword> swords = collectEligibleSwordsForStyle(styleId);
+            List<String> swords = collectEligibleSwordsForStyle(styleId);
             if (swords.isEmpty()) {
                 continue;
             }
-            List<EligibleSword> valid = new ArrayList<>();
-            for (EligibleSword sword : swords) {
-                if (!getSwordStackById(sword.swordId()).isEmpty()) {
-                    valid.add(sword);
+            List<String> valid = new ArrayList<>();
+            for (String swordId : swords) {
+                if (!getSwordStackById(swordId).isEmpty()) {
+                    valid.add(swordId);
                 }
             }
             if (!valid.isEmpty()) {
@@ -777,11 +771,11 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
             uniqueStyles.set(j, tmp);
         }
 
-        List<EligibleSword> selected = new ArrayList<>();
+        List<String> selected = new ArrayList<>();
         int picks = Math.min(3, uniqueStyles.size());
         for (int i = 0; i < picks; i++) {
             String styleId = uniqueStyles.get(i);
-            List<EligibleSword> options = swordsByStyle.get(styleId);
+            List<String> options = swordsByStyle.get(styleId);
             selected.add(options.get(this.random.nextInt(options.size())));
         }
 
@@ -792,9 +786,9 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
             return;
         }
 
-        setSwordId(selected.get(0).swordId());
-        setAltSwordId1(selected.size() > 1 ? selected.get(1).swordId() : "");
-        setAltSwordId2(selected.size() > 2 ? selected.get(2).swordId() : "");
+        setSwordId(selected.get(0));
+        setAltSwordId1(selected.size() > 1 ? selected.get(1) : "");
+        setAltSwordId2(selected.size() > 2 ? selected.get(2) : "");
 
         if (selected.size() < 3) {
             Log.warn("[DemonSlayer] Level-5 super senior could not find 3 distinct styles (found {})", selected.size());

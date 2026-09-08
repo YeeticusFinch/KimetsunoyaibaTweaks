@@ -8,6 +8,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordSwingConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.MantisDemonEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.SixEyeDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 
 import net.minecraft.client.Minecraft;
@@ -261,7 +262,7 @@ public class BonePositionTracker {
 		if (!"claw".equals(modelKey) || entity == null) {
 			return 0xFFFFFF;
 		}
-		if (entity instanceof MantisDemonEntity) {
+		if (entity instanceof MantisDemonEntity || entity instanceof SixEyeDemonEntity) {
 			return 0x1B5E20;
 		}
 		net.minecraft.world.item.ItemStack stack = entity.getMainHandItem();

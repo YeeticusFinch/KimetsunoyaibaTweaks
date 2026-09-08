@@ -1,0 +1,18 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"move": {
+			"loop": true,
+			"animation_length": 2,
+			"bones": {
+				"jaw": {
+					"rotation": ["Math.sin(query.anim_time * 360*1.5+90) * -8+14", 0, 0]
+				}
+			}
+		},
+		"stationary": {
+			"loop": true,
+			"animation_length": 1
+		}
+	}
+}

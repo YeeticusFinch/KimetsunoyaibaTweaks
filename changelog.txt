@@ -2,6 +2,10 @@
 - Fixed the moon breathing secondary particles (the moons are only for kokushibo sword)
 - Added compatibility with 3dd-skin-layers mod
 - Fixed weird floating pixels on the Daughter entity
+- Added six eyed demon
+- Improved the six eyed demon headbutt launch and impact particles
+- Added the six eyed demon bite attack
+- Fixed six eyed demon punch impact particles, choke positioning, and walk animation speed
 
 1.6.564
 - Added demons for all the other default skins (ari, efe, noor...)

@@ -4,11 +4,13 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.CustomRenderTypes;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonEyeKanjiHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonEyesClientState;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonEyesResourceHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.PoseStack.Pose;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -17,6 +19,8 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -72,6 +76,11 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
         if (state == null || !state.demon()) {
             return;
         }
+
+        if (state.index() == DemonEyesResourceHelper.SIX_EYE_DEMON_EYES_INDEX) {
+            renderSixEyeHead(poseStack, buffer, player, state, limbSwingAmount, packedLight, OverlayTexture.NO_OVERLAY);
+            return;
+        }
         /*
         RenderType renderType = CustomRenderTypes.geoEntityTranslucentEmissive(
             DemonEyeKanjiHelper.getEyeOverlayTexture(state.index(), state.rankTier())
@@ -108,6 +117,30 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
         renderHead(poseStack, consumer, overlayModel.head, state.offsetX(), state.offsetY(), tint);
 
         renderKanji(poseStack, buffer, state);
+    }
+
+    private void renderSixEyeHead(PoseStack poseStack, MultiBufferSource buffer, AbstractClientPlayer player,
+                                  DemonEyesClientState.PlayerDemonEyesState state, float limbSwingAmount,
+                                  int packedLight, int packedOverlay) {
+        ItemStack stack = new ItemStack(ModItems.SIX_EYE_DEMON_HEAD.get());
+        stack.getOrCreateTag().putBoolean("SixEyeDemonHeadKanji", state.rankTier() >= 0);
+        stack.getOrCreateTag().putString("SixEyeDemonHeadAnimation", limbSwingAmount > 0.01F ? "move" : "stationary");
+        stack.getOrCreateTag().putFloat("SixEyeDemonHeadAnimationSpeed",
+            Math.max(0.65F, Math.min(2.5F, 0.65F + limbSwingAmount * 2.0F)));
+
+        poseStack.pushPose();
+        getParentModel().head.translateAndRotate(poseStack);
+        Minecraft.getInstance().getItemRenderer().renderStatic(
+            stack,
+            ItemDisplayContext.HEAD,
+            packedLight,
+            packedOverlay,
+            poseStack,
+            buffer,
+            player.level(),
+            player.getId()
+        );
+        poseStack.popPose();
     }
 
     private void renderKanji(PoseStack poseStack, MultiBufferSource buffer,

@@ -225,6 +225,10 @@ public class DemonSlayerAggroHandler {
     }
 
     private static void tickDemonVsSlayerAggro(Mob mob) {
+        if (mob instanceof AbstractDemonEntity demon
+            && demon.isRetaliatingAgainstDemonPlayer(mob.getTarget())) {
+            return;
+        }
         if (mob.tickCount % SCAN_INTERVAL != 0) {
             return;
         }

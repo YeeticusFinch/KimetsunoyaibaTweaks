@@ -862,6 +862,11 @@ public class ModBlocks {
             .strength(1.5f, 6.0f)
             .noOcclusion()));
 
+    public static final RegistryObject<SixEyeDemonHeadBlock> SIX_EYE_DEMON_HEAD = registerBlockWithoutItem("six_eye_demon_head",
+        () -> new SixEyeDemonHeadBlock(BlockBehaviour.Properties.copy(Blocks.PLAYER_HEAD)
+            .strength(1.0f)
+            .noOcclusion()));
+
     /**
      * Helper method to register a block and its corresponding BlockItem
      */

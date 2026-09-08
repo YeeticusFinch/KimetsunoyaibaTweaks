@@ -417,6 +417,14 @@ public class ModEntities {
                 .updateInterval(1)
                 .build("mantis_demon"));
 
+    public static final RegistryObject<EntityType<SixEyeDemonEntity>> SIX_EYE_DEMON =
+        ENTITY_TYPES.register("six_eye_demon",
+            () -> EntityType.Builder.of(SixEyeDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.84F, 2.73F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .build("six_eye_demon"));
+
     public static final RegistryObject<EntityType<SilkRibbonEntity>> SILK_RIBBON =
         ENTITY_TYPES.register("silk_ribbon",
             () -> EntityType.Builder.<SilkRibbonEntity>of(SilkRibbonEntity::new, MobCategory.MISC)
@@ -552,6 +560,7 @@ public class ModEntities {
             event.put(DAUGHTER.get(), DaughterEntity.createAttributes().build());
             event.put(MOTHER.get(), MotherEntity.createAttributes().build());
             event.put(MANTIS_DEMON.get(), MantisDemonEntity.createAttributes().build());
+            event.put(SIX_EYE_DEMON.get(), SixEyeDemonEntity.createAttributes().build());
             event.put(SILK_RIBBON.get(), SilkRibbonEntity.createAttributes().build());
             event.put(DISSOLUTION_COCOON.get(), DissolutionCocoonEntity.createAttributes().build());
             event.put(NEZUKO.get(), NezukoEntity.createAttributes().build());

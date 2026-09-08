@@ -2,6 +2,9 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EntitySkinLayersConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DaughterEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.MantisDemonEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.MotherEntity;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -75,6 +78,12 @@ public class SkinLayersGeoLayer<T extends net.minecraft.world.entity.LivingEntit
             return;
         }
 
+        if (headOnlyEntity(animatable)
+                && !bone.getName().equals(HEAD)
+                && !bone.getName().equals(ARMOR_HEAD)) {
+            return;
+        }
+
         ResourceLocation texture = getRenderer().getTextureLocation(animatable);
         if (!renderDiagnosticLogged) {
             renderDiagnosticLogged = true;
@@ -112,6 +121,12 @@ public class SkinLayersGeoLayer<T extends net.minecraft.world.entity.LivingEntit
             default -> {
             }
         }
+    }
+
+    private static boolean headOnlyEntity(net.minecraft.world.entity.LivingEntity entity) {
+        return entity instanceof MantisDemonEntity
+                || entity instanceof DaughterEntity
+                || entity instanceof MotherEntity;
     }
 
     private void renderHead(PoseStack poseStack, MeshPart mesh, VertexConsumer buffer,
