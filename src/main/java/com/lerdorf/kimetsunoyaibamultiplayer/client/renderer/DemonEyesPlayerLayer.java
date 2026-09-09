@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -79,6 +80,7 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
 
         if (state.index() == DemonEyesResourceHelper.SIX_EYE_DEMON_EYES_INDEX) {
             renderSixEyeHead(poseStack, buffer, player, state, limbSwingAmount, packedLight, OverlayTexture.NO_OVERLAY);
+            renderKanji(poseStack, buffer, state);
             return;
         }
         /*
@@ -123,6 +125,7 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
                                   DemonEyesClientState.PlayerDemonEyesState state, float limbSwingAmount,
                                   int packedLight, int packedOverlay) {
         ItemStack stack = new ItemStack(ModItems.SIX_EYE_DEMON_HEAD.get());
+        stack.getOrCreateTag().putBoolean("SixEyeDemonHeadEyesOnly", true);
         stack.getOrCreateTag().putBoolean("SixEyeDemonHeadKanji", state.rankTier() >= 0);
         stack.getOrCreateTag().putString("SixEyeDemonHeadAnimation", limbSwingAmount > 0.01F ? "move" : "stationary");
         stack.getOrCreateTag().putFloat("SixEyeDemonHeadAnimationSpeed",
@@ -130,6 +133,8 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
 
         poseStack.pushPose();
         getParentModel().head.translateAndRotate(poseStack);
+        // Match an equipped head item's attachment before applying its HEAD display settings.
+        CustomHeadLayer.translateToHead(poseStack, false);
         Minecraft.getInstance().getItemRenderer().renderStatic(
             stack,
             ItemDisplayContext.HEAD,
@@ -146,6 +151,7 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
     private void renderKanji(PoseStack poseStack, MultiBufferSource buffer,
                              DemonEyesClientState.PlayerDemonEyesState state) {
         DemonEyeKanjiHelper.EyeKanjiPlacement placement = DemonEyeKanjiHelper.getPlacement(state.index());
+        double forwardOffset = state.index() == DemonEyesResourceHelper.SIX_EYE_DEMON_EYES_INDEX ? 0.6D : 0.0D;
         double width = Math.max(0.0D, placement.width()) * SKIN_PIXEL;
         double height = Math.max(0.0D, placement.height()) * SKIN_PIXEL;
         if (width <= 0.0D || height <= 0.0D) {
@@ -156,8 +162,11 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
             ResourceLocation rightTexture = DemonEyeKanjiHelper.getRightTexture(state.rankTier());
             ResourceLocation leftTexture = DemonEyeKanjiHelper.getLeftTexture(state.rankTier());
             if (rightTexture != null && leftTexture != null) {
-                renderKanjiQuad(poseStack, buffer, rightTexture, placement.xOffset(), placement.yOffset(), width, height, placement.rotation(), state.offsetX(), state.offsetY());
-                renderKanjiQuad(poseStack, buffer, leftTexture, -placement.xOffset(), placement.yOffset(), width, height, -placement.rotation(), state.offsetX(), state.offsetY());
+                DemonEyeKanjiHelper.EyeKanjiPlacement leftPlacement = DemonEyeKanjiHelper.getLeftPlacement(state.index());
+                renderKanjiQuad(poseStack, buffer, rightTexture, placement.xOffset(), placement.yOffset(), width, height, placement.rotation(), state.offsetX(), state.offsetY(), forwardOffset);
+                renderKanjiQuad(poseStack, buffer, leftTexture, leftPlacement.xOffset(), leftPlacement.yOffset(),
+                    Math.max(0.0D, leftPlacement.width()) * SKIN_PIXEL, Math.max(0.0D, leftPlacement.height()) * SKIN_PIXEL,
+                    leftPlacement.rotation(), state.offsetX(), state.offsetY(), forwardOffset);
                 return;
             }
         }
@@ -166,16 +175,16 @@ public class DemonEyesPlayerLayer extends RenderLayer<AbstractClientPlayer, Play
         if (texture == null) {
             return;
         }
-        renderKanjiQuad(poseStack, buffer, texture, placement.xOffset(), placement.yOffset(), width, height, placement.rotation(), state.offsetX(), state.offsetY());
+        renderKanjiQuad(poseStack, buffer, texture, placement.xOffset(), placement.yOffset(), width, height, placement.rotation(), state.offsetX(), state.offsetY(), forwardOffset);
     }
 
     private void renderKanjiQuad(PoseStack poseStack, MultiBufferSource buffer, ResourceLocation texture,
                                  double xOffset, double yOffset, double width, double height, double rotation,
-                                 float eyeOffsetX, float eyeOffsetY) {
+                                 float eyeOffsetX, float eyeOffsetY, double forwardOffset) {
         poseStack.pushPose();
         getParentModel().head.translateAndRotate(poseStack);
         poseStack.translate(eyeOffsetX * SKIN_PIXEL, -eyeOffsetY * SKIN_PIXEL, 0.0D);
-        poseStack.translate(xOffset * SKIN_PIXEL, (-4.0D + yOffset) * SKIN_PIXEL, HEAD_FRONT_Z);
+        poseStack.translate(xOffset * SKIN_PIXEL, (-4.0D + yOffset) * SKIN_PIXEL, HEAD_FRONT_Z - forwardOffset * SKIN_PIXEL);
         if (rotation != 0.0D) {
             poseStack.mulPose(Axis.ZP.rotationDegrees((float) rotation));
         }

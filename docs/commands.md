@@ -57,6 +57,12 @@ These are registered on `RegisterCommandsEvent`.
 | `/knygravity field_debug on` | OP level 2 | Enables gravity field debug mode. Registered only when `KNYGravity.isEnabled()` is true. |
 | `/knygravity field_debug off` | OP level 2 | Disables gravity field debug mode. Registered only when `KNYGravity.isEnabled()` is true. |
 
+The `/knygravity` commands and gravity blocks require either Gravity API (`gravityapi`)
+or GravityChanger (`gravitychanger`) with its API available. Both mods are optional;
+without either provider, gravity remains vanilla and these commands are not registered.
+If both are installed, KNY uses Gravity API. GravityChanger support targets the Forge
+1.20.1 API in `gravitychanger-forge-1.20.1-2.jar`.
+
 ## Client-Only Commands
 
 These are registered on `RegisterClientCommandsEvent` by `ClientCommandHandler`.

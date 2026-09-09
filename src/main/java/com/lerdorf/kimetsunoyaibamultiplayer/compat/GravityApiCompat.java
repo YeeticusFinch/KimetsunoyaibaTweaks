@@ -10,7 +10,9 @@ import java.lang.reflect.Method;
 
 public final class GravityApiCompat {
     public static final String MODID = "gravityapi";
+    public static final String GRAVITY_CHANGER_MODID = "gravitychanger";
     private static final String API_CLASS_NAME = "com.min01.gravityapi.api.GravityChangerAPI";
+    private static final String GRAVITY_CHANGER_API_CLASS_NAME = "gravitychanger.api.GravityChangerAPI";
 
     private static Class<?> apiClass;
     private static boolean apiClassResolved;
@@ -19,7 +21,7 @@ public final class GravityApiCompat {
     }
 
     public static boolean isLoaded() {
-        return ModList.get().isLoaded(MODID);
+        return ModList.get().isLoaded(MODID) || ModList.get().isLoaded(GRAVITY_CHANGER_MODID);
     }
 
     public static boolean isAvailable() {
@@ -90,7 +92,9 @@ public final class GravityApiCompat {
         if (!apiClassResolved) {
             apiClassResolved = true;
             try {
-                apiClass = Class.forName(API_CLASS_NAME);
+                // Both providers expose the same methods; preserve Gravity API precedence when both are installed.
+                apiClass = Class.forName(ModList.get().isLoaded(MODID)
+                    ? API_CLASS_NAME : GRAVITY_CHANGER_API_CLASS_NAME);
             } catch (ClassNotFoundException exception) {
                 apiClass = null;
             }

@@ -105,6 +105,14 @@ description='''${mod_description}'''
     ordering="AFTER"
     side="BOTH"
 
+# GravityChanger dependency (optional) - alternative external gravity provider
+[[dependencies.${mod_id}]]
+    modId="gravitychanger"
+    mandatory=false
+    versionRange="[2,)"
+    ordering="AFTER"
+    side="BOTH"
+
 # ShoulderSurfing dependency (optional)
 #[[dependencies.${mod_id}]]
 #    modId="shouldersurfing"

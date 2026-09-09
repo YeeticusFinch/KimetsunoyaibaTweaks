@@ -9,7 +9,7 @@ public class SixEyeDemonHeadModel<T extends GeoAnimatable> extends GeoModel<T> {
     @Override
     public ResourceLocation getModelResource(T animatable) {
         return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID,
-            "geo/six_eye_demon_head.geo.json");
+            "geo/six_eye_head.geo.json");
     }
 
     @Override

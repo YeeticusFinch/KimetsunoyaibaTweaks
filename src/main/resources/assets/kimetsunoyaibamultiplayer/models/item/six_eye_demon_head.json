@@ -1,6 +1,48 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "builtin/entity",
   "textures": {
-    "layer0": "kimetsunoyaibamultiplayer:entity/six_eye_demon"
+    "particle": "kimetsunoyaibamultiplayer:item/six_eye_demon"
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 3.75, 0],
+      "scale": [1, 1, 1]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 4, 0],
+      "scale": [1, 1, 1]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 5.75, 0],
+      "scale": [1, 1, 1]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 6.25, 0],
+      "scale": [1, 1, 1]
+    },
+    "ground": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 5.5, 0],
+      "scale": [1, 1, 1]
+    },
+    "gui": {
+      "rotation": [164.83, 25.03, -147.37],
+      "translation": [2, 3.25, 0],
+      "scale": [1.3, 1.3, 1.3]
+    },
+    "head": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 7.75, -1],
+      "scale": [2, 2, 2]
+    },
+    "fixed": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 3.75, 0],
+      "scale": [1, 1, 1]
+    }
   }
 }

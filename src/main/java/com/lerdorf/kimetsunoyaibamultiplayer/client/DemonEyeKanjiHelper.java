@@ -21,6 +21,15 @@ public final class DemonEyeKanjiHelper {
         return PLACEMENTS.getOrDefault(demonEyesIndex, EyeKanjiPlacement.DEFAULT);
     }
 
+    public static EyeKanjiPlacement getLeftPlacement(int demonEyesIndex) {
+        if (demonEyesIndex == DemonEyesResourceHelper.SIX_EYE_DEMON_EYES_INDEX) {
+            return new EyeKanjiPlacement(1.50D, -0.15D, 1.00D, 1.00D, 0.00D);
+        }
+        EyeKanjiPlacement placement = getPlacement(demonEyesIndex);
+        return new EyeKanjiPlacement(-placement.xOffset(), placement.yOffset(),
+            placement.width(), placement.height(), -placement.rotation());
+    }
+
     public static ResourceLocation getEyeOverlayTexture(int demonEyesIndex, int rankTier) {
         if (getTexture(rankTier) != null) {
             if (shouldRenderMirroredUpperKanji(rankTier, getPlacement(demonEyesIndex))) {
@@ -131,6 +140,8 @@ public final class DemonEyeKanjiHelper {
             new EyeKanjiPlacement(-1.95D, 0.50D, 0.90D, 0.90D, 0.00D));
         placements.put(DemonEyesResourceHelper.ZURI_EYES_INDEX,
             new EyeKanjiPlacement(-1.55D, 0.50D, 0.90D, 0.90D, 0.00D));
+        placements.put(DemonEyesResourceHelper.SIX_EYE_DEMON_EYES_INDEX,
+            new EyeKanjiPlacement(-1.70D, -0.85D, 1.00D, 1.00D, 0.00D));
 
 
         return Map.copyOf(placements);

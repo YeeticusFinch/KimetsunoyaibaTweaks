@@ -16,9 +16,9 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
 public class SixEyeDemonHeadEyeLayer<T extends GeoAnimatable> extends GeoRenderLayer<T> {
-    private static final ResourceLocation EYES_TEXTURE = ResourceLocation.fromNamespaceAndPath(
+    static final ResourceLocation EYES_TEXTURE = ResourceLocation.fromNamespaceAndPath(
         KimetsunoyaibaMultiplayer.MODID, "textures/entity/six_eye_demon_eyes.png");
-    private static final ResourceLocation EYES_KANJI_TEXTURE = ResourceLocation.fromNamespaceAndPath(
+    static final ResourceLocation EYES_KANJI_TEXTURE = ResourceLocation.fromNamespaceAndPath(
         KimetsunoyaibaMultiplayer.MODID, "textures/entity/six_eye_demon_eyes_kanji.png");
     private final SixEyeDemonHeadModel<T> overlayModel = new SixEyeDemonHeadModel<>() {
         @Override
@@ -35,14 +35,18 @@ public class SixEyeDemonHeadEyeLayer<T extends GeoAnimatable> extends GeoRenderL
     public void render(PoseStack poseStack, T animatable, BakedGeoModel bakedModel, RenderType renderType,
                        MultiBufferSource bufferSource, VertexConsumer buffer, float partialTick,
                        int packedLight, int packedOverlay) {
-        BakedGeoModel overlayBakedModel = overlayModel.getBakedModel(overlayModel.getModelResource(animatable));
         ResourceLocation texture = EYES_TEXTURE;
         if (getRenderer() instanceof software.bernie.geckolib.renderer.GeoItemRenderer<?> itemRenderer) {
             ItemStack stack = itemRenderer.getCurrentItemStack();
+            // Player eyes already use this texture in the main pass, without the full head skin.
+            if (SixEyeDemonHeadItemRenderer.isEyesOnly(stack)) {
+                return;
+            }
             if (stack != null && stack.hasTag() && stack.getTag().getBoolean("SixEyeDemonHeadKanji")) {
                 texture = EYES_KANJI_TEXTURE;
             }
         }
+        BakedGeoModel overlayBakedModel = overlayModel.getBakedModel(overlayModel.getModelResource(animatable));
         RenderType overlayRenderType = CustomRenderTypes.geoEntityTranslucentEmissive(texture);
         getRenderer().reRender(overlayBakedModel, poseStack, bufferSource, animatable, overlayRenderType,
             bufferSource.getBuffer(overlayRenderType), partialTick, 0xF000F0, OverlayTexture.NO_OVERLAY,
