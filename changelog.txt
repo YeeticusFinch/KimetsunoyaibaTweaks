@@ -1,10 +1,13 @@
+1.6.566
+- Updated the GravityAPI optional dependency to GravityControl
+  - https://www.curseforge.com/minecraft/mc-mods/gravity-control
+- Fixed the six eyed demon head and eyes (kinda)
+
 1.6.565
 - Fixed the moon breathing secondary particles (the moons are only for kokushibo sword)
 - Added compatibility with 3dd-skin-layers mod
 - Fixed weird floating pixels on the Daughter entity
 - Added six eyed demon
-- Updated the GravityAPI optional dependency to GravityControl
-  - https://www.curseforge.com/minecraft/mc-mods/gravity-control
 
 1.6.564
 - Added demons for all the other default skins (ari, efe, noor...)

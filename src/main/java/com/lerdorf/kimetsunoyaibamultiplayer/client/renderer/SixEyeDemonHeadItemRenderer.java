@@ -38,8 +38,22 @@ public class SixEyeDemonHeadItemRenderer extends GeoItemRenderer<SixEyeDemonHead
     @Override
     public void renderByItem(ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack,
                              MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        super.renderByItem(stack, displayContext, poseStack, bufferSource,
-            isEyesOnly(stack) ? 0xF000F0 : packedLight, packedOverlay);
+        poseStack.pushPose();
+        try {
+            if (isEyesOnly(stack) && displayContext == ItemDisplayContext.HEAD) {
+                // Undo item centering and the shared JSON HEAD transform before applying the eye placement.
+                poseStack.translate(0.5D, 0.5D, 0.5D);
+                poseStack.scale(0.5F, 0.5F, 0.5F);
+                poseStack.translate(0.0D, -7.75D / 16.0D, 1.0D / 16.0D);
+                poseStack.translate(0.0D, 6.25D / 16.0D, 0.25D / 16.0D);
+                poseStack.scale(1.6F, 1.6F, 1.6F);
+                poseStack.translate(-0.5D, -0.5D, -0.5D);
+            }
+            super.renderByItem(stack, displayContext, poseStack, bufferSource,
+                isEyesOnly(stack) ? 0xF000F0 : packedLight, packedOverlay);
+        } finally {
+            poseStack.popPose();
+        }
     }
 
     static boolean isEyesOnly(ItemStack stack) {
