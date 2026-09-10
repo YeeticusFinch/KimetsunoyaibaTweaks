@@ -42,10 +42,14 @@ public class LoveSwordSlashesSpawner {
             return null;
         }
 
-        // Create the entity on the server
+        // Create the entity on the server (create() converts authored local
+        // coordinates to world space inside an active combat frame)
         LoveSwordSlashesEntity entity = LoveSwordSlashesEntity.create(
             level, position, yaw, pitch, animationName, lifetimeTicks
         );
+
+        // The create() call may have converted the authored position; reuse it for the packet
+        position = entity.position();
 
         // Add to world
         level.addFreshEntity(entity);

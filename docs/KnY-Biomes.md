@@ -39,15 +39,15 @@ This multiplayer addon adds the following:
   - Automatic teleport back if boundary exceeded
 - **Documentation**: See [mt-fujikasane-dimension.md](mt-fujikasane-dimension.md) for complete setup guide
 
-## Optional: Increase KnY Biome Spawn Frequency
+## Enhanced Mount Biomes
 
-If you want mt_yoko, mt_natagumo, or mugen_biome to spawn more frequently than the base mod provides, you can enable vanilla biome replacement in the config:
+Kimetsunoyaiba Tweaks replaces the base mod's broad Mount Natagumo and Mount Yoko
+climate entries with a seed-deterministic biome source when enabled. The source:
 
-1. Edit `config/kimetsunoyaibamultiplayer-biome.toml`
-2. Set `enableVanillaReplacement = true`
-3. Adjust replacement chances:
-   - `mtYokoReplacementChance` (default: 0.15 = 15% of taiga biomes)
-   - `mtNatagumoReplacementChance` (default: 0.10 = 10% of dark forests)
-   - `mugenReplacementChance` (default: 0.15 = 15% of savanna biomes)
+- Samples Minecraft's existing climate values, so only mountainous inland terrain qualifies.
+- Uses smooth, low-frequency selector noise at an 800-2000 block scale.
+- Selects approximately 10% of qualifying mountainous terrain by default.
+- Leaves the base mod biome definitions intact, including Mount Natagumo trees and its biome-specific spawns.
+- Limits each Mount Natagumo structure (`house_rui` and `house_rui_brother`) to one deterministic candidate per enhanced region.
 
-This is seed-deterministic, so the same world seed will always produce the same biome layout.
+Settings are in `config/kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml`.

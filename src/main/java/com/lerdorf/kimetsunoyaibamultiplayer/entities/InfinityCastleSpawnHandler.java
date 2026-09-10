@@ -402,13 +402,19 @@ public final class InfinityCastleSpawnHandler {
             .ifPresent(holders -> {
                 for (Holder<EntityType<?>> holder : holders) {
                     EntityType<?> type = holder.value();
-                    if (type != null) {
+                    if (type != null && !(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.disableTweaksDemons
+                        && DemonSpawnReplacementHandler.isTweaksDemonType(type))) {
                         types.add(type);
                     }
                 }
             });
         for (DemonRegistry.RegisteredDemon registeredDemon : DemonRegistry.getAll()) {
-            BuiltInRegistries.ENTITY_TYPE.getOptional(registeredDemon.getEntityId()).ifPresent(types::add);
+            BuiltInRegistries.ENTITY_TYPE.getOptional(registeredDemon.getEntityId()).ifPresent(type -> {
+                if (!com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.disableTweaksDemons
+                    || !DemonSpawnReplacementHandler.isTweaksDemonType(type)) {
+                    types.add(type);
+                }
+            });
         }
         return new ArrayList<>(types);
     }

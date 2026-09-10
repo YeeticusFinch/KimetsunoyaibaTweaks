@@ -787,7 +787,8 @@ public class EnhancedLoveForms {
                 	
                 	if (currentTick[0] > 15 && currentTick[0] < 35) {
                 		MovementHelper.lookAtTarget(entity);
-                		MovementHelper.setVelocity(entity, entity.getDeltaMovement().x, Math.max(entity.getDeltaMovement().y, 0), entity.getDeltaMovement().z);
+                        Vec3 localVelocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
+                        MovementHelper.setVelocity(entity, localVelocity.x, Math.max(localVelocity.y, 0), localVelocity.z);
                 		if (serverLevel != null) {
                 			for (int i = 0; i < 5; i++) {
                 				String slashAnim = slashAnimations[(int) (Math.random() * slashAnimations.length)];
@@ -880,7 +881,8 @@ public class EnhancedLoveForms {
                 			spawnedLoveSlashes[0] = true;
 
                 			// Calculate direction vector from eye position to target
-                			Vec3 direction = vectors[2].subtract(entity.getEyePosition()).normalize();
+                            Vec3 direction = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(
+                                vectors[2].subtract(entity.getEyePosition())).normalize();
 
                 			// Calculate yaw from direction (Minecraft uses -Z as north, rotation is counterclockwise from south)
                 			// atan2(x, z) gives angle from north axis
@@ -891,7 +893,8 @@ public class EnhancedLoveForms {
 
                             // Spawn the love sword slashes entity
                             LoveSwordSlashesSpawner.spawnLoveSwordSlashes(
-                                level, entity.getEyePosition(), yawSlashRot, pitchSlashRot, "love_third_form", 40
+                                level, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity),
+                                yawSlashRot, pitchSlashRot, "love_third_form", 40
                             );
                 		}
                 		if (serverLevel != null) {
@@ -1585,8 +1588,11 @@ public class EnhancedLoveForms {
     	                        //livingTarget.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0));
                         	}*/
                         	// Knockback away from center
-                            Vec3 knockbackDir = target.position().subtract(entity.getEyePosition()).normalize();
-                            target.setDeltaMovement(target.getDeltaMovement().add(knockbackDir.scale(1.0)));
+                            Vec3 knockbackDir = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame
+                                .local(target.position()).subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity));
+                            if (knockbackDir.lengthSqr() > 1.0E-4D && target instanceof LivingEntity livingTarget) {
+                                MovementHelper.addVelocity(livingTarget, knockbackDir.normalize());
+                            }
                         }
                 	}
                 	

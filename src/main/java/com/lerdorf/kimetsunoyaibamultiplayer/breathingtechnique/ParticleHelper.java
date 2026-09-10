@@ -15,7 +15,7 @@ public class ParticleHelper {
 		for (int i = 0; i < count; i++) {
 			double t = i / (double) count;
 			Vec3 pos = start.add(direction.scale(t));
-			level.sendParticles(particle, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
+			com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, particle, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
 		}
 	}
 
@@ -28,7 +28,7 @@ public class ParticleHelper {
 		for (int i = 0; i < count; i++) {
 			double t = i / (double) count;
 			Vec3 pos = start.add(direction.scale(distance * t));
-			level.sendParticles(particle, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
+			com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, particle, pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
 		}
 	}
 
@@ -38,7 +38,7 @@ public class ParticleHelper {
 			double angle = (i / (double) count) * Math.PI * 2;
 			double x = center.x + Math.cos(angle) * radius;
 			double z = center.z + Math.sin(angle) * radius;
-			level.sendParticles(particle, x, center.y, z, 1, 0, 0, 0, 0);
+			com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, particle, x, center.y, z, 1, 0, 0, 0, 0);
 		}
 	}
 
@@ -83,7 +83,7 @@ public class ParticleHelper {
 					for (int i = 0; i < ParticleConfig.particlesPerPosition; i++) {
 						// Log.debug("Spawning particle at: " + worldX + ", " + worldY + ", " +
 						// worldZ);
-						level.sendParticles(particle, worldX, worldY, worldZ, 1, 0, 0, 0, 0);
+						com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, particle, worldX, worldY, worldZ, 1, 0, 0, 0, 0);
 					}
 				}
 			}
@@ -130,7 +130,7 @@ public class ParticleHelper {
 				if (true) {
 					for (int i = 0; i < ParticleConfig.particlesPerPosition; i++) {
 						//Log.debug("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
-						level.sendParticles(particle, worldX, worldY, worldZ, 1, 0, 0, 0, 0);
+						com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, particle, worldX, worldY, worldZ, 1, 0, 0, 0, 0);
 					}
 				}
 			}

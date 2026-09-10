@@ -403,10 +403,14 @@ public final class SwampDemonArt {
                 }
 
                 double radius = 5.5D;
-                activeLevel.sendParticles(SWAMP_DUST, center.x, center.y + 1.0D, center.z, 90, radius, 1.2D, radius, 0.003D);
-                activeLevel.sendParticles(ParticleTypes.SMOKE, center.x, center.y + 1.0D, center.z, 45, radius * 0.7D, 0.8D, radius * 0.7D, 0.01D);
+                 com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(activeLevel, SWAMP_DUST,
+                     center.x, center.y + 1.0D, center.z, 90, radius, 1.2D, radius, 0.003D);
+                 com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(activeLevel, ParticleTypes.SMOKE,
+                     center.x, center.y + 1.0D, center.z, 45, radius * 0.7D, 0.8D, radius * 0.7D, 0.01D);
 
-                AABB cloudArea = new AABB(center, center).inflate(radius, 2.0D, radius);
+                Vec3 localCenter = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(center);
+                AABB cloudArea = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+                    new AABB(localCenter, localCenter).inflate(radius, 2.0D, radius));
                 for (LivingEntity target : activeLevel.getEntitiesOfClass(LivingEntity.class, cloudArea,
                     living -> living != entity && living.isAlive() && !living.isSpectator())) {
                     target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0, false, true));
@@ -449,15 +453,17 @@ public final class SwampDemonArt {
                     return;
                 }
 
-                Vec3 look = entity.getLookAngle();
+                 Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
                 if (look.lengthSqr() < 1.0E-4D) {
                     look = new Vec3(0.0D, 0.0D, 1.0D);
                 }
                 look = look.normalize();
 
                 MovementHelper.setVelocity(entity, look.scale(0.9D).add(0.0D, Math.max(entity.getDeltaMovement().y, 0.02D), 0.0D));
-                activeLevel.sendParticles(ParticleTypes.BUBBLE, entity.getX(), entity.getY(0.4D), entity.getZ(), 16, 0.35D, 0.3D, 0.35D, 0.08D);
-                activeLevel.sendParticles(ParticleTypes.SPLASH, entity.getX(), entity.getY(0.4D), entity.getZ(), 10, 0.25D, 0.15D, 0.25D, 0.05D);
+                 com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(activeLevel, ParticleTypes.BUBBLE,
+                     entity.getX(), entity.getY(0.4D), entity.getZ(), 16, 0.35D, 0.3D, 0.35D, 0.08D);
+                 com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(activeLevel, ParticleTypes.SPLASH,
+                     entity.getX(), entity.getY(0.4D), entity.getZ(), 10, 0.25D, 0.15D, 0.25D, 0.05D);
                 activeLevel.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
                     SoundEvents.PLAYER_SPLASH, SoundSource.HOSTILE, 0.5F, 1.05F);
                 activeLevel.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
@@ -502,6 +508,15 @@ public final class SwampDemonArt {
 
     
     public static void activateSpawnPuddle(LivingEntity entity) {
+        var previousGravityFrame = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(entity);
+        try {
+            activateSpawnPuddleInGravityFrame(entity);
+        } finally {
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.restore(previousGravityFrame);
+        }
+    }
+
+    private static void activateSpawnPuddleInGravityFrame(LivingEntity entity) {
         if (!(entity.level() instanceof ServerLevel level) || isPuddled(entity) || entity.isInWaterOrBubble()) {
             return;
         }
@@ -641,6 +656,8 @@ public final class SwampDemonArt {
         if (puddle == null) {
             return;
         }
+        // Mark as KNY-gravity-affected so gravity block fields also act on it
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.inheritVisual(puddle);
         puddle.bindAvatar(entity);
         puddle.moveTo(entity.getX(), entity.getY(), entity.getZ(), entity.getYRot(), 0.0F);
         if (level.addFreshEntity(puddle)) {
@@ -658,6 +675,8 @@ public final class SwampDemonArt {
             return;
         }
 
+        // Mark as KNY-gravity-affected so gravity block fields also act on it
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.inheritVisual(sourcePortal);
         sourcePortal.makePortal(SWAMP_DOMAIN_LEVEL, targetPos, PORTAL_DURATION_TICKS, 1.85F);
         sourcePortal.moveTo(sourcePos.x, sourcePos.y, sourcePos.z, 0.0F, 0.0F);
         sourceLevel.addFreshEntity(sourcePortal);
@@ -686,11 +705,12 @@ public final class SwampDemonArt {
 
     private static BlockPos findValidSwampHandSpawn(ServerLevel level, BlockPos start, int limit) {
         BlockPos.MutableBlockPos checkPos = start.mutable();
+        net.minecraft.core.Direction worldDown = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(net.minecraft.core.Direction.DOWN);
         int c = 0;
 
         // Try going down first
-        while (!isValidGround(level, checkPos.below())) {
-            checkPos.move(0, -1, 0);
+        while (!isValidGround(level, checkPos.relative(worldDown))) {
+            checkPos.move(worldDown);
             if (++c > limit) break;
         }
 
@@ -702,8 +722,8 @@ public final class SwampDemonArt {
         checkPos.set(start);
         c = 0;
 
-        while (!isValidGround(level, checkPos.below())) {
-            checkPos.move(0, 1, 0);
+        while (!isValidGround(level, checkPos.relative(worldDown))) {
+            checkPos.move(worldDown.getOpposite());
             if (++c > limit) break;
         }
 
@@ -712,7 +732,8 @@ public final class SwampDemonArt {
 
     private static void throwHands(LivingEntity caster, ServerLevel sourceLevel) {
         Vec3 start = caster.getEyePosition();
-        Vec3 look = caster.getLookAngle();
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(caster));
         if (look.lengthSqr() < 1.0E-4D) {
             look = new Vec3(0.0D, 0.0D, 1.0D);
         }
@@ -828,7 +849,8 @@ public final class SwampDemonArt {
         }
 
         Vec3 start = caster.getEyePosition();
-        Vec3 look = caster.getLookAngle();
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(caster));
         if (look.lengthSqr() < 1.0E-4D) {
             look = new Vec3(0.0D, 0.0D, 1.0D);
         }
@@ -849,7 +871,8 @@ public final class SwampDemonArt {
                     return;
                 }
 
-                velocity[0] = velocity[0].add(0.0D, -0.01D, 0.0D);
+                velocity[0] = velocity[0].add(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+                    new Vec3(0.0D, -0.01D, 0.0D)));
                 Vec3 nextPos = currentPos[0].add(velocity[0]);
                 BlockHitResult hit = activeLevel.clip(new ClipContext(currentPos[0], nextPos,
                     ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
@@ -860,7 +883,8 @@ public final class SwampDemonArt {
                     spawnSwampDomainPortal(activeLevel, impact, targetPos, caster);
                     activeLevel.playSound(null, impact.x, impact.y, impact.z,
                         SoundEvents.PORTAL_TRIGGER, SoundSource.HOSTILE, 0.8F, 0.8F);
-                    activeLevel.sendParticles(SWAMP_DUST, impact.x, impact.y + 0.05D, impact.z, 35, 0.45D, 0.02D, 0.45D, 0.002D);
+                     com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(activeLevel, SWAMP_DUST,
+                         impact.x, impact.y + 0.05D, impact.z, 35, 0.45D, 0.02D, 0.45D, 0.002D);
                     finished = true;
                     return;
                 }
@@ -877,13 +901,15 @@ public final class SwampDemonArt {
 
                     activeLevel.playSound(null, target.getX(), target.getY(), target.getZ(),
                         SoundEvents.PORTAL_TRIGGER, SoundSource.HOSTILE, 0.7F, 1.1F);
-                    activeLevel.sendParticles(SWAMP_DUST, target.getX(), target.getY() + 0.05D, target.getZ(),
-                        20, 0.3D, 0.05D, 0.3D, 0.002D);
+                     com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(activeLevel, SWAMP_DUST,
+                         target.getX(), target.getY() + 0.05D, target.getZ(), 20, 0.3D, 0.05D, 0.3D, 0.002D);
                 }
 
                 currentPos[0] = nextPos;
-                activeLevel.sendParticles(SWAMP_DUST, currentPos[0].x, currentPos[0].y, currentPos[0].z, 6, 0.08D, 0.08D, 0.08D, 0.001D);
-                activeLevel.sendParticles(ParticleTypes.SMOKE, currentPos[0].x, currentPos[0].y, currentPos[0].z, 2, 0.04D, 0.04D, 0.04D, 0.0D);
+                 com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(activeLevel, SWAMP_DUST,
+                     currentPos[0].x, currentPos[0].y, currentPos[0].z, 6, 0.08D, 0.08D, 0.08D, 0.001D);
+                 com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(activeLevel, ParticleTypes.SMOKE,
+                     currentPos[0].x, currentPos[0].y, currentPos[0].z, 2, 0.04D, 0.04D, 0.04D, 0.0D);
 
                 ticks++;
                 if (ticks >= SWAMP_DOMAIN_PROJECTILE_LIFETIME_TICKS) {
@@ -950,7 +976,8 @@ public final class SwampDemonArt {
 
     private static Vec3 findTargetPoint(LivingEntity entity, double distance) {
         Vec3 eye = entity.getEyePosition();
-        Vec3 target = eye.add(entity.getLookAngle().scale(distance));
+        Vec3 target = eye.add(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity)).scale(distance));
         BlockHitResult hit = entity.level().clip(new ClipContext(eye, target, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, entity));
         if (hit.getType() == HitResult.Type.MISS) {
             return target;
@@ -1008,7 +1035,7 @@ public final class SwampDemonArt {
             return;
         }
 
-        Vec3 movement = entity.getDeltaMovement();
+        Vec3 movement = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
         double yVelocity = movement.y;
         boolean allowControlledSwampDemonRise = entity instanceof SwampDemonEntity demon
             && demon.getTarget() != null
@@ -1023,7 +1050,7 @@ public final class SwampDemonArt {
         }
 
         if (yVelocity != movement.y) {
-            entity.setDeltaMovement(movement.x, yVelocity, movement.z);
+            MovementHelper.setVelocity(entity, movement.x, yVelocity, movement.z);
             entity.hurtMarked = true;
         }
         entity.fallDistance = 0.0F;
@@ -1592,6 +1619,12 @@ public final class SwampDemonArt {
         @SubscribeEvent
         public static void onLivingTick(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
             LivingEntity entity = event.getEntity();
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.run(entity,
+                () -> onLivingTickInGravityFrame(event));
+        }
+
+        private static void onLivingTickInGravityFrame(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
+            LivingEntity entity = event.getEntity();
             if (entity.level().isClientSide) {
                 boolean puddledNow = isPuddled(entity);
                 boolean puddledBefore = entity.getPersistentData().getBoolean(CLIENT_PUDDLE_STATE_CACHE_TAG);
@@ -1608,7 +1641,8 @@ public final class SwampDemonArt {
                 }
             }
             if (!entity.level().isClientSide && entity.level().dimension().equals(SWAMP_DOMAIN_LEVEL)) {
-                neutralizeSwampDomainBuoyancy(entity);
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.run(entity,
+                    () -> neutralizeSwampDomainBuoyancy(entity));
             }
             if (entity.level().dimension().equals(SWAMP_DOMAIN_LEVEL)
                 && !(entity instanceof Player)
@@ -1695,14 +1729,17 @@ public final class SwampDemonArt {
                 state = PUDDLE_STATE_SHOWING;
             }
 
-            entity.setDeltaMovement(entity.getDeltaMovement().x * 0.82D, Math.min(entity.getDeltaMovement().y, 0.0D), entity.getDeltaMovement().z * 0.82D);
+            Vec3 puddleVelocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
+            MovementHelper.setVelocity(entity, puddleVelocity.x * 0.82D,
+                Math.min(puddleVelocity.y, 0.0D), puddleVelocity.z * 0.82D);
             entity.setSprinting(false);
             entity.fallDistance = 0.0F;
             //entity.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 10, 0, false, false));
             syncPuddleCollisionBox(entity);
             syncHiddenPuddleReach(entity);
             MovementHelper.setStepHeight(entity, PUDDLE_STEP_HEIGHT);
-            serverLevel.sendParticles(PUDDLE_DUST, entity.getX(), entity.getY() + 0.03D, entity.getZ(), 4, 0.18D, 0.01D, 0.18D, 0.001D);
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(serverLevel, PUDDLE_DUST,
+                entity.getX(), entity.getY() + 0.03D, entity.getZ(), 4, 0.18D, 0.01D, 0.18D, 0.001D);
             syncPlayerPuddleLoop(entity, serverLevel);
         }
 
@@ -1750,9 +1787,10 @@ public final class SwampDemonArt {
                     continue;
                 }
 
-                Vec3 movement = living.getDeltaMovement();
+                Vec3 movement = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(living);
                 double yVelocity = Math.min(movement.y, SWAMP_DOMAIN_CEILING_DOWNWARD_SPEED);
-                living.setDeltaMovement(movement.x, yVelocity, movement.z);
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.run(living,
+                    () -> MovementHelper.setVelocity(living, movement.x, yVelocity, movement.z));
                 living.hurtMarked = true;
             }
         }
@@ -1893,7 +1931,8 @@ public final class SwampDemonArt {
                 return;
             }
 
-            entity.setDeltaMovement(entity.getDeltaMovement().x, Math.min(0.0D, entity.getDeltaMovement().y), entity.getDeltaMovement().z);
+            Vec3 movement = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
+            MovementHelper.setVelocity(entity, movement.x, Math.min(0.0D, movement.y), movement.z);
             entity.hurtMarked = true;
         }
     }

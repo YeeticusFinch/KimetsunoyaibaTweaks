@@ -11,6 +11,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame;
+import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DarkStarVisualEntity;
@@ -328,6 +330,11 @@ public final class CustomBloodDemonArtRuntime {
 
     private static void executeMove(ServerPlayer player, CustomBloodDemonArtSavedData.CoreSettings core,
                                     CustomBloodDemonArtSavedData.MoveType move, AmplifierTotals amplifierTotals) {
+        CombatGravityFrame.run(player, () -> executeMoveInGravityFrame(player, core, move, amplifierTotals));
+    }
+
+    private static void executeMoveInGravityFrame(ServerPlayer player, CustomBloodDemonArtSavedData.CoreSettings core,
+                                                  CustomBloodDemonArtSavedData.MoveType move, AmplifierTotals amplifierTotals) {
         switch (move) {
             case PUNCH_RIGHT -> executePunch(player, core, "punch_right", amplifierTotals);
             case PUNCH_LEFT -> executePunch(player, core, "punch_left", amplifierTotals);
@@ -385,14 +392,13 @@ public final class CustomBloodDemonArtRuntime {
 
         AnimationHelper.playAnimation(player, animationName, 10);
 
-        // Yaw-based forward direction so the cone stays horizontal
-        float yaw = (float) Math.toRadians(-player.getYRot());
-        Vec3 forward = new Vec3(Math.sin(yaw), 0.0D, Math.cos(yaw)).normalize();
+        // Ability geometry is authored in the player's gravity-local basis.
+        Vec3 forward = CombatGravityFrame.look(player).normalize();
 
         // Right vector for drawing circular cone rings
         Vec3 right = new Vec3(-forward.z, 0.0D, forward.x).normalize();
 
-        Vec3 eyePos = player.getEyePosition();
+        Vec3 eyePos = CombatGravityFrame.eye(player);
 
         double maxDistance = 6.0D * rangeScale;
         double baseRadius = 0.45D;
@@ -410,7 +416,8 @@ public final class CustomBloodDemonArtRuntime {
                         .add(right.scale(radius * Math.cos(angle)))
                         .add(0.0D, radius * Math.sin(angle), 0.0D);
 
-                    level.sendParticles(
+                    sendParticles(
+                        level,
                         particle,
                         particlePos.x,
                         particlePos.y,
@@ -426,14 +433,17 @@ public final class CustomBloodDemonArtRuntime {
         }
 
         // Cone-shaped hit detection
-        AABB hitBox = player.getBoundingBox().expandTowards(forward.scale(maxDistance)).inflate(3.5D * rangeScale);
+        AABB hitBox = CombatGravityFrame.world(new AABB(
+            CombatGravityFrame.position(player).add(-3.5D * rangeScale, -3.5D * rangeScale, -3.5D * rangeScale),
+            CombatGravityFrame.position(player).add(forward.scale(maxDistance))
+                .add(3.5D * rangeScale, 3.5D * rangeScale, 3.5D * rangeScale)));
 
         for (LivingEntity target : player.level().getEntitiesOfClass(
             LivingEntity.class,
             hitBox,
             entity -> entity != player && entity.isAlive()
         )) {
-            Vec3 toTarget = target.position().subtract(player.position());
+            Vec3 toTarget = CombatGravityFrame.local(target.position()).subtract(CombatGravityFrame.position(player));
             Vec3 flatToTarget = new Vec3(toTarget.x, 0.0D, toTarget.z);
 
             if (flatToTarget.lengthSqr() < 0.001D) {
@@ -483,12 +493,12 @@ public final class CustomBloodDemonArtRuntime {
         double rangeScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.RANGE));
         double speedScale = ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
         AnimationHelper.playAnimation(player, "kimetsunoyaibamultiplayer:front_flip", 15);
-        Vec3 look = player.getLookAngle().normalize();
-        MovementHelper.setVelocity(player, look.x * 1.0D * speedScale * rangeScale, 0.65D * speedScale, look.z * 1.0D * speedScale * rangeScale);
+        Vec3 look = CombatGravityFrame.look(player).normalize();
+        MovementHelper.setVelocity(player, look.scale(speedScale * rangeScale).add(0.0D, 0.65D * speedScale, 0.0D));
         for (int i = 0; i < 5; i++) {
             final int offset = i * 3;
             AbilityScheduler.scheduleOnce(player, () -> {
-                Vec3 pos = player.position().add(0.0D, 0.35D, 0.0D);
+                Vec3 pos = CombatGravityFrame.position(player).add(0.0D, 0.35D, 0.0D);
                 spawnBurst(player.serverLevel(), core.secondaryParticle(), pos, 7);
             }, offset);
         }
@@ -506,9 +516,10 @@ public final class CustomBloodDemonArtRuntime {
             final String animation = animations[i];
             AbilityScheduler.scheduleOnce(player, () -> {
                 AnimationHelper.playAnimation(player, animation, 10);
-                Vec3 center = player.getEyePosition().add(player.getLookAngle().normalize().scale(1.3D * rangeScale));
+                Vec3 center = CombatGravityFrame.eye(player).add(CombatGravityFrame.look(player).normalize().scale(1.3D * rangeScale));
                 spawnBurst(player.serverLevel(), core.primaryParticle(), center, 10);
-                AABB hitBox = new AABB(center, center).inflate(2.25D * rangeScale, 1.35D, 2.25D * rangeScale);
+                AABB hitBox = CombatGravityFrame.world(new AABB(center, center)
+                    .inflate(2.25D * rangeScale, 1.35D, 2.25D * rangeScale));
                 for (LivingEntity target : player.level().getEntitiesOfClass(LivingEntity.class, hitBox,
                     entity -> entity != player && entity.isAlive())) {
                     Damager.hurt(player, target, damage, true);
@@ -551,14 +562,16 @@ public final class CustomBloodDemonArtRuntime {
         final float initialYaw = player.getYRot();
         final float initialPitch = player.getXRot();
 
-        Vec3 launchDir = player.getLookAngle().normalize();
+        Vec3 localLaunchDir = CombatGravityFrame.look(player).normalize();
+        Vec3 launchDir = CombatGravityFrame.world(localLaunchDir);
         Vec3 spawnPos = player.getEyePosition().add(launchDir.scale(1.1D));
 
-        WitherSkull skull = new WitherSkull(level, player, launchDir.x, launchDir.y, launchDir.z);
+        WitherSkull skull = new WitherSkull(level, player, localLaunchDir.x, localLaunchDir.y, localLaunchDir.z);
+        CombatGravityFrame.inheritVisual(skull);
         skull.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
         skull.setYRot(initialYaw);
         skull.setXRot(initialPitch);
-        skull.setDeltaMovement(launchDir.scale(speed));
+        skull.setDeltaMovement(CombatGravityFrame.local(launchDir.scale(speed)));
 
         level.addFreshEntity(skull);
 
@@ -582,7 +595,8 @@ public final class CustomBloodDemonArtRuntime {
 
             Vec3 skullPos = skull.position();
 
-            level.sendParticles(
+            sendWorldParticles(
+                level,
                 trailParticle,
                 skullPos.x,
                 skullPos.y + 0.15D,
@@ -658,10 +672,10 @@ public final class CustomBloodDemonArtRuntime {
                 skull.setYRot(yaw);
                 skull.setXRot(pitch);
 
-                travelDir = Vec3.directionFromRotation(pitch, yaw);
+                travelDir = CombatGravityFrame.world(CombatGravityFrame.look(player));
             }
 
-            skull.setDeltaMovement(travelDir.scale(speed));
+            skull.setDeltaMovement(CombatGravityFrame.local(travelDir.scale(speed)));
             skull.hurtMarked = true;
 
         }, 1, maxLifetimeTicks + 5);
@@ -688,8 +702,8 @@ public final class CustomBloodDemonArtRuntime {
                 // Launch projectile
                 // - save the location of this projectile into an array
                 // - save the direction of this projectile into an array
-                dirs[(int) (tick[0] / projectileInterval)] = player.getLookAngle();
-                locs[(int) (tick[0] / projectileInterval)] = player.getEyePosition();
+                dirs[(int) (tick[0] / projectileInterval)] = CombatGravityFrame.look(player);
+                locs[(int) (tick[0] / projectileInterval)] = CombatGravityFrame.eye(player);
                 AnimationHelper.playAnimation(player, animations[(int) (tick[0] / projectileInterval)], projectileInterval);
                 level.playSound(
                     null,
@@ -700,10 +714,11 @@ public final class CustomBloodDemonArtRuntime {
                     1.0F
                 );
             }
-            for (int i = 0; i <= Math.min(tick[0] / projectileInterval, projectileCount); i++) {
+            for (int i = 0; i < Math.min(projectileCount, tick[0] / projectileInterval + 1); i++) {
                 Vec3 particlePos = locs[i];
 
-                 level.sendParticles(
+                 sendParticles(
+                        level,
                         particle2,
                         particlePos.x,
                         particlePos.y,
@@ -719,7 +734,8 @@ public final class CustomBloodDemonArtRuntime {
                 
                 particlePos = locs[i];
 
-                    level.sendParticles(
+                     sendParticles(
+                        level,
                         particle1,
                         particlePos.x,
                         particlePos.y,
@@ -731,7 +747,8 @@ public final class CustomBloodDemonArtRuntime {
                         0.0D
                     );
 
-                AABB hitBox = new AABB(locs[i], locs[i]).inflate(projectileSpeed, projectileSpeed, projectileSpeed);
+                AABB hitBox = CombatGravityFrame.world(new AABB(locs[i], locs[i])
+                    .inflate(projectileSpeed, projectileSpeed, projectileSpeed));
                 for (LivingEntity target : player.level().getEntitiesOfClass(LivingEntity.class, hitBox, entity -> entity != player && entity.isAlive())) {
                     spawnBurst(player.serverLevel(), core.primaryParticle(), locs[i], 10);
                     Damager.hurt(player, target, damage, false);
@@ -765,7 +782,7 @@ public final class CustomBloodDemonArtRuntime {
             }
 
             Vec3 eyePos = player.getEyePosition();
-            Vec3 look = player.getLookAngle();
+            Vec3 look = CombatGravityFrame.world(CombatGravityFrame.look(player));
 
             if (look.lengthSqr() < 1.0E-4D) {
                 look = new Vec3(0.0D, 0.0D, 1.0D);
@@ -823,7 +840,8 @@ public final class CustomBloodDemonArtRuntime {
             for (double step = 0.0D; step <= length; step += 0.35D) {
                 Vec3 p = eyePos.add(dir.scale(step));
 
-                level.sendParticles(
+                sendWorldParticles(
+                    level,
                     beamParticle,
                     p.x,
                     p.y,
@@ -859,7 +877,7 @@ public final class CustomBloodDemonArtRuntime {
 
     private static LivingEntity findCrosshairTarget(ServerPlayer player, double maxRange) {
         Vec3 eyePos = player.getEyePosition();
-        Vec3 look = player.getLookAngle().normalize();
+        Vec3 look = CombatGravityFrame.world(CombatGravityFrame.look(player)).normalize();
 
         AABB searchBox = player.getBoundingBox()
             .expandTowards(look.scale(maxRange))
@@ -966,7 +984,7 @@ public final class CustomBloodDemonArtRuntime {
                             FallingBlockEntity falling = FallingBlockEntity.fall(level, pos, state);
                             Vec3 toCenter = center.subtract(falling.position());
                             if (toCenter.lengthSqr() > 1.0E-4D) {
-                                falling.setDeltaMovement(toCenter.normalize().scale(0.35D * speedScale));
+                                 KNYGravity.setWorldVelocity(falling, toCenter.normalize().scale(0.35D * speedScale));
                             }
                         }
                     }
@@ -977,7 +995,8 @@ public final class CustomBloodDemonArtRuntime {
             for (double angle = 0.0D; angle < Math.PI * 2.0D; angle += Math.PI / 14.0D) {
                 double px = center.x + Math.cos(angle) * radius;
                 double pz = center.z + Math.sin(angle) * radius;
-                level.sendParticles(secondaryParticle, px, center.y, pz, 1, 0.02D, 0.02D, 0.02D, 0.0D);
+                 sendWorldParticles(level, secondaryParticle, px, center.y, pz, 1,
+                     0.02D, 0.02D, 0.02D, 0.0D);
             }
 
             AABB pullBox = new AABB(center, center).inflate(radius);
@@ -993,7 +1012,7 @@ public final class CustomBloodDemonArtRuntime {
 
                 double pullStrength = (0.08D + (0.14D * (1.0D - (dist / Math.max(radius, 0.001D))))) * speedScale;
                 Vec3 pull = toCenter.scale(1.0D / dist).scale(pullStrength);
-                entity.setDeltaMovement(entity.getDeltaMovement().add(pull));
+                 KNYGravity.setWorldVelocity(entity, KNYGravity.getWorldVelocity(entity).add(pull));
                 entity.hurtMarked = true;
 
                 if (entity instanceof LivingEntity living) {
@@ -1008,7 +1027,8 @@ public final class CustomBloodDemonArtRuntime {
                             Vec3 dir = delta.scale(1.0D / len);
                             for (double d = 0.2D; d <= len; d += 0.45D) {
                                 Vec3 p = from.add(dir.scale(d));
-                                level.sendParticles(primaryParticle, p.x, p.y, p.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+                                 sendWorldParticles(level, primaryParticle, p.x, p.y, p.z, 1,
+                                     0.0D, 0.0D, 0.0D, 0.0D);
                             }
                         }
                     }
@@ -1063,7 +1083,7 @@ public final class CustomBloodDemonArtRuntime {
         final double blockLiftRadius = Math.min(20.0D + (4.0D * rangeAmp), pullRadius);
 
         Vec3 eye = player.getEyePosition();
-        Vec3 look = player.getLookAngle();
+        Vec3 look = CombatGravityFrame.world(CombatGravityFrame.look(player));
         Vec3 maxEnd = eye.add(look.scale(60.0D));
 
         BlockHitResult blockHit = level.clip(new ClipContext(
@@ -1105,12 +1125,14 @@ public final class CustomBloodDemonArtRuntime {
         double laserLen = center.distanceTo(eye);
         for (double d = 0.0D; d <= laserLen; d += 0.35D) {
             Vec3 p = eye.add(look.scale(d));
-            level.sendParticles(primaryParticle, p.x, p.y, p.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            sendWorldParticles(level, primaryParticle, p.x, p.y, p.z,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
         //Log.warn("[DarkStar] Laser trace finished for {} at center={} rangeAmp={} speedScale={} damageScale={}",
         //    player.getName().getString(), center, rangeAmp, speedScale, damageScale);
 
-        DarkStarVisualEntity visual = DarkStarVisualEntity.create(level, center, player.getUUID(), tintColor, 2.0F, durationTicks);
+        DarkStarVisualEntity visual = DarkStarVisualEntity.create(level,
+            CombatGravityFrame.local(center), player.getUUID(), tintColor, 2.0F, durationTicks);
         level.addFreshEntity(visual);
 
         final Vec3 darkStarCenter = center;
@@ -1171,7 +1193,7 @@ public final class CustomBloodDemonArtRuntime {
                     Vec3 toCenter = darkStarCenter.subtract(falling.position());
 
                     if (toCenter.lengthSqr() > 1.0E-4D) {
-                        falling.setDeltaMovement(toCenter.normalize().scale(0.35D * speedScale));
+                         KNYGravity.setWorldVelocity(falling, toCenter.normalize().scale(0.35D * speedScale));
                         falling.hurtMarked = true;
                     }
 
@@ -1215,8 +1237,9 @@ public final class CustomBloodDemonArtRuntime {
                     }
 
                     level.destroyBlock(pos, true); // false = drops
-                    level.sendParticles(
-                        ParticleTypes.EXPLOSION,
+                     sendWorldParticles(
+                         level,
+                         ParticleTypes.EXPLOSION,
                         pos.getX() + 0.5D,
                         pos.getY() + 0.5D,
                         pos.getZ() + 0.5D,
@@ -1256,7 +1279,7 @@ public final class CustomBloodDemonArtRuntime {
                     double pullStrength = (0.28D + (0.42D * proximityBoost)) * speedScale;
 
                     Vec3 pull = toCenter.normalize().scale(pullStrength);
-                    entity.setDeltaMovement(entity.getDeltaMovement().add(pull));
+                     KNYGravity.setWorldVelocity(entity, KNYGravity.getWorldVelocity(entity).add(pull));
                     entity.hurtMarked = true;
 
                     if (entity instanceof LivingEntity living && dist <= effectRadius) {
@@ -1317,15 +1340,17 @@ public final class CustomBloodDemonArtRuntime {
             double radius = 1.25D;
             for (int i = 0; i < 16; i++) {
                 double a = (Math.PI * 2.0D * i) / 16.0D;
-                Vec3 p = player.position().add(Math.cos(a) * radius, height, Math.sin(a) * radius);
-                level.sendParticles(i % 2 == 0 ? primaryParticle : secondaryParticle, p.x, p.y, p.z, 1, 0.01D, 0.01D, 0.01D, 0.0D);
+                Vec3 p = CombatGravityFrame.position(player)
+                    .add(Math.cos(a) * radius, height, Math.sin(a) * radius);
+                sendParticles(level, i % 2 == 0 ? primaryParticle : secondaryParticle,
+                    p.x, p.y, p.z, 1, 0.01D, 0.01D, 0.01D, 0.0D);
             }
 
             // Emergency "totem" rescue whenever health gets critical.
             if (player.getHealth() <= 1.0F && totemCooldown[0] == 0) {
                 totemCooldown[0] = 8;
                 level.playSound(null, player.blockPosition(), SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.0F, 1.0F);
-                level.sendParticles(ParticleTypes.TOTEM_OF_UNDYING,
+                sendWorldParticles(level, ParticleTypes.TOTEM_OF_UNDYING,
                     player.getX(), player.getY() + 1.0D, player.getZ(),
                     40, 0.6D, 0.8D, 0.6D, 0.0D);
                 player.setHealth(Math.max(player.getHealth(), 8.0F));
@@ -1362,7 +1387,7 @@ public final class CustomBloodDemonArtRuntime {
             player.startFallFlying();
             player.fallDistance = 0.0F;
 
-            Vec3 look = player.getLookAngle();
+            Vec3 look = CombatGravityFrame.look(player);
             if (look.lengthSqr() < 1.0E-4D) {
                 look = new Vec3(0.0D, 0.0D, 1.0D);
             }
@@ -1371,8 +1396,9 @@ public final class CustomBloodDemonArtRuntime {
             double yVelocity = Mth.clamp(look.y * (0.55D * speedScale), -0.30D, 0.30D);
             MovementHelper.setVelocity(player, look.x * glideSpeed, yVelocity, look.z * glideSpeed);
 
-            Vec3 pos = player.position().add(0.0D, 0.6D, 0.0D);
-            level.sendParticles(trailParticle, pos.x, pos.y, pos.z, 6, 0.15D, 0.15D, 0.15D, 0.0D);
+            Vec3 pos = CombatGravityFrame.position(player).add(0.0D, 0.6D, 0.0D);
+            sendParticles(level, trailParticle, pos.x, pos.y, pos.z, 6,
+                0.15D, 0.15D, 0.15D, 0.0D);
         }, 1, durationTicks);
     }
 
@@ -1389,14 +1415,14 @@ public final class CustomBloodDemonArtRuntime {
 
         AnimationHelper.playAnimation(player, "beast2", 20);
 
-        // Yaw-based forward direction so the cone stays horizontal
-        float yaw = (float) Math.toRadians(-player.getYRot());
-        Vec3 forward = new Vec3(Math.sin(yaw), 0.0D, Math.cos(yaw)).normalize();
+        // Keep the cone in the player's gravity-local horizontal plane.
+        final Vec3 forward = new Vec3(CombatGravityFrame.look(player).x, 0.0D,
+            CombatGravityFrame.look(player).z).normalize();
 
         // Right vector for drawing circular cone rings
         Vec3 right = new Vec3(-forward.z, 0.0D, forward.x).normalize();
 
-        Vec3 eyePos = player.getEyePosition();
+        Vec3 eyePos = CombatGravityFrame.eye(player);
 
         double maxDistance = 14.0D * rangeScale;
         double baseRadius = 0.45D;
@@ -1414,7 +1440,8 @@ public final class CustomBloodDemonArtRuntime {
                         .add(right.scale(radius * Math.cos(angle)))
                         .add(0.0D, radius * Math.sin(angle), 0.0D);
 
-                    level.sendParticles(
+                    sendParticles(
+                        level,
                         particle,
                         particlePos.x,
                         particlePos.y,
@@ -1430,14 +1457,16 @@ public final class CustomBloodDemonArtRuntime {
         }
 
         // Cone-shaped hit detection
-        AABB hitBox = player.getBoundingBox().expandTowards(forward.scale(maxDistance)).inflate(3.5D * rangeScale);
+        AABB hitBox = CombatGravityFrame.world(new AABB(eyePos, eyePos)
+            .expandTowards(forward.scale(maxDistance)).inflate(3.5D * rangeScale));
 
         for (LivingEntity target : player.level().getEntitiesOfClass(
             LivingEntity.class,
             hitBox,
             entity -> entity != player && entity.isAlive()
         )) {
-            Vec3 toTarget = target.position().subtract(player.position());
+            Vec3 toTarget = CombatGravityFrame.local(target.position())
+                .subtract(CombatGravityFrame.position(player));
             Vec3 flatToTarget = new Vec3(toTarget.x, 0.0D, toTarget.z);
 
             if (flatToTarget.lengthSqr() < 0.001D) {
@@ -1548,13 +1577,8 @@ public final class CustomBloodDemonArtRuntime {
                 return;
             }
 
-            float yawRad = (float)Math.toRadians(-player.getYRot());
-
-            Vec3 forward = new Vec3(
-                Math.sin(yawRad),
-                0,
-                Math.cos(yawRad)
-            ).normalize();
+            Vec3 forward = CombatGravityFrame.look(player);
+            forward = new Vec3(forward.x, 0.0D, forward.z).normalize();
 
             Vec3 right = new Vec3(
                 -forward.z,
@@ -1598,7 +1622,7 @@ public final class CustomBloodDemonArtRuntime {
                         level,
                         player,
                         40,
-                        player.position(),
+                         CombatGravityFrame.position(player),
                         player.getYRot()
                     );
 
@@ -1617,10 +1641,10 @@ public final class CustomBloodDemonArtRuntime {
 
                 // Damage sweep
                 Vec3 attackCenter =
-                    player.position()
+                    CombatGravityFrame.position(player)
                         .add(forward.scale(2.5D));
 
-                AABB hitbox =
+                AABB hitbox = CombatGravityFrame.world(
                     new AABB(
                         attackCenter.x - 2.0D,
                         attackCenter.y - 1.5D,
@@ -1628,7 +1652,7 @@ public final class CustomBloodDemonArtRuntime {
                         attackCenter.x + 2.0D,
                         attackCenter.y + 1.5D,
                         attackCenter.z + 2.0D
-                    );
+                    ));
 
                 for (LivingEntity target : level.getEntitiesOfClass(
                     LivingEntity.class,
@@ -1652,9 +1676,8 @@ public final class CustomBloodDemonArtRuntime {
                         amplifierTotals
                     );
 
-                    Vec3 knockback =
-                        target.position()
-                            .subtract(player.position());
+                    Vec3 knockback = CombatGravityFrame.local(target.position())
+                        .subtract(CombatGravityFrame.position(player));
 
                     if (knockback.lengthSqr() > 0.001D) {
                         knockback = knockback.normalize();
@@ -1691,13 +1714,14 @@ public final class CustomBloodDemonArtRuntime {
         final double spawnRadius = 0.7D;
 
         final int tintColor = core.chatColor() & 0xFFFFFF;
-        final Vec3 center = player.getEyePosition().add(0.0D, -0.2D, 0.0D);
+        final Vec3 center = CombatGravityFrame.eye(player).add(0.0D, -0.2D, 0.0D);
 
         AnimationHelper.playAnimation(player, "speed_attack_punch", 10);
         level.playSound(null, player.blockPosition(), SoundEvents.SKELETON_SHOOT, SoundSource.PLAYERS, 1.0F, 1.15F);
 
         ParticleOptions burstParticle = resolveParticle(core.primaryParticle());
-        level.sendParticles(burstParticle, center.x, center.y, center.z, 20, 0.2D, 0.2D, 0.2D, 0.01D);
+        sendParticles(level, burstParticle, center.x, center.y, center.z, 20,
+            0.2D, 0.2D, 0.2D, 0.01D);
 
         for (int i = 0; i < spineCount; i++) {
             // Fibonacci sphere sampling keeps coverage even across all directions.
@@ -1763,7 +1787,8 @@ public final class CustomBloodDemonArtRuntime {
         target.addEffect(new MobEffectInstance(MobEffects.GLOWING, markDurationTicks + 5, 0, false, false, true));
 
         ParticleOptions particle = resolveParticle(core.primaryParticle());
-        level.sendParticles(
+        sendWorldParticles(
+            level,
             particle,
             target.getX(),
             target.getY() + (target.getBbHeight() * 0.6D),
@@ -1822,7 +1847,8 @@ public final class CustomBloodDemonArtRuntime {
         float damage = (9 * damageScale);
         GuardStateHelper.setGuardState(player, 7*defenseAmp);
 
-       Vec3 launch = VindicatorsBane.getTargetDirection(player).scale(0.55D * speedScale);
+        Vec3 launch = CombatGravityFrame.local(VindicatorsBane.getTargetDirection(player))
+            .scale(0.55D * speedScale);
        playAnimation(player, "sword_to_upper", 10);
        ServerLevel level = player.serverLevel();
        VindicatorsBane.playSplitterLaunchSound(level, player);
@@ -1834,7 +1860,8 @@ public final class CustomBloodDemonArtRuntime {
                 return;
             }
 
-            Vec3 dive = VindicatorsBane.getTargetDirection(player).scale(0.7D * speedScale);
+            Vec3 dive = CombatGravityFrame.local(VindicatorsBane.getTargetDirection(player))
+                .scale(0.7D * speedScale);
             MovementHelper.setVelocity(player, dive.x, -1, dive.z);
             player.hurtMarked = true;
             playAnimation(player, "sword_overhead", 12);
@@ -1844,12 +1871,16 @@ public final class CustomBloodDemonArtRuntime {
                 }
 
                 VindicatorsBane.playSplitterImpactSound(level, player);
-                level.sendParticles(particle1, player.getX(), player.getY(0.1D), player.getZ(), 12, 0.45D, 0.15D, 0.45D, 0.01D);
-                level.sendParticles(particle2, player.getX(), player.getY(0.2D), player.getZ(), 20, 0.8D, 0.3D, 0.8D, 0.03D);
+                sendWorldParticles(level, particle1, player.getX(), player.getY(0.1D), player.getZ(),
+                    12, 0.45D, 0.15D, 0.45D, 0.01D);
+                sendWorldParticles(level, particle2, player.getX(), player.getY(0.2D), player.getZ(),
+                    20, 0.8D, 0.3D, 0.8D, 0.03D);
 
                 
                 for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
-                    player.getBoundingBox().inflate(3.0D * rangeScale, 1.5D * rangeScale, 3.0D * rangeScale),
+                    CombatGravityFrame.world(new AABB(CombatGravityFrame.position(player),
+                        CombatGravityFrame.position(player)).inflate(3.0D * rangeScale, 1.5D * rangeScale,
+                            3.0D * rangeScale)),
                     living -> living != player && living.isAlive() && player.distanceToSqr(living) <= 9.0D * rangeScale)) {
                     if (Damager.hurt(player, target, damage)) {
                         //BleedingHandler.applyOrRefreshBleeding(target, 20 * 10, 1);
@@ -1880,11 +1911,12 @@ public final class CustomBloodDemonArtRuntime {
 
     private static BlockPos findValidGroundSpawn(ServerLevel level, BlockPos start, int limit) {
         BlockPos.MutableBlockPos checkPos = start.mutable();
+        net.minecraft.core.Direction worldDown = CombatGravityFrame.world(net.minecraft.core.Direction.DOWN);
         int c = 0;
 
         // Try going down first
-        while (!isValidGround(level, checkPos.below())) {
-            checkPos.move(0, -1, 0);
+        while (!isValidGround(level, checkPos.relative(worldDown))) {
+            checkPos.move(worldDown);
             if (++c > limit) break;
         }
 
@@ -1896,8 +1928,8 @@ public final class CustomBloodDemonArtRuntime {
         checkPos.set(start);
         c = 0;
 
-        while (!isValidGround(level, checkPos.below())) {
-            checkPos.move(0, 1, 0);
+        while (!isValidGround(level, checkPos.relative(worldDown))) {
+            checkPos.move(worldDown.getOpposite());
             if (++c > limit) break;
         }
 
@@ -1913,12 +1945,12 @@ public final class CustomBloodDemonArtRuntime {
         final float damage = (5*damageScale);
         ServerLevel level = player.serverLevel();
         
-        Vec3 start = player.getEyePosition();
-        Vec3 look = player.getLookAngle();
+        Vec3 start = CombatGravityFrame.eye(player);
+        Vec3 look = CombatGravityFrame.look(player);
         if (look.lengthSqr() < 1.0E-4D) {
             look = new Vec3(0.0D, 0.0D, 1.0D);
         }
-        final Vec3[] velocity = {look.normalize().scale(1)};
+        final Vec3[] velocity = {look.normalize()};
         final Vec3[] currentPos = { start };
 
         final ParticleOptions particle1 = resolveParticle(core.primaryParticle());
@@ -1944,7 +1976,8 @@ public final class CustomBloodDemonArtRuntime {
 
                 //velocity[0] = velocity[0].add(0.0D, -0.01D, 0.0D);
                 Vec3 nextPos = currentPos[0].add(velocity[0]);
-                BlockHitResult hit = activeLevel.clip(new ClipContext(currentPos[0], nextPos,
+                BlockHitResult hit = activeLevel.clip(new ClipContext(
+                    CombatGravityFrame.world(currentPos[0]), CombatGravityFrame.world(nextPos),
                     ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
 
                 if (hit.getType() == HitResult.Type.BLOCK) {
@@ -1961,14 +1994,13 @@ public final class CustomBloodDemonArtRuntime {
 
                     
 
-                    // Use nearest block in X/Z instead of flooring/truncating
-                    int baseX = (int) Math.round(basePos.x);
-                    int baseY = Mth.floor(basePos.y);
-                    int baseZ = (int) Math.round(basePos.z);
+                    // Select neighboring blocks in the authored surface axes, then
+                    // convert each candidate to the world before querying terrain.
+                    BlockPos localBase = BlockPos.containing(basePos);
 
                     // Try center first, then random horizontal neighboring blocks
                     java.util.List<BlockPos> candidateBases = new java.util.ArrayList<>();
-                    candidateBases.add(new BlockPos(baseX, baseY, baseZ));
+                    candidateBases.add(CombatGravityFrame.world(localBase));
 
                     int start = level.random.nextInt(4);
 
@@ -1981,7 +2013,7 @@ public final class CustomBloodDemonArtRuntime {
 
                     for (int i = 0; i < 4; i++) {
                         BlockPos offset = offsets[(start + i) % 4];
-                        candidateBases.add(new BlockPos(baseX + offset.getX(), baseY, baseZ + offset.getZ()));
+                        candidateBases.add(CombatGravityFrame.world(localBase.offset(offset.getX(), 0, offset.getZ())));
                     }
 
                     for (BlockPos candidateBase : candidateBases) {
@@ -2009,14 +2041,16 @@ public final class CustomBloodDemonArtRuntime {
                             spawnPos.x,
                             spawnPos.y,
                             spawnPos.z,
-                            player.getYRot(),
+                            CombatGravityFrame.yaw(player),
                             0,
                             player
                         );
+                        CombatGravityFrame.inheritVisual(fangs);
 
                         level.addFreshEntity(fangs);
 
-                        level.sendParticles(
+                        sendWorldParticles(
+                            level,
                             particle1,
                             spawnPos.x,
                             spawnPos.y+1.3f,
@@ -2028,12 +2062,14 @@ public final class CustomBloodDemonArtRuntime {
                             0.0D
                         );
 
-                        spawnRing(level, core.secondaryParticle(), spawnPos.add(0, 0.5f, 0), 0.5, 9);
+                        spawnRing(level, core.secondaryParticle(), CombatGravityFrame.local(spawnPos)
+                            .add(0, 0.5f, 0), 0.5, 9);
 
-                        AABB damageBox = new AABB(
-                            spawnPos.x - 1.0D, spawnPos.y, spawnPos.z - 1.0D,
-                            spawnPos.x + 1.0D, spawnPos.y + 1.5D, spawnPos.z + 1.0D
-                        );
+                        Vec3 localSpawnPos = CombatGravityFrame.local(spawnPos);
+                        AABB damageBox = CombatGravityFrame.world(new AABB(
+                            localSpawnPos.x - 1.0D, localSpawnPos.y, localSpawnPos.z - 1.0D,
+                            localSpawnPos.x + 1.0D, localSpawnPos.y + 1.5D, localSpawnPos.z + 1.0D
+                        ));
 
                         for (LivingEntity target : level.getEntitiesOfClass(
                             LivingEntity.class,
@@ -2128,7 +2164,8 @@ public final class CustomBloodDemonArtRuntime {
                 continue;
             }
 
-            Vec3 spawnPos = player.position().add(spawnOffset);
+            Vec3 spawnPos = player.position().add(CombatGravityFrame.world(spawnOffset));
+            CombatGravityFrame.inheritVisual(vex);
 
             vex.moveTo(
                 spawnPos.x,
@@ -2193,7 +2230,7 @@ public final class CustomBloodDemonArtRuntime {
             ticks[0]++;
 
             Vec3 playerPos = player.position();
-            Vec3 look = player.getLookAngle();
+            Vec3 look = CombatGravityFrame.world(CombatGravityFrame.look(player));
 
             if (look.lengthSqr() < 1.0E-4D) {
                 look = new Vec3(0.0D, 0.0D, 1.0D);
@@ -2211,13 +2248,11 @@ public final class CustomBloodDemonArtRuntime {
                     double radius = 1.0D + 0.04D * ticks[0];
                     double y = 0.2D + ticks[0] * 0.08D;
 
-                    Vec3 p = player.position().add(
-                        Math.cos(angle) * radius,
-                        y,
-                        Math.sin(angle) * radius
-                    );
+                    Vec3 p = player.position().add(CombatGravityFrame.world(new Vec3(
+                        Math.cos(angle) * radius, y, Math.sin(angle) * radius)));
 
-                    level.sendParticles(
+                    sendWorldParticles(
+                        level,
                         primaryParticle,
                         p.x,
                         p.y,
@@ -2249,7 +2284,8 @@ public final class CustomBloodDemonArtRuntime {
                 Vec3 vexPos = vex.position();
                 double distToPlayerSqr = vex.distanceToSqr(player);
 
-                level.sendParticles(
+                sendWorldParticles(
+                    level,
                     secondaryParticle,
                     vexPos.x,
                     vexPos.y + 0.25D,
@@ -2265,11 +2301,10 @@ public final class CustomBloodDemonArtRuntime {
                     double angle = level.random.nextDouble() * Math.PI * 2.0D;
                     double distance = 2.0D + level.random.nextDouble() * teleportRadius;
 
-                    Vec3 teleportPos = player.position().add(
+                    Vec3 teleportPos = player.position().add(CombatGravityFrame.world(new Vec3(
                         Math.cos(angle) * distance,
                         1.0D + level.random.nextDouble() * 2.0D,
-                        Math.sin(angle) * distance
-                    );
+                        Math.sin(angle) * distance)));
 
                     vex.teleportTo(teleportPos.x, teleportPos.y, teleportPos.z);
                     vex.setBoundOrigin(player.blockPosition());
@@ -2281,11 +2316,10 @@ public final class CustomBloodDemonArtRuntime {
                     vex.setTarget(null);
                     vex.setBoundOrigin(player.blockPosition());
 
-                    Vec3 returnPos = player.getEyePosition().add(
+                    Vec3 returnPos = player.getEyePosition().add(CombatGravityFrame.world(new Vec3(
                         (level.random.nextDouble() - 0.5D) * 4.0D,
                         level.random.nextDouble() * 2.0D,
-                        (level.random.nextDouble() - 0.5D) * 4.0D
-                    );
+                        (level.random.nextDouble() - 0.5D) * 4.0D)));
 
                     vex.getMoveControl().setWantedPosition(
                         returnPos.x,
@@ -2357,7 +2391,8 @@ public final class CustomBloodDemonArtRuntime {
         LivingEntity initialTarget = findCrosshairTarget(player, searchRange);
         Vec3 center = initialTarget != null
             ? initialTarget.position().add(0.0D, initialTarget.getBbHeight() * 0.5D, 0.0D)
-            : player.getEyePosition().add(player.getLookAngle().normalize().scale(searchRange));
+            : player.getEyePosition().add(CombatGravityFrame.world(CombatGravityFrame.look(player)
+                .normalize().scale(searchRange)));
 
         final Vec3 prisonCenter = center;
 
@@ -2374,13 +2409,16 @@ public final class CustomBloodDemonArtRuntime {
                 for (int h = -3; h <= 3; h++) {
                     double y = (h / 3.0D) * prisonRadius;
                     double ringRadius = Math.sqrt(Math.max(0.0D, (prisonRadius * prisonRadius) - (y * y)));
-                    Vec3 p = prisonCenter.add(Math.cos(theta) * ringRadius, y, Math.sin(theta) * ringRadius);
-                    level.sendParticles(primaryParticle, p.x, p.y, p.z, 1, 0.01D, 0.01D, 0.01D, 0.0D);
+                    Vec3 p = prisonCenter.add(CombatGravityFrame.world(new Vec3(
+                        Math.cos(theta) * ringRadius, y, Math.sin(theta) * ringRadius)));
+                    sendWorldParticles(level, primaryParticle, p.x, p.y, p.z,
+                        1, 0.01D, 0.01D, 0.01D, 0.0D);
                 }
             }
 
             // Center vortex effect.
-            level.sendParticles(
+            sendWorldParticles(
+                level,
                 secondaryParticle,
                 prisonCenter.x,
                 prisonCenter.y,
@@ -2398,10 +2436,11 @@ public final class CustomBloodDemonArtRuntime {
                 prisonBox,
                 e -> e != player && e.isAlive() && isEnemy(player, e)
             )) {
-                Vec3 desired = prisonCenter.add(0.0D, 0.25D + (0.12D * Math.sin((tick[0] + target.getId()) * 0.25D)), 0.0D);
+                Vec3 desired = prisonCenter.add(CombatGravityFrame.world(new Vec3(
+                    0.0D, 0.25D + (0.12D * Math.sin((tick[0] + target.getId()) * 0.25D)), 0.0D)));
                 Vec3 pull = desired.subtract(target.position()).scale(0.30D + (0.08D * speedScale));
 
-                target.setDeltaMovement(target.getDeltaMovement().scale(0.2D).add(pull));
+                KNYGravity.setWorldVelocity(target, KNYGravity.getWorldVelocity(target).scale(0.2D).add(pull));
                 target.hurtMarked = true;
                 target.fallDistance = 0.0F;
 
@@ -2440,7 +2479,7 @@ public final class CustomBloodDemonArtRuntime {
 
             tick[0]++;
             Vec3 eye = player.getEyePosition();
-            Vec3 look = player.getLookAngle().normalize();
+            Vec3 look = CombatGravityFrame.world(CombatGravityFrame.look(player)).normalize();
 
             if (!fired[0] && tick[0] >= 15) {
                 fired[0] = true;
@@ -2448,8 +2487,10 @@ public final class CustomBloodDemonArtRuntime {
 
                 for (double d = 0.8D; d <= beamRange; d += 0.6D) {
                     Vec3 p = eye.add(look.scale(d));
-                    level.sendParticles(ParticleTypes.SONIC_BOOM, p.x, p.y, p.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-                    level.sendParticles(primaryParticle, p.x, p.y, p.z, 1, 0.04D, 0.04D, 0.04D, 0.0D);
+                    sendWorldParticles(level, ParticleTypes.SONIC_BOOM, p.x, p.y, p.z,
+                        1, 0.0D, 0.0D, 0.0D, 0.0D);
+                    sendWorldParticles(level, primaryParticle, p.x, p.y, p.z,
+                        1, 0.04D, 0.04D, 0.04D, 0.0D);
                 }
 
                 Set<Integer> hitIds = new HashSet<>();
@@ -2482,7 +2523,8 @@ public final class CustomBloodDemonArtRuntime {
                     );
                     applyTargetPotion(core.primaryPotion(), player, target, amplifierTotals);
                     applyTargetPotion(core.secondaryPotion(), player, target, amplifierTotals);
-                    MovementHelper.addVelocity(target, look.x * (0.7D * speedScale), 0.12D, look.z * (0.7D * speedScale));
+            Vec3 localKnockback = CombatGravityFrame.local(look).scale(0.7D * speedScale);
+            MovementHelper.addVelocity(target, localKnockback.x, 0.12D, localKnockback.z);
                 }
             }
         }, 1, 22);
@@ -2507,7 +2549,8 @@ public final class CustomBloodDemonArtRuntime {
         for (int i = 0; i < 4; i++) {
             float yaw = player.getYRot() + (i * 90.0F);
             com.lerdorf.kimetsunoyaibamultiplayer.entities.AfterImageEntity image =
-                new com.lerdorf.kimetsunoyaibamultiplayer.entities.AfterImageEntity(level, player, lifetimeTicks + 30, player.position(), yaw);
+                new com.lerdorf.kimetsunoyaibamultiplayer.entities.AfterImageEntity(level, player, lifetimeTicks + 30,
+                    CombatGravityFrame.position(player), yaw);
             image.startVisibleWithFade();
             level.addFreshEntity(image);
             afterImages.add(image);
@@ -2525,13 +2568,15 @@ public final class CustomBloodDemonArtRuntime {
             player.startFallFlying();
             player.fallDistance = 0.0F;
 
-            Vec3 look = player.getLookAngle().normalize();
+            Vec3 look = CombatGravityFrame.look(player).normalize();
             double yVelocity = Mth.clamp(look.y * (0.55D * speedScale), -0.28D, 0.28D);
             MovementHelper.setVelocity(player, look.x * glideSpeed, yVelocity, look.z * glideSpeed);
 
             for (double a = 0.0D; a < Math.PI * 2.0D; a += Math.PI / 4.0D) {
-                Vec3 p = player.position().add(Math.cos(a) * 1.8D, 0.5D, Math.sin(a) * 1.8D);
-                level.sendParticles(primaryParticle, p.x, p.y, p.z, 1, 0.02D, 0.02D, 0.02D, 0.0D);
+                Vec3 p = CombatGravityFrame.position(player).add(new Vec3(
+                    Math.cos(a) * 1.8D, 0.5D, Math.sin(a) * 1.8D));
+                sendParticles(level, primaryParticle, p.x, p.y, p.z,
+                    1, 0.02D, 0.02D, 0.02D, 0.0D);
             }
 
             for (int i = 0; i < afterImages.size(); i++) {
@@ -2541,8 +2586,9 @@ public final class CustomBloodDemonArtRuntime {
                 }
 
                 double angle = (tick[0] * 0.16D * speedScale) + (i * (Math.PI / 2.0D));
-                Vec3 orbitCenter = player.position().add(0.0D, 6.0D, 0.0D);
-                Vec3 orbitTarget = orbitCenter.add(Math.cos(angle) * orbitRadius, Math.sin(angle * 0.5D) * 1.5D, Math.sin(angle) * orbitRadius);
+                Vec3 orbitCenter = CombatGravityFrame.position(player).add(0.0D, 6.0D, 0.0D);
+                Vec3 orbitTarget = orbitCenter.add(Math.cos(angle) * orbitRadius,
+                    Math.sin(angle * 0.5D) * 1.5D, Math.sin(angle) * orbitRadius);
 
                 LivingEntity enemy = null;
                 if (tick[0] % 18 == 0) {
@@ -2559,10 +2605,10 @@ public final class CustomBloodDemonArtRuntime {
 
                 Vec3 moveTarget = orbitTarget;
                 if (enemy != null) {
-                    moveTarget = enemy.getEyePosition();
+                    moveTarget = CombatGravityFrame.local(enemy.getEyePosition());
                 }
 
-                Vec3 dir = moveTarget.subtract(image.position());
+                Vec3 dir = moveTarget.subtract(CombatGravityFrame.local(image.position()));
                 if (dir.lengthSqr() > 1.0E-4D) {
                     MovementHelper.setVelocity(image, dir.normalize().scale(0.65D * speedScale));
                     MovementHelper.lookInDirection(image, dir);
@@ -2573,7 +2619,8 @@ public final class CustomBloodDemonArtRuntime {
                     Damager.hurt(player, target, swoopDamage, false);
                     applyTargetPotion(core.primaryPotion(), player, target, amplifierTotals);
                     applyTargetPotion(core.secondaryPotion(), player, target, amplifierTotals);
-                    Vec3 away = target.position().subtract(image.position()).normalize();
+                    Vec3 away = CombatGravityFrame.local(target.position())
+                        .subtract(CombatGravityFrame.local(image.position())).normalize();
                     MovementHelper.addVelocity(target, away.x * 0.55D, 0.18D, away.z * 0.55D);
                 }
             }
@@ -2612,31 +2659,37 @@ public final class CustomBloodDemonArtRuntime {
             }
 
             tick[0]++;
-            double yaw = player.getYRot() + (float) (26.0D * speedScale);
-            MovementHelper.setRotation(player, (float) yaw, player.getXRot());
-            MovementHelper.setVelocity(player, player.getDeltaMovement().x * 0.45D, Math.max(player.getDeltaMovement().y, -0.06D), player.getDeltaMovement().z * 0.45D);
+            double yaw = CombatGravityFrame.yaw(player) + (26.0D * speedScale);
+            MovementHelper.setRotation(player, (float) yaw, CombatGravityFrame.pitch(player));
+            Vec3 localVelocity = CombatGravityFrame.velocity(player);
+            MovementHelper.setVelocity(player, localVelocity.x * 0.45D,
+                Math.max(localVelocity.y, -0.06D), localVelocity.z * 0.45D);
 
-            Vec3 center = player.position().add(0.0D, 1.0D, 0.0D);
+            Vec3 center = CombatGravityFrame.position(player).add(0.0D, 1.0D, 0.0D);
             for (double r = 1.0D; r <= Math.min(radius, 10.0D + tick[0] * 0.22D * speedScale); r += 1.0D) {
                 double angle = (tick[0] * 0.45D * speedScale) + (r * 0.65D);
-                Vec3 p1 = center.add(Math.cos(angle) * r, (r * 0.06D), Math.sin(angle) * r);
-                Vec3 p2 = center.add(Math.cos(angle + Math.PI) * r, (r * 0.06D), Math.sin(angle + Math.PI) * r);
-                level.sendParticles(primaryParticle, p1.x, p1.y, p1.z, 1, 0.01D, 0.01D, 0.01D, 0.0D);
-                level.sendParticles(secondaryParticle, p2.x, p2.y, p2.z, 1, 0.01D, 0.01D, 0.01D, 0.0D);
+                Vec3 p1 = CombatGravityFrame.world(center.add(Math.cos(angle) * r, (r * 0.06D), Math.sin(angle) * r));
+                Vec3 p2 = CombatGravityFrame.world(center.add(Math.cos(angle + Math.PI) * r,
+                    (r * 0.06D), Math.sin(angle + Math.PI) * r));
+                sendWorldParticles(level, primaryParticle, p1.x, p1.y, p1.z,
+                    1, 0.01D, 0.01D, 0.01D, 0.0D);
+                sendWorldParticles(level, secondaryParticle, p2.x, p2.y, p2.z,
+                    1, 0.01D, 0.01D, 0.01D, 0.0D);
             }
 
-            AABB hitBox = new AABB(player.position(), player.position()).inflate(radius, 2.0D, radius);
+            AABB hitBox = CombatGravityFrame.world(new AABB(CombatGravityFrame.position(player),
+                CombatGravityFrame.position(player)).inflate(radius, 2.0D, radius));
             for (LivingEntity target : level.getEntitiesOfClass(
                 LivingEntity.class,
                 hitBox,
                 e -> e != player
                     && e.isAlive()
                     && !(e instanceof com.lerdorf.kimetsunoyaibamultiplayer.entities.AfterImageEntity)
-                    && Math.abs(e.getY() - player.getY()) <= 2.0D
+                    && Math.abs(CombatGravityFrame.local(e.position()).y - CombatGravityFrame.position(player).y) <= 2.0D
             )) {
                 Damager.hurt(player, target, pulseDamage, true);
                 applyTargetPotion(core.primaryPotion(), player, target, amplifierTotals);
-                Vec3 dir = target.position().subtract(player.position());
+                Vec3 dir = CombatGravityFrame.local(target.position()).subtract(CombatGravityFrame.position(player));
                 if (dir.lengthSqr() > 1.0E-4D) {
                     Vec3 kb = dir.normalize().scale(0.4D + (0.25D * speedScale));
                     MovementHelper.addVelocity(target, kb.x, 0.18D, kb.z);
@@ -2671,7 +2724,7 @@ public final class CustomBloodDemonArtRuntime {
 
         final int[] tick = {0};
 
-        final Vec3 center = player.position();
+        final Vec3 center = CombatGravityFrame.position(player);
 
         final float step = (float)(0.5f * speedScale);
 
@@ -2692,22 +2745,25 @@ public final class CustomBloodDemonArtRuntime {
             for (float a = 0; a < Math.PI * 2; a += (Math.PI * 2) / (tick[0] * 2)) {
                 
                 Vec3 loc = center.add(r * Math.cos(a), 0, r * Math.sin(a));
-                BlockPos.MutableBlockPos bloc = new BlockPos((int) loc.x, (int) loc.y, (int) loc.z).mutable();
+                Vec3 worldLoc = CombatGravityFrame.world(loc);
+                net.minecraft.core.Direction worldDown = CombatGravityFrame.world(net.minecraft.core.Direction.DOWN);
+                BlockPos.MutableBlockPos bloc = BlockPos.containing(worldLoc).mutable();
                 int c = 0;
                 int limit = 15;
 
                 // Try going down first
-                while (!isValidGround(level, bloc.below())) {
-                    bloc.move(0, -1, 0);
+                while (!isValidGround(level, bloc.relative(worldDown))) {
+                    bloc.move(worldDown);
                     if (++c > limit) break;
                 }
                 
                 if (c < limit) {
-                    level.sendParticles(tick[0] % 2 == 0 ? primaryParticle : secondaryParticle, loc.x, bloc.getY() + 1.5f, loc.z + 0.5f, 5, 0.1D, 0.1D, 0.1D,
-                            0.04D);
-                    BlockState state = level.getBlockState(bloc.below());
+                    sendWorldParticles(level, tick[0] % 2 == 0 ? primaryParticle : secondaryParticle,
+                        worldLoc.x, worldLoc.y, worldLoc.z, 5, 0.1D, 0.1D, 0.1D, 0.04D);
+                    BlockState state = level.getBlockState(bloc.relative(worldDown));
 
-                    level.sendParticles(
+                    sendWorldParticles(
+                        level,
                         new BlockParticleOption(ParticleTypes.BLOCK, state),
                         bloc.getX() + 0.5D,
                         bloc.getY() + 0.5D,
@@ -2767,23 +2823,28 @@ public final class CustomBloodDemonArtRuntime {
             tick[0]++;
 
             player.fallDistance = 0.0F;
+            net.minecraft.core.Direction worldDown = CombatGravityFrame.world(net.minecraft.core.Direction.DOWN);
             BlockPos groundPos = player.blockPosition().mutable();
             int downChecks = 0;
             while (downChecks < 48 && !isValidGround(level, groundPos)) {
-                groundPos = groundPos.below();
+                groundPos = groundPos.relative(worldDown);
                 downChecks++;
             }
 
-            double currentHeightAboveGround = player.getY() - groundPos.getY();
+            double currentHeightAboveGround = CombatGravityFrame.local(player.position()).y
+                - CombatGravityFrame.local(Vec3.atCenterOf(groundPos)).y;
             double heightError = targetHoverHeight - currentHeightAboveGround;
             double yVel = Mth.clamp(heightError * 0.12D, -0.2D, 0.35D) * speedScale;
-            MovementHelper.setVelocity(player, player.getDeltaMovement().x * 0.7D, yVel, player.getDeltaMovement().z * 0.7D);
+            Vec3 localVelocity = CombatGravityFrame.velocity(player);
+            MovementHelper.setVelocity(player, localVelocity.x * 0.7D, yVel, localVelocity.z * 0.7D);
 
             double baseAngle = tick[0] * 0.26D * speedScale;
             for (int i = 0; i < 18; i++) {
                 double a = baseAngle + ((Math.PI * 2.0D * i) / 18.0D);
-                Vec3 p = player.position().add(Math.cos(a) * ringRadius, 0.4D + 0.3D * Math.sin(a * 2.0D), Math.sin(a) * ringRadius);
-                level.sendParticles(primaryParticle, p.x, p.y, p.z, 1, 0.01D, 0.01D, 0.01D, 0.0D);
+                Vec3 p = CombatGravityFrame.world(CombatGravityFrame.position(player).add(
+                    Math.cos(a) * ringRadius, 0.4D + 0.3D * Math.sin(a * 2.0D), Math.sin(a) * ringRadius));
+                sendWorldParticles(level, primaryParticle, p.x, p.y, p.z,
+                    1, 0.01D, 0.01D, 0.01D, 0.0D);
             }
         }, 1, lifetimeTicks);
     }
@@ -2828,15 +2889,16 @@ public final class CustomBloodDemonArtRuntime {
             if (ticks[0] <= launchTicks) {
                 MovementHelper.setVelocity(
                     player,
-                    player.getDeltaMovement().x * 0.5D,
+                    CombatGravityFrame.velocity(player).x * 0.5D,
                     launchUpVelocity,
-                    player.getDeltaMovement().z * 0.5D
+                    CombatGravityFrame.velocity(player).z * 0.5D
                 );
-                level.sendParticles(
+                sendParticles(
+                    level,
                     trailParticle,
-                    player.getX(),
-                    player.getY() + 0.4D,
-                    player.getZ(),
+                    CombatGravityFrame.position(player).x,
+                    CombatGravityFrame.position(player).y + 0.4D,
+                    CombatGravityFrame.position(player).z,
                     10,
                     0.2D,
                     0.25D,
@@ -2848,7 +2910,7 @@ public final class CustomBloodDemonArtRuntime {
 
             player.startFallFlying();
 
-            Vec3 look = player.getLookAngle();
+            Vec3 look = CombatGravityFrame.look(player);
             if (look.lengthSqr() < 1.0E-4D) {
                 look = new Vec3(0.0D, 0.0D, 1.0D);
             }
@@ -2856,8 +2918,10 @@ public final class CustomBloodDemonArtRuntime {
 
             MovementHelper.setVelocity(player, look.scale(speed));
 
-            Vec3 pos = player.position().add(0.0D, 0.7D, 0.0D);
-            level.sendParticles(trailParticle, pos.x, pos.y, pos.z, 8, 0.2D, 0.2D, 0.2D, 0.0D);
+            Vec3 pos = CombatGravityFrame.world(CombatGravityFrame.position(player)
+                .add(0.0D, 0.7D, 0.0D));
+            sendWorldParticles(level, trailParticle, pos.x, pos.y, pos.z,
+                8, 0.2D, 0.2D, 0.2D, 0.0D);
 
             boolean blockCrash = player.horizontalCollision || player.verticalCollision;
             boolean entityCrash = !level.getEntitiesOfClass(
@@ -2901,8 +2965,10 @@ public final class CustomBloodDemonArtRuntime {
             double angle = tick[0] * 0.45D * speedScale;
             for (int i = 0; i < 3; i++) {
                 double a = angle + i * (Math.PI * 2.0D / 3.0D);
-                Vec3 p = player.position().add(Math.cos(a) * 1.2D, 0.7D + (0.25D * i), Math.sin(a) * 1.2D);
-                level.sendParticles(primaryParticle, p.x, p.y, p.z, 1, 0.02D, 0.02D, 0.02D, 0.0D);
+            Vec3 p = player.position().add(CombatGravityFrame.world(new Vec3(
+                Math.cos(a) * 1.2D, 0.7D + (0.25D * i), Math.sin(a) * 1.2D)));
+                sendWorldParticles(level, primaryParticle, p.x, p.y, p.z,
+                    1, 0.02D, 0.02D, 0.02D, 0.0D);
             }
 
             applySelfPotion(core.primaryPotion(), player, amplifierTotals);
@@ -2920,11 +2986,12 @@ public final class CustomBloodDemonArtRuntime {
                 meleeArc,
                 e -> e != player && e.isAlive() && isEnemy(player, e)
             )) {
-                Vec3 toTarget = target.position().subtract(player.position());
+                Vec3 toTarget = CombatGravityFrame.local(target.position())
+                    .subtract(CombatGravityFrame.position(player));
                 if (toTarget.lengthSqr() > 4.84D) {
                     continue;
                 }
-                Vec3 forward = player.getLookAngle().normalize();
+                Vec3 forward = CombatGravityFrame.look(player).normalize();
                 if (toTarget.normalize().dot(forward) < 0.35D) {
                     continue;
                 }
@@ -2947,7 +3014,7 @@ public final class CustomBloodDemonArtRuntime {
                                             ParticleOptions burstParticle,
                                             float explosionRadius,
                                             float explosionDamage) {
-        Vec3 pos = player.position().add(0.0D, 0.5D, 0.0D);
+        Vec3 pos = player.position().add(CombatGravityFrame.world(new Vec3(0.0D, 0.5D, 0.0D)));
 
         player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 4, false, false));
         player.fallDistance = 0.0F;
@@ -2960,7 +3027,8 @@ public final class CustomBloodDemonArtRuntime {
             Vec3 dir = new Vec3(Math.cos(a), 0.18D + ((i % 3) * 0.08D), Math.sin(a)).normalize();
             for (double d = 0.5D; d <= explosionRadius * 2.8D; d += 0.5D) {
                 Vec3 p = pos.add(dir.scale(d));
-                level.sendParticles(burstParticle, p.x, p.y, p.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+                sendWorldParticles(level, burstParticle, p.x, p.y, p.z,
+                    1, 0.0D, 0.0D, 0.0D, 0.0D);
             }
         }
 
@@ -3023,7 +3091,7 @@ public final class CustomBloodDemonArtRuntime {
             1.0F
         );
 
-        Vec3 look = player.getLookAngle();
+        Vec3 look = CombatGravityFrame.world(CombatGravityFrame.look(player));
         if (look.lengthSqr() < 1.0E-4D) {
             look = new Vec3(0.0D, 0.0D, 1.0D);
         }
@@ -3048,7 +3116,7 @@ public final class CustomBloodDemonArtRuntime {
 
             Vec3 oldPos = pos[0];
 
-            velocity[0] = velocity[0].add(0.0D, -gravity, 0.0D);
+            velocity[0] = velocity[0].add(CombatGravityFrame.world(new Vec3(0.0D, -gravity, 0.0D)));
             Vec3 newPos = oldPos.add(velocity[0]);
 
             BlockHitResult blockHit = level.clip(new ClipContext(
@@ -3076,7 +3144,8 @@ public final class CustomBloodDemonArtRuntime {
                     double y = Math.cos(phi) * sphereRadius;
                     double z = Math.sin(theta) * Math.sin(phi) * sphereRadius;
 
-                    level.sendParticles(
+                    sendWorldParticles(
+                        level,
                         primaryParticle,
                         pos[0].x + x,
                         pos[0].y + y,
@@ -3091,7 +3160,8 @@ public final class CustomBloodDemonArtRuntime {
             }
 
             // Secondary trailing particles
-            level.sendParticles(
+            sendWorldParticles(
+                level,
                 secondaryParticle,
                 oldPos.x,
                 oldPos.y,
@@ -3105,7 +3175,8 @@ public final class CustomBloodDemonArtRuntime {
 
             // Flash every 2 ticks
             if (ticks[0] % 2 == 0) {
-                level.sendParticles(
+                sendWorldParticles(
+                    level,
                     ParticleTypes.FLASH,
                     pos[0].x,
                     pos[0].y,
@@ -3181,12 +3252,15 @@ public final class CustomBloodDemonArtRuntime {
             return;
         }
 
-        Vec3 launchDir = player.getLookAngle().normalize();
+        Vec3 launchDir = CombatGravityFrame.world(CombatGravityFrame.look(player)).normalize();
         double launchSpeed = 1.35D * ampScale(amplifierTotals.count(BloodDemonArtAlchemyCatalog.AmplifierKind.SPEED));
         Vec3 spawnPos = player.getEyePosition().add(launchDir.scale(1.15D));
 
-        serpent.moveTo(spawnPos.x, spawnPos.y - 0.15D, spawnPos.z, player.getYRot(), player.getXRot());
-        serpent.setDeltaMovement(launchDir.scale(launchSpeed));
+        CombatGravityFrame.inheritVisual(serpent);
+        Vec3 spawnOffset = CombatGravityFrame.world(new Vec3(0.0D, -0.15D, 0.0D));
+        serpent.moveTo(spawnPos.x + spawnOffset.x, spawnPos.y + spawnOffset.y, spawnPos.z + spawnOffset.z,
+            CombatGravityFrame.yaw(player), CombatGravityFrame.pitch(player));
+        serpent.setDeltaMovement(CombatGravityFrame.local(launchDir.scale(launchSpeed)));
         serpent.setNoGravity(true);
         serpent.hasImpulse = true;
         serpent.hurtMarked = true;
@@ -3424,13 +3498,26 @@ public final class CustomBloodDemonArtRuntime {
             double angle = (Math.PI * 2.0D * i) / steps;
             double x = center.x + Math.cos(angle) * radius;
             double z = center.z + Math.sin(angle) * radius;
-            level.sendParticles(particle, x, center.y, z, 3, 0.05D, 0.05D, 0.05D, 0.01D);
+            sendParticles(level, particle, x, center.y, z, 3, 0.05D, 0.05D, 0.05D, 0.01D);
         }
     }
 
     private static void spawnBurst(ServerLevel level, CustomBloodDemonArtSavedData.ParticleStyle particleStyle, Vec3 center, int count) {
         ParticleOptions particle = resolveParticle(particleStyle);
-        level.sendParticles(particle, center.x, center.y, center.z, count, 0.3D, 0.25D, 0.3D, 0.01D);
+        sendParticles(level, particle, center.x, center.y, center.z, count, 0.3D, 0.25D, 0.3D, 0.01D);
+    }
+
+    private static void sendParticles(ServerLevel level, ParticleOptions particle, double x, double y, double z,
+                                       int count, double dx, double dy, double dz, double speed) {
+        CombatGravityFrame.sendParticles(level, particle, x, y, z, count, dx, dy, dz, speed);
+    }
+
+    private static void sendWorldParticles(ServerLevel level, ParticleOptions particle, double x, double y, double z,
+                                            int count, double dx, double dy, double dz, double speed) {
+        Vec3 point = CombatGravityFrame.local(new Vec3(x, y, z));
+        Vec3 spread = CombatGravityFrame.local(new Vec3(dx, dy, dz));
+        sendParticles(level, particle, point.x, point.y, point.z, count,
+            spread.x, spread.y, spread.z, speed);
     }
 
     private static ParticleOptions resolveParticle(CustomBloodDemonArtSavedData.ParticleStyle style) {

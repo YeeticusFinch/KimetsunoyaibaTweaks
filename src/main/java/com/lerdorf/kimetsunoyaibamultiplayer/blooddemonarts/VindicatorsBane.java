@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticleHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.combat.BloodDemonArtM1AttackHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AbstractDemonEntity;
@@ -78,11 +79,16 @@ public final class VindicatorsBane {
         playAnimation(entity, "sword_rotate", 12);
         playDramaticCleaveSound(serverLevel, entity);
 
-        ParticleHelper.spawnCircleParticles(serverLevel, entity.position().add(0.0D, 1.0D, 0.0D), 5.0D, ParticleTypes.SWEEP_ATTACK, 36);
+        ParticleHelper.spawnCircleParticles(serverLevel,
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity)
+                .add(0.0D, 1.0D, 0.0D), 5.0D, ParticleTypes.SWEEP_ATTACK, 36);
 
         float damage = (float)entity.getAttributeValue(Attributes.ATTACK_DAMAGE) * 1.1F;
         for (LivingEntity target : serverLevel.getEntitiesOfClass(LivingEntity.class,
-            entity.getBoundingBox().inflate(5.0D, 1.5D, 5.0D),
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+                new AABB(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity),
+                    com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity))
+                    .inflate(5.0D, 1.5D, 5.0D)),
             living -> living != entity && living.isAlive() && entity.distanceToSqr(living) <= 25.0D)) {
             Damager.hurt(entity, target, damage);
         }
@@ -96,8 +102,7 @@ public final class VindicatorsBane {
         Vec3 launch = getTargetDirection(entity).scale(0.55D);
         playAnimation(entity, "sword_to_upper", 10);
         playSplitterLaunchSound(serverLevel, entity);
-        entity.setDeltaMovement(entity.getDeltaMovement().add(launch.x, 0.85D, launch.z));
-        entity.hurtMarked = true;
+        MovementHelper.addVelocity(entity, launch.x, 0.85D, launch.z);
 
         AbilityScheduler.scheduleOnce(entity, () -> {
             if (!entity.isAlive()) {
@@ -105,8 +110,7 @@ public final class VindicatorsBane {
             }
 
             Vec3 dive = getTargetDirection(entity).scale(0.7D);
-            entity.setDeltaMovement(dive.x, -1.0D, dive.z);
-            entity.hurtMarked = true;
+            MovementHelper.setVelocity(entity, dive.x, -1.0D, dive.z);
             playAnimation(entity, "sword_overhead", 12);
             AbilityScheduler.scheduleOnce(entity, () -> {
                 if (!entity.isAlive()) {
@@ -114,12 +118,17 @@ public final class VindicatorsBane {
                 }
 
                 playSplitterImpactSound(serverLevel, entity);
-                serverLevel.sendParticles(ParticleTypes.EXPLOSION, entity.getX(), entity.getY(0.1D), entity.getZ(), 12, 0.45D, 0.15D, 0.45D, 0.01D);
-                serverLevel.sendParticles(ParticleTypes.CRIT, entity.getX(), entity.getY(0.2D), entity.getZ(), 20, 0.8D, 0.3D, 0.8D, 0.03D);
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(serverLevel,
+                    ParticleTypes.EXPLOSION, entity.getX(), entity.getY(0.1D), entity.getZ(), 12, 0.45D, 0.15D, 0.45D, 0.01D);
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(serverLevel,
+                    ParticleTypes.CRIT, entity.getX(), entity.getY(0.2D), entity.getZ(), 20, 0.8D, 0.3D, 0.8D, 0.03D);
 
                 float damage = (float)entity.getAttributeValue(Attributes.ATTACK_DAMAGE) * 1.35F;
                 for (LivingEntity target : serverLevel.getEntitiesOfClass(LivingEntity.class,
-                    entity.getBoundingBox().inflate(3.0D, 1.5D, 3.0D),
+                    com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+                        new AABB(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity),
+                            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity))
+                            .inflate(3.0D, 1.5D, 3.0D)),
                     living -> living != entity && living.isAlive() && entity.distanceToSqr(living) <= 9.0D)) {
                     if (Damager.hurt(entity, target, damage)) {
                         BleedingHandler.applyOrRefreshBleeding(target, 20 * 10, 1);
@@ -144,15 +153,15 @@ public final class VindicatorsBane {
                 }
 
                 Vec3 dash = getLookDirection(entity).scale(1.0D);
-                entity.setDeltaMovement(dash.x, 0.12D, dash.z);
-                entity.hurtMarked = true;
+                MovementHelper.setVelocity(entity, dash.x, 0.12D, dash.z);
 
                 if (tick % 10 == 0) {
                     playAnimation(entity, "kimetsunoyaibamultiplayer:front_flip", 10);
                     playBloodlustRushPulse(serverLevel, entity, tick / 10);
                     double yaw = Math.atan2(dash.z, dash.x) - (Math.PI / 2.0D);
                     double pitch = Math.atan2(dash.y, Math.sqrt((dash.x * dash.x) + (dash.z * dash.z)));
-                    Vec3 center = entity.position().add(0.0D, 1.0D, 0.0D);
+                    Vec3 center = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity)
+                        .add(0.0D, 1.0D, 0.0D);
                     ParticleHelper.spawnVerticalArc(serverLevel, center, yaw, pitch,
                         1.6D, 0.1D, 360, 10.0D, 0.0D, ParticleTypes.SWEEP_ATTACK, 24);
                     ParticleHelper.spawnVerticalArc(serverLevel, center, yaw, pitch,
@@ -160,7 +169,10 @@ public final class VindicatorsBane {
 
                     float damage = (float)entity.getAttributeValue(Attributes.ATTACK_DAMAGE);
                     for (LivingEntity target : serverLevel.getEntitiesOfClass(LivingEntity.class,
-                        entity.getBoundingBox().inflate(3.0D, 1.2D, 3.0D),
+                        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+                            new AABB(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity),
+                                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity))
+                                .inflate(3.0D, 1.2D, 3.0D)),
                         living -> living != entity && living.isAlive() && entity.distanceToSqr(living) <= 9.0D)) {
                         Damager.hurt(entity, target, damage);
                     }
@@ -229,18 +241,19 @@ public final class VindicatorsBane {
         }
 
         if (target != null && target.isAlive()) {
-            Vec3 towardTarget = target.position().subtract(entity.position());
+            Vec3 towardTarget = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(
+                target.position()).subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity));
             if (towardTarget.horizontalDistanceSqr() > 1.0E-4D) {
                 return towardTarget.normalize();
             }
         }
 
-        Vec3 look = entity.getLookAngle();
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
         return look.horizontalDistanceSqr() > 1.0E-4D ? look.normalize() : new Vec3(0.0D, 0.0D, 1.0D);
     }
 
     private static Vec3 getLookDirection(LivingEntity entity) {
-        Vec3 look = entity.getLookAngle();
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
         return look.lengthSqr() > 1.0E-4D ? look.normalize() : new Vec3(0.0D, 0.0D, 1.0D);
     }
 

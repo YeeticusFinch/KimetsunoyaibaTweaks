@@ -73,7 +73,9 @@ public final class SilkManipulation {
     // ==================== Form implementations ====================
 
     private static void executeSilkSpray(LivingEntity caster, Level level, int formId) {
-        Vec3 start = caster.getEyePosition().add(caster.getLookAngle().scale(0.6D)).subtract(0.0D, 0.25D, 0.0D);
+        Vec3 start = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(caster)
+            .add(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(caster).scale(0.6D))
+            .subtract(0.0D, 0.25D, 0.0D);
         AimResolution aim = resolveSilkAim(caster, level, SILK_SPRAY_RANGE);
 
         SilkRibbonEntity ribbon = SilkRibbonEntity.spawn(level, caster, start, aim.point(),
@@ -91,7 +93,8 @@ public final class SilkManipulation {
 
     private static void executeAcidSpray(LivingEntity caster, Level level, int formId) {
         Vec3 baseAim = resolveAimDirection(caster, ACID_SPRAY_RANGE);
-        Vec3 start = caster.getEyePosition().add(baseAim.scale(0.6D)).subtract(0.0D, 0.25D, 0.0D);
+        Vec3 start = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(caster)
+            .add(baseAim.scale(0.6D)).subtract(0.0D, 0.25D, 0.0D);
 
         for (int i = 0; i < ACID_RIBBON_COUNT; i++) {
             boolean darkGreen = (i % 2 == 1); // half white, half dark green
@@ -117,7 +120,9 @@ public final class SilkManipulation {
     }
 
     private static void executeDissolutionCocoon(LivingEntity caster, Level level, int formId) {
-        Vec3 start = caster.getEyePosition().add(caster.getLookAngle().scale(0.6D)).subtract(0.0D, 0.15D, 0.0D);
+        Vec3 start = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(caster)
+            .add(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(caster).scale(0.6D))
+            .subtract(0.0D, 0.15D, 0.0D);
         AimResolution aim = resolveSilkAim(caster, level, 20.0D);
 
         SilkRibbonEntity ribbon = SilkRibbonEntity.spawn(level, caster, start, aim.point(),
@@ -135,22 +140,30 @@ public final class SilkManipulation {
 
     /** Raytrace a silk shot, retaining a living entity hit for the ribbon to lock onto. */
     private static AimResolution resolveSilkAim(LivingEntity caster, Level level, double range) {
-        Vec3 start = caster.getEyePosition();
+        Vec3 start = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(caster);
         LivingEntity daughterTarget = caster instanceof DaughterEntity daughter ? daughter.getTarget() : null;
         Vec3 maxEnd = daughterTarget != null && daughterTarget.isAlive()
-            ? entityCenter(daughterTarget)
-            : start.add(caster.getLookAngle().scale(range));
+            ? com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(entityCenter(daughterTarget))
+            : start.add(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(caster).scale(range));
 
         BlockHitResult blockHit = level.clip(new ClipContext(
-            start, maxEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
-        Vec3 rayEnd = blockHit.getType() == HitResult.Type.MISS ? maxEnd : blockHit.getLocation();
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(start),
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(maxEnd),
+            ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
+        Vec3 rayEndWorld = blockHit.getType() == HitResult.Type.MISS
+            ? com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(maxEnd)
+            : blockHit.getLocation();
+        Vec3 rayEnd = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(rayEndWorld);
+
+        Vec3 worldStart = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(start);
+        Vec3 worldRayEnd = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(rayEnd);
 
         EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
-            level, caster, start, rayEnd, new AABB(start, rayEnd).inflate(1.0D),
+            level, caster, worldStart, worldRayEnd, new AABB(worldStart, worldRayEnd).inflate(1.0D),
             entity -> entity != caster && entity instanceof LivingEntity living
                 && living.isAlive() && !living.isSpectator());
         if (entityHit != null && entityHit.getEntity() instanceof LivingEntity living) {
-            return new AimResolution(entityCenter(living), living);
+            return new AimResolution(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(entityCenter(living)), living);
         }
         return new AimResolution(rayEnd, null);
     }
@@ -165,9 +178,11 @@ public final class SilkManipulation {
     private static Vec3 resolveAimDirection(LivingEntity caster, double range) {
         // Prefer entity crosshair pick so sprays track targets slightly off-block.
         HitResult hit = caster.pick(range, 1.0F, false);
-        Vec3 to = hit.getLocation();
-        Vec3 dir = to.subtract(caster.getEyePosition());
-        return dir.lengthSqr() > 1.0E-4D ? dir.normalize() : caster.getLookAngle();
+        Vec3 to = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(hit.getLocation());
+        Vec3 dir = to.subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(caster));
+        return dir.lengthSqr() > 1.0E-4D
+            ? dir.normalize()
+            : com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(caster);
     }
 
     private static Vec3 rotateAroundY(Vec3 vec, double radians) {
@@ -181,7 +196,7 @@ public final class SilkManipulation {
             return;
         }
         net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) level;
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.CLOUD,
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, net.minecraft.core.particles.ParticleTypes.CLOUD,
             handPos.x, handPos.y, handPos.z, 6, 0.15D, 0.15D, 0.15D, 0.01D);
     }
 }

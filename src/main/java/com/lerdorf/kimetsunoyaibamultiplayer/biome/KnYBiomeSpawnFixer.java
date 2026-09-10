@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -17,16 +18,17 @@ import net.minecraft.world.level.dimension.LevelStem;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedMountBiomeConfig;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Adds custom biomes to the overworld and optionally replaces vanilla biome occurrences.
+ * Adds custom biomes to the overworld and installs the enhanced mount biome source.
  *
- * NOTE: As of KimetsunoYaiba ver3, mt_yoko and mt_natagumo are now properly spawned by the base mod,
- * so we no longer need to fix their spawning. This handler now focuses on adding our custom biomes
- * (wisteria_forest) and optionally replacing vanilla biome occurrences with KnY biomes.
+ * The base mod owns the Mount Natagumo/Yoko biome contents. When enhancement is enabled,
+ * their broad base climate entries are removed and the runtime source puts them back only
+ * on seed-selected mountainous terrain.
  */
 @Mod.EventBusSubscriber(modid = com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer.MODID)
 public class KnYBiomeSpawnFixer {
@@ -36,8 +38,8 @@ public class KnYBiomeSpawnFixer {
      */
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
     public static void fixBiomeSpawning(ServerAboutToStartEvent event) {
-        // Check if biome fix is enabled
-        if (!com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.enableBiomeFix) {
+        boolean enhancedMountBiomes = EnhancedMountBiomeConfig.anyEnhancedMountEnabled();
+        if (!com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.enableBiomeFix && !enhancedMountBiomes) {
             return;
         }
         MinecraftServer server = event.getServer();
@@ -58,6 +60,17 @@ public class KnYBiomeSpawnFixer {
                         List<Pair<Climate.ParameterPoint, Holder<Biome>>> parameters =
                             new ArrayList<>(noiseSource.parameters().values());
 
+                        Holder<Biome> enhancedNatagumo = getBiomeHolder(biomeRegistry, "kimetsunoyaiba", "mt_natagumo");
+                        Holder<Biome> enhancedYoko = getBiomeHolder(biomeRegistry, "kimetsunoyaiba", "mt_yoko");
+
+                        // Do not let the base mod's broad climate entries bypass the enhanced source.
+                        if (EnhancedMountBiomeConfig.enhancedMountNatagumoEnabled && enhancedNatagumo != null) {
+                            parameters.removeIf(pair -> pair.getSecond().equals(enhancedNatagumo));
+                        }
+                        if (EnhancedMountBiomeConfig.enhancedMountYokoEnabled && enhancedYoko != null) {
+                            parameters.removeIf(pair -> pair.getSecond().equals(enhancedYoko));
+                        }
+
                         // Get biome holders for all 3 wisteria forest biomes
                         Holder<Biome> wisteriaForestCyan = getBiomeHolder(biomeRegistry, "kimetsunoyaibamultiplayer", "wisteria_forest_cyan");
                         Holder<Biome> wisteriaForestCream = getBiomeHolder(biomeRegistry, "kimetsunoyaibamultiplayer", "wisteria_forest_cream");
@@ -70,7 +83,8 @@ public class KnYBiomeSpawnFixer {
                         int replacedCream = 0;
                         int configuredClusterSize = com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.wisteriaForestClusterSize;
 
-                        for (int i = 0; i < parameters.size(); i++) {
+                        if (com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.enableBiomeFix) {
+                            for (int i = 0; i < parameters.size(); i++) {
                             Pair<Climate.ParameterPoint, Holder<Biome>> pair = parameters.get(i);
                             Holder<Biome> originalBiome = pair.getSecond();
 
@@ -168,10 +182,20 @@ public class KnYBiomeSpawnFixer {
                                     i += clustered;
                                 }
                             }
+                            }
                         }
 
-                        // Update the biome source with replaced biomes
-                        chunkGenerator.biomeSource = MultiNoiseBiomeSource.createFromList(new Climate.ParameterList<>(parameters));
+                        // Update the biome source with replaced biomes, then wrap it with seed-aware mount placement.
+                        BiomeSource replacementSource = MultiNoiseBiomeSource.createFromList(new Climate.ParameterList<>(parameters));
+                        if (enhancedMountBiomes && (enhancedNatagumo != null || enhancedYoko != null)) {
+                            replacementSource = new EnhancedMountBiomeSource(
+                                replacementSource,
+                                server.getWorldData().worldGenOptions().seed(),
+                                enhancedNatagumo,
+                                enhancedYoko
+                            );
+                        }
+                        chunkGenerator.biomeSource = replacementSource;
 
                         if (com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.logBiomeChanges) {
                             com.lerdorf.kimetsunoyaibamultiplayer.Log.info("Successfully replaced vanilla biomes with wisteria forests:");

@@ -47,6 +47,96 @@ public class FirstPersonSwordKeyframes {
                     new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
         ));
 
+        // guard_0 - exported from Blender
+        ANIMATION_KEYFRAMES.put("guard_0", List.of(
+                    new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+        ));
+
+        // guard_1 - exported from Blender
+        ANIMATION_KEYFRAMES.put("guard_1", List.of(
+                    new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+        ));
+
+        // guard_2 - exported from Blender
+        ANIMATION_KEYFRAMES.put("guard_2", List.of(
+                    new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+        ));
+
+        // guard_3 - exported from Blender
+        ANIMATION_KEYFRAMES.put("guard_3", List.of(
+                    new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+        ));
+
+        // guard_4 - exported from Blender
+            ANIMATION_KEYFRAMES.put("guard_4", List.of(
+                        new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                        new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                        new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                        new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                        new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                        new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                        new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                        new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                        new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                        new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                        new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+            ));
+
+        // guard_5 - exported from Blender
+        ANIMATION_KEYFRAMES.put("guard_5", List.of(
+                    new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+        ));
+
     	// sword_to_left - exported from Blender
         ANIMATION_KEYFRAMES.put("sword_to_left", List.of(
                     new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),

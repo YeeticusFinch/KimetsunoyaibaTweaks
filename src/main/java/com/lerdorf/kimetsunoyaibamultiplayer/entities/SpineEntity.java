@@ -41,6 +41,9 @@ public class SpineEntity extends Projectile {
 
     public static SpineEntity create(Level level, LivingEntity owner, Vec3 spawnPos, Vec3 velocity, float damage, int color) {
         SpineEntity spine = new SpineEntity(ModEntities.SPINE.get(), level);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.inheritVisual(spine);
+        spawnPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(spawnPos);
+        velocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(velocity);
         spine.setOwner(owner);
         spine.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
         spine.setDeltaMovement(velocity);

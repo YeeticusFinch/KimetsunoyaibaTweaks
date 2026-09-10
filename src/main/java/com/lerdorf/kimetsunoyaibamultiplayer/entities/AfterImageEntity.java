@@ -104,6 +104,8 @@ public class AfterImageEntity extends Mob implements GeoEntity {
      */
     public AfterImageEntity(Level level, LivingEntity original, int maxLifetime, Vec3 centerPos, float facingYaw) {
         this(ModEntities.AFTER_IMAGE.get(), level);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.inheritVisual(this);
+        centerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(centerPos);
         this.maxLifetime = maxLifetime;
         this.centerPos = centerPos;
         this.ownerUUID = original.getUUID();

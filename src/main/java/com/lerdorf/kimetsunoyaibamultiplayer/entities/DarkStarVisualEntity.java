@@ -37,6 +37,8 @@ public class DarkStarVisualEntity extends Entity {
 
     public static DarkStarVisualEntity create(Level level, Vec3 position, UUID ownerUuid, int tintColor, float renderScale, int lifetimeTicks) {
         DarkStarVisualEntity entity = new DarkStarVisualEntity(ModEntities.DARK_STAR_VISUAL.get(), level);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.inheritVisual(entity);
+        position = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(position);
         entity.setPos(position.x, position.y, position.z);
         entity.setOwnerUuid(ownerUuid);
         entity.setTintColor(tintColor);

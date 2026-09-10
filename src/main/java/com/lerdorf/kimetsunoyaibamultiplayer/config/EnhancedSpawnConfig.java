@@ -35,6 +35,12 @@ public class EnhancedSpawnConfig {
                     "If false, falls back to simple spawn priority system.")
             .define("enhanced_spawning_rules", true);
 
+    private static final ForgeConfigSpec.BooleanValue DISABLE_TWEAKS_DEMONS = BUILDER
+            .comment("Disable natural spawning of demons added by kimetsunoyaibamultiplayer.",
+                    "This disables tweaks demon replacements and timed/natural demon spawns in the Infinity Castle.",
+                    "Commands, raids, and spawn eggs are unaffected.")
+            .define("disable_tweaks_demons", false);
+
     private static final ForgeConfigSpec.BooleanValue REPLACE_BASE_GENERIC_DEMON_SLAYERS = BUILDER
             .comment("Replace base mod generic demon slayers with kimetsunoyaibamultiplayer demon slayers.",
                     "Replaces:",
@@ -209,6 +215,7 @@ public class EnhancedSpawnConfig {
 
     // Runtime cache - Initialize with default values before config loads
     public static boolean enhancedSpawningRules = true;  // Default to true
+    public static boolean disableTweaksDemons = false;
     public static boolean replaceBaseGenericDemonSlayers = true;
     public static boolean replaceBaseNezuko = true;
     public static boolean preventYorichiTypeZeroNaturalSpawns = true;
@@ -249,6 +256,7 @@ public class EnhancedSpawnConfig {
 
     private static void updateCache() {
         enhancedSpawningRules = ENHANCED_SPAWNING_RULES.get();
+        disableTweaksDemons = DISABLE_TWEAKS_DEMONS.get();
         replaceBaseGenericDemonSlayers = REPLACE_BASE_GENERIC_DEMON_SLAYERS.get();
         replaceBaseNezuko = REPLACE_BASE_NEZUKO.get();
         preventYorichiTypeZeroNaturalSpawns = PREVENT_YORICHI_TYPE_ZERO_NATURAL_SPAWNS.get();

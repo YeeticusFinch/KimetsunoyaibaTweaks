@@ -63,6 +63,16 @@ without either provider, gravity remains vanilla and these commands are not regi
 If both are installed, KNY uses Gravity API. GravityChanger support targets the Forge
 1.20.1 API in `gravitychanger-forge-1.20.1-2.jar`.
 
+**Combat local axes**: When a gravity provider is present, all sword forms, blood demon
+art attacks, particles, slashes, and movement are authored in the user's local
+gravity-relative axes via `gravity/api/CombatGravityFrame` (port of WibsDSCore's
+CastleCombatFrame). Client visuals follow via `client/CombatRenderGravity`: slash
+models, ribbon particles, and raw slashes rotate with the provider's entity rotation
+animation. Ability-spawned entities (Nezuko tornado slashes, swamp domain portals)
+inherit the author's gravity and are affected by gravity block fields
+(`KNYGravity.isGravityAffected`). Without a provider every path falls back to the
+vanilla XYZ basis.
+
 ## Client-Only Commands
 
 These are registered on `RegisterClientCommandsEvent` by `ClientCommandHandler`.

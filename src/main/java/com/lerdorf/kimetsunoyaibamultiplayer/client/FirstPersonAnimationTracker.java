@@ -251,7 +251,8 @@ public class FirstPersonAnimationTracker {
             "left_sword_to_right", "left_sword_to_left", "left_sword_overhead", "double_sword_overhead",
             "sword_to_right_reverse", "sword_to_left_reverse", "sword_to_upper",
             "punch_right", "punch_left", "kick_right", "kick_left",
-            "backstep", "guard", "iai1", "speed_attack_sword", "beast2", "breath_beast2"
+            "backstep", "guard", "guard_0", "guard_1", "guard_2", "guard_3", "guard_4", "guard_5",
+            "iai1", "speed_attack_sword", "beast2", "breath_beast2"
         };
 
         for (String known : knownNames) {

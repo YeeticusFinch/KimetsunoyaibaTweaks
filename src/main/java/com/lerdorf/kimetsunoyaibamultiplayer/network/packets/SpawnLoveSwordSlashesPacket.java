@@ -24,6 +24,7 @@ import java.util.function.Supplier;
  */
 public class SpawnLoveSwordSlashesPacket {
 
+    private final net.minecraft.core.Direction gravity;
     private final double x;
     private final double y;
     private final double z;
@@ -33,6 +34,7 @@ public class SpawnLoveSwordSlashesPacket {
     private final int lifetimeTicks;
 
     public SpawnLoveSwordSlashesPacket(Vec3 position, float yaw, float pitch, String animationName, int lifetimeTicks) {
+        this.gravity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.currentDirection();
         this.x = position.x;
         this.y = position.y;
         this.z = position.z;
@@ -43,6 +45,9 @@ public class SpawnLoveSwordSlashesPacket {
     }
 
     public SpawnLoveSwordSlashesPacket(FriendlyByteBuf buf) {
+        int ordinal = buf.readUnsignedByte();
+        this.gravity = ordinal < net.minecraft.core.Direction.values().length
+            ? net.minecraft.core.Direction.values()[ordinal] : null;
         this.x = buf.readDouble();
         this.y = buf.readDouble();
         this.z = buf.readDouble();
@@ -53,6 +58,7 @@ public class SpawnLoveSwordSlashesPacket {
     }
 
     public void toBytes(FriendlyByteBuf buf) {
+        buf.writeByte(gravity == null ? 255 : gravity.ordinal());
         buf.writeDouble(x);
         buf.writeDouble(y);
         buf.writeDouble(z);
@@ -68,7 +74,7 @@ public class SpawnLoveSwordSlashesPacket {
             // Only process on client side
             if (ctx.getDirection().getReceptionSide().isClient()) {
                 DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                    handleClientSide(x, y, z, yaw, pitch, animationName, lifetimeTicks);
+                    handleClientSide(gravity, x, y, z, yaw, pitch, animationName, lifetimeTicks);
                 });
             }
         });
@@ -76,7 +82,7 @@ public class SpawnLoveSwordSlashesPacket {
         return true;
     }
 
-    private static void handleClientSide(double x, double y, double z, float yaw, float pitch,
+    private static void handleClientSide(net.minecraft.core.Direction gravity, double x, double y, double z, float yaw, float pitch,
                                           String animationName, int lifetimeTicks) {
         try {
             // Use client handler to get level - no direct Minecraft import needed
@@ -85,10 +91,10 @@ public class SpawnLoveSwordSlashesPacket {
                 return;
             }
 
-            // Create and spawn the entity on the client
+            // Create and spawn the entity on the client with the authoring gravity basis
             Vec3 position = new Vec3(x, y, z);
-            LoveSwordSlashesEntity entity = LoveSwordSlashesEntity.create(
-                level, position, yaw, pitch, animationName, lifetimeTicks
+            LoveSwordSlashesEntity entity = LoveSwordSlashesEntity.createClient(
+                level, position, yaw, pitch, animationName, lifetimeTicks, gravity
             );
 
             // Add the entity to the world

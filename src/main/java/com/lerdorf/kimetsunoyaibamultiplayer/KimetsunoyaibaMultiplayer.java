@@ -146,6 +146,7 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SwordRackConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.class);
+        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedMountBiomeConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.class);
@@ -170,6 +171,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig.SPEC, "kimetsunoyaibamultiplayer/sword_display.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordRackConfig.SPEC, "kimetsunoyaibamultiplayer/sword_rack.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.SPEC, "kimetsunoyaibamultiplayer/biomes.toml");
+        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedMountBiomeConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.SPEC, "kimetsunoyaibamultiplayer/spawn_rates.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_spawning.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.SPEC, "kimetsunoyaibamultiplayer/raids.toml");

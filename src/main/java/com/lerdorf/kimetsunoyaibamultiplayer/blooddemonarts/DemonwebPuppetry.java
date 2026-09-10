@@ -157,11 +157,15 @@ public final class DemonwebPuppetry {
         if (!(entity instanceof Mob manifestation)) {
             return false;
         }
-        Vec3 launchDirection = owner.getLookAngle().normalize();
-        Vec3 spawnPosition = owner.getEyePosition().add(launchDirection);
-        manifestation.moveTo(spawnPosition.x, spawnPosition.y, spawnPosition.z,
+        Vec3 launchDirection = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(owner).normalize();
+        Vec3 spawnPosition = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(owner)
+            .add(launchDirection);
+        Vec3 worldLaunchDirection = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(launchDirection);
+        Vec3 worldSpawnPosition = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(spawnPosition);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.inheritVisual(manifestation);
+        manifestation.moveTo(worldSpawnPosition.x, worldSpawnPosition.y, worldSpawnPosition.z,
             owner.getYRot(), owner.getXRot());
-        manifestation.setDeltaMovement(launchDirection);
+        manifestation.setDeltaMovement(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(worldLaunchDirection));
         manifestation.hasImpulse = true;
         manifestation.setPersistenceRequired();
         CompoundTag data = manifestation.getPersistentData();
@@ -357,14 +361,14 @@ public final class DemonwebPuppetry {
         double forward = Math.max(-1.0D, Math.min(1.0D, forwardInput));
         double strafe = Math.max(-1.0D, Math.min(1.0D, strafeInput));
         double vertical = (jumping ? 1.0D : 0.0D) - (descending ? 1.0D : 0.0D);
-        Vec3 look = entity.getLookAngle().normalize();
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).normalize();
         double yawRadians = Math.toRadians(entity.getYRot());
         Vec3 horizontalForward = new Vec3(-Math.sin(yawRadians), 0.0D, Math.cos(yawRadians));
         Vec3 right = new Vec3(-horizontalForward.z, 0.0D, horizontalForward.x);
         Vec3 accelerationDirection = look.scale(forward)
             .add(right.scale(-strafe))
             .add(0.0D, vertical, 0.0D);
-        Vec3 velocity = entity.getDeltaMovement();
+        Vec3 velocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
         if (accelerationDirection.lengthSqr() > 0.0001D) {
             velocity = velocity.add(accelerationDirection.normalize().scale(WEB_TRAVERSAL_ACCELERATION));
         } else {

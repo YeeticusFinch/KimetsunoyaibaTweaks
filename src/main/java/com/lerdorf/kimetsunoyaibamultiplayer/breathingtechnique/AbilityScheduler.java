@@ -45,7 +45,11 @@ public class AbilityScheduler {
         UUID entityId = entity.getUUID();
         ResourceKey<Level> dimension = level.dimension();
 
-        ScheduledTask task = new ScheduledTask(action, currentTick + delayTicks, false, 0, 0);
+        // Re-enter the entity's gravity frame when the callback fires so delayed
+        // ability code keeps using the axes the form was authored in.
+        ScheduledTask task = new ScheduledTask(
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.bind(entity, action),
+            currentTick + delayTicks, false, 0, 0);
         entityTasks
             .computeIfAbsent(dimension, k -> new ConcurrentHashMap<>())
             .computeIfAbsent(entityId, k -> new CopyOnWriteArrayList<>())
@@ -62,7 +66,11 @@ public class AbilityScheduler {
         UUID entityId = entity.getUUID();
         ResourceKey<Level> dimension = level.dimension();
 
-        ScheduledTask task = new ScheduledTask(action, currentTick, true, intervalTicks, currentTick + durationTicks);
+        // Re-enter the entity's gravity frame when the callback fires so repeating
+        // ability code keeps using the axes the form was authored in.
+        ScheduledTask task = new ScheduledTask(
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.bind(entity, action),
+            currentTick, true, intervalTicks, currentTick + durationTicks);
         entityTasks
             .computeIfAbsent(dimension, k -> new ConcurrentHashMap<>())
             .computeIfAbsent(entityId, k -> new CopyOnWriteArrayList<>())

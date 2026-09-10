@@ -415,7 +415,10 @@ public final class CombustibleBlood {
         GuardStateHelper.setGuardState(entity, damage, formId, true);
         GuardStateHelper.setAttackState(entity, damage, true);
 
-        entity.teleportTo(entity.getX(), entity.getY() + EXPLODING_HEEL_BASH_TELEPORT_HEIGHT, entity.getZ());
+        // Teleport along the entity's local up axis (authored local offset -> world)
+        Vec3 heelLift = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+            new Vec3(0.0D, EXPLODING_HEEL_BASH_TELEPORT_HEIGHT, 0.0D));
+        entity.teleportTo(entity.getX() + heelLift.x, entity.getY() + heelLift.y, entity.getZ() + heelLift.z);
         MovementHelper.setVelocity(entity, Vec3.ZERO);
 
         scheduleHeelBashDrop(entity, damage, true, 4, HEEL_BASH_ASCENT_TICKS);
@@ -444,7 +447,7 @@ public final class CombustibleBlood {
             MovementHelper.lookAtTarget(entity);
             MovementHelper.setVelocity(entity, launchDirection.scale(FLYING_KICK_SPEED));
             for (LivingEntity target : getValidTargetsNear(activeLevel, entity,
-                entity.position().add(0.0D, entity.getBbHeight() * 0.5D, 0.0D), FLYING_KICK_HIT_RADIUS)) {
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0.0D, entity.getBbHeight() * 0.5D, 0.0D), FLYING_KICK_HIT_RADIUS)) {
                 if (!hitTargets.add(target.getUUID())) {
                     continue;
                 }
@@ -543,7 +546,7 @@ public final class CombustibleBlood {
                 Vec3 forward = getSafeHorizontalLookVector(entity);
                 for (LivingEntity target : getValidTargetsNear(currentLevel, entity, getForwardHitCenter(entity), FRENZIED_SPIN_RADIUS)) {
                     Damager.hurt(entity, target, damage, true);
-                    Vec3 knockback = target.position().subtract(entity.position());
+                    Vec3 knockback = target.position().subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity));
                     if (knockback.horizontalDistanceSqr() < 1.0E-4D) {
                         knockback = forward;
                     } else {
@@ -584,7 +587,7 @@ public final class CombustibleBlood {
                 spawnExplodingBloodStrikeTrail(currentLevel, entity, strikeDirection);
 
                 for (LivingEntity target : getValidTargetsNear(currentLevel, entity,
-                    entity.position().add(0.0D, entity.getBbHeight() * 0.5D, 0.0D),
+                    com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0.0D, entity.getBbHeight() * 0.5D, 0.0D),
                     EXPLODING_BLOOD_STRIKE_HIT_RADIUS)) {
                     if (!hitTargets.add(target.getUUID())) {
                         continue;
@@ -609,7 +612,7 @@ public final class CombustibleBlood {
         GuardStateHelper.setGuardState(entity, damage, formId, true);
         GuardStateHelper.setAttackState(entity, damage, true);
 
-        Vec3 startPos = entity.position();
+        Vec3 startPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
         Vec3 targetPos = findDropKickTeleportPosition(entity, serverLevel, DROP_KICK_RANGE);
         ParticleHelper.spawnParticleLine(serverLevel,
             startPos.add(0.0D, entity.getBbHeight() * 0.55D, 0.0D),
@@ -617,13 +620,15 @@ public final class CombustibleBlood {
             ModParticles.BLOOD_FLAME.get(),
             DROP_KICK_TRAIL_PARTICLES);
 
-        entity.teleportTo(targetPos.x, targetPos.y, targetPos.z);
+        // targetPos is authored local; teleport needs world space
+        Vec3 dropKickTarget = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(targetPos);
+        entity.teleportTo(dropKickTarget.x, dropKickTarget.y, dropKickTarget.z);
         MovementHelper.setVelocity(entity, Vec3.ZERO);
         playAnimation(entity, "kick_rotate2", DROP_KICK_TICKS);
-        spawnDropKickBloodFlameBurst(serverLevel, entity.position().add(0.0D, entity.getBbHeight() * 0.5D, 0.0D));
+        spawnDropKickBloodFlameBurst(serverLevel, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0.0D, entity.getBbHeight() * 0.5D, 0.0D));
 
         for (LivingEntity target : getValidTargetsNear(serverLevel, entity,
-            entity.position().add(0.0D, entity.getBbHeight() * 0.5D, 0.0D), DROP_KICK_HIT_RADIUS)) {
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0.0D, entity.getBbHeight() * 0.5D, 0.0D), DROP_KICK_HIT_RADIUS)) {
             bloodFlameHit(entity, target, damage);
         }
 
@@ -663,7 +668,7 @@ public final class CombustibleBlood {
         GuardStateHelper.setAttackState(entity, damage, true);
         playAnimation(entity, "kick_rotate5", SPIN_KICK_TICKS);
 
-        Vec3 vortexPos = entity.position().add(getSafeHorizontalLookVector(entity).scale(SPIN_KICK_VORTEX_DISTANCE));
+        Vec3 vortexPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(getSafeHorizontalLookVector(entity).scale(SPIN_KICK_VORTEX_DISTANCE));
         spawnExplodingBloodVortex(entity, serverLevel, vortexPos);
 
         AbilityScheduler.scheduleOnce(entity, () -> cleanupForm(entity), SPIN_KICK_TICKS);
@@ -698,11 +703,11 @@ public final class CombustibleBlood {
                 MovementHelper.lookAtTarget(entity);
                 MovementHelper.setVelocity(entity, launchDirection.scale(RUPTURE_KICK_SPEED));
 
-                Vec3 currentVelocity = entity.getDeltaMovement();
+                Vec3 currentVelocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
                 Vec3 knockbackDirection = currentVelocity.lengthSqr() < 1.0E-4D ? launchDirection : currentVelocity.normalize();
 
                 AABB kickArea = entity.getBoundingBox().inflate(RUPTURE_KICK_HIT_RADIUS);
-                List<LivingEntity> kickTargets = activeLevel.getEntitiesOfClass(LivingEntity.class, kickArea,
+                List<LivingEntity> kickTargets = activeLevel.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(kickArea),
                     living -> living.isAlive() && living != entity && !living.isSpectator());
 
                 for (LivingEntity target : kickTargets) {
@@ -755,8 +760,8 @@ public final class CombustibleBlood {
                             MovementHelper.lookAt(entity, lockedTarget.position().add(0.0D, lockedTarget.getEyeHeight() * 0.5D, 0.0D));
                         }
 
-                        Vec3 desiredPosition = lockedTarget.position().add(entity.getLookAngle().scale(-1.5D));
-                        MovementHelper.setVelocity(entity, desiredPosition.subtract(entity.position()).scale(0.45D));
+                        Vec3 desiredPosition = lockedTarget.position().add(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).scale(-1.5D));
+                        MovementHelper.setVelocity(entity, desiredPosition.subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity)).scale(0.45D));
                     }
 
                     if (localTick < RUPTURE_ATTACK_COUNT * RUPTURE_ATTACK_INTERVAL_TICKS) {
@@ -937,7 +942,7 @@ public final class CombustibleBlood {
 
                     if (!exploded[0] && localTick > 0 && isHellfireTornadoGroundImpact(entity, currentLevel)) {
                         exploded[0] = true;
-                        triggerHellfireTornadoExplosion(entity, currentLevel, entity.position(), damage);
+                        triggerHellfireTornadoExplosion(entity, currentLevel, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity), damage);
                     }
 
                     localTick++;
@@ -947,7 +952,7 @@ public final class CombustibleBlood {
             AbilityScheduler.scheduleOnce(entity, () -> {
                 if (!exploded[0] && entity.level() instanceof ServerLevel currentLevel && entity.isAlive()) {
                     exploded[0] = true;
-                    triggerHellfireTornadoExplosion(entity, currentLevel, entity.position(), damage);
+                    triggerHellfireTornadoExplosion(entity, currentLevel, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity), damage);
                 }
                 discardHellfireTornadoSlash(tornadoSlash);
                 GuardStateHelper.clearGuardState(entity);
@@ -971,7 +976,7 @@ public final class CombustibleBlood {
         }
         horizontalForward = horizontalForward.normalize();
 
-        Vec3 center = entity.position()
+        Vec3 center = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity)
             .add(0.0D, entity.getBbHeight() * 0.5D, 0.0D)
             .add(horizontalForward.scale(HELLFIRE_KICK_FORWARD_RANGE * 0.5D));
         AABB searchArea = new AABB(
@@ -983,13 +988,14 @@ public final class CombustibleBlood {
             center.z + HELLFIRE_KICK_FORWARD_RANGE
         );
 
-        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, searchArea,
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(searchArea),
             living -> living.isAlive() && living != entity && !living.isSpectator())) {
             if (!isValidTarget(entity, target) || !hitTargets.add(target.getUUID())) {
                 continue;
             }
 
-            Vec3 offset = target.position().subtract(entity.position());
+            Vec3 offset = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(target.position())
+                .subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity));
             double forwardDistance = offset.dot(horizontalForward);
             Vec3 sideOffset = offset.subtract(horizontalForward.scale(forwardDistance));
             if (forwardDistance < 0.0D
@@ -1013,7 +1019,7 @@ public final class CombustibleBlood {
     }
 
     private static Vec3 getHellfireTornadoSlashPosition(LivingEntity entity) {
-        return entity.position().add(0.0D, entity.getBbHeight() * 0.5D, 0.0D);
+        return com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0.0D, entity.getBbHeight() * 0.5D, 0.0D);
     }
 
     private static void updateHellfireTornadoSlash(
@@ -1026,7 +1032,9 @@ public final class CombustibleBlood {
             return;
         }
 
-        Vec3 slashPos = getHellfireTornadoSlashPosition(entity);
+        // The slash entity position packet is world space; the helper returns authored local
+        Vec3 slashPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+            getHellfireTornadoSlashPosition(entity));
         float yaw = (float) Math.toDegrees(Math.atan2(-tornadoDirection.x, tornadoDirection.z));
         yaw += 180.0F;
         float pitch = (float) Math.toDegrees(-Math.asin(tornadoDirection.y));
@@ -1054,7 +1062,9 @@ public final class CombustibleBlood {
         float damage,
         Set<java.util.UUID> hitTargets
     ) {
-        AABB hitArea = entity.getBoundingBox().inflate(HELLFIRE_TORNADO_HIT_RADIUS);
+        Vec3 center = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
+        AABB hitArea = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+            new AABB(center, center).inflate(HELLFIRE_TORNADO_HIT_RADIUS));
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, hitArea,
             living -> living.isAlive() && living != entity && !living.isSpectator())) {
             if (!isValidTarget(entity, target) || !hitTargets.add(target.getUUID())) {
@@ -1069,7 +1079,12 @@ public final class CombustibleBlood {
             return true;
         }
 
-        BlockPos below = BlockPos.containing(entity.getX(), entity.getBoundingBox().minY - 0.08D, entity.getZ());
+        // Probe along the entity's local down axis (works for sideways/upside-down gravity)
+        Vec3 downOffset = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(new Vec3(0.0D, -0.08D, 0.0D));
+        BlockPos below = BlockPos.containing(
+            entity.getX() + downOffset.x,
+            entity.getBoundingBox().minY + downOffset.y,
+            entity.getZ() + downOffset.z);
         return !level.getBlockState(below).getCollisionShape(level, below).isEmpty();
     }
 
@@ -1079,15 +1094,16 @@ public final class CombustibleBlood {
         Vec3 center,
         float damage
     ) {
-        level.playSound(null, center.x, center.y, center.z,
+        Vec3 worldCenter = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(center);
+        level.playSound(null, worldCenter.x, worldCenter.y, worldCenter.z,
             SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, 1.1F, 0.75F);
-        level.playSound(null, center.x, center.y, center.z,
+        level.playSound(null, worldCenter.x, worldCenter.y, worldCenter.z,
             SoundEvents.FIREWORK_ROCKET_LARGE_BLAST, SoundSource.HOSTILE, 1.0F, 0.85F);
-        level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, center.x, center.y + 0.2D, center.z,
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, ParticleTypes.EXPLOSION_EMITTER, center.x, center.y + 0.2D, center.z,
             1, 0.0D, 0.0D, 0.0D, 0.0D);
-        level.sendParticles(ModParticles.BLOOD_FLAME.get(), center.x, center.y + 0.7D, center.z,
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, ModParticles.BLOOD_FLAME.get(), center.x, center.y + 0.7D, center.z,
             120, 1.1D, 0.7D, 1.1D, 0.08D);
-        level.sendParticles(EXPLODING_BLOOD_DUST, center.x, center.y + 0.4D, center.z,
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, EXPLODING_BLOOD_DUST, center.x, center.y + 0.4D, center.z,
             90, 0.9D, 0.35D, 0.9D, 0.03D);
 
         AABB explosionArea = new AABB(
@@ -1098,10 +1114,11 @@ public final class CombustibleBlood {
             center.y + HELLFIRE_TORNADO_EXPLOSION_HEIGHT,
             center.z + HELLFIRE_TORNADO_EXPLOSION_RADIUS
         );
-        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, explosionArea,
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(explosionArea),
             living -> living.isAlive() && living != entity && !living.isSpectator())) {
             if (isValidTarget(entity, target)
-                && target.position().distanceToSqr(center) <= HELLFIRE_TORNADO_EXPLOSION_RADIUS * HELLFIRE_TORNADO_EXPLOSION_RADIUS) {
+                && com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(target.position())
+                    .distanceToSqr(center) <= HELLFIRE_TORNADO_EXPLOSION_RADIUS * HELLFIRE_TORNADO_EXPLOSION_RADIUS) {
                 bloodFlameHit(entity, target, damage);
             }
         }
@@ -1124,7 +1141,7 @@ public final class CombustibleBlood {
         serverLevel.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
             SoundEvents.BLAZE_SHOOT, SoundSource.HOSTILE, 0.8F, 1.2F);
 
-        Vec3 look = entity.getLookAngle();
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
         if (look.lengthSqr() < 1.0E-4D) {
             look = new Vec3(0.0D, 0.0D, 1.0D);
         }
@@ -1147,7 +1164,9 @@ public final class CombustibleBlood {
     }
 
     private static void launchExplodingBloodProjectile(LivingEntity caster, Vec3 direction) {
-        final Vec3[] currentPos = {caster.getEyePosition().add(direction.scale(0.55D))};
+        // The projectile simulates in world space: convert the authored local direction once
+        final Vec3 simDirection = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(direction);
+        final Vec3[] currentPos = {caster.getEyePosition().add(simDirection.scale(0.55D))};
         final boolean[] landed = {false};
 
         AbilityScheduler.scheduleRepeating(caster, new Runnable() {
@@ -1158,7 +1177,7 @@ public final class CombustibleBlood {
                 }
 
                 if (!landed[0]) {
-                    Vec3 nextPos = currentPos[0].add(direction.scale(EXPLODING_BLOOD_PROJECTILE_SPEED));
+                    Vec3 nextPos = currentPos[0].add(simDirection.scale(EXPLODING_BLOOD_PROJECTILE_SPEED));
                     BlockHitResult blockHit = activeLevel.clip(new ClipContext(
                         currentPos[0], nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, caster));
 
@@ -1176,7 +1195,7 @@ public final class CombustibleBlood {
                     }
                 }
 
-                spawnExplodingBloodTrail(activeLevel, currentPos[0], direction);
+                spawnExplodingBloodTrail(activeLevel, currentPos[0], simDirection);
             }
         }, 1, EXPLODING_BLOOD_PROJECTILE_LIFETIME_TICKS);
 
@@ -1184,11 +1203,13 @@ public final class CombustibleBlood {
             if (!(caster.level() instanceof ServerLevel activeLevel)) {
                 return;
             }
-            spawnExplodingBloodVortex(caster, activeLevel, currentPos[0]);
+            spawnExplodingBloodVortex(caster, activeLevel,
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(currentPos[0]));
         }, EXPLODING_BLOOD_PROJECTILE_LIFETIME_TICKS);
     }
 
     private static LivingEntity findProjectileHitTarget(LivingEntity caster, ServerLevel level, Vec3 start, Vec3 end) {
+        // start/end are already world space (world-space projectile sim)
         AABB travelBox = new AABB(start, end).inflate(EXPLODING_BLOOD_PROJECTILE_HIT_RADIUS);
         LivingEntity closest = null;
         double closestSqr = Double.MAX_VALUE;
@@ -1212,14 +1233,14 @@ public final class CombustibleBlood {
     private static void spawnExplodingBloodTrail(ServerLevel level, Vec3 pos, Vec3 direction) {
         for (int i = 0; i < 3; i++) {
             Vec3 trail = pos.subtract(direction.scale(i * 0.2D));
-            level.sendParticles(EXPLODING_BLOOD_DUST, trail.x, trail.y, trail.z, 2, 0.015D, 0.015D, 0.015D, 0.0D);
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(level, EXPLODING_BLOOD_DUST, trail.x, trail.y, trail.z, 2, 0.015D, 0.015D, 0.015D, 0.0D);
         }
     }
 
     private static void spawnExplodingBloodVortex(LivingEntity caster, ServerLevel level, Vec3 center) {
         level.playSound(null, center.x, center.y, center.z, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.HOSTILE, 0.8F, 0.75F);
         level.playSound(null, center.x, center.y, center.z, SoundEvents.FIREWORK_ROCKET_BLAST, SoundSource.HOSTILE, 0.8F, 1.0F);
-        level.sendParticles(ModParticles.BLOOD_FLAME.get(), center.x, center.y + 0.35D, center.z,
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, ModParticles.BLOOD_FLAME.get(), center.x, center.y + 0.35D, center.z,
             85, 0.7D, 0.7D, 0.7D, 0.05D);
 
         AbilityScheduler.scheduleRepeating(caster, new Runnable() {
@@ -1250,9 +1271,9 @@ public final class CombustibleBlood {
                 double x = center.x + (Math.cos(angle) * radius);
                 double z = center.z + (Math.sin(angle) * radius);
                 Vec3 tangent = new Vec3(-Math.sin(angle), 0.28D + (heightFactor * 0.42D), Math.cos(angle)).normalize();
-                level.sendParticles(ModParticles.BLOOD_FLAME.get(), x, y, z, 1, tangent.x, tangent.y, tangent.z, 0.0D);
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, ModParticles.BLOOD_FLAME.get(), x, y, z, 1, tangent.x, tangent.y, tangent.z, 0.0D);
                 if ((layer & 1) == 0) {
-                    level.sendParticles(EXPLODING_BLOOD_DUST, x, y, z, 2, 0.02D, 0.02D, 0.02D, 0.0D);
+                    com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, EXPLODING_BLOOD_DUST, x, y, z, 2, 0.02D, 0.02D, 0.02D, 0.0D);
                 }
             }
         }
@@ -1264,7 +1285,7 @@ public final class CombustibleBlood {
             double x = center.x + (Math.cos(angle) * radius);
             double z = center.z + (Math.sin(angle) * radius);
             Vec3 tangent = new Vec3(-Math.sin(angle), 0.34D, Math.cos(angle)).normalize();
-            level.sendParticles(ModParticles.BLOOD_FLAME.get(), x, y, z, 1, tangent.x, tangent.y, tangent.z, 0.0D);
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, ModParticles.BLOOD_FLAME.get(), x, y, z, 1, tangent.x, tangent.y, tangent.z, 0.0D);
         }
     }
 
@@ -1278,7 +1299,7 @@ public final class CombustibleBlood {
                 center.x + EXPLODING_BLOOD_VORTEX_RADIUS, center.y + EXPLODING_BLOOD_VORTEX_HEIGHT,
                 center.z + EXPLODING_BLOOD_VORTEX_RADIUS);
 
-        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(area),
                 living -> living.isAlive() && !living.isSpectator())) {
             if (!isInsideVortex(target, center)) {
                 continue;
@@ -1291,8 +1312,8 @@ public final class CombustibleBlood {
     private static void bloodFlameHit(LivingEntity source, LivingEntity target, float damage) {
         if (isExplodingBloodDamageTarget(target)) {
                 Damager.hurt(source, target, damage, true);
-                target.setDeltaMovement(target.getDeltaMovement().x, Math.max(target.getDeltaMovement().y, 0.85D),
-                        target.getDeltaMovement().z);
+                Vec3 targetVelocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(target);
+                MovementHelper.setVelocity(target, targetVelocity.x, Math.max(targetVelocity.y, 0.85D), targetVelocity.z);
                 target.hurtMarked = true;
                 target.setSecondsOnFire(4);
             } else {
@@ -1319,7 +1340,7 @@ public final class CombustibleBlood {
     }
 
     private static Vec3 getForwardHitCenter(LivingEntity entity) {
-        return entity.position()
+        return com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity)
             .add(0.0D, entity.getBbHeight() * 0.5D, 0.0D)
             .add(getSafeHorizontalLookVector(entity).scale(CLAW_ATTACK_FORWARD_DISTANCE));
     }
@@ -1339,9 +1360,10 @@ public final class CombustibleBlood {
             center.y + radius,
             center.z + radius
         );
-        return level.getEntitiesOfClass(LivingEntity.class, area,
+        return level.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(area),
             target -> isValidTarget(source, target)
-                && target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D).distanceToSqr(center) <= radiusSqr);
+                && com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(target.position())
+                    .add(0.0D, target.getBbHeight() * 0.5D, 0.0D).distanceToSqr(center) <= radiusSqr);
     }
 
     private static void damageTargetsNearPoint(
@@ -1405,7 +1427,8 @@ public final class CombustibleBlood {
             return true;
         }
 
-        BlockPos below = BlockPos.containing(entity.getX(), entity.getBoundingBox().minY - 0.12D, entity.getZ());
+        Vec3 worldPosition = entity.position().add(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(new Vec3(0.0D, -0.12D, 0.0D)));
+        BlockPos below = BlockPos.containing(worldPosition);
         return !level.getBlockState(below).getCollisionShape(level, below).isEmpty();
     }
 
@@ -1461,16 +1484,16 @@ public final class CombustibleBlood {
     }
 
     private static void spawnExplodingBloodStrikeTrail(ServerLevel level, LivingEntity entity, Vec3 direction) {
-        Vec3 start = entity.position().add(0.0D, entity.getBbHeight() * 0.55D, 0.0D);
+        Vec3 start = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0.0D, entity.getBbHeight() * 0.55D, 0.0D);
         Vec3 end = start.add(direction.scale(EXPLODING_BLOOD_STRIKE_TRAIL_LENGTH));
 
         for (int i = 0; i <= EXPLODING_BLOOD_STRIKE_TRAIL_POINTS; i++) {
             double progress = i / (double) EXPLODING_BLOOD_STRIKE_TRAIL_POINTS;
             Vec3 point = start.lerp(end, progress);
-            level.sendParticles(ModParticles.BLOOD_FLAME.get(), point.x, point.y, point.z,
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, ModParticles.BLOOD_FLAME.get(), point.x, point.y, point.z,
                 2, 0.035D, 0.035D, 0.035D, 0.01D);
             if ((i & 1) == 0) {
-                level.sendParticles(EXPLODING_BLOOD_DUST, point.x, point.y, point.z,
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, EXPLODING_BLOOD_DUST, point.x, point.y, point.z,
                     1, 0.02D, 0.02D, 0.02D, 0.0D);
             }
         }
@@ -1478,11 +1501,12 @@ public final class CombustibleBlood {
 
     private static Vec3 findDropKickTeleportPosition(LivingEntity entity, ServerLevel level, double range) {
         Vec3 direction = getSafeHorizontalLookVector(entity);
-        Vec3 eyeStart = entity.getEyePosition();
+        Vec3 eyeStart = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity);
         Vec3 eyeEnd = eyeStart.add(direction.scale(range));
+        // Clip in world space; keep the authored local basis for the offset search
         BlockHitResult hitResult = level.clip(new ClipContext(
-            eyeStart,
-            eyeEnd,
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(eyeStart),
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(eyeEnd),
             ClipContext.Block.COLLIDER,
             ClipContext.Fluid.NONE,
             entity
@@ -1490,14 +1514,15 @@ public final class CombustibleBlood {
 
         double maxDistance = range;
         if (hitResult.getType() == HitResult.Type.BLOCK) {
-            maxDistance = Math.max(0.0D, eyeStart.distanceTo(hitResult.getLocation()) - 1.0D);
+            Vec3 hitLocal = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(hitResult.getLocation());
+            maxDistance = Math.max(0.0D, eyeStart.distanceTo(hitLocal) - 1.0D);
         }
 
-        Vec3 originalPos = entity.position();
+        Vec3 originalPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
         for (double distance = maxDistance; distance >= 0.0D; distance -= 0.5D) {
             Vec3 candidate = originalPos.add(direction.scale(distance));
             Vec3 offset = candidate.subtract(originalPos);
-            if (level.noCollision(entity, entity.getBoundingBox().move(offset))) {
+            if (level.noCollision(entity, entity.getBoundingBox().move(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(offset)))) {
                 return candidate;
             }
         }
@@ -1506,9 +1531,9 @@ public final class CombustibleBlood {
     }
 
     private static void spawnDropKickBloodFlameBurst(ServerLevel level, Vec3 center) {
-        level.sendParticles(ModParticles.BLOOD_FLAME.get(), center.x, center.y, center.z,
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, ModParticles.BLOOD_FLAME.get(), center.x, center.y, center.z,
             90, 0.85D, 0.55D, 0.85D, 0.08D);
-        level.sendParticles(EXPLODING_BLOOD_DUST, center.x, center.y, center.z,
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, EXPLODING_BLOOD_DUST, center.x, center.y, center.z,
             45, 0.65D, 0.35D, 0.65D, 0.04D);
         ParticleHelper.spawnCircleParticles(level, center, 2.2D, ModParticles.BLOOD_FLAME.get(), 28);
         level.playSound(null, center.x, center.y, center.z,
@@ -1570,8 +1595,8 @@ public final class CombustibleBlood {
         markAbilityUse(entity);
         MovementHelper.lookAtTarget(entity);
 
-        Vec3 eyePosition = entity.getEyePosition();
-        Vec3 look = entity.getLookAngle();
+        Vec3 eyePosition = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity);
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
         if (look.lengthSqr() < 1.0E-4D) {
             look = new Vec3(0.0D, 0.0D, 1.0D);
         }
@@ -1608,14 +1633,15 @@ public final class CombustibleBlood {
 
                 MovementHelper.lookAtTarget(entity);
 
-                Vec3 currentEye = entity.getEyePosition();
-                Vec3 currentLook = entity.getLookAngle();
+                Vec3 currentEye = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity);
+                Vec3 currentLook = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
                 if (currentLook.lengthSqr() < 1.0E-4D) {
                     currentLook = new Vec3(0.0D, 0.0D, 1.0D);
                 }
                 currentLook = currentLook.normalize();
 
-                Vec3 currentTargetPos = getHemokinesisTargetPosition(currentTarget);
+                Vec3 currentTargetPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(
+                    getHemokinesisTargetPosition(currentTarget));
                 drawHemokinesisBeam(activeLevel, currentEye, currentLook, currentTargetPos);
 
                 Vec3 pullPoint = currentEye.add(currentLook.scale(HEMOKINESIS_TARGET_PULL_POINT_OFFSET));
@@ -1637,6 +1663,9 @@ public final class CombustibleBlood {
     }
 
     private static Entity findHemokinesisTarget(ServerLevel level, LivingEntity caster, Vec3 eyePosition, Vec3 look) {
+        // Inputs are authored local; run the search in world space
+        eyePosition = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(eyePosition);
+        look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(look);
         Vec3 maxEnd = eyePosition.add(look.scale(HEMOKINESIS_RANGE));
         BlockHitResult blockHit = level.clip(new ClipContext(
             eyePosition,
@@ -1725,7 +1754,7 @@ public final class CombustibleBlood {
             return;
         }
 
-        target.setDeltaMovement(velocity);
+        target.setDeltaMovement(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(velocity));
         target.hasImpulse = true;
         target.hurtMarked = true;
     }
@@ -1735,7 +1764,8 @@ public final class CombustibleBlood {
         liftHemokinesisFallingBlockIfNeeded(level, fallingBlock);
 
         Vec3 adjustedVelocity = limitVector(velocity, HEMOKINESIS_FALLING_BLOCK_MAX_SPEED);
-        AABB nextBounds = fallingBlock.getBoundingBox().move(adjustedVelocity);
+        Vec3 worldVelocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(adjustedVelocity);
+        AABB nextBounds = fallingBlock.getBoundingBox().move(worldVelocity);
         if (!level.noCollision(fallingBlock, nextBounds) || isHemokinesisFallingBlockNearGround(level, fallingBlock)) {
             liftHemokinesisFallingBlockIfNeeded(level, fallingBlock);
             adjustedVelocity = new Vec3(
@@ -1745,7 +1775,7 @@ public final class CombustibleBlood {
             );
         }
 
-        fallingBlock.setDeltaMovement(adjustedVelocity);
+        fallingBlock.setDeltaMovement(worldVelocity);
         fallingBlock.hasImpulse = true;
         fallingBlock.hurtMarked = true;
     }
@@ -1769,7 +1799,8 @@ public final class CombustibleBlood {
         return fallingBlock.onGround()
             || !level.noCollision(
                 fallingBlock,
-                fallingBlock.getBoundingBox().move(0.0D, -HEMOKINESIS_FALLING_BLOCK_GROUND_CHECK, 0.0D)
+                fallingBlock.getBoundingBox().move(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+                    new Vec3(0.0D, -HEMOKINESIS_FALLING_BLOCK_GROUND_CHECK, 0.0D)))
             );
     }
 
@@ -1780,7 +1811,8 @@ public final class CombustibleBlood {
 
         Vec3 start = fallingBlock.position();
         for (int attempt = 1; attempt <= HEMOKINESIS_FALLING_BLOCK_LIFT_ATTEMPTS; attempt++) {
-            Vec3 candidate = start.add(0.0D, HEMOKINESIS_FALLING_BLOCK_LIFT_STEP * attempt, 0.0D);
+            Vec3 candidate = start.add(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+                new Vec3(0.0D, HEMOKINESIS_FALLING_BLOCK_LIFT_STEP * attempt, 0.0D)));
             AABB candidateBounds = fallingBlock.getBoundingBox().move(candidate.subtract(start));
             if (level.noCollision(fallingBlock, candidateBounds)) {
                 fallingBlock.teleportTo(candidate.x, candidate.y, candidate.z);
@@ -1805,7 +1837,7 @@ public final class CombustibleBlood {
 
         for (double t = 0.0D; t <= 1.0D; t += HEMOKINESIS_BEAM_POINT_STEP) {
             Vec3 point = cubicBezier(eyePosition, startControl, endControl, targetPosition, t);
-            level.sendParticles(EXPLODING_BLOOD_DUST, point.x, point.y, point.z, 2, 0.012D, 0.012D, 0.012D, 0.0D);
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, EXPLODING_BLOOD_DUST, point.x, point.y, point.z, 2, 0.012D, 0.012D, 0.012D, 0.0D);
         }
     }
 
@@ -1848,9 +1880,9 @@ public final class CombustibleBlood {
     }
 
     private static Vec3 getSafeLookVector(LivingEntity entity) {
-        Vec3 look = entity.getLookAngle();
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
         if (look.lengthSqr() < 1.0E-4D) {
-            float yaw = (float) Math.toRadians(-entity.getYRot());
+            float yaw = (float) Math.toRadians(-com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
             look = new Vec3(Math.sin(yaw), 0.0D, Math.cos(yaw));
         }
         if (look.lengthSqr() < 1.0E-4D) {
@@ -1861,12 +1893,13 @@ public final class CombustibleBlood {
 
     private static Vec3 getHeelImpactPosition(LivingEntity entity) {
         Vec3 look = getSafeLookVector(entity);
-        return new Vec3(entity.getX(), entity.getY(0.35D), entity.getZ()).add(look.scale(2.0D));
+        return com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity)
+            .add(0.0D, entity.getBbHeight() * 0.35D, 0.0D).add(look.scale(2.0D));
     }
 
     private static void triggerRuptureHeelImpact(ServerLevel level, Vec3 impactPos) {
-        level.sendParticles(ParticleTypes.FLASH, impactPos.x, impactPos.y, impactPos.z, 5, 0.03D, 0.03D, 0.03D, 0.0D);
-        level.sendParticles(ParticleTypes.EXPLOSION, impactPos.x, impactPos.y, impactPos.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, ParticleTypes.FLASH, impactPos.x, impactPos.y, impactPos.z, 5, 0.03D, 0.03D, 0.03D, 0.0D);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, ParticleTypes.EXPLOSION, impactPos.x, impactPos.y, impactPos.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
     }
 
     private static void triggerRuptureBloodFlameBurst(LivingEntity entity, ServerLevel level, Vec3 impactPos, float damage) {
@@ -1876,13 +1909,13 @@ public final class CombustibleBlood {
         for (int i = 0; i < RUPTURE_RIFT_POINT_COUNT; i++) {
             double angle = baseAngle + (i * (Math.PI * 2.0D / RUPTURE_RIFT_POINT_COUNT));
             Vec3 point = impactPos.add(Math.cos(angle) * RUPTURE_RIFT_RADIUS, 0.0D, Math.sin(angle) * RUPTURE_RIFT_RADIUS);
-            level.sendParticles(ParticleTypes.EXPLOSION, point.x, point.y, point.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(level, ParticleTypes.EXPLOSION, point.x, point.y, point.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
 
             AABB hitArea = new AABB(
                 point.x - RUPTURE_RIFT_BEAM_HIT_RADIUS, point.y - RUPTURE_RIFT_BEAM_HIT_RADIUS, point.z - RUPTURE_RIFT_BEAM_HIT_RADIUS,
                 point.x + RUPTURE_RIFT_BEAM_HIT_RADIUS, point.y + RUPTURE_RIFT_BEAM_HIT_RADIUS, point.z + RUPTURE_RIFT_BEAM_HIT_RADIUS
             );
-            for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, hitArea,
+            for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(hitArea),
                 living -> living.isAlive() && living != entity && !living.isSpectator())) {
                 bloodFlameHit(entity, target, damage);
             }
@@ -1915,11 +1948,12 @@ public final class CombustibleBlood {
     }
 
     private static boolean isInsideVortex(LivingEntity target, Vec3 center) {
-        if (target.getY() < center.y || target.getY() > center.y + EXPLODING_BLOOD_VORTEX_HEIGHT) {
+        Vec3 localTarget = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(target.position());
+        if (localTarget.y < center.y || localTarget.y > center.y + EXPLODING_BLOOD_VORTEX_HEIGHT) {
             return false;
         }
-        double dx = target.getX() - center.x;
-        double dz = target.getZ() - center.z;
+        double dx = localTarget.x - center.x;
+        double dz = localTarget.z - center.z;
         return (dx * dx) + (dz * dz) <= (EXPLODING_BLOOD_VORTEX_RADIUS * EXPLODING_BLOOD_VORTEX_RADIUS);
     }
 
@@ -1942,8 +1976,11 @@ public final class CombustibleBlood {
         }
         markAbilityUse(entity);
         playRegularMeleeCombo(entity);
-        serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.FLAME,
-            entity.getX(), entity.getY(1.0D), entity.getZ(), 10, 0.25D, 0.25D, 0.25D, 0.01D);
+        Vec3 particlePos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity)
+            .add(0.0D, entity.getBbHeight(), 0.0D);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel,
+            net.minecraft.core.particles.ParticleTypes.FLAME, particlePos.x, particlePos.y, particlePos.z,
+            10, 0.25D, 0.25D, 0.25D, 0.01D);
     }
 
     public static void playRegularMeleeCombo(LivingEntity entity) {

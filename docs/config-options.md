@@ -17,6 +17,7 @@ Side labels use Forge's config registration type:
 - `config/kimetsunoyaibamultiplayer/sword_display.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordDisplayConfig.java` (`COMMON`)
 - `config/kimetsunoyaibamultiplayer/sword_rack.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SwordRackConfig.java` (`COMMON`)
 - `config/kimetsunoyaibamultiplayer/biomes.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/BiomeConfig.java` (`COMMON`)
+- `config/kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedMountBiomeConfig.java` (`COMMON`)
 - `config/kimetsunoyaibamultiplayer/spawn_rates.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/SpawnRateConfig.java` (`COMMON`)
 - `config/kimetsunoyaibamultiplayer/enhanced_spawning.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedSpawnConfig.java` (`COMMON`)
 - `config/kimetsunoyaibamultiplayer/raids.toml` from `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/RaidConfig.java` (`COMMON`)
@@ -126,6 +127,24 @@ Side labels use Forge's config registration type:
 | `mtFujikasaneSizeMultiplier` | === Mount Fujikasane Settings ===<br>Size multiplier for mt_fujikasane biome (1.0 = default, higher = larger mountain)<br>Larger values create a bigger mountain area (300-400 block radius at 1.0)<br>Range: 0.5 (small) to 2.0 (huge) |
 | `mtFujikasaneSpawnFrequency` | Spawn frequency for mt_fujikasane biome (1 = default, higher = more common)<br>RECOMMENDED: Keep at 1 for rarity. Higher values make multiple mountains spawn<br>Range: 1 to 3 |
 | `wisteriaRingWidthMultiplier` | Width multiplier for the Wisteria forest ring around Mt Fujikasane (1.0 = default)<br>Controls how wide the protective Wisteria ring is around the mountain<br>Range: 0.5 (narrow) to 2.0 (wide) |
+
+### EnhancedMountBiomeConfig
+
+- Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedMountBiomeConfig.java`
+- Config file: `config/kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml`
+- Side: `COMMON` (server-side world generation)
+
+| Option path | Description |
+| --- | --- |
+| `enhanced-mount-natagumo-enabled` | Replace the base Mount Natagumo climate placement with mountain-only placement. Default: true |
+| `natagumo-mountain-chance` | Approximate fraction of mountainous terrain selected for Mount Natagumo. Default: 0.10; range: 0.0-1.0 |
+| `natagumo-noise-scale` | Horizontal scale of Mount Natagumo regions in blocks. Default: 1200; range: 800-2000 |
+| `enhanced-mount-yoko-enabled` | Replace the base Mount Yoko climate placement with mountain-only placement. Default: true |
+| `yoko-mountain-chance` | Approximate fraction of mountainous terrain selected for Mount Yoko. Default: 0.10; range: 0.0-1.0 |
+| `yoko-noise-scale` | Horizontal scale of Mount Yoko regions in blocks. Default: 1200; range: 800-2000 |
+| `mountain-continentalness-min` | Minimum continentalness for enhanced mount placement. Default: 0.03 |
+| `mountain-erosion-max` | Maximum erosion for enhanced mount placement; lower values are more mountainous. Default: 0.0 |
+| `mountain-weirdness-min` | Minimum absolute weirdness for enhanced mount placement. Default: 0.35 |
 
 ### CustomNPCConfig
 
@@ -247,6 +266,7 @@ Side labels use Forge's config registration type:
 | Option path | Description |
 | --- | --- |
 | `enhanced_spawning.enhanced_spawning_rules` | Master switch for enhanced spawning rules.<br>If true, uses complex biome/structure/dimension rules.<br>If false, falls back to simple spawn priority system. |
+| `enhanced_spawning.disable_tweaks_demons` | Disable natural/timed spawning of demons added by kimetsunoyaibamultiplayer, including base-demon replacements and Infinity Castle timed spawns.<br>Commands, raids, and spawn eggs are unaffected. Default: false |
 | `enhanced_spawning.replace_base_generic_demon_slayers` | Replace base mod generic demon slayers with kimetsunoyaibamultiplayer demon slayers.<br>Replaces:<br>- kimetsunoyaiba:demon_slayer -> multiplayer demon slayer (level 0-3)<br>- kimetsunoyaiba:dice_steak_senior -> multiplayer demon slayer (level 4)<br>- kimetsunoyaiba:dice_steak_senior_super -> multiplayer demon slayer (level 5) |
 | `enhanced_spawning.replace_base_nezuko` | Replace base mod Nezuko with kimetsunoyaibamultiplayer Nezuko.<br>Replaces:<br>- kimetsunoyaiba:nezuko -> kimetsunoyaibamultiplayer:nezuko |
 | `enhanced_spawning.prevent_yorichi_type_0_natural_spawns` | Prevent Yorichi Type 0 from spawning naturally.<br>When enabled, kimetsunoyaiba:yorichi_0 is blocked from natural spawning anywhere.<br>Commands, spawn eggs, and other manual spawn paths are unaffected. |
@@ -406,6 +426,15 @@ Side labels use Forge's config registration type:
 | `spawn_priority.kimetsunoyaiba_demon9_priority` | Spawn priority for kimetsunoyaiba:demon9 (0 = never, 50 = 50% chance, 100 = always) |
 | `spawn_priority.kimetsunoyaiba_demon10_priority` | Spawn priority for kimetsunoyaiba:demon10 (0 = never, 50 = 50% chance, 100 = always) |
 | `spawn_priority.kimetsunoyaiba_demon_priority` | Spawn priority for kimetsunoyaiba:demon (0 = never, 50 = 50% chance, 100 = always) |
+| `spawn_priority.kimetsunoyaibamultiplayer_demon_efe_priority` | Replacement chance for kimetsunoyaibamultiplayer:demon_efe when an EASY base demon is selected (0 = never, 50 = 50%, 100 = always) |
+| `spawn_priority.kimetsunoyaibamultiplayer_demon_ari_priority` | Replacement chance for kimetsunoyaibamultiplayer:demon_ari when an EASY base demon is selected (0 = never, 50 = 50%, 100 = always) |
+| `spawn_priority.kimetsunoyaibamultiplayer_demon_kai_priority` | Replacement chance for kimetsunoyaibamultiplayer:demon_kai when an EASY base demon is selected (0 = never, 50 = 50%, 100 = always) |
+| `spawn_priority.kimetsunoyaibamultiplayer_demon_makena_priority` | Replacement chance for kimetsunoyaibamultiplayer:demon_makena when an EASY base demon is selected (0 = never, 50 = 50%, 100 = always) |
+| `spawn_priority.kimetsunoyaibamultiplayer_demon_noor_priority` | Replacement chance for kimetsunoyaibamultiplayer:demon_noor when an EASY base demon is selected (0 = never, 50 = 50%, 100 = always) |
+| `spawn_priority.kimetsunoyaibamultiplayer_demon_sunny_priority` | Replacement chance for kimetsunoyaibamultiplayer:demon_sunny when an EASY base demon is selected (0 = never, 50 = 50%, 100 = always) |
+| `spawn_priority.kimetsunoyaibamultiplayer_demon_zuri_priority` | Replacement chance for kimetsunoyaibamultiplayer:demon_zuri when an EASY base demon is selected (0 = never, 50 = 50%, 100 = always) |
+| `spawn_priority.kimetsunoyaibamultiplayer_swamp_demon_priority` | Replacement chance for kimetsunoyaibamultiplayer:swamp_demon when demon_5 or demon_9 is selected (0 = never, 50 = 50%, 100 = always) |
+| `spawn_priority.kimetsunoyaibamultiplayer_six_eye_demon_priority` | Replacement chance for kimetsunoyaibamultiplayer:six_eye_demon when demon_8 or demon_10 is selected (0 = never, 50 = 50%, 100 = always) |
 | `spawn_priority.kimetsunoyaiba_dice_steak_senior_priority` | Spawn priority for kimetsunoyaiba:dice_steak_senior (0 = never, 50 = 50% chance, 100 = always) |
 | `spawn_priority.kimetsunoyaiba_dice_steak_senior_demon_priority` | Spawn priority for kimetsunoyaiba:dice_steak_senior_demon (0 = never, 50 = 50% chance, 100 = always) |
 | `spawn_priority.kimetsunoyaiba_dice_steak_senior_golden_priority` | Spawn priority for kimetsunoyaiba:dice_steak_senior_golden (0 = never, 50 = 50% chance, 100 = always) |

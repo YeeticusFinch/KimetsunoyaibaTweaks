@@ -68,7 +68,7 @@ public class MistVariations {
         } else if (entity instanceof BreathingSlayerEntity slayer) {
             slayer.playGeckoAnimation(animationName, maxTicks);
         } else {
-            // Generic mobs/NPCs (e.g., CustomNPCs) — route through AnimationHelper
+            // Generic mobs/NPCs (e.g., CustomNPCs) â€” route through AnimationHelper
             AnimationHelper.playAnimationOnLayer(entity, animationName, maxTicks, speed, layer);
         }
     }
@@ -130,7 +130,7 @@ public class MistVariations {
 
                  // ===== PHASE 1: DENSE MIST CLOUD GENERATION =====
                  if (level instanceof ServerLevel serverLevel) {
-                     Vec3 centerPos = entity.position();
+                     Vec3 centerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
 
                      // Cyan mist particle (RGB: 138, 195, 194)
                      DustParticleOptions mistParticle = new DustParticleOptions(
@@ -154,17 +154,17 @@ public class MistVariations {
                                      double z = centerPos.z + Math.sin(radians) * r;
 
                                      // Spawn dense particles
-                                     serverLevel.sendParticles(mistParticle,
+                                     com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, mistParticle,
                                          x, layerHeight, z,
                                          5, 0.5, 0.3, 0.5, 0.02);
 
                                      // Add cloud particles for extra density
                                      if (level.random.nextFloat() < 0.5) {
-                                         serverLevel.sendParticles(ParticleTypes.CLOUD,
+                                         com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, ParticleTypes.CLOUD,
                                              x, layerHeight + 0.5, z,
                                              2, 0.4, 0.3, 0.4, 0.01);
                                          
-                                         serverLevel.sendParticles(ModParticles.MIST_PARTICLE.get(),
+                                         com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, ModParticles.MIST_PARTICLE.get(),
                                                  x, layerHeight + 0.5, z,
                                                  4, 0.4, 0.3, 0.4, 0.01);
                                      }
@@ -183,13 +183,13 @@ public class MistVariations {
                                  double offsetY = level.random.nextDouble() * 6;
                                  double offsetZ = (level.random.nextDouble() - 0.5) * 30;
 
-                                 serverLevel.sendParticles(mistParticle,
+                                 com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, mistParticle,
                                      centerPos.x + offsetX, centerPos.y + offsetY, centerPos.z + offsetZ,
                                      4, 0.6, 0.4, 0.6, 0.03);
 
                                  // Cloud particles for texture
                                  if (level.random.nextFloat() < 0.4) {
-                                     serverLevel.sendParticles(ModParticles.MIST_PARTICLE.get(),
+                                     com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, ModParticles.MIST_PARTICLE.get(),
                                          centerPos.x + offsetX, centerPos.y + offsetY, centerPos.z + offsetZ,
                                          4, 0.5, 0.3, 0.5, 0.02);
                                  }
@@ -205,7 +205,7 @@ public class MistVariations {
                      SoundSource.PLAYERS, 1.5F, 1.2F);
 
                  // ===== PHASE 2: SPAWN GHOSTLY CLONES =====
-                 Vec3 centerPos = entity.position();
+                 Vec3 centerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
                  Log.debug("[DEBUG 7TH FORM] Starting clone spawn phase...");
                  Log.debug("[DEBUG 7TH FORM] Level type: " + level.getClass().getSimpleName());
                  Log.debug("[DEBUG 7TH FORM] Is ServerLevel: " + (level instanceof ServerLevel));
@@ -221,9 +221,9 @@ public class MistVariations {
                          double angle = Math.toRadians(level.random.nextInt(360));
                          double distance = 5 + level.random.nextDouble() * 10; // 5-15 blocks away
 
-                         double spawnX = entity.getX() + Math.cos(angle) * distance;
-                         double spawnZ = entity.getZ() + Math.sin(angle) * distance;
-                         double spawnY = entity.getY();
+                         double spawnX = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.x(entity) + Math.cos(angle) * distance;
+                         double spawnZ = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.z(entity) + Math.sin(angle) * distance;
+                         double spawnY = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.y(entity);
 
                          Log.debug("[DEBUG 7TH FORM] Clone #" + i + " at: " + spawnX + ", " + spawnY + ", " + spawnZ);
 
@@ -277,15 +277,15 @@ public class MistVariations {
                      fadeTickCounter[0]++;
 
                      if (fadeTickCounter[0] < 15) { // Launch upwards
-                    	 if (fadeTickCounter[0] == 0) MovementHelper.setVelocity(entity, entity.getLookAngle().scale(-0.3f).add(0, 0.7f, 0));
+                    	 if (fadeTickCounter[0] == 0) MovementHelper.setVelocity(entity, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).scale(-0.3f).add(0, 0.7f, 0));
                      }
                      else {
                     	 if (fadeTickCounter[0] % attackInterval == 1) {
      						MovementHelper.lookAtTarget(entity);
      						// Spawn mist clouds during the charge
      	                    if (level instanceof ServerLevel serverLevel) {
-     	                        serverLevel.sendParticles(ModParticles.MIST_PARTICLE.get(),
-     	                            entity.getX(), entity.getY() + 1, entity.getZ(),
+     	                        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, ModParticles.MIST_PARTICLE.get(),
+     	                            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.x(entity), com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.y(entity) + 1, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.z(entity),
      	                            6, 1.0, 1.0, 1.0, 0.05);
      	                    }
      					}
@@ -304,14 +304,13 @@ public class MistVariations {
      						// Use layer 4000 with 3x speed for ultra-fast attacks
      						playEntityAnimationOnLayer(entity, animations[animIndex], 10, 3.0f, 4000);
 
-     						Vec3 attackerPos = entity.position().add(0, entity.getEyeHeight(), 0);
-     						// Vec3 lookVec = entity.getLookAngle().normalize();
+     						Vec3 attackerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0, entity.getEyeHeight(), 0);
+     						// Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).normalize();
 
      						AABB attackBox = entity.getBoundingBox().inflate(5);
 
      						// AABB attackBox = entity.getBoundingBox().inflate(4.5);
-     						List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class,
-     								attackBox, e -> e != entity && e.isAlive());
+     						List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(attackBox), e -> e != entity && e.isAlive());
 
      						for (LivingEntity target : targets) {
      							Damager.hurt(entity, target, (float)damage, false);
@@ -320,11 +319,11 @@ public class MistVariations {
      						// Spawn particles
      						if (level instanceof ServerLevel serverLevel) {
 
-     							double yawRad = Math.toRadians(entity.getYRot() + (Math.random() - 0.5) * 30);
+     							double yawRad = Math.toRadians(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity) + (Math.random() - 0.5) * 30);
      							double pitchRad = Math.toRadians((Math.random()-0.3) * 5);
      							Vec3 posOffset = new Vec3(Math.random() - 0.5, (Math.random() + 0.5) * 2,
      									Math.random() - 0.5);
-     							Vec3 pos = entity.position().add(posOffset);
+     							Vec3 pos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(posOffset);
 
      							int arcLength = (int) (100 + Math.random() * 70);
      							double angle = (Math.random() - 0.5) * 10;
@@ -427,15 +426,15 @@ public class MistVariations {
                  // Apply darkness to all living entities within 20 blocks of the cloud origin
                  // every second during the form. Excludes the caster.
                  if (level instanceof ServerLevel) {
-                     final Vec3 cloudOrigin = entity.position();
+                     final Vec3 cloudOrigin = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
                      final int tickInterval = 20; // every 1 second
                      AbilityScheduler.scheduleRepeating(entity, () -> {
                          AABB area = new AABB(cloudOrigin, cloudOrigin).inflate(20.0);
-                         List<LivingEntity> nearby = entity.level().getEntitiesOfClass(
-                             LivingEntity.class,
-                             area,
-                             e -> e != entity && e.isAlive()
-                         );
+                          List<LivingEntity> nearby = entity.level().getEntitiesOfClass(
+                              LivingEntity.class,
+                              com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(area),
+                              e -> e != entity && e.isAlive()
+                          );
                          for (LivingEntity le : nearby) {
                              // 3 seconds of darkness, reapplied every second while inside the cloud
                          	if (!(le instanceof Player p && (p.isCreative() || p.isSpectator())))

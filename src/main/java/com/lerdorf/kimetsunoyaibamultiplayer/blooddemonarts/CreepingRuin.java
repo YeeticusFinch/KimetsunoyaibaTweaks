@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonCreeperEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -105,8 +106,12 @@ public final class CreepingRuin {
             @Override
             public void run() {
                 double radius = 1.0D + age;
-                serverLevel.sendParticles(ParticleTypes.EXPLOSION, entity.getX(), entity.getY(0.5D), entity.getZ(), 8, radius * 0.08D, 0.05D, radius * 0.08D, 0.0D);
-                serverLevel.sendParticles(ParticleTypes.FLASH, entity.getX(), entity.getY(0.5D), entity.getZ(), 2, radius * 0.05D, 0.05D, radius * 0.05D, 0.0D);
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(serverLevel,
+                    ParticleTypes.EXPLOSION, entity.getX(), entity.getY(0.5D), entity.getZ(), 8,
+                    radius * 0.08D, 0.05D, radius * 0.08D, 0.0D);
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendWorldParticles(serverLevel,
+                    ParticleTypes.FLASH, entity.getX(), entity.getY(0.5D), entity.getZ(), 2,
+                    radius * 0.05D, 0.05D, radius * 0.05D, 0.0D);
 
                 AABB area = entity.getBoundingBox().inflate(radius + 0.75D);
                 for (LivingEntity target : serverLevel.getEntitiesOfClass(LivingEntity.class, area, living -> living != entity && living.isAlive())) {
@@ -118,8 +123,12 @@ public final class CreepingRuin {
                     float damage = entity instanceof DemonCreeperEntity creeper && creeper.isChargedState() ? 9.0F : 6.0F;
                     Damager.hurt(entity, target, damage);
 
-                    Vec3 knockback = target.position().subtract(entity.position()).normalize().scale(1.0D);
-                    target.push(knockback.x, 0.35D, knockback.z);
+                    Vec3 knockback = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(
+                        target.position()).subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity));
+                    if (knockback.lengthSqr() > 1.0E-4D) {
+                        knockback = knockback.normalize().scale(1.0D);
+                    }
+                    MovementHelper.addVelocity(target, knockback.add(0.0D, 0.35D, 0.0D));
                     target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1));
                 }
                 age++;
@@ -138,9 +147,8 @@ public final class CreepingRuin {
             creeper.playGeckoAnimation("spin", 12);
         }
 
-        Vec3 look = entity.getLookAngle().normalize();
-        entity.setDeltaMovement(entity.getDeltaMovement().add(look.x * 0.8D, 0.9D, look.z * 0.8D));
-        entity.hurtMarked = true;
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).normalize();
+        MovementHelper.addVelocity(entity, look.x * 0.8D, 0.9D, look.z * 0.8D);
 
         AbilityScheduler.scheduleOnce(entity, () -> spawnLightningRing(serverLevel, entity, 10.0D, 20), 10);
         if (entity instanceof DemonCreeperEntity creeper && creeper.isChargedState()) {
@@ -191,18 +199,21 @@ public final class CreepingRuin {
         java.util.Set<java.util.UUID> struckEntities = new java.util.HashSet<>();
         for (int degrees = 0; degrees < 360; degrees += degreeStep) {
             double radians = Math.toRadians(degrees);
-            double x = entity.getX() + (Math.cos(radians) * radius);
-            double z = entity.getZ() + (Math.sin(radians) * radius);
+            Vec3 localPosition = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity)
+                .add(Math.cos(radians) * radius, 0.0D, Math.sin(radians) * radius);
+            Vec3 worldPosition = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(localPosition);
 
             net.minecraft.world.entity.LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(level);
             if (lightning != null) {
-                lightning.moveTo(x, entity.getY(), z);
+                lightning.moveTo(worldPosition.x, worldPosition.y, worldPosition.z);
                 lightning.setVisualOnly(false);
                 level.addFreshEntity(lightning);
             }
         }
 
-        AABB strikeArea = entity.getBoundingBox().inflate(radius + 2.0D);
+        Vec3 center = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
+        AABB strikeArea = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+            new AABB(center, center).inflate(radius + 2.0D));
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, strikeArea,
             living -> living != entity && living.isAlive())) {
             double distance = target.distanceTo(entity);

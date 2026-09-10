@@ -84,6 +84,8 @@ public class SwampHandEntity extends Mob implements GeoEntity {
      */
     public static SwampHandEntity create(Level level, net.minecraft.world.phys.Vec3 position, LivingEntity owner) {
         SwampHandEntity hand = new SwampHandEntity(ModEntities.SWAMP_HAND.get(), level);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.inheritVisual(hand);
+        position = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(position);
         hand.setPos(position.x, position.y, position.z);
         if (owner != null) {
             hand.ownerUUID = owner.getUUID();

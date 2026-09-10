@@ -76,10 +76,39 @@ public class LoveSwordSlashesEntity extends Mob implements GeoEntity {
     public static LoveSwordSlashesEntity create(Level level, Vec3 position, float yaw, float pitch,
                                                  String animationName, int lifetimeTicks) {
         LoveSwordSlashesEntity entity = new LoveSwordSlashesEntity(ModEntities.LOVE_SWORD_SLASHES.get(), level);
+        // Inside an active combat frame the slash inherits the author's gravity basis:
+        // the entity gets that gravity direction (providers rotate its render + physics)
+        // and the authored local position is converted to world space. Vanilla passthrough
+        // when no gravity provider is present.
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.inheritVisual(entity);
+        position = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(position);
         entity.setPos(position.x, position.y, position.z);
         entity.setYRot(yaw);
         entity.setXRot(pitch);
         // Lock rotation by setting old rotation values (prevents interpolation)
+        entity.yRotO = yaw;
+        entity.xRotO = pitch;
+        entity.setAnimation(animationName);
+        entity.lifetime = lifetimeTicks;
+        return entity;
+    }
+
+    /**
+     * Client-side creation for packets: applies an explicit gravity direction
+     * (already world-space position). DOWN leaves everything vanilla.
+     */
+    public static LoveSwordSlashesEntity createClient(Level level, Vec3 position, float yaw, float pitch,
+                                                      String animationName, int lifetimeTicks,
+                                                      net.minecraft.core.Direction gravity) {
+        LoveSwordSlashesEntity entity = new LoveSwordSlashesEntity(ModEntities.LOVE_SWORD_SLASHES.get(), level);
+        if (gravity != null && gravity != net.minecraft.core.Direction.DOWN) {
+            entity.getPersistentData().putBoolean(
+                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity.GRAVITY_AFFECTED_TAG, true);
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity.setBaseGravityDirection(entity, gravity);
+        }
+        entity.setPos(position.x, position.y, position.z);
+        entity.setYRot(yaw);
+        entity.setXRot(pitch);
         entity.yRotO = yaw;
         entity.xRotO = pitch;
         entity.setAnimation(animationName);

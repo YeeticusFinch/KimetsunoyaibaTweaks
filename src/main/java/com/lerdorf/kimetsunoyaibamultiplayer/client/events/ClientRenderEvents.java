@@ -149,6 +149,14 @@ public class ClientRenderEvents {
                 continue; // Unknown animation type
             }
 
+            // Rotate authored local slash geometry with the entity's gravity basis
+            // (vanilla passthrough when no gravity provider is present).
+            Quaternionf gravityRotation = (req.isRawSlash || req.isRawHorizontal || req.isRawVertical)
+                    && req.authoredGravity() != net.minecraft.core.Direction.DOWN
+                    ? com.lerdorf.kimetsunoyaibamultiplayer.client.CombatRenderGravity.rotation(req.authoredGravity())
+                    : com.lerdorf.kimetsunoyaibamultiplayer.client.CombatRenderGravity.rotation(req.entity, event.getPartialTick());
+            worldPos = com.lerdorf.kimetsunoyaibamultiplayer.client.CombatRenderGravity.position(req.entity, worldPos, gravityRotation);
+
             // Convert world coordinates to camera-relative coordinates
             Vec3 cameraRelative = worldPos.subtract(camera);
 
@@ -200,7 +208,7 @@ public class ClientRenderEvents {
             }
 
             // Render model with dual-layer system (base + emissive)
-            DualLayerSlashRenderer.renderDualLayer(
+            com.lerdorf.kimetsunoyaibamultiplayer.client.DualLayerSlashRenderer.renderDualLayerWithGravity(
                 poseStack,
                 bufferSource,
                 cameraRelative,
@@ -214,7 +222,8 @@ public class ClientRenderEvents {
                 flipHorizontal,  // Pass flip flag to use "base" or "reverse" animation
                 req.startTime,   // Start time for animated texture frame calculation
                 req.duration,    // Duration for animated texture frame calculation
-                req.tintColor
+                req.tintColor,
+                gravityRotation
             );
         }
 

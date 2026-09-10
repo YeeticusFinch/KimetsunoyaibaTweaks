@@ -129,7 +129,7 @@ public class LoveVariations {
 
                 final Vec3[] vectors = new Vec3[2];
                 // Get initial forward and right vectors using yaw (handles looking up/down)
-                float yawRad = (float) Math.toRadians(-entity.getYRot());
+                float yawRad = (float) Math.toRadians(-com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
                 vectors[0] = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
                 // Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
                 vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
@@ -144,12 +144,13 @@ public class LoveVariations {
         		float [][][] particlePointsSwordRight = ParticlePositions.sword_to_right.get("point_a");
         		
         		// Find target - check for entity within 12 blocks on crosshair
-				Vec3 lookVec = entity.getLookAngle();
-				Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
+				Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
+				Vec3 startPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity);
 				Vec3 endPos = startPos.add(lookVec.scale(12.0));
 
 				// Raycast to find entity
-				AABB searchBox = new AABB(startPos, endPos).inflate(1.0);
+				AABB searchBox = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(
+					new AABB(startPos, endPos).inflate(1.0));
 				List<LivingEntity> nearbyEntities = level.getEntitiesOfClass(LivingEntity.class, searchBox,
 						e -> e != entity && e.isAlive());
 
@@ -159,11 +160,12 @@ public class LoveVariations {
 
 				if (!nearbyEntities.isEmpty()) {
 					nearbyEntities
-							.sort(Comparator.comparingDouble(e -> e.position().distanceToSqr(entity.position())));
+						.sort(Comparator.comparingDouble(e -> com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame
+							.local(e.position()).distanceToSqr(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity))));
 					targetEntity = nearbyEntities.get(0);
-					targetPos = targetEntity.position();
+					targetPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(targetEntity.position());
 				} else {
-					targetPos = entity.position().add(lookVec.scale(10.0));
+					targetPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(lookVec.scale(10.0));
 				}
 
 				// entity.setNoGravity(true);
@@ -176,7 +178,7 @@ public class LoveVariations {
 				final double angularVelocity = (Math.PI * 2) / totalTicks; // Radians per tick
 
 				// Store player's starting angle
-				Vec3 toPlayer = entity.position().subtract(finalTargetPos);
+				Vec3 toPlayer = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).subtract(finalTargetPos);
 				final double startAngle = Math.atan2(toPlayer.z, toPlayer.x);
                 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
@@ -185,7 +187,7 @@ public class LoveVariations {
                 	
                 	if (currentTick[0] % 4 == 0) {
                 		// Use yaw rotation to get forward direction (works even when looking up/down)
-                		float yaw = (float) Math.toRadians(-entity.getYRot());
+						float yaw = (float) Math.toRadians(-com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
                 		vectors[0] = new Vec3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
                 		// Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
                 		vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
@@ -215,10 +217,11 @@ public class LoveVariations {
                 			float y = particlePoints[currentTick[0]+particlePointsOffset][i][1];
                 			float z = particlePoints[currentTick[0]+particlePointsOffset][i][2];
 
-                			Vec3 pos = entity.position().add(vectors[0].scale(z).add(vectors[1].scale(x)).add(0, y, 0));
+							Vec3 pos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity)
+								.add(vectors[0].scale(z).add(vectors[1].scale(x)).add(0, y, 0));
 
                 			// Spawn pink dust particle at pos
-                			serverLevel.sendParticles(
+							com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel,
                 		            new EnergyParticleOptions(
                 		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
@@ -228,7 +231,7 @@ public class LoveVariations {
                 		        );
                 			
                 			// Spawn white dust particle at pos
-                			serverLevel.sendParticles(
+							com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel,
                 					new EnergyParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1f                           // scale
@@ -261,7 +264,9 @@ public class LoveVariations {
 						double currentAngle = startAngle + (currentTick[0] * angularVelocity * 3.0);
 
 						// Get current center position (follow target entity if available)
-						Vec3 currentCenter = finalTargetEntity != null ? finalTargetEntity.position() : finalTargetPos;
+						Vec3 currentCenter = finalTargetEntity != null
+							? com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(finalTargetEntity.position())
+							: finalTargetPos;
 
 						// Calculate where entity SHOULD be on the circle
 						Vec3 targetPosition = MovementHelper.calculateCirclePosition(currentCenter, circleRadius,
@@ -273,7 +278,7 @@ public class LoveVariations {
 								nextAngle);
 
 						// Calculate velocity to move from current position towards next position
-						Vec3 playerPos = entity.position();
+						Vec3 playerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
 						Vec3 toNextPosition = nextPosition.subtract(playerPos);
 
 						// Also add correction to pull player towards the circle if they're off-path
@@ -285,7 +290,7 @@ public class LoveVariations {
 						Vec3 combinedVelocity = forwardVelocity.add(correctionVelocity);
 
 						// Preserve some Y velocity for terrain following, but dampen falling
-						double yVelocity = entity.getDeltaMovement().y;
+						double yVelocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).y;
 						if (yVelocity < 0) {
 							yVelocity = Math.max(yVelocity, -0.2); // Limit falling speed
 						}
@@ -366,9 +371,9 @@ public class LoveVariations {
 								for (LivingEntity target : circleTargets) {
 									boolean success = Damager.hurt(entity, target, damage);
 									if (success) { // Knock the target into the air
-										float targetY = (float)entity.position().y() + 10 + (((float)currentTick[0])/(float)(firstFormStart));
-										Vec3 curVel =  target.getDeltaMovement();
-										if (target.position().y() < targetY)
+								float targetY = (float)com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).y() + 10 + (((float)currentTick[0])/(float)(firstFormStart));
+								Vec3 curVel = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(target);
+								if (com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(target.position()).y() < targetY)
 											MovementHelper.setVelocity(target, curVel.add(0, Math.min(Math.max(targetY-target.position().y(), 0.7), 1.1), 0));
 									}
 								}
@@ -567,11 +572,11 @@ public class LoveVariations {
                 final int interval = 1;
                 
                 final Vec3[] vecs = new Vec3[5]; // 0=position, 1=forward, 2=right, 3=up, 4=target
-                float yawStart = (float) Math.toRadians(-entity.getYRot());
+              				float yawStart = (float) Math.toRadians(-com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
 
         		// Build orthonormal basis (forward, right, up)
-        		vecs[0] = entity.position();
-        		vecs[1] = entity.getLookAngle(); // Forward vector
+         				vecs[0] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
+         				vecs[1] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity); // Forward vector
         		vecs[2] = new Vec3(Math.sin(yawStart + Math.PI/2), 0, Math.cos(yawStart + Math.PI/2)).normalize(); // Right vector (90° from forward on horizontal plane)
         		vecs[3] = vecs[2].cross(vecs[1]).normalize(); // Up vector (right × forward, perpendicular to both)
         		
@@ -590,11 +595,11 @@ public class LoveVariations {
                 	}
                 	
                 	if (currentTick[0]-fifthFormStart == 25 || (currentTick[0]-fifthFormStart < 25 && currentTick[0] %4 == 0)) {
-                		float yaw = (float) Math.toRadians(-entity.getYRot());
+                  		float yaw = (float) Math.toRadians(-com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
 
                 		// Build orthonormal basis (forward, right, up)
-                		vecs[0] = entity.position();
-                		vecs[1] = entity.getLookAngle(); // Forward vector
+                  		vecs[0] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
+                  		vecs[1] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity); // Forward vector
                 		if (vecs[1].y > 0) vecs[1] = new Vec3(vecs[1].x, 0, vecs[1].z);
                 		vecs[2] = new Vec3(Math.sin(yaw + Math.PI/2), 0, Math.cos(yaw + Math.PI/2)).normalize(); // Right vector (90° from forward on horizontal plane)
                 		vecs[3] = vecs[2].cross(vecs[1]).scale(-1).normalize(); // Up vector (right × forward, perpendicular to both)
@@ -602,15 +607,16 @@ public class LoveVariations {
                 			yawPitch[0] = (float) Math.toDegrees(Math.atan2(-vecs[1].x, vecs[1].z));
                 			yawPitch[1] = (float) Math.toDegrees(Math.atan2(-vecs[1].y, Math.sqrt(vecs[1].x*vecs[1].x + vecs[1].z*vecs[1].z)));
                 			
-                			Vec3 eyePos = entity.getEyePosition();
+                  			Vec3 eyePos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity);
                 			// Find the target block
                 			for (int i = 1; i < range; i++) {
-                    			Vec3 vec = eyePos.add(vecs[1].scale(i));
+                  				Vec3 vec = eyePos.add(vecs[1].scale(i));
                     			
                     			vecs[4] = vec; // Set the target position
 
                     			// Check block collision
-                    			BlockPos blockPos = new BlockPos((int)Math.floor(vec.x), (int)Math.floor(vec.y), (int)Math.floor(vec.z));
+                      			BlockPos blockPos = BlockPos.containing(
+                      				com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(vec));
                     			if (!level.getBlockState(blockPos).isAir()) {
                     				
                     				break; // Stop at first block hit

@@ -64,6 +64,15 @@ public final class BaseModFormExecutionHelper {
      * @param formId Base-mod form ID (e.g. 601, 801, 901, 1401)
      */
     public static void executeBaseModForm(LivingEntity entity, Level level, int formId) {
+        var previousGravityFrame = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(entity);
+        try {
+            executeBaseModFormInGravityFrame(entity, level, formId);
+        } finally {
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.restore(previousGravityFrame);
+        }
+    }
+
+    public static void executeBaseModFormInGravityFrame(LivingEntity entity, Level level, int formId) {
         if (entity == null || level == null || level.isClientSide
             || PuppetryHandler.isAbilityUseBlocked(entity)) {
             return;
@@ -614,7 +623,7 @@ public final class BaseModFormExecutionHelper {
                 return;
             }
 
-            if (entity.getDeltaMovement().y <= 0.0) {
+            if (com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).y <= 0.0) {
                 setVelocityInLookDirection(entity, 1.5);
                 AnimationHelper.playAnimation(entity, "speed_attack_sword");
                 burstDone[0] = true;
@@ -678,7 +687,7 @@ public final class BaseModFormExecutionHelper {
      */
     private static void applyFlameForm3Movement(LivingEntity entity) {
         nextMovementToken(entity, FLAME_MOVEMENT_TOKEN_TAG);
-        Vec3 velocity = entity.getDeltaMovement();
+        Vec3 velocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
         MovementHelper.setVelocity(entity, velocity.x, FLAME_FORM3_LAUNCH_Y, velocity.z);
     }
 
@@ -799,7 +808,7 @@ public final class BaseModFormExecutionHelper {
                     entity.setNoGravity(false);
                     return;
                 }
-                Vec3 current = entity.getDeltaMovement();
+                Vec3 current = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
                 MovementHelper.setVelocity(entity, current.x, 0.0, current.z);
                 entity.fallDistance = 0.0F;
             }, 1, 10);
@@ -880,7 +889,7 @@ public final class BaseModFormExecutionHelper {
         if (!entity.isAlive() || !isMovementTokenActive(entity, WATER_MOVEMENT_TOKEN_TAG, token)) {
             return;
         }
-        Vec3 current = entity.getDeltaMovement();
+        Vec3 current = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
         MovementHelper.setVelocity(entity, current.x, WATER_FORM8_LEAP_Y, current.z);
     }
 
@@ -907,7 +916,7 @@ public final class BaseModFormExecutionHelper {
      */
     private static void applyWindForm1Movement(LivingEntity entity) {
         final int token = nextMovementToken(entity, WIND_MOVEMENT_TOKEN_TAG);
-        double yawRad = Math.toRadians(entity.getYRot());
+        double yawRad = Math.toRadians(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
         double x = -Math.sin(yawRad) * 1.1;
         double z = Math.cos(yawRad) * 1.1;
 
@@ -915,7 +924,7 @@ public final class BaseModFormExecutionHelper {
             if (!entity.isAlive() || !isMovementTokenActive(entity, WIND_MOVEMENT_TOKEN_TAG, token)) {
                 return;
             }
-            MovementHelper.setVelocity(entity, x, entity.getDeltaMovement().y, z);
+            MovementHelper.setVelocity(entity, x, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).y, z);
         }, 1, 20);
     }
 
@@ -928,7 +937,7 @@ public final class BaseModFormExecutionHelper {
         if (!entity.isAlive() || !isMovementTokenActive(entity, WIND_MOVEMENT_TOKEN_TAG, token)) {
             return;
         }
-        Vec3 current = entity.getDeltaMovement();
+        Vec3 current = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
         MovementHelper.setVelocity(entity, current.x, WIND_FORM2_LEAP_Y, current.z);
     }
 
@@ -941,7 +950,7 @@ public final class BaseModFormExecutionHelper {
         if (!entity.isAlive() || !isMovementTokenActive(entity, WIND_MOVEMENT_TOKEN_TAG, token)) {
             return;
         }
-        Vec3 current = entity.getDeltaMovement();
+        Vec3 current = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
         MovementHelper.setVelocity(entity, current.x, WIND_FORM5_LEAP_Y, current.z);
     }
 
@@ -954,7 +963,7 @@ public final class BaseModFormExecutionHelper {
         if (!entity.isAlive() || !isMovementTokenActive(entity, WIND_MOVEMENT_TOKEN_TAG, token)) {
             return;
         }
-        Vec3 current = entity.getDeltaMovement();
+        Vec3 current = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
         MovementHelper.setVelocity(entity, current.x, WIND_FORM7_LEAP_Y, current.z);
     }
 
@@ -996,7 +1005,7 @@ public final class BaseModFormExecutionHelper {
         if (!entity.isAlive() || !isMovementTokenActive(entity, WIND_MOVEMENT_TOKEN_TAG, token)) {
             return;
         }
-        Vec3 current = entity.getDeltaMovement();
+        Vec3 current = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
         MovementHelper.setVelocity(entity, current.x, WIND_FORM9_LEAP_Y, current.z);
     }
 
@@ -1126,7 +1135,7 @@ public final class BaseModFormExecutionHelper {
      */
     private static void applyStoneForm5Movement(LivingEntity entity) {
         final int token = nextMovementToken(entity, STONE_MOVEMENT_TOKEN_TAG);
-        final double startY = entity.getY();
+        final double startY = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.y(entity);
         final double hoverY = startY + 8.0;
         final int[] tickCounter = {0};
 
@@ -1141,11 +1150,11 @@ public final class BaseModFormExecutionHelper {
             if (tickCounter[0] <= 10) {
                 // Smoothly reach +8 blocks over the first 10 ticks.
                 int remainingTicks = Math.max(1, 11 - tickCounter[0]);
-                double yError = hoverY - entity.getY();
+                double yError = hoverY - com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.y(entity);
                 yVelocity = Mth.clamp((yError / remainingTicks) + 0.08, 0.35, 1.25);
             } else {
                 // Hover near the +8 block target for the next 20 ticks.
-                double yError = hoverY - entity.getY();
+                double yError = hoverY - com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.y(entity);
                 yVelocity = Mth.clamp((yError * 0.85) + 0.08, -0.35, 0.35);
             }
 
@@ -1172,21 +1181,21 @@ public final class BaseModFormExecutionHelper {
     }
 
     private static Vec3 horizontalLook(LivingEntity entity) {
-        Vec3 look = entity.getLookAngle();
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
         Vec3 horizontal = new Vec3(look.x, 0.0, look.z);
         if (horizontal.lengthSqr() > 1.0e-6) {
             return horizontal.normalize();
         }
 
         // Fallback in case the look vector is near-vertical.
-        double yawRad = Math.toRadians(entity.getYRot());
+        double yawRad = Math.toRadians(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
         double x = -Math.sin(yawRad);
         double z = Math.cos(yawRad);
         return new Vec3(x, 0.0, z).normalize();
     }
 
     private static Vec3 fullLook(LivingEntity entity) {
-        Vec3 look = entity.getLookAngle();
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
         if (look.lengthSqr() > 1.0e-6) {
             return look.normalize();
         }
@@ -1199,7 +1208,7 @@ public final class BaseModFormExecutionHelper {
      */
     private static void setHorizontalVelocityPreserveY(LivingEntity entity, double horizontalSpeed) {
         Vec3 horizontalForward = horizontalLook(entity).scale(horizontalSpeed);
-        double currentYVelocity = entity.getDeltaMovement().y;
+        double currentYVelocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).y;
         MovementHelper.setVelocity(entity, horizontalForward.x, currentYVelocity, horizontalForward.z);
     }
 
@@ -1228,7 +1237,7 @@ public final class BaseModFormExecutionHelper {
             tickCounter[0]++;
             MovementHelper.setVelocity(entity, lockedDirection.scale(speed));
             if (Config.logDebug && (tickCounter[0] == 1 || tickCounter[0] == 10)) {
-                Vec3 current = entity.getDeltaMovement();
+                Vec3 current = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
                 Log.debug("[MovementOverlay] startLockedLookDash tick entity={}, tokenTag={}, token={}, tick={}, velocity=({}, {}, {})",
                     entity.getName().getString(), tokenTag, token, tickCounter[0],
                     current.x, current.y, current.z);
@@ -1237,10 +1246,10 @@ public final class BaseModFormExecutionHelper {
     }
 
     private static void setHorizontalVelocityFromYawPreserveY(LivingEntity entity, double horizontalSpeed) {
-        double yawRad = Math.toRadians(entity.getYRot());
+        double yawRad = Math.toRadians(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
         double x = -Math.sin(yawRad) * horizontalSpeed;
         double z = Math.cos(yawRad) * horizontalSpeed;
-        double currentYVelocity = entity.getDeltaMovement().y;
+        double currentYVelocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).y;
         MovementHelper.setVelocity(entity, x, currentYVelocity, z);
     }
 
@@ -1250,7 +1259,7 @@ public final class BaseModFormExecutionHelper {
      */
     private static void setHorizontalVelocityGravityOnly(LivingEntity entity, double horizontalSpeed) {
         Vec3 horizontalForward = horizontalLook(entity).scale(horizontalSpeed);
-        double gravityY = Math.min(entity.getDeltaMovement().y, 0.0);
+        double gravityY = Math.min(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).y, 0.0);
         MovementHelper.setVelocity(entity, horizontalForward.x, gravityY, horizontalForward.z);
     }
 }

@@ -54,6 +54,15 @@ public final class BloodDemonArtM1AttackHandler {
     }
 
     public static boolean performNezukoAttack(LivingEntity attacker, UUID excludedTargetId) {
+        var previousGravityFrame = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(attacker);
+        try {
+            return performNezukoAttackInGravityFrame(attacker, excludedTargetId);
+        } finally {
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.restore(previousGravityFrame);
+        }
+    }
+
+    private static boolean performNezukoAttackInGravityFrame(LivingEntity attacker, UUID excludedTargetId) {
         if (!markHandledThisTick(attacker)) {
             return false;
         }
@@ -67,20 +76,35 @@ public final class BloodDemonArtM1AttackHandler {
     }
 
     public static boolean performSwampAttack(LivingEntity attacker, UUID excludedTargetId) {
-        if (!markHandledThisTick(attacker)) {
-            return false;
-        }
+        var previousGravityFrame = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(attacker);
+        try {
+            if (!markHandledThisTick(attacker)) {
+                return false;
+            }
 
-        performMartialArtsAttack(attacker, 2, SWAMP_COLOR, excludedTargetId);
-        return true;
+            performMartialArtsAttack(attacker, 2, SWAMP_COLOR, excludedTargetId);
+            return true;
+        } finally {
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.restore(previousGravityFrame);
+        }
     }
 
     public static boolean performNichirinLikeSlashAttack(LivingEntity attacker, UUID excludedTargetId) {
-        return performSlashAttack(attacker, excludedTargetId, null);
+        var previousGravityFrame = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(attacker);
+        try {
+            return performSlashAttack(attacker, excludedTargetId, null);
+        } finally {
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.restore(previousGravityFrame);
+        }
     }
 
     public static boolean performWebSlashAttack(LivingEntity attacker, UUID excludedTargetId) {
-        return performSlashAttack(attacker, excludedTargetId, "web");
+        var previousGravityFrame = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(attacker);
+        try {
+            return performSlashAttack(attacker, excludedTargetId, "web");
+        } finally {
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.restore(previousGravityFrame);
+        }
     }
 
     private static boolean performSlashAttack(LivingEntity attacker, UUID excludedTargetId, String modelKey) {
@@ -133,13 +157,17 @@ public final class BloodDemonArtM1AttackHandler {
     }
 
     private static int damageTargets(LivingEntity attacker, double knockback, UUID excludedTargetId) {
-        Vec3 eyePos = attacker.position().add(0.0D, attacker.getEyeHeight(), 0.0D);
-        Vec3 lookVec = attacker.getLookAngle().normalize();
+        Vec3 eyePos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(attacker)
+            .add(0.0D, attacker.getEyeHeight(), 0.0D);
+        Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(attacker).normalize();
         Vec3 frontPos = eyePos.add(lookVec.scale(DEFAULT_BOX_SIZE / 1.5F));
-        AABB attackBox = new AABB(
+        // The attack box is authored in local axes around the local look vector,
+        // then converted to world space for the level query.
+        AABB localBox = new AABB(
             frontPos.add(-DEFAULT_BOX_SIZE / 2.0F, -DEFAULT_BOX_SIZE / 2.0F, -DEFAULT_BOX_SIZE / 2.0F),
             frontPos.add(DEFAULT_BOX_SIZE / 2.0F, DEFAULT_BOX_SIZE / 2.0F, DEFAULT_BOX_SIZE / 2.0F)
         );
+        AABB attackBox = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(localBox);
 
         float damage = AttackDamageHelper.getM1AoeDamageByStrength(attacker);
         List<LivingEntity> targets = attacker.level().getEntitiesOfClass(LivingEntity.class, attackBox,
@@ -159,7 +187,9 @@ public final class BloodDemonArtM1AttackHandler {
 
             Damager.hurt(attacker, target, damage, false, true);
             if (knockback > 0.0D) {
-                target.knockback(knockback, attacker.getX() - target.getX(), attacker.getZ() - target.getZ());
+                target.knockback(knockback,
+                    com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.x(attacker) - com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.x(target),
+                    com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.z(attacker) - com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.z(target));
             }
             hitCount++;
         }
@@ -174,18 +204,20 @@ public final class BloodDemonArtM1AttackHandler {
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
         int b = color & 0xFF;
-        Vec3 impactPos = attacker.position()
+        Vec3 impactPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(attacker)
             .add(0.0D, attacker.getEyeHeight(), 0.0D)
-            .add(attacker.getLookAngle().normalize().scale(2.0D));
-        serverLevel.sendParticles(
+            .add(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(attacker).normalize().scale(2.0D));
+        Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(attacker);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(
+            serverLevel,
             new ImpactParticleOptions(r, g, b, 1.0F),
             impactPos.x,
             impactPos.y,
             impactPos.z,
             1,
-            attacker.getLookAngle().x * 0.02D,
-            attacker.getLookAngle().y * 0.02D,
-            attacker.getLookAngle().z * 0.02D,
+            look.x * 0.02D,
+            look.y * 0.02D,
+            look.z * 0.02D,
             0.12D
         );
     }

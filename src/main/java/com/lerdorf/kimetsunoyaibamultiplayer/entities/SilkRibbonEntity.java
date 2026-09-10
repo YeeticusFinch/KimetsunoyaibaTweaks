@@ -141,6 +141,9 @@ public class SilkRibbonEntity extends Mob {
                                          RibbonKind kind, float damage, boolean cocoonOnHit,
                                          @Nullable LivingEntity targetEntity) {
         SilkRibbonEntity ribbon = new SilkRibbonEntity(ModEntities.SILK_RIBBON.get(), level);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.inheritVisual(ribbon);
+        start = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(start);
+        targetPoint = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(targetPoint);
         ribbon.setPos(start.x, start.y, start.z);
         ribbon.casterUuid = caster.getUUID();
         ribbon.targetPoint = targetPoint;

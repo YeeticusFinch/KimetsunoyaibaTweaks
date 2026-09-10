@@ -15,7 +15,8 @@
     "ServerLevelParticleMixin",
     "CommandsMixin",
     "DemonizedSerpentParticlesMixin",
-    "StructureTemplateMixin"
+    "StructureTemplateMixin",
+    "EnhancedMountStructureMixin"
   ],
   "client": [
     "BridgerPreviewFallingBlockMixin",

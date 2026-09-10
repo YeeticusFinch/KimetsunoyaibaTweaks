@@ -154,7 +154,7 @@ public final class GravityFieldManager {
             return;
         }
         Entity entity = event.getEntity();
-        if (!KNYGravity.canChangeGravity(entity)) {
+        if (!KNYGravity.isGravityAffected(entity)) {
             return;
         }
         Map<UUID, DesiredGravity> desired = new HashMap<>();
@@ -190,7 +190,7 @@ public final class GravityFieldManager {
             GravityBlockEntity field = entry.getValue();
             Direction direction = field.getWorldGravityDirection();
             long tieBreaker = entry.getKey().asLong();
-            for (Entity entity : level.getEntitiesOfClass(Entity.class, field.getFieldBox(), KNYGravity::canChangeGravity)) {
+            for (Entity entity : level.getEntitiesOfClass(Entity.class, field.getFieldBox(), KNYGravity::isGravityAffected)) {
                 addDesired(desired, entity, direction, GRAVITY_BLOCK_PRIORITY, tieBreaker, true);
             }
         }
@@ -221,7 +221,7 @@ public final class GravityFieldManager {
             if (!(entry.getValue() instanceof GravityField field) || !field.enabled()) {
                 continue;
             }
-            for (Entity entity : level.getEntitiesOfClass(Entity.class, field.box(), KNYGravity::canChangeGravity)) {
+            for (Entity entity : level.getEntitiesOfClass(Entity.class, field.box(), KNYGravity::isGravityAffected)) {
                 if (field.affects(entity)) {
                     addDesired(desired, entity, field.getDirection(entity), field.getPriority(entity), field.sourcePos().asLong(), true);
                 }
@@ -246,7 +246,7 @@ public final class GravityFieldManager {
     private static void addTrackedEntitiesWithoutFields(ServerLevel level, Map<UUID, DesiredGravity> desired) {
         for (ServerPlayer player : level.players()) {
             UUID id = player.getUUID();
-            if (!desired.containsKey(id) && KNYGravity.canChangeGravity(player)) {
+            if (!desired.containsKey(id) && KNYGravity.isGravityAffected(player)) {
                 addDesired(desired, player, Direction.DOWN, Double.NEGATIVE_INFINITY, Long.MAX_VALUE, false);
             }
         }
@@ -256,7 +256,7 @@ public final class GravityFieldManager {
                 continue;
             }
             Entity entity = level.getEntity(entry.getKey());
-            if (entity == null || !KNYGravity.canChangeGravity(entity)) {
+            if (entity == null || !KNYGravity.isGravityAffected(entity)) {
                 TRACKED_ENTITIES.remove(entry.getKey());
                 continue;
             }

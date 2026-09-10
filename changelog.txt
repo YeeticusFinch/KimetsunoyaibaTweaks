@@ -1,3 +1,9 @@
+1.6.567
+- Made GravityControl work with some breathing styles and blood demon arts
+- Made Mount Natagumo actually spawn as a mountain (Enhanced Mount Natagumo)
+- Fixed the demon spawning for the Tweaks demons
+- Added Guard and Dash skills for demon players
+
 1.6.566
 - Updated the GravityAPI optional dependency to GravityControl
   - https://www.curseforge.com/minecraft/mc-mods/gravity-control

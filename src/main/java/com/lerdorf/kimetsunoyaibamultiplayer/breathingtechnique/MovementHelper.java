@@ -28,7 +28,7 @@ public class MovementHelper {
      * @param velocity The velocity vector
      */
     public static void setVelocity(LivingEntity entity, Vec3 velocity) {
-        entity.setDeltaMovement(velocity);
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity, velocity);
         entity.hasImpulse = true;
         entity.hurtMarked = true; // Force velocity sync to clients
 
@@ -55,7 +55,7 @@ public class MovementHelper {
      * @param deltaVelocity The velocity to add
      */
     public static void addVelocity(LivingEntity entity, Vec3 deltaVelocity) {
-        setVelocity(entity, entity.getDeltaMovement().add(deltaVelocity));
+        setVelocity(entity, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).add(deltaVelocity));
     }
 
     /**
@@ -74,6 +74,9 @@ public class MovementHelper {
      * Also rotates ShoulderSurfing camera if entity is a player
      */
     public static void setRotation(LivingEntity entity, float yaw, float pitch) {
+        var nativeRotation = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.nativeRotation(entity, yaw, pitch);
+        yaw = nativeRotation.y;
+        pitch = nativeRotation.x;
         // --- Update entity state ---
         entity.setYRot(yaw);
         entity.setXRot(pitch);
@@ -113,7 +116,7 @@ public class MovementHelper {
      * @param target The position to look at
      */
     public static void lookAt(LivingEntity entity, Vec3 target) {
-        Vec3 lookDir = target.subtract(entity.getEyePosition()).normalize();
+        Vec3 lookDir = target.subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity)).normalize();
         float yaw = (float) Math.toDegrees(Math.atan2(-lookDir.x, lookDir.z));
         float pitch = (float) Math.toDegrees(-Math.asin(lookDir.y));
         setRotation(entity, yaw, pitch);
@@ -125,10 +128,10 @@ public class MovementHelper {
      * @param target The position to look at
      */
     public static void lookAtNoY(LivingEntity entity, Vec3 target) {
-        Vec3 lookDir = target.subtract(entity.getEyePosition()).normalize();
+        Vec3 lookDir = target.subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity)).normalize();
         float yaw = (float) Math.toDegrees(Math.atan2(-lookDir.x, lookDir.z));
         //float pitch = (float) Math.toDegrees(-Math.asin(lookDir.y));
-        Vec3 normalized = entity.getLookAngle();
+        Vec3 normalized = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
         float pitch = (float) Math.toDegrees(-Math.asin(normalized.y));
         setRotation(entity, yaw, pitch);
     }
@@ -164,7 +167,7 @@ public class MovementHelper {
             }
 
             // Look at target's eye position for a natural head tilt
-            Vec3 targetPos = target.position().add(0, target.getEyeHeight(), 0);
+            Vec3 targetPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(target);
             lookAt(entity, targetPos);
         }
     }
@@ -176,7 +179,7 @@ public class MovementHelper {
      * @param speed Movement speed multiplier
      */
     public static void moveTowards(LivingEntity entity, Vec3 target, double speed) {
-        Vec3 direction = target.subtract(entity.position());
+        Vec3 direction = target.subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity));
         Vec3 velocity = direction.normalize().scale(speed);
         setVelocity(entity, velocity);
     }
@@ -267,10 +270,12 @@ public class MovementHelper {
     }
 
 	public static void stepUp(LivingEntity entity, double vx, double vy, double vz) {
-		// Calculate the block position in front of the entity
-		Vec3 targetPos = entity.position().add(new Vec3(vx, vy, vz).normalize());
+		// Calculate the block position in front of the entity (authored local space)
+		Vec3 targetPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(new Vec3(vx, vy, vz).normalize());
 
-		BlockPos targetBlockPos = BlockPos.containing(targetPos);
+		// Block lookups happen in world space: convert the authored local point.
+		Vec3 worldTarget = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(targetPos);
+		BlockPos targetBlockPos = BlockPos.containing(worldTarget);
 		BlockPos aboveBlockPos = targetBlockPos.above();
 
 		Level level = entity.level();
@@ -284,7 +289,9 @@ public class MovementHelper {
 		boolean aboveIsPassable = aboveBlock.getCollisionShape(level, aboveBlockPos).isEmpty();
 
 		if (targetIsSolid && aboveIsPassable) {
-		    entity.teleportTo(entity.getX(), entity.getY() + 1.0, entity.getZ());
+			// Teleport one block along the entity's local up axis.
+			Vec3 upOffset = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D));
+			entity.teleportTo(entity.getX() + upOffset.x, entity.getY() + upOffset.y, entity.getZ() + upOffset.z);
 		}
 	}
 }

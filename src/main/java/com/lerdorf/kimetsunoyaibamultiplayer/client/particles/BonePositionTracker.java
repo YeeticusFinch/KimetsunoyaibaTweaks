@@ -68,11 +68,41 @@ public class BonePositionTracker {
 		public final Vec3 posOffset;
 		public final boolean isRawHorizontal;
 		public final boolean isRawVertical;
-		public final float vert;
-		public final float hor;
-		public final int tintColor;
+	public final float vert;
+	public final float hor;
+	public final int tintColor;
 
-	    public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
+	    /**
+	     * The gravity basis this slash was authored in: the active combat frame's
+	     * direction when available, otherwise the entity's own gravity direction.
+	     * DOWN means vanilla axes (no extra rotation).
+	     */
+	    public net.minecraft.core.Direction authoredGravity() {
+	        if (com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.active()) {
+	            return com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.currentDirection();
+	        }
+	        return entity == null ? net.minecraft.core.Direction.DOWN
+	            : com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity.getGravityDirection(entity);
+	    }
+
+	    /** The entity's native yaw converted into the authored local basis. */
+	    public float authoredYaw() {
+	        net.minecraft.core.Direction gravity = authoredGravity();
+	        if (gravity == net.minecraft.core.Direction.DOWN || entity == null) {
+	            return entity == null ? 0.0F : entity.getYRot();
+	        }
+	        if (com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity.getGravityDirection(entity) == gravity) {
+	            return entity.getYRot();
+	        }
+	        var previous = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(entity);
+	        try {
+	            return com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity);
+	        } finally {
+	            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.restore(previous);
+	        }
+	    }
+
+    public SlashRenderRequest(String modelKey, UUID entityId, String animationName, LivingEntity entity,
 	                             boolean isHorizontal, boolean isVertical, boolean isSpin,
 	                             boolean leftToRight, boolean upward, boolean leftHand) {
 	        this.modelKey = modelKey;
@@ -386,13 +416,13 @@ public class BonePositionTracker {
 		case "sword_to_right":
 			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
 			if (!isKanrojiSword) {
-				spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
+				spawnHorizontalRadialRibbon(level, entity, entityPos, yawRad, entityHeight, progress, particleType, false);
 			}
 			break;
 		case "sword_to_left":
 			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
 			if (!isKanrojiSword) {
-				spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+				spawnHorizontalRadialRibbon(level, entity, entityPos, yawRad, entityHeight, progress, particleType, true);
 			}
 			break;
 		case "sword_overhead":
@@ -402,22 +432,22 @@ public class BonePositionTracker {
 		case "left_sword_to_right":
 			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
 			if (!isKanrojiSword) {
-				spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
+				spawnHorizontalRadialRibbon(level, entity, entityPos, yawRad, entityHeight, progress, particleType, false);
 			}
 			break;
 		case "left_sword_to_left":
 			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
 			if (!isKanrojiSword) {
-				spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+				spawnHorizontalRadialRibbon(level, entity, entityPos, yawRad, entityHeight, progress, particleType, true);
 			}
 			break;
 		case "beast2":
-			spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
-			spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+			spawnHorizontalRadialRibbon(level, entity, entityPos, yawRad, entityHeight, progress, particleType, false);
+			spawnHorizontalRadialRibbon(level, entity, entityPos, yawRad, entityHeight, progress, particleType, true);
 			break;
 		case "breath_beast2":
-			spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
-			spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
+			spawnHorizontalRadialRibbon(level, entity, entityPos, yawRad, entityHeight, progress, particleType, true);
+			spawnHorizontalRadialRibbon(level, entity, entityPos, yawRad, entityHeight, progress, particleType, false);
 			break;
 		case "left_sword_overhead":
 			// Use custom particle positions from ParticlePositions.sword_overhead
@@ -434,7 +464,7 @@ public class BonePositionTracker {
 		case "sword_to_upper":
 			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
 			if (!isKanrojiSword) {
-				spawnVerticalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, true);
+				spawnVerticalRadialRibbon(level, entity, entityPos, yawRad, entityHeight, progress, particleType, true);
 			}
 			break;
 		case "sword_rotate":
@@ -444,18 +474,18 @@ public class BonePositionTracker {
 		case "speed_attack_sword":
 			// Skip radial ribbon particles for Kanroji sword (uses ParticlePositions only)
 			if (!isKanrojiSword) {
-				spawnForwardThrust(level, entityPos, yawRad, entityHeight, progress, particleType);
+				spawnForwardThrust(level, entity, entityPos, yawRad, entityHeight, progress, particleType);
 			}
 			break;
 		default:
 			if (animationName.contains("sword") || animationName.contains("breath")) {
-				//spawnHorizontalRadialRibbon(level, entityPos, yawRad, entityHeight, progress, particleType, false);
+				//spawnHorizontalRadialRibbon(level, entity, entityPos, yawRad, entityHeight, progress, particleType, false);
 			}
 			break;
 		}
 	}
 
-	private static void spawnForwardThrust(ClientLevel level, Vec3 entityPos, double yawRad,
+	private static void spawnForwardThrust(ClientLevel level, LivingEntity entity, Vec3 entityPos, double yawRad,
 			double entityHeight, float progress, ParticleOptions particleType) {
 		double centerY = entityHeight * 0.75;
 
@@ -467,7 +497,7 @@ public class BonePositionTracker {
 
 	}
 
-	private static void spawnHorizontalRadialRibbon(ClientLevel level, Vec3 entityPos, double yawRad,
+	private static void spawnHorizontalRadialRibbon(ClientLevel level, LivingEntity entity, Vec3 entityPos, double yawRad,
 			double entityHeight, float progress, ParticleOptions particleType, boolean leftToRight) {
 		double centerY = entityHeight * 0.75;
 
@@ -505,7 +535,7 @@ public class BonePositionTracker {
 								&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
 							break;
 						//Log.debug("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
-						level.addParticle(particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
+						com.lerdorf.kimetsunoyaibamultiplayer.client.CombatRenderGravity.particle(entity, level, particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
 						incrementParticleCount();
 					}
 				}
@@ -513,7 +543,7 @@ public class BonePositionTracker {
 		}
 	}
 
-	private static void spawnVerticalRadialRibbon(ClientLevel level, Vec3 entityPos, double yawRad, double entityHeight,
+	private static void spawnVerticalRadialRibbon(ClientLevel level, LivingEntity entity, Vec3 entityPos, double yawRad, double entityHeight,
 			float progress, ParticleOptions particleType, boolean upward) {
 		double centerY = entityHeight * 0.9;
 
@@ -549,7 +579,7 @@ public class BonePositionTracker {
 								&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
 							break;
 						//Log.debug("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
-						level.addParticle(particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
+						com.lerdorf.kimetsunoyaibamultiplayer.client.CombatRenderGravity.particle(entity, level, particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
 						incrementParticleCount();
 					}
 				}
@@ -557,7 +587,7 @@ public class BonePositionTracker {
 		}
 	}
 
-	private static void spawnSpinRadialRibbon(ClientLevel level, Vec3 entityPos, double yawRad, double entityHeight,
+	private static void spawnSpinRadialRibbon(ClientLevel level, LivingEntity entity, Vec3 entityPos, double yawRad, double entityHeight,
 			float progress, ParticleOptions particleType) {
 		double centerY = entityHeight * 0.8;
 
@@ -588,7 +618,7 @@ public class BonePositionTracker {
 								&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
 							break;
 						//Log.debug("Spawning particle at: " + worldX + ", " + worldY + ", " + worldZ);
-						level.addParticle(particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
+						com.lerdorf.kimetsunoyaibamultiplayer.client.CombatRenderGravity.particle(entity, level, particleType, worldX, worldY, worldZ, 0.0, 0.0, 0.0);
 						incrementParticleCount();
 					}
 				}
@@ -639,7 +669,7 @@ public class BonePositionTracker {
 					if (ParticleConfig.maxParticlesPerTick > 0
 							&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
 						break;
-					level.addParticle(particleType, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
+					com.lerdorf.kimetsunoyaibamultiplayer.client.CombatRenderGravity.particle(entity, level, particleType, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
 					incrementParticleCount();
 				}
 			}
@@ -689,7 +719,7 @@ public class BonePositionTracker {
 					if (ParticleConfig.maxParticlesPerTick > 0
 							&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
 						break;
-					level.addParticle(particleType, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
+					com.lerdorf.kimetsunoyaibamultiplayer.client.CombatRenderGravity.particle(entity, level, particleType, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
 					incrementParticleCount();
 				}
 			}
@@ -739,7 +769,7 @@ public class BonePositionTracker {
 					if (ParticleConfig.maxParticlesPerTick > 0
 							&& getTotalParticlesThisTick() >= ParticleConfig.maxParticlesPerTick)
 						break;
-					level.addParticle(particleType, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
+					com.lerdorf.kimetsunoyaibamultiplayer.client.CombatRenderGravity.particle(entity, level, particleType, pos.x, pos.y, pos.z, 0.0, 0.0, 0.0);
 					incrementParticleCount();
 				}
 			}
@@ -1156,7 +1186,7 @@ public class BonePositionTracker {
 			}
 			ParticleOptions particleType = SwordParticleMapping.getParticleForSwordTrail(swordItem, request.entity);
 			if (particleType != null) {
-				level.addParticle(particleType, position.x, position.y, position.z, 0.0, 0.0, 0.0);
+				com.lerdorf.kimetsunoyaibamultiplayer.client.CombatRenderGravity.particle(request.entity, level, particleType, position.x, position.y, position.z, 0.0, 0.0, 0.0);
 			}
 		}
 	}
@@ -1340,7 +1370,7 @@ public class BonePositionTracker {
 
 	public static Vec3 calculateRawSlashPosition(LivingEntity entity, float progress, SlashRenderRequest req) {
 		Vec3 entityPos = entity.position().add( req.posOffset);
-		float yaw = entity.getYRot();
+		float yaw = req.authoredYaw();
 		double entityHeight = entity.getBbHeight();
 		double yawRad = Math.toRadians(yaw);
 
@@ -1413,7 +1443,7 @@ public class BonePositionTracker {
 	}
 
 	public static float[] calculateRawSlashRotation(LivingEntity entity, float progress, SlashRenderRequest req) {
-		float yaw = entity.getYRot();
+		float yaw = req.authoredYaw();
 
 		// Calculate base rotation based on arc progress
 		// Reverse flag flips the sweep direction (like leftToRight vs rightToLeft)
@@ -1446,7 +1476,7 @@ public class BonePositionTracker {
 	public static Vec3 calculateRawHorizontalPosition(LivingEntity entity, float progress, SlashRenderRequest req) {
 
 		Vec3 entityPos = entity.position().add(req.posOffset);
-		float yaw = entity.getYRot();
+		float yaw = req.authoredYaw();
 		double entityHeight = entity.getBbHeight();
 		double yawRad = Math.toRadians(yaw);
 		double centerY = entityHeight * 0.75;
@@ -1467,7 +1497,7 @@ public class BonePositionTracker {
 	}
 
 	public static float[] calculateRawHorizontalRotation(LivingEntity entity, float progress, SlashRenderRequest req) {
-		float yaw = entity.getYRot();
+		float yaw = req.authoredYaw();
 		double totalArcDegrees = req.arcRange;
 		double arcAngle = progress * totalArcDegrees + (req.angleOffset);
 
@@ -1486,7 +1516,7 @@ public class BonePositionTracker {
 
 	public static Vec3 calculateRawVerticalPosition(LivingEntity entity, float progress, SlashRenderRequest req) {
 		Vec3 entityPos = entity.position().add(req.posOffset);
-		float yaw = entity.getYRot();
+		float yaw = req.authoredYaw();
 		double entityHeight = entity.getBbHeight();
 		double yawRad = Math.toRadians(yaw);
 		double centerY = entityHeight * 0.9;
@@ -1509,7 +1539,7 @@ public class BonePositionTracker {
 
 	public static float[] calculateRawVerticalRotation(LivingEntity entity, float progress, SlashRenderRequest req) {
 		
-		float yaw = entity.getYRot();
+		float yaw = req.authoredYaw();
 		double totalArcDegrees = req.arcRange;
 		double arcAngle = progress * totalArcDegrees + req.angleOffset + (req.reverse ? -20 : 0);
 

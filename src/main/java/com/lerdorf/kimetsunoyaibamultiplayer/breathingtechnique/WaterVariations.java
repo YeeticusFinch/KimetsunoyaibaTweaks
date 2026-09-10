@@ -184,8 +184,11 @@ public class WaterVariations {
                         //livingTarget.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0));
                 	}
                 	// Knockback away from center
-                    Vec3 knockbackDir = target.position().subtract(entity.position()).normalize();
-                    target.setDeltaMovement(target.getDeltaMovement().add(knockbackDir.scale(0.5)));
+                    Vec3 knockbackDir = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame
+                        .local(target.position()).subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity));
+                    if (knockbackDir.lengthSqr() > 1.0E-4D && target instanceof LivingEntity livingTarget) {
+                        MovementHelper.addVelocity(livingTarget, knockbackDir.normalize().scale(0.5D));
+                    }
                 }
             	
             	
@@ -280,8 +283,11 @@ public class WaterVariations {
                                         //livingTarget.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0));
                                     }
                                     // Knockback away from center
-                                    Vec3 knockbackDir = target.position().subtract(entity.position()).normalize();
-                                    target.setDeltaMovement(target.getDeltaMovement().add(knockbackDir.scale(0.5)));
+                                     Vec3 knockbackDir = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame
+                                         .local(target.position()).subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity));
+                                     if (knockbackDir.lengthSqr() > 1.0E-4D && target instanceof LivingEntity livingTarget) {
+                                         MovementHelper.addVelocity(livingTarget, knockbackDir.normalize().scale(0.5D));
+                                     }
                                 }
                             }
             		}

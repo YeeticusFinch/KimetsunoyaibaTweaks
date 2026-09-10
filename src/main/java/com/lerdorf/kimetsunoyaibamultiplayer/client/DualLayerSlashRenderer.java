@@ -39,6 +39,19 @@ public class DualLayerSlashRenderer {
                                       float yaw, float pitch, float roll, float scale, float progress,
                                       String modelKey, int packedLight, boolean flipHorizontal,
                                       long startTimeMillis, int durationMillis, int tintColor) {
+        renderDualLayerWithGravity(poseStack, bufferSource, position, yaw, pitch, roll, scale, progress, modelKey,
+            packedLight, flipHorizontal, startTimeMillis, durationMillis, tintColor, null);
+    }
+
+    /**
+     * Same as {@link #renderDualLayer} but first rotates the model into the
+     * entity's gravity basis so slashes align with sideways/upside-down gravity.
+     */
+    public static void renderDualLayerWithGravity(PoseStack poseStack, MultiBufferSource bufferSource, Vec3 position,
+                                      float yaw, float pitch, float roll, float scale, float progress,
+                                      String modelKey, int packedLight, boolean flipHorizontal,
+                                      long startTimeMillis, int durationMillis, int tintColor,
+                                      org.joml.Quaternionf gravityRotation) {
 
         if (!SwordSwingConfig.useSwordSwingModel) {
             return;
@@ -63,6 +76,11 @@ public class DualLayerSlashRenderer {
 
             // Translate to world position
             poseStack.translate(position.x, position.y, position.z);
+
+            // Rotate into the gravity basis before applying the authored orientation
+            if (gravityRotation != null) {
+                poseStack.mulPose(gravityRotation);
+            }
 
             // Apply rotations
             poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(-yaw + SwordSwingConfig.globalYawOffset));

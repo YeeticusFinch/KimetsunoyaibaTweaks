@@ -5,6 +5,9 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
 public final class KNYGravity {
+    /** Persistent data tag marking entities that KNY gravity fields should affect. */
+    public static final String GRAVITY_AFFECTED_TAG = "knymp_gravity_affected";
+
     private KNYGravity() {
     }
 
@@ -66,5 +69,23 @@ public final class KNYGravity {
 
     public static boolean canChangeGravity(Entity entity) {
         return isEnabled() && com.lerdorf.kimetsunoyaibamultiplayer.compat.GravityApiCompat.canChangeGravity(entity);
+    }
+
+    /**
+     * True when the entity may participate in KNY gravity fields: either the provider
+     * allows it to change gravity, or it was explicitly marked (e.g. ability-spawned
+     * projectiles and summons).
+     */
+    public static boolean isGravityAffected(Entity entity) {
+        return canChangeGravity(entity)
+            || (isEnabled() && entity != null && entity.getPersistentData().getBoolean(GRAVITY_AFFECTED_TAG));
+    }
+
+    /**
+     * The provider's smooth client-side rotation animation for this entity, or null.
+     * Used by client renderers to align visuals with the rotated entity model.
+     */
+    public static Object getRotationAnimation(Entity entity) {
+        return isEnabled() ? com.lerdorf.kimetsunoyaibamultiplayer.compat.GravityApiCompat.getRotationAnimation(entity) : null;
     }
 }

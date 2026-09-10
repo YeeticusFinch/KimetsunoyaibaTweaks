@@ -57,7 +57,7 @@ public class EnhancedMistForms {
         } else if (entity instanceof BreathingSlayerEntity slayer) {
             slayer.playGeckoAnimation(animationName, 20);
         } else {
-            // Generic mobs/NPCs (e.g., CustomNPCs) — route through AnimationHelper
+            // Generic mobs/NPCs (e.g., CustomNPCs) â€” route through AnimationHelper
             AnimationHelper.playAnimation(entity, animationName);
         }
     }
@@ -82,7 +82,7 @@ public class EnhancedMistForms {
         } else if (entity instanceof BreathingSlayerEntity slayer) {
             slayer.playGeckoAnimation(animationName, maxTicks);
         } else {
-            // Generic mobs/NPCs (e.g., CustomNPCs) — route through AnimationHelper
+            // Generic mobs/NPCs (e.g., CustomNPCs) â€” route through AnimationHelper
             AnimationHelper.playAnimationOnLayer(entity, animationName, maxTicks, speed, layer);
         }
     }
@@ -134,14 +134,14 @@ public class EnhancedMistForms {
 				// from the left click attacks)
 				setCancelAttackSwing(entity, true);
 				
-				Vec3 lookVec = entity.getLookAngle(); // this is a unit vector pointing in the entity's direction
+				Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity); // this is a unit vector pointing in the entity's direction
 				
 				// Apply damage to targets in front
-				Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
+				Vec3 startPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0, entity.getEyeHeight(), 0);
 				Vec3 endPos = startPos.add(lookVec.scale(6.0));
 
 				AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
-				List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
+				List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(hitBox),
 						e -> e != entity && e.isAlive()); // only collect living targets that aren't the entity
 				
 				for (LivingEntity le : targets) {
@@ -152,9 +152,9 @@ public class EnhancedMistForms {
 				// Spawn particles and slash models (server-side only)
 				if (level instanceof ServerLevel serverLevel) {
 
-					double yawRad = Math.toRadians(entity.getYRot()+20); // get the yaw rotation of the entity
+					double yawRad = Math.toRadians(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity)+20); // get the yaw rotation of the entity
 					
-					Vec3 pos = entity.position();
+					Vec3 pos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
 					
 					int arcLength = 140;
 					
@@ -232,18 +232,18 @@ public class EnhancedMistForms {
 				setCancelAttackSwing(entity, true);
 
 				// Launch player forward a little bit
-				Vec3 lookVec = entity.getLookAngle();
+				Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
 				MovementHelper.setVelocity(entity, lookVec.scale(3).multiply(1, 0.3f, 1));
 
 				// Set attack state for damage dealing
 				GuardStateHelper.setAttackState(entity, 9.0);
 
 				// Apply effects to targets in front - INCREASED RANGE to 5 blocks
-				Vec3 startPos = entity.position().add(0, entity.getEyeHeight(), 0);
+				Vec3 startPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0, entity.getEyeHeight(), 0);
 				Vec3 endPos = startPos.add(lookVec.scale(6.0));
 
 				AABB hitBox = new AABB(startPos, endPos).inflate(1.5);
-				List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, hitBox,
+				List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(hitBox),
 						e -> e != entity && e.isAlive());
 				
 				if (level instanceof ServerLevel serverLevel) {
@@ -253,12 +253,12 @@ public class EnhancedMistForms {
 								(float) (Math.random()*0.7f + 0.2f)),
 								10);
 					for (int i = 0; i <= 10; i ++) {
-	                    double x = entity.getX() + 3*(Math.random()-0.5);
-	                    double y = entity.getY() + 2*(Math.random()-0.5);
-	                    double z = entity.getZ() + 3*(Math.random()-0.5);
+	                    double x = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.x(entity) + 3*(Math.random()-0.5);
+	                    double y = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.y(entity) + 2*(Math.random()-0.5);
+	                    double z = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.z(entity) + 3*(Math.random()-0.5);
 	
 	                    // Spawn a burst of particles at this point
-	                    serverLevel.sendParticles(ModParticles.MIST_PARTICLE.get(),
+	                    com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, ModParticles.MIST_PARTICLE.get(),
 	                        x, y, z,
 	                        3, 0.5, 0.3, 0.5, 0.03);
 	                }
@@ -336,7 +336,7 @@ public class EnhancedMistForms {
                 final int[] slashCounter = { 0 };
 
 				AbilityScheduler.scheduleRepeating(entity, () -> {
-					Vec3 lookVec = entity.getLookAngle();
+					Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
 					int currentTick = tickCounter[0]++;
 
 					// Attack every slashInterval ticks
@@ -361,16 +361,15 @@ public class EnhancedMistForms {
 						// Large AOE in front of entity
 
 						float boxSize = 6;
-						Vec3 attackerPos = entity.position().add(0, entity.getEyeHeight(), 0);
-						// Vec3 lookVec = entity.getLookAngle().normalize();
+						Vec3 attackerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0, entity.getEyeHeight(), 0);
+						// Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).normalize();
 						Vec3 frontPos = attackerPos.add(lookVec.scale(boxSize / 2f));
 
 						AABB attackBox = new AABB(frontPos.add(-boxSize / 2f, -boxSize / 2f, -boxSize / 2f),
 								frontPos.add(boxSize / 2f, boxSize / 2f, boxSize / 2f));
 
 						// AABB attackBox = entity.getBoundingBox().inflate(4.5);
-						List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class,
-								attackBox, e -> e != entity && e.isAlive());
+						List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(attackBox), e -> e != entity && e.isAlive());
 
 						for (LivingEntity target : targets) {
 							Damager.hurt(entity, target, damage, true);
@@ -380,13 +379,13 @@ public class EnhancedMistForms {
 						// Spawn particles and slash models (server-side only)
 						if (level instanceof ServerLevel serverLevel) {
 
-							double yawRad = Math.toRadians(entity.getYRot()+20);
+							double yawRad = Math.toRadians(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity)+20);
 							float pitchDeg = (float)((Math.random()-0.5) * 20);
 							double pitchRad = Math.toRadians(pitchDeg);
 							
 							float heightRand = (float)( (Math.random() + 0.3) * 2 + pitchRad/Math.PI);
 							
-							Vec3 pos = entity.position().add(Math.random() - 0.5, heightRand,
+							Vec3 pos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(Math.random() - 0.5, heightRand,
 									Math.random() - 0.5);
 							
 							// Send raw slash render request to all clients
@@ -479,7 +478,7 @@ public class EnhancedMistForms {
                 playEntityAnimation(entity, "sword_rotate");
 
                 // Spinning 360-degree attack
-                Vec3 centerPos = entity.position();
+                Vec3 centerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
 
                 entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 3));
                 entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 3)); // Slow Falling
@@ -533,7 +532,7 @@ public class EnhancedMistForms {
                             double x = centerPos.x + Math.cos(angle) * radius;
                             double z = centerPos.z + Math.sin(angle) * radius;
 
-                            serverLevel.sendParticles(ModParticles.MIST_PARTICLE.get(),
+                            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, ModParticles.MIST_PARTICLE.get(),
                                 x, centerPos.y + 1, z,
                                 2, 0.2, 0.3, 0.2, 0.03);
                         }
@@ -544,15 +543,19 @@ public class EnhancedMistForms {
                     List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
 
                     for (Entity target : targets) {
-                    	if (target instanceof LivingEntity livingTarget) {
-	                        Damager.hurt(entity, livingTarget, damage);
-	
-	                        // Brief confusion
-	                        //livingTarget.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 40, 0));
-                    	}
-                    	// Knockback away from center
-                        Vec3 knockbackDir = target.position().subtract(centerPos).normalize();
-                        target.setDeltaMovement(target.getDeltaMovement().add(knockbackDir.scale(1.0)));
+                     	if (target instanceof LivingEntity livingTarget) {
+ 	                        Damager.hurt(entity, livingTarget, damage);
+ 
+ 	                        // Brief confusion
+ 	                        //livingTarget.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 40, 0));
+
+ 	                        // Knockback away from center in the authored local basis.
+                        Vec3 knockbackDir = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame
+                            .local(target.position()).subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity));
+                        if (knockbackDir.lengthSqr() > 1.0E-4D) {
+                            MovementHelper.addVelocity(livingTarget, knockbackDir.normalize());
+                        }
+                     	}
                     }
                 }, 1, totalTicks);
 
@@ -596,22 +599,27 @@ public class EnhancedMistForms {
     public static void shiftingFlowSlash(Level level, LivingEntity entity, float range, float damage) {
     	playEntityAnimation(entity, "kamusari3");
 		// Find safe teleport position up to 40 blocks away
-		Vec3 lookVec = entity.getLookAngle();
+		Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
 		if (lookVec.y > 0)
 			lookVec = lookVec.multiply(1, 0.3f, 1);
-		Vec3 startPos = entity.getEyePosition();
+		Vec3 startPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity);
 		Vec3 targetPos = startPos.add(lookVec.scale(range));
 
-		// Raycast to find first non-passable block
-		BlockHitResult hitResult = level.clip(new ClipContext(startPos.add(0, entity.getEyeHeight(), 0),
-				targetPos.add(0, entity.getEyeHeight(), 0), ClipContext.Block.COLLIDER,
+		// Raycast to find first non-passable block (authored local -> world for the clip)
+		BlockHitResult hitResult = level.clip(new ClipContext(
+				com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(startPos.add(0, entity.getEyeHeight(), 0)),
+				com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(targetPos.add(0, entity.getEyeHeight(), 0)),
+				ClipContext.Block.COLLIDER,
 				ClipContext.Fluid.NONE, entity));
 
 		if (hitResult.getType() == HitResult.Type.BLOCK) {
 			// Hit a block, teleport just before it
 			Vec3 hitPos = hitResult.getLocation();
-			targetPos = startPos.add(hitPos.subtract(startPos).normalize()
-					.scale(Math.max(0, startPos.distanceTo(hitPos) - 1.0)));
+			// hitPos is world space; bring it into the authored local basis for the math below
+			hitPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(hitPos);
+			Vec3 hitLocal = hitPos;
+			targetPos = startPos.add(hitLocal.subtract(startPos).normalize()
+					.scale(Math.max(0, startPos.distanceTo(hitLocal) - 1.0)));
 		}
 
 		List<LivingEntity> nearbyEntities = new ArrayList<LivingEntity>();
@@ -620,14 +628,15 @@ public class EnhancedMistForms {
         for (float i = 0; i < range; i+=width*1.8f) {
         	Vec3 pos = startPos.add(lookVec.scale(i));
         	AABB hitBox = new AABB(pos, pos).inflate(width);
-        	nearbyEntities.addAll(level.getEntitiesOfClass(LivingEntity.class, hitBox,
+        	nearbyEntities.addAll(level.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(hitBox),
             e -> e != entity && e.isAlive()));
         }
 
 		if (!nearbyEntities.isEmpty()) {
-			Vec3 entityPos = nearbyEntities.get(0).position();
-			if (startPos.distanceTo(entityPos) < startPos.distanceTo(targetPos)) {
-				targetPos = entityPos;
+			// Compare and choose the target in the authored local basis
+			Vec3 entityPosLocal = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.local(nearbyEntities.get(0).position());
+			if (startPos.distanceTo(entityPosLocal) < startPos.distanceTo(targetPos)) {
+				targetPos = entityPosLocal;
 			}
 		}
 		
@@ -635,8 +644,9 @@ public class EnhancedMistForms {
 			ParticleHelper.spawnParticleLine(serverLevel, startPos, targetPos, ModParticles.MIST_PARTICLE.get(), 80);
 		}
 			
-		// Teleport entity
-		entity.teleportTo(targetPos.x, targetPos.y, targetPos.z);
+		// Teleport entity (authored local -> world)
+		Vec3 teleportTarget = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(targetPos);
+		entity.teleportTo(teleportTarget.x, teleportTarget.y, teleportTarget.z);
 
 		// Spawn particles
 		if (level instanceof ServerLevel serverLevel) {
@@ -656,7 +666,7 @@ public class EnhancedMistForms {
 		
 		// Damage nearby entities (AOE)
 		AABB area = entity.getBoundingBox().inflate(3.0);
-		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, area,
+		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(area),
 				e -> e != entity && e.isAlive());
 
 		for (LivingEntity target : targets) {
@@ -667,10 +677,10 @@ public class EnhancedMistForms {
 		AbilityScheduler.scheduleOnce(entity, () -> {
 			// Spawn particles
 			if (level instanceof ServerLevel serverLevel) {
-				ParticleHelper.spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 3.0,
+				ParticleHelper.spawnCircleParticles(serverLevel, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0, 1, 0), 3.0,
 						new DustParticleOptions(new Vector3f(138f / 255f, 195f / 255f, 194f / 255f),
 								(float) (Math.random()*0.7f + 0.2f)), 3);
-				ParticleHelper.spawnCircleParticles(serverLevel, entity.position().add(0, 1, 0), 3.0,
+				ParticleHelper.spawnCircleParticles(serverLevel, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0, 1, 0), 3.0,
 						ModParticles.SMALL_MIST_PARTICLE.get(), 4);
 				level.playSound(null, entity.blockPosition(), SoundEvents.WOOL_BREAK, SoundSource.PLAYERS, 1.0F,
 						0.8F);
@@ -729,10 +739,10 @@ public class EnhancedMistForms {
                 //entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, totalTicks, 3)); // High speed
                 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
-					Vec3 lookVec = entity.getLookAngle();
+					Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity);
 					if (lookVec.y > 0)
 						lookVec = lookVec.multiply(1, 0, 1);
-					lookVec = lookVec.scale(1.7).add(0, entity.getDeltaMovement().y, 0);
+					lookVec = lookVec.scale(1.7).add(0, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).y, 0);
 					int currentTick = tickCounter[0]++;
 					
 					// Launch player forward a little bit
@@ -743,8 +753,8 @@ public class EnhancedMistForms {
 						MovementHelper.lookAtTarget(entity);
 						// Spawn mist clouds during the charge
 	                    if (level instanceof ServerLevel serverLevel) {
-	                        serverLevel.sendParticles(ModParticles.MIST_PARTICLE.get(),
-	                            entity.getX(), entity.getY() + 1, entity.getZ(),
+	                        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, ModParticles.MIST_PARTICLE.get(),
+	                            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.x(entity), com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.y(entity) + 1, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.z(entity),
 	                            6, 1.0, 1.0, 1.0, 0.05);
 	                    }
 					}
@@ -761,14 +771,13 @@ public class EnhancedMistForms {
 						// Use layer 4000 with 3x speed for ultra-fast attacks
 						playEntityAnimationOnLayer(entity, animations[animIndex], 10, 3.0f, 4000);
 
-						Vec3 attackerPos = entity.position().add(0, entity.getEyeHeight(), 0);
-						// Vec3 lookVec = entity.getLookAngle().normalize();
+						Vec3 attackerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0, entity.getEyeHeight(), 0);
+						// Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).normalize();
 
 						AABB attackBox = entity.getBoundingBox().inflate(5);
 
 						// AABB attackBox = entity.getBoundingBox().inflate(4.5);
-						List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class,
-								attackBox, e -> e != entity && e.isAlive());
+						List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(attackBox), e -> e != entity && e.isAlive());
 
 						for (LivingEntity target : targets) {
 							Damager.hurt(entity, target, (float)damage, true);
@@ -777,11 +786,11 @@ public class EnhancedMistForms {
 						// Spawn particles
 						if (level instanceof ServerLevel serverLevel) {
 
-							double yawRad = Math.toRadians(entity.getYRot() + (Math.random() - 0.5) * 30);
+							double yawRad = Math.toRadians(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity) + (Math.random() - 0.5) * 30);
 							double pitchRad = Math.toRadians((Math.random()-0.3) * 5);
 							Vec3 posOffset = new Vec3(Math.random() - 0.5, (Math.random() + 0.5) * 2,
 									Math.random() - 0.5);
-							Vec3 pos = entity.position().add(posOffset);
+							Vec3 pos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(posOffset);
 
 							int arcLength = (int) (100 + Math.random() * 70);
 							double angle = (Math.random() - 0.5) * 10;
@@ -906,10 +915,10 @@ public class EnhancedMistForms {
                 	
                 	if (currentTick[0] < 7) { // Jump upwards and backwards
                 		MovementHelper.lookAtTarget(entity);
-                		MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(-0.2).add(0, 0.5f, 0));
+                		MovementHelper.setVelocity(entity, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).normalize().scale(-0.2).add(0, 0.5f, 0));
                 	}
                 	else if (currentTick[0] < 17) { // Hover
-                		MovementHelper.setVelocity(entity, entity.getDeltaMovement().multiply(1, 0, 1));
+                		MovementHelper.setVelocity(entity, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).multiply(1, 0, 1));
                 		if (currentTick[0] >= 11-interval && currentTick[0] <= 11+interval && !bools[3]) {
                 			playEntityAnimationOnLayer(entity, "kimetsunoyaibamultiplayer:front_flip", 15, 1.5f, 4000);
             				bools[3] = true;
@@ -919,10 +928,10 @@ public class EnhancedMistForms {
                 		if (currentTick[0] < 22) { // Forward movement 
                 			
                 			MovementHelper.lookAtTarget(entity);
-                			MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(0.9).multiply(1, 0.5, 1));
+                			MovementHelper.setVelocity(entity, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).normalize().scale(0.9).multiply(1, 0.5, 1));
 
                 		} else { // Hover
-                			MovementHelper.setVelocity(entity, entity.getDeltaMovement().multiply(1, 0, 1));
+                			MovementHelper.setVelocity(entity, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).multiply(1, 0, 1));
                 			if (!bools[0]) {
                 				bools[0] = true;
                 				// give slowfall
@@ -941,14 +950,13 @@ public class EnhancedMistForms {
 							// Use layer 4000 with 3x speed for ultra-fast attacks
 							playEntityAnimationOnLayer(entity, animations[animIndex], 10, 3.0f, 4000);
 	
-							Vec3 attackerPos = entity.position().add(0, entity.getEyeHeight(), 0).add(entity.getLookAngle().normalize().scale(3));
-							// Vec3 lookVec = entity.getLookAngle().normalize();
+							Vec3 attackerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(0, entity.getEyeHeight(), 0).add(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).normalize().scale(3));
+							// Vec3 lookVec = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).normalize();
 	
 							AABB attackBox = entity.getBoundingBox().inflate(5);
 	
 							// AABB attackBox = entity.getBoundingBox().inflate(4.5);
-							List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class,
-									attackBox, e -> e != entity && e.isAlive());
+							List<LivingEntity> targets = entity.level().getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(attackBox), e -> e != entity && e.isAlive());
 	
 							for (LivingEntity target : targets) {
 								Damager.hurt(entity, target, (float)damage);
@@ -959,10 +967,10 @@ public class EnhancedMistForms {
 							// Spawn particles
 							if (level instanceof ServerLevel serverLevel) {
 	
-								double yawRad = Math.toRadians(entity.getYRot() + (Math.random() - 0.5) * 30);
+								double yawRad = Math.toRadians(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity) + (Math.random() - 0.5) * 30);
 								double pitchRad = Math.toRadians((Math.random()-0.6) * 20);
 	
-								Vec3 pos = entity.position().add(Math.random() - 0.5, (Math.random() + 0.5) * 2,
+								Vec3 pos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity).add(Math.random() - 0.5, (Math.random() + 0.5) * 2,
 										Math.random() - 0.5);
 	
 								int arcLength = (int) (100 + Math.random() * 70);
@@ -1049,16 +1057,16 @@ public class EnhancedMistForms {
                 	}
                 	else { // Hover
                 		if (currentTick[0] < totalDuration) {
-                			MovementHelper.setVelocity(entity, entity.getDeltaMovement().multiply(1, 0, 1));
+                			MovementHelper.setVelocity(entity, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity).multiply(1, 0, 1));
                 			MovementHelper.lookAtTarget(entity);
                 		}
                 		if (!bools[1]) {
                 			MovementHelper.lookAtTarget(entity);
                 			bools[1] = true;
                 			// Huge vertical slash ranged attack
-                			vecs[0] = entity.getEyePosition();
-                			vecs[1] = entity.getLookAngle().normalize();
-                			nums[0] =  (float)Math.toRadians(entity.getYRot());
+                			vecs[0] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity);
+                			vecs[1] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity).normalize();
+                			nums[0] =  (float)Math.toRadians(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
                 			nums[1] =  (float)Math.toRadians(entity.getXRot());
                 			
                 			playEntityAnimationOnLayer(entity, animations[2], 10, 1.0f, 4000);
@@ -1077,7 +1085,7 @@ public class EnhancedMistForms {
         	                
         	                Vec3 pos = vecs[0].add(vecs[1].scale((currentTick[0]-40)*3/4));
                         	AABB hitBox = new AABB(pos.add(0, -1, 0), pos.add(0, 1, 0)).inflate(5);
-                        	targets.addAll(level.getEntitiesOfClass(LivingEntity.class, hitBox,
+                        	targets.addAll(level.getEntitiesOfClass(LivingEntity.class, com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(hitBox),
                             e -> e != entity && e.isAlive()));
 
                         	if (level.getBlockState(BlockPos.containing(pos)).getCollisionShape(level, BlockPos.containing(pos)).isEmpty() || level.getBlockState(BlockPos.containing(pos)).canBeReplaced() || level.getBlockState(BlockPos.containing(pos)).isAir()) {
@@ -1149,7 +1157,7 @@ public class EnhancedMistForms {
 
                 // ===== PHASE 1: DENSE MIST CLOUD GENERATION =====
                 if (level instanceof ServerLevel serverLevel) {
-                    Vec3 centerPos = entity.position();
+                    Vec3 centerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
 
                     // Cyan mist particle (RGB: 138, 195, 194)
                     DustParticleOptions mistParticle = new DustParticleOptions(
@@ -1173,17 +1181,17 @@ public class EnhancedMistForms {
                                     double z = centerPos.z + Math.sin(radians) * r;
 
                                     // Spawn dense particles
-                                    serverLevel.sendParticles(mistParticle,
+                                    com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, mistParticle,
                                         x, layerHeight, z,
                                         5, 0.5, 0.3, 0.5, 0.02);
 
                                     // Add cloud particles for extra density
                                     if (level.random.nextFloat() < 0.5) {
-                                        serverLevel.sendParticles(ParticleTypes.CLOUD,
+                                        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, ParticleTypes.CLOUD,
                                             x, layerHeight + 0.5, z,
                                             2, 0.4, 0.3, 0.4, 0.01);
                                         
-                                        serverLevel.sendParticles(ModParticles.MIST_PARTICLE.get(),
+                                        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, ModParticles.MIST_PARTICLE.get(),
                                                 x, layerHeight + 0.5, z,
                                                 4, 0.4, 0.3, 0.4, 0.01);
                                     }
@@ -1202,13 +1210,13 @@ public class EnhancedMistForms {
                                 double offsetY = level.random.nextDouble() * 6;
                                 double offsetZ = (level.random.nextDouble() - 0.5) * 30;
 
-                                serverLevel.sendParticles(mistParticle,
+                                com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, mistParticle,
                                     centerPos.x + offsetX, centerPos.y + offsetY, centerPos.z + offsetZ,
                                     4, 0.6, 0.4, 0.6, 0.03);
 
                                 // Cloud particles for texture
                                 if (level.random.nextFloat() < 0.4) {
-                                    serverLevel.sendParticles(ModParticles.MIST_PARTICLE.get(),
+                                    com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel, ModParticles.MIST_PARTICLE.get(),
                                         centerPos.x + offsetX, centerPos.y + offsetY, centerPos.z + offsetZ,
                                         4, 0.5, 0.3, 0.5, 0.02);
                                 }
@@ -1224,7 +1232,7 @@ public class EnhancedMistForms {
                     SoundSource.PLAYERS, 1.5F, 1.2F);
 
                 // ===== PHASE 2: SPAWN GHOSTLY CLONES =====
-                Vec3 centerPos = entity.position();
+                Vec3 centerPos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
                 Log.debug("[DEBUG 7TH FORM] Starting clone spawn phase...");
                 Log.debug("[DEBUG 7TH FORM] Level type: " + level.getClass().getSimpleName());
                 Log.debug("[DEBUG 7TH FORM] Is ServerLevel: " + (level instanceof ServerLevel));
@@ -1240,9 +1248,9 @@ public class EnhancedMistForms {
                         double angle = Math.toRadians(level.random.nextInt(360));
                         double distance = 5 + level.random.nextDouble() * 10; // 5-15 blocks away
 
-                        double spawnX = entity.getX() + Math.cos(angle) * distance;
-                        double spawnZ = entity.getZ() + Math.sin(angle) * distance;
-                        double spawnY = entity.getY();
+                        double spawnX = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.x(entity) + Math.cos(angle) * distance;
+                        double spawnZ = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.z(entity) + Math.sin(angle) * distance;
+                        double spawnY = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.y(entity);
 
                         Log.debug("[DEBUG 7TH FORM] Clone #" + i + " at: " + spawnX + ", " + spawnY + ", " + spawnZ);
 
@@ -1314,13 +1322,13 @@ public class EnhancedMistForms {
                 // Apply darkness to all living entities within 20 blocks of the cloud origin
                 // every second during the form. Excludes the caster.
                 if (level instanceof ServerLevel) {
-                    final Vec3 cloudOrigin = entity.position();
+                    final Vec3 cloudOrigin = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
                     final int tickInterval = 20; // every 1 second
                     AbilityScheduler.scheduleRepeating(entity, () -> {
                         AABB area = new AABB(cloudOrigin, cloudOrigin).inflate(20.0);
                         List<LivingEntity> nearby = entity.level().getEntitiesOfClass(
                             LivingEntity.class,
-                            area,
+                            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(area),
                             e -> e != entity && e.isAlive()
                         );
                         for (LivingEntity le : nearby) {

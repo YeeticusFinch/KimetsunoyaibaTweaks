@@ -58,7 +58,15 @@ public class BreathingForm {
         if (PuppetryHandler.isAbilityUseBlocked(entity)) {
             return;
         }
-        effect.execute(entity, level, this.formId);
+        // All sword forms (players and entities) author their particles, slashes,
+        // movement, and attacks in the executor's local gravity-relative axes when a
+        // gravity provider is present; vanilla axes otherwise.
+        var previousGravityFrame = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(entity);
+        try {
+            effect.execute(entity, level, this.formId);
+        } finally {
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.restore(previousGravityFrame);
+        }
     }
 
     /**

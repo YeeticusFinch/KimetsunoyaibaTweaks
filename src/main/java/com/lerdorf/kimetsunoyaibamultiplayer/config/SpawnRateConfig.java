@@ -15,7 +15,7 @@ public class SpawnRateConfig {
 
     static {
         BUILDER.comment("Spawn Priority Configuration",
-                        "Priority values control natural spawn chances for kimetsunoyaiba mobs:",
+                        "Priority values control natural spawn chances for kimetsunoyaiba mobs and tweaks demon replacements:",
                         "  0 = Never spawns naturally",
                         "  50 = 50% chance to spawn when selected",
                         "  100 = Always spawns when selected (default)",
@@ -134,6 +134,19 @@ public class SpawnRateConfig {
         defaultSpawnRates.put("kimetsunoyaiba:yushiro", 100.0);
         defaultSpawnRates.put("kimetsunoyaiba:zennitsu", 100.0);
         defaultSpawnRates.put("kimetsunoyaiba:zohakuten", 100.0);
+
+        // Tweaks demons replace their matching base demons instead of having
+        // independent biome spawn entries. Their priorities are the chance,
+        // in percent, that the selected base spawn is replaced.
+        defaultSpawnRates.put("kimetsunoyaibamultiplayer:demon_efe", 20.0);
+        defaultSpawnRates.put("kimetsunoyaibamultiplayer:demon_ari", 20.0);
+        defaultSpawnRates.put("kimetsunoyaibamultiplayer:demon_kai", 20.0);
+        defaultSpawnRates.put("kimetsunoyaibamultiplayer:demon_makena", 20.0);
+        defaultSpawnRates.put("kimetsunoyaibamultiplayer:demon_noor", 20.0);
+        defaultSpawnRates.put("kimetsunoyaibamultiplayer:demon_sunny", 20.0);
+        defaultSpawnRates.put("kimetsunoyaibamultiplayer:demon_zuri", 20.0);
+        defaultSpawnRates.put("kimetsunoyaibamultiplayer:swamp_demon", 20.0);
+        defaultSpawnRates.put("kimetsunoyaibamultiplayer:six_eye_demon", 20.0);
 
         // Add all entities to the config
         for (Map.Entry<String, Double> entry : defaultSpawnRates.entrySet()) {

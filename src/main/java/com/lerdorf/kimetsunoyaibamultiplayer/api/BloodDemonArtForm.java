@@ -52,7 +52,12 @@ public class BloodDemonArtForm {
         if (PuppetryHandler.isAbilityUseBlocked(entity)) {
             return;
         }
-        effect.execute(entity, level, formId);
+        var previousGravityFrame = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(entity);
+        try {
+            effect.execute(entity, level, formId);
+        } finally {
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.restore(previousGravityFrame);
+        }
     }
 
     public interface FormEffect {
