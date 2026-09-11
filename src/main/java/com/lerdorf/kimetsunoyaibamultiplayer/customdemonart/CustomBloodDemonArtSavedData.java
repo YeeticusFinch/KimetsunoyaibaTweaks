@@ -550,15 +550,17 @@ public class CustomBloodDemonArtSavedData extends SavedData {
         private final List<String> catalystIds;
         private final List<CustomFormSlot> slots;
         private final Map<String, Integer> passiveSkillLevels;
+        private int demonSlayerSkillPoints;
         private int selectedSlot;
 
         private PlayerArtData(CoreSettings coreSettings, String artName, List<String> catalystIds, List<CustomFormSlot> slots,
-                              Map<String, Integer> passiveSkillLevels, int selectedSlot) {
+                              Map<String, Integer> passiveSkillLevels, int demonSlayerSkillPoints, int selectedSlot) {
             this.coreSettings = coreSettings;
             this.artName = sanitizeArtName(artName);
             this.catalystIds = catalystIds;
             this.slots = slots;
             this.passiveSkillLevels = passiveSkillLevels;
+            this.demonSlayerSkillPoints = Math.max(0, demonSlayerSkillPoints);
             this.selectedSlot = selectedSlot;
         }
 
@@ -567,7 +569,8 @@ public class CustomBloodDemonArtSavedData extends SavedData {
             for (int i = 0; i < MAX_SLOTS; i++) {
                 slots.add(CustomFormSlot.empty());
             }
-            return new PlayerArtData(CoreSettings.defaults(), DEFAULT_ART_NAME, new ArrayList<>(), slots, new ConcurrentHashMap<>(), -1);
+            return new PlayerArtData(CoreSettings.defaults(), DEFAULT_ART_NAME, new ArrayList<>(), slots,
+                new ConcurrentHashMap<>(), 0, -1);
         }
 
         public static PlayerArtData fromTag(CompoundTag tag) {
@@ -594,7 +597,10 @@ public class CustomBloodDemonArtSavedData extends SavedData {
                     }
                 }
             }
-            return new PlayerArtData(core, artName, catalystIds, slots, passiveSkillLevels, selectedSlot);
+            int demonSlayerSkillPoints = tag.contains("demonSlayerSkillPoints", Tag.TAG_INT)
+                ? Math.max(0, tag.getInt("demonSlayerSkillPoints")) : 0;
+            return new PlayerArtData(core, artName, catalystIds, slots, passiveSkillLevels,
+                demonSlayerSkillPoints, selectedSlot);
         }
 
         public CompoundTag toTag() {
@@ -614,6 +620,7 @@ public class CustomBloodDemonArtSavedData extends SavedData {
                 }
             }
             tag.put("passiveSkillLevels", passiveTag);
+            tag.putInt("demonSlayerSkillPoints", Math.max(0, demonSlayerSkillPoints));
             tag.putInt("selectedSlot", selectedSlot);
             return tag;
         }
@@ -668,6 +675,16 @@ public class CustomBloodDemonArtSavedData extends SavedData {
                 passiveSkillLevels.remove(skillId);
             } else {
                 passiveSkillLevels.put(skillId, level);
+            }
+        }
+
+        public int demonSlayerSkillPoints() {
+            return Math.max(0, demonSlayerSkillPoints);
+        }
+
+        public void addDemonSlayerSkillPoints(int amount) {
+            if (amount > 0) {
+                demonSlayerSkillPoints = Math.max(0, demonSlayerSkillPoints) + amount;
             }
         }
 

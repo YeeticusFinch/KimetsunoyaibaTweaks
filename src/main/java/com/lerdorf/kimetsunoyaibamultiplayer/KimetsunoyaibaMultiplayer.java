@@ -714,6 +714,7 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.commands.OreSelectCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SurvivalRaidCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.MeditationMenuCommand.register(event.getDispatcher());
+        com.lerdorf.kimetsunoyaibamultiplayer.commands.AddSkillPointCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.QuestCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugPlayerDimensionsCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.RepairHouseTamayoCommand.register(event.getDispatcher());
@@ -1079,6 +1080,8 @@ public class KimetsunoyaibaMultiplayer
             //event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD);
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_FORM_VARIATION);
+            event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.DEMON_SLAYER_GUARD);
+            event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.DEMON_SLAYER_DASH);
             Log.debug("[KimetsunoyaibaMultiplayer] Registered breathing technique cycling key bindings");
             Log.debug("[KimetsunoyaibaMultiplayer] CYCLE_FORM_VARIATION bound to: {}",
                     com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_FORM_VARIATION.getKey().getName());
@@ -1241,6 +1244,7 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.client.KanrojiSwordAnimationHandler.tick();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.CrowQuestMarkerHandlerClient.clientTick();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.tick();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.DemonSlayerSkillClient.tick();
 
                 // Update gun animations for local player
                 if (net.minecraft.client.Minecraft.getInstance().player != null) {

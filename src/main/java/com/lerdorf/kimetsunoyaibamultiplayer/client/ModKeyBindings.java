@@ -35,4 +35,18 @@ public class ModKeyBindings {
         InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_G), // Default: G key
         CATEGORY
     );
+
+    public static final KeyMapping DEMON_SLAYER_GUARD = new KeyMapping(
+        "key.kimetsunoyaibamultiplayer.demon_slayer_guard",
+        KeyConflictContext.IN_GAME,
+        InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_X),
+        CATEGORY
+    );
+
+    public static final KeyMapping DEMON_SLAYER_DASH = new KeyMapping(
+        "key.kimetsunoyaibamultiplayer.demon_slayer_dash",
+        KeyConflictContext.IN_GAME,
+        InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_Z),
+        CATEGORY
+    );
 }

@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.meditation.PassiveSkillManager;
 
 import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import net.minecraft.network.FriendlyByteBuf;
@@ -159,6 +160,10 @@ public class AnimationSyncPacket {
             if (ctx.getDirection().getReceptionSide().isServer()) {
                 ServerPlayer sender = ctx.getSender();
                 if (sender != null) {
+                    // Guard animations are part of the guard stance and must not end it.
+                    if (animationId == null || !animationId.getPath().startsWith("guard_")) {
+                        PassiveSkillManager.cancelGuard(sender);
+                    }
                     if (Config.logDebug) {
                         Log.info("Server received animation sync from player {}: animation={}, tick={}, stop={}",
                             sender.getName().getString(), animationId, currentTick, stopAnimation);

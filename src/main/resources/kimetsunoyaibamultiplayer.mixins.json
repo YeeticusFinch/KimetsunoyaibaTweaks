@@ -16,7 +16,9 @@
     "CommandsMixin",
     "DemonizedSerpentParticlesMixin",
     "StructureTemplateMixin",
-    "EnhancedMountStructureMixin"
+    "EnhancedMountStructureMixin",
+    "NatagumoTerrainMixin",
+    "NatagumoDensityMixin"
   ],
   "client": [
     "BridgerPreviewFallingBlockMixin",

@@ -51,26 +51,31 @@ public class BreathingDisplayOverlay {
             MutableComponent customDisplay = Component.literal(CustomDemonArtItem.getDisplayText(heldItem))
                 .withStyle(style -> style.withColor(CustomDemonArtItem.getDisplayColor(heldItem)));
             renderDisplayText(event.getGuiGraphics().pose(), customDisplay, event.getGuiGraphics());
+            renderGuardStatus(event);
             return;
         }
 
         if (heldItem.getItem() instanceof BloodDemonArtItem artItem) {
             renderBloodDemonArtItem(event, artItem.getDisplayText(heldItem), artItem.getArtId());
+            renderGuardStatus(event);
             return;
         }
 
         if (heldItem.getItem() instanceof BloodDemonArtAxeItem artItem) {
             renderBloodDemonArtItem(event, artItem.getDisplayText(heldItem), artItem.getArtId());
+            renderGuardStatus(event);
             return;
         }
 
         BreathingInfoDetector.BreathingInfo info = BreathingInfoDetector.getBreathingInfo(player, heldItem);
         if (info == null) {
+            renderGuardStatus(event);
             return;
         }
 
         // Render the breathing info on screen
         renderBreathingInfo(event.getGuiGraphics().pose(), info, event.getGuiGraphics());
+        renderGuardStatus(event);
     }
 
     private static void renderBloodDemonArtItem(RenderGuiOverlayEvent.Post event, String displayText, String artId) {
@@ -116,6 +121,11 @@ public class BreathingDisplayOverlay {
     }
 
     private static void renderDisplayText(PoseStack poseStack, Component displayText, net.minecraft.client.gui.GuiGraphics guiGraphics) {
+        renderDisplayText(poseStack, displayText, guiGraphics, 0);
+    }
+
+    private static void renderDisplayText(PoseStack poseStack, Component displayText,
+                                          net.minecraft.client.gui.GuiGraphics guiGraphics, int yOffset) {
         Font font = mc.font;
         // Apply scaling
         float scale = (float) Config.breathingDisplayScale;
@@ -134,24 +144,24 @@ public class BreathingDisplayOverlay {
         switch (Config.breathingDisplayPosition) {
             case TOP_LEFT:
                 x = (int)(margin / scale);
-                y = (int)(margin / scale);
+                y = (int)(margin / scale) + yOffset;
                 break;
             case TOP_RIGHT:
                 x = (int)((screenWidth - textWidth - margin) / scale);
-                y = (int)(margin / scale);
+                y = (int)(margin / scale) + yOffset;
                 break;
             case BOTTOM_LEFT:
                 x = (int)(margin / scale);
-                y = (int)((screenHeight - textHeight - margin) / scale);
+                y = (int)((screenHeight - textHeight - margin) / scale) + yOffset;
                 break;
             case BOTTOM_RIGHT:
                 x = (int)((screenWidth - textWidth - margin) / scale);
-                y = (int)((screenHeight - textHeight - margin) / scale);
+                y = (int)((screenHeight - textHeight - margin) / scale) + yOffset;
                 break;
             case CENTER_BELOW_CROSSHAIR:
             default:
                 x = (int)((screenWidth - textWidth) / 2 / scale);
-                y = (int)((screenHeight / 2 + 20) / scale); // 20 pixels below center
+                y = (int)((screenHeight / 2 + 20) / scale) + yOffset; // 20 pixels below center
                 break;
         }
 
@@ -159,5 +169,15 @@ public class BreathingDisplayOverlay {
         guiGraphics.drawString(font, displayText, x, y, 0xFFFFFF, true);
 
         poseStack.popPose();
+    }
+
+    private static void renderGuardStatus(RenderGuiOverlayEvent.Post event) {
+        if (!DemonSlayerSkillClient.isGuardActive()) {
+            return;
+        }
+
+        Component guardText = Component.literal("Guard: " + DemonSlayerSkillClient.getGuardRemaining())
+            .withStyle(style -> style.withColor(0xFFFFFF));
+        renderDisplayText(event.getGuiGraphics().pose(), guardText, event.getGuiGraphics(), 12);
     }
 }

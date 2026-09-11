@@ -42,11 +42,13 @@ This multiplayer addon adds the following:
 ## Enhanced Mount Biomes
 
 Kimetsunoyaiba Tweaks replaces the base mod's broad Mount Natagumo and Mount Yoko
-climate entries with a seed-deterministic biome source when enabled. The source:
+climate entries with a seed-deterministic biome source when enabled. Mount Natagumo uses
+the same ring region mask for biome and terrain generation. The source:
 
-- Samples Minecraft's existing climate values, so only mountainous inland terrain qualifies.
-- Uses smooth, low-frequency selector noise at an 800-2000 block scale.
-- Selects approximately 10% of qualifying mountainous terrain by default.
+- Places one deterministic candidate center on each ring at 3000, 6000, 9000, and later blocks from spawn.
+- Uses an irregular 800-block terrain region, full-strength through 700 blocks and smoothly fading out by 850 blocks.
+- Raises vanilla density sampling with macro and detail noise rather than placing a post-generation stone shell.
+- Rejects ocean positions and ocean-centered regions.
 - Leaves the base mod biome definitions intact, including Mount Natagumo trees and its biome-specific spawns.
 - Limits each Mount Natagumo structure (`house_rui` and `house_rui_brother`) to one deterministic candidate per enhanced region.
 

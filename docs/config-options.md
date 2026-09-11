@@ -136,7 +136,12 @@ Side labels use Forge's config registration type:
 
 | Option path | Description |
 | --- | --- |
-| `enhanced-mount-natagumo-enabled` | Replace the base Mount Natagumo climate placement with mountain-only placement. Default: true |
+| `enhanced-mount-natagumo-enabled` | Replace the base Mount Natagumo climate placement with deterministic ring regions and density-stage terrain. Default: true |
+| `natagumo-ring-spacing` | Distance between Mount Natagumo spawn rings in blocks. Default: 3000 |
+| `natagumo-first-ring-radius` | Radius of the first Mount Natagumo spawn ring in blocks. Default: 3000 |
+| `natagumo-biome-threshold` | Minimum Natagumo region strength required for the biome. Default: 0.05 |
+| `natagumo-peak-height` | Maximum added height of the Natagumo density profile. Default: 170 |
+| `natagumo-max-surface-y` | Approximate maximum Natagumo surface Y used to cap the density offset. Default: 230 |
 | `natagumo-mountain-chance` | Approximate fraction of mountainous terrain selected for Mount Natagumo. Default: 0.10; range: 0.0-1.0 |
 | `natagumo-noise-scale` | Horizontal scale of Mount Natagumo regions in blocks. Default: 1200; range: 800-2000 |
 | `enhanced-mount-yoko-enabled` | Replace the base Mount Yoko climate placement with mountain-only placement. Default: true |

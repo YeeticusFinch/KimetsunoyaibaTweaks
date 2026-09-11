@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket
 import com.lerdorf.kimetsunoyaibamultiplayer.SpeedControlledAnimation;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.AfterImageEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.meditation.PassiveSkillManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobAnimationSyncPacket;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
@@ -194,6 +195,10 @@ public class AnimationHelper {
         }
         // SERVER SIDE: Send to all clients (including the player themselves)
         else if (!player.level().isClientSide) {
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+                && (animationName == null || !animationName.startsWith("guard_"))) {
+                PassiveSkillManager.cancelGuard(serverPlayer);
+            }
             // On server side, we don't need to look up the animation - just send the animation name
             // The clients will look it up themselves when they receive the packet
             AnimationSyncPacket packet = new AnimationSyncPacket(
@@ -220,7 +225,8 @@ public class AnimationHelper {
 
         // Custom player_animation assets in this mod should resolve to our namespace.
         // beast2/beast4/beast6 are defined in assets/kimetsunoyaibamultiplayer/player_animation/*.json.
-        if (animationName.startsWith("love_")
+        if (animationName.startsWith("guard_")
+            || animationName.startsWith("love_")
             || animationName.startsWith("beast")
             || animationName.equals("backflip")
             || animationName.equals("tilted_spin")

@@ -50,91 +50,91 @@ public class FirstPersonSwordKeyframes {
         // guard_0 - exported from Blender
         ANIMATION_KEYFRAMES.put("guard_0", List.of(
                     new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+                    new FPKeyframe(0.10f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.20f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.30f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.40f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.50f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.60f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.70f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.80f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.90f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(1.00f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f))
         ));
 
         // guard_1 - exported from Blender
         ANIMATION_KEYFRAMES.put("guard_1", List.of(
                     new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+                    new FPKeyframe(0.10f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.20f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.30f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.40f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.50f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.60f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.70f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.80f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(0.90f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f)),
+                    new FPKeyframe(1.00f, new Vec3(-0.22146, 0.00000, -0.09659), new Quaternionf(0.012328f, -0.276530f, 0.300701f, 0.912665f))
         ));
 
         // guard_2 - exported from Blender
         ANIMATION_KEYFRAMES.put("guard_2", List.of(
                     new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+                    new FPKeyframe(0.10f, new Vec3(-0.14887, 0.00000, -0.09659), new Quaternionf(-0.025183f, -0.132754f, 0.367028f, 0.920344f)),
+                    new FPKeyframe(0.20f, new Vec3(-0.14887, 0.00000, -0.09659), new Quaternionf(-0.025183f, -0.132754f, 0.367028f, 0.920344f)),
+                    new FPKeyframe(0.30f, new Vec3(-0.14887, 0.00000, -0.09659), new Quaternionf(-0.025183f, -0.132754f, 0.367028f, 0.920344f)),
+                    new FPKeyframe(0.40f, new Vec3(-0.14887, 0.00000, -0.09659), new Quaternionf(-0.025183f, -0.132754f, 0.367028f, 0.920344f)),
+                    new FPKeyframe(0.50f, new Vec3(-0.14887, 0.00000, -0.09659), new Quaternionf(-0.025183f, -0.132754f, 0.367028f, 0.920344f)),
+                    new FPKeyframe(0.60f, new Vec3(-0.14887, 0.00000, -0.09659), new Quaternionf(-0.025183f, -0.132754f, 0.367028f, 0.920344f)),
+                    new FPKeyframe(0.70f, new Vec3(-0.14887, 0.00000, -0.09659), new Quaternionf(-0.025183f, -0.132754f, 0.367028f, 0.920344f)),
+                    new FPKeyframe(0.80f, new Vec3(-0.14887, 0.00000, -0.09659), new Quaternionf(-0.025183f, -0.132754f, 0.367028f, 0.920344f)),
+                    new FPKeyframe(0.90f, new Vec3(-0.14887, 0.00000, -0.09659), new Quaternionf(-0.025183f, -0.132754f, 0.367028f, 0.920344f)),
+                    new FPKeyframe(1.00f, new Vec3(-0.14887, 0.00000, -0.09659), new Quaternionf(-0.025183f, -0.132754f, 0.367028f, 0.920344f))
         ));
 
         // guard_3 - exported from Blender
         ANIMATION_KEYFRAMES.put("guard_3", List.of(
                     new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+                    new FPKeyframe(0.10f, new Vec3(-0.14887, 0.15204, -0.09659), new Quaternionf(0.023513f, -0.133060f, 0.669449f, 0.730466f)),
+                    new FPKeyframe(0.20f, new Vec3(-0.14887, 0.15204, -0.09659), new Quaternionf(0.023513f, -0.133060f, 0.669449f, 0.730466f)),
+                    new FPKeyframe(0.30f, new Vec3(-0.14887, 0.15204, -0.09659), new Quaternionf(0.023513f, -0.133060f, 0.669449f, 0.730466f)),
+                    new FPKeyframe(0.40f, new Vec3(-0.14887, 0.15204, -0.09659), new Quaternionf(0.023513f, -0.133060f, 0.669449f, 0.730466f)),
+                    new FPKeyframe(0.50f, new Vec3(-0.14887, 0.15204, -0.09659), new Quaternionf(0.023513f, -0.133060f, 0.669449f, 0.730466f)),
+                    new FPKeyframe(0.60f, new Vec3(-0.14887, 0.15204, -0.09659), new Quaternionf(0.023513f, -0.133060f, 0.669449f, 0.730466f)),
+                    new FPKeyframe(0.70f, new Vec3(-0.14887, 0.15204, -0.09659), new Quaternionf(0.023513f, -0.133060f, 0.669449f, 0.730466f)),
+                    new FPKeyframe(0.80f, new Vec3(-0.14887, 0.15204, -0.09659), new Quaternionf(0.023513f, -0.133060f, 0.669449f, 0.730466f)),
+                    new FPKeyframe(0.90f, new Vec3(-0.14887, 0.15204, -0.09659), new Quaternionf(0.023513f, -0.133060f, 0.669449f, 0.730466f)),
+                    new FPKeyframe(1.00f, new Vec3(-0.14887, 0.15204, -0.09659), new Quaternionf(0.023513f, -0.133060f, 0.669449f, 0.730466f))
         ));
 
         // guard_4 - exported from Blender
-            ANIMATION_KEYFRAMES.put("guard_4", List.of(
-                        new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                        new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                        new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                        new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                        new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                        new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                        new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                        new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                        new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                        new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                        new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
-            ));
+        ANIMATION_KEYFRAMES.put("guard_4", List.of(
+                    new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.10f, new Vec3(-0.61484, 0.49914, -0.20870), new Quaternionf(0.147657f, 0.176479f, -0.940190f, 0.251189f)),
+                    new FPKeyframe(0.20f, new Vec3(-0.61484, 0.49914, -0.20870), new Quaternionf(0.147657f, 0.176479f, -0.940190f, 0.251189f)),
+                    new FPKeyframe(0.30f, new Vec3(-0.61484, 0.49914, -0.20870), new Quaternionf(0.147657f, 0.176479f, -0.940190f, 0.251189f)),
+                    new FPKeyframe(0.40f, new Vec3(-0.61484, 0.49914, -0.20870), new Quaternionf(0.147657f, 0.176479f, -0.940190f, 0.251189f)),
+                    new FPKeyframe(0.50f, new Vec3(-0.61484, 0.49914, -0.20870), new Quaternionf(0.147657f, 0.176479f, -0.940190f, 0.251189f)),
+                    new FPKeyframe(0.60f, new Vec3(-0.61484, 0.49914, -0.20870), new Quaternionf(0.147657f, 0.176479f, -0.940190f, 0.251189f)),
+                    new FPKeyframe(0.70f, new Vec3(-0.61484, 0.49914, -0.20870), new Quaternionf(0.147657f, 0.176479f, -0.940190f, 0.251189f)),
+                    new FPKeyframe(0.80f, new Vec3(-0.61484, 0.49914, -0.20870), new Quaternionf(0.147657f, 0.176479f, -0.940190f, 0.251189f)),
+                    new FPKeyframe(0.90f, new Vec3(-0.61484, 0.49914, -0.20870), new Quaternionf(0.147657f, 0.176479f, -0.940190f, 0.251189f)),
+                    new FPKeyframe(1.00f, new Vec3(-0.61484, 0.49914, -0.20870), new Quaternionf(0.147657f, 0.176479f, -0.940190f, 0.251189f))
+        ));
 
         // guard_5 - exported from Blender
         ANIMATION_KEYFRAMES.put("guard_5", List.of(
                     new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.10f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.20f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.30f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.40f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.50f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.60f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.70f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.80f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(0.90f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
-                    new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+                    new FPKeyframe(0.10f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f)),
+                    new FPKeyframe(0.20f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f)),
+                    new FPKeyframe(0.30f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f)),
+                    new FPKeyframe(0.40f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f)),
+                    new FPKeyframe(0.50f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f)),
+                    new FPKeyframe(0.60f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f)),
+                    new FPKeyframe(0.70f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f)),
+                    new FPKeyframe(0.80f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f)),
+                    new FPKeyframe(0.90f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f)),
+                    new FPKeyframe(1.00f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f))
         ));
 
     	// sword_to_left - exported from Blender
@@ -264,6 +264,7 @@ public class FirstPersonSwordKeyframes {
         ANIMATION_KEYFRAMES.put("double_sword_overhead", ANIMATION_KEYFRAMES.get("sword_overhead"));
         ANIMATION_KEYFRAMES.put("beast2", ANIMATION_KEYFRAMES.get("sword_to_right"));
         ANIMATION_KEYFRAMES.put("breath_beast2", ANIMATION_KEYFRAMES.get("sword_to_left"));
+
     }
     
 

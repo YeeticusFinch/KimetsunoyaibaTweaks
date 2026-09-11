@@ -36,6 +36,8 @@ public class KeyInputHandler {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null)
                 return;
+            if (DemonSlayerSkillClient.handleKeyInput(event))
+                return;
             if (event.getAction() != GLFW.GLFW_PRESS)
                 return;
             if (mc.screen != null)
@@ -251,6 +253,7 @@ public class KeyInputHandler {
         try {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null) return;
+            if (DemonSlayerSkillClient.handleMouseInput(event)) return;
             if (event.getAction() != GLFW.GLFW_PRESS) return;
             if (mc.screen != null) return;
 

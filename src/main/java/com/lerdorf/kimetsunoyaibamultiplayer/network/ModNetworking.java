@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CloseDemonPropositi
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CombustibleBloodM1AttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CustomBdaPassiveAttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonEyesSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonSlayerSkillPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BloodDemonArtBuilderActionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonPropositionResponsePacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OrochiDismountPacket;
@@ -283,6 +284,13 @@ public class ModNetworking {
                 .decoder(AdjustPassiveSkillPacket::new)
                 .encoder(AdjustPassiveSkillPacket::toBytes)
                 .consumerMainThread(AdjustPassiveSkillPacket::handle)
+                .add();
+
+        int demonSlayerSkillPacketId = id();
+        net.messageBuilder(DemonSlayerSkillPacket.class, demonSlayerSkillPacketId)
+                .decoder(DemonSlayerSkillPacket::new)
+                .encoder(DemonSlayerSkillPacket::toBytes)
+                .consumerMainThread(DemonSlayerSkillPacket::handle)
                 .add();
 
         int customBdaPassiveAttackPacketId = id();
