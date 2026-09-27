@@ -1,0 +1,23 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Made with Blockbench",
+	"textures": {
+		"0": "kimetsunoyaibamultiplayer:block/train_headlight_glow",
+		"particle": "kimetsunoyaibamultiplayer:block/train_headlight_glow"
+	},
+	"elements": [
+		{
+			"from": [6.25, 5.25, 21],
+			"to": [9.75, 8.75, 22],
+			"rotation": {"angle": 45, "axis": "z", "origin": [8, 7, 5]},
+			"faces": {
+				"north": {"uv": [0, 0, 4, 4], "texture": "#0"},
+				"east": {"uv": [4, 0, 5, 4], "texture": "#0"},
+				"south": {"uv": [0, 4, 4, 8], "texture": "#0"},
+				"west": {"uv": [4, 4, 5, 8], "texture": "#0"},
+				"up": {"uv": [9, 1, 5, 0], "texture": "#0"},
+				"down": {"uv": [9, 1, 5, 2], "texture": "#0"}
+			}
+		}
+	]
+}

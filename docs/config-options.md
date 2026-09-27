@@ -42,6 +42,8 @@ Side labels use Forge's config registration type:
 - Config file: `config/kimetsunoyaibamultiplayer/common.toml`
 - Side: `COMMON` (client and server)
 
+Player sheath position is selected per player in the meditation menu Cosmetics tab.
+
 | Option path | Description |
 | --- | --- |
 | `common.log-debug` | Enable debug logging for the mod |
@@ -131,8 +133,8 @@ Side labels use Forge's config registration type:
 ### EnhancedMountBiomeConfig
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/EnhancedMountBiomeConfig.java`
-- Config file: `config/kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml`
-- Side: `COMMON` (server-side world generation)
+- Config file: `serverconfig/kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml`
+- Side: `SERVER` (server-side world generation)
 
 | Option path | Description |
 | --- | --- |
@@ -140,8 +142,9 @@ Side labels use Forge's config registration type:
 | `natagumo-ring-spacing` | Distance between Mount Natagumo spawn rings in blocks. Default: 3000 |
 | `natagumo-first-ring-radius` | Radius of the first Mount Natagumo spawn ring in blocks. Default: 3000 |
 | `natagumo-biome-threshold` | Minimum Natagumo region strength required for the biome. Default: 0.05 |
-| `natagumo-peak-height` | Maximum added height of the Natagumo density profile. Default: 170 |
-| `natagumo-max-surface-y` | Approximate maximum Natagumo surface Y used to cap the density offset. Default: 230 |
+| `natagumo-overwrite-oceans` | Allow Mount Natagumo to replace ocean biomes inside its selected region. Default: true |
+| `natagumo-peak-height` | Legacy setting; the enhanced Natagumo profile targets Y=280. Default: 211 |
+| `natagumo-max-surface-y` | Hard maximum Natagumo surface Y. Default: 280 |
 | `natagumo-mountain-chance` | Approximate fraction of mountainous terrain selected for Mount Natagumo. Default: 0.10; range: 0.0-1.0 |
 | `natagumo-noise-scale` | Horizontal scale of Mount Natagumo regions in blocks. Default: 1200; range: 800-2000 |
 | `enhanced-mount-yoko-enabled` | Replace the base Mount Yoko climate placement with mountain-only placement. Default: true |
@@ -150,6 +153,8 @@ Side labels use Forge's config registration type:
 | `mountain-continentalness-min` | Minimum continentalness for enhanced mount placement. Default: 0.03 |
 | `mountain-erosion-max` | Maximum erosion for enhanced mount placement; lower values are more mountainous. Default: 0.0 |
 | `mountain-weirdness-min` | Minimum absolute weirdness for enhanced mount placement. Default: 0.35 |
+
+Mount Natagumo's imaginary rings are concentric around each selected peak and currently divide its 800-block radius into five 160-block bands: Boss Ring, Boss Minions Ring, Mother Ring, Headless Puppet Ring, and Puppet Ring from the center outward. The Boss Minions Ring is divided by compass heading into the Father Region to the south (+/- 60 degrees), the Sister Region to the north-east, and the Brother Region to the north-west. Use `/natagumoregion` to check the current ring.
 
 ### CustomNPCConfig
 
@@ -229,7 +234,7 @@ Side labels use Forge's config registration type:
 | Option path | Description |
 | --- | --- |
 | `enhancedChestOfDrawers` | Enable enhanced chest of drawers replacement<br>When true, base mod chest of drawers items/blocks are replaced with the multiplayer version:<br>- kimetsunoyaiba:chest_of_drawer -> kimetsunoyaibamultiplayer:chest_of_drawers<br>Right-clicking a base mod chest of drawers will convert it and immediately pass the click through.<br>Default: true |
-| `enhancedVialRack` | Enable enhanced vial rack replacement<br>When true, base mod medicine holder items/blocks are replaced with the multiplayer vial rack:<br>- kimetsunoyaiba:medicine_holder -> kimetsunoyaibamultiplayer:vial_rack<br>Nearby base mod medicine holder blocks are periodically converted with randomized rack contents.<br>Default: true |
+| `enhancedVialRack` | Enable enhanced vial rack replacement<br>When true, base mod medicine holder items/blocks are replaced with the multiplayer vial rack:<br>- kimetsunoyaiba:medicine_holder -> kimetsunoyaibamultiplayer:vial_rack<br>Existing base mod medicine holder blocks are converted when right-clicked.<br>Default: true |
 
 ### EnhancedBreathingConfig
 
@@ -243,6 +248,7 @@ Side labels use Forge's config registration type:
 | `enhanced_breathing.enhancedFlowerBreathing` | Enable enhanced Flower Breathing sword replacement<br>When true, automatically replaces base mod flower swords with enhanced versions:<br>- kimetsunoyaiba:nichirinsword_kanawo -> kimetsunoyaibamultiplayer:nichirinsword_kanawo<br>- kimetsunoyaiba:nichirinsword_kanae -> kimetsunoyaibamultiplayer:nichirinsword_kanae<br>Enhanced features:<br>- Hashira-exclusive forms (7th, 8th, 9th for Kanae's sword)<br>- Final Form: Equinoctial Vermillion Eye<br>- Improved particle effects and animations<br>Default: true |
 | `enhanced_breathing.enhancedBeastBreathing` | Enable enhanced Beast Breathing forms<br>When true, automatically replaces base mod Inosuke swords with enhanced versions:<br>- kimetsunoyaiba:nichirinsword_inosuke -> kimetsunoyaibamultiplayer:nichirinsword_inosuke<br>Enhanced features:<br>- Uses Enhanced Beast Breathing technique implementation<br>- Integrates with dual-wield behavior when paired in offhand<br>Default: true |
 | `enhanced_breathing.enhancedLoveBreathing` | Enable enhanced Love Breathing forms<br>When true, automatically replaces base mod love swords with enhanced versions:<br>- kimetsunoyaiba:nichirinsword_kanroji -> kimetsunoyaibamultiplayer:nichirinsword_kanroji<br>Enhanced features:<br>- Flexible whip-like sword rendering<br>- 6 Love Breathing forms<br>- Dual-layer emissive rendering with heart particle trails<br>- Physics-based whip motion with keyframe animations<br>Default: true |
+| `enhanced_breathing.loveUseDustParticles` | Use vanilla dust particles instead of custom energy particles for the colorized effects in enhanced Love Breathing forms and variations. The existing Love colors are preserved.<br>Default: false |
 | `enhanced_breathing.enhancedBlackSword` | Enable enhanced Black Sword replacement<br>When true, automatically replaces base mod black sword with enhanced version:<br>- kimetsunoyaiba:nichirinsword_black -> kimetsunoyaibamultiplayer:nichirinsword_black<br>Enhanced features:<br>- Uses enhanced Black Sword technique implementation<br>- Improved particle effects and animations<br>Default: true |
 | `enhanced_breathing.enhancedCombustibleBlood` | Enable enhanced Combustible Blood replacement<br>When true, automatically replaces base mod Nezuko Blood Demon Art with the enhanced version:<br>- kimetsunoyaiba:blooddemonart_nezuko -> kimetsunoyaibamultiplayer:combustible_blood<br>Enhanced features:<br>- Uses the Combustible Blood technique implementation<br>- Expanded Nezuko-inspired forms and effects<br>Default: true |
 | `love_whip_physics.disableLoveM1TrailParticles` | Whether or not to disable the love sword swing particles<br>Default: false |
@@ -272,7 +278,7 @@ Side labels use Forge's config registration type:
 | --- | --- |
 | `enhanced_spawning.enhanced_spawning_rules` | Master switch for enhanced spawning rules.<br>If true, uses complex biome/structure/dimension rules.<br>If false, falls back to simple spawn priority system. |
 | `enhanced_spawning.disable_tweaks_demons` | Disable natural/timed spawning of demons added by kimetsunoyaibamultiplayer, including base-demon replacements and Infinity Castle timed spawns.<br>Commands, raids, and spawn eggs are unaffected. Default: false |
-| `enhanced_spawning.replace_base_generic_demon_slayers` | Replace base mod generic demon slayers with kimetsunoyaibamultiplayer demon slayers.<br>Replaces:<br>- kimetsunoyaiba:demon_slayer -> multiplayer demon slayer (level 0-3)<br>- kimetsunoyaiba:dice_steak_senior -> multiplayer demon slayer (level 4)<br>- kimetsunoyaiba:dice_steak_senior_super -> multiplayer demon slayer (level 5) |
+| `enhanced_spawning.replace_base_generic_demon_slayers` | Replace base mod generic demon slayers with kimetsunoyaibamultiplayer demon slayers.<br>Replaces:<br>- kimetsunoyaiba:demon_slayer -> multiplayer demon slayer (rank 0-3)<br>- kimetsunoyaiba:dice_steak_senior -> multiplayer demon slayer (rank 4)<br>- kimetsunoyaiba:dice_steak_senior_super -> multiplayer demon slayer (rank 12, Super Senior) |
 | `enhanced_spawning.replace_base_nezuko` | Replace base mod Nezuko with kimetsunoyaibamultiplayer Nezuko.<br>Replaces:<br>- kimetsunoyaiba:nezuko -> kimetsunoyaibamultiplayer:nezuko |
 | `enhanced_spawning.prevent_yorichi_type_0_natural_spawns` | Prevent Yorichi Type 0 from spawning naturally.<br>When enabled, kimetsunoyaiba:yorichi_0 is blocked from natural spawning anywhere.<br>Commands, spawn eggs, and other manual spawn paths are unaffected. |
 | `enhanced_spawning.generic_spawn_rates.generic_demon_spawn_rate` | Spawn rate multiplier for generic demons outside designated areas (0.0-1.0).<br>0.4 = 40% of normal spawn rate, 1.0 = 100% normal rate, 0.0 = never spawn |
@@ -558,7 +564,6 @@ Side labels use Forge's config registration type:
 | Option path | Description |
 | --- | --- |
 | `sword_display.enabled` | Enable displaying swords on player model when not actively held |
-| `sword_display.default_position` | Default position for swords on the player model (HIP or BACK). Per-sword overrides below take precedence. |
 | `sword_display.sword_position_overrides` | Per-sword position overrides. Format: 'modid:itemname=POSITION' (e.g., 'kimetsunoyaiba:nichirinsword_uzui=BACK') |
 | `sword_display.scale` | Scale of displayed swords (0.5 = half size, 1.0 = normal size, 2.0 = double size) |
 | `sword_display.sheath_scale` | Additional scale multiplier for sheaths (applied on top of sword scale)<br>Example: sword scale=0.5, sheath scale=1.2 -> sheath displays at 0.6 (0.5 * 1.2) |

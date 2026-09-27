@@ -25,11 +25,6 @@ public class SwordDisplayConfig {
             .comment("Enable displaying swords on player model when not actively held")
             .define("enabled", true);
 
-    // Position preference (HIP or BACK) - this is now the default fallback
-    private static final ForgeConfigSpec.EnumValue<SwordDisplayPosition> POSITION = BUILDER
-            .comment("Default position for swords on the player model (HIP or BACK). Per-sword overrides below take precedence.")
-            .defineEnum("default_position", SwordDisplayPosition.HIP);
-
     // Per-sword position overrides
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> SWORD_POSITIONS = BUILDER
             .comment("Per-sword position overrides. Format: 'modid:itemname=POSITION' (e.g., 'kimetsunoyaiba:nichirinsword_uzui=BACK')")
@@ -309,7 +304,8 @@ public class SwordDisplayConfig {
     public static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static boolean enabled;
-    public static SwordDisplayPosition position;  // Default position
+    // Legacy/entity fallback. Player sheath placement is stored in player NBT.
+    public static SwordDisplayPosition position = SwordDisplayPosition.HIP;
     public static double scale;
     public static double sheathScale;
     public static boolean renderSheaths;
@@ -391,7 +387,6 @@ public class SwordDisplayConfig {
     public static void onLoad(final ModConfigEvent event) {
         Log.debug("SWORD DISPLAY CONFIG LOADING...");
         enabled = ENABLED.get();
-        position = POSITION.get();
         scale = SCALE.get();
         sheathScale = SHEATH_SCALE.get();
         renderSheaths = RENDER_SHEATHS.get();

@@ -83,6 +83,12 @@ public class EnhancedBreathingConfig {
                     "Default: true")
             .define("enhancedLoveBreathing", true);
 
+    private static final ForgeConfigSpec.BooleanValue LOVE_USE_DUST_PARTICLES = BUILDER
+            .comment("Use vanilla dust particles for enhanced Love Breathing color effects instead of energy particles",
+                    "The Love particle colors are unchanged. This applies to enhanced Love forms and variations.",
+                    "Default: false")
+            .define("loveUseDustParticles", false);
+
     // Black Sword Enhancement
     private static final ForgeConfigSpec.BooleanValue ENHANCED_BLACK_SWORD = BUILDER
             .comment("Enable enhanced Black Sword replacement",
@@ -218,6 +224,7 @@ public class EnhancedBreathingConfig {
     public static boolean enhancedFlowerBreathing;
     public static boolean enhancedBeastBreathing;
     public static boolean enhancedLoveBreathing;
+    public static boolean loveUseDustParticles;
     public static boolean enhancedBlackSword;
     public static boolean enhancedCombustibleBlood;
     public static boolean disableLoveM1TrailParticles;
@@ -251,6 +258,7 @@ public class EnhancedBreathingConfig {
         enhancedFlowerBreathing = ENHANCED_FLOWER_BREATHING.get();
         enhancedBeastBreathing = ENHANCED_BEAST_BREATHING.get();
         enhancedLoveBreathing = ENHANCED_LOVE_BREATHING.get();
+        loveUseDustParticles = LOVE_USE_DUST_PARTICLES.get();
         enhancedBlackSword = ENHANCED_BLACK_SWORD.get();
         enhancedCombustibleBlood = ENHANCED_COMBUSTIBLE_BLOOD.get();
         disableLoveM1TrailParticles = DISABLE_LOVE_M1_TRAIL_PARTICLES.get();
@@ -283,6 +291,7 @@ public class EnhancedBreathingConfig {
         Log.debug("  - Enhanced Flower Breathing: " + enhancedFlowerBreathing);
         Log.debug("  - Enhanced Beast Breathing: " + enhancedBeastBreathing);
         Log.debug("  - Enhanced Love Breathing: " + enhancedLoveBreathing);
+        Log.debug("  - Love Breathing uses dust particles: " + loveUseDustParticles);
         Log.debug("  - Enhanced Black Sword: " + enhancedBlackSword);
         Log.debug("  - Enhanced Combustible Blood: " + enhancedCombustibleBlood);
         Log.debug("  - Disable Love/Kanroji M1 Trail Particles: " + disableLoveM1TrailParticles);

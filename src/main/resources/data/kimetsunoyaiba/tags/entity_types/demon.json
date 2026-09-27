@@ -16,6 +16,7 @@
     "kimetsunoyaibamultiplayer:demon_noor",
     "kimetsunoyaibamultiplayer:demon_sunny",
     "kimetsunoyaibamultiplayer:demon_zuri",
+    "kimetsunoyaibamultiplayer:kyogai",
     { "id": "kimetsu:akaza", "required": false },
     { "id": "kimetsu:daki", "required": false },
     { "id": "kimetsu:demon_nakime", "required": false },

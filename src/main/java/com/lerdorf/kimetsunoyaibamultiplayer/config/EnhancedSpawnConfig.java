@@ -44,9 +44,9 @@ public class EnhancedSpawnConfig {
     private static final ForgeConfigSpec.BooleanValue REPLACE_BASE_GENERIC_DEMON_SLAYERS = BUILDER
             .comment("Replace base mod generic demon slayers with kimetsunoyaibamultiplayer demon slayers.",
                     "Replaces:",
-                    "- kimetsunoyaiba:demon_slayer -> multiplayer demon slayer (level 0-3)",
-                    "- kimetsunoyaiba:dice_steak_senior -> multiplayer demon slayer (level 4)",
-                    "- kimetsunoyaiba:dice_steak_senior_super -> multiplayer demon slayer (level 5)")
+                    "- kimetsunoyaiba:demon_slayer -> multiplayer demon slayer (rank 0-3)",
+                    "- kimetsunoyaiba:dice_steak_senior -> multiplayer demon slayer (rank 4)",
+                    "- kimetsunoyaiba:dice_steak_senior_super -> multiplayer demon slayer (rank 12)")
             .define("replace_base_generic_demon_slayers", true);
 
     private static final ForgeConfigSpec.BooleanValue REPLACE_BASE_NEZUKO = BUILDER

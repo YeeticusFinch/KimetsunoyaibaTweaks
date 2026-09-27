@@ -169,8 +169,8 @@ RaidRegistry (WorldSavedData)
 |-------|-------------|----------|
 | `GENERIC_SLAYER` | Common slayers | demon_slayer, frost_slayer, ice_slayer, murata |
 | `NAMED_SLAYER` | Named characters (weak→strong) | genya, masachika, inosuke, tanjiro, kaigaku_human, sabito, zennitsu, kanawo |
-| `HARD_SLAYER` | Elite slayers | dice_steak_senior, dice_steak_senior_super |
-| `HASHIRA` | Pillars (weak→strong) | kocho, kanroji, kanae, shinazugawa, rengoku, iguro, uzui, tomioka, muichirou, himejima |
+| `HARD_SLAYER` | Elite slayers | dice_steak_senior (rank 4 / Kanoe) |
+| `HASHIRA` | Pillars and super senior | kocho, kanroji, kanae, shinazugawa, rengoku, iguro, uzui, tomioka, muichirou, himejima, dice_steak_senior_super (rank 12) |
 | `SUPER_HASHIRA` | Legendary | michikatsu, yoriichi, yoriichi_old |
 
 ### Implementation

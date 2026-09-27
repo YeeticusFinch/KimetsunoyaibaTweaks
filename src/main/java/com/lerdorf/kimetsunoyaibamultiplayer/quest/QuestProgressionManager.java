@@ -13,6 +13,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.raids.StructureLocationCache;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SunBreathingLevelHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SlayerFleshHelper;
+import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -21,6 +22,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
@@ -75,12 +79,18 @@ public final class QuestProgressionManager {
     private static final String SLAYERS_BLOOD_STUDY_START_TICK = "KnYPermanenceSlayersBloodStudyStartTick";
     private static final String SLAYERS_BLOOD_STUDY_COMPLETE = "KnYPermanenceSlayersBloodStudyComplete";
     private static final String SLAYERS_BLOOD_FINAL_KILLED = "KnYPermanenceSlayersBloodFinalKilled";
+    private static final String SLAYERS_BLOOD_FINAL_KILLED_TICK = "KnYPermanenceSlayersBloodFinalKilledTick";
+    private static final String SLAYERS_BLOOD_REWARDS_GRANTED = "KnYPermanenceSlayersBloodRewardsGranted";
+    private static final String SLAYERS_BLOOD_STAGE_COMPLETED = "KnYPermanenceSlayersBloodStageCompleted";
+    private static final String SPIDER_FAMILY_WIP_NOTICE_SENT = "KnYPermanenceSpiderFamilyWipNoticeSent";
     private static final String SLAYERS_BLOOD_CAPTIVE_UUID = "KnYPermanenceSlayersBloodCaptiveUuid";
     private static final String SLAYERS_BLOOD_FINAL_UUID = "KnYPermanenceSlayersBloodFinalUuid";
     private static final String SLAYERS_BLOOD_FLESH_STACK_TAG = "KnYPermanenceSlayersBloodFleshStack";
     private static final String SLAYERS_BLOOD_SLAYER_TAG = "slayers_blood_slayer";
     private static final String SLAYERS_BLOOD_FINAL_TAG = "slayers_blood_final_slayer";
     private static final long SLAYERS_BLOOD_VILLAGE_REINFORCEMENT_INTERVAL = 20L * 60L;
+    private static final long SLAYERS_BLOOD_FINAL_DIALOGUE_TICKS = 30L * 5L;
+    private static final long SLAYERS_BLOOD_POST_DIALOGUE_DELAY_TICKS = 20L * 10L;
     private static final double SLAYERS_BLOOD_VILLAGE_DETECTION_RADIUS = 96.0D;
     private static final double SLAYERS_BLOOD_INITIAL_SPAWN_RADIUS = 20.0D;
     private static final double SLAYERS_BLOOD_REINFORCEMENT_SPAWN_RADIUS = 40.0D;
@@ -169,6 +179,7 @@ public final class QuestProgressionManager {
         if (isPermanenceSlayersBlood(context)) {
             QuestScenarioActions.tickKamanueNeutrality(player, context);
         }
+        grantSlayersBloodRewardsAfterFinalDialogue(player, context);
         if (isStepComplete(player, context)) {
             completeStep(player, context);
         }
@@ -585,6 +596,10 @@ public final class QuestProgressionManager {
         data.remove(SLAYERS_BLOOD_STUDY_START_TICK);
         data.remove(SLAYERS_BLOOD_STUDY_COMPLETE);
         data.remove(SLAYERS_BLOOD_FINAL_KILLED);
+        data.remove(SLAYERS_BLOOD_FINAL_KILLED_TICK);
+        data.remove(SLAYERS_BLOOD_REWARDS_GRANTED);
+        data.remove(SLAYERS_BLOOD_STAGE_COMPLETED);
+        data.remove(SPIDER_FAMILY_WIP_NOTICE_SENT);
         data.remove(SLAYERS_BLOOD_CAPTIVE_UUID);
         data.remove(SLAYERS_BLOOD_FLESH_STACK_TAG);
         if (data.contains(SLAYERS_BLOOD_FINAL_UUID)) {
@@ -743,7 +758,31 @@ public final class QuestProgressionManager {
     }
 
     public static boolean isPermanenceSlayersBloodFinalSlayerKilled(ServerPlayer player, QuestRuntimeContext context) {
-        return player.getPersistentData().getBoolean(SLAYERS_BLOOD_FINAL_KILLED);
+        if (!player.getPersistentData().getBoolean(SLAYERS_BLOOD_FINAL_KILLED)
+            || player.getPersistentData().getBoolean(SLAYERS_BLOOD_STAGE_COMPLETED)) {
+            return false;
+        }
+        long killedAt = player.getPersistentData().getLong(SLAYERS_BLOOD_FINAL_KILLED_TICK);
+        return killedAt <= 0L || player.level().getGameTime() >= killedAt
+            + SLAYERS_BLOOD_FINAL_DIALOGUE_TICKS + SLAYERS_BLOOD_POST_DIALOGUE_DELAY_TICKS;
+    }
+
+    private static void grantSlayersBloodRewardsAfterFinalDialogue(ServerPlayer player, QuestRuntimeContext context) {
+        if (!isPermanenceSlayersBloodFinalFight(context)
+            || !player.getPersistentData().getBoolean(SLAYERS_BLOOD_FINAL_KILLED)
+            || player.getPersistentData().getBoolean(SLAYERS_BLOOD_REWARDS_GRANTED)) {
+            return;
+        }
+
+        long killedAt = player.getPersistentData().getLong(SLAYERS_BLOOD_FINAL_KILLED_TICK);
+        if (killedAt <= 0L || player.level().getGameTime() < killedAt + SLAYERS_BLOOD_FINAL_DIALOGUE_TICKS) {
+            return;
+        }
+
+        if (!player.getPersistentData().getBoolean(SLAYERS_BLOOD_REWARDS_GRANTED)) {
+            applyRewards(player, context.stage().rewards());
+        }
+        player.getPersistentData().putBoolean(SLAYERS_BLOOD_REWARDS_GRANTED, true);
     }
 
     public static BlockPos findPermanenceSlayersBloodFinalSlayer(ServerPlayer player) {
@@ -979,12 +1018,10 @@ public final class QuestProgressionManager {
 
             if (!player.getPersistentData().getBoolean(SLAYERS_BLOOD_FINAL_KILLED)) {
                 player.getPersistentData().putBoolean(SLAYERS_BLOOD_FINAL_KILLED, true);
+                player.getPersistentData().putLong(SLAYERS_BLOOD_FINAL_KILLED_TICK, serverLevel.getGameTime());
                 QuestScenarioActions.sendDelayedMessages(player, messages, 30);
             }
 
-            if (context.step().customCheck().test(player, context)) {
-                completeStep(player, context);
-            }
             handled = true;
         }
         return handled;
@@ -1108,7 +1145,7 @@ public final class QuestProgressionManager {
         if (fleshData == null) {
             return false;
         }
-        int powerLevel = Mth.clamp(fleshData.powerLevel(), 0, 5);
+        int powerLevel = Mth.clamp(fleshData.powerLevel(), 0, 12);
         String styleId = fleshData.breathingStyleId();
         boolean female = fleshData.female();
         int textureIndex = Math.max(0, fleshData.textureIndex());
@@ -1227,7 +1264,7 @@ public final class QuestProgressionManager {
         }
 
         if (isPermanenceFirstTaste(context)) {
-            return handlePermanenceFirstTasteCrowInteract(player);
+            return handlePermanenceFirstTasteCrowInteract(player, context);
         }
 
         Vec3 targetLocation = resolveQuestMarkerTargetLocation(player, context);
@@ -1242,7 +1279,7 @@ public final class QuestProgressionManager {
         }
         
         if (targetLocation == null) {
-            player.sendSystemMessage(Component.literal("§7" + speaker + " cannot find a marker for this objective yet."));
+            sendMissingMarkerDiagnosis(player, speaker, context, null);
             return true;
         }
 
@@ -1660,6 +1697,11 @@ public final class QuestProgressionManager {
         return entries;
     }
 
+    public static String getActiveQuestGroupId(ServerPlayer player, PlayerRole role) {
+        QuestRuntimeContext active = getOrInitializeContext(player, role);
+        return active == null ? "" : active.group().id();
+    }
+
     public static String getCurrentStageName(ServerPlayer player, PlayerRole role, String groupId) {
         QuestGroupDefinition groupDef = QuestGroupRegistry.get(groupId);
         // Don't auto-initialize if the quest group isn't unlocked yet
@@ -1796,6 +1838,10 @@ public final class QuestProgressionManager {
             data.remove(SLAYERS_BLOOD_STUDY_START_TICK);
             data.remove(SLAYERS_BLOOD_STUDY_COMPLETE);
             data.remove(SLAYERS_BLOOD_FINAL_KILLED);
+            data.remove(SLAYERS_BLOOD_FINAL_KILLED_TICK);
+            data.remove(SLAYERS_BLOOD_REWARDS_GRANTED);
+            data.remove(SLAYERS_BLOOD_STAGE_COMPLETED);
+            data.remove(SPIDER_FAMILY_WIP_NOTICE_SENT);
             data.remove(SLAYERS_BLOOD_CAPTIVE_UUID);
             data.remove(SLAYERS_BLOOD_FLESH_STACK_TAG);
         }
@@ -1921,6 +1967,7 @@ public final class QuestProgressionManager {
         }
 
         migratePermanenceStageIfNeeded(player, group);
+        disableSpiderFamilyStageIfNeeded(player, group);
 
         int stageIndex = Math.min(player.getPersistentData().getInt(ACTIVE_STAGE_INDEX), group.stages().size() - 1);
         QuestStageDefinition stage = group.stages().get(stageIndex);
@@ -2043,6 +2090,14 @@ public final class QuestProgressionManager {
 
         applyRewards(player, context.stage().rewards());
         int nextStageIndex = context.stageIndex() + 1;
+        if (shouldDisableSpiderFamilyStage(context, nextStageIndex)) {
+            player.getPersistentData().putBoolean(SLAYERS_BLOOD_STAGE_COMPLETED, true);
+            player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, true);
+            player.sendSystemMessage(Component.literal("§6Stage Complete: §f" + context.stage().name()));
+            player.sendSystemMessage(Component.literal(
+                "§7Stage No.4 - The Spider Family is still a work in progress and is currently disabled."));
+            return;
+        }
         if (nextStageIndex < context.group().stages().size()) {
             player.getPersistentData().putInt(ACTIVE_STAGE_INDEX, nextStageIndex);
             player.getPersistentData().putInt(ACTIVE_STEP_INDEX, 0);
@@ -2053,6 +2108,13 @@ public final class QuestProgressionManager {
             player.sendSystemMessage(Component.literal("§6Quest Group Complete: §f" + context.group().name()));
             clearRuntimeState(player);
         }
+    }
+
+    private static boolean shouldDisableSpiderFamilyStage(QuestRuntimeContext context, int nextStageIndex) {
+        return "permanence".equals(context.group().id())
+            && "slayers_blood".equals(context.stage().id())
+            && nextStageIndex < context.group().stages().size()
+            && "spider_family".equals(context.group().stages().get(nextStageIndex).id());
     }
 
     private static void applyRewards(ServerPlayer player, QuestRewardDefinition rewards) {
@@ -2222,6 +2284,39 @@ public final class QuestProgressionManager {
         player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, false);
     }
 
+    private static void disableSpiderFamilyStageIfNeeded(ServerPlayer player, QuestGroupDefinition group) {
+        if (!"permanence".equals(group.id())) {
+            return;
+        }
+
+        int spiderFamilyIndex = -1;
+        int slayersBloodIndex = -1;
+        for (int i = 0; i < group.stages().size(); i++) {
+            String stageId = group.stages().get(i).id();
+            if ("spider_family".equals(stageId)) {
+                spiderFamilyIndex = i;
+            } else if ("slayers_blood".equals(stageId)) {
+                slayersBloodIndex = i;
+            }
+        }
+
+        if (spiderFamilyIndex < 0 || slayersBloodIndex < 0
+            || player.getPersistentData().getInt(ACTIVE_STAGE_INDEX) < spiderFamilyIndex) {
+            return;
+        }
+
+        QuestStageDefinition slayersBlood = group.stages().get(slayersBloodIndex);
+        player.getPersistentData().putInt(ACTIVE_STAGE_INDEX, slayersBloodIndex);
+        player.getPersistentData().putInt(ACTIVE_STEP_INDEX, Math.max(0, slayersBlood.steps().size() - 1));
+        player.getPersistentData().putBoolean(ACTIVE_STEP_STARTED, true);
+        player.getPersistentData().putBoolean(SLAYERS_BLOOD_STAGE_COMPLETED, true);
+        if (!player.getPersistentData().getBoolean(SPIDER_FAMILY_WIP_NOTICE_SENT)) {
+            player.getPersistentData().putBoolean(SPIDER_FAMILY_WIP_NOTICE_SENT, true);
+            player.sendSystemMessage(Component.literal(
+                "§7Stage No.4 - The Spider Family is still a work in progress and is currently disabled."));
+        }
+    }
+
     private static boolean isPermanenceFirstTaste(QuestRuntimeContext context) {
         return context != null
             && "permanence".equals(context.group().id())
@@ -2319,12 +2414,65 @@ public final class QuestProgressionManager {
             || victim.getType().is(WOMAN);
     }
 
-    private static boolean handlePermanenceFirstTasteCrowInteract(ServerPlayer player) {
+    private static void sendMissingMarkerDiagnosis(ServerPlayer player, String speaker,
+                                                   QuestRuntimeContext context, String specialLookup) {
+        QuestStepDefinition step = context.step();
+        player.sendSystemMessage(Component.literal("§7[" + speaker + "] No marker found for objective: §f"
+            + step.title()));
+        player.sendSystemMessage(Component.literal("§8Quest: " + context.group().name() + " [" + context.group().id()
+            + "] | Stage: " + context.stage().name() + " [" + context.stage().id() + "] | Step: "
+            + step.id() + " (" + (context.stepIndex() + 1) + ")"));
+        player.sendSystemMessage(Component.literal("§8Lookup attempted: §f"
+            + (specialLookup == null ? describeMarkerLookup(step) : specialLookup)));
+        player.sendSystemMessage(Component.literal("§8Player location: " + player.level().dimension().location()
+            + " " + player.blockPosition().toShortString()));
+
+        Component restart = Component.literal("[Restart quest]")
+            .withStyle(Style.EMPTY
+                .withColor(ChatFormatting.YELLOW)
+                .withUnderlined(true)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/restartquest"))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                    Component.literal("Restart the current quest stage"))));
+        player.sendSystemMessage(Component.literal("§7If this quest is stuck, click ").append(restart)
+            .append(Component.literal("§7 or run §f/restartquest§7.")));
+    }
+
+    private static String describeMarkerLookup(QuestStepDefinition step) {
+        List<String> lookups = new ArrayList<>();
+        if (!step.targetKey().isBlank()) {
+            lookups.add("a quest entity with NPC/target tag '" + step.targetKey() + "' within 400 blocks");
+        }
+        if (step.targetId() != null) {
+            if (step.type() == QuestStepType.ENTER_STRUCTURE) {
+                lookups.add("structure '" + step.targetId() + "' using the nearest-structure search");
+            } else {
+                lookups.add("target id '" + step.targetId() + "'");
+            }
+        }
+        if (step.type() == QuestStepType.ENTER_STRUCTURE) {
+            lookups.add("the step-specific structure marker resolver");
+        } else if (step.type() == QuestStepType.ENTER_BIOME) {
+            lookups.add("the step-specific biome marker resolver");
+        } else if (step.type() == QuestStepType.CUSTOM) {
+            lookups.add("the step-specific custom marker resolver");
+        } else if (step.type() == QuestStepType.TALK_TO_ENTITY || step.type() == QuestStepType.KILL_ENTITY) {
+            if (step.targetKey().isBlank()) {
+                lookups.add("an entity target, but this objective has no target key configured");
+            }
+        } else {
+            lookups.add("a location marker for this objective type");
+        }
+        return String.join("; ", lookups);
+    }
+
+    private static boolean handlePermanenceFirstTasteCrowInteract(ServerPlayer player, QuestRuntimeContext context) {
         sendPermanenceFirstTasteProgress(player, null);
 
         BlockPos targetPos = resolveDemonHuntMarker(player);
         if (targetPos == null) {
-            player.sendSystemMessage(Component.literal("§6[Crow] §fNo nearby hunting grounds could be found yet."));
+            sendMissingMarkerDiagnosis(player, "Crow", context,
+                "a nearby vanilla village to use as hunting grounds");
             return true;
         }
 

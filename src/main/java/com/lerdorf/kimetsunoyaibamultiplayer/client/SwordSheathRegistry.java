@@ -23,6 +23,9 @@ public class SwordSheathRegistry {
      */
     private static final Map<Item, Item> sheathDisplayOverrides = new HashMap<>();
 
+    /** Number of texture variants available for each sheath item. */
+    private static final Map<Item, Integer> sheathTextureVariantCounts = new HashMap<>();
+
     /**
      * The default sheath item used for swords without a specific sheath defined
      */
@@ -62,6 +65,7 @@ public class SwordSheathRegistry {
      */
     public static void registerSheath(Item sword, Item sheathItem, boolean persistsWhenDrawn) {
         swordSheathMap.put(sword, new SheathInfo(sheathItem, persistsWhenDrawn));
+        sheathTextureVariantCounts.putIfAbsent(sheathItem, 1);
         Log.debug("Registered sheath {} for sword {} (persists: {})",
             sheathItem, sword, persistsWhenDrawn);
     }
@@ -113,6 +117,17 @@ public class SwordSheathRegistry {
         return info != null && info.persistsWhenDrawn();
     }
 
+    /** Registers the number of selectable textures for a sheath. Indexes wrap with modulo. */
+    public static void registerSheathTextureVariants(Item sheathItem, int count) {
+        if (sheathItem != null) {
+            sheathTextureVariantCounts.put(sheathItem, Math.max(1, count));
+        }
+    }
+
+    public static int getSheathTextureVariantCount(Item sheathItem) {
+        return sheathTextureVariantCounts.getOrDefault(sheathItem, 1);
+    }
+
     /**
      * Registers a display override so that when a sword is sheathed, it renders
      * as a different item model. For example, sword_kokushibo_2 can display as
@@ -150,6 +165,7 @@ public class SwordSheathRegistry {
     public static void clear() {
         swordSheathMap.clear();
         sheathDisplayOverrides.clear();
+        sheathTextureVariantCounts.clear();
         defaultSheathItem = null;
         //Log.debug("Cleared all sword sheath registrations");
     }

@@ -10,7 +10,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.VialRackBlockEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBlocksConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -21,7 +20,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -36,8 +34,7 @@ import java.util.List;
 public final class EnhancedVialRackHandler {
     private static final ResourceLocation BASE_MEDICINE_HOLDER_ID =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "medicine_holder");
-    private static final int BLOCK_SCAN_INTERVAL_TICKS = 200;
-    private static final int BLOCK_SCAN_RADIUS = 5;
+    private static final int INVENTORY_SCAN_INTERVAL_TICKS = 20;
     private static final int EMPTY_VIAL_WEIGHT = 5;
 
     private static final List<RegistryObject<Item>> RANDOM_VIALS = List.of(
@@ -63,9 +60,9 @@ public final class EnhancedVialRackHandler {
             return;
         }
 
-        replaceInventoryMedicineHolders(player);
-        if (player.tickCount % BLOCK_SCAN_INTERVAL_TICKS == 0 && player.level() instanceof ServerLevel serverLevel) {
-            replaceNearbyMedicineHolders(serverLevel, player);
+        // Inventory conversion is infrequent; never scan nearby world blocks from PlayerTickEvent.
+        if (player.tickCount % INVENTORY_SCAN_INTERVAL_TICKS == 0) {
+            replaceInventoryMedicineHolders(player);
         }
     }
 
@@ -89,7 +86,7 @@ public final class EnhancedVialRackHandler {
 
     private static void replaceInventoryMedicineHolders(Player player) {
         Inventory inventory = player.getInventory();
-        List<ItemStack> overflow = new ArrayList<>();
+        List<ItemStack> overflow = null;
 
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
             ItemStack stack = inventory.getItem(slot);
@@ -99,26 +96,21 @@ public final class EnhancedVialRackHandler {
 
             int count = stack.getCount();
             inventory.setItem(slot, new ItemStack(ModAlchemyBlocks.VIAL_RACK.get().asItem()));
+            if (overflow == null) {
+                overflow = new ArrayList<>();
+            }
             for (int i = 1; i < count; i++) {
                 overflow.add(new ItemStack(ModAlchemyBlocks.VIAL_RACK.get().asItem()));
             }
         }
 
-        for (ItemStack stack : overflow) {
-            if (!inventory.add(stack)) {
-                player.drop(stack, false);
+        if (overflow != null) {
+            for (ItemStack stack : overflow) {
+                if (!inventory.add(stack)) {
+                    player.drop(stack, false);
+                }
             }
         }
-    }
-
-    private static void replaceNearbyMedicineHolders(ServerLevel level, Player player) {
-        BlockPos center = player.blockPosition();
-        Vec3 playerPosition = player.position();
-        BlockPos.betweenClosedStream(
-                center.offset(-BLOCK_SCAN_RADIUS, -BLOCK_SCAN_RADIUS, -BLOCK_SCAN_RADIUS),
-                center.offset(BLOCK_SCAN_RADIUS, BLOCK_SCAN_RADIUS, BLOCK_SCAN_RADIUS))
-            .filter(pos -> pos.getCenter().distanceToSqr(playerPosition) <= BLOCK_SCAN_RADIUS * BLOCK_SCAN_RADIUS)
-            .forEach(pos -> replaceMedicineHolderBlock(level, pos, level.random));
     }
 
     private static boolean replaceMedicineHolderBlock(Level level, BlockPos pos, RandomSource random) {

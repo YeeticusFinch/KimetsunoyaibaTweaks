@@ -1,0 +1,11 @@
+{
+  "type": "forge:add_features",
+  "biomes": [
+    "kimetsunoyaiba:mt_natagumo"
+  ],
+  "features": [
+    "kimetsunoyaibamultiplayer:natagumo_dark_oak_tree_placed",
+    "kimetsunoyaibamultiplayer:natagumo_dark_oak_wall_tree_placed"
+  ],
+  "step": "vegetal_decoration"
+}

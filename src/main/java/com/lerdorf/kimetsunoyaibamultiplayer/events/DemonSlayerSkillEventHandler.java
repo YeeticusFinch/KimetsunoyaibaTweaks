@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.PassiveSkillManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -43,6 +44,17 @@ public final class DemonSlayerSkillEventHandler {
     public static void onLivingDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             PassiveSkillManager.cancelGuard(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLivingDamage(LivingDamageEvent event) {
+        try {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                PassiveSkillManager.damageSlayerGuardWeapon(player);
+            }
+        } catch (Exception e) {
+            System.err.println("[DemonSlayerSkillEventHandler] Failed to damage guard weapon: " + e.getMessage());
         }
     }
 

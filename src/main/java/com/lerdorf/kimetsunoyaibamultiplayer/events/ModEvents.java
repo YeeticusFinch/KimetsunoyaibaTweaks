@@ -15,6 +15,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.PassiveSkillManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationStatsTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
+import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidTriggerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.FamiliarEntityHelper;
@@ -126,6 +127,11 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
+        if (QuestScenarioActions.isQuestKamanue(event.getEntity())) {
+            event.setCanceled(true);
+            event.setAmount(0.0F);
+            return;
+        }
         if (FamiliarEntityHelper.isDamageImmuneQuestFamiliar(event.getEntity())) {
             event.setCanceled(true);
             event.setAmount(0.0F);

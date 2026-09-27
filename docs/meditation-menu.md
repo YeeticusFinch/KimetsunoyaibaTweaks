@@ -81,6 +81,8 @@ The cruel quest is only available to demon slayers
 
 ### Skills Tab
 
+The Skills tab contains passive skills and, for demon players, the Blood Demon Art builder. Demon eye customization is in the Cosmetics tab.
+
 #### Passive Skills
 
 ##### Passive Skills for Demon Players
@@ -133,3 +135,7 @@ Claws
 ##### Passive Skills for Kakushi Players
 
 ##### Passive Skills for Swordsmith Players
+
+### Cosmetics Tab
+
+The Cosmetics tab is available alongside Info, Navigation, and Skills. Demon players can open the demon eye selector here. All players can open the sheath editor, which controls their sword display position, sheath texture variation, additional translation and rotation offsets, and a standing player preview with a full-turn rotation slider. The display offsets apply to both the sword and its sheath. Changes are saved to player NBT and synchronized so other players see the same display.

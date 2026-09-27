@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AdjustPassiveSkillPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectMeditationTargetPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -50,15 +51,38 @@ public class MeditationMenuScreen extends Screen {
     private Rect2i bloodDemonArtBuilderButtonBounds;
     private Rect2i passiveSkillsButtonBounds;
     private Rect2i passiveSkillsBackButtonBounds;
+    private Rect2i sheathEditorButtonBounds;
+    private Rect2i cosmeticsDemonEyesButtonBounds;
     private int localDemonEyesIndex;
     private int localDemonEyesHue;
     private boolean passiveSkillsOpen;
+    private SwordDisplayConfig.SwordDisplayPosition localSheathPosition;
+    private int localSheathTextureIndex;
+    private double localSheathTranslateX;
+    private double localSheathTranslateY;
+    private double localSheathTranslateZ;
+    private double localSheathRotateX;
+    private double localSheathRotateY;
+    private double localSheathRotateZ;
 
     public MeditationMenuScreen(MeditationMenuData data) {
         super(Component.literal("Meditation"));
         this.data = data;
         this.localDemonEyesIndex = data.demonEyesIndex();
         this.localDemonEyesHue = data.demonEyesHue();
+        this.localSheathPosition = parseSheathPosition(data.sheathPosition());
+        this.localSheathTextureIndex = data.sheathTextureIndex();
+        this.localSheathTranslateX = data.sheathTranslateX();
+        this.localSheathTranslateY = data.sheathTranslateY();
+        this.localSheathTranslateZ = data.sheathTranslateZ();
+        this.localSheathRotateX = data.sheathRotateX();
+        this.localSheathRotateY = data.sheathRotateY();
+        this.localSheathRotateZ = data.sheathRotateZ();
+        if (minecraft != null && minecraft.player != null) {
+            SheathCosmeticsClientState.set(minecraft.player.getUUID(), localSheathPosition, localSheathTextureIndex,
+                localSheathTranslateX, localSheathTranslateY, localSheathTranslateZ,
+                localSheathRotateX, localSheathRotateY, localSheathRotateZ);
+        }
     }
 
     public MeditationMenuScreen refreshed(MeditationMenuData newData) {
@@ -73,6 +97,14 @@ public class MeditationMenuScreen extends Screen {
         screen.expandedInfoSections.addAll(expandedInfoSections);
         screen.localDemonEyesIndex = localDemonEyesIndex;
         screen.localDemonEyesHue = localDemonEyesHue;
+        screen.localSheathPosition = localSheathPosition;
+        screen.localSheathTextureIndex = localSheathTextureIndex;
+        screen.localSheathTranslateX = localSheathTranslateX;
+        screen.localSheathTranslateY = localSheathTranslateY;
+        screen.localSheathTranslateZ = localSheathTranslateZ;
+        screen.localSheathRotateX = localSheathRotateX;
+        screen.localSheathRotateY = localSheathRotateY;
+        screen.localSheathRotateZ = localSheathRotateZ;
         screen.passiveSkillsOpen = passiveSkillsOpen;
         return screen;
     }
@@ -100,6 +132,8 @@ public class MeditationMenuScreen extends Screen {
         bloodDemonArtBuilderButtonBounds = null;
         passiveSkillsButtonBounds = null;
         passiveSkillsBackButtonBounds = null;
+        sheathEditorButtonBounds = null;
+        cosmeticsDemonEyesButtonBounds = null;
 
         guiGraphics.fill(left - 4, top - 4, left + PANEL_WIDTH + 4, top + PANEL_HEIGHT + 4, 0xAA0A0A10);
         guiGraphics.fill(left, top, left + PANEL_WIDTH, top + PANEL_HEIGHT, 0xF1211B19);
@@ -116,6 +150,7 @@ public class MeditationMenuScreen extends Screen {
             case INFO -> renderInfoTab(guiGraphics, left, top);
             case NAVIGATION -> renderNavigationTab(guiGraphics, left, top, mouseX, mouseY);
             case SKILLS -> renderSkillsTab(guiGraphics, left, top);
+            case COSMETICS -> renderCosmeticsTab(guiGraphics, left, top);
         }
 
         super.render(guiGraphics, mouseX, mouseY, partialTick);
@@ -394,33 +429,25 @@ public class MeditationMenuScreen extends Screen {
 
             guiGraphics.enableScissor(cardLeft + 4, clipTop, cardRight - 6, clipBottom);
             int contentTop = cardTop - yOffset;
-            guiGraphics.drawString(font, "Demon Customization", cardLeft + 8, contentTop + 8, 0xF5D18A, false);
-            guiGraphics.drawString(font, "Adjust the glowing demon-eyes overlay on your player skin.", cardLeft + 8, contentTop + 24, 0xF0E3C2, false);
-            guiGraphics.drawString(font, "Current style: " + DemonEyesResourceHelper.getLabel(localDemonEyesIndex), cardLeft + 8, contentTop + 36, 0xCBE7C8, false);
-            guiGraphics.drawString(font, "Hue: " + localDemonEyesHue, cardLeft + 8, contentTop + 48, 0xCBE7C8, false);
+            guiGraphics.drawString(font, "Demon Skills", cardLeft + 8, contentTop + 8, 0xF5D18A, false);
+            guiGraphics.drawString(font, "Demon eyes are available in Cosmetics.", cardLeft + 8, contentTop + 24, 0xF0E3C2, false);
 
             int buttonTop = contentTop + 60;
-            Rect2i demonEyes = new Rect2i(cardLeft + 8, buttonTop, cardRight - cardLeft - 16, buttonHeight);
-            renderButton(guiGraphics, demonEyes, "Change Demon Eyes", 0xFF8A6A3E, 0x1D1208);
-            if (isVerticallyVisible(demonEyes, clipTop, clipBottom)) {
-                demonEyesButtonBounds = demonEyes;
-            }
-
-            Rect2i passiveSkills = new Rect2i(cardLeft + 8, buttonTop + 24, cardRight - cardLeft - 16, buttonHeight);
+            Rect2i passiveSkills = new Rect2i(cardLeft + 8, buttonTop, cardRight - cardLeft - 16, buttonHeight);
             renderButton(guiGraphics, passiveSkills, "Passive Skills", 0xFF8A6A3E, 0x1D1208);
             if (isVerticallyVisible(passiveSkills, clipTop, clipBottom)) {
                 passiveSkillsButtonBounds = passiveSkills;
             }
 
-            Rect2i builder = new Rect2i(cardLeft + 8, buttonTop + 48, cardRight - cardLeft - 16, buttonHeight);
+            Rect2i builder = new Rect2i(cardLeft + 8, buttonTop + 24, cardRight - cardLeft - 16, buttonHeight);
             renderButton(guiGraphics, builder, "Open Blood Demon Art Builder", 0xFF688B72, 0x102015);
             if (isVerticallyVisible(builder, clipTop, clipBottom)) {
                 bloodDemonArtBuilderButtonBounds = builder;
             }
 
-            guiGraphics.drawString(font, "Muzan Blood Consumed: " + data.muzanBlood(), cardLeft + 8, contentTop + 126, 0xB8A48B, false);
-            guiGraphics.drawString(font, "Humans Consumed: " + data.humansConsumed(), cardLeft + 166, contentTop + 126, 0xB8A48B, false);
-            guiGraphics.drawString(font, "The builder opens in a separate editor window from this tab.", cardLeft + 8, contentTop + 150, 0x9F978D, false);
+            guiGraphics.drawString(font, "Muzan Blood Consumed: " + data.muzanBlood(), cardLeft + 8, contentTop + 102, 0xB8A48B, false);
+            guiGraphics.drawString(font, "Humans Consumed: " + data.humansConsumed(), cardLeft + 166, contentTop + 102, 0xB8A48B, false);
+            guiGraphics.drawString(font, "The builder opens in a separate editor window from this tab.", cardLeft + 8, contentTop + 126, 0x9F978D, false);
             guiGraphics.disableScissor();
             renderScrollbar(guiGraphics, cardRight - 6, clipTop, clipBottom, DEMON_CUSTOMIZATION_CONTENT_HEIGHT, visible, skillsScroll);
             return;
@@ -445,6 +472,33 @@ public class MeditationMenuScreen extends Screen {
         }
         guiGraphics.disableScissor();
         renderScrollbar(guiGraphics, bodyRight - 8, bodyTop + 44, bodyBottom - 8, wrappedLines.size(), visible, skillsScroll);
+    }
+
+    private void renderCosmeticsTab(GuiGraphics guiGraphics, int left, int top) {
+        int bodyLeft = left + INNER_MARGIN;
+        int bodyTop = top + BODY_TOP;
+        int bodyRight = left + PANEL_WIDTH - INNER_MARGIN;
+        int bodyBottom = top + PANEL_HEIGHT - BODY_BOTTOM_MARGIN;
+        guiGraphics.fill(bodyLeft, bodyTop, bodyRight, bodyBottom, 0xAA15100E);
+
+        int cardLeft = bodyLeft + 10;
+        int cardRight = bodyRight - 10;
+        int y = bodyTop + 14;
+        if (data.demonPlayer()) {
+            guiGraphics.drawString(font, "Demon Eyes", cardLeft, y, 0xF5D18A, false);
+            guiGraphics.drawString(font, DemonEyesResourceHelper.getLabel(localDemonEyesIndex) + " | Hue " + localDemonEyesHue,
+                cardLeft, y + 14, 0xCBE7C8, false);
+            cosmeticsDemonEyesButtonBounds = new Rect2i(cardLeft, y + 30, cardRight - cardLeft, 18);
+            renderButton(guiGraphics, cosmeticsDemonEyesButtonBounds, "Change Demon Eyes", 0xFF8A6A3E, 0x1D1208);
+            y += 60;
+        }
+
+        guiGraphics.drawString(font, "Sheath Editor", cardLeft, y, 0xF5D18A, false);
+        guiGraphics.drawString(font, "Position: " + localSheathPosition.name() + " | Texture: " + localSheathTextureIndex,
+            cardLeft, y + 14, 0xCBE7C8, false);
+        sheathEditorButtonBounds = new Rect2i(cardLeft, y + 30, cardRight - cardLeft, 18);
+        renderButton(guiGraphics, sheathEditorButtonBounds, "Edit Sheath Display", 0xFF688B72, 0x102015);
+        guiGraphics.drawString(font, "Customize how your sheath appears to other players.", cardLeft, y + 58, 0xB8A48B, false);
     }
 
     private void renderPassiveSkillsView(GuiGraphics guiGraphics, int bodyLeft, int bodyTop, int bodyRight, int bodyBottom) {
@@ -602,12 +656,20 @@ public class MeditationMenuScreen extends Screen {
                         }
                     }
                 }
-                if (demonEyesButtonBounds != null && contains(demonEyesButtonBounds, mouseX, mouseY)) {
+                if (bloodDemonArtBuilderButtonBounds != null && contains(bloodDemonArtBuilderButtonBounds, mouseX, mouseY)) {
+                    ModNetworking.sendToServer(new RequestBloodDemonArtBuilderPacket());
+                    return true;
+                }
+            }
+            if (activeTab == Tab.COSMETICS) {
+                if (cosmeticsDemonEyesButtonBounds != null && contains(cosmeticsDemonEyesButtonBounds, mouseX, mouseY)) {
                     minecraft.setScreen(new DemonEyesCustomizationScreen(this, localDemonEyesIndex, localDemonEyesHue));
                     return true;
                 }
-                if (bloodDemonArtBuilderButtonBounds != null && contains(bloodDemonArtBuilderButtonBounds, mouseX, mouseY)) {
-                    ModNetworking.sendToServer(new RequestBloodDemonArtBuilderPacket());
+                if (sheathEditorButtonBounds != null && contains(sheathEditorButtonBounds, mouseX, mouseY)) {
+                    minecraft.setScreen(new SheathCustomizationScreen(this, localSheathPosition, localSheathTextureIndex,
+                        localSheathTranslateX, localSheathTranslateY, localSheathTranslateZ,
+                        localSheathRotateX, localSheathRotateY, localSheathRotateZ));
                     return true;
                 }
             }
@@ -698,6 +760,27 @@ public class MeditationMenuScreen extends Screen {
     public void updateLocalDemonEyesStyle(int demonEyesIndex, int demonEyesHue) {
         this.localDemonEyesIndex = demonEyesIndex;
         this.localDemonEyesHue = demonEyesHue;
+    }
+
+    public void updateLocalSheathCosmetics(SwordDisplayConfig.SwordDisplayPosition position, int textureIndex,
+                                           double translateX, double translateY, double translateZ,
+                                           double rotateX, double rotateY, double rotateZ) {
+        localSheathPosition = position;
+        localSheathTextureIndex = textureIndex;
+        localSheathTranslateX = translateX;
+        localSheathTranslateY = translateY;
+        localSheathTranslateZ = translateZ;
+        localSheathRotateX = rotateX;
+        localSheathRotateY = rotateY;
+        localSheathRotateZ = rotateZ;
+    }
+
+    private SwordDisplayConfig.SwordDisplayPosition parseSheathPosition(String value) {
+        try {
+            return SwordDisplayConfig.SwordDisplayPosition.valueOf(value);
+        } catch (IllegalArgumentException exception) {
+            return SwordDisplayConfig.position;
+        }
     }
 
     private void toggleInfoSection(String id) {
@@ -822,7 +905,10 @@ public class MeditationMenuScreen extends Screen {
             id,
             data.demonPlayer(),
             localDemonEyesIndex,
-            localDemonEyesHue
+            localDemonEyesHue,
+            localSheathPosition.name(), localSheathTextureIndex,
+            localSheathTranslateX, localSheathTranslateY, localSheathTranslateZ,
+            localSheathRotateX, localSheathRotateY, localSheathRotateZ
         ));
         newScreen.activeTab = Tab.NAVIGATION;
         minecraft.setScreen(newScreen);
@@ -836,7 +922,8 @@ public class MeditationMenuScreen extends Screen {
     private enum Tab {
         INFO("Info"),
         NAVIGATION("Navigation"),
-        SKILLS("Skills");
+        SKILLS("Skills"),
+        COSMETICS("Cosmetics");
 
         private final String label;
 

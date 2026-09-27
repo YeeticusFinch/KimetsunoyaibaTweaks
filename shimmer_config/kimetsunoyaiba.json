@@ -5,36 +5,30 @@
       "r": 231,
       "g": 162,
       "b": 242,
-      "a": 80
+      "a": 170
     },
     "wisteria_cyan": {
       "r": 162,
       "g": 210,
       "b": 242,
-      "a": 80
+      "a": 170
     },
     "wisteria_lavender": {
       "r": 185,
       "g": 163,
       "b": 242,
-      "a": 80
+      "a": 170
     },
     "wisteria_cream": {
       "r": 242,
       "g": 240,
       "b": 162,
-      "a": 80
+      "a": 170
     },
     "ds_flame": {
       "r": 255,
       "g": 217,
       "b": 71,
-      "a": 255
-    },
-    "ds_love": {
-      "r": 255,
-      "g": 220,
-      "b": 210,
       "a": 255
     },
     "ds_thunder": {
@@ -103,6 +97,12 @@
       "b": 195,
       "a": 170
     },
+    "lantern_tsuzumi_glow": {
+      "r": 255,
+      "g": 156,
+      "b": 81,
+      "a": 255
+    },
     "kaede_leaves_weight_average_color": {
       "r": 254,
       "g": 118,
@@ -135,7 +135,17 @@
       "radius": 11
     },
     {
+      "block": "kimetsunoyaibamultiplayer:sideways_lantern_2",
+      "color": "#lantern_2_weight_average_color",
+      "radius": 11
+    },
+    {
       "block": "kimetsunoyaiba:lantern_2red",
+      "color": "#lantern_2red_weight_average_color",
+      "radius": 12
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:sideways_lantern_2red",
       "color": "#lantern_2red_weight_average_color",
       "radius": 12
     },
@@ -153,6 +163,16 @@
       "block": "kimetsunoyaiba:lantern_3",
       "color": "#lantern_3_weight_average_color",
       "radius": 14
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:sideways_lantern_3",
+      "color": "#lantern_3_weight_average_color",
+      "radius": 14
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:lantern_tsuzumi",
+      "color": "#lantern_tsuzumi_glow",
+      "radius": 18
     },
     {
       "block": "kimetsunoyaiba:kaede_leaves",
@@ -175,42 +195,32 @@
       "radius": 14
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_lavender",
+      "block": "kimetsunoyaibamultiplayer:sideways_lantern_1",
+      "color": "#lantern_1_weight_average_color",
+      "radius": 14
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:train_headlight",
+      "color": "#brazier_weight_average_color",
+      "radius": 14
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_lavender",
       "color": "#wisteria_lavender",
       "radius": 1
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_cyan",
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cyan",
       "color": "#wisteria_cyan",
       "radius": 1
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_cream",
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cream",
       "color": "#wisteria_cream",
       "radius": 1
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_pink",
-      "color": "#wisteria_pink",
-      "radius": 1
-    },
-    {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_lavender",
-      "color": "#wisteria_lavender",
-      "radius": 1
-    },
-    {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_cyan",
-      "color": "#wisteria_cyan",
-      "radius": 1
-    },
-    {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_cream",
-      "color": "#wisteria_cream",
-      "radius": 1
-    },
-    {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_pink",
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_pink",
       "color": "#wisteria_pink",
       "radius": 1
     }
@@ -220,7 +230,13 @@
       "block": "kimetsunoyaiba:lantern_2"
     },
     {
+      "block": "kimetsunoyaibamultiplayer:sideways_lantern_2"
+    },
+    {
       "block": "kimetsunoyaiba:lantern_2red"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:sideways_lantern_2red"
     },
     {
       "block": "kimetsunoyaiba:cherry_blossoms"
@@ -232,31 +248,40 @@
       "block": "kimetsunoyaiba:lantern_3"
     },
     {
+      "block": "kimetsunoyaibamultiplayer:sideways_lantern_3"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:lantern_tsuzumi"
+    },
+    {
       "block": "kimetsunoyaiba:kaede_leaves"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_cyan"
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cyan"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_cream"
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_cream"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_lavender"
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_lavender"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_leaves_pink"
+      "block": "kimetsunoyaibamultiplayer:wisteria_leaves_pink"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_cyan"
+      "block": "kimetsunoyaibamultiplayer:wisteria_petals_cyan"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_cream"
+      "block": "kimetsunoyaibamultiplayer:wisteria_petals_cream"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_lavender"
+      "block": "kimetsunoyaibamultiplayer:wisteria_petals_lavender"
     },
     {
-      "block": "kimetsunoyaibamultiplayer:glowing_wisteria_petals_pink"
+      "block": "kimetsunoyaibamultiplayer:wisteria_petals_pink"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:train_headlight"
     },
     {
       "block": "kimetsunoyaiba:brazier"
@@ -268,18 +293,33 @@
       "block": "kimetsunoyaiba:lantern_1"
     },
     {
-      "particle": "kimetsunoyaiba:particle_flame",
+      "particle": "kimetsunoyaibamultiplayer:blood_flame",
       "color": "#ds_flame",
       "radius": 15
     },
     {
-      "particle": "kimetsunoyaibamultiplayer:love_slash",
-      "color": "#ds_love",
+      "particle": "kimetsunoyaibamultiplayer:energy",
+      "color": "#ds_flame",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaibamultiplayer:impact",
+      "color": "#ds_white",
       "radius": 15
     },
     {
       "particle": "kimetsunoyaibamultiplayer:love_impact",
-      "color": "#ds_love",
+      "color": "#ds_pink",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaibamultiplayer:love_slash",
+      "color": "#ds_pink",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaiba:particle_flame",
+      "color": "#ds_flame",
       "radius": 15
     },
     {
@@ -381,14 +421,6 @@
       "particle": "minecraft:cloud",
       "color": "#ds_white",
       "radius": 15
-    }
-  ],
-  "Entity": [
-    {
-      "entity": "kimetsunoyaibamultiplayer:sword_slash",
-      "emissive": true,
-      "blendMode": "additive",
-      "bloom": true
     }
   ],
   "Particle": [
@@ -586,6 +618,11 @@
       "item_id": "kimetsunoyaiba:lantern_3",
       "color": "#lantern_3_weight_average_color",
       "radius": 14
+    },
+    {
+      "item_id": "kimetsunoyaibamultiplayer:lantern_tsuzumi",
+      "color": "#lantern_tsuzumi_glow",
+      "radius": 18
     },
     {
       "item_id": "kimetsunoyaiba:kaede_leaves",

@@ -158,8 +158,9 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBlocksConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SwordsmithVillageConfig.class);
-        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.ClientParticleConfig.class);
-        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EntitySkinLayersConfig.class);
+         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.ClientParticleConfig.class);
+         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EntitySkinLayersConfig.class);
+         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.GravityConfig.class);
         com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.register(modEventBus);
         Log.alwaysWarn("[INIT] Registered config event handlers");
 
@@ -171,7 +172,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig.SPEC, "kimetsunoyaibamultiplayer/sword_display.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordRackConfig.SPEC, "kimetsunoyaibamultiplayer/sword_rack.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.SPEC, "kimetsunoyaibamultiplayer/biomes.toml");
-        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedMountBiomeConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml");
+        context.registerConfig(ModConfig.Type.SERVER, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedMountBiomeConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.SPEC, "kimetsunoyaibamultiplayer/spawn_rates.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_spawning.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.SPEC, "kimetsunoyaibamultiplayer/raids.toml");
@@ -186,7 +187,8 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordsmithVillageConfig.SPEC, "kimetsunoyaibamultiplayer/swordsmith_village.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.DemonRankingConfig.SPEC, "kimetsunoyaibamultiplayer/demon_ranking.toml");
         context.registerConfig(ModConfig.Type.CLIENT, com.lerdorf.kimetsunoyaibamultiplayer.config.ClientParticleConfig.SPEC, "kimetsunoyaibamultiplayer/client_particles.toml");
-        context.registerConfig(ModConfig.Type.CLIENT, com.lerdorf.kimetsunoyaibamultiplayer.config.EntitySkinLayersConfig.SPEC, "kimetsunoyaibamultiplayer/entity_skin_layers.toml");
+         context.registerConfig(ModConfig.Type.CLIENT, com.lerdorf.kimetsunoyaibamultiplayer.config.EntitySkinLayersConfig.SPEC, "kimetsunoyaibamultiplayer/entity_skin_layers.toml");
+         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.GravityConfig.SPEC, "kimetsunoyaibamultiplayer/gravity.toml");
         context.registerConfig(ModConfig.Type.SERVER, com.lerdorf.kimetsunoyaibamultiplayer.config.FutonConfig.SPEC, "kimetsunoyaibamultiplayer/futon.toml");
         Log.alwaysWarn("[INIT] Registered config specs");
         Log.startupProbe("KimetsunoyaibaMultiplayer.<init>.end");
@@ -468,6 +470,7 @@ public class KimetsunoyaibaMultiplayer
             com.lerdorf.kimetsunoyaibamultiplayer.entities.NezukoEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.DaughterEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.MotherEntity.registerBloodDemonArt();
+            com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.KyogaiDrumsArt.register();
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:daughter",
                 com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_DEMON,
@@ -479,6 +482,12 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.HARD_BOSS_DEMON,
                 false,
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.MotherEntity.BLOOD_DEMON_ART_ID
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:kyogai",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_BOSS_DEMON,
+                false,
+                com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.KyogaiDrumsArt.ART_ID
             );
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:demon_creeper",
@@ -714,8 +723,10 @@ public class KimetsunoyaibaMultiplayer
         com.lerdorf.kimetsunoyaibamultiplayer.commands.OreSelectCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.SurvivalRaidCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.MeditationMenuCommand.register(event.getDispatcher());
-        com.lerdorf.kimetsunoyaibamultiplayer.commands.AddSkillPointCommand.register(event.getDispatcher());
-        com.lerdorf.kimetsunoyaibamultiplayer.commands.QuestCommand.register(event.getDispatcher());
+         com.lerdorf.kimetsunoyaibamultiplayer.commands.AddSkillPointCommand.register(event.getDispatcher());
+         com.lerdorf.kimetsunoyaibamultiplayer.commands.LocateMountNatagumoPeakCommand.register(event.getDispatcher());
+         com.lerdorf.kimetsunoyaibamultiplayer.commands.NatagumoRegionCommand.register(event.getDispatcher());
+         com.lerdorf.kimetsunoyaibamultiplayer.commands.QuestCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.DebugPlayerDimensionsCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.RepairHouseTamayoCommand.register(event.getDispatcher());
         com.lerdorf.kimetsunoyaibamultiplayer.commands.TestTamayoHouseCommand.register(event.getDispatcher());
@@ -1190,6 +1201,10 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.SIX_EYE_DEMON_HEAD.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.SixEyeDemonHeadRenderer::new
             );
+            event.registerBlockEntityRenderer(
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.TRAIN_WHEEL.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.TrainWheelRenderer::new
+            );
 
             if (Config.logDebug)
             Log.info("Registered entity renderers");
@@ -1269,6 +1284,7 @@ public class KimetsunoyaibaMultiplayer
             com.lerdorf.kimetsunoyaibamultiplayer.client.CrowAnimatableWrapper.clearAll();
             com.lerdorf.kimetsunoyaibamultiplayer.client.GunAnimationHandler.clearAll();
             com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.clearAll();
+            com.lerdorf.kimetsunoyaibamultiplayer.client.SheathCosmeticsClientState.clear();
             com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.clearAll();
             com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker.clearAll();
             // Don't clear mirrors from client side - they are server-side entities

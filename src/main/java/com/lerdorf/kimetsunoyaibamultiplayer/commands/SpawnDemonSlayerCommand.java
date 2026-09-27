@@ -35,13 +35,13 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Command to spawn a demon slayer entity with a specific breathing style and power level.
+ * Command to spawn a demon slayer entity with a specific breathing style and rank.
  *
  * Usage: /spawndemonslayer <breathing_style> <power_level> [male|female|random] [skin_number] [demonized]
  *
  * Examples:
  * - /spawndemonslayer water_breathing 0    (training sword, no armor)
- * - /spawndemonslayer mist_breathing 3     (mist sword, full uniform, high stats)
+ * - /spawndemonslayer mist_breathing 7     (mist sword, full uniform, Hinoto rank)
  */
 public class SpawnDemonSlayerCommand {
 
@@ -59,7 +59,7 @@ public class SpawnDemonSlayerCommand {
             .requires(source -> source.hasPermission(2)) // Requires OP level 2
             .then(Commands.argument("style", StringArgumentType.string())
                 .suggests(STYLE_SUGGESTIONS)
-                .then(Commands.argument("level", IntegerArgumentType.integer(0, 5))
+                .then(Commands.argument("level", IntegerArgumentType.integer(0, 12))
                     .executes(SpawnDemonSlayerCommand::execute)
                     .then(Commands.literal("demonized")
                         .executes(SpawnDemonSlayerCommand::execute)
@@ -155,7 +155,7 @@ public class SpawnDemonSlayerCommand {
         }
         entity.setTextureIndex(textureIndex);
 
-        // Set power level/loadout (our override allows 0-5) and apply stat bonuses
+        // Set rank/loadout (our override allows 0-12) and apply stat bonuses
         entity.configurePowerLevelLoadout(powerLevel);
         entity.applyAttackSpeedBonus();
         if (demonized) {

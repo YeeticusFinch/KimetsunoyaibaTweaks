@@ -63,6 +63,7 @@ public final class QuestScenarioActions {
     public static final String SLAYERS_BLOOD_DUNGEON_X = "KnYPermanenceSlayersBloodDungeonX";
     public static final String SLAYERS_BLOOD_DUNGEON_Y = "KnYPermanenceSlayersBloodDungeonY";
     public static final String SLAYERS_BLOOD_DUNGEON_Z = "KnYPermanenceSlayersBloodDungeonZ";
+    private static final String SLAYERS_BLOOD_DUNGEON_SEARCH_NEXT_TICK = "KnYPermanenceSlayersBloodDungeonSearchNextTick";
     public static final String KIDNAPPERS_BOG_ACTIVE_TAG = "KnYKidnappersBogActive";
     public static final String SWAMP_DOMAIN_ENCOUNTER_STARTED_TAG = "KnYSwampDomainEncounterStarted";
     public static final String KIDNAPPERS_BOG_QUEST_SWAMP_CLONE_TAG = "KnYKidnappersBogSwampClone";
@@ -103,6 +104,8 @@ public final class QuestScenarioActions {
     private static final int MEDIUM_STRUCTURE_ANCHOR_MAX_DISTANCE = 160;
     private static final int LARGE_STRUCTURE_ANCHOR_MAX_DISTANCE = 512;
     private static final int DEFAULT_STRUCTURE_ANCHOR_MAX_DISTANCE = 256;
+    private static final int SLAYERS_BLOOD_DUNGEON_SEARCH_CHUNK_RADIUS = 32;
+    private static final long SLAYERS_BLOOD_DUNGEON_RETRY_DELAY_TICKS = 20L * 60L;
     private static final double KAMANUE_FACE_PLAYER_RADIUS = 10.0D;
     private static final double KAZUMI_DUPLICATE_RADIUS = 50.0D;
     private static final double KAZUMI_QUEST_REUSE_RADIUS = 400.0D;
@@ -152,7 +155,7 @@ public final class QuestScenarioActions {
     }
 
     public static BlockPos findNearestSlayersBloodDungeon(ServerLevel level, BlockPos origin) {
-        return findNearestStructure(level, origin, MINESHAFT);
+        return findNearestStructure(level, origin, MINESHAFT, SLAYERS_BLOOD_DUNGEON_SEARCH_CHUNK_RADIUS);
     }
 
     public static BlockPos getOrStoreSlayersBloodDungeon(ServerPlayer player) {
@@ -166,10 +169,18 @@ public final class QuestScenarioActions {
                 player.getPersistentData().getInt(SLAYERS_BLOOD_DUNGEON_Z)
             );
         }
-        BlockPos dungeon = findNearestSlayersBloodDungeon(serverLevel, player.blockPosition());
-        if (dungeon == null) {
+        long now = serverLevel.getGameTime();
+        if (player.getPersistentData().getLong(SLAYERS_BLOOD_DUNGEON_SEARCH_NEXT_TICK) > now) {
             return null;
         }
+        BlockPos dungeon = findNearestSlayersBloodDungeon(serverLevel, player.blockPosition());
+        if (dungeon == null) {
+            player.getPersistentData().putLong(
+                SLAYERS_BLOOD_DUNGEON_SEARCH_NEXT_TICK,
+                now + SLAYERS_BLOOD_DUNGEON_RETRY_DELAY_TICKS);
+            return null;
+        }
+        player.getPersistentData().remove(SLAYERS_BLOOD_DUNGEON_SEARCH_NEXT_TICK);
         player.getPersistentData().putInt(SLAYERS_BLOOD_DUNGEON_X, dungeon.getX());
         player.getPersistentData().putInt(SLAYERS_BLOOD_DUNGEON_Y, dungeon.getY());
         player.getPersistentData().putInt(SLAYERS_BLOOD_DUNGEON_Z, dungeon.getZ());
@@ -668,6 +679,7 @@ public final class QuestScenarioActions {
 
     private static void claimKamanueForQuest(Entity entity, BlockPos dungeon) {
         entity.getPersistentData().putString(QUEST_NPC_ID_TAG, "kamanue");
+        entity.setInvulnerable(true);
         if (!entity.getPersistentData().contains(KAMANUE_HOSTILE)) {
             entity.getPersistentData().putBoolean(KAMANUE_HOSTILE, false);
         }
@@ -1287,7 +1299,13 @@ public final class QuestScenarioActions {
     }
 
     public static BlockPos findNearestStructure(ServerLevel level, BlockPos origin, ResourceLocation structureId) {
-        BlockPos nearest = level.findNearestMapStructure(QuestStructureTags.tagFor(structureId), origin, 100, false);
+        return findNearestStructure(level, origin, structureId, 100);
+    }
+
+    private static BlockPos findNearestStructure(ServerLevel level, BlockPos origin,
+                                                 ResourceLocation structureId, int chunkRadius) {
+        BlockPos nearest = level.findNearestMapStructure(
+            QuestStructureTags.tagFor(structureId), origin, chunkRadius, false);
         if (nearest == null) {
             return null;
         }

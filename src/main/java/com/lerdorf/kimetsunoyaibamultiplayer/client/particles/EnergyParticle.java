@@ -1,6 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client.particles;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.EnergyParticleOptions;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
 import net.minecraftforge.api.distmarker.Dist;
@@ -9,23 +11,22 @@ import org.joml.Vector3f;
 
 /**
  * Energy particle that drifts in a random direction, collides with blocks,
- * and shrinks over its final 10 ticks before despawning.
+ * and fades into a progressively softer halo before despawning.
  *
  * Works as a drop-in replacement for DustParticleOptions with the same
  * color (Vector3f) and size (float) constructor signature.
  *
  * - Lifetime: 30 ticks total
- * - First 20 ticks: stays same size
- * - Last 10 ticks: shrinks linearly to 0
+ * - First 20 ticks: stays fully opaque at the configured size
+ * - Last 10 ticks: fades out without shrinking and gains a soft halo
  * - Has physics (collides with blocks)
  * - Drifts in random direction with gentle movement
  */
 @OnlyIn(Dist.CLIENT)
 public class EnergyParticle extends TextureSheetParticle {
 
-    private final float initialSize;
     private static final int TOTAL_LIFETIME = 30;
-    private static final int SHRINK_START_TICK = 20;
+    private static final int FADE_START_TICK = 20;
     private static final float DRIFT_SPEED = 0.0001f;
 
     protected EnergyParticle(ClientLevel level, double x, double y, double z,
@@ -42,7 +43,6 @@ public class EnergyParticle extends TextureSheetParticle {
         this.bCol = color.z();
 
         // Set size
-        this.initialSize = size * 0.1f;
         this.quadSize = size * 0.1f;
 
         // Set lifetime to 30 ticks
@@ -62,7 +62,7 @@ public class EnergyParticle extends TextureSheetParticle {
         this.yd = driftSpeed * Math.sin(phi) * Math.sin(theta);
         this.zd = driftSpeed * Math.cos(phi);
 
-        // Full opacity
+        // Full opacity until the fade phase begins.
         this.alpha = 1.0f;
     }
 
@@ -70,17 +70,33 @@ public class EnergyParticle extends TextureSheetParticle {
     public void tick() {
         super.tick();
 
-        // Calculate age (how many ticks have passed)
-        int ticksAlive = this.age;
+        // Fade during the final ten ticks while keeping the particle's base size.
+        float fadeProgress = (float) (this.age - FADE_START_TICK)
+                / (TOTAL_LIFETIME - FADE_START_TICK);
+        fadeProgress = Math.max(0.0F, Math.min(1.0F, fadeProgress));
+        this.alpha = 1.0F - fadeProgress;
+    }
 
-        // After tick 20, start shrinking over 10 ticks
-        if (ticksAlive >= SHRINK_START_TICK) {
-            int shrinkTicks = ticksAlive - SHRINK_START_TICK;
-            int remainingTicks = TOTAL_LIFETIME - SHRINK_START_TICK;
-            // Linear interpolation from initialSize to 0
-            float shrinkProgress = (float) shrinkTicks / remainingTicks;
-            this.quadSize = initialSize * (1.0f - shrinkProgress);
+    @Override
+    public void render(VertexConsumer buffer, Camera camera, float partialTick) {
+        float fadeProgress = (float) (this.age - FADE_START_TICK + partialTick)
+                / (TOTAL_LIFETIME - FADE_START_TICK);
+        fadeProgress = Math.max(0.0F, Math.min(1.0F, fadeProgress));
+
+        if (fadeProgress > 0.0F && this.alpha > 0.0F) {
+            float baseAlpha = this.alpha;
+            float baseSize = this.quadSize;
+
+            // A larger, low-opacity pass creates a soft halo as the particle fades.
+            this.alpha = baseAlpha * fadeProgress * 0.35F;
+            this.quadSize = baseSize * (1.0F + fadeProgress * 1.5F);
+            super.render(buffer, camera, partialTick);
+
+            this.alpha = baseAlpha;
+            this.quadSize = baseSize;
         }
+
+        super.render(buffer, camera, partialTick);
     }
 
     @Override

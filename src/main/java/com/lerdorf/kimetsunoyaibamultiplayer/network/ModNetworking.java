@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AdjustPassiveSkillPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CloseDemonPropositionPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ConfigEditPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CombustibleBloodM1AttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CustomBdaPassiveAttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonEyesSyncPacket;
@@ -18,6 +19,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PuppetLineSyncPacke
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonPropositionStatePacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonEyesPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetSheathCosmeticsPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SheathCosmeticsSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectMeditationTargetPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WebTraversalInputPacket;
@@ -377,6 +380,20 @@ public class ModNetworking {
                 .consumerMainThread(SetDemonEyesPacket::handle)
                 .add();
 
+        int sheathCosmeticsSyncPacketId = id();
+        net.messageBuilder(SheathCosmeticsSyncPacket.class, sheathCosmeticsSyncPacketId)
+                .decoder(SheathCosmeticsSyncPacket::new)
+                .encoder(SheathCosmeticsSyncPacket::toBytes)
+                .consumerMainThread(SheathCosmeticsSyncPacket::handle)
+                .add();
+
+        int setSheathCosmeticsPacketId = id();
+        net.messageBuilder(SetSheathCosmeticsPacket.class, setSheathCosmeticsPacketId)
+                .decoder(SetSheathCosmeticsPacket::new)
+                .encoder(SetSheathCosmeticsPacket::toBytes)
+                .consumerMainThread(SetSheathCosmeticsPacket::handle)
+                .add();
+
         int updateBridgerBlockPacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateBridgerBlockPacket.class, updateBridgerBlockPacketId)
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateBridgerBlockPacket::new)
@@ -410,6 +427,13 @@ public class ModNetworking {
                 .decoder(WebTraversalInputPacket::new)
                 .encoder(WebTraversalInputPacket::toBytes)
                 .consumerMainThread(WebTraversalInputPacket::handle)
+                .add();
+
+        int configEditPacketId = id();
+        net.messageBuilder(ConfigEditPacket.class, configEditPacketId)
+                .decoder(ConfigEditPacket::new)
+                .encoder(ConfigEditPacket::toBytes)
+                .consumerMainThread(ConfigEditPacket::handle)
                 .add();
     }
 

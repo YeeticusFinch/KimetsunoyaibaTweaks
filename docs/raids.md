@@ -94,10 +94,15 @@ kimetsunoyaiba:sabito
 kimetsunoyaiba:zennitsu
 kimetsunoyaiba:kanawo
 
-## Hard Demon Slayers
+## Senior Demon Slayers
 
-kimetsunoyaiba:dice_steak_senior
-kimetsunoyaiba:dice_steak_senior_super
+kimetsunoyaiba:dice_steak_senior (multiplayer rank 4, Kanoe)
+kimetsunoyaiba:dice_steak_senior_super (multiplayer rank 12, Super Senior)
+
+Generic demon slayer raid entries are spawned by the multiplayer entity implementation:
+`demon_slayer` entries use ranks 0-3, senior entries use rank 4, and super senior
+entries use rank 12. This keeps the new rank buffs and passive guard/dash abilities
+consistent even when global base-entity replacement is disabled.
 
 ### Hashira
 

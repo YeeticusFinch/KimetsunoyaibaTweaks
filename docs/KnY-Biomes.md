@@ -46,10 +46,15 @@ climate entries with a seed-deterministic biome source when enabled. Mount Natag
 the same ring region mask for biome and terrain generation. The source:
 
 - Places one deterministic candidate center on each ring at 3000, 6000, 9000, and later blocks from spawn.
-- Uses an irregular 800-block terrain region, full-strength through 700 blocks and smoothly fading out by 850 blocks.
-- Raises vanilla density sampling with macro and detail noise rather than placing a post-generation stone shell.
-- Rejects ocean positions and ocean-centered regions.
+- Uses a continuous concentric 800-block terrain region with a smooth radial falloff from a Y=75 base toward a Y=280 summit target.
+- Shapes terrain through one final-density vertical sampling pass with only small-scale detail variation; the surface is hard-capped at Y=280.
+- Can optionally replace ocean positions inside selected regions; the setting defaults to allowing ocean overwrite.
+- Adds one deterministic, gently meandering river from the south side of each peak toward its southern foothills during the completed surface pass.
+- The river leaves the mountain density untouched and follows the completed local surface with a 3-block water corridor; its bed is exactly one block below the water and uses gravel.
+- Adds common 15-25 block dark oak trees and 10-20 block dark oak wall trees with narrow conical dark oak crowns, alongside the existing mega spruce generation. Trees require grass blocks.
+- Generates two persistent decorative silk cocoons per newly loaded Sister-region chunk, preferring positions beside detected trees and marking each entity with `Decoration: true`. Chunk claims are saved so reloads do not duplicate them.
+- Persists discovered peak centers in `kimetsunoyaibamultiplayer_natagumo_peaks` world data for later navigation or structure logic.
 - Leaves the base mod biome definitions intact, including Mount Natagumo trees and its biome-specific spawns.
 - Limits each Mount Natagumo structure (`house_rui` and `house_rui_brother`) to one deterministic candidate per enhanced region.
 
-Settings are in `config/kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml`.
+Settings are in `serverconfig/kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml`. Use `/natagumoregion` to report the imaginary ring or Boss Minions sub-region at the player's position.

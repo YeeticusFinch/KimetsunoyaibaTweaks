@@ -16,8 +16,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ImpactParticleOptions;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.PlayerRole;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.AttackDamageHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -47,6 +47,7 @@ public final class PassiveSkillManager {
     public static final String REGENERATION_ID = "demon_regeneration";
     public static final String MARTIAL_ARTS_ID = "demon_martial_arts";
     public static final String CLAWS_ID = "demon_claws";
+    public static final String DEMON_GUARD_ID = "demon_guard";
     public static final String SLAYER_GUARD_ID = "slayer_guard";
     public static final String SLAYER_DASH_ID = "slayer_dash";
 
@@ -58,7 +59,7 @@ public final class PassiveSkillManager {
     private static final String SLAYER_GUARD_REMAINING = "KnYSlayerGuardRemaining";
     private static final String SLAYER_GUARD_LAST_INPUT = "KnYSlayerGuardLastInput";
     private static final String SLAYER_GUARD_LAST_DRAIN = "KnYSlayerGuardLastDrain";
-    private static final String SLAYER_GUARD_ITEM = "KnYSlayerGuardItem";
+    private static final String GUARD_ANIMATION = "KnYGuardAnimation";
     private static final String SLAYER_GUARD_COOLDOWN_UNTIL = "KnYSlayerGuardCooldownUntil";
     private static final String SLAYER_DASH_COOLDOWN_UNTIL = "KnYSlayerDashCooldownUntil";
 
@@ -66,6 +67,7 @@ public final class PassiveSkillManager {
     private static final int REGENERATION_MAX_LEVEL = 10;
     private static final int MARTIAL_ARTS_MAX_LEVEL = 5;
     private static final int CLAWS_MAX_LEVEL = 5;
+    private static final int DEMON_GUARD_MAX_LEVEL = 5;
     private static final int SLAYER_GUARD_MAX_LEVEL = 5;
     private static final int SLAYER_DASH_MAX_LEVEL = 5;
     private static final int SLAYER_GUARD_COOLDOWN_TICKS = 60;
@@ -105,7 +107,10 @@ public final class PassiveSkillManager {
             "Damage and knockback scale with level. Spawns a BDA-colored impact particle."),
         new SkillDefinition(CLAWS_ID, "Claws", CLAWS_MAX_LEVEL,
             "Custom BDA left-clicks can become claw slash AOE attacks.",
-            "Damage scales with level and may apply one configured target BDA effect.")
+            "Damage scales with level and may apply one configured target BDA effect."),
+        new SkillDefinition(DEMON_GUARD_ID, "Guard", DEMON_GUARD_MAX_LEVEL,
+            "Hold X to maintain a defensive stance with any item or empty hand.",
+            "Guard strength and duration scale with level. Ends on release or interruption.")
     );
 
     private static final List<SkillDefinition> SLAYER_SKILLS = List.of(
@@ -242,10 +247,9 @@ public final class PassiveSkillManager {
             }
         }
 
-        if (isSlayerGuardActive(player)) {
-            if (isDemonSlayer(player)
-                && MeditationMenuService.resolveRoleForProgression(player) == PlayerRole.DEMON_SLAYER) {
-                tickSlayerGuard(player);
+        if (isGuardActive(player)) {
+            if (canUseGuard(player)) {
+                tickGuard(player);
             } else {
                 cancelGuard(player);
             }
@@ -253,11 +257,10 @@ public final class PassiveSkillManager {
     }
 
     public static boolean startGuard(ServerPlayer player) {
-        if (player == null || !isDemonSlayer(player)
-            || MeditationMenuService.resolveRoleForProgression(player) != PlayerRole.DEMON_SLAYER) {
+        if (player == null || !canUseGuard(player)) {
             return false;
         }
-        if (isSlayerGuardActive(player)) {
+        if (isGuardActive(player)) {
             refreshGuardInput(player);
             return true;
         }
@@ -267,7 +270,8 @@ public final class PassiveSkillManager {
             return false;
         }
 
-        int level = getSkillLevel(player, SLAYER_GUARD_ID);
+        String guardSkillId = isDemonSlayer(player) ? SLAYER_GUARD_ID : DEMON_GUARD_ID;
+        int level = getSkillLevel(player, guardSkillId);
         if (level <= 0) {
             return false;
         }
@@ -277,24 +281,30 @@ public final class PassiveSkillManager {
         player.getPersistentData().putInt(SLAYER_GUARD_REMAINING, guardPower);
         player.getPersistentData().putLong(SLAYER_GUARD_LAST_INPUT, now);
         player.getPersistentData().putLong(SLAYER_GUARD_LAST_DRAIN, now);
-        player.getPersistentData().putString(SLAYER_GUARD_ITEM, heldItemId(player));
         GuardStateHelper.setGuardState(player, guardPower, 0.0D, false);
         setGuardMovementModifier(player, true);
 
-        int animationIndex = player.getRandom().nextInt(6);
-        AnimationHelper.playAnimation(player, "guard_" + animationIndex, -1);
+        String animation = isDemonSlayer(player)
+            ? "guard_" + player.getRandom().nextInt(6)
+            : "guard";
+        player.getPersistentData().putString(GUARD_ANIMATION, animation);
+        AnimationHelper.playAnimation(player, animation, -1);
         ModNetworking.sendToPlayer(new DemonSlayerSkillPacket(DemonSlayerSkillPacket.GUARD_STATE, guardPower), player);
         return true;
     }
 
     public static void refreshGuardInput(ServerPlayer player) {
-        if (isSlayerGuardActive(player)) {
+        if (isGuardActive(player)) {
             player.getPersistentData().putLong(SLAYER_GUARD_LAST_INPUT, player.level().getGameTime());
         }
     }
 
     public static void cancelGuard(ServerPlayer player) {
-        if (player == null || !isSlayerGuardActive(player)) {
+        cancelGuard(player, false);
+    }
+
+    private static void cancelGuard(ServerPlayer player, boolean exhausted) {
+        if (player == null || !isGuardActive(player)) {
             return;
         }
 
@@ -304,9 +314,11 @@ public final class PassiveSkillManager {
         player.getPersistentData().remove(SLAYER_GUARD_REMAINING);
         player.getPersistentData().remove(SLAYER_GUARD_LAST_INPUT);
         player.getPersistentData().remove(SLAYER_GUARD_LAST_DRAIN);
-        player.getPersistentData().remove(SLAYER_GUARD_ITEM);
-        player.getPersistentData().putLong(SLAYER_GUARD_COOLDOWN_UNTIL,
-            player.level().getGameTime() + SLAYER_GUARD_COOLDOWN_TICKS);
+        player.getPersistentData().remove(GUARD_ANIMATION);
+        if (exhausted) {
+            player.getPersistentData().putLong(SLAYER_GUARD_COOLDOWN_UNTIL,
+                player.level().getGameTime() + SLAYER_GUARD_COOLDOWN_TICKS);
+        }
         ModNetworking.sendToPlayer(new DemonSlayerSkillPacket(DemonSlayerSkillPacket.GUARD_STATE, 0), player);
         ModNetworking.sendToAllClients(AnimationSyncPacket.createStopPacket(player.getUUID()));
     }
@@ -335,22 +347,37 @@ public final class PassiveSkillManager {
         } else {
             horizontal = horizontal.normalize();
         }
-        double power = 0.9D + (0.2D * (clamp(level, 1, SLAYER_DASH_MAX_LEVEL) - 1));
+        double power = getSlayerDashPower(level);
         MovementHelper.setVelocity(player, horizontal.scale(power).add(0.0D, 0.12D, 0.0D));
-        player.getPersistentData().putLong(SLAYER_DASH_COOLDOWN_UNTIL, now + dashCooldown(level));
+        player.getPersistentData().putLong(SLAYER_DASH_COOLDOWN_UNTIL, now + getSlayerDashCooldown(level));
         AnimationHelper.playAnimation(player, "sprint", 8);
         return true;
     }
 
-    public static boolean isSlayerGuardActive(ServerPlayer player) {
+    public static boolean isGuardActive(ServerPlayer player) {
         return player != null && player.getPersistentData().getBoolean(SLAYER_GUARD_ACTIVE);
     }
 
-    private static void tickSlayerGuard(ServerPlayer player) {
+    private static boolean canUseGuard(ServerPlayer player) {
+        if (player == null) {
+            return false;
+        }
+
+        PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
+        if (role == PlayerRole.DEMON && isDemon(player)) {
+            return getSkillLevel(player, DEMON_GUARD_ID) > 0;
+        }
+        if (role == PlayerRole.DEMON_SLAYER && isDemonSlayer(player)) {
+            return getSkillLevel(player, SLAYER_GUARD_ID) > 0
+                && BreathingInfoDetector.isNichirinSword(player.getMainHandItem());
+        }
+        return false;
+    }
+
+    private static void tickGuard(ServerPlayer player) {
         long now = player.level().getGameTime();
         if (player.isDeadOrDying()
-            || now - player.getPersistentData().getLong(SLAYER_GUARD_LAST_INPUT) > 10L
-            || !heldItemId(player).equals(player.getPersistentData().getString(SLAYER_GUARD_ITEM))) {
+            || now - player.getPersistentData().getLong(SLAYER_GUARD_LAST_INPUT) > 10L) {
             cancelGuard(player);
             return;
         }
@@ -365,13 +392,30 @@ public final class PassiveSkillManager {
         int remaining = player.getPersistentData().getInt(SLAYER_GUARD_REMAINING) - drain;
         player.getPersistentData().putLong(SLAYER_GUARD_LAST_DRAIN, lastDrain + drain * 2L);
         if (remaining <= 0) {
-            cancelGuard(player);
+            cancelGuard(player, true);
             return;
         }
 
         player.getPersistentData().putInt(SLAYER_GUARD_REMAINING, remaining);
         GuardStateHelper.setGuardState(player, remaining, 0.0D, false);
         ModNetworking.sendToPlayer(new DemonSlayerSkillPacket(DemonSlayerSkillPacket.GUARD_STATE, remaining), player);
+
+        String animation = player.getPersistentData().getString(GUARD_ANIMATION);
+        if (!animation.isEmpty() && now % 10L == 0L) {
+            AnimationHelper.playAnimation(player, animation, -1);
+        }
+    }
+
+    public static void damageSlayerGuardWeapon(ServerPlayer player) {
+        if (player == null || !isGuardActive(player) || !isDemonSlayer(player)) {
+            return;
+        }
+
+        ItemStack weapon = player.getMainHandItem();
+        if (!BreathingInfoDetector.isNichirinSword(weapon) || !weapon.isDamageableItem()) {
+            return;
+        }
+        weapon.hurtAndBreak(1, player, broken -> broken.broadcastBreakEvent(InteractionHand.MAIN_HAND));
     }
 
     public static void recordDamage(Player player) {
@@ -503,7 +547,8 @@ public final class PassiveSkillManager {
         AnimationHelper.playAnimation(player, animation, 10);
         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
             SoundSource.PLAYERS, 1.0F, 1.0F);
-        ModNetworking.sendToAllClients(new MobSwordSlashPacket(player.getUUID(), normalizeSlashAnimation(animation), 0));
+        ModNetworking.sendToAllClients(new MobSwordSlashPacket(
+            player.getUUID(), normalizeSlashAnimation(animation), 0, "claw"));
         damageTargets(player, level, true, excludedTargetId);
     }
 
@@ -625,6 +670,9 @@ public final class PassiveSkillManager {
             case CLAWS_ID -> level > 0
                 ? "Damage: " + Math.round(damageScale(level) * 100.0F) + "%. Target-effect chance: " + Math.round(0.05F * level * 100.0F) + "%."
                 : "Max level 5. Requires custom BDA item left-clicks.";
+            case DEMON_GUARD_ID -> level > 0
+                ? "Defensive power: " + guardPower(level) + ". Works with any held item or empty hand."
+                : "Max level 5. Hold X to guard with any held item or empty hand.";
             case SLAYER_GUARD_ID -> level > 0
                 ? "Defensive power: " + guardPower(level) + ". Movement speed is reduced to 30% while held."
                 : "Max level 5. Hold X to guard; ends on release or interruption.";
@@ -691,8 +739,25 @@ public final class PassiveSkillManager {
         return SLAYER_DASH_COOLDOWN_TICKS_LEVEL_ONE - (clampedLevel - 1) * reductionPerLevel;
     }
 
-    private static String heldItemId(ServerPlayer player) {
-        return BuiltInRegistries.ITEM.getKey(player.getMainHandItem().getItem()).toString();
+    /**
+     * Convert an entity rank to the equivalent demon slayer passive skill level.
+     * Ranks below Kanoe do not have the new guard/dash abilities.
+     */
+    public static int getSlayerPassiveSkillLevelForRank(int rank) {
+        return rank < 4 ? 0 : clamp(rank - 3, 1, SLAYER_GUARD_MAX_LEVEL);
+    }
+
+    public static int getSlayerGuardPower(int level) {
+        return guardPower(level);
+    }
+
+    public static double getSlayerDashPower(int level) {
+        int clampedLevel = clamp(level, 1, SLAYER_DASH_MAX_LEVEL);
+        return 0.9D + (0.2D * (clampedLevel - 1));
+    }
+
+    public static int getSlayerDashCooldown(int level) {
+        return dashCooldown(level);
     }
 
     private static void setGuardMovementModifier(ServerPlayer player, boolean active) {

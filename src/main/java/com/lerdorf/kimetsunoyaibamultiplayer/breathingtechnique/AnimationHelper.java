@@ -196,7 +196,7 @@ public class AnimationHelper {
         // SERVER SIDE: Send to all clients (including the player themselves)
         else if (!player.level().isClientSide) {
             if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
-                && (animationName == null || !animationName.startsWith("guard_"))) {
+                && !isGuardAnimation(animationName)) {
                 PassiveSkillManager.cancelGuard(serverPlayer);
             }
             // On server side, we don't need to look up the animation - just send the animation name
@@ -225,7 +225,8 @@ public class AnimationHelper {
 
         // Custom player_animation assets in this mod should resolve to our namespace.
         // beast2/beast4/beast6 are defined in assets/kimetsunoyaibamultiplayer/player_animation/*.json.
-        if (animationName.startsWith("guard_")
+        if (animationName.equals("guard")
+            || animationName.startsWith("guard_")
             || animationName.startsWith("love_")
             || animationName.startsWith("beast")
             || animationName.equals("backflip")
@@ -235,6 +236,11 @@ public class AnimationHelper {
         }
 
         return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", animationName);
+    }
+
+    private static boolean isGuardAnimation(String animationName) {
+        return animationName != null
+            && (animationName.equals("guard") || animationName.startsWith("guard_"));
     }
 
     private static KeyframeAnimation findAnimation(ResourceLocation animationLocation) {

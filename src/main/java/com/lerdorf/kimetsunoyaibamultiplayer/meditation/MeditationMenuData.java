@@ -21,12 +21,23 @@ public class MeditationMenuData {
     private final boolean demonPlayer;
     private final int demonEyesIndex;
     private final int demonEyesHue;
+    private final String sheathPosition;
+    private final int sheathTextureIndex;
+    private final double sheathTranslateX;
+    private final double sheathTranslateY;
+    private final double sheathTranslateZ;
+    private final double sheathRotateX;
+    private final double sheathRotateY;
+    private final double sheathRotateZ;
 
     public MeditationMenuData(String role, String rank, String muzanBlood, String humansConsumed, String kizukiRank,
                               List<InfoSection> infoSections, List<QuestEntry> quests, List<LocationEntry> locations,
                               List<PassiveSkillEntry> passiveSkills,
                               int passiveSkillPoints,
-                              String selectedType, String selectedId, boolean demonPlayer, int demonEyesIndex, int demonEyesHue) {
+                               String selectedType, String selectedId, boolean demonPlayer, int demonEyesIndex, int demonEyesHue,
+                               String sheathPosition, int sheathTextureIndex,
+                               double sheathTranslateX, double sheathTranslateY, double sheathTranslateZ,
+                               double sheathRotateX, double sheathRotateY, double sheathRotateZ) {
         this.role = role;
         this.rank = rank;
         this.muzanBlood = muzanBlood;
@@ -42,6 +53,14 @@ public class MeditationMenuData {
         this.demonPlayer = demonPlayer;
         this.demonEyesIndex = demonEyesIndex;
         this.demonEyesHue = demonEyesHue;
+        this.sheathPosition = sheathPosition;
+        this.sheathTextureIndex = sheathTextureIndex;
+        this.sheathTranslateX = sheathTranslateX;
+        this.sheathTranslateY = sheathTranslateY;
+        this.sheathTranslateZ = sheathTranslateZ;
+        this.sheathRotateX = sheathRotateX;
+        this.sheathRotateY = sheathRotateY;
+        this.sheathRotateZ = sheathRotateZ;
     }
 
     public MeditationMenuData(FriendlyByteBuf buf) {
@@ -60,6 +79,14 @@ public class MeditationMenuData {
         this.demonPlayer = buf.readBoolean();
         this.demonEyesIndex = buf.readVarInt();
         this.demonEyesHue = buf.readVarInt();
+        this.sheathPosition = buf.readUtf();
+        this.sheathTextureIndex = buf.readVarInt();
+        this.sheathTranslateX = buf.readDouble();
+        this.sheathTranslateY = buf.readDouble();
+        this.sheathTranslateZ = buf.readDouble();
+        this.sheathRotateX = buf.readDouble();
+        this.sheathRotateY = buf.readDouble();
+        this.sheathRotateZ = buf.readDouble();
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -78,6 +105,14 @@ public class MeditationMenuData {
         buf.writeBoolean(demonPlayer);
         buf.writeVarInt(demonEyesIndex);
         buf.writeVarInt(demonEyesHue);
+        buf.writeUtf(sheathPosition);
+        buf.writeVarInt(sheathTextureIndex);
+        buf.writeDouble(sheathTranslateX);
+        buf.writeDouble(sheathTranslateY);
+        buf.writeDouble(sheathTranslateZ);
+        buf.writeDouble(sheathRotateX);
+        buf.writeDouble(sheathRotateY);
+        buf.writeDouble(sheathRotateZ);
     }
 
     private static List<String> readStringList(FriendlyByteBuf buf) {
@@ -154,6 +189,38 @@ public class MeditationMenuData {
 
     public int demonEyesHue() {
         return demonEyesHue;
+    }
+
+    public String sheathPosition() {
+        return sheathPosition;
+    }
+
+    public int sheathTextureIndex() {
+        return sheathTextureIndex;
+    }
+
+    public double sheathTranslateX() {
+        return sheathTranslateX;
+    }
+
+    public double sheathTranslateY() {
+        return sheathTranslateY;
+    }
+
+    public double sheathTranslateZ() {
+        return sheathTranslateZ;
+    }
+
+    public double sheathRotateX() {
+        return sheathRotateX;
+    }
+
+    public double sheathRotateY() {
+        return sheathRotateY;
+    }
+
+    public double sheathRotateZ() {
+        return sheathRotateZ;
     }
 
     public record InfoSection(String id, String title, int count, List<InfoSection> children) {

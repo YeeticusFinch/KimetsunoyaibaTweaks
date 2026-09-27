@@ -409,6 +409,8 @@ boolean persists = SwordSheathRegistry.sheathPersistsWhenDrawn(swordStack);
 - Caller applies sword scale and positioning
 - This applies global sheath scale + per-sheath scale
 - Renders sheath using Minecraft's item renderer
+- Applies the owning player's Cosmetics-tab display offsets to the shared sword/sheath pose
+- Selects the owning player's texture variant with modulo over the registered variant count
 
 **Scale System:**
 ```java
@@ -458,7 +460,7 @@ public static void renderSheath(Item sheathItem, PoseStack poseStack,
 
 **Global Settings:**
 - `enabled` (boolean) - Enable/disable sword display feature
-- `default_position` (HIP/BACK) - Default position for swords
+- Player position is selected per player in the meditation menu Cosmetics tab
 - `scale` (double, 0.1-5.0) - Scale of displayed swords
 - `sheath_scale` (double, 0.1-5.0) - Additional scale for sheaths
 - `render_sheaths` (boolean) - Enable/disable sheath rendering
@@ -493,7 +495,6 @@ sword_position_overrides = [
 ```toml
 [sword_display]
     enabled = true
-    default_position = "HIP"
     scale = 1.0
     sheath_scale = 1.0
     render_sheaths = true

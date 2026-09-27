@@ -137,7 +137,7 @@ public class LoveSlashParticle extends TextureSheetParticle {
 
     @Override
     public int getLightColor(float partialTick) {
-        return 0xFF94D7; // fullbright, same style as flame/lava-ish particles
+        return 0xF000F0; // Minecraft's packed fullbright light value
     }
 
     @OnlyIn(Dist.CLIENT)

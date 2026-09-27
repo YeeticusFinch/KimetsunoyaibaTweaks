@@ -20,7 +20,7 @@ public class EnhancedBlocksConfig {
         .comment("Enable enhanced vial rack replacement",
             "When true, base mod medicine holder items/blocks are replaced with the multiplayer vial rack:",
             "  - kimetsunoyaiba:medicine_holder -> kimetsunoyaibamultiplayer:vial_rack",
-            "Nearby base mod medicine holder blocks are periodically converted with randomized rack contents.",
+            "Existing base mod medicine holder blocks are converted when right-clicked.",
             "Default: true")
         .define("enhancedVialRack", true);
 

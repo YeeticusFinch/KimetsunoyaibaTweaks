@@ -27,13 +27,17 @@ public final class EnhancedMountBiomeConfig {
             .comment("Minimum Natagumo terrain strength required for the Mount Natagumo biome")
             .defineInRange("natagumo-biome-threshold", 0.05, 0.0, 1.0);
 
+    private static final ForgeConfigSpec.BooleanValue NATAGUMO_OVERWRITE_OCEANS = BUILDER
+            .comment("Allow enhanced Mount Natagumo to replace ocean biomes inside its selected region")
+            .define("natagumo-overwrite-oceans", true);
+
     private static final ForgeConfigSpec.IntValue NATAGUMO_PEAK_HEIGHT = BUILDER
-            .comment("Maximum added height of the Natagumo mountain profile, in blocks")
-            .defineInRange("natagumo-peak-height", 170, 20, 250);
+            .comment("Legacy Natagumo peak-height setting; the enhanced profile targets Y=280")
+            .defineInRange("natagumo-peak-height", 211, 20, 280);
 
     private static final ForgeConfigSpec.IntValue NATAGUMO_MAX_SURFACE_Y = BUILDER
             .comment("Absolute maximum surface Y for the Natagumo mountain")
-            .defineInRange("natagumo-max-surface-y", 230, 100, 320);
+            .defineInRange("natagumo-max-surface-y", 280, 100, 280);
 
     private static final ForgeConfigSpec.BooleanValue ENHANCED_MOUNT_YOKO_ENABLED = BUILDER
             .comment("Replace the base mod's Mount Yoko climate placement with mountain-only placement")
@@ -65,6 +69,7 @@ public final class EnhancedMountBiomeConfig {
     public static int natagumoRingSpacing;
     public static int natagumoFirstRingRadius;
     public static double natagumoBiomeThreshold;
+    public static boolean natagumoOverwriteOceans;
     public static int natagumoPeakHeight;
     public static int natagumoMaxSurfaceY;
     public static boolean enhancedMountYokoEnabled;
@@ -87,6 +92,7 @@ public final class EnhancedMountBiomeConfig {
         natagumoRingSpacing = NATAGUMO_RING_SPACING.get();
         natagumoFirstRingRadius = NATAGUMO_FIRST_RING_RADIUS.get();
         natagumoBiomeThreshold = NATAGUMO_BIOME_THRESHOLD.get();
+        natagumoOverwriteOceans = NATAGUMO_OVERWRITE_OCEANS.get();
         natagumoPeakHeight = NATAGUMO_PEAK_HEIGHT.get();
         natagumoMaxSurfaceY = NATAGUMO_MAX_SURFACE_Y.get();
         enhancedMountYokoEnabled = ENHANCED_MOUNT_YOKO_ENABLED.get();

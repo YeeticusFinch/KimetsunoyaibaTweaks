@@ -3,6 +3,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client.renderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SheathModelRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.SheathCosmeticsClientState;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.SheathPreviewState;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationSyncHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.AnimationTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
@@ -48,6 +50,18 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
 
         SwordDisplayTracker.SwordDisplayState state = SwordDisplayTracker.getDisplayState(player.getUUID());
 
+        SheathPreviewState.Preview preview = SheathPreviewState.get(player.getUUID());
+        if (preview != null) {
+            if (preview.swordItem() != null) {
+                renderSwordWithSheath(poseStack, buffer, packedLight, player,
+                    new ItemStack(preview.swordItem()), true, true, preview.position());
+            } else {
+                renderSheathOnly(poseStack, buffer, packedLight, player, preview.sheathItem(),
+                    null, true, preview.position());
+            }
+            return;
+        }
+
         // Check if any swords are in transition (being sheathed)
         // During transition, render them in the player's hand
         if (state.hasLeftSwordInTransition()) {
@@ -64,7 +78,7 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
             Item transitionSheath = SwordSheathRegistry.getSheathItem(transitioningSword);
             if (transitionSheath != null) {
                 renderSheathOnly(poseStack, buffer, packedLight, player, transitionSheath,
-                    transitioningSword.getItem(), true, state.getLeftPosition());
+                    transitioningSword.getItem(), true, resolvePlayerPosition(player, state.getLeftPosition()));
             }
         }
 
@@ -73,28 +87,28 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
             Item transitionSheath = SwordSheathRegistry.getSheathItem(transitioningSword);
             if (transitionSheath != null) {
                 renderSheathOnly(poseStack, buffer, packedLight, player, transitionSheath,
-                    transitioningSword.getItem(), false, state.getRightPosition());
+                    transitioningSword.getItem(), false, resolvePlayerPosition(player, state.getRightPosition()));
             }
         }
 
         // Render left hip/back sword (and sheath)
         if (state.hasLeftSword()) {
             renderSwordWithSheath(poseStack, buffer, packedLight, player, state.getLeftHipSword(),
-                                 true, true, state.getLeftPosition());
+                                 true, true, resolvePlayerPosition(player, state.getLeftPosition()));
         } else if (state.shouldShowLeftSheath()) {
             // Render just the sheath if sword is drawn but sheath persists
             renderSheathOnly(poseStack, buffer, packedLight, player, state.leftSheathItem,
-                           state.leftSheathSwordItem, true, state.getLeftPosition());
+                            state.leftSheathSwordItem, true, resolvePlayerPosition(player, state.getLeftPosition()));
         }
 
         // Render right hip/back sword (and sheath)
         if (state.hasRightSword()) {
             renderSwordWithSheath(poseStack, buffer, packedLight, player, state.getRightHipSword(),
-                                 true, false, state.getRightPosition());
+                                 true, false, resolvePlayerPosition(player, state.getRightPosition()));
         } else if (state.shouldShowRightSheath()) {
             // Render just the sheath if sword is drawn but sheath persists
             renderSheathOnly(poseStack, buffer, packedLight, player, state.rightSheathItem,
-                           state.rightSheathSwordItem, false, state.getRightPosition());
+                            state.rightSheathSwordItem, false, resolvePlayerPosition(player, state.getRightPosition()));
         }
     }
 
@@ -123,6 +137,8 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
             renderSwordOnBack(poseStack, player, isLeft, sword);
         }
 
+        applyPlayerDisplayOffsets(poseStack, player);
+
         // Apply global and per-sword scale from config
         float scale = resolveDisplayScale(sword, isLeft, position);
         poseStack.scale(scale, scale, scale);
@@ -131,7 +147,7 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
         if (renderSheath && SwordDisplayConfig.renderSheaths) {
         	Item sheathItem = SwordSheathRegistry.getSheathItem(sword);
         	if (sheathItem != null) {
-        	    SheathModelRenderer.renderSheath(sheathItem, poseStack, buffer, packedLight, player.getId());
+                    SheathModelRenderer.renderSheath(sheathItem, poseStack, buffer, packedLight, player.getId(), player.getUUID());
         	}
         }
 
@@ -174,12 +190,14 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
             renderSwordOnBack(poseStack, player, isLeft, swordStack);
         }
 
+        applyPlayerDisplayOffsets(poseStack, player);
+
         // Apply global and per-sword scale from config
         float scale = resolveDisplayScale(swordStack, isLeft, position);
         poseStack.scale(scale, scale, scale);
 
         // Render the sheath
-        SheathModelRenderer.renderSheath(sheathItem, poseStack, buffer, packedLight, player.getId());
+        SheathModelRenderer.renderSheath(sheathItem, poseStack, buffer, packedLight, player.getId(), player.getUUID());
 
         poseStack.popPose();
     }
@@ -307,6 +325,25 @@ public class SwordDisplayRenderer extends RenderLayer<AbstractClientPlayer, Play
         );
         double customScale = customOffsets == null ? 1.0D : customOffsets.scale;
         return (float) (SwordDisplayConfig.scale * customScale);
+    }
+
+    /** Applies the player's additional display offset to both the sword and sheath pose. */
+    private static void applyPlayerDisplayOffsets(PoseStack poseStack, Player player) {
+        SheathCosmeticsClientState.State state = SheathCosmeticsClientState.get(player.getUUID());
+        if (state == null) {
+            return;
+        }
+
+        poseStack.translate(state.translateX(), state.translateY(), state.translateZ());
+        poseStack.mulPose(Axis.ZP.rotationDegrees((float) state.rotateZ()));
+        poseStack.mulPose(Axis.YP.rotationDegrees((float) state.rotateY()));
+        poseStack.mulPose(Axis.XP.rotationDegrees((float) state.rotateX()));
+    }
+
+    private static SwordDisplayConfig.SwordDisplayPosition resolvePlayerPosition(
+        AbstractClientPlayer player, SwordDisplayConfig.SwordDisplayPosition fallback) {
+        SheathCosmeticsClientState.State state = SheathCosmeticsClientState.get(player.getUUID());
+        return state == null || state.position() == null ? fallback : state.position();
     }
 
 }

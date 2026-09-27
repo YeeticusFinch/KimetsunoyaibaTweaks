@@ -1,0 +1,7 @@
+{
+  "parent": "kimetsunoyaibamultiplayer:block/lantern_tsuzumi",
+  "textures": {
+    "0": "kimetsunoyaibamultiplayer:block/lantern_tsuzumi_standalone",
+    "particle": "kimetsunoyaibamultiplayer:block/lantern_tsuzumi_standalone"
+  }
+}

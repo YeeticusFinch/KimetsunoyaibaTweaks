@@ -23,6 +23,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /** Limits each base Natagumo structure to one deterministic candidate per region. */
 @Mixin(net.minecraft.world.level.chunk.ChunkGenerator.class)
 public class EnhancedMountStructureMixin {
+    private static final String BOSS_RING = "Boss Ring";
+    private static final String BROTHER_REGION = "Boss Minions Ring - Brother Region";
+    private static final int CUSTOM_STRUCTURE_SPACING = 8;
+    private static final int CUSTOM_STRUCTURE_SEPARATION = 4;
+    private static final int RUI_STRUCTURE_SALT = 182736451;
+    private static final int RUI_BROTHER_STRUCTURE_SALT = 918273645;
     private static final ResourceKey<Structure> RUI = ResourceKey.create(
             net.minecraft.core.registries.Registries.STRUCTURE,
             ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_rui"));
@@ -51,19 +57,22 @@ public class EnhancedMountStructureMixin {
             return;
         }
 
-        int salt = RUI.equals(key) ? 414556433 : 672031365;
+        int salt = RUI.equals(key) ? RUI_STRUCTURE_SALT : RUI_BROTHER_STRUCTURE_SALT;
         RandomSpreadStructurePlacement placement = new RandomSpreadStructurePlacement(
-                100, 50, RandomSpreadType.LINEAR, salt);
-        if (!isPreferredCandidate(placement, seed, chunkPos)) {
+                CUSTOM_STRUCTURE_SPACING, CUSTOM_STRUCTURE_SEPARATION, RandomSpreadType.LINEAR, salt);
+        String targetRegion = RUI.equals(key) ? BOSS_RING : BROTHER_REGION;
+        if (!isPreferredCandidate(placement, seed, chunkPos, targetRegion)) {
             cir.setReturnValue(false);
         }
     }
 
     private static boolean isPreferredCandidate(RandomSpreadStructurePlacement placement, long seed,
-                                                ChunkPos candidate) {
+                                                ChunkPos candidate, String targetRegion) {
         EnhancedMountBiomeSource.NatagumoRegion region = EnhancedMountBiomeSource.getNatagumoRegion(
                 seed, candidate.getMiddleBlockX(), candidate.getMiddleBlockZ());
-        if (region == null || region.strength() < EnhancedMountBiomeConfig.natagumoBiomeThreshold) {
+        if (region == null || region.strength() < EnhancedMountBiomeConfig.natagumoBiomeThreshold
+                || !targetRegion.equals(EnhancedMountBiomeSource.natagumoRegionName(
+                region, candidate.getMiddleBlockX(), candidate.getMiddleBlockZ()))) {
             return false;
         }
 
@@ -89,7 +98,9 @@ public class EnhancedMountStructureMixin {
                 if (possibleRegion == null || possibleRegion.ring() != region.ring()
                         || possibleRegion.centerX() != region.centerX()
                         || possibleRegion.centerZ() != region.centerZ()
-                        || possibleRegion.strength() < EnhancedMountBiomeConfig.natagumoBiomeThreshold) {
+                        || possibleRegion.strength() < EnhancedMountBiomeConfig.natagumoBiomeThreshold
+                        || !targetRegion.equals(EnhancedMountBiomeSource.natagumoRegionName(
+                        possibleRegion, possible.getMiddleBlockX(), possible.getMiddleBlockZ()))) {
                     continue;
                 }
 

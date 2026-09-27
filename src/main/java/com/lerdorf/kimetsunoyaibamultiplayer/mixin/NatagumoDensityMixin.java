@@ -20,17 +20,7 @@ public abstract class NatagumoDensityMixin {
         NatagumoTerrainContext.Context context = NatagumoTerrainContext.get();
         return context == null
                 ? delegate
-                : new NatagumoDensityFunction(delegate, context.source(), context.sampler());
+                : new NatagumoDensityFunction(delegate, context.source(), context.sampler(), context.cache());
     }
 
-    @Redirect(
-            method = "<init>",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/NoiseRouter;initialDensityWithoutJaggedness()Lnet/minecraft/world/level/levelgen/DensityFunction;"))
-    private DensityFunction kimetsu$wrapInitialDensity(NoiseRouter router) {
-        DensityFunction delegate = router.initialDensityWithoutJaggedness();
-        NatagumoTerrainContext.Context context = NatagumoTerrainContext.get();
-        return context == null
-                ? delegate
-                : new NatagumoDensityFunction(delegate, context.source(), context.sampler());
-    }
 }

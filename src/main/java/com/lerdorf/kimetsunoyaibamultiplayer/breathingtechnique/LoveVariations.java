@@ -21,7 +21,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistr
 import com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
-import com.lerdorf.kimetsunoyaibamultiplayer.particles.EnergyParticleOptions;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 
 import net.minecraft.core.BlockPos;
@@ -222,7 +221,7 @@ public class LoveVariations {
 
                 			// Spawn pink dust particle at pos
 							com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel,
-                		            new EnergyParticleOptions(
+                             EnhancedLoveForms.createLoveParticleOptions(
                 		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ),
@@ -232,7 +231,7 @@ public class LoveVariations {
                 			
                 			// Spawn white dust particle at pos
 							com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.sendParticles(serverLevel,
-                					new EnergyParticleOptions(
+                             EnhancedLoveForms.createLoveParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1f                           // scale
                     		            ),
@@ -313,7 +312,7 @@ public class LoveVariations {
 								double pz = entity.getZ() + Math.sin(particleAngle) * particleRadius;
 								double py = entity.getY() + 0.5 + (currentTick[0] % 20) * 0.1;
 
-								serverLevel.sendParticles( new EnergyParticleOptions(
+                             serverLevel.sendParticles( EnhancedLoveForms.createLoveParticleOptions(
                 		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ), px, py, pz, 1, 0, 0.1, 0, 0.02);
@@ -333,7 +332,7 @@ public class LoveVariations {
 								double pathAngle = currentAngle + (i * Math.PI / 6);
 								double pathX = currentCenter.x + Math.cos(pathAngle) * circleRadius;
 								double pathZ = currentCenter.z + Math.sin(pathAngle) * circleRadius;
-								serverLevel.sendParticles( new EnergyParticleOptions(
+                             serverLevel.sendParticles( EnhancedLoveForms.createLoveParticleOptions(
                 		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ), pathX, currentCenter.y + 0.5, pathZ,
@@ -730,7 +729,7 @@ public class LoveVariations {
 
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
-                		            new EnergyParticleOptions(
+                             EnhancedLoveForms.createLoveParticleOptions(
                 		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.8f                           // scale
                 		            ),
@@ -740,7 +739,7 @@ public class LoveVariations {
                 			
                 			// Spawn white dust particle at pos
                 			serverLevel.sendParticles(
-                					new EnergyParticleOptions(
+                             EnhancedLoveForms.createLoveParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1.5f                           // scale
                     		            ),
@@ -899,7 +898,7 @@ public class LoveVariations {
                 				
                 				if (Math.random() < 0.3) {
                 					serverLevel.sendParticles(
-                        		            new EnergyParticleOptions(
+                             EnhancedLoveForms.createLoveParticleOptions(
                         		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                         		                2.5f                           // scale
                         		            ),

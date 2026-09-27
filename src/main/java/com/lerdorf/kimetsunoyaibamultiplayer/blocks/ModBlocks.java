@@ -142,6 +142,14 @@ public class ModBlocks {
             .lightLevel(state -> 15)
             .noOcclusion()));
 
+    public static final RegistryObject<Block> LANTERN_TSUZUMI = registerBlock("lantern_tsuzumi",
+        () -> new LanternTsuzumiBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN)
+            .mapColor(MapColor.TERRACOTTA_ORANGE)
+            .sound(SoundType.LANTERN)
+            .strength(0.3f)
+            .lightLevel(state -> 15)
+            .noOcclusion()));
+
     public static final RegistryObject<Block> WISTERIA_STAIRS = registerBlock("wisteria_stairs",
         () -> new StairBlock(Blocks.OAK_PLANKS.defaultBlockState(), BlockBehaviour.Properties.copy(Blocks.OAK_STAIRS)
             .mapColor(MapColor.WOOD)
@@ -838,6 +846,80 @@ public class ModBlocks {
             .mapColor(MapColor.STONE)
             .sound(SoundType.STONE)
             .strength(3.0f, 3.0f)
+            .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> SEPULCHRAL_PILLAR = registerBlock("sepulchral_pillar",
+        () -> new DeepslateParticleBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE)
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.METAL)
+            .strength(3.5f, 6.0f)
+            .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> SEPULCHRAL_PILLAR_BASE = registerBlock("sepulchral_pillar_base",
+        () -> new SepulchralPillarBaseBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE)
+            .mapColor(MapColor.STONE)
+            .sound(SoundType.METAL)
+            .strength(3.5f, 6.0f)
+            .noOcclusion()
+            .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> TRAIN_WHEEL = registerBlock("train_wheel",
+        () -> new TrainWheelBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE)
+            .sound(SoundType.DEEPSLATE)
+            .strength(3.0f, 6.0f)
+            .noOcclusion()
+            .requiresCorrectToolForDrops(), false));
+
+    public static final RegistryObject<Block> TRAIN_WHEEL_HOODED_RIGHT = registerBlock("train_wheel_hooded_right",
+        () -> new TrainWheelBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE)
+            .sound(SoundType.DEEPSLATE)
+            .strength(3.0f, 6.0f)
+            .noOcclusion()
+            .requiresCorrectToolForDrops(), false));
+
+    public static final RegistryObject<Block> TRAIN_WHEEL_HOODED_LEFT = registerBlock("train_wheel_hooded_left",
+        () -> new TrainWheelBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE)
+            .sound(SoundType.DEEPSLATE)
+            .strength(3.0f, 6.0f)
+            .noOcclusion()
+            .requiresCorrectToolForDrops(), false));
+
+    public static final RegistryObject<Block> LARGE_TRAIN_WHEEL = registerBlock("large_train_wheel",
+        () -> new TrainWheelBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE)
+            .sound(SoundType.DEEPSLATE)
+            .strength(3.0f, 6.0f)
+            .noOcclusion()
+            .requiresCorrectToolForDrops(), true));
+
+    public static final RegistryObject<Block> LARGE_TRAIN_WHEEL_BAR = registerBlock("large_train_wheel_bar",
+        () -> new TrainWheelBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE)
+            .sound(SoundType.DEEPSLATE)
+            .strength(3.0f, 6.0f)
+            .noOcclusion()
+            .requiresCorrectToolForDrops(), true, true));
+
+    public static final RegistryObject<Block> TRAIN_FRONT = registerBlock("train_front",
+        () -> new TrainFrontBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE)
+            .sound(SoundType.DEEPSLATE)
+            .strength(3.0f, 6.0f)
+            .noOcclusion()
+            .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> TRAIN_HEADLIGHT_CASE = registerBlock("train_headlight_case",
+        () -> new TrainHeadlightCaseBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE)
+            .sound(SoundType.DEEPSLATE)
+            .strength(3.0f, 6.0f)
+            .noOcclusion()
+            .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> TRAIN_HEADLIGHT = registerBlock("train_headlight",
+        () -> new TrainHeadlightBlock(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE)
+            .sound(SoundType.DEEPSLATE)
+            .strength(3.0f, 6.0f)
+            .lightLevel(state -> 15)
+            .emissiveRendering((state, level, pos) -> true)
+            .noCollission()
+            .noOcclusion()
             .requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> GRAVITY_FIELD_PROJECTOR = registerBlock("gravity_field_projector",

@@ -151,7 +151,8 @@ public final class BloodDemonArtM1AttackHandler {
         playAnimation(attacker, animation, 10);
         attacker.level().playSound(null, attacker.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
             SoundSource.PLAYERS, 1.0F, 1.0F);
-        ModNetworking.sendToAllClients(new MobSwordSlashPacket(attacker.getUUID(), normalizeSlashAnimation(animation), 0));
+        ModNetworking.sendToAllClients(new MobSwordSlashPacket(
+            attacker.getUUID(), normalizeSlashAnimation(animation), 0, "claw_nezuko"));
         applyWeakAttackState(attacker);
         damageTargets(attacker, 0.18D + 0.12D * level, excludedTargetId);
     }

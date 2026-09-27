@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.KyogaiDrumsItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -48,6 +49,11 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
         // MAIN HAND
         if (boneName.equals("itemMainHand") || boneName.equals("itemMainHand2") || boneName.equals("itemMainHand3")) {
             ItemStack mainHand = animatable.getItemBySlot(EquipmentSlot.MAINHAND);
+
+            // Kyogai's drums are rendered by the armor layer on the body, not in the hand.
+            if (mainHand.getItem() instanceof KyogaiDrumsItem) {
+                return ItemStack.EMPTY;
+            }
 
             // CRITICAL: Hide nichirin swords when not in combat (render-only, no state modification)
             // When entity is peaceful, sword will be displayed on their back/hip by GeoSwordDisplayLayer

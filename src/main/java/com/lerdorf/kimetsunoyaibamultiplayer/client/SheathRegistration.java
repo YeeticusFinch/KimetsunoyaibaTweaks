@@ -33,6 +33,7 @@ public class SheathRegistration {
     try {
         // Set the default sheath for all swords
         SwordSheathRegistry.setDefaultSheath(SheathItems.SWORD_SHEATH.get());
+        SwordSheathRegistry.registerSheathTextureVariants(SheathItems.SWORD_SHEATH.get(), 5);
 
         // Register the custom sheath for the base mod's saber (if it exists)
         net.minecraft.world.item.Item baseModSaber =

@@ -73,14 +73,14 @@ public enum EntityPowerScale {
 
     /**
      * Hard demon slayers - Elite non-hashira.
-     * Examples: dice_steak_senior, dice_steak_senior_super
+     * Examples: dice_steak_senior (rank 4 / Kanoe)
      */
     HARD_SLAYER,
 
     /**
      * Hashira - Top-tier demon slayers.
      * Examples: kocho, kanroji, kanae, shinazugawa, rengoku, iguro,
-     * uzui, tomioka, muichirou, himejima
+     * uzui, tomioka, muichirou, himejima, dice_steak_senior_super (rank 12)
      */
     HASHIRA,
 

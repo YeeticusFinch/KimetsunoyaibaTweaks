@@ -111,7 +111,7 @@ public class GeoSwordDisplayLayer<T extends LivingEntity & GeoAnimatable> extend
 
     private static void renderSuperSeniorExtraSheaths(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                                                       LivingEntity entity) {
-        if (!SwordDisplayConfig.renderSheaths || !(entity instanceof DemonSlayerEntity slayer) || slayer.getPowerLevel() < 5) {
+        if (!SwordDisplayConfig.renderSheaths || !(entity instanceof DemonSlayerEntity slayer) || slayer.getPowerLevel() < 12) {
             return;
         }
 

@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "upside_down=false": {
+      "model": "kimetsunoyaibamultiplayer:block/sepulchral_pillar_base"
+    },
+    "upside_down=true": {
+      "model": "kimetsunoyaibamultiplayer:block/sepulchral_pillar_base",
+      "x": 180
+    }
+  }
+}

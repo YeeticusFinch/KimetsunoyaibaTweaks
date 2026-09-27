@@ -92,7 +92,7 @@ public class DissolutionCocoonRenderer extends GeoEntityRenderer<DissolutionCoco
 
         Matrix4f matrix = poseStack.last().pose();
         Matrix3f normal = poseStack.last().normal();
-        VertexConsumer buffer = bufferSource.getBuffer(RenderType.entityTranslucentEmissive(TETHER_TEXTURE));
+        VertexConsumer buffer = bufferSource.getBuffer(RenderType.entityTranslucent(TETHER_TEXTURE));
         quad(buffer, matrix, normal, leftStart, leftEnd, rightEnd, rightStart);
     }
 

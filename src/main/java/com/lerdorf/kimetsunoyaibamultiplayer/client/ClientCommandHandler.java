@@ -181,7 +181,8 @@ public class ClientCommandHandler {
         }
 
         // Our dual-wield animation assets live in kimetsunoyaibamultiplayer namespace.
-        if (animationName.startsWith("guard_")
+        if (animationName.equals("guard")
+            || animationName.startsWith("guard_")
             || animationName.startsWith("left_sword_")
             || animationName.equals("double_sword_overhead")
             || animationName.equals("beast2")

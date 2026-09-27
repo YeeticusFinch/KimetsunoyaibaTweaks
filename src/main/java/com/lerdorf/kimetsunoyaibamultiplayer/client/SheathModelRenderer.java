@@ -15,6 +15,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Helper class for rendering sheath models without requiring an actual item
@@ -102,10 +103,16 @@ public class SheathModelRenderer {
 	/**
 	 * Renders a sheath item at the current pose stack position
 	 * Note: Sword scale should be applied by the caller (e.g., SwordDisplayRenderer)
-	 * This applies the global sheath scale multiplier and per-sheath transformations
+	 * This applies the global sheath scale multiplier and per-sheath transformations.
 	 */
-	public static void renderSheath(Item sheathItem, PoseStack poseStack,
+    public static void renderSheath(Item sheathItem, PoseStack poseStack,
 	                               MultiBufferSource buffer, int packedLight, int levelId) {
+	    renderSheath(sheathItem, poseStack, buffer, packedLight, levelId, null);
+	}
+
+	/** Renders a sheath with the owning player's texture selection. */
+	public static void renderSheath(Item sheathItem, PoseStack poseStack,
+	                               MultiBufferSource buffer, int packedLight, int levelId, UUID playerId) {
 	    if (sheathItem == null) {
 	        return;
 	    }
@@ -113,15 +120,20 @@ public class SheathModelRenderer {
 	    try {
 	        Minecraft mc = Minecraft.getInstance();
 	        ItemStack sheathStack = new ItemStack(sheathItem);
+	        SheathCosmeticsClientState.State playerState = SheathCosmeticsClientState.get(playerId);
+	        if (playerState != null) {
+	            int variantCount = SwordSheathRegistry.getSheathTextureVariantCount(sheathItem);
+	            sheathStack.getOrCreateTag().putInt("CustomModelData", Math.floorMod(playerState.textureIndex(), variantCount));
+	        }
 
-	        boolean hasTransforms = false;
+        boolean hasTransforms = false;
 	        SheathOffsets offsets = getSheathOffsets(sheathItem);
 
 	        // Check for new offset system or legacy scale system
 	        if (offsets != null) {
 	            // Use new transformation offsets
-	            hasTransforms = true;
-	            poseStack.pushPose();
+            hasTransforms = true;
+            poseStack.pushPose();
 
 	            // Apply translation
 	            if (offsets.translateX != 0 || offsets.translateY != 0 || offsets.translateZ != 0) {
@@ -152,12 +164,12 @@ public class SheathModelRenderer {
 	            float perSheathScale = getSheathScale(sheathItem);
 	            float combinedSheathScale = globalSheathScale * perSheathScale;
 
-	            if (combinedSheathScale != 1.0f) {
-	                hasTransforms = true;
-	                poseStack.pushPose();
-	                poseStack.scale(combinedSheathScale, combinedSheathScale, combinedSheathScale);
-	            }
-	        }
+            if (combinedSheathScale != 1.0f) {
+                hasTransforms = true;
+                poseStack.pushPose();
+                poseStack.scale(combinedSheathScale, combinedSheathScale, combinedSheathScale);
+            }
+        }
 
 	        // Render the sheath item
 	        mc.getItemRenderer().renderStatic(

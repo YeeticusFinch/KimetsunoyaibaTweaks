@@ -161,7 +161,7 @@ public class AnimationSyncPacket {
                 ServerPlayer sender = ctx.getSender();
                 if (sender != null) {
                     // Guard animations are part of the guard stance and must not end it.
-                    if (animationId == null || !animationId.getPath().startsWith("guard_")) {
+                    if (animationId == null || !isGuardAnimation(animationId)) {
                         PassiveSkillManager.cancelGuard(sender);
                     }
                     if (Config.logDebug) {
@@ -206,5 +206,10 @@ public class AnimationSyncPacket {
 
     public static AnimationSyncPacket createStopPacket(UUID playerUUID) {
         return new AnimationSyncPacket(playerUUID, null, 0, 0, false, true);
+    }
+
+    private static boolean isGuardAnimation(ResourceLocation animationId) {
+        String path = animationId.getPath();
+        return path.equals("guard") || path.startsWith("guard_");
     }
 }

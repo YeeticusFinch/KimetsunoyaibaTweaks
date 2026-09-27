@@ -83,6 +83,7 @@ public class SwordDisplayRendererSetup {
         if (renderer instanceof PlayerRenderer playerRenderer) {
             playerRenderer.addLayer(new DemonEyesPlayerLayer(playerRenderer));
             playerRenderer.addLayer(new NezukoBoxBackLayer(playerRenderer));
+            playerRenderer.addLayer(new KyogaiDrumsPlayerLayer(playerRenderer));
             playerRenderer.addLayer(new SwordDisplayRenderer(
                 playerRenderer,
                 Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()

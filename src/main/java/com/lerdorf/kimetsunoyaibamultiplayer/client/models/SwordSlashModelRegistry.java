@@ -37,6 +37,9 @@ public class SwordSlashModelRegistry {
     // When false (default): animate through frames sequentially
     private static final java.util.Set<String> RANDOM_TEXTURE_SELECTION = new java.util.HashSet<>();
 
+    // Set of animated model keys that stop on their final frame instead of looping.
+    private static final java.util.Set<String> HOLD_LAST_TEXTURE_FRAME = new java.util.HashSet<>();
+
     // Map model keys to resource namespaces (e.g., "forest" -> "knyextraadditions")
     private static final Map<String, String> MODEL_KEY_TO_NAMESPACE = new HashMap<>();
 
@@ -429,6 +432,28 @@ public class SwordSlashModelRegistry {
      */
     public static boolean usesRandomTextureSelection(String modelKey) {
         return RANDOM_TEXTURE_SELECTION.contains(modelKey);
+    }
+
+    /**
+     * Sets whether an animated texture should remain on its final frame.
+     *
+     * @param modelKey The model key
+     * @param holdLastFrame true to clamp animation to the final frame
+     */
+    public static void setHoldLastTextureFrame(String modelKey, boolean holdLastFrame) {
+        if (holdLastFrame) {
+            HOLD_LAST_TEXTURE_FRAME.add(modelKey);
+        } else {
+            HOLD_LAST_TEXTURE_FRAME.remove(modelKey);
+        }
+        Log.info((holdLastFrame ? "Enabled" : "Disabled") + " final-frame hold for: " + modelKey);
+    }
+
+    /**
+     * Checks whether an animated texture remains on its final frame.
+     */
+    public static boolean holdsLastTextureFrame(String modelKey) {
+        return HOLD_LAST_TEXTURE_FRAME.contains(modelKey);
     }
 
     /**

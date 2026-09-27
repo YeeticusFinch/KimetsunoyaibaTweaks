@@ -8,9 +8,14 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonEyesSyncHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.DemonEyesHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.SheathCosmeticsHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.SheathCosmeticsSyncHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -660,6 +665,57 @@ public final class KnYAPI {
         }
     }
 
+    /** Registers how many texture variants a sheath exposes to the player cosmetics editor. */
+    public static void registerSheathTextureVariants(String sheathItemId, int variantCount) {
+        if (!net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            return;
+        }
+        Item sheath = getItem(sheathItemId);
+        if (sheath != null) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSheathRegistry.registerSheathTextureVariants(sheath, variantCount);
+        }
+    }
+
+    // ==================== Player Sheath Cosmetics ====================
+
+    public static void setSheathPosition(Player player, SwordDisplayConfig.SwordDisplayPosition position) {
+        SheathCosmeticsHelper.setPosition(player, position);
+        syncSheathCosmetics(player);
+    }
+
+    public static void setSheathTextureIndex(Player player, int textureIndex) {
+        SheathCosmeticsHelper.setTextureIndex(player, textureIndex);
+        syncSheathCosmetics(player);
+    }
+
+    public static void setSheathOffsets(Player player, double translateX, double translateY, double translateZ,
+                                         double rotateX, double rotateY, double rotateZ) {
+        SheathCosmeticsHelper.setOffsets(player, translateX, translateY, translateZ, rotateX, rotateY, rotateZ);
+        syncSheathCosmetics(player);
+    }
+
+    public static void setSheathCosmetics(Player player, SwordDisplayConfig.SwordDisplayPosition position,
+                                          int textureIndex, double translateX, double translateY, double translateZ,
+                                          double rotateX, double rotateY, double rotateZ) {
+        SheathCosmeticsHelper.setAll(player, position, textureIndex, translateX, translateY, translateZ,
+            rotateX, rotateY, rotateZ);
+        syncSheathCosmetics(player);
+    }
+
+    public static SwordDisplayConfig.SwordDisplayPosition getSheathPosition(Player player) {
+        return SheathCosmeticsHelper.getPosition(player);
+    }
+
+    public static int getSheathTextureIndex(Player player) {
+        return SheathCosmeticsHelper.getTextureIndex(player);
+    }
+
+    private static void syncSheathCosmetics(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            SheathCosmeticsSyncHandler.broadcastState(serverPlayer);
+        }
+    }
+
     // ==================== Helper Utilities ====================
 
     /**
@@ -1031,6 +1087,34 @@ public final class KnYAPI {
     }
 
     /**
+     * Configure an animated slash to stop on its final texture frame.
+     * Client-side only - safe to call from common code but only executes on client.
+     */
+    public static void setAnimatedSlashTextureHoldLastFrame(String modelKey, boolean holdLastFrame) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
+            com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry
+                .setHoldLastTextureFrame(modelKey, holdLastFrame);
+        }
+    }
+
+    /**
+     * Ask nearby clients to render a model-backed sword slash for an entity.
+     * The client automatically falls back to normal particles when the slash-model
+     * option is disabled in the tweaks configuration.
+     */
+    public static void sendSlashModelToClients(Level level, LivingEntity entity, String modelKey,
+                                                String animationName) {
+        if (!(level instanceof ServerLevel serverLevel) || entity == null) {
+            return;
+        }
+
+        ModNetworking.sendToNearby(
+            new MobSwordSlashPacket(entity.getUUID(), animationName, 0, modelKey),
+            serverLevel, entity.getX(), entity.getY(), entity.getZ(), 64.0D
+        );
+    }
+
+    /**
      * Register a custom namespace for a model key's resources.
      * Use this when your slash model files are in your own mod's assets folder.
      * Client-side only - safe to call from common code but only executes on client.
@@ -1100,8 +1184,9 @@ public final class KnYAPI {
         return switch (scale) {
             case GENERIC_SLAYER -> 1;
             case NAMED_SLAYER -> 3;
-            case HARD_SLAYER, HASHIRA -> 4;
-            case SUPER_HASHIRA -> 5;
+            case HARD_SLAYER -> 4;
+            case HASHIRA -> 11;
+            case SUPER_HASHIRA -> 12;
             default -> 1;
         };
     }

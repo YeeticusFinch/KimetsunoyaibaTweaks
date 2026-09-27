@@ -3,5 +3,11 @@
   "textures": {
     "0": "kimetsunoyaibamultiplayer:block/sword_sheath",
     "particle": "kimetsunoyaibamultiplayer:block/sword_sheath"
-  }
+  },
+  "overrides": [
+    {"predicate": {"custom_model_data": 1}, "model": "kimetsunoyaibamultiplayer:item/sword_sheath_1"},
+    {"predicate": {"custom_model_data": 2}, "model": "kimetsunoyaibamultiplayer:item/sword_sheath_2"},
+    {"predicate": {"custom_model_data": 3}, "model": "kimetsunoyaibamultiplayer:item/sword_sheath_3"},
+    {"predicate": {"custom_model_data": 4}, "model": "kimetsunoyaibamultiplayer:item/sword_sheath_4"}
+  ]
 }

@@ -6,6 +6,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.combat.WhipDamageHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowEnhancementHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesEntity;
@@ -15,11 +16,11 @@ import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 
 import net.minecraft.core.BlockPos;
-import com.lerdorf.kimetsunoyaibamultiplayer.particles.EnergyParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -58,6 +59,12 @@ import org.joml.Vector3f;
  * This is a PLACEHOLDER implementation. Full forms will be added later.
  */
 public class EnhancedLoveForms {
+
+    static ParticleOptions createLoveParticleOptions(Vector3f color, float size) {
+        return EnhancedBreathingConfig.loveUseDustParticles
+                ? new DustParticleOptions(color, size)
+                : new EnergyParticleOptions(color, size);
+    }
 
 	/**
 	 * Determines if a target should be hit by AOE attacks from the source.
@@ -330,7 +337,7 @@ public class EnhancedLoveForms {
 
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
-                		            new EnergyParticleOptions(
+                             createLoveParticleOptions(
                 		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) :new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ),
@@ -340,7 +347,7 @@ public class EnhancedLoveForms {
                 			
                 			// Spawn white dust particle at pos
                 			serverLevel.sendParticles(
-                					new EnergyParticleOptions(
+                             createLoveParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1f                           // scale
                     		            ),
@@ -548,7 +555,7 @@ public class EnhancedLoveForms {
 
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
-                		            new EnergyParticleOptions(
+                             createLoveParticleOptions(
                 		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ),
@@ -558,7 +565,7 @@ public class EnhancedLoveForms {
                 			
                 			// Spawn white dust particle at pos
                 			serverLevel.sendParticles(
-                					new EnergyParticleOptions(
+                             createLoveParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1f                           // scale
                     		            ),
@@ -765,7 +772,7 @@ public class EnhancedLoveForms {
 
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
-                		            new EnergyParticleOptions(
+                             createLoveParticleOptions(
                 		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.2f                           // scale
                 		            ),
@@ -775,7 +782,7 @@ public class EnhancedLoveForms {
                 			
                 			// Spawn white dust particle at pos
                 			serverLevel.sendParticles(
-                					new EnergyParticleOptions(
+                             createLoveParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1f                           // scale
                     		            ),
@@ -1043,7 +1050,7 @@ public class EnhancedLoveForms {
                     				for (float i = 0; i < Math.PI*2; i += 0.2f) {
                     					Vec3 pos = le.position().add(1.5f*Math.sin(i), 1, 1.5f*Math.cos(i));
                     					serverLevel.sendParticles(
-                            		            new EnergyParticleOptions(
+                             createLoveParticleOptions(
                             		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                             		                1.8f                           // scale
                             		            ),
@@ -1090,7 +1097,7 @@ public class EnhancedLoveForms {
 
                     			// Spawn pink dust particle at pos
                     			serverLevel.sendParticles(
-                    		            new EnergyParticleOptions(
+                             createLoveParticleOptions(
                     		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                     		                1.8f                           // scale
                     		            ),
@@ -1100,7 +1107,7 @@ public class EnhancedLoveForms {
                     			
                     			// Spawn white dust particle at pos
                     			serverLevel.sendParticles(
-                    					new EnergyParticleOptions(
+                             createLoveParticleOptions(
                         		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                         		                1.5f                           // scale
                         		            ),
@@ -1229,7 +1236,7 @@ public class EnhancedLoveForms {
 
                 			// Spawn pink dust particle at pos
                 			serverLevel.sendParticles(
-                		            new EnergyParticleOptions(
+                             createLoveParticleOptions(
                 		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                 		                1.8f                           // scale
                 		            ),
@@ -1239,7 +1246,7 @@ public class EnhancedLoveForms {
                 			
                 			// Spawn white dust particle at pos
                 			serverLevel.sendParticles(
-                					new EnergyParticleOptions(
+                             createLoveParticleOptions(
                     		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                     		                1.5f                           // scale
                     		            ),
@@ -1420,7 +1427,7 @@ public class EnhancedLoveForms {
                 				
                 				if (Math.random() < 0.3) {
                 					serverLevel.sendParticles(
-                        		            new EnergyParticleOptions(
+                             createLoveParticleOptions(
                         		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                         		                2.5f                           // scale
                         		            ),
@@ -1607,7 +1614,7 @@ public class EnhancedLoveForms {
 
                     			// Spawn pink dust particle at pos
                     			serverLevel.sendParticles(
-                    		            new EnergyParticleOptions(
+                             createLoveParticleOptions(
                     		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
                     		                1.2f                           // scale
                     		            ),
@@ -1617,7 +1624,7 @@ public class EnhancedLoveForms {
                     			
                     			// Spawn white dust particle at pos
                     			serverLevel.sendParticles(
-                    					new EnergyParticleOptions(
+                             createLoveParticleOptions(
                         		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
                         		                1f                           // scale
                         		            ),

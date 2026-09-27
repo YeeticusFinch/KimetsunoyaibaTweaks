@@ -1,8 +1,32 @@
+1.6.5692
+- Updated the colors of the tsuzumi lantern block
+- Improved how the tsuzumi lantern blocks are placed
+
+1.6.5691
+- Added tsuzumi lantern
+
+1.6.569
+- Fixed the startup crash
+- Added automated shimmer setup (in the new tweaks menu)
+- Added new button to the top right corner of the pause menu for opening the KnY Tweaks menu
+- Added some more train blocks (a surprise tool that will help us later!)
+
+1.6.568
+- Added custom in-game tweaks config editor
+- Fixed some particle glitches for enhanced love breathing
+
 1.6.567
 - Made GravityControl work with some breathing styles and blood demon arts
 - Made Mount Natagumo actually spawn as a mountain (Enhanced Mount Natagumo)
 - Fixed the demon spawning for the Tweaks demons
 - Added Guard and Dash skills for demon players
+- Fixed the crafting recipes for the uniform and nichirin sword (they can now use the new scarlet ore)
+- Added a cosmetics tab in the meditaiton menu
+- Added a sword sheath customizer
+- Fixed some bugs with the Slayer's Blood quest (where the next quest starts before Slayer's Blood finishes)
+- Made the "cannot find a marker for this objective yet" a bit more helpful
+- Fixed some lag spikes with the quest system and with the claw attacks
+- Fixed the bug where the orochi entity lags the game by scanning for structures every player-tick
 
 1.6.566
 - Updated the GravityAPI optional dependency to GravityControl

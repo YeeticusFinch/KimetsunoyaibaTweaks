@@ -1971,6 +1971,9 @@ public class ClientSetup {
                 ModItems.NICHIRINSWORD_YOURBREATHING.get(),
                 ModItems.NICHIRINSWORD_YOURBREATHING_SHEATHED.get()
             );
+
+            // The editor wraps the player's texture index over this count.
+            KnYAPI.registerSheathTextureVariants("yourmod:your_sword_sheath", 3);
         });
     }
 }
@@ -1996,6 +1999,28 @@ SheathModelRenderer.registerSheathOffsets(
 ```
 
 `registerSheathScale()` still exists for legacy code, but `registerSheathOffsets()` is preferred because it controls translation, rotation, and scale.
+
+### Per-Player Sheath Cosmetics
+
+Every player has persistent, server-authoritative sheath cosmetic values. The Cosmetics tab in the meditation menu edits them live, and the values are synchronized to other clients. The NBT keys are:
+
+- `KnYSheathPosition`: `HIP` or `BACK`
+- `KnYSheathTextureIndex`: non-negative texture index, wrapped by the registered sheath variant count
+- `KnYSheathTranslateX`, `KnYSheathTranslateY`, `KnYSheathTranslateZ`: additional translation
+- `KnYSheathRotateX`, `KnYSheathRotateY`, `KnYSheathRotateZ`: additional rotation in degrees
+
+Addon mods can update these values through the public API. The position and translation/rotation values are additional player sword-display offsets applied after the configured and per-sword display transforms, so the sword and its sheath move together:
+
+```java
+KnYAPI.setSheathPosition(player, SwordDisplayConfig.SwordDisplayPosition.BACK);
+KnYAPI.setSheathTextureIndex(player, 2);
+KnYAPI.setSheathOffsets(player,
+    0.0D, 0.02D, -0.01D, // additional translation X/Y/Z
+    0.0D, 0.0D, 4.0D    // additional rotation X/Y/Z
+);
+```
+
+Register the number of textures and provide item model overrides using `custom_model_data` values `1` through `count - 1`; index zero is the base item model. The runtime applies `Math.floorMod(textureIndex, count)` separately for each sheath item, so different sheaths can expose different numbers of variants.
 
 ### Sword Display Position and Offsets
 

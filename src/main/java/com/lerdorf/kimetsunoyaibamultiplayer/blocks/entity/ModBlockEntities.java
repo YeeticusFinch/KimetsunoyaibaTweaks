@@ -55,6 +55,15 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("six_eye_demon_head",
             () -> BlockEntityType.Builder.of(SixEyeDemonHeadBlockEntity::new, ModBlocks.SIX_EYE_DEMON_HEAD.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<TrainWheelBlockEntity>> TRAIN_WHEEL =
+        BLOCK_ENTITIES.register("train_wheel",
+            () -> BlockEntityType.Builder.of(TrainWheelBlockEntity::new,
+                ModBlocks.TRAIN_WHEEL.get(),
+                ModBlocks.TRAIN_WHEEL_HOODED_RIGHT.get(),
+                ModBlocks.TRAIN_WHEEL_HOODED_LEFT.get(),
+                ModBlocks.LARGE_TRAIN_WHEEL.get(),
+                ModBlocks.LARGE_TRAIN_WHEEL_BAR.get()).build(null));
+
     private ModBlockEntities() {
     }
 

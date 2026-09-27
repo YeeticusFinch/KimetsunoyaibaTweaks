@@ -25,6 +25,7 @@ import software.bernie.geckolib.util.RenderUtils;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Model descriptor for sword slash effects Provides resource locations for
@@ -36,6 +37,8 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 	private static final java.util.Random RANDOM = new java.util.Random();
 	private static final float PLANE_EPSILON = 0.0001F;
 	private static final Map<ResourceLocation, AlphaMask> ALPHA_MASK_CACHE = new HashMap<>();
+	private static final Set<String> CLAW_FACE_BONES = Set.of(
+			"bb_main", "bb_main2", "bb_main3", "bb_main4", "bb_main5");
 
 	private final String modelKey;
 	private int frameCount = 1; // Default to 1 frame (static texture)
@@ -135,9 +138,12 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 
 		// Calculate current frame based on frame delay
 		// Each frame stays visible for frameDelay ticks
-		int currentFrame = (elapsedTicks / frameDelay) % frameCount;
+        int currentFrame = elapsedTicks / frameDelay;
+        if (SwordSlashModelRegistry.holdsLastTextureFrame(modelKey)) {
+            return Math.min(currentFrame, frameCount - 1);
+        }
 
-		return currentFrame;
+        return currentFrame % frameCount;
 	}
 
 	/**
@@ -323,9 +329,10 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 		Matrix4f matrix = poseStack.last().pose();
 		Matrix3f normalMatrix = poseStack.last().normal();
 
-// Manually draw each cube
+		// Manually draw each cube
 		for (GeoCube cube : bone.getCubes()) {
-			renderGeoCube(cube, matrix, normalMatrix, buffer, packedLight, overlay, red, green, blue, alpha, texture);
+			renderGeoCube(bone.getName(), cube, matrix, normalMatrix, buffer, packedLight, overlay, red, green, blue,
+				alpha, texture);
 		}
 
 		// Recurse into children
@@ -336,11 +343,11 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 		poseStack.popPose();
 	}
 
-	private void renderGeoCube(GeoCube cube, Matrix4f matrix, Matrix3f normalMatrix, VertexConsumer buffer,
+	private void renderGeoCube(String boneName, GeoCube cube, Matrix4f matrix, Matrix3f normalMatrix, VertexConsumer buffer,
 			int packedLight, int overlay, float red, float green, float blue, float alpha, ResourceLocation texture) {
 
-		if (renderVoxelizedCube(cube, matrix, normalMatrix, buffer, packedLight, overlay, red, green, blue, alpha,
-				texture)) {
+		if (renderVoxelizedCube(boneName, cube, matrix, normalMatrix, buffer, packedLight, overlay, red, green, blue,
+				alpha, texture)) {
 			return;
 		}
 
@@ -368,9 +375,16 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 
 	}
 
-	private boolean renderVoxelizedCube(GeoCube cube, Matrix4f matrix, Matrix3f normalMatrix, VertexConsumer buffer,
+	private boolean renderVoxelizedCube(String boneName, GeoCube cube, Matrix4f matrix, Matrix3f normalMatrix,
+			VertexConsumer buffer,
 			int packedLight, int overlay, float red, float green, float blue, float alpha, ResourceLocation texture) {
 		if (!SwordSwingConfig.enableVoxelThickness || SwordSwingConfig.voxelThickness <= PLANE_EPSILON) {
+			return false;
+		}
+		// The claw models are five separate flat faces. Keep every named face on
+		// the voxel path, while avoiding accidental voxelization of other bones if
+		// the model is expanded later.
+		if ((isClawModel() || isNezukoClawModel()) && !CLAW_FACE_BONES.contains(boneName)) {
 			return false;
 		}
 

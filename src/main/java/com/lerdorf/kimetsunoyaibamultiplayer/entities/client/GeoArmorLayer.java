@@ -1,6 +1,8 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.items.AndonBakamaItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.KyogaiEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.KyogaiDrumsItem;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -32,6 +34,16 @@ public class GeoArmorLayer<T extends LivingEntity & GeoAnimatable> extends ItemA
     @Override
     protected ItemStack getArmorItemForBone(GeoBone bone, T animatable) {
         String boneName = bone.getName();
+
+        // Kyogai's drum item is intentionally not an ArmorItem, but its GeckoLib
+        // model still uses the armor bones on the entity model.
+        if (animatable instanceof KyogaiEntity kyogai
+            && kyogai.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof KyogaiDrumsItem
+            && (boneName.equals("armorBody")
+                || boneName.equals("armorLeftArm")
+                || boneName.equals("armorRightArm"))) {
+            return kyogai.getItemBySlot(EquipmentSlot.CHEST);
+        }
 
         switch (boneName) {
             // Boots

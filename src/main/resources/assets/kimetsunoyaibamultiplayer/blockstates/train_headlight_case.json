@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "kimetsunoyaibamultiplayer:block/train_headlight_case"
+    },
+    "facing=east": {
+      "model": "kimetsunoyaibamultiplayer:block/train_headlight_case",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "kimetsunoyaibamultiplayer:block/train_headlight_case",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "kimetsunoyaibamultiplayer:block/train_headlight_case",
+      "y": 270
+    }
+  }
+}

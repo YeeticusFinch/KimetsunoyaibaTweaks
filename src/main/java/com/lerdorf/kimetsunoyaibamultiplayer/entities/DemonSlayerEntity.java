@@ -66,14 +66,16 @@ import java.util.UUID;
  * - demon_slayer (male) — uses biped.geo.json with mob_slayer textures
  * - demon_slayer_female — uses biped_female.geo.json with slayer_female textures
  *
- * Power levels 0-5:
+ * Power levels 0-12:
  * - Level 0: Training sword, no armor, 20 HP
- * - Level 1-4: Normal sword, standard uniform, scaling stats
- * - Level 5: Super senior with three style swords and periodic sword switching
+ * - Level 1-11: Normal sword, standard uniform, scaling stats
+ * - Level 12: Super senior with three style swords and periodic sword switching
  */
 public class DemonSlayerEntity extends BreathingSlayerEntity {
     private static final int MAX_SWORD_ASSIGN_RETRIES = 12;
-    private static final int MAX_POWER_LEVEL = 5;
+    private static final int MAX_POWER_LEVEL = 12;
+    private static final int SUPER_SENIOR_LEVEL = 12;
+    private static final int MAX_RANK_EFFECT_AMPLIFIER = 11;
     private static final int FALL_RECOVERY_TICKS = 30;
     private static final int KICK_COOLDOWN_MIN = 50;
     private static final int KICK_COOLDOWN_MAX = 95;
@@ -117,7 +119,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> FINAL_SELECTION_PATH_SPEED =
         SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.FLOAT);
-    // Synced data: level-5 additional sword ids (for extra sheaths/sword switching)
+    // Synced data: level-12 additional sword ids (for extra sheaths/sword switching)
     private static final EntityDataAccessor<String> ALT_SWORD_ID_1 =
         SynchedEntityData.defineId(DemonSlayerEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> ALT_SWORD_ID_2 =
@@ -159,22 +161,25 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         // Priority 1: Float
         this.goalSelector.addGoal(1, new FloatGoal(this));
 
-        // Priority 2: Level 3+ front-flip gap closer
-        this.goalSelector.addGoal(2, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonSlayerFrontFlipGoal(this));
+        // Priority 2: Rank 4+ passive dash
+        this.goalSelector.addGoal(2, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonSlayerDashGoal(this));
 
-        // Priority 3: Level 3+ dodge/backstep
-        this.goalSelector.addGoal(3, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonSlayerBackstepGoal(this));
+        // Priority 3: Level 3+ front-flip gap closer
+        this.goalSelector.addGoal(3, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonSlayerFrontFlipGoal(this));
 
-        // Priority 4: Level 2+ guard
-        this.goalSelector.addGoal(4, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonSlayerGuardGoal(this));
+        // Priority 4: Level 3+ dodge/backstep
+        this.goalSelector.addGoal(4, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonSlayerBackstepGoal(this));
 
-        // Priority 5: Basic melee
-        this.goalSelector.addGoal(5, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.AnimatedMeleeAttackGoal(this, 1.0D, false));
+        // Priority 5: Rank 4+ passive guard
+        this.goalSelector.addGoal(5, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.DemonSlayerGuardGoal(this));
 
-        // Priority 6+: Navigation/idle
-        this.goalSelector.addGoal(6, new WaterAvoidingRandomStrollGoal(this, 0.8D));
-        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+        // Priority 6: Basic melee
+        this.goalSelector.addGoal(6, new com.lerdorf.kimetsunoyaibamultiplayer.entities.ai.AnimatedMeleeAttackGoal(this, 1.0D, false));
+
+        // Priority 7+: Navigation/idle
+        this.goalSelector.addGoal(7, new WaterAvoidingRandomStrollGoal(this, 0.8D));
+        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false,
@@ -495,8 +500,8 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         int maxTextures = 6;
         setTextureIndex(this.random.nextInt(maxTextures));
 
-        // 3. Assign random power level 0-5
-        int powerLevel = this.random.nextInt(MAX_POWER_LEVEL + 1); // 0-5
+        // 3. Assign random rank 0-12
+        int powerLevel = this.random.nextInt(MAX_POWER_LEVEL + 1); // 0-12
         // Keep equipment set deterministic per-entity and avoid mixing regular/purple pieces.
         setPurpleUniformVariant(this.random.nextFloat() < 0.25F);
         configurePowerLevelLoadout(powerLevel);
@@ -644,11 +649,18 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     }
 
     /**
-     * Apply stat bonuses based on power level (0-4).
-     * Level 0: 20 HP, Speed I
-     * Level 1-4: Same as parent BreathingSlayerEntity
+     * Apply stat bonuses based on rank (0-12).
+     * Level 0: 20 HP and no buffs
+     * Level 1-12: Strength scales with rank and Resistance is capped at III.
      */
     public void applyDemonSlayerPowerBonuses(int powerLevel) {
+        powerLevel = Math.max(0, Math.min(MAX_POWER_LEVEL, powerLevel));
+
+        // Reconfiguration must also remove effects when a slayer becomes unranked.
+        this.removeEffect(MobEffects.MOVEMENT_SPEED);
+        this.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+        this.removeEffect(MobEffects.DAMAGE_BOOST);
+
         AttributeInstance maxHealth = this.getAttribute(Attributes.MAX_HEALTH);
         if (maxHealth != null) {
             double health = switch (powerLevel) {
@@ -657,7 +669,14 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
                 case 2 -> 60.0;
                 case 3 -> 70.0;
                 case 4 -> 80.0;
-                case 5 -> 95.0;
+                case 5 -> 82.0;
+                case 6 -> 84.0;
+                case 7 -> 86.0;
+                case 8 -> 88.0;
+                case 9 -> 90.0;
+                case 10 -> 92.0;
+                case 11 -> 94.0;
+                case 12 -> 95.0;
                 default -> 20.0;
             };
             if (isDemonized()) {
@@ -680,17 +699,23 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         if (speedLevel >= 0) // (level 1+)
             this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, Integer.MAX_VALUE, speedLevel, true, false));
 
-        // Resistance (level 1+)
+        // Resistance I at rank 2, Resistance II at rank 3, Resistance III at rank 4+.
         if (powerLevel >= 2) {
             int resistanceLevel = Math.min(MAX_RESISTANCE_AMPLIFIER, powerLevel - 2);
             this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE, resistanceLevel, true, false));
         }
 
-        // Strength (level 1+)
+        // Mizunoe starts at Strength I; Hashira reaches the requested Strength XII.
         if (powerLevel >= 1) {
-            int strengthLevel = ((powerLevel - 1) * 2) + (isDemonized() ? 1 : 0);
+            int strengthLevel = powerLevel == 1 ? 0 : powerLevel - 2;
+            if (powerLevel >= 11) {
+                strengthLevel += 2;
+            }
+            strengthLevel = Math.min(MAX_RANK_EFFECT_AMPLIFIER,
+                strengthLevel + (isDemonized() ? 1 : 0));
             this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, strengthLevel, true, false));
         } else if (isDemonized()) {
+            // Preserve the existing demonized level-0 behavior.
             this.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, Integer.MAX_VALUE, 0, true, false));
         }
     }
@@ -708,7 +733,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
             setSheatheOnBack(false);
         }
 
-        if (powerLevel >= 5) {
+        if (powerLevel >= SUPER_SENIOR_LEVEL) {
             boolean hasExistingPool = hasValidSuperSeniorSwordPool();
             if (!hasExistingPool) {
                 initializeSuperSeniorSwordSet();
@@ -791,14 +816,14 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         setAltSwordId2(selected.size() > 2 ? selected.get(2) : "");
 
         if (selected.size() < 3) {
-            Log.warn("[DemonSlayer] Level-5 super senior could not find 3 distinct styles (found {})", selected.size());
+            Log.warn("[DemonSlayer] Rank-12 super senior could not find 3 distinct styles (found {})", selected.size());
         }
 
         resetSuperSeniorSwitchTimer();
     }
 
     private boolean hasValidSuperSeniorSwordPool() {
-        if (getPowerLevel() < 5) {
+        if (getPowerLevel() < SUPER_SENIOR_LEVEL) {
             return false;
         }
         String primary = getSwordId();
@@ -828,7 +853,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     }
 
     private void tickSuperSeniorSwordSwitching() {
-        if (this.getPowerLevel() < 5 || isActionLocked()) {
+        if (this.getPowerLevel() < SUPER_SENIOR_LEVEL || isActionLocked()) {
             return;
         }
         if (this.superSeniorSwordSwitchTicks > 0) {
@@ -893,7 +918,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
                 case 2 -> 0.40D;
                 case 3 -> 0.65D;
                 case 4 -> 1.00D;
-                case 5 -> 1.25D;
+                case 5, 6, 7, 8, 9, 10, 11, 12 -> 1.25D;
                 default -> 0.0D;
             };
             attackSpeed.addPermanentModifier(new AttributeModifier(
@@ -1304,20 +1329,27 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
     }
 
     private void updateSeniorNameForLevel(int level) {
-        if (level >= 5) {
-            Component baseName = this.getType().getDescription();
-            this.setCustomName(baseName.copy().append(Component.literal(" Super Senior")));
-            this.setCustomNameVisible(false);
-        } else if (level >= 4) {
-            Component baseName = this.getType().getDescription();
-            this.setCustomName(baseName.copy().append(Component.literal(" Senior")));
-            this.setCustomNameVisible(false);
-        } else if (this.hasCustomName()) {
-            String current = this.getCustomName().getString();
-            if (current.endsWith(" Senior") || current.endsWith(" Super Senior")) {
-                this.setCustomName(null);
-            }
-        }
+        this.setCustomName(Component.literal("Demon Slayer (" + getRankName(level) + ")"));
+        this.setCustomNameVisible(false);
+    }
+
+    public static String getRankName(int level) {
+        return switch (Math.max(0, Math.min(MAX_POWER_LEVEL, level))) {
+            case 0 -> "Unranked";
+            case 1 -> "Mizunoto";
+            case 2 -> "Mizunoe";
+            case 3 -> "Kanoto";
+            case 4 -> "Kanoe";
+            case 5 -> "Tsuchinoto";
+            case 6 -> "Tsuchinoe";
+            case 7 -> "Hinoto";
+            case 8 -> "Hinoe";
+            case 9 -> "Kinoto";
+            case 10 -> "Kinoe";
+            case 11 -> "Hashira";
+            case 12 -> "Super Senior";
+            default -> "Unranked";
+        };
     }
 
     private void tryKickAttack(@Nullable LivingEntity target) {
@@ -1375,7 +1407,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         if (powerLevel == 0 && target instanceof Creeper) {
             return true;
         }
-        if (powerLevel > 1) {
+        if (powerLevel > 3) {
             return false;
         }
         if (!isActivelyInCombatWith(target)) {
@@ -1387,7 +1419,7 @@ public class DemonSlayerEntity extends BreathingSlayerEntity {
         if (powerLevel == 0) {
             return selfHealth * 1.5D < targetHealth;
         }
-        // Level 1
+        // The former level-1 flee behavior applies to ranks 1-3.
         return selfHealth * 2.0D < targetHealth;
     }
 

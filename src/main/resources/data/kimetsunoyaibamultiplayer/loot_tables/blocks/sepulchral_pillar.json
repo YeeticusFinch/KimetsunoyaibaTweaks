@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "kimetsunoyaibamultiplayer:sepulchral_pillar"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "kimetsunoyaibamultiplayer:blocks/sepulchral_pillar"
+}

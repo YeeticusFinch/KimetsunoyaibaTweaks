@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.meditation;
 import com.lerdorf.kimetsunoyaibamultiplayer.alchemy.BlueSpiderLilyTeaHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.DemonRankingConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.demonranking.DemonRank;
 import com.lerdorf.kimetsunoyaibamultiplayer.demonranking.DemonRankingSavedData;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
@@ -12,6 +13,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.quest.PlayerRole;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.DemonEyesHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.SheathCosmeticsHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.resources.ResourceLocation;
@@ -89,7 +91,8 @@ public final class MeditationMenuService {
                 "",
                 false,
                 DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX,
-                DemonEyesHelper.DEFAULT_DEMON_EYES_HUE
+                DemonEyesHelper.DEFAULT_DEMON_EYES_HUE,
+                SwordDisplayConfig.SwordDisplayPosition.HIP.name(), 0, 0, 0, 0, 0, 0, 0
             );
         }
 
@@ -101,13 +104,15 @@ public final class MeditationMenuService {
         boolean demonPlayer = role == PlayerRole.DEMON;
         int demonEyesIndex = DemonEyesHelper.getOrCreateIndex(player);
         int demonEyesHue = DemonEyesHelper.getHue(player);
+        SwordDisplayConfig.SwordDisplayPosition sheathPosition = SheathCosmeticsHelper.getPosition(player);
+        int sheathTextureIndex = SheathCosmeticsHelper.getTextureIndex(player);
 
         List<MeditationMenuData.InfoSection> infoSections = buildInfoSections(player);
         List<MeditationMenuData.QuestEntry> quests = QuestProgressionManager.buildQuestEntries(player, role);
         if (role == PlayerRole.DEMON && DemonRankingConfig.isEnabled()) {
             List<MeditationMenuData.QuestEntry> withBloodyBattle = new ArrayList<>();
-            withBloodyBattle.add(buildBloodyBattleEntry(player));
             withBloodyBattle.addAll(quests);
+            withBloodyBattle.add(buildBloodyBattleEntry(player));
             quests = withBloodyBattle;
         }
         List<MeditationMenuData.LocationEntry> locations = buildLocations(role);
@@ -116,7 +121,16 @@ public final class MeditationMenuService {
 
         String selectedType = player.getPersistentData().getString("MeditationSelectedType");
         String selectedId = player.getPersistentData().getString("MeditationSelectedId");
-        if (!selectionExists(selectedType, selectedId, quests, locations)) {
+        String activeQuestId = QuestProgressionManager.getActiveQuestGroupId(player, role);
+        boolean activeQuestAvailable = !activeQuestId.isBlank()
+            && quests.stream().anyMatch(quest -> quest.id().equals(activeQuestId));
+        boolean selectedDifferentQuest = SELECTED_TYPE_QUEST.equals(selectedType)
+            && activeQuestAvailable && !activeQuestId.equals(selectedId);
+        if (activeQuestAvailable && (!selectionExists(selectedType, selectedId, quests, locations) || selectedDifferentQuest)) {
+            selectedType = SELECTED_TYPE_QUEST;
+            selectedId = activeQuestId;
+            saveSelection(player, selectedType, selectedId);
+        } else if (!selectionExists(selectedType, selectedId, quests, locations)) {
             if (!quests.isEmpty()) {
                 selectedType = SELECTED_TYPE_QUEST;
                 selectedId = quests.get(0).id();
@@ -134,7 +148,11 @@ public final class MeditationMenuService {
         locations = applyLocationSelection(locations, selectedType, selectedId);
 
         return new MeditationMenuData(role.getDisplayName(), rank, muzanBlood, humansConsumed, kizukiRank,
-            infoSections, quests, locations, passiveSkills, passiveSkillPoints, selectedType, selectedId, demonPlayer, demonEyesIndex, demonEyesHue);
+            infoSections, quests, locations, passiveSkills, passiveSkillPoints, selectedType, selectedId, demonPlayer,
+            demonEyesIndex, demonEyesHue, sheathPosition.name(), sheathTextureIndex,
+            SheathCosmeticsHelper.getTranslateX(player), SheathCosmeticsHelper.getTranslateY(player),
+            SheathCosmeticsHelper.getTranslateZ(player), SheathCosmeticsHelper.getRotateX(player),
+            SheathCosmeticsHelper.getRotateY(player), SheathCosmeticsHelper.getRotateZ(player));
     }
 
     public static void saveSelection(ServerPlayer player, String type, String id) {

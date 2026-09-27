@@ -67,6 +67,7 @@ public class DissolutionCocoonEntity extends Mob implements GeoEntity {
         SynchedEntityData.defineId(DissolutionCocoonEntity.class, EntityDataSerializers.FLOAT);
 
     public static final int BASE_DURATION_TICKS = 20 * 60 * 5;  // 5 minutes
+    public static final String DECORATION_TAG = "Decoration";
     private static final int STRUGGLE_PENALTY_TICKS = 20 * 10;  // -10 seconds
     private static final int POISON_INTERVAL_TICKS = 40;
     private static final int COCOON_DAMAGE_INTERVAL_TICKS = 20;
@@ -89,6 +90,8 @@ public class DissolutionCocoonEntity extends Mob implements GeoEntity {
     private int breakAnimationTicks = 0;
     private final List<ItemStack> storedDrops = new ArrayList<>();
     private boolean storedDropsDropped = false;
+    private boolean decoration = false;
+    private boolean decorationPlacementInitialized = false;
     @Nullable
     private UUID victimUuid = null;
 
@@ -174,8 +177,59 @@ public class DissolutionCocoonEntity extends Mob implements GeoEntity {
         return null;
     }
 
+    private void initializeDecorationPlacement() {
+        if (decorationPlacementInitialized || level().isClientSide()) {
+            return;
+        }
+        decorationPlacementInitialized = true;
+
+        BlockPos.MutableBlockPos scanPos = BlockPos.containing(
+            getX(), getY() + getBbHeight(), getZ()).mutable();
+        int maxY = Math.min(level().getMaxBuildHeight() - 1, scanPos.getY() + 50);
+        BlockPos anchor = null;
+        for (int y = scanPos.getY() + 1; y <= maxY; y++) {
+            scanPos.setY(y);
+            var state = level().getBlockState(scanPos);
+            if (!state.isAir() && (!state.getCollisionShape(level(), scanPos).isEmpty() || state.blocksMotion())) {
+                anchor = scanPos.immutable();
+                break;
+            }
+        }
+
+        if (anchor == null) {
+            return;
+        }
+
+        double baseY = getY();
+        double liftHeight = anchor.getY() - baseY;
+        if (liftHeight <= 0.0D) {
+            return;
+        }
+
+        double liftScale = MIN_ANCHOR_LIFT
+            + level().random.nextDouble() * (MAX_ANCHOR_LIFT - MIN_ANCHOR_LIFT);
+        setPos(getX(), baseY + liftHeight * liftScale, getZ());
+        entityData.set(HAS_TETHER, true);
+        entityData.set(TETHER_X, anchor.getX() + 0.5F);
+        entityData.set(TETHER_Y, (float) anchor.getY());
+        entityData.set(TETHER_Z, anchor.getZ() + 0.5F);
+    }
+
     public static boolean isCocooned(LivingEntity entity) {
         return entity != null && entity.isAlive() && entity.getPersistentData().getBoolean(VICTIM_TAG);
+    }
+
+    public boolean isDecorational() {
+        return decoration || getPersistentData().getBoolean(DECORATION_TAG);
+    }
+
+    public void setDecorational(boolean decorational) {
+        this.decoration = decorational;
+        if (decorational) {
+            getPersistentData().putBoolean(DECORATION_TAG, true);
+        } else {
+            getPersistentData().remove(DECORATION_TAG);
+        }
     }
 
     /**
@@ -271,6 +325,11 @@ public class DissolutionCocoonEntity extends Mob implements GeoEntity {
             }
         } else if (isSpawning()) {
             this.entityData.set(SPAWNING, false);
+        }
+
+        if (isDecorational()) {
+            initializeDecorationPlacement();
+            return;
         }
 
         LivingEntity victim = getVictim();
@@ -480,6 +539,9 @@ public class DissolutionCocoonEntity extends Mob implements GeoEntity {
             ? tag.getInt("SpawnAnimationTicks")
             : (tag.getBoolean("Spawning") ? SPAWN_ANIMATION_TICKS : 0);
         this.breakAnimationTicks = tag.getInt("BreakAnimationTicks");
+        this.decoration = tag.getBoolean(DECORATION_TAG)
+            || this.getPersistentData().getBoolean(DECORATION_TAG);
+        this.decorationPlacementInitialized = tag.getBoolean("DecorationPlacementInitialized");
         if (tag.hasUUID("Victim")) {
             this.victimUuid = tag.getUUID("Victim");
             this.entityData.set(VICTIM, java.util.Optional.of(this.victimUuid));
@@ -491,6 +553,9 @@ public class DissolutionCocoonEntity extends Mob implements GeoEntity {
         this.entityData.set(TETHER_Y, tag.getFloat("TetherY"));
         this.entityData.set(TETHER_Z, tag.getFloat("TetherZ"));
         this.entityData.set(DURATION_TICKS, tag.getInt("DurationTicks"));
+        if (isDecorational() && level() instanceof ServerLevel) {
+            initializeDecorationPlacement();
+        }
     }
 
     @Override
@@ -514,6 +579,10 @@ public class DissolutionCocoonEntity extends Mob implements GeoEntity {
         tag.putFloat("TetherX", getTetherX());
         tag.putFloat("TetherY", getTetherY());
         tag.putFloat("TetherZ", getTetherZ());
+        if (isDecorational()) {
+            tag.putBoolean(DECORATION_TAG, true);
+            tag.putBoolean("DecorationPlacementInitialized", decorationPlacementInitialized);
+        }
         java.util.Optional<UUID> id = this.entityData.get(VICTIM);
         if (id.isPresent()) {
             tag.putUUID("Victim", id.get());

@@ -318,11 +318,6 @@ public class ClientRenderEvents {
 
         ItemStack stack = event.getItemStack();
 
-        // Check if holding a nichirin sword (from this mod, base mod, or any addon)
-        boolean holdingNichirinSword = isNichirinSword(stack);
-
-        if (!holdingNichirinSword) return;
-        
         // Update animation tracking
         com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
                 .updateCurrentAnimation(player);
@@ -334,6 +329,11 @@ public class ClientRenderEvents {
 
         // No tracked animation -> let vanilla render.
         if (currentAnimation == null) {
+            return;
+        }
+
+        // Demon guard may be used with any held item; sword animations remain sword-only.
+        if (!isNichirinSword(stack) && !currentAnimation.equals("guard")) {
             return;
         }
 

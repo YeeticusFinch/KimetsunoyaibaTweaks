@@ -276,7 +276,7 @@ public class EntityReplacerHandler {
         } else if ("dice_steak_senior".equals(path)) {
             forcedLevel = 4;
         } else if ("dice_steak_senior_super".equals(path)) {
-            forcedLevel = 5;
+            forcedLevel = 12;
         } else {
             return false;
         }

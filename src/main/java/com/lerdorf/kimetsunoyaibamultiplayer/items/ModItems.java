@@ -107,6 +107,9 @@ public class ModItems {
             com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIX_EYE_DEMON_HEAD.get(),
             new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> KYOGAI_DRUMS = ITEMS.register("kyogai_drums",
+        () -> new KyogaiDrumsItem(new Item.Properties().stacksTo(1)));
+
     // Spawn eggs
     public static final RegistryObject<Item> MUICHIRO_SPAWN_EGG = ITEMS.register("muichiro_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
@@ -118,6 +121,12 @@ public class ModItems {
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MUICHIRO_FP,
             0x6FA2B7, 0xDAF1F8, // Deeper mist-blue body, pale cyan spots
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> KYOGAI_SPAWN_EGG = ITEMS.register("kyogai_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KYOGAI,
+            0x382B2F, 0xD6B17B,
             new Item.Properties().stacksTo(64)));
 
     public static final RegistryObject<Item> KANROJI_SPAWN_EGG = ITEMS.register("kanroji_spawn_egg",
@@ -196,6 +205,13 @@ public class ModItems {
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SIX_EYE_DEMON,
             0x17251A, 0x1B5E20,
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> DECORATIONAL_SILK_COCOON_SPAWN_EGG = ITEMS.register(
+        "decorational_silk_cocoon_spawn_egg",
+        () -> new DecorationalSilkCocoonSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DISSOLUTION_COCOON,
+            0xFFFFFF, 0xFFFFFF,
             new Item.Properties().stacksTo(64)));
 
     public static final RegistryObject<Item> DEMON_EFE_SPAWN_EGG = ITEMS.register("demon_efe_spawn_egg",
@@ -695,16 +711,18 @@ public class ModItems {
                     HAORI_UROKODAKI.get(),
                     HAORI_GOLD.get(),
                     HAIR_MUICHIRO_FP.get(),
-                    HAIR_TANJURO.get(),
-                    BLINDFOLD.get(),
-                    SATOKOS_BOW.get(),
-                    HAHNAFUDA_SIMPLE.get()
-                );
+                     HAIR_TANJURO.get(),
+                     BLINDFOLD.get(),
+                     SATOKOS_BOW.get(),
+                     HAHNAFUDA_SIMPLE.get(),
+                     KYOGAI_DRUMS.get()
+                 );
 
                 addItems(output,
                     MUICHIRO_SPAWN_EGG.get(),
-                    MUICHIRO_FP_SPAWN_EGG.get(),
-                    KANROJI_SPAWN_EGG.get(),
+                     MUICHIRO_FP_SPAWN_EGG.get(),
+                     KYOGAI_SPAWN_EGG.get(),
+                     KANROJI_SPAWN_EGG.get(),
                     KANAE_SPAWN_EGG.get(),
                     KANAWO_SPAWN_EGG.get(),
                     KANATA_SPAWN_EGG.get(),
@@ -723,9 +741,10 @@ public class ModItems {
                     NEZUKO_SPAWN_EGG.get(),
                      DAUGHTER_SPAWN_EGG.get(),
                      MOTHER_SPAWN_EGG.get(),
-                     MANTIS_DEMON_SPAWN_EGG.get(),
-                     SIX_EYE_DEMON_SPAWN_EGG.get(),
-                     DEMON_EFE_SPAWN_EGG.get(),
+                      MANTIS_DEMON_SPAWN_EGG.get(),
+                      SIX_EYE_DEMON_SPAWN_EGG.get(),
+                      DECORATIONAL_SILK_COCOON_SPAWN_EGG.get(),
+                      DEMON_EFE_SPAWN_EGG.get(),
                      DEMON_ARI_SPAWN_EGG.get(),
                      DEMON_KAI_SPAWN_EGG.get(),
                      DEMON_MAKENA_SPAWN_EGG.get(),

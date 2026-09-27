@@ -86,6 +86,15 @@ public class ModEntities {
                 .updateInterval(3)
                 .build("kanroji"));
 
+    /** Kyogai, rendered with the custom biped model and his drum equipment. */
+    public static final RegistryObject<EntityType<KyogaiEntity>> KYOGAI =
+        ENTITY_TYPES.register("kyogai",
+            () -> EntityType.Builder.of(KyogaiEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(32)
+                .updateInterval(3)
+                .build("kyogai"));
+
     /**
      * Kanae Kocho - Flower Hashira
      * Wields nichirinsword_kanae and uses Hashira-tier Flower Breathing.
@@ -551,6 +560,7 @@ public class ModEntities {
 
             // Register attributes for Mitsuri Kanroji
             event.put(KANROJI.get(), KanrojiEntity.createAttributes().build());
+            event.put(KYOGAI.get(), KyogaiEntity.createAttributes().build());
 
             event.put(DEMON_CREEPER.get(), DemonCreeperEntity.createAttributes().build());
             event.put(DEMON_VILLAGER.get(), DemonVillagerEntity.createAttributes().build());

@@ -15,7 +15,7 @@ These are registered on `RegisterCommandsEvent`.
 | `/giveblacksword <style>` | OP level 2, player only | Gives the executing player a black nichirin sword assigned to the requested breathing style. |
 | `/sunbreathinglevel <level>` | OP level 2, player only | Sets the executing player's Sun Breathing level. Level range is 0-12. |
 | `/sunbreathinglevel <target> <level>` | OP level 2 | Sets another player's Sun Breathing level. Level range is 0-12. |
-| `/spawndemonslayer <style> <level> [demonized]` | OP level 2 | Spawns a demon slayer entity at the command source position with a spawnable breathing style and power level 0-5. |
+| `/spawndemonslayer <style> <level> [demonized]` | OP level 2 | Spawns a demon slayer entity at the command source position with a spawnable breathing style and rank 0-12. |
 | `/spawndemonslayer <style> <level> [male\|female\|random] [skin] [demonized]` | OP level 2 | Spawns a demon slayer with optional gender, skin 1-6, and demonized state. |
 | `/demonize` | OP level 2, player only | Demonizes the targeted `BreathingSlayerEntity` within 60 blocks. |
 | `/torilgate confirm` | Player only | Confirms a pending Toril Gate teleport. |
@@ -48,6 +48,7 @@ These are registered on `RegisterCommandsEvent`.
 | `/testtamayohouse` | OP level 2, player only | Enables Tamayo house test particles for 45 seconds. |
 | `/localpos` | OP level 2, player only | Prints the player's local position inside the current KimetsunoYaiba or multiplayer structure. |
 | `/localposition` | OP level 2, player only | Alias for `/localpos`. |
+| `/natagumoregion` | Player only | Reports the imaginary Mount Natagumo ring at the player's position, including the Father, Sister, or Brother sub-region inside the Boss Minions Ring. |
 | `/freerank <rank>` | OP level 2 | Makes a demon rank takeable from its offline holder via the fallback entity. |
 | `/clearrank <target>` | OP level 2 | Removes a player's demon rank entirely. |
 | `/setrank <target> <rank>` | OP level 2 | Assigns a demon rank directly and applies its buffs. |

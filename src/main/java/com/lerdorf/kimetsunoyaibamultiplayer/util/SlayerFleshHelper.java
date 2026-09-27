@@ -62,7 +62,7 @@ public final class SlayerFleshHelper {
         lore.add(StringTag.valueOf(Component.Serializer.toJson(
             Component.literal("Demon Slayer Remains").withStyle(ChatFormatting.DARK_RED))));
         lore.add(StringTag.valueOf(Component.Serializer.toJson(
-            Component.literal("Level: " + Math.max(0, powerLevel)).withStyle(ChatFormatting.GRAY))));
+            Component.literal("Rank: " + Math.max(0, powerLevel)).withStyle(ChatFormatting.GRAY))));
         lore.add(StringTag.valueOf(Component.Serializer.toJson(
             Component.literal("Breathing: " + formatStyleName(styleId)).withStyle(ChatFormatting.GRAY))));
         display.put("Lore", lore);

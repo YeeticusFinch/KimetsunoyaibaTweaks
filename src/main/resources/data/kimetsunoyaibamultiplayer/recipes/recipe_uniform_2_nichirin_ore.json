@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "OOO",
+    "OSO",
+    "OSO"
+  ],
+  "key": {
+    "O": {
+      "tag": "kimetsunoyaibamultiplayer:scarlet_ores"
+    },
+    "S": {
+      "item": "kimetsunoyaiba:scarlet_ironsand"
+    }
+  },
+  "result": {
+    "item": "kimetsunoyaiba:uniform_leggings",
+    "count": 1
+  }
+}

@@ -1,7 +1,10 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.raids;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.DemonSlayerConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -20,6 +23,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
@@ -441,7 +445,10 @@ public class KnYRaid {
         }
 
         try {
-            Mob mob = (Mob) entityType.create(level);
+            Mob mob = createRaidDemonSlayer(id);
+            if (mob == null) {
+                mob = (Mob) entityType.create(level);
+            }
             if (mob == null) return;
 
             int radius = CivilianStructureRegistry.getSpawnRadius(structureId);
@@ -536,6 +543,38 @@ public class KnYRaid {
         } catch (Exception e) {
             Log.debug("Failed to spawn entity: " + id + " - " + e.getMessage());
         }
+    }
+
+    /**
+     * Raid slayers use the multiplayer implementation directly so their rank,
+     * effects, and passive abilities do not depend on the global replacement toggle.
+     */
+    private Mob createRaidDemonSlayer(ResourceLocation id) {
+        if (type != RaidType.SLAYER || !"kimetsunoyaiba".equals(id.getNamespace())) {
+            return null;
+        }
+
+        String path = id.getPath();
+        int rank;
+        if ("demon_slayer".equals(path)) {
+            rank = level.random.nextInt(4); // Unranked through Kanoto
+        } else if ("dice_steak_senior".equals(path)) {
+            rank = 4; // Kanoe
+        } else if ("dice_steak_senior_super".equals(path)) {
+            rank = 12; // Super Senior
+        } else {
+            return null;
+        }
+
+        boolean female = level.random.nextDouble() < DemonSlayerConfig.getFemaleSpawnChance();
+        DemonSlayerEntity slayer = (female ? ModEntities.DEMON_SLAYER_FEMALE : ModEntities.DEMON_SLAYER).get().create(level);
+        if (slayer == null) {
+            return null;
+        }
+
+        slayer.finalizeSpawn(level, level.getCurrentDifficultyAt(center), MobSpawnType.EVENT, null, null);
+        slayer.configurePowerLevelLoadout(rank);
+        return slayer;
     }
 
     /**

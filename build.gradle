@@ -240,6 +240,13 @@ tasks.named('processResources', ProcessResources).configure {
     }
 
     dependsOn tasks.named('compileJava')
+    from('src/main/resources/logo.png') {
+        into 'assets/kimetsunoyaibamultiplayer/textures/gui'
+        rename { 'tweaks_logo.png' }
+    }
+    from('shimmer_config') {
+        into 'assets/kimetsunoyaibamultiplayer/shimmer_config'
+    }
     from(mixinRefmapFile) {
         into ''
     }
