@@ -32,6 +32,9 @@ public class KyogaiRenderer extends GeoEntityRenderer<KyogaiEntity> {
 
         this.addRenderLayer(new GeoArmorLayer<>(this));
         this.addRenderLayer(new GeoEquipmentLayer<>(this));
+        this.addRenderLayer(new SkinLayersGeoLayer<>(this));
+        this.addRenderLayer(new EyesGlowLayer<>(this, "geo/biped_kyogai.geo.json",
+            "textures/entity/kyogai_eyes.png", "animations/biped.animation.json"));
         this.scaleHeight = 1.4F;
         this.scaleWidth = 1.4F;
     }
