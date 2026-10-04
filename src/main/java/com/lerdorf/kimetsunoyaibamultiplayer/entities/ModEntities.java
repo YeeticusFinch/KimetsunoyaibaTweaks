@@ -95,6 +95,28 @@ public class ModEntities {
                 .updateInterval(3)
                 .build("kyogai"));
 
+    /** Animated projectile created by Kyogai's navel drum. */
+    public static final RegistryObject<EntityType<KyogaiClawEntity>> KYOGAI_CLAW =
+        ENTITY_TYPES.register("kyogai_claw",
+            () -> EntityType.Builder.of(KyogaiClawEntity::new, MobCategory.MISC)
+                .sized(0.5F, 0.5F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("kyogai_claw"));
+
+    /** Temporary directional indicator used by client-only blood demon art effects. */
+    public static final RegistryObject<EntityType<DirectionArrowEntity>> DIRECTION_ARROW =
+        ENTITY_TYPES.register("direction_arrow",
+            () -> EntityType.Builder.of(DirectionArrowEntity::new, MobCategory.MISC)
+                .sized(0.15F, 0.15F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("direction_arrow"));
+
     /**
      * Kanae Kocho - Flower Hashira
      * Wields nichirinsword_kanae and uses Hashira-tier Flower Breathing.
@@ -561,6 +583,7 @@ public class ModEntities {
             // Register attributes for Mitsuri Kanroji
             event.put(KANROJI.get(), KanrojiEntity.createAttributes().build());
             event.put(KYOGAI.get(), KyogaiEntity.createAttributes().build());
+            event.put(KYOGAI_CLAW.get(), KyogaiClawEntity.createAttributes().build());
 
             event.put(DEMON_CREEPER.get(), DemonCreeperEntity.createAttributes().build());
             event.put(DEMON_VILLAGER.get(), DemonVillagerEntity.createAttributes().build());

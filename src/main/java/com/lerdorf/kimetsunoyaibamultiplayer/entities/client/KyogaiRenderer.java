@@ -30,7 +30,7 @@ public class KyogaiRenderer extends GeoEntityRenderer<KyogaiEntity> {
             }
         });
 
-        this.addRenderLayer(new GeoArmorLayer<>(this));
+        this.addRenderLayer(new KyogaiDrumsGeoLayer(this));
         this.addRenderLayer(new GeoEquipmentLayer<>(this));
         this.addRenderLayer(new SkinLayersGeoLayer<>(this));
         this.addRenderLayer(new EyesGlowLayer<>(this, "geo/biped_kyogai.geo.json",

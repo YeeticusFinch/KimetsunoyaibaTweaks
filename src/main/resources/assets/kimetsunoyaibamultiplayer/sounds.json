@@ -43,5 +43,59 @@
         "stream": true
       }
     ]
+  },
+  "drum_left_shoulder": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.drum_left_shoulder",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:drum_left_shoulder",
+        "stream": false
+      }
+    ]
+  },
+  "drum_right_shoulder": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.drum_right_shoulder",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:drum_right_shoulder",
+        "stream": false
+      }
+    ]
+  },
+  "drum_left_leg": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.drum_left_leg",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:drum_left_leg",
+        "stream": false
+      }
+    ]
+  },
+  "drum_right_leg": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.drum_right_leg",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:drum_right_leg",
+        "stream": false
+      }
+    ]
+  },
+  "drum_navel": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.drum_navel",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:drum_navel",
+        "stream": false
+      }
+    ]
+  },
+  "drum_back": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.drum_back",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:drum_back",
+        "stream": false
+      }
+    ]
   }
 }

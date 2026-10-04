@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -73,6 +74,21 @@ public final class GravityFieldManager {
                 SOURCES.remove(dimension);
             }
         }
+    }
+
+    public static List<GravityField> getFieldsNear(ServerLevel level, Vec3 position, double radius) {
+        LinkedHashMap<UUID, GravityEffectSource> sources = SOURCES.get(level.dimension());
+        if (sources == null || sources.isEmpty()) {
+            return List.of();
+        }
+        AABB searchBox = new AABB(position, position).inflate(radius);
+        List<GravityField> fields = new ArrayList<>();
+        for (GravityEffectSource source : sources.values()) {
+            if (source instanceof GravityField field && field.enabled() && field.box().intersects(searchBox)) {
+                fields.add(field);
+            }
+        }
+        return fields;
     }
 
     public static Optional<GravityEffectSource> resolve(Entity entity) {

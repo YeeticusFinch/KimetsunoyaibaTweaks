@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,6 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -73,7 +75,12 @@ public class DemonSlayerInitiationHandler {
     private static final ResourceLocation KINOE = ResourceLocation.parse("kimetsunoyaiba:kinoe");
     private static final ResourceLocation KILL_12_MOONS = ResourceLocation.parse("kimetsunoyaiba:kill_12_moons");
     private static final ResourceLocation COMPLETED_FINAL_SELECTION = ResourceLocation.parse("kimetsunoyaibamultiplayer:completed_final_selectioni");
-    private static final Set<ResourceLocation> GATED_RANK_AND_KILL_ADVANCEMENTS = Set.of(
+    private static final Set<ResourceLocation> CUSTOM_PROGRESSION_ADVANCEMENTS = Set.of(
+        CUSTOM_DEMON_SLAYER_CORPS,
+        COMPLETED_FINAL_SELECTION,
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:mizunoto")
+    );
+    private static final Set<ResourceLocation> SUPPRESSED_BASE_PROGRESS_ADVANCEMENTS = Set.of(
         MIZUNOTO,
         ResourceLocation.parse("kimetsunoyaiba:mizunoe"),
         ResourceLocation.parse("kimetsunoyaiba:kanoto"),
@@ -85,6 +92,7 @@ public class DemonSlayerInitiationHandler {
         ResourceLocation.parse("kimetsunoyaiba:kinoto"),
         ResourceLocation.parse("kimetsunoyaiba:kinoe"),
         ResourceLocation.parse("kimetsunoyaiba:hashira"),
+        ResourceLocation.parse("kimetsunoyaiba:strongest"),
         ResourceLocation.parse("kimetsunoyaiba:demon_kill_count_10"),
         ResourceLocation.parse("kimetsunoyaiba:demon_kill_count_20"),
         ResourceLocation.parse("kimetsunoyaiba:demon_kill_count_30"),
@@ -97,7 +105,10 @@ public class DemonSlayerInitiationHandler {
         "net.mcreator.kimetsunoyaiba.procedures.AdvancementRewardProcedure",
         "net.mcreator.kimetsunoyaiba.procedures.CheckAdvancementDemonProcedure",
         "net.mcreator.kimetsunoyaiba.procedures.Advanvement1Procedure",
-        "net.mcreator.kimetsunoyaiba.procedures.ColorChangeProcedure"
+        "net.mcreator.kimetsunoyaiba.procedures.ColorChangeProcedure",
+        // RespawnProcedure directly invokes CheckAdvancementDemonProcedure, so
+        // disabling only the latter does not stop rank grants on respawn.
+        "net.mcreator.kimetsunoyaiba.procedures.RespawnProcedure"
     };
 
     /**
@@ -135,14 +146,14 @@ public class DemonSlayerInitiationHandler {
                 return;
             }
 
-            // Rank and demon kill count progression is gated behind our custom
-            // "completed_final_selectioni" advancement.
-            if (GATED_RANK_AND_KILL_ADVANCEMENTS.contains(advancementId) &&
-                !hasAdvancement(serverPlayer, COMPLETED_FINAL_SELECTION)) {
+            // The custom progression owns these achievements. Revoke every base
+            // rank/kill achievement, including awards made from the base mod's
+            // respawn procedure after final selection has been completed.
+            if (SUPPRESSED_BASE_PROGRESS_ADVANCEMENTS.contains(advancementId)) {
                 revokeAdvancement(serverPlayer, eventAdvancement);
 
                 if (CustomProgressionConfig.enableDebugLogging.get()) {
-                    Log.debug("[KnY-MP Progression] Revoked gated advancement '{}' from {} (missing completed_final_selectioni)",
+                    Log.debug("[KnY-MP Progression] Revoked base progression advancement '{}' from {}",
                         advancementId, player.getName().getString());
                 }
                 return;
@@ -333,6 +344,44 @@ public class DemonSlayerInitiationHandler {
             // CRITICAL: Never use log4j in exception handlers - causes LinkageError crashes
             // Always use System.err.println() instead
             System.err.println("[KnY-MP Progression] Error in onServerTick: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Keep custom progression advancements when Forge creates the replacement
+     * player entity after death, and remove any base rank progress that escaped
+     * the advancement event guard during respawn.
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        try {
+            if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()
+                || !(event.getEntity() instanceof ServerPlayer player)) {
+                return;
+            }
+
+            revokeBaseProgression(player);
+        } catch (Exception e) {
+            System.err.println("[KnY-MP Progression] Error enforcing progression on respawn: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /** Copy custom advancement progress from the old player to a death clone. */
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        try {
+            if (!CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get()
+                || !event.isWasDeath()
+                || !(event.getOriginal() instanceof ServerPlayer original)
+                || !(event.getEntity() instanceof ServerPlayer clone)) {
+                return;
+            }
+
+            restoreCustomProgression(original, clone);
+        } catch (Exception e) {
+            System.err.println("[KnY-MP Progression] Error copying custom progression on death: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -595,6 +644,33 @@ public class DemonSlayerInitiationHandler {
         }
         for (String criterion : completedCriteria) {
             player.getAdvancements().revoke(advancement, criterion);
+        }
+    }
+
+    private static void revokeBaseProgression(ServerPlayer player) {
+        for (ResourceLocation advancementId : SUPPRESSED_BASE_PROGRESS_ADVANCEMENTS) {
+            Advancement advancement = player.server.getAdvancements().getAdvancement(advancementId);
+            if (advancement != null) {
+                revokeAdvancement(player, advancement);
+            }
+        }
+    }
+
+    private static void restoreCustomProgression(ServerPlayer original, ServerPlayer clone) {
+        if (original == null || clone == null || clone.getServer() == null) {
+            return;
+        }
+
+        for (ResourceLocation advancementId : CUSTOM_PROGRESSION_ADVANCEMENTS) {
+            Advancement advancement = clone.server.getAdvancements().getAdvancement(advancementId);
+            if (advancement == null) {
+                continue;
+            }
+
+            AdvancementProgress originalProgress = original.getAdvancements().getOrStartProgress(advancement);
+            for (String criterion : originalProgress.getCompletedCriteria()) {
+                clone.getAdvancements().award(advancement, criterion);
+            }
         }
     }
 

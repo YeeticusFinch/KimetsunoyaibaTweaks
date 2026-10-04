@@ -27,21 +27,30 @@ public final class GravityFieldOutlineManager {
             return;
         }
         ServerLevel level = player.serverLevel();
-        if (level.getGameTime() % PREVIEW_INTERVAL_TICKS != 0L || !GravityBlockEntity.isHoldingGravityBlock(player)) {
+        if (level.getGameTime() % PREVIEW_INTERVAL_TICKS != 0L) {
             return;
         }
 
-        BlockPos center = player.blockPosition();
-        BlockPos min = center.offset(-PREVIEW_RADIUS, -PREVIEW_RADIUS, -PREVIEW_RADIUS);
-        BlockPos max = center.offset(PREVIEW_RADIUS, PREVIEW_RADIUS, PREVIEW_RADIUS);
-        double maxDistanceSqr = PREVIEW_RADIUS * PREVIEW_RADIUS;
-        for (BlockPos pos : BlockPos.betweenClosed(min, max)) {
-            if (pos.distSqr(center) > maxDistanceSqr) {
-                continue;
+        if (GravityBlockEntity.isHoldingGravityBlock(player)) {
+            BlockPos center = player.blockPosition();
+            BlockPos min = center.offset(-PREVIEW_RADIUS, -PREVIEW_RADIUS, -PREVIEW_RADIUS);
+            BlockPos max = center.offset(PREVIEW_RADIUS, PREVIEW_RADIUS, PREVIEW_RADIUS);
+            double maxDistanceSqr = PREVIEW_RADIUS * PREVIEW_RADIUS;
+            for (BlockPos pos : BlockPos.betweenClosed(min, max)) {
+                if (pos.distSqr(center) > maxDistanceSqr) {
+                    continue;
+                }
+                if (level.getBlockEntity(pos) instanceof GravityBlockEntity gravityBlock) {
+                    spawnBox(level, player, gravityBlock.getFieldBox());
+                    spawnArrow(level, player, gravityBlock.getBlockPos(), gravityBlock.getWorldGravityDirection());
+                }
             }
-            if (level.getBlockEntity(pos) instanceof GravityBlockEntity gravityBlock) {
-                spawnBox(level, player, gravityBlock.getFieldBox());
-                spawnArrow(level, player, gravityBlock.getBlockPos(), gravityBlock.getWorldGravityDirection());
+        }
+
+        for (GravityField field : GravityFieldManager.getFieldsNear(level, player.position(), PREVIEW_RADIUS)) {
+            if (player.getUUID().equals(field.excludedEntity())) {
+                spawnBox(level, player, field.box());
+                spawnArrow(level, player, field.sourcePos(), field.gravityDirection());
             }
         }
     }

@@ -1,0 +1,30 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"drum_right_leg": {
+			"animation_length": 1.25,
+			"bones": {
+				"right_arm": {
+					"rotation": {
+						"0.0": [2, 15, 5.5],
+						"0.5": [17.5, 0, 85],
+						"0.75": [15.2529, 29.1736, 11.5013]
+					},
+					"position": [0, 0, 0]
+				},
+				"left_arm": {
+					"rotation": [2, -15, -5.5]
+				},
+				"right_leg": {
+					"rotation": [0, 5, 2.5]
+				},
+				"left_leg": {
+					"rotation": [0, -5, -2.5]
+				},
+				"torso": {
+					"rotation": [0, 0, 0]
+				}
+			}
+		}
+	}
+}

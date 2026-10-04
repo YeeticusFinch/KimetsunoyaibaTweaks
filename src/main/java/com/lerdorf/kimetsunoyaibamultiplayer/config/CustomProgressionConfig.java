@@ -78,7 +78,7 @@ public class CustomProgressionConfig {
                     "  - Automatic granting of nichirinsword",
                     "  - Automatic spawning and taming of kasugai_crow",
                     "  - Automatic granting of mizunoto advancement",
-                    "  - Retention of base rank advancements (mizunoto through strongest)",
+                     "  - Base rank advancements (mizunoto through strongest)",
                     "",
                     "This is useful if:",
                     "  - The base mod is bugging out and giving items multiple times",

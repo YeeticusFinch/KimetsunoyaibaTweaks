@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.blocks;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.LotusBlockItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -200,6 +201,22 @@ public class ModBlocks {
             .sound(SoundType.WOOD)
             .strength(1.0f, 10.0f)
             .noOcclusion()));
+
+    public static final RegistryObject<Block> FUSUMA_WINDOW_2 = registerBlock("fusuma_window_2",
+        () -> new FusumaWindow2Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(1.0f, 10.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> BIRDHOUSE = registerBlock("birdhouse",
+        () -> new BirdhouseBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(1.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<LotusBlock> LOTUS = registerLotusBlock();
 
     public static final RegistryObject<Block> DARK_BAMBOO_FUSUMA = registerBlock("dark_bamboo_fusuma",
         () -> new DarkBambooFusumaBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
@@ -956,6 +973,17 @@ public class ModBlocks {
         RegistryObject<T> toReturn = BLOCKS.register(name, block);
         registerBlockItem(name, toReturn);
         return toReturn;
+    }
+
+    private static RegistryObject<LotusBlock> registerLotusBlock() {
+        RegistryObject<LotusBlock> block = BLOCKS.register("lotus",
+            () -> new LotusBlock(BlockBehaviour.Properties.copy(Blocks.LILY_PAD)
+                .strength(0.0f)
+                .noOcclusion()
+                .lightLevel(state -> 4)));
+        com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems.ITEMS.register("lotus",
+            () -> new LotusBlockItem(block.get(), new Item.Properties().stacksTo(64)));
+        return block;
     }
 
     /**

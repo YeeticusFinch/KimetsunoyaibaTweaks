@@ -23,7 +23,6 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
     private static final double NATAGUMO_BASE_Y = 75.0;
     private static final double NATAGUMO_TARGET_SUMMIT_Y = 280.0;
     private static final double NATAGUMO_MAX_Y = 280.0;
-    private static final double NATAGUMO_EDGE_BLEND_PROFILE = 0.12;
     static final double RIVER_WATER_HALF_WIDTH = 3.0;
 
     private final BiomeSource delegate;
@@ -155,10 +154,10 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
 
         double clampedProfile = clamp(profile, 0.0, 1.0);
         double targetHeight = natagumoTargetSurfaceHeight(blockX, blockZ, clampedProfile);
-        // Keep the mountain boundary continuous, then let the radial profile own the interior.
-        double vanillaBlend = smootherStep(clamp(
-                clampedProfile / NATAGUMO_EDGE_BLEND_PROFILE, 0.0, 1.0));
-        double finalHeight = lerp(vanillaHeight, targetHeight, vanillaBlend);
+        // Fade only the positive height delta so the mount cannot drop into a cliff at its edge.
+        double mountainHeight = Math.max(vanillaHeight, targetHeight);
+        double mountainBlend = smootherStep(clampedProfile);
+        double finalHeight = lerp(vanillaHeight, mountainHeight, mountainBlend);
         return clamp(finalHeight, -64.0, NATAGUMO_MAX_Y);
     }
 

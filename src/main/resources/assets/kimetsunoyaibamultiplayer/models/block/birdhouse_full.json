@@ -1,0 +1,9 @@
+{
+  "parent": "kimetsunoyaibamultiplayer:block/birdhouse",
+  "render_type": "cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "0": "kimetsunoyaibamultiplayer:block/birdhouse_full",
+    "particle": "kimetsunoyaibamultiplayer:block/birdhouse_full"
+  }
+}

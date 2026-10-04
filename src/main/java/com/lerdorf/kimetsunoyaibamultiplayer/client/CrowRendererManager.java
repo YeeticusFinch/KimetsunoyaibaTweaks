@@ -18,6 +18,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanaeRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanawoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KiriyaRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KyogaiRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KyogaiClawRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DirectionArrowRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanrojiRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroFPRenderer;
@@ -52,7 +54,9 @@ public class CrowRendererManager {
 
         // Register renderer for Mitsuri Kanroji
         event.registerEntityRenderer(ModEntities.KANROJI.get(), KanrojiRenderer::new);
-        event.registerEntityRenderer(ModEntities.KYOGAI.get(), KyogaiRenderer::new);
+         event.registerEntityRenderer(ModEntities.KYOGAI.get(), KyogaiRenderer::new);
+         event.registerEntityRenderer(ModEntities.KYOGAI_CLAW.get(), KyogaiClawRenderer::new);
+         event.registerEntityRenderer(ModEntities.DIRECTION_ARROW.get(), DirectionArrowRenderer::new);
 
         // Register renderers for Kanae and Kanawo (Flower Breathing)
         event.registerEntityRenderer(ModEntities.KANAE.get(), KanaeRenderer::new);

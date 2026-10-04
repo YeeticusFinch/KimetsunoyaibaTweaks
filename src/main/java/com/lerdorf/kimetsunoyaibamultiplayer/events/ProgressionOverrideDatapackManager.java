@@ -41,6 +41,7 @@ public class ProgressionOverrideDatapackManager {
         "data/kimetsunoyaiba/advancements/kinoto.json",
         "data/kimetsunoyaiba/advancements/kinoe.json",
         "data/kimetsunoyaiba/advancements/hashira.json",
+        "data/kimetsunoyaiba/advancements/strongest.json",
         "data/kimetsunoyaiba/advancements/demon_kill_count_10.json",
         "data/kimetsunoyaiba/advancements/demon_kill_count_20.json",
         "data/kimetsunoyaiba/advancements/demon_kill_count_30.json",

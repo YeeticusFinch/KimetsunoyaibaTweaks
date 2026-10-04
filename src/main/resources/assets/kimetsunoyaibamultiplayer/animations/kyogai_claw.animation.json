@@ -1,0 +1,17 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"claw_spin": {
+			"loop": true,
+			"animation_length": 0.3333,
+			"bones": {
+				"claw": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"0.3333": [360, 0, 0]
+					}
+				}
+			}
+		}
+	}
+}

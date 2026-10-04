@@ -24,6 +24,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SheathCosmeticsSync
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectMeditationTargetPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WebTraversalInputPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.KyogaiGravityArrowPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -231,6 +232,13 @@ public class ModNetworking {
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BossArrowPacket::new)
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BossArrowPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BossArrowPacket::handle)
+                .add();
+
+        int kyogaiGravityArrowPacketId = id();
+        net.messageBuilder(KyogaiGravityArrowPacket.class, kyogaiGravityArrowPacketId)
+                .decoder(KyogaiGravityArrowPacket::new)
+                .encoder(KyogaiGravityArrowPacket::toBytes)
+                .consumerMainThread(KyogaiGravityArrowPacket::handle)
                 .add();
 
         int orochiDismountPacketId = id();

@@ -1,0 +1,9 @@
+{
+  "parent": "kimetsunoyaibamultiplayer:custom/fusuma_window_2",
+  "textures": {
+    "all": "kimetsunoyaibamultiplayer:block/fusuma_window_2",
+    "particle": "kimetsunoyaibamultiplayer:block/fusuma_window_2",
+    "0": "kimetsunoyaibamultiplayer:block/fusuma_window_2"
+  },
+  "render_type": "cutout"
+}

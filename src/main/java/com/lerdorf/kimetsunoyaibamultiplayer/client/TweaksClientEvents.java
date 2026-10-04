@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -31,6 +32,19 @@ public final class TweaksClientEvents {
         LogoButton button = new LogoButton(pauseScreen.width - 28, 8, 20, 20,
             Component.empty(), ignored ->
                 Minecraft.getInstance().setScreen(new TweaksMenuScreen(pauseScreen)));
+        button.setTooltip(Tooltip.create(Component.literal("Kimetsunoyaiba Tweaks")));
+        event.addListener(button);
+    }
+
+    @SubscribeEvent
+    public static void addMainMenuButton(ScreenEvent.Init.Post event) {
+        if (!(event.getScreen() instanceof TitleScreen titleScreen)) {
+            return;
+        }
+
+        LogoButton button = new LogoButton(titleScreen.width - 28, 8, 20, 20,
+            Component.empty(), ignored ->
+                Minecraft.getInstance().setScreen(new TweaksMenuScreen(titleScreen)));
         button.setTooltip(Tooltip.create(Component.literal("Kimetsunoyaiba Tweaks")));
         event.addListener(button);
     }

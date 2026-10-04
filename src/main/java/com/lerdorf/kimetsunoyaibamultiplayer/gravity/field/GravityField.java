@@ -22,11 +22,20 @@ public record GravityField(
     int height,
     boolean enabled,
     double priority,
-    BlockPos sourcePos
+    BlockPos sourcePos,
+    @Nullable UUID excludedEntity
 ) implements GravityEffectSource {
+    public GravityField(UUID id, ResourceKey<Level> dimension, AABB box, Direction projectorFacing,
+                        Direction gravityDirection, int range, int width, int height, boolean enabled,
+                        double priority, BlockPos sourcePos) {
+        this(id, dimension, box, projectorFacing, gravityDirection, range, width, height, enabled,
+            priority, sourcePos, null);
+    }
+
     @Override
     public boolean affects(Entity entity) {
-        return enabled && entity.level().dimension().equals(dimension) && box.intersects(entity.getBoundingBox());
+        return enabled && (excludedEntity == null || !excludedEntity.equals(entity.getUUID()))
+            && entity.level().dimension().equals(dimension) && box.intersects(entity.getBoundingBox());
     }
 
     @Override

@@ -126,6 +126,12 @@
       "g": 215,
       "b": 205,
       "a": 170
+    },
+    "lotus_glow": {
+      "r": 255,
+      "g": 70,
+      "b": 107,
+      "a": 255
     }
   },
   "LightBlock": [
@@ -223,6 +229,11 @@
       "block": "kimetsunoyaibamultiplayer:wisteria_leaves_pink",
       "color": "#wisteria_pink",
       "radius": 1
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:lotus",
+      "color": "#lotus_glow",
+      "radius": 3
     }
   ],
   "Bloom": [
@@ -267,6 +278,9 @@
     },
     {
       "block": "kimetsunoyaibamultiplayer:wisteria_leaves_pink"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:lotus"
     },
     {
       "block": "kimetsunoyaibamultiplayer:wisteria_petals_cyan"
@@ -643,6 +657,11 @@
       "item_id": "kimetsunoyaiba:lantern_1",
       "color": "#lantern_1_weight_average_color",
       "radius": 14
+    },
+    {
+      "item_id": "kimetsunoyaibamultiplayer:lotus",
+      "color": "#lotus_glow",
+      "radius": 12
     }
   ],
   "BuildIn": false

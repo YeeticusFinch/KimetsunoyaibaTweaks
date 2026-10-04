@@ -21,6 +21,8 @@ public class BlockRenderTypeHandler {
         event.enqueueWork(() -> {
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.CHEST_OF_DRAWERS.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.SWORD_RACK.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.BIRDHOUSE.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.LOTUS.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.SIDEWAYS_LANTERN_1.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.SIDEWAYS_LANTERN_2.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.SIDEWAYS_LANTERN_2RED.get(), RenderType.cutout());

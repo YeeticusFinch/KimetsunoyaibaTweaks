@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "kimetsunoyaiba:blooddemonart_demon_king"
+    },
+    "title": {
+      "translate": "advancements.strongest.title"
+    },
+    "description": {
+      "translate": "advancements.strongest.descr"
+    },
+    "frame": "challenge",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": {
+    "strongest_0": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "kimetsunoyaiba:demon_slayer"
+}

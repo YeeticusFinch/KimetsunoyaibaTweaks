@@ -23,6 +23,14 @@ public class ModSounds {
     // Music discs
     public static final RegistryObject<SoundEvent> DISC_TANJIRO_VS_ENMU = registerSoundEvent("disc_tanjiro_vs_enmu");
 
+    // Kyogai's drum abilities
+    public static final RegistryObject<SoundEvent> DRUM_LEFT_SHOULDER = registerSoundEvent("drum_left_shoulder");
+    public static final RegistryObject<SoundEvent> DRUM_RIGHT_SHOULDER = registerSoundEvent("drum_right_shoulder");
+    public static final RegistryObject<SoundEvent> DRUM_LEFT_LEG = registerSoundEvent("drum_left_leg");
+    public static final RegistryObject<SoundEvent> DRUM_RIGHT_LEG = registerSoundEvent("drum_right_leg");
+    public static final RegistryObject<SoundEvent> DRUM_NAVEL = registerSoundEvent("drum_navel");
+    public static final RegistryObject<SoundEvent> DRUM_BACK = registerSoundEvent("drum_back");
+
     private static RegistryObject<SoundEvent> registerSoundEvent(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

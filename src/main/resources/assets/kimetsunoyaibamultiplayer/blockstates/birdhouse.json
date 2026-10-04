@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "full=false": {
+      "model": "kimetsunoyaibamultiplayer:block/birdhouse"
+    },
+    "full=true": {
+      "model": "kimetsunoyaibamultiplayer:block/birdhouse_full"
+    }
+  }
+}

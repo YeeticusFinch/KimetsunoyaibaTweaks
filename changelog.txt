@@ -1,3 +1,16 @@
+1.6.5694
+- Fixed bugs with Kyogai's BDA
+- Fixed bug with new tsuzumi lantern
+- Improved the birdhouse texture
+- Fixed bugs with the custom progression achievements
+- Fixed infinite recusrion bug causing Doma spawning to crash the game
+- Added lotus
+- Added ability to grow new spider lilies by using bonemeal in wisteria forests
+
+1.6.5693
+- Added Kyogai's BDA
+- Added bird house and new fusuma window 2
+
 1.6.5692
 - Updated the colors of the tsuzumi lantern block
 - Improved how the tsuzumi lantern blocks are placed

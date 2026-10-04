@@ -33,6 +33,7 @@ import java.util.Optional;
 public class StructureResidentSpawner {
 
     private static final long RESPAWN_COOLDOWN_MS = 60_000; // 60s throttle
+    private static final ThreadLocal<Boolean> SPAWNING_DOMA = ThreadLocal.withInitial(() -> false);
 
     // Key: dimensionId + ":" + structureId + ":" + centerPos
     private static final Map<String, Long> lastSpawnTime = new HashMap<>();
@@ -46,7 +47,10 @@ public class StructureResidentSpawner {
 
         LevelAccessor accessor = event.getLevel();
         Entity e = event.getEntity();
-        if (!(accessor instanceof ServerLevel level) || !(e instanceof Mob)) {
+        if (Boolean.TRUE.equals(SPAWNING_DOMA.get())
+            || isDomaEntity(e)
+            || !(accessor instanceof ServerLevel level)
+            || !(e instanceof Mob)) {
             return;
         }
         Log.startupProbeOnce("StructureResidentSpawner.onEntityJoinLevel");
@@ -76,6 +80,10 @@ public class StructureResidentSpawner {
     }
 
     private static void ensureDomaPresent(ServerLevel level, ResourceLocation structureId, BlockPos center) {
+        if (Boolean.TRUE.equals(SPAWNING_DOMA.get())) {
+            return;
+        }
+
         // Throttle per structure center
         String key = level.dimension().location() + ":" + structureId + ":" + center.getX() + "," + center.getY() + "," + center.getZ();
         long now = System.currentTimeMillis();
@@ -101,14 +109,28 @@ public class StructureResidentSpawner {
 
         // Spawn Doma at structure center (or slightly offset to valid ground)
         if (domaType != null) {
-            Entity doma = domaType.create(level);
-            if (doma != null) {
-                BlockPos spawn = findSpawnablePosition(level, center);
-                doma.moveTo(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, level.random.nextFloat() * 360F, 0);
-                level.addFreshEntity(doma);
-                lastSpawnTime.put(key, now);
+            SPAWNING_DOMA.set(true);
+            try {
+                Entity doma = domaType.create(level);
+                if (doma != null) {
+                    BlockPos spawn = findSpawnablePosition(level, center);
+                    doma.moveTo(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, level.random.nextFloat() * 360F, 0);
+                    level.addFreshEntity(doma);
+                    lastSpawnTime.put(key, now);
+                }
+            } finally {
+                SPAWNING_DOMA.set(false);
             }
         }
+    }
+
+    private static boolean isDomaEntity(Entity entity) {
+        if (entity == null) {
+            return false;
+        }
+
+        ResourceLocation entityId = EntityType.getKey(entity.getType());
+        return entityId != null && "doma".equals(entityId.getPath());
     }
 
     private static BlockPos findSpawnablePosition(ServerLevel level, BlockPos origin) {

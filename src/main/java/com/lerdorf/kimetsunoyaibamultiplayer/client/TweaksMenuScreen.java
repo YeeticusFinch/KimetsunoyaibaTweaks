@@ -1,72 +1,60 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.config.ConfigEditorRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class TweaksMenuScreen extends Screen {
+    private static final int PHOTO_WIDTH = 2000;
+    private static final int PHOTO_HEIGHT = 1125;
+    private static final int PHOTO_COUNT = 5;
+    private static final int MENU_LEFT = 28;
+    private static final int MENU_TOP = 70;
+    private static final int MENU_WIDTH = 250;
+    private static final int BUTTON_HEIGHT = 24;
+    private static final int BUTTON_GAP = 8;
+
     private final Screen parent;
+    private final ResourceLocation background;
 
     public TweaksMenuScreen(Screen parent) {
         super(Component.literal("Kimetsunoyaiba Tweaks"));
         this.parent = parent;
+        int photoIndex = ThreadLocalRandom.current().nextInt(PHOTO_COUNT);
+        this.background = ResourceLocation.fromNamespaceAndPath(
+            KimetsunoyaibaMultiplayer.MODID, "textures/gui/menu_photos/photo_" + photoIndex + ".png");
     }
 
     @Override
     protected void init() {
-        int panelWidth = Math.min(430, width - 24);
-        int left = (width - panelWidth) / 2;
-        int top = panelTop();
-        int buttonY = top + 72;
-
-        addRenderableWidget(Button.builder(Component.literal("Client Config"), button ->
-                minecraft.setScreen(new TweaksConfigScreen(this, ConfigEditorRegistry.EditorTab.CLIENT)))
-            .bounds(left + 35, buttonY, panelWidth - 70, 24).build());
-        buttonY += 34;
-
-        if (hasServerAccess()) {
-            addRenderableWidget(Button.builder(Component.literal("Server Config"), button ->
-                    minecraft.setScreen(new TweaksConfigScreen(this, ConfigEditorRegistry.EditorTab.SERVER)))
-                .bounds(left + 35, buttonY, panelWidth - 70, 24).build());
-            buttonY += 34;
-        }
-
-        if (hasKnyWorldsConfig()) {
-            addRenderableWidget(Button.builder(Component.literal("KnY Worlds Config"), button ->
-                    minecraft.setScreen(new TweaksConfigScreen(this, ConfigEditorRegistry.EditorTab.KNY_WORLDS)))
-                .bounds(left + 35, buttonY, panelWidth - 70, 24).build());
-            buttonY += 34;
-        }
-
-        addRenderableWidget(Button.builder(Component.literal("Shimmer"), button ->
-                minecraft.setScreen(new ShimmerScreen(this)))
-            .bounds(left + 35, buttonY, panelWidth - 70, 24).build());
-        buttonY += 34;
-
-        addRenderableWidget(Button.builder(Component.literal("Back"), button -> onClose())
-            .bounds(left + 35, buttonY, panelWidth - 70, 20).build());
+        int buttonY = MENU_TOP;
+        addMenuButton("Config", button -> minecraft.setScreen(new ConfigMenuScreen(this)), buttonY);
+        buttonY += BUTTON_HEIGHT + BUTTON_GAP;
+        addMenuButton("Recommended Mods", button -> minecraft.setScreen(new RecommendedModsScreen(this)), buttonY);
+        buttonY += BUTTON_HEIGHT + BUTTON_GAP;
+        addMenuButton("KnY Servers", button -> minecraft.setScreen(new KnyServersScreen(this)), buttonY);
+        buttonY += BUTTON_HEIGHT + BUTTON_GAP;
+        addMenuButton("Wiki", button -> Util.getPlatform().openUri(
+            "https://github.com/YeeticusFinch/KimetsunoyaibaTweaks/wiki"), buttonY);
+        buttonY += BUTTON_HEIGHT + BUTTON_GAP + 8;
+        addMenuButton("Back", button -> onClose(), buttonY, MENU_WIDTH / 4);
     }
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(guiGraphics);
-        int panelWidth = Math.min(430, width - 24);
-        int left = (width - panelWidth) / 2;
-        int top = panelTop();
-        int panelHeight = panelHeight();
-        guiGraphics.fill(left - 4, top - 4, left + panelWidth + 4, top + panelHeight + 4, 0xAA08090D);
-        guiGraphics.fill(left, top, left + panelWidth, top + panelHeight, 0xF01C1720);
-        guiGraphics.fill(left + 2, top + 2, left + panelWidth - 2, top + panelHeight - 2, 0xF52A2028);
+        renderPhotoBackground(guiGraphics);
 
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(width / 2.0F, top + 22.0F, 0.0F);
-        guiGraphics.pose().scale(1.55F, 1.55F, 1.0F);
-        guiGraphics.drawCenteredString(font, title, 0, 0, 0xFFF2D5A0);
+        guiGraphics.pose().translate(MENU_LEFT, 34.0F, 0.0F);
+        guiGraphics.pose().scale(1.45F, 1.45F, 1.0F);
+        guiGraphics.drawString(font, title, 0, 0, 0xFFF2D5A0, false);
         guiGraphics.pose().popPose();
-        guiGraphics.drawCenteredString(font, Component.literal("Configure your Kimetsunoyaiba experience"),
-            width / 2, top + 44, 0xFFC8B9AC);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
@@ -80,20 +68,25 @@ public final class TweaksMenuScreen extends Screen {
         return false;
     }
 
-    private boolean hasServerAccess() {
-        return minecraft != null && minecraft.player != null && minecraft.player.hasPermissions(2)
-            && !ConfigEditorRegistry.specs(ConfigEditorRegistry.EditorTab.SERVER).isEmpty();
+    private void renderPhotoBackground(GuiGraphics guiGraphics) {
+        guiGraphics.fill(0, 0, width, height, 0xFF08090D);
+        float scale = Math.max(width / (float) PHOTO_WIDTH, height / (float) PHOTO_HEIGHT);
+        float drawWidth = PHOTO_WIDTH * scale;
+        float drawHeight = PHOTO_HEIGHT * scale;
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate((width - drawWidth) / 2.0F, (height - drawHeight) / 2.0F, 0.0F);
+        guiGraphics.pose().scale(scale, scale, 1.0F);
+        guiGraphics.blit(background, 0, 0, 0, 0, PHOTO_WIDTH, PHOTO_HEIGHT, PHOTO_WIDTH, PHOTO_HEIGHT);
+        guiGraphics.pose().popPose();
     }
 
-    private boolean hasKnyWorldsConfig() {
-        return !ConfigEditorRegistry.specs(ConfigEditorRegistry.EditorTab.KNY_WORLDS).isEmpty();
+    private void addMenuButton(String label, Button.OnPress onPress, int y) {
+        addMenuButton(label, onPress, y, MENU_WIDTH / 2);
     }
 
-    private int panelHeight() {
-        return hasServerAccess() ? 234 : 200;
+    private void addMenuButton(String label, Button.OnPress onPress, int y, int buttonWidth) {
+        addRenderableWidget(Button.builder(Component.literal(label), onPress)
+            .bounds(MENU_LEFT, y, Math.min(buttonWidth, width - MENU_LEFT - 24), BUTTON_HEIGHT).build());
     }
 
-    private int panelTop() {
-        return Math.max(24, (height - panelHeight() - 60) / 2);
-    }
 }

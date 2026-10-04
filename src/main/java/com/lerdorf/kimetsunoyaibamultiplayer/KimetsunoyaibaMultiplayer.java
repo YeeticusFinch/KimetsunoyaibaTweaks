@@ -1202,6 +1202,10 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.SixEyeDemonHeadRenderer::new
             );
             event.registerBlockEntityRenderer(
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.LOTUS.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.LotusRenderer::new
+            );
+            event.registerBlockEntityRenderer(
                 com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.TRAIN_WHEEL.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.TrainWheelRenderer::new
             );
