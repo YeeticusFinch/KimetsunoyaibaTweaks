@@ -21,7 +21,8 @@ public final class DemonSlayerRankManager {
         "kimetsunoyaibamultiplayer", "demon_slayer_corps");
     private static final ResourceLocation COMPLETED_FINAL_SELECTION = ResourceLocation.fromNamespaceAndPath(
         "kimetsunoyaibamultiplayer", "completed_final_selectioni");
-    private static final int BUFF_DURATION_TICKS = 60;
+    private static final int BUFF_DURATION_TICKS = 20 * 30;
+    private static final int BUFF_REFRESH_INTERVAL_TICKS = 20 * 20;
 
     private DemonSlayerRankManager() {
     }
@@ -86,6 +87,20 @@ public final class DemonSlayerRankManager {
         return rank == null ? "Unranked" : rank.displayName();
     }
 
+    public static int getSpeedAmplifier(ServerPlayer player) {
+        DemonSlayerRank rank = getRank(player);
+        return rank == null ? -1 : rank.level() <= 5 ? 0 : 1;
+    }
+
+    public static void refreshSpeedEffect(ServerPlayer player) {
+        int speedAmplifier = getSpeedAmplifier(player);
+        if (speedAmplifier < 0) {
+            return;
+        }
+        player.addEffect(new MobEffectInstance(
+            MobEffects.MOVEMENT_SPEED, BUFF_DURATION_TICKS, speedAmplifier, true, false, true));
+    }
+
     public static void syncPlayer(ServerPlayer player) {
         if (player == null || isDemon(player)) {
             return;
@@ -106,7 +121,7 @@ public final class DemonSlayerRankManager {
     }
 
     public static void tick(ServerPlayer player) {
-        if (player == null || player.level().getGameTime() % 20L != 0L) {
+        if (player == null || player.level().getGameTime() % BUFF_REFRESH_INTERVAL_TICKS != 0L) {
             return;
         }
         syncPlayer(player);
@@ -177,34 +192,15 @@ public final class DemonSlayerRankManager {
         int level = rank.level();
         AttributeInstance maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
         if (maxHealth != null) {
-            double health = switch (level) {
-                case 1 -> 40.0D;
-                case 2 -> 60.0D;
-                case 3 -> 70.0D;
-                case 4 -> 80.0D;
-                case 5 -> 82.0D;
-                case 6 -> 84.0D;
-                case 7 -> 86.0D;
-                case 8 -> 88.0D;
-                case 9 -> 90.0D;
-                case 10 -> 92.0D;
-                case 11 -> 94.0D;
-                case 12 -> 95.0D;
-                default -> 20.0D;
-            };
-            maxHealth.setBaseValue(health);
-            if (player.getHealth() > health) {
-                player.setHealth((float) health);
+            // Rank health is supplied by HEALTH_BOOST; restore the vanilla base
+            // in case an earlier version stored the old direct max-health bonus.
+            maxHealth.setBaseValue(20.0D);
+            if (player.getHealth() > player.getMaxHealth()) {
+                player.setHealth(player.getMaxHealth());
             }
         }
 
-        int speedAmplifier = switch (level) {
-            case 1 -> 0;
-            case 2 -> 1;
-            case 3 -> 3;
-            case 4, 5 -> 1;
-            default -> 0;
-        };
+        int speedAmplifier = level <= 5 ? 0 : 1;
         int strengthAmplifier = level == 1 ? 0 : level - 2;
         if (level >= 11) {
             strengthAmplifier += 2;
@@ -216,10 +212,28 @@ public final class DemonSlayerRankManager {
         player.addEffect(new MobEffectInstance(
             MobEffects.DAMAGE_BOOST, BUFF_DURATION_TICKS, strengthAmplifier, true, false, true));
 
-        if (level >= 2) {
-            int resistanceAmplifier = Math.min(2, level - 2);
+        int resistanceAmplifier = level <= 5 ? 0 : level <= 10 ? 1 : 2;
+        player.addEffect(new MobEffectInstance(
+            MobEffects.DAMAGE_RESISTANCE, BUFF_DURATION_TICKS, resistanceAmplifier, true, false, true));
+
+        int healthBoostAmplifier = switch (level) {
+            case 2, 3 -> 0;
+            case 4 -> 1;
+            case 5 -> 2;
+            case 6 -> 3;
+            case 7 -> 4;
+            case 8 -> 5;
+            case 9 -> 6;
+            case 10 -> 7;
+            case 11 -> 8;
+            case 12 -> 9;
+            default -> -1;
+        };
+        if (healthBoostAmplifier >= 0) {
             player.addEffect(new MobEffectInstance(
-                MobEffects.DAMAGE_RESISTANCE, BUFF_DURATION_TICKS, resistanceAmplifier, true, false, true));
+                MobEffects.HEALTH_BOOST, BUFF_DURATION_TICKS, healthBoostAmplifier, true, false, true));
+        } else {
+            player.removeEffect(MobEffects.HEALTH_BOOST);
         }
     }
 
@@ -227,6 +241,15 @@ public final class DemonSlayerRankManager {
         player.removeEffect(MobEffects.MOVEMENT_SPEED);
         player.removeEffect(MobEffects.DAMAGE_BOOST);
         player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
+        player.removeEffect(MobEffects.HEALTH_BOOST);
+
+        AttributeInstance maxHealth = player.getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth != null) {
+            maxHealth.setBaseValue(20.0D);
+            if (player.getHealth() > player.getMaxHealth()) {
+                player.setHealth(player.getMaxHealth());
+            }
+        }
     }
 
     private static boolean isDemon(ServerPlayer player) {

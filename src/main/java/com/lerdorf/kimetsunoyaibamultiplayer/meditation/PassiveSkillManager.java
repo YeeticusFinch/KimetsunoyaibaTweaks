@@ -14,6 +14,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonSlayerSkillPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ImpactParticleOptions;
+import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRankManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.PlayerRole;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.AttackDamageHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
@@ -48,6 +49,7 @@ public final class PassiveSkillManager {
     public static final String MARTIAL_ARTS_ID = "demon_martial_arts";
     public static final String CLAWS_ID = "demon_claws";
     public static final String DEMON_GUARD_ID = "demon_guard";
+    public static final String FAST_SPRINT_ID = "fast_sprint";
     public static final String SLAYER_GUARD_ID = "slayer_guard";
     public static final String SLAYER_DASH_ID = "slayer_dash";
 
@@ -68,8 +70,12 @@ public final class PassiveSkillManager {
     private static final int MARTIAL_ARTS_MAX_LEVEL = 5;
     private static final int CLAWS_MAX_LEVEL = 5;
     private static final int DEMON_GUARD_MAX_LEVEL = 5;
+    private static final int FAST_SPRINT_MAX_LEVEL = 5;
     private static final int SLAYER_GUARD_MAX_LEVEL = 5;
     private static final int SLAYER_DASH_MAX_LEVEL = 5;
+    private static final int FAST_SPRINT_DURATION_TICKS = 20 * 3;
+    private static final int FAST_SPRINT_REFRESH_TICKS = 20 * 2;
+    private static final String FAST_SPRINT_ACTIVE = "KnYFastSprintActive";
     private static final int SLAYER_GUARD_COOLDOWN_TICKS = 60;
     private static final int SLAYER_DASH_COOLDOWN_TICKS_LEVEL_ONE = 60;
     private static final int SLAYER_DASH_COOLDOWN_TICKS_LEVEL_FIVE = 20;
@@ -110,7 +116,10 @@ public final class PassiveSkillManager {
             "Damage scales with level and may apply one configured target BDA effect."),
         new SkillDefinition(DEMON_GUARD_ID, "Guard", DEMON_GUARD_MAX_LEVEL,
             "Hold X to maintain a defensive stance with any item or empty hand.",
-            "Guard strength and duration scale with level. Ends on release or interruption.")
+            "Guard strength and duration scale with level. Ends on release or interruption."),
+        new SkillDefinition(FAST_SPRINT_ID, "Fast Sprint", FAST_SPRINT_MAX_LEVEL,
+            "While sprinting, gain temporary speed based on demon power and Fast Sprint level.",
+            "Checks every 2 seconds and refreshes a 3-second speed effect while sprinting.")
     );
 
     private static final List<SkillDefinition> SLAYER_SKILLS = List.of(
@@ -119,7 +128,10 @@ public final class PassiveSkillManager {
             "Guard strength and duration scale with level. Ends on release or interruption."),
         new SkillDefinition(SLAYER_DASH_ID, "Dash", SLAYER_DASH_MAX_LEVEL,
             "Press Z to launch forward with a short cooldown.",
-            "Cooldown decreases and dash power increases with level.")
+            "Cooldown decreases and dash power increases with level."),
+        new SkillDefinition(FAST_SPRINT_ID, "Fast Sprint", FAST_SPRINT_MAX_LEVEL,
+            "While sprinting, gain temporary speed based on rank and Fast Sprint level.",
+            "Checks every 2 seconds and refreshes a 3-second speed effect while sprinting.")
     );
 
     private PassiveSkillManager() {
@@ -257,12 +269,61 @@ public final class PassiveSkillManager {
             }
         }
 
+        if (player.level().getGameTime() % FAST_SPRINT_REFRESH_TICKS == 0L) {
+            tickFastSprint(player);
+        }
+
         if (isGuardActive(player)) {
             if (canUseGuard(player)) {
                 tickGuard(player);
             } else {
                 cancelGuard(player);
             }
+        }
+    }
+
+    private static void tickFastSprint(ServerPlayer player) {
+        PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
+        boolean demon = role == PlayerRole.DEMON && isDemon(player);
+        boolean demonSlayer = role == PlayerRole.DEMON_SLAYER && isDemonSlayer(player);
+        if ((!demon && !demonSlayer) || !player.isSprinting()) {
+            stopFastSprint(player, demonSlayer);
+            return;
+        }
+
+        int skillLevel = getSkillLevel(player, FAST_SPRINT_ID);
+        if (skillLevel <= 0) {
+            stopFastSprint(player, demonSlayer);
+            return;
+        }
+
+        int powerSpeedAmplifier = demon
+            ? Math.max(0, DemonTransformationHandler.getEffectiveMuzanBlood(player))
+            : Math.max(0, DemonSlayerRankManager.getSpeedAmplifier(player));
+        int speedAmplifier = powerSpeedAmplifier + skillLevel;
+
+        // Replace the normal speed effect while sprinting so the temporary
+        // effect uses the exact combined amplifier, including skill changes.
+        player.removeEffect(MobEffects.MOVEMENT_SPEED);
+        player.addEffect(new MobEffectInstance(
+            MobEffects.MOVEMENT_SPEED,
+            FAST_SPRINT_DURATION_TICKS,
+            speedAmplifier,
+            true,
+            false,
+            true));
+        player.getPersistentData().putBoolean(FAST_SPRINT_ACTIVE, true);
+    }
+
+    private static void stopFastSprint(ServerPlayer player, boolean demonSlayer) {
+        if (!player.getPersistentData().getBoolean(FAST_SPRINT_ACTIVE)) {
+            return;
+        }
+
+        player.getPersistentData().putBoolean(FAST_SPRINT_ACTIVE, false);
+        player.removeEffect(MobEffects.MOVEMENT_SPEED);
+        if (demonSlayer) {
+            DemonSlayerRankManager.refreshSpeedEffect(player);
         }
     }
 
@@ -683,6 +744,9 @@ public final class PassiveSkillManager {
             case DEMON_GUARD_ID -> level > 0
                 ? "Defensive power: " + guardPower(level) + ". Works with any held item or empty hand."
                 : "Max level 5. Hold X to guard with any held item or empty hand.";
+            case FAST_SPRINT_ID -> level > 0
+                ? "Sprint speed amplifier: " + (getPowerSpeedAmplifier(player) + level) + ". Refreshes every 2 seconds."
+                : "Max level 5. Grants temporary speed while sprinting.";
             case SLAYER_GUARD_ID -> level > 0
                 ? "Defensive power: " + guardPower(level) + ". Movement speed is reduced to 30% while held."
                 : "Max level 5. Hold X to guard; ends on release or interruption.";
@@ -714,6 +778,13 @@ public final class PassiveSkillManager {
     private static int getTotalSkillPoints(ServerPlayer player) {
         int effectiveBlood = DemonTransformationHandler.getEffectiveMuzanBlood(player);
         return effectiveBlood <= 0 ? 0 : 1 + (effectiveBlood / 10);
+    }
+
+    private static int getPowerSpeedAmplifier(ServerPlayer player) {
+        if (isDemon(player)) {
+            return Math.max(0, DemonTransformationHandler.getEffectiveMuzanBlood(player));
+        }
+        return Math.max(0, DemonSlayerRankManager.getSpeedAmplifier(player));
     }
 
     private static int getSpentSkillPoints(ServerPlayer player, List<SkillDefinition> skills) {

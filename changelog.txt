@@ -1,5 +1,12 @@
 1.6.5695
 - Improvements for Kyogai's BDA
+- Added WIP entities for demon makomo, demon sabito, demon kanawo, and demon kanae
+- Added some new demon eyes
+- Bugfixes for custom progression demon slayer ranks
+- Added nezuko running to the loading screen
+- Added the new `/setdsrank` command for force giving yourself demon slayer ranks
+- Added Fast Sprint passive skill
+- Adjusted the buffs for each demon slayer rank
 
 1.6.5694
 - Fixed bugs with Kyogai's BDA
