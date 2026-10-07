@@ -1,0 +1,5 @@
+{
+  "display": {"icon": {"item": "kimetsunoyaiba:nichirinsword_water"}, "title": {"text": "Kanoe"}, "description": {"text": "Reach the Kanoe rank."}, "frame": "goal", "show_toast": true, "announce_to_chat": true, "hidden": false},
+  "criteria": {"kanoe_0": {"trigger": "minecraft:impossible"}},
+  "parent": "kimetsunoyaibamultiplayer:kanoto"
+}

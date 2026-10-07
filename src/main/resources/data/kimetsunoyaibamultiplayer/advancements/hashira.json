@@ -1,0 +1,5 @@
+{
+  "display": {"icon": {"item": "kimetsunoyaiba:nichirinsword_water"}, "title": {"text": "Hashira"}, "description": {"text": "Reach the Hashira rank."}, "frame": "challenge", "show_toast": true, "announce_to_chat": true, "hidden": false},
+  "criteria": {"hashira_0": {"trigger": "minecraft:impossible"}},
+  "parent": "kimetsunoyaibamultiplayer:kinoe"
+}

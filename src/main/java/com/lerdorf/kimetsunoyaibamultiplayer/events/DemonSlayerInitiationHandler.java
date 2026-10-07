@@ -78,7 +78,18 @@ public class DemonSlayerInitiationHandler {
     private static final Set<ResourceLocation> CUSTOM_PROGRESSION_ADVANCEMENTS = Set.of(
         CUSTOM_DEMON_SLAYER_CORPS,
         COMPLETED_FINAL_SELECTION,
-        ResourceLocation.parse("kimetsunoyaibamultiplayer:mizunoto")
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:mizunoto"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:mizunoe"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:kanoto"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:kanoe"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:tsuchinoto"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:tsuchinoe"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:hinoto"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:hinoe"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:kinoto"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:kinoe"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:hashira"),
+        ResourceLocation.parse("kimetsunoyaibamultiplayer:strongest")
     );
     private static final Set<ResourceLocation> SUPPRESSED_BASE_PROGRESS_ADVANCEMENTS = Set.of(
         MIZUNOTO,

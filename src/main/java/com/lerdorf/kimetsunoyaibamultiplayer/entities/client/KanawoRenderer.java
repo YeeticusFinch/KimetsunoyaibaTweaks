@@ -37,6 +37,9 @@ public class KanawoRenderer extends GeoEntityRenderer<KanawoEntity> {
 
             @Override
             public ResourceLocation getTextureResource(KanawoEntity entity) {
+                if (entity != null && entity.isDemonized() && entity.getDemonizedTextureOverride() != null) {
+                    return entity.getDemonizedTextureOverride();
+                }
                 return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "textures/entities/kanawo.png");
             }
 

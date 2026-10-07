@@ -239,6 +239,16 @@ public final class PassiveSkillManager {
         return true;
     }
 
+    public static void setDemonSlayerSkillPoints(ServerPlayer player, int amount) {
+        if (player == null) {
+            return;
+        }
+
+        CustomBloodDemonArtSavedData savedData = CustomBloodDemonArtSavedData.get(player.serverLevel());
+        savedData.getOrCreate(player).setDemonSlayerSkillPoints(amount);
+        savedData.setDirty();
+    }
+
     public static void tick(ServerPlayer player) {
         if (isDemon(player)) {
             if (player.level().getGameTime() % 20L == 0L) {

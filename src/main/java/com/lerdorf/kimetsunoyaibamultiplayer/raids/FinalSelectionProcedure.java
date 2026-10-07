@@ -8,6 +8,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.config.FinalSelectionRaidConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonSlayerInitiationHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRankManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinOreItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack;
@@ -697,6 +698,7 @@ public class FinalSelectionProcedure {
         awardAdvancement(player, COMPLETED_FINAL_SELECTION_ADVANCEMENT);
         awardAdvancement(player, MIZUNOTO_ADVANCEMENT);
         DemonSlayerInitiationHandler.completeFinalSelectionInitiation(player, "final selection raid completion");
+        DemonSlayerRankManager.ensureMizunoto(player);
         spawnAndTameKasugaiCrow(player);
         grantRandomUniformSet(player);
         runOreSelectionProcedurePlaceholder(player);
@@ -1738,6 +1740,7 @@ public class FinalSelectionProcedure {
         }
 
         DemonSlayerInitiationHandler.completeFinalSelectionInitiation(player, "final selection command completion");
+        DemonSlayerRankManager.ensureMizunoto(player);
 
         // Spawn and tame kasugai crow
         spawnAndTameKasugaiCrowForPlayer(player);

@@ -10,7 +10,9 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +41,10 @@ public final class DemonEyesResourceHelper {
     public static final int SUNNY_EYES_INDEX = 1021;
     public static final int ZURI_EYES_INDEX = 1022;
     public static final int SIX_EYE_DEMON_EYES_INDEX = 1023;
+    public static final int KANAE_EYES_INDEX = 1024;
+    public static final int KANAWO_EYES_INDEX = 1025;
+    public static final int MAKOMO_EYES_INDEX = 1026;
+    public static final int SABITO_EYES_INDEX = 1027;
     private static final List<NamedEyesStyle> NAMED_STYLES = List.of(
         new NamedEyesStyle(KANROJI_EYES_INDEX, "Kanroji", "textures/entity/oni_kanroji_eyes.png", "textures/entity/oni_kanroji_eyes_kanji.png", "textures/entity/oni_kanroji_eyes_double_kanji.png"),
         new NamedEyesStyle(KANROJI_EYES_1_INDEX, "Kanroji 1", "textures/entity/oni_kanroji_eyes_1.png", "textures/entity/oni_kanroji_eyes_kanji_1.png", "textures/entity/oni_kanroji_eyes_double_kanji_1.png"),
@@ -62,7 +68,15 @@ public final class DemonEyesResourceHelper {
         new NamedEyesStyle(SUNNY_EYES_INDEX, "Sunny", "textures/entity/demon_eyes_sunny.png", null, null),
         new NamedEyesStyle(ZURI_EYES_INDEX, "Zuri", "textures/entity/demon_eyes_zuri.png", null, null),
         new NamedEyesStyle(SIX_EYE_DEMON_EYES_INDEX, "Six-Eye Demon", "textures/entity/six_eye_demon_eyes.png",
-            "textures/entity/six_eye_demon_eyes_kanji.png", null)
+            "textures/entity/six_eye_demon_eyes_kanji.png", null),
+        new NamedEyesStyle(KANAE_EYES_INDEX, "Kanae", "textures/entity/demon_eyes_kanae.png",
+            "textures/entity/demon_eyes_kanae_kanji.png", "textures/entity/demon_eyes_kanae_double_kanji.png"),
+        new NamedEyesStyle(KANAWO_EYES_INDEX, "Kanawo", "textures/entity/demon_eyes_kanawo.png",
+            "textures/entity/demon_eyes_kanawo_kanji.png", "textures/entity/demon_eyes_kanawo_double_kanji.png"),
+        new NamedEyesStyle(MAKOMO_EYES_INDEX, "Makomo", "textures/entity/demon_eyes_makomo.png",
+            "textures/entity/demon_eyes_makomo_kanji.png", "textures/entity/demon_eyes_makomo_double_kanji.png"),
+        new NamedEyesStyle(SABITO_EYES_INDEX, "Sabito", "textures/entity/demon_eyes_sabito.png",
+            "textures/entity/demon_eyes_sabito_kanji.png", "textures/entity/demon_eyes_sabito_double_kanji.png")
     );
 
     private DemonEyesResourceHelper() {
@@ -74,7 +88,7 @@ public final class DemonEyesResourceHelper {
             return List.of(DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX);
         }
 
-        List<Integer> indices = new ArrayList<>();
+        Set<Integer> indices = new LinkedHashSet<>();
         minecraft.getResourceManager().listResources("textures/entity", location ->
             KimetsunoyaibaMultiplayer.MODID.equals(location.getNamespace()) &&
                 DEMON_EYES_PATTERN.matcher(location.getPath()).matches()
@@ -88,7 +102,6 @@ public final class DemonEyesResourceHelper {
         if (indices.isEmpty()) {
             indices.add(DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX);
         }
-        indices.sort(Comparator.naturalOrder());
         for (NamedEyesStyle style : NAMED_STYLES) {
             if (resourceExists(style.texturePath())
                 && (style.index() != EMPTY_DEMON_EYES_INDEX
@@ -96,7 +109,9 @@ public final class DemonEyesResourceHelper {
                 indices.add(style.index());
             }
         }
-        return indices;
+        List<Integer> availableIndices = new ArrayList<>(indices);
+        availableIndices.sort(Comparator.naturalOrder());
+        return availableIndices;
     }
 
     public static ResourceLocation getTexture(int index) {

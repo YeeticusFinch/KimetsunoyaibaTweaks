@@ -27,12 +27,21 @@
     "GenericItemLayerMixin",
     "BaseInosukeModelMixin",
     "BaseInosukeRendererMixin",
+    "BaseMakomoModelMixin",
+    "BaseSabitoModelMixin",
+    "BaseKanawoModelMixin",
+    "BaseKanaeModelMixin",
+    "BaseMakomoRendererMixin",
+    "BaseSabitoRendererMixin",
+    "BaseKanawoRendererMixin",
+    "BaseKanaeRendererMixin",
     "BaseBackstepHudOverlayMixin",
     "EntityGlowingMixin",
     "PuppetGeoBoneCaptureMixin",
     "DustParticleMixin",
     "EntityRenderDispatcherAccessor",
-    "FearGameRendererMixin"
+    "FearGameRendererMixin",
+    "StartupAnimationLoadingOverlayMixin"
   ],
   "injectors": {
     "defaultRequire": 1

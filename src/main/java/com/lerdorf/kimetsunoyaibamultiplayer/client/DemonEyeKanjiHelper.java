@@ -31,18 +31,23 @@ public final class DemonEyeKanjiHelper {
     }
 
     public static ResourceLocation getEyeOverlayTexture(int demonEyesIndex, int rankTier) {
-        if (getTexture(rankTier) != null) {
-            if (shouldRenderMirroredUpperKanji(rankTier, getPlacement(demonEyesIndex))) {
-                ResourceLocation doubleKanjiOverlay = DemonEyesResourceHelper.getDoubleKanjiTexture(demonEyesIndex);
-                if (doubleKanjiOverlay != null) {
-                    return doubleKanjiOverlay;
-                }
-            }
-            ResourceLocation kanjiOverlay = DemonEyesResourceHelper.getKanjiTexture(demonEyesIndex);
-            if (kanjiOverlay != null) {
-                return kanjiOverlay;
+        // Negative rank means the eye style has no kanji overlay.
+        if (rankTier < 0 || getTexture(rankTier) == null) {
+            return DemonEyesResourceHelper.getTexture(demonEyesIndex);
+        }
+
+        if (isUpperRank(rankTier)) {
+            ResourceLocation doubleKanjiOverlay = DemonEyesResourceHelper.getDoubleKanjiTexture(demonEyesIndex);
+            if (doubleKanjiOverlay != null) {
+                return doubleKanjiOverlay;
             }
         }
+
+        ResourceLocation kanjiOverlay = DemonEyesResourceHelper.getKanjiTexture(demonEyesIndex);
+        if (kanjiOverlay != null) {
+            return kanjiOverlay;
+        }
+
         return DemonEyesResourceHelper.getTexture(demonEyesIndex);
     }
 
@@ -142,6 +147,10 @@ public final class DemonEyeKanjiHelper {
             new EyeKanjiPlacement(-1.55D, 0.50D, 0.90D, 0.90D, 0.00D));
         placements.put(DemonEyesResourceHelper.SIX_EYE_DEMON_EYES_INDEX,
             new EyeKanjiPlacement(-1.70D, -0.85D, 1.00D, 1.00D, 0.00D));
+        placements.put(DemonEyesResourceHelper.KANAE_EYES_INDEX, new EyeKanjiPlacement(-2.00D, 1.70D, 1.00D, 1.00D, 0.00D));
+        placements.put(DemonEyesResourceHelper.KANAWO_EYES_INDEX, new EyeKanjiPlacement(-1.95D, 1.55D, 1.00D, 1.00D, 0.00D));
+        placements.put(DemonEyesResourceHelper.MAKOMO_EYES_INDEX, new EyeKanjiPlacement(-1.50D, 2.50D, 0.80D, 0.80D, 0.00D));
+        placements.put(DemonEyesResourceHelper.SABITO_EYES_INDEX, new EyeKanjiPlacement(-1.75D, 1.75D, 0.90D, 0.90D, -10.00D));
 
 
         return Map.copyOf(placements);

@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingTechniq
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedFlowerForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -28,6 +29,10 @@ import javax.annotation.Nullable;
  */
 public class KanawoEntity extends BreathingSlayerEntity {
     private static final float MAX_HP = 105.0F;
+    private static final ResourceLocation DEMONIZED_TEXTURE =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/entity/oni_kanawo.png");
+    private static final ResourceLocation DEMONIZED_EYES_TEXTURE =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "textures/entity/demon_eyes_kanawo.png");
 
     public KanawoEntity(EntityType<? extends BreathingSlayerEntity> entityType, Level level) {
         super(entityType, level);
@@ -41,6 +46,16 @@ public class KanawoEntity extends BreathingSlayerEntity {
     @Override
     public ItemStack getEquippedSword() {
         return new ItemStack(ModItems.NICHIRINSWORD_KANAWO.get());
+    }
+
+    @Override
+    public ResourceLocation getDemonizedTextureOverride() {
+        return DEMONIZED_TEXTURE;
+    }
+
+    @Override
+    public ResourceLocation getDemonizedEyesTextureOverride() {
+        return DEMONIZED_EYES_TEXTURE;
     }
 
     @Override

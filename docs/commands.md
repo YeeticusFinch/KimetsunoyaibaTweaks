@@ -52,6 +52,7 @@ These are registered on `RegisterCommandsEvent`.
 | `/freerank <rank>` | OP level 2 | Makes a demon rank takeable from its offline holder via the fallback entity. |
 | `/clearrank <target>` | OP level 2 | Removes a player's demon rank entirely. |
 | `/setrank <target> <rank>` | OP level 2 | Assigns a demon rank directly and applies its buffs. |
+| `/setdsrank <rank>` | OP level 2, player only | Sets the executing player's custom demon slayer rank, grants its custom advancement, applies rank buffs, and sets total passive skill points to the rank level. |
 | `/knygravity get` | OP level 2, player only | Prints current/base gravity and whether KNY gravity is enabled. Registered only when `KNYGravity.isEnabled()` is true. |
 | `/knygravity set <direction>` | OP level 2, player only | Sets the player's base gravity direction. Registered only when `KNYGravity.isEnabled()` is true. |
 | `/knygravity reset` | OP level 2, player only | Resets the player's gravity. Registered only when `KNYGravity.isEnabled()` is true. |

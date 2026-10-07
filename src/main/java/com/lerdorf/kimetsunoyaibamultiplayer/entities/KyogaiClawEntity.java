@@ -299,7 +299,8 @@ public class KyogaiClawEntity extends Mob implements GeoEntity {
         serverLevel.sendParticles(
             new BlockParticleOption(ParticleTypes.BLOCK, surface.blockState),
             facePosition.x, facePosition.y, facePosition.z, 4,
-            faceNormal.x * 0.03D, faceNormal.y * 0.03D, faceNormal.z * 0.03D, 0.015D);
+                faceNormal.x * 0.03D, faceNormal.y * 0.03D, faceNormal.z * 0.03D, 0.015D);
+        serverLevel.sendParticles(ParticleTypes.EXPLOSION, facePosition.x, facePosition.y, facePosition.z, 1, faceNormal.x * 0.03D, faceNormal.y * 0.03D, faceNormal.z * 0.03D, 0.015D);
         if (enteredNewBlock) {
             var soundType = surface.blockState.getSoundType();
             serverLevel.playSound(null, facePosition.x, facePosition.y, facePosition.z,
@@ -312,7 +313,7 @@ public class KyogaiClawEntity extends Mob implements GeoEntity {
         for (LivingEntity target : level().getEntitiesOfClass(LivingEntity.class,
             getBoundingBox().inflate(0.65D), entity -> entity.isAlive() && entity != owner
                 && !damagedEntities.contains(entity.getUUID()))) {
-            if (Damager.hurt(owner == null ? this : owner, target, 6.0F)) {
+            if (Damager.hurt(owner == null ? this : owner, target, 14.0F)) {
                 damagedEntities.add(target.getUUID());
             }
         }

@@ -63,9 +63,10 @@ Teleports other people into another room within his mansion.
 
 Each time a drum ability is used, it will play a unique animation for each drum, the animation takes 15 ticks (0.75 seconds) to hit the drum, making a unique sound once the drum is hit
 
-For gravity drums, the gravity change will apply 10 ticks (0.5 seconds) after the drum is hit (so 25 ticks after the ability is activated). All living entities that are on the ground and not moving in the direction of the new gravity change by the time the gravity change takes effect will get slammed, suffering damage and also 2 seconds of extreme slowness (and maybe also blindness too, idk yet)
+For gravity drums, the gravity change will apply 10 ticks (0.5 seconds) after the drum is hit (so 25 ticks after the ability is activated).
 
-- This means that if a player wants to avoid this attack, then when they hear the drum sound they must jump and move in the direction of the gravity switch, and they will have about 1 second to react
+- The gravity field is permanently expanded by 3 blocks in every direction beyond its base dimensions; this expansion is fixed and does not accumulate across drum hits. Entities are immediately launched along their current local up and toward the upcoming gravity direction when the drum sound plays. Nine ticks after the sound, entities facing more than 45 degrees away from the upcoming gravity direction are launched violently, damaged for 9, and hit with the fall, door-break, and explosion effects. The gravity field switches on the tenth tick.
+- An arrow showing the upcoming gravity direction is rendered only for the player who used the drum.
 
 For the claw drum (navel, sometimes misspelled "naval"), the claw attack is spawned as soon as the drum is hit (as soon as the sound occurs, so 15 ticks after the ability is activated), the claw travels forward at a fast rate, and can be dodged like any projectile-based ranged attack
 

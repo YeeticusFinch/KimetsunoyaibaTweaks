@@ -1,3 +1,6 @@
+1.6.5695
+- Improvements for Kyogai's BDA
+
 1.6.5694
 - Fixed bugs with Kyogai's BDA
 - Fixed bug with new tsuzumi lantern

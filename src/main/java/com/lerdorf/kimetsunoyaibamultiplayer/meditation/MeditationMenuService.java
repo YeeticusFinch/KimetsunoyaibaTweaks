@@ -11,6 +11,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.PlayerRole;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
+import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRankManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.DemonEyesHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SheathCosmeticsHelper;
@@ -50,20 +51,6 @@ public final class MeditationMenuService {
         new MeditationMenuData.LocationEntry("house_ubuyashiki", "Ubuyashiki House", "Waypoint for kimetsunoyaiba:house_ubuyashiki.", false),
         new MeditationMenuData.LocationEntry("house_urokodaki", "Urokodaki House", "Waypoint for kimetsunoyaiba:house_urokodaki.", false)
     );
-    private static final List<ResourceLocation> RANK_ADVANCEMENTS = List.of(
-        ResourceLocation.parse("kimetsunoyaiba:hashira"),
-        ResourceLocation.parse("kimetsunoyaiba:kinoe"),
-        ResourceLocation.parse("kimetsunoyaiba:kinoto"),
-        ResourceLocation.parse("kimetsunoyaiba:hinoe"),
-        ResourceLocation.parse("kimetsunoyaiba:hinoto"),
-        ResourceLocation.parse("kimetsunoyaiba:tsuchinoe"),
-        ResourceLocation.parse("kimetsunoyaiba:tsuchinoto"),
-        ResourceLocation.parse("kimetsunoyaiba:kanoe"),
-        ResourceLocation.parse("kimetsunoyaiba:kanoto"),
-        ResourceLocation.parse("kimetsunoyaiba:mizunoe"),
-        ResourceLocation.parse("kimetsunoyaiba:mizunoto")
-    );
-
     private MeditationMenuService() {
     }
 
@@ -350,10 +337,8 @@ public final class MeditationMenuService {
         if (role == PlayerRole.DEMON) {
             return "Unranked Demon";
         }
-        for (ResourceLocation id : RANK_ADVANCEMENTS) {
-            if (hasAdvancement(player, id)) {
-                return prettify(id.getPath());
-            }
+        if (role == PlayerRole.DEMON_SLAYER) {
+            return DemonSlayerRankManager.getDisplayName(player);
         }
         return role == PlayerRole.CIVILIAN ? "None" : "Unranked";
     }

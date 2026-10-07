@@ -25,7 +25,7 @@ public class DirectionArrowRenderer extends GeoEntityRenderer<DirectionArrowEnti
     @Override
     public RenderType getRenderType(DirectionArrowEntity animatable, ResourceLocation texture,
                                     MultiBufferSource bufferSource, float partialTick) {
-        return RenderType.entityTranslucent(texture);
+        return RenderType.entityTranslucentEmissive(texture);
     }
 
     @Override
@@ -50,6 +50,7 @@ public class DirectionArrowRenderer extends GeoEntityRenderer<DirectionArrowEnti
                           MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
                           float partialTick, int packedLight, int packedOverlay, float red, float green,
                           float blue, float alpha) {
+        poseStack.scale(1.75F, 1.75F, 1.75F);
         int color = animatable.getColor();
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
             partialTick, 0xF000F0, packedOverlay,

@@ -688,6 +688,10 @@ public class CustomBloodDemonArtSavedData extends SavedData {
             }
         }
 
+        public void setDemonSlayerSkillPoints(int amount) {
+            demonSlayerSkillPoints = Math.max(0, amount);
+        }
+
         public int selectedSlot() {
             return selectedSlot;
         }

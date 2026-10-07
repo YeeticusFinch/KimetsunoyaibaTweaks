@@ -17,6 +17,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationStatsTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestScenarioActions;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidTriggerHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRankManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.FamiliarEntityHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SlayerFleshHelper;
@@ -62,6 +63,7 @@ public class ModEvents {
             DemonTransformationHandler.restorePersistentDemonhood(serverPlayer);
             DemonTransformationHandler.enforceHumanRestoration(serverPlayer);
             DemonTransformationHandler.enforceSunlightImmunityRequiresDemon(serverPlayer);
+            DemonSlayerRankManager.syncPlayer(serverPlayer);
         }
         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceTransformationRolePrecedence(serverPlayer);
@@ -85,6 +87,7 @@ public class ModEvents {
     public static void onPlayerClone(PlayerEvent.Clone event) {
         QuestProgressionManager.copyQuestProgressOnClone(event.getOriginal(), event.getEntity(), event.isWasDeath());
         MeditationStatsTracker.copyOnClone(event.getOriginal(), event.getEntity());
+        DemonSlayerRankManager.copyOnClone(event.getOriginal(), event.getEntity());
         if (event.isWasDeath()) {
             DemonTransformationHandler.capturePersistentDemonhood(event.getOriginal(), event.getEntity());
         }
@@ -110,6 +113,7 @@ public class ModEvents {
             DemonTransformationHandler.enforceSunlightImmunityRequiresDemon(serverPlayer);
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceTransformationRolePrecedence(serverPlayer);
             com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService.enforceDemonRolePrecedence(serverPlayer);
+            DemonSlayerRankManager.tick(serverPlayer);
             PassiveSkillManager.tick(serverPlayer);
         }
     }

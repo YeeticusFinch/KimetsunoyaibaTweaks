@@ -37,6 +37,9 @@ public class KanaeRenderer extends GeoEntityRenderer<KanaeEntity> {
 
             @Override
             public ResourceLocation getTextureResource(KanaeEntity entity) {
+                if (entity != null && entity.isDemonized() && entity.getDemonizedTextureOverride() != null) {
+                    return entity.getDemonizedTextureOverride();
+                }
                 return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "textures/entities/kanae.png");
             }
 
