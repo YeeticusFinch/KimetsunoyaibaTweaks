@@ -12,6 +12,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuP
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.PlayerRole;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRankManager;
+import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRank;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.DemonEyesHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SheathCosmeticsHelper;
@@ -66,6 +67,7 @@ public final class MeditationMenuService {
             return new MeditationMenuData(
                 PlayerRole.CIVILIAN.getDisplayName(),
                 "None",
+                "None",
                 "0",
                 "0",
                 "None",
@@ -74,6 +76,7 @@ public final class MeditationMenuService {
                 List.of(),
                 List.of(),
                 0,
+                List.of(),
                 "",
                 "",
                 false,
@@ -85,6 +88,7 @@ public final class MeditationMenuService {
 
         PlayerRole role = resolveRoleForProgression(player);
         String rank = resolveRank(player, role);
+        String slayerRank = resolveSlayerRank(player, role);
         String muzanBlood = resolveMuzanBlood(player);
         String humansConsumed = resolveHumansConsumed(player);
         String kizukiRank = resolveKizukiRank(player);
@@ -94,7 +98,7 @@ public final class MeditationMenuService {
         SwordDisplayConfig.SwordDisplayPosition sheathPosition = SheathCosmeticsHelper.getPosition(player);
         int sheathTextureIndex = SheathCosmeticsHelper.getTextureIndex(player);
 
-        List<MeditationMenuData.InfoSection> infoSections = buildInfoSections(player);
+        List<MeditationMenuData.InfoSection> infoSections = buildInfoSections(player, role);
         List<MeditationMenuData.QuestEntry> quests = QuestProgressionManager.buildQuestEntries(player, role);
         if (role == PlayerRole.DEMON && DemonRankingConfig.isEnabled()) {
             List<MeditationMenuData.QuestEntry> withBloodyBattle = new ArrayList<>();
@@ -105,6 +109,7 @@ public final class MeditationMenuService {
         List<MeditationMenuData.LocationEntry> locations = buildLocations(role);
         List<MeditationMenuData.PassiveSkillEntry> passiveSkills = PassiveSkillManager.buildEntries(player, role);
         int passiveSkillPoints = PassiveSkillManager.getAvailableSkillPoints(player, role);
+        List<MeditationMenuData.BuffEntry> buffs = buildBuffEntries(player);
 
         String selectedType = player.getPersistentData().getString("MeditationSelectedType");
         String selectedId = player.getPersistentData().getString("MeditationSelectedId");
@@ -134,12 +139,30 @@ public final class MeditationMenuService {
         quests = applyQuestSelection(quests, selectedType, selectedId);
         locations = applyLocationSelection(locations, selectedType, selectedId);
 
-        return new MeditationMenuData(role.getDisplayName(), rank, muzanBlood, humansConsumed, kizukiRank,
-            infoSections, quests, locations, passiveSkills, passiveSkillPoints, selectedType, selectedId, demonPlayer,
+        return new MeditationMenuData(role.getDisplayName(), rank, slayerRank, muzanBlood, humansConsumed, kizukiRank,
+            infoSections, quests, locations, passiveSkills, passiveSkillPoints, buffs, selectedType, selectedId, demonPlayer,
             demonEyesIndex, demonEyesHue, sheathPosition.name(), sheathTextureIndex,
             SheathCosmeticsHelper.getTranslateX(player), SheathCosmeticsHelper.getTranslateY(player),
             SheathCosmeticsHelper.getTranslateZ(player), SheathCosmeticsHelper.getRotateX(player),
             SheathCosmeticsHelper.getRotateY(player), SheathCosmeticsHelper.getRotateZ(player));
+    }
+
+    private static List<MeditationMenuData.BuffEntry> buildBuffEntries(ServerPlayer player) {
+        DemonSlayerRank rank = DemonSlayerRankManager.getRank(player);
+        if (rank == null) {
+            return List.of();
+        }
+
+        List<MeditationMenuData.BuffEntry> buffs = new ArrayList<>();
+        buffs.add(new MeditationMenuData.BuffEntry("Speed", DemonSlayerRankManager.getSpeedAmplifier(rank) + 1));
+        buffs.add(new MeditationMenuData.BuffEntry("Strength", DemonSlayerRankManager.getStrengthAmplifier(rank) + 1));
+        buffs.add(new MeditationMenuData.BuffEntry("Resistance", DemonSlayerRankManager.getResistanceAmplifier(rank) + 1));
+
+        int healthBoostAmplifier = DemonSlayerRankManager.getHealthBoostAmplifier(rank);
+        if (healthBoostAmplifier >= 0) {
+            buffs.add(new MeditationMenuData.BuffEntry("Health Boost", healthBoostAmplifier + 1));
+        }
+        return buffs;
     }
 
     public static void saveSelection(ServerPlayer player, String type, String id) {
@@ -150,7 +173,7 @@ public final class MeditationMenuService {
         player.getPersistentData().putString("MeditationSelectedId", id);
     }
 
-    private static List<MeditationMenuData.InfoSection> buildInfoSections(ServerPlayer player) {
+    private static List<MeditationMenuData.InfoSection> buildInfoSections(ServerPlayer player, PlayerRole role) {
         int demonKills = getInt(player, MeditationStatsTracker.DEMON_KILLS_TOTAL);
         int kizukiKills = getInt(player, MeditationStatsTracker.KIZUKI_KILLS_TOTAL);
         int nonKizukiKills = Math.max(0, demonKills - kizukiKills);
@@ -215,7 +238,15 @@ public final class MeditationMenuService {
             List.of()
         );
 
-        return List.of(demonsKilled, humansKilled, blueSpiderLilyTea);
+        List<MeditationMenuData.InfoSection> sections = new ArrayList<>();
+        if (role == PlayerRole.DEMON_SLAYER) {
+            sections.add(new MeditationMenuData.InfoSection(
+                "slayer_experience", "Slayer Experience", DemonSlayerRankManager.getSlayerExperience(player), List.of()));
+        }
+        sections.add(demonsKilled);
+        sections.add(humansKilled);
+        sections.add(blueSpiderLilyTea);
+        return sections;
     }
 
     private static List<MeditationMenuData.LocationEntry> buildLocations(PlayerRole role) {
@@ -335,12 +366,20 @@ public final class MeditationMenuService {
             return "Transforming";
         }
         if (role == PlayerRole.DEMON) {
-            return "Unranked Demon";
+            return resolveKizukiRank(player);
         }
         if (role == PlayerRole.DEMON_SLAYER) {
             return DemonSlayerRankManager.getDisplayName(player);
         }
         return role == PlayerRole.CIVILIAN ? "None" : "Unranked";
+    }
+
+    private static String resolveSlayerRank(ServerPlayer player, PlayerRole role) {
+        DemonSlayerRank rank = DemonSlayerRankManager.getRank(player);
+        if (rank != null) {
+            return rank.displayName();
+        }
+        return role == PlayerRole.DEMON ? "Unranked" : "None";
     }
 
     private static String resolveMuzanBlood(ServerPlayer player) {

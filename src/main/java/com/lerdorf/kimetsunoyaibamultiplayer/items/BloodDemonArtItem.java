@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SwampDemonArt;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.RuiBloodDemonArt;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
 import net.minecraft.ChatFormatting;
@@ -101,6 +102,9 @@ public class BloodDemonArtItem extends Item {
 
         if (!level.isClientSide) {
             SwampDemonArt.markAbilityUse(player);
+            if (RuiBloodDemonArt.ART_ID.equals(artId)) {
+                RuiBloodDemonArt.markRightClickFormUse(player, form.getFormId());
+            }
             SwampDemonArt.handleAbilityItemUse(player, stack, form.getFormId());
             form.execute(player, level);
             PlayerAbilityCooldowns.addCooldown(player, this, Math.max(20, form.getCooldownSeconds() * 20));

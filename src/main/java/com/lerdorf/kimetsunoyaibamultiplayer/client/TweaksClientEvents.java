@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -46,6 +47,20 @@ public final class TweaksClientEvents {
             Component.empty(), ignored ->
                 Minecraft.getInstance().setScreen(new TweaksMenuScreen(titleScreen)));
         button.setTooltip(Tooltip.create(Component.literal("Kimetsunoyaiba Tweaks")));
+        event.addListener(button);
+    }
+
+    @SubscribeEvent
+    public static void addMultiplayerButton(ScreenEvent.Init.Post event) {
+        if (!(event.getScreen() instanceof JoinMultiplayerScreen multiplayerScreen)) {
+            return;
+        }
+
+        Button button = Button.builder(Component.literal("KnY Servers"), ignored ->
+                Minecraft.getInstance().setScreen(new KnyServersScreen(multiplayerScreen)))
+            .bounds(multiplayerScreen.width - 128, 8, 120, 20)
+            .build();
+        button.setTooltip(Tooltip.create(Component.literal("Looking for KnY Servers?")));
         event.addListener(button);
     }
 

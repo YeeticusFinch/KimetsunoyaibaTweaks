@@ -153,12 +153,14 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
         }
 
         double clampedProfile = clamp(profile, 0.0, 1.0);
-        double targetHeight = natagumoTargetSurfaceHeight(blockX, blockZ, clampedProfile);
-        // Fade only the positive height delta so the mount cannot drop into a cliff at its edge.
+        double targetHeight = vanillaHeight
+                + (NATAGUMO_TARGET_SUMMIT_Y - vanillaHeight) * clampedProfile
+                + detailNoise(seed, blockX, blockZ) * clampedProfile;
+        // Interpolate from the local vanilla surface so the edge never imposes an absolute base Y.
         double mountainHeight = Math.max(vanillaHeight, targetHeight);
         double mountainBlend = smootherStep(clampedProfile);
         double finalHeight = lerp(vanillaHeight, mountainHeight, mountainBlend);
-        return clamp(finalHeight, -64.0, NATAGUMO_MAX_Y);
+        return Math.max(vanillaHeight, clamp(finalHeight, -64.0, NATAGUMO_MAX_Y));
     }
 
     /** Returns the local mountain target used by the river; it never carries height downstream. */

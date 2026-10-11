@@ -15,13 +15,20 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedMountBiomeConfig;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Adds custom biomes to the overworld and installs the enhanced mount biome source.
@@ -187,12 +194,24 @@ public class KnYBiomeSpawnFixer {
 
                         // Update the biome source with replaced biomes, then wrap it with seed-aware mount placement.
                         BiomeSource replacementSource = MultiNoiseBiomeSource.createFromList(new Climate.ParameterList<>(parameters));
+                        preserveAlexsCavesBiomeSourceState(
+                            noiseSource,
+                            replacementSource,
+                            biomeRegistry,
+                            server.getWorldData().worldGenOptions().seed()
+                        );
                         if (enhancedMountBiomes && (enhancedNatagumo != null || enhancedYoko != null)) {
                             replacementSource = new EnhancedMountBiomeSource(
                                 replacementSource,
                                 server.getWorldData().worldGenOptions().seed(),
                                 enhancedNatagumo,
                                 enhancedYoko
+                            );
+                            preserveAlexsCavesBiomeSourceState(
+                                noiseSource,
+                                replacementSource,
+                                biomeRegistry,
+                                server.getWorldData().worldGenOptions().seed()
                             );
                         }
                         chunkGenerator.biomeSource = replacementSource;
@@ -210,6 +229,77 @@ public class KnYBiomeSpawnFixer {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Alex's Caves stores its rare cave biome holders on each BiomeSource instance.
+     * Keep that state when replacing the overworld MultiNoiseBiomeSource; otherwise
+     * its mixin can return null for a cave biome during structure biome checks.
+     * Reflection keeps Alex's Caves an optional runtime dependency.
+     */
+    private static void preserveAlexsCavesBiomeSourceState(
+        BiomeSource original,
+        BiomeSource replacement,
+        Registry<Biome> biomeRegistry,
+        long seed
+    ) {
+        try {
+            Class<?> accessorClass = Class.forName(
+                "com.github.alexmodguy.alexscaves.server.level.biome.BiomeSourceAccessor"
+            );
+            if (!accessorClass.isInstance(original) || !accessorClass.isInstance(replacement)) {
+                return;
+            }
+
+            Method getResourceKeyMap = accessorClass.getMethod("getResourceKeyMap");
+            Method setResourceKeyMap = accessorClass.getMethod("setResourceKeyMap", Map.class);
+            Map<?, ?> originalResourceKeyMap = (Map<?, ?>) getResourceKeyMap.invoke(original);
+            Map<Object, Object> resourceKeyMap = originalResourceKeyMap == null
+                ? new HashMap<>()
+                : new HashMap<>(originalResourceKeyMap);
+            Set<Holder<Biome>> possibleBiomes = new HashSet<>(original.possibleBiomes());
+
+            // Alex's cave configuration is the authoritative list of keys its
+            // MultiNoise mixin may request. The copied map can be incomplete
+            // after another mod replaces the biome source, so restore those
+            // holders directly from the server registry.
+            Field configuredBiomes = Class.forName(
+                "com.github.alexmodguy.alexscaves.server.config.BiomeGenerationConfig"
+            ).getField("BIOMES");
+            Object configuredValue = configuredBiomes.get(null);
+            if (configuredValue instanceof Map<?, ?> configuredMap) {
+                for (Object key : configuredMap.keySet()) {
+                    if (key instanceof ResourceKey<?> resourceKey) {
+                        @SuppressWarnings("unchecked")
+                        ResourceKey<Biome> biomeKey = (ResourceKey<Biome>) resourceKey;
+                        biomeRegistry.getHolder(biomeKey).ifPresent(holder -> {
+                            resourceKeyMap.put(biomeKey, holder);
+                            possibleBiomes.add(holder);
+                        });
+                    }
+                }
+            }
+
+            setResourceKeyMap.invoke(replacement, resourceKeyMap);
+
+            Method expandBiomesWith = accessorClass.getMethod("expandBiomesWith", java.util.Set.class);
+            expandBiomesWith.invoke(replacement, possibleBiomes);
+
+            // The replacement may be wrapped by EnhancedMountBiomeSource. Alex's
+            // ChunkStatus mixin then cannot initialize this inner MultiNoise source.
+            Class<?> multiNoiseAccessorClass = Class.forName(
+                "com.github.alexmodguy.alexscaves.server.level.biome.MultiNoiseBiomeSourceAccessor"
+            );
+            if (multiNoiseAccessorClass.isInstance(replacement)) {
+                multiNoiseAccessorClass.getMethod("setLastSampledSeed", long.class).invoke(replacement, seed);
+                multiNoiseAccessorClass.getMethod("setLastSampledDimension", ResourceKey.class)
+                    .invoke(replacement, Level.OVERWORLD);
+            }
+        } catch (ClassNotFoundException ignored) {
+            // Alex's Caves is not installed.
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            System.err.println("Unable to preserve Alex's Caves biome source state: " + e.getMessage());
         }
     }
 

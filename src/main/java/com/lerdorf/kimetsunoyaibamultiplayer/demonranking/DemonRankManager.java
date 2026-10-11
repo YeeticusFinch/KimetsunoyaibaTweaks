@@ -2,6 +2,11 @@ package com.lerdorf.kimetsunoyaibamultiplayer.demonranking;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.DemonRankingConfig;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -17,6 +22,15 @@ public final class DemonRankManager {
     private static final int BUFF_DURATION_TICKS = 20 * 60 * 10; // 10 minutes; refreshed well before expiry by the tick handler
 
     private DemonRankManager() {
+    }
+
+    public static void assignRank(ServerPlayer player, DemonRank rank) {
+        if (!DemonRankingConfig.isEnabled() || player == null || rank == null) {
+            return;
+        }
+        DemonRankingSavedData data = DemonRankingSavedData.get(player.serverLevel());
+        data.assign(rank, player.getUUID());
+        syncOnlinePlayer(player, rank);
     }
 
     /**
@@ -169,6 +183,7 @@ public final class DemonRankManager {
     private static void syncOnlinePlayer(ServerPlayer player, DemonRank rank) {
         applyBuffs(player, rank);
         player.getPersistentData().putString("kizuki_rank", rank.displayName());
+        announceRankUp(player, rank);
     }
 
     private static void clearOnlinePlayerBuffs(ServerPlayer player) {
@@ -186,5 +201,13 @@ public final class DemonRankManager {
         player.removeEffect(MobEffects.DAMAGE_BOOST);
         player.removeEffect(MobEffects.DAMAGE_RESISTANCE);
         player.removeEffect(MobEffects.REGENERATION);
+    }
+
+    private static void announceRankUp(ServerPlayer player, DemonRank rank) {
+        player.connection.send(new ClientboundSetTitlesAnimationPacket(10, 60, 10));
+        player.connection.send(new ClientboundSetSubtitleTextPacket(
+            Component.literal(rank.displayName()).withStyle(ChatFormatting.RED)));
+        player.connection.send(new ClientboundSetTitleTextPacket(
+            Component.literal(rank.kanji()).withStyle(ChatFormatting.WHITE)));
     }
 }

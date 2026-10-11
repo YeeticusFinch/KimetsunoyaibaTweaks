@@ -50,6 +50,7 @@ public final class PassiveSkillManager {
     public static final String CLAWS_ID = "demon_claws";
     public static final String DEMON_GUARD_ID = "demon_guard";
     public static final String FAST_SPRINT_ID = "fast_sprint";
+    public static final String SPRINT_JUMP_ID = "sprint_jump";
     public static final String SLAYER_GUARD_ID = "slayer_guard";
     public static final String SLAYER_DASH_ID = "slayer_dash";
 
@@ -70,12 +71,17 @@ public final class PassiveSkillManager {
     private static final int MARTIAL_ARTS_MAX_LEVEL = 5;
     private static final int CLAWS_MAX_LEVEL = 5;
     private static final int DEMON_GUARD_MAX_LEVEL = 5;
-    private static final int FAST_SPRINT_MAX_LEVEL = 5;
+    private static final int FAST_SPRINT_MAX_LEVEL = 8;
+    private static final int DEMON_SPRINT_JUMP_MAX_LEVEL = 10;
+    private static final int SLAYER_SPRINT_JUMP_MAX_LEVEL = 4;
     private static final int SLAYER_GUARD_MAX_LEVEL = 5;
     private static final int SLAYER_DASH_MAX_LEVEL = 5;
-    private static final int FAST_SPRINT_DURATION_TICKS = 20 * 3;
-    private static final int FAST_SPRINT_REFRESH_TICKS = 20 * 2;
+    private static final int FAST_SPRINT_DURATION_TICKS = 20 * 2;
+    private static final int FAST_SPRINT_REFRESH_TICKS = 15;
     private static final String FAST_SPRINT_ACTIVE = "KnYFastSprintActive";
+    private static final int SPRINT_JUMP_DURATION_TICKS = 20 * 2;
+    private static final int SPRINT_JUMP_REFRESH_TICKS = 20;
+    private static final String SPRINT_JUMP_ACTIVE = "KnYSprintJumpActive";
     private static final int SLAYER_GUARD_COOLDOWN_TICKS = 60;
     private static final int SLAYER_DASH_COOLDOWN_TICKS_LEVEL_ONE = 60;
     private static final int SLAYER_DASH_COOLDOWN_TICKS_LEVEL_FIVE = 20;
@@ -119,7 +125,10 @@ public final class PassiveSkillManager {
             "Guard strength and duration scale with level. Ends on release or interruption."),
         new SkillDefinition(FAST_SPRINT_ID, "Fast Sprint", FAST_SPRINT_MAX_LEVEL,
             "While sprinting, gain temporary speed based on demon power and Fast Sprint level.",
-            "Checks every 2 seconds and refreshes a 3-second speed effect while sprinting.")
+            "Checks every 15 ticks and refreshes a 2-second speed effect while sprinting."),
+        new SkillDefinition(SPRINT_JUMP_ID, "Sprint Jump", DEMON_SPRINT_JUMP_MAX_LEVEL,
+            "While sprinting, gain temporary Jump Boost based on this skill level.",
+            "Checks every 20 ticks and refreshes a 2-second Jump Boost effect while sprinting.")
     );
 
     private static final List<SkillDefinition> SLAYER_SKILLS = List.of(
@@ -131,7 +140,10 @@ public final class PassiveSkillManager {
             "Cooldown decreases and dash power increases with level."),
         new SkillDefinition(FAST_SPRINT_ID, "Fast Sprint", FAST_SPRINT_MAX_LEVEL,
             "While sprinting, gain temporary speed based on rank and Fast Sprint level.",
-            "Checks every 2 seconds and refreshes a 3-second speed effect while sprinting.")
+            "Checks every 15 ticks and refreshes a 2-second speed effect while sprinting."),
+        new SkillDefinition(SPRINT_JUMP_ID, "Sprint Jump", SLAYER_SPRINT_JUMP_MAX_LEVEL,
+            "While sprinting, gain temporary Jump Boost based on this skill level.",
+            "Checks every 20 ticks and refreshes a 2-second Jump Boost effect while sprinting.")
     );
 
     private PassiveSkillManager() {
@@ -272,6 +284,9 @@ public final class PassiveSkillManager {
         if (player.level().getGameTime() % FAST_SPRINT_REFRESH_TICKS == 0L) {
             tickFastSprint(player);
         }
+        if (player.level().getGameTime() % SPRINT_JUMP_REFRESH_TICKS == 0L) {
+            tickSprintJump(player);
+        }
 
         if (isGuardActive(player)) {
             if (canUseGuard(player)) {
@@ -325,6 +340,41 @@ public final class PassiveSkillManager {
         if (demonSlayer) {
             DemonSlayerRankManager.refreshSpeedEffect(player);
         }
+    }
+
+    private static void tickSprintJump(ServerPlayer player) {
+        PlayerRole role = MeditationMenuService.resolveRoleForProgression(player);
+        boolean demon = role == PlayerRole.DEMON && isDemon(player);
+        boolean demonSlayer = role == PlayerRole.DEMON_SLAYER && isDemonSlayer(player);
+        if ((!demon && !demonSlayer) || !player.isSprinting()) {
+            stopSprintJump(player);
+            return;
+        }
+
+        int skillLevel = getSkillLevel(player, SPRINT_JUMP_ID);
+        if (skillLevel <= 0) {
+            stopSprintJump(player);
+            return;
+        }
+
+        player.removeEffect(MobEffects.JUMP);
+        player.addEffect(new MobEffectInstance(
+            MobEffects.JUMP,
+            SPRINT_JUMP_DURATION_TICKS,
+            skillLevel - 1,
+            true,
+            false,
+            true));
+        player.getPersistentData().putBoolean(SPRINT_JUMP_ACTIVE, true);
+    }
+
+    private static void stopSprintJump(ServerPlayer player) {
+        if (!player.getPersistentData().getBoolean(SPRINT_JUMP_ACTIVE)) {
+            return;
+        }
+
+        player.getPersistentData().putBoolean(SPRINT_JUMP_ACTIVE, false);
+        player.removeEffect(MobEffects.JUMP);
     }
 
     public static boolean startGuard(ServerPlayer player) {
@@ -745,8 +795,11 @@ public final class PassiveSkillManager {
                 ? "Defensive power: " + guardPower(level) + ". Works with any held item or empty hand."
                 : "Max level 5. Hold X to guard with any held item or empty hand.";
             case FAST_SPRINT_ID -> level > 0
-                ? "Sprint speed amplifier: " + (getPowerSpeedAmplifier(player) + level) + ". Refreshes every 2 seconds."
-                : "Max level 5. Grants temporary speed while sprinting.";
+                ? "Sprint speed amplifier: " + (getPowerSpeedAmplifier(player) + level) + ". Refreshes every 15 ticks."
+                : "Max level " + FAST_SPRINT_MAX_LEVEL + ". Grants temporary speed while sprinting.";
+            case SPRINT_JUMP_ID -> level > 0
+                ? "Jump Boost amplifier: " + (level - 1) + ". Refreshes every 20 ticks while sprinting."
+                : "Grants Jump Boost while sprinting.";
             case SLAYER_GUARD_ID -> level > 0
                 ? "Defensive power: " + guardPower(level) + ". Movement speed is reduced to 30% while held."
                 : "Max level 5. Hold X to guard; ends on release or interruption.";

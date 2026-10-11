@@ -76,6 +76,9 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> WEB_TRAVERSAL = MOB_EFFECTS.register("web_traversal",
             WebTraversalEffect::new);
 
+    public static final RegistryObject<MobEffect> SPIDER_SNARE = MOB_EFFECTS.register("spider_snare",
+            SpiderSnareEffect::new);
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

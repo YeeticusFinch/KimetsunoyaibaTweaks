@@ -52,6 +52,8 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         SynchedEntityData.defineId(AbstractDemonEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> SITTING =
         SynchedEntityData.defineId(AbstractDemonEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> HEADLESS =
+        SynchedEntityData.defineId(AbstractDemonEntity.class, EntityDataSerializers.BOOLEAN);
 
     private static final ResourceLocation[] MUZAN_BLOOD_ITEM_IDS = new ResourceLocation[] {
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "muzan_blood"),
@@ -96,6 +98,7 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         this.entityData.define(ANIMATION_TICKS, 0);
         this.entityData.define(SUNLIGHT_BURN_TICKS, 0);
         this.entityData.define(SITTING, false);
+        this.entityData.define(HEADLESS, false);
     }
 
     public boolean isInSittingPose() {
@@ -104,6 +107,14 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
 
     public void setInSittingPose(boolean sitting) {
         this.entityData.set(SITTING, sitting);
+    }
+
+    public boolean isHeadless() {
+        return this.entityData.get(HEADLESS);
+    }
+
+    public void setHeadless(boolean headless) {
+        this.entityData.set(HEADLESS, headless);
     }
 
     @Override
@@ -134,7 +145,8 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         }
         BloodDemonArtRegistry.RegisteredBloodDemonArt art = getBloodDemonArt();
         LivingEntity target = getTarget();
-        if (art == null || target == null || !target.isAlive() || bloodDemonArtCooldownTicks > 0 || isUsingLockedAnimation()) {
+        if (art == null || target == null || !target.isAlive() || bloodDemonArtCooldownTicks > 0
+            || isUsingLockedAnimation() || !canUseBloodDemonArtAgainst(target)) {
             return;
         }
 
@@ -154,6 +166,10 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
 
         form.execute(this, level());
         bloodDemonArtCooldownTicks = Math.max(20, form.getCooldownSeconds() * 20);
+    }
+
+    protected boolean canUseBloodDemonArtAgainst(LivingEntity target) {
+        return true;
     }
 
     protected double getBloodDemonArtRange() {
@@ -365,6 +381,10 @@ public abstract class AbstractDemonEntity extends Monster implements GeoEntity {
         controllers.add(new AnimationController<>(this, "controller", 0, state -> {
             if (this.isDeadOrDying()) {
                 return state.setAndContinue(RawAnimation.begin().thenPlay("death"));
+            }
+
+            if (this.isHeadless()) {
+                return state.setAndContinue(RawAnimation.begin().thenLoop("headless"));
             }
 
             if (this.isInSittingPose()) {

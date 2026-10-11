@@ -4,10 +4,13 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AdjustPassiveSkillPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CloseDemonPropositionPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleRuiWebSnatchVariantPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ConfigEditPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CombustibleBloodM1AttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CustomBdaPassiveAttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonEyesSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.McaDemonStatePacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RuiHeadCameraPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonSlayerSkillPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BloodDemonArtBuilderActionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DemonPropositionResponsePacket;
@@ -104,6 +107,13 @@ public class ModNetworking {
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBloodDemonArtFormPacket::new)
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBloodDemonArtFormPacket::encode)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBloodDemonArtFormPacket::handle)
+                .add();
+
+        int cycleRuiWebSnatchVariantPacketId = id();
+        net.messageBuilder(CycleRuiWebSnatchVariantPacket.class, cycleRuiWebSnatchVariantPacketId)
+                .decoder(CycleRuiWebSnatchVariantPacket::new)
+                .encoder(CycleRuiWebSnatchVariantPacket::encode)
+                .consumerMainThread(CycleRuiWebSnatchVariantPacket::handle)
                 .add();
 
         // Register sword model override packet (server -> client)
@@ -442,6 +452,20 @@ public class ModNetworking {
                 .decoder(ConfigEditPacket::new)
                 .encoder(ConfigEditPacket::toBytes)
                 .consumerMainThread(ConfigEditPacket::handle)
+                .add();
+
+        int mcaDemonStatePacketId = id();
+        net.messageBuilder(McaDemonStatePacket.class, mcaDemonStatePacketId)
+                .decoder(McaDemonStatePacket::new)
+                .encoder(McaDemonStatePacket::toBytes)
+                .consumerMainThread(McaDemonStatePacket::handle)
+                .add();
+
+        int ruiHeadCameraPacketId = id();
+        net.messageBuilder(RuiHeadCameraPacket.class, ruiHeadCameraPacketId)
+                .decoder(RuiHeadCameraPacket::new)
+                .encoder(RuiHeadCameraPacket::toBytes)
+                .consumerMainThread(RuiHeadCameraPacket::handle)
                 .add();
     }
 

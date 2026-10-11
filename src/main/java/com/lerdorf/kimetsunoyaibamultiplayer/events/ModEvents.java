@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.DemonRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.compat.MinecraftComesAliveCompat;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
@@ -20,6 +21,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidTriggerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRankManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.FamiliarEntityHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SlayerFleshHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,6 +39,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -163,6 +166,22 @@ public class ModEvents {
         }
     }
 
+    @SubscribeEvent
+    public static void onLivingDamage(LivingDamageEvent event) {
+        if (event.getEntity().level().isClientSide()
+            || !(event.getSource().getEntity() instanceof ServerPlayer player)
+            || !BreathingInfoDetector.isNichirinSword(player.getMainHandItem())
+            || DemonSlayerRankManager.isBreathingDamageInProgress(player)) {
+            return;
+        }
+
+        if (event.getSource().is(DamageTypes.PLAYER_ATTACK)) {
+            DemonSlayerRankManager.addNichirinAttackExperience(player, event.getAmount());
+        } else {
+            DemonSlayerRankManager.addBreathingDamageExperience(player, event.getAmount());
+        }
+    }
+
     private static boolean isDrowningImmuneQuestEntity(LivingEntity entity) {
         ResourceLocation typeId = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
         if (typeId == null) {
@@ -210,7 +229,9 @@ public class ModEvents {
         }
 
         if (!target.level().isClientSide() && source != null && Damager.isDemon(source)) {
-            handleCustomHumanFleshDrops(target);
+            if (!MinecraftComesAliveCompat.addHumanFleshDrop(target)) {
+                handleCustomHumanFleshDrops(target);
+            }
         }
 
         if (!target.level().isClientSide() && target instanceof DemonSlayerEntity slayer) {

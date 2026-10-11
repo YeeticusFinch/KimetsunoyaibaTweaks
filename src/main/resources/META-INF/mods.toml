@@ -113,6 +113,14 @@ description='''${mod_description}'''
     ordering="AFTER"
     side="BOTH"
 
+# Minecraft Comes Alive integration (optional)
+[[dependencies.${mod_id}]]
+    modId="mca"
+    mandatory=false
+    versionRange="[7.6,)"
+    ordering="AFTER"
+    side="BOTH"
+
 # ShoulderSurfing dependency (optional)
 #[[dependencies.${mod_id}]]
 #    modId="shouldersurfing"

@@ -22111,6 +22111,26 @@
 					"rotation": [0, -5, -2.5]
 				}
 			}
+		},
+		"headless": {
+			"loop": true,
+			"animation_length": 0.5,
+			"bones": {
+				"head": {
+					"position": {
+						"0.0": {
+							"post": [0, -16000, 0],
+							"lerp_mode": "catmullrom"
+						}
+					},
+					"scale": {
+						"0.0": {
+							"post": [0, 0, 0],
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
 		}
 	}
 }

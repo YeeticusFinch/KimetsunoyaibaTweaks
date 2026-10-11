@@ -136,13 +136,32 @@ public final class PuppetLineRenderer {
             if (!(entity instanceof LivingEntity puppet)) {
                 continue;
             }
+            if (puppet == minecraft.player) {
+                continue;
+            }
             Vec3[] endpoints = getEndpoints(puppet);
             if (endpoints == null && !puppet.hasEffect(ModEffects.PUPPETRY.get())
-                && !puppet.hasEffect(ModEffects.WEB_TRAVERSAL.get())) {
+                && !puppet.hasEffect(ModEffects.WEB_TRAVERSAL.get())
+                && !puppet.hasEffect(ModEffects.SPIDER_SNARE.get())) {
                 continue;
             }
 
             int lines = renderPuppetStrings(puppet, matrix, normal, camera, buffer, endpoints);
+            if (lines > 0) {
+                renderedPuppets++;
+                renderedLines += lines;
+            }
+        }
+
+        // The local player may be omitted from entitiesForRendering in first
+        // person. Render their active lines explicitly so perspective changes
+        // do not make the effect appear to vanish.
+        LivingEntity localPlayer = minecraft.player;
+        Vec3[] localEndpoints = getEndpoints(localPlayer);
+        if (localEndpoints != null || localPlayer.hasEffect(ModEffects.PUPPETRY.get())
+            || localPlayer.hasEffect(ModEffects.WEB_TRAVERSAL.get())
+            || localPlayer.hasEffect(ModEffects.SPIDER_SNARE.get())) {
+            int lines = renderPuppetStrings(localPlayer, matrix, normal, camera, buffer, localEndpoints);
             if (lines > 0) {
                 renderedPuppets++;
                 renderedLines += lines;
@@ -164,7 +183,8 @@ public final class PuppetLineRenderer {
 
     private static int renderPuppetStrings(LivingEntity puppet, Matrix4f matrix, Matrix3f normal,
                                            Vec3 camera, VertexConsumer buffer, Vec3[] syncedEndpoints) {
-        Vec3[] endpoints = syncedEndpoints != null ? syncedEndpoints : getOrCreateEndpoints(puppet);
+        Vec3[] endpoints = syncedEndpoints != null && syncedEndpoints.length > 0
+            ? syncedEndpoints : getOrCreateEndpoints(puppet);
         Vec3 puppetPos = puppet.getPosition(Minecraft.getInstance().getFrameTime());
         float yRotRad = puppet.getYRot() * ((float) Math.PI / 180F);
         double width = Math.max(0.35D, puppet.getBbWidth());

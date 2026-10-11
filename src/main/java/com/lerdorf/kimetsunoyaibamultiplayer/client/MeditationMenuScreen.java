@@ -38,6 +38,7 @@ public class MeditationMenuScreen extends Screen {
     private int questScroll;
     private int locationScroll;
     private int skillsScroll;
+    private int buffsScroll;
     private int detailScroll;
     private final List<Rect2i> tabBounds = new ArrayList<>();
     private final List<InfoHitbox> infoHitboxes = new ArrayList<>();
@@ -50,12 +51,15 @@ public class MeditationMenuScreen extends Screen {
     private Rect2i demonEyesButtonBounds;
     private Rect2i bloodDemonArtBuilderButtonBounds;
     private Rect2i passiveSkillsButtonBounds;
+    private Rect2i buffsButtonBounds;
     private Rect2i passiveSkillsBackButtonBounds;
+    private Rect2i buffsBackButtonBounds;
     private Rect2i sheathEditorButtonBounds;
     private Rect2i cosmeticsDemonEyesButtonBounds;
     private int localDemonEyesIndex;
     private int localDemonEyesHue;
     private boolean passiveSkillsOpen;
+    private boolean buffsOpen;
     private SwordDisplayConfig.SwordDisplayPosition localSheathPosition;
     private int localSheathTextureIndex;
     private double localSheathTranslateX;
@@ -92,6 +96,7 @@ public class MeditationMenuScreen extends Screen {
         screen.questScroll = questScroll;
         screen.locationScroll = locationScroll;
         screen.skillsScroll = skillsScroll;
+        screen.buffsScroll = buffsScroll;
         screen.detailScroll = detailScroll;
         screen.expandedInfoSections.clear();
         screen.expandedInfoSections.addAll(expandedInfoSections);
@@ -106,6 +111,7 @@ public class MeditationMenuScreen extends Screen {
         screen.localSheathRotateY = localSheathRotateY;
         screen.localSheathRotateZ = localSheathRotateZ;
         screen.passiveSkillsOpen = passiveSkillsOpen;
+        screen.buffsOpen = buffsOpen;
         return screen;
     }
 
@@ -131,7 +137,9 @@ public class MeditationMenuScreen extends Screen {
         demonEyesButtonBounds = null;
         bloodDemonArtBuilderButtonBounds = null;
         passiveSkillsButtonBounds = null;
+        buffsButtonBounds = null;
         passiveSkillsBackButtonBounds = null;
+        buffsBackButtonBounds = null;
         sheathEditorButtonBounds = null;
         cosmeticsDemonEyesButtonBounds = null;
 
@@ -189,6 +197,10 @@ public class MeditationMenuScreen extends Screen {
         guiGraphics.drawString(font, data.role(), bodyLeft + 52, bodyTop, 0xF0E3C2, false);
         guiGraphics.drawString(font, "Rank", bodyLeft, bodyTop + 18, 0x8FD48C, false);
         guiGraphics.drawString(font, data.rank(), bodyLeft + 52, bodyTop + 18, 0xF0E3C2, false);
+        if (data.demonPlayer()) {
+            guiGraphics.drawString(font, "Slayer Rank", bodyLeft, bodyTop + 36, 0x8FD48C, false);
+            guiGraphics.drawString(font, data.slayerRank(), bodyLeft + 78, bodyTop + 36, 0xF0E3C2, false);
+        }
 
         List<InfoRow> rows = flattenInfoRows(data.infoSections(), 0);
         int lineHeight = 10;
@@ -412,6 +424,10 @@ public class MeditationMenuScreen extends Screen {
             renderPassiveSkillsView(guiGraphics, bodyLeft, bodyTop, bodyRight, bodyBottom);
             return;
         }
+        if (buffsOpen) {
+            renderBuffsView(guiGraphics, bodyLeft, bodyTop, bodyRight, bodyBottom);
+            return;
+        }
 
         if (data.demonPlayer()) {
             int buttonHeight = 18;
@@ -439,15 +455,21 @@ public class MeditationMenuScreen extends Screen {
                 passiveSkillsButtonBounds = passiveSkills;
             }
 
-            Rect2i builder = new Rect2i(cardLeft + 8, buttonTop + 24, cardRight - cardLeft - 16, buttonHeight);
+            Rect2i buffs = new Rect2i(cardLeft + 8, buttonTop + 24, cardRight - cardLeft - 16, buttonHeight);
+            renderButton(guiGraphics, buffs, "Buffs", 0xFF8A6A3E, 0x1D1208);
+            if (isVerticallyVisible(buffs, clipTop, clipBottom)) {
+                buffsButtonBounds = buffs;
+            }
+
+            Rect2i builder = new Rect2i(cardLeft + 8, buttonTop + 48, cardRight - cardLeft - 16, buttonHeight);
             renderButton(guiGraphics, builder, "Open Blood Demon Art Builder", 0xFF688B72, 0x102015);
             if (isVerticallyVisible(builder, clipTop, clipBottom)) {
                 bloodDemonArtBuilderButtonBounds = builder;
             }
 
-            guiGraphics.drawString(font, "Muzan Blood Consumed: " + data.muzanBlood(), cardLeft + 8, contentTop + 102, 0xB8A48B, false);
-            guiGraphics.drawString(font, "Humans Consumed: " + data.humansConsumed(), cardLeft + 166, contentTop + 102, 0xB8A48B, false);
-            guiGraphics.drawString(font, "The builder opens in a separate editor window from this tab.", cardLeft + 8, contentTop + 126, 0x9F978D, false);
+            guiGraphics.drawString(font, "Muzan Blood Consumed: " + data.muzanBlood(), cardLeft + 8, contentTop + 126, 0xB8A48B, false);
+            guiGraphics.drawString(font, "Humans Consumed: " + data.humansConsumed(), cardLeft + 166, contentTop + 126, 0xB8A48B, false);
+            guiGraphics.drawString(font, "The builder opens in a separate editor window from this tab.", cardLeft + 8, contentTop + 150, 0x9F978D, false);
             guiGraphics.disableScissor();
             renderScrollbar(guiGraphics, cardRight - 6, clipTop, clipBottom, DEMON_CUSTOMIZATION_CONTENT_HEIGHT, visible, skillsScroll);
             return;
@@ -456,22 +478,24 @@ public class MeditationMenuScreen extends Screen {
         int buttonHeight = 18;
         passiveSkillsButtonBounds = new Rect2i(bodyLeft + 10, bodyTop + 12, bodyRight - bodyLeft - 20, buttonHeight);
         renderButton(guiGraphics, passiveSkillsButtonBounds, "Passive Skills", 0xFF8A6A3E, 0x1D1208);
+        buffsButtonBounds = new Rect2i(bodyLeft + 10, bodyTop + 36, bodyRight - bodyLeft - 20, buttonHeight);
+        renderButton(guiGraphics, buffsButtonBounds, "Buffs", 0xFF8A6A3E, 0x1D1208);
 
-        List<String> lines = List.of("Role: " + data.role(), "", "Passive Skills are available from the button above.");
+        List<String> lines = List.of("Role: " + data.role(), "Rank: " + data.rank(), "", "Passive Skills and current buffs are available from the buttons above.");
 
         List<FormattedCharSequence> wrappedLines = wrapLines(lines, bodyRight - bodyLeft - 20);
         int lineHeight = 10;
-        int visible = Math.max(1, (bodyBottom - bodyTop - 44) / lineHeight);
+        int visible = Math.max(1, (bodyBottom - bodyTop - 68) / lineHeight);
         skillsScroll = clampScroll(skillsScroll, wrappedLines.size(), visible);
 
-        guiGraphics.enableScissor(bodyLeft + 4, bodyTop + 40, bodyRight - 6, bodyBottom - 4);
-        int y = bodyTop + 44;
+        guiGraphics.enableScissor(bodyLeft + 4, bodyTop + 64, bodyRight - 6, bodyBottom - 4);
+        int y = bodyTop + 68;
         for (int i = skillsScroll; i < Math.min(wrappedLines.size(), skillsScroll + visible); i++) {
             guiGraphics.drawString(font, wrappedLines.get(i), bodyLeft + 8, y, 0xF0E3C2, false);
             y += lineHeight;
         }
         guiGraphics.disableScissor();
-        renderScrollbar(guiGraphics, bodyRight - 8, bodyTop + 44, bodyBottom - 8, wrappedLines.size(), visible, skillsScroll);
+        renderScrollbar(guiGraphics, bodyRight - 8, bodyTop + 68, bodyBottom - 8, wrappedLines.size(), visible, skillsScroll);
     }
 
     private void renderCosmeticsTab(GuiGraphics guiGraphics, int left, int top) {
@@ -550,6 +574,35 @@ public class MeditationMenuScreen extends Screen {
         }
         guiGraphics.disableScissor();
         renderScrollbar(guiGraphics, bodyRight - 8, listTop, bodyBottom - 8, data.passiveSkills().size(), visible, skillsScroll);
+    }
+
+    private void renderBuffsView(GuiGraphics guiGraphics, int bodyLeft, int bodyTop, int bodyRight, int bodyBottom) {
+        buffsBackButtonBounds = new Rect2i(bodyLeft + 8, bodyTop + 8, 54, 18);
+        renderButton(guiGraphics, buffsBackButtonBounds, "Back", 0xFF4A3B32, 0xF3E0C2);
+        guiGraphics.drawString(font, "Buffs", bodyLeft + 72, bodyTop + 13, 0xF5D18A, false);
+        guiGraphics.drawString(font, "Role: " + data.role(), bodyLeft + 12, bodyTop + 38, 0xEADCC0, false);
+        guiGraphics.drawString(font, data.demonPlayer() ? "Slayer Rank: " + data.slayerRank() : "Rank: " + data.rank(),
+            bodyLeft + 12, bodyTop + 50, 0xEADCC0, false);
+
+        int listTop = bodyTop + 68;
+        int rowHeight = 18;
+        int visible = Math.max(1, (bodyBottom - listTop - 8) / rowHeight);
+        if (data.buffs().isEmpty()) {
+            guiGraphics.drawString(font, "This role and rank grant no potion buffs.", bodyLeft + 12, listTop, 0xB8A48B, false);
+            return;
+        }
+
+        buffsScroll = clampScroll(buffsScroll, data.buffs().size(), visible);
+        guiGraphics.enableScissor(bodyLeft + 8, listTop, bodyRight - 10, bodyBottom - 6);
+        for (int i = buffsScroll; i < Math.min(data.buffs().size(), buffsScroll + visible); i++) {
+            MeditationMenuData.BuffEntry buff = data.buffs().get(i);
+            int rowY = listTop + (i - buffsScroll) * rowHeight;
+            guiGraphics.drawString(font, buff.name(), bodyLeft + 12, rowY, 0xCBE7C8, false);
+            String level = "Level " + buff.level();
+            guiGraphics.drawString(font, level, bodyRight - 82, rowY, 0xF5D18A, false);
+        }
+        guiGraphics.disableScissor();
+        renderScrollbar(guiGraphics, bodyRight - 8, listTop, bodyBottom - 8, data.buffs().size(), visible, buffsScroll);
     }
 
     private void renderButton(GuiGraphics guiGraphics, Rect2i bounds, String label, int fill, int textColor) {
@@ -638,12 +691,24 @@ public class MeditationMenuScreen extends Screen {
             if (activeTab == Tab.SKILLS) {
                 if (passiveSkillsButtonBounds != null && contains(passiveSkillsButtonBounds, mouseX, mouseY)) {
                     passiveSkillsOpen = true;
+                    buffsOpen = false;
                     skillsScroll = 0;
+                    return true;
+                }
+                if (buffsButtonBounds != null && contains(buffsButtonBounds, mouseX, mouseY)) {
+                    passiveSkillsOpen = false;
+                    buffsOpen = true;
+                    buffsScroll = 0;
                     return true;
                 }
                 if (passiveSkillsBackButtonBounds != null && contains(passiveSkillsBackButtonBounds, mouseX, mouseY)) {
                     passiveSkillsOpen = false;
                     skillsScroll = 0;
+                    return true;
+                }
+                if (buffsBackButtonBounds != null && contains(buffsBackButtonBounds, mouseX, mouseY)) {
+                    buffsOpen = false;
+                    buffsScroll = 0;
                     return true;
                 }
                 if (passiveSkillsOpen) {
@@ -741,15 +806,18 @@ public class MeditationMenuScreen extends Screen {
                 if (passiveSkillsOpen) {
                     int visible = Math.max(1, (bodyBottom - (bodyTop + 36) - 8) / 45);
                     skillsScroll = clampScroll(skillsScroll + amount, data.passiveSkills().size(), visible);
+                } else if (buffsOpen) {
+                    int visible = Math.max(1, (bodyBottom - (bodyTop + 68) - 8) / 18);
+                    buffsScroll = clampScroll(buffsScroll + amount, data.buffs().size(), visible);
                 } else if (data.demonPlayer()) {
                     int clipTop = bodyTop + 16;
                     int clipBottom = bodyBottom - 12;
                     int visible = Math.max(1, clipBottom - clipTop);
                     skillsScroll = clampScroll(skillsScroll + amount * 10, DEMON_CUSTOMIZATION_CONTENT_HEIGHT, visible);
                 } else {
-                    List<FormattedCharSequence> wrappedLines = wrapLines(List.of("Role: " + data.role(), "", "Passive Skills are available from the button above."),
+                    List<FormattedCharSequence> wrappedLines = wrapLines(List.of("Role: " + data.role(), "Rank: " + data.rank(), "", "Passive Skills and current buffs are available from the buttons above."),
                         bodyRight - bodyLeft - 20);
-                    int visible = Math.max(1, (bodyBottom - bodyTop - 16) / 10);
+                    int visible = Math.max(1, (bodyBottom - bodyTop - 68) / 10);
                     skillsScroll = clampScroll(skillsScroll + amount, wrappedLines.size(), visible);
                 }
             }
@@ -878,6 +946,7 @@ public class MeditationMenuScreen extends Screen {
         MeditationMenuScreen newScreen = new MeditationMenuScreen(new MeditationMenuData(
             data.role(),
             data.rank(),
+            data.slayerRank(),
             data.muzanBlood(),
             data.humansConsumed(),
             data.kizukiRank(),
@@ -901,6 +970,7 @@ public class MeditationMenuScreen extends Screen {
             )).toList(),
             data.passiveSkills(),
             data.passiveSkillPoints(),
+            data.buffs(),
             type,
             id,
             data.demonPlayer(),

@@ -470,6 +470,7 @@ public class KimetsunoyaibaMultiplayer
             com.lerdorf.kimetsunoyaibamultiplayer.entities.NezukoEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.DaughterEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.MotherEntity.registerBloodDemonArt();
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.RuiEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.KyogaiDrumsArt.register();
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:daughter",
@@ -482,6 +483,12 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.HARD_BOSS_DEMON,
                 false,
                 com.lerdorf.kimetsunoyaibamultiplayer.entities.MotherEntity.BLOOD_DEMON_ART_ID
+            );
+            com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
+                "kimetsunoyaibamultiplayer:rui",
+                com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_BOSS_DEMON,
+                false,
+                com.lerdorf.kimetsunoyaibamultiplayer.entities.RuiEntity.BLOOD_DEMON_ART_ID
             );
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:kyogai",
@@ -1149,6 +1156,8 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DaughterRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MOTHER.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MotherRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.RUI.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.RuiRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MANTIS_DEMON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MantisDemonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SIX_EYE_DEMON.get(),

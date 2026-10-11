@@ -5,25 +5,27 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.Locale;
 
 public enum DemonSlayerRank {
-    MIZUNOTO(1, "Mizunoto"),
-    MIZUNOE(2, "Mizunoe"),
-    KANOTO(3, "Kanoto"),
-    KANOE(4, "Kanoe"),
-    TSUCHINOTO(5, "Tsuchinoto"),
-    TSUCHINOE(6, "Tsuchinoe"),
-    HINOTO(7, "Hinoto"),
-    HINOE(8, "Hinoe"),
-    KINOTO(9, "Kinoto"),
-    KINOE(10, "Kinoe"),
-    HASHIRA(11, "Hashira"),
-    STRONGEST(12, "Strongest");
+    MIZUNOTO(1, "Mizunoto", "癸"),
+    MIZUNOE(2, "Mizunoe", "壬"),
+    KANOTO(3, "Kanoto", "辛"),
+    KANOE(4, "Kanoe", "庚"),
+    TSUCHINOTO(5, "Tsuchinoto", "己"),
+    TSUCHINOE(6, "Tsuchinoe", "戊"),
+    HINOTO(7, "Hinoto", "丁"),
+    HINOE(8, "Hinoe", "丙"),
+    KINOTO(9, "Kinoto", "乙"),
+    KINOE(10, "Kinoe", "甲"),
+    HASHIRA(11, "Hashira", "柱"),
+    STRONGEST(12, "Strongest", "最強");
 
     private final int level;
     private final String displayName;
+    private final String kanji;
 
-    DemonSlayerRank(int level, String displayName) {
+    DemonSlayerRank(int level, String displayName, String kanji) {
         this.level = level;
         this.displayName = displayName;
+        this.kanji = kanji;
     }
 
     public int level() {
@@ -32,6 +34,10 @@ public enum DemonSlayerRank {
 
     public String displayName() {
         return displayName;
+    }
+
+    public String kanji() {
+        return kanji;
     }
 
     public ResourceLocation advancementId() {

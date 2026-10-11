@@ -29,7 +29,6 @@ import java.util.*;
  *
  * This creates dynamic protection mechanics similar to how iron golems protect villagers.
  */
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class GuardianSpawnHandler {
 
     private static final Random RANDOM = new Random();

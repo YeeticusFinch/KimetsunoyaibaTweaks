@@ -40,8 +40,9 @@
     "PuppetGeoBoneCaptureMixin",
     "DustParticleMixin",
     "EntityRenderDispatcherAccessor",
-    "FearGameRendererMixin",
-    "StartupAnimationLoadingOverlayMixin"
+     "FearGameRendererMixin",
+     "StartupAnimationLoadingOverlayMixin",
+     "McaZombieVillagerRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

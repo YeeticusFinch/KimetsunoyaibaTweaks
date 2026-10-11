@@ -25,9 +25,6 @@ public abstract class NatagumoTerrainMixin {
     private static final int SURFACE_REPAIR_MAX_SLOPE = 2;
     private static final int SURFACE_REPAIR_DEPTH = 3;
     private static final int NATAGUMO_MAX_SURFACE_Y = 280;
-    private static final int SURFACE_PROTECTION_DEPTH = 10;
-    private static final int RIVER_SURFACE_PROTECTION_DEPTH = 18;
-    private static final double RIVER_PROTECTION_RADIUS = 12.0D;
     private static final int RIVER_HEADROOM = 5;
 
     @Inject(method = "createNoiseChunk", at = @At("HEAD"))
@@ -60,7 +57,7 @@ public abstract class NatagumoTerrainMixin {
         if (!(biomeSource instanceof EnhancedMountBiomeSource enhancedSource)) {
             return;
         }
-        protectNatagumoSurface(region, randomState, enhancedSource, chunk);
+        protectNatagumoSurface(randomState, enhancedSource, chunk);
     }
 
     @Inject(method = "buildSurface(Lnet/minecraft/server/level/WorldGenRegion;"
@@ -80,7 +77,7 @@ public abstract class NatagumoTerrainMixin {
         applyRiverColumns(region, randomState, enhancedSource, chunk);
     }
 
-    private static void protectNatagumoSurface(WorldGenRegion region, RandomState randomState,
+    private static void protectNatagumoSurface(RandomState randomState,
                                                 EnhancedMountBiomeSource source, ChunkAccess chunk) {
         BlockPos.MutableBlockPos position = new BlockPos.MutableBlockPos(0, 0, 0);
         int minBlockX = chunk.getPos().getMinBlockX();
@@ -95,27 +92,11 @@ public abstract class NatagumoTerrainMixin {
                     continue;
                 }
 
-                // The density translation targets this height, but this block-level guard keeps
-                // an inaccurate vanilla-height estimate from producing Y=320 plateaus.
+                // Keep an inaccurate vanilla-height estimate from producing Y=320 plateaus.
                 for (int y = maxBuildY; y > NATAGUMO_MAX_SURFACE_Y; y--) {
                     position.set(blockX, y, blockZ);
                     if (!chunk.getBlockState(position).isAir()) {
                         chunk.setBlockState(position, Blocks.AIR.defaultBlockState(), false);
-                    }
-                }
-
-                int finalSurfaceY = (int) Math.floor(source.natagumoTargetSurfaceHeight(
-                        blockX, blockZ, profile));
-                int protectionDepth = source.riverDistance(blockX, blockZ)
-                        < RIVER_PROTECTION_RADIUS
-                        ? RIVER_SURFACE_PROTECTION_DEPTH
-                        : SURFACE_PROTECTION_DEPTH;
-                int bottomY = Math.max(region.getMinBuildHeight(), finalSurfaceY - protectionDepth);
-                int topY = Math.min(maxBuildY, finalSurfaceY - 1);
-                for (int y = bottomY; y <= topY; y++) {
-                    position.set(blockX, y, blockZ);
-                    if (chunk.getBlockState(position).isAir()) {
-                        chunk.setBlockState(position, Blocks.STONE.defaultBlockState(), false);
                     }
                 }
             }

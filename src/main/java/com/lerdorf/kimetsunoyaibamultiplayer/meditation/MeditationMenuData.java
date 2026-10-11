@@ -8,6 +8,7 @@ import java.util.List;
 public class MeditationMenuData {
     private final String role;
     private final String rank;
+    private final String slayerRank;
     private final String muzanBlood;
     private final String humansConsumed;
     private final String kizukiRank;
@@ -16,6 +17,7 @@ public class MeditationMenuData {
     private final List<LocationEntry> locations;
     private final List<PassiveSkillEntry> passiveSkills;
     private final int passiveSkillPoints;
+    private final List<BuffEntry> buffs;
     private final String selectedType;
     private final String selectedId;
     private final boolean demonPlayer;
@@ -30,16 +32,18 @@ public class MeditationMenuData {
     private final double sheathRotateY;
     private final double sheathRotateZ;
 
-    public MeditationMenuData(String role, String rank, String muzanBlood, String humansConsumed, String kizukiRank,
-                              List<InfoSection> infoSections, List<QuestEntry> quests, List<LocationEntry> locations,
-                              List<PassiveSkillEntry> passiveSkills,
-                              int passiveSkillPoints,
-                               String selectedType, String selectedId, boolean demonPlayer, int demonEyesIndex, int demonEyesHue,
+    public MeditationMenuData(String role, String rank, String slayerRank, String muzanBlood, String humansConsumed, String kizukiRank,
+                               List<InfoSection> infoSections, List<QuestEntry> quests, List<LocationEntry> locations,
+                               List<PassiveSkillEntry> passiveSkills,
+                               int passiveSkillPoints,
+                               List<BuffEntry> buffs,
+                                String selectedType, String selectedId, boolean demonPlayer, int demonEyesIndex, int demonEyesHue,
                                String sheathPosition, int sheathTextureIndex,
                                double sheathTranslateX, double sheathTranslateY, double sheathTranslateZ,
                                double sheathRotateX, double sheathRotateY, double sheathRotateZ) {
         this.role = role;
         this.rank = rank;
+        this.slayerRank = slayerRank;
         this.muzanBlood = muzanBlood;
         this.humansConsumed = humansConsumed;
         this.kizukiRank = kizukiRank;
@@ -48,6 +52,7 @@ public class MeditationMenuData {
         this.locations = List.copyOf(locations);
         this.passiveSkills = List.copyOf(passiveSkills);
         this.passiveSkillPoints = passiveSkillPoints;
+        this.buffs = List.copyOf(buffs);
         this.selectedType = selectedType;
         this.selectedId = selectedId;
         this.demonPlayer = demonPlayer;
@@ -66,6 +71,7 @@ public class MeditationMenuData {
     public MeditationMenuData(FriendlyByteBuf buf) {
         this.role = buf.readUtf();
         this.rank = buf.readUtf();
+        this.slayerRank = buf.readUtf();
         this.muzanBlood = buf.readUtf();
         this.humansConsumed = buf.readUtf();
         this.kizukiRank = buf.readUtf();
@@ -74,6 +80,7 @@ public class MeditationMenuData {
         this.locations = buf.readList(LocationEntry::new);
         this.passiveSkills = buf.readList(PassiveSkillEntry::new);
         this.passiveSkillPoints = buf.readVarInt();
+        this.buffs = buf.readList(BuffEntry::new);
         this.selectedType = buf.readUtf();
         this.selectedId = buf.readUtf();
         this.demonPlayer = buf.readBoolean();
@@ -92,6 +99,7 @@ public class MeditationMenuData {
     public void write(FriendlyByteBuf buf) {
         buf.writeUtf(role);
         buf.writeUtf(rank);
+        buf.writeUtf(slayerRank);
         buf.writeUtf(muzanBlood);
         buf.writeUtf(humansConsumed);
         buf.writeUtf(kizukiRank);
@@ -100,6 +108,7 @@ public class MeditationMenuData {
         buf.writeCollection(locations, (packetBuffer, location) -> location.write(packetBuffer));
         buf.writeCollection(passiveSkills, (packetBuffer, passiveSkill) -> passiveSkill.write(packetBuffer));
         buf.writeVarInt(passiveSkillPoints);
+        buf.writeCollection(buffs, (packetBuffer, buff) -> buff.write(packetBuffer));
         buf.writeUtf(selectedType);
         buf.writeUtf(selectedId);
         buf.writeBoolean(demonPlayer);
@@ -139,6 +148,10 @@ public class MeditationMenuData {
         return rank;
     }
 
+    public String slayerRank() {
+        return slayerRank;
+    }
+
     public String muzanBlood() {
         return muzanBlood;
     }
@@ -169,6 +182,10 @@ public class MeditationMenuData {
 
     public int passiveSkillPoints() {
         return passiveSkillPoints;
+    }
+
+    public List<BuffEntry> buffs() {
+        return buffs;
     }
 
     public String selectedType() {
@@ -311,6 +328,17 @@ public class MeditationMenuData {
             buf.writeBoolean(active);
             buf.writeBoolean(canIncrease);
             buf.writeBoolean(canDecrease);
+        }
+    }
+
+    public record BuffEntry(String name, int level) {
+        public BuffEntry(FriendlyByteBuf buf) {
+            this(buf.readUtf(), buf.readVarInt());
+        }
+
+        public void write(FriendlyByteBuf buf) {
+            buf.writeUtf(name);
+            buf.writeVarInt(level);
         }
     }
 }

@@ -42,7 +42,7 @@ public final class SetDemonSlayerRankCommand {
             return 0;
         }
 
-        DemonSlayerRankManager.assignRank(player, rank);
+        DemonSlayerRankManager.assignRank(player, rank, true);
         source.sendSuccess(() -> Component.literal(
             "Set your demon slayer rank to " + rank.displayName()
                 + " and granted " + rank.level() + " passive skill point"

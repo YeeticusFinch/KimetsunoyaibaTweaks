@@ -440,6 +440,14 @@ public class ModEntities {
                 .updateInterval(2)
                 .build("mother"));
 
+    public static final RegistryObject<EntityType<RuiEntity>> RUI =
+        ENTITY_TYPES.register("rui",
+            () -> EntityType.Builder.of(RuiEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(2)
+                .build("rui"));
+
     public static final RegistryObject<EntityType<MantisDemonEntity>> MANTIS_DEMON =
         ENTITY_TYPES.register("mantis_demon",
             () -> EntityType.Builder.of(MantisDemonEntity::new, MobCategory.MONSTER)
@@ -463,6 +471,26 @@ public class ModEntities {
                 .clientTrackingRange(48)
                 .updateInterval(1)
                 .build("silk_ribbon"));
+
+    public static final RegistryObject<EntityType<RuiWebEntity>> RUI_WEB =
+        ENTITY_TYPES.register("rui_web",
+            () -> EntityType.Builder.<RuiWebEntity>of(RuiWebEntity::new, MobCategory.MISC)
+                .sized(8.0F, 8.0F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("rui_web"));
+
+    public static final RegistryObject<EntityType<RuiDecapitatedHeadEntity>> RUI_DECAPITATED_HEAD =
+        ENTITY_TYPES.register("rui_decapitated_head",
+            () -> EntityType.Builder.<RuiDecapitatedHeadEntity>of(RuiDecapitatedHeadEntity::new, MobCategory.MISC)
+                .sized(0.5F, 0.5F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("rui_decapitated_head"));
 
     public static final RegistryObject<EntityType<DissolutionCocoonEntity>> DISSOLUTION_COCOON =
         ENTITY_TYPES.register("dissolution_cocoon",
@@ -592,9 +620,11 @@ public class ModEntities {
             event.put(SWAMP_DEMON.get(), SwampDemonEntity.createAttributes().build());
             event.put(DAUGHTER.get(), DaughterEntity.createAttributes().build());
             event.put(MOTHER.get(), MotherEntity.createAttributes().build());
+            event.put(RUI.get(), RuiEntity.createAttributes().build());
             event.put(MANTIS_DEMON.get(), MantisDemonEntity.createAttributes().build());
             event.put(SIX_EYE_DEMON.get(), SixEyeDemonEntity.createAttributes().build());
             event.put(SILK_RIBBON.get(), SilkRibbonEntity.createAttributes().build());
+            event.put(RUI_DECAPITATED_HEAD.get(), RuiDecapitatedHeadEntity.createAttributes().build());
             event.put(DISSOLUTION_COCOON.get(), DissolutionCocoonEntity.createAttributes().build());
             event.put(NEZUKO.get(), NezukoEntity.createAttributes().build());
 

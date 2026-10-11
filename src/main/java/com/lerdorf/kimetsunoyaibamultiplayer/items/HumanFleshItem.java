@@ -13,6 +13,9 @@ public class HumanFleshItem extends GeckolibItem {
     public static final String TEXTURE_PATH_TAG = "HumanFleshTexture";
     public static final String PLAYER_UUID_TAG = "HumanFleshPlayerUuid";
     public static final String PLAYER_NAME_TAG = "HumanFleshPlayerName";
+    public static final String MCA_VILLAGER_DATA_TAG = "McaVillagerData";
+    public static final String MCA_VILLAGER_TYPE_TAG = "McaVillagerType";
+    public static final String MCA_VILLAGER_NAME_TAG = "McaVillagerName";
 
     private final String modelPath;
     private final ResourceLocation defaultTexture;

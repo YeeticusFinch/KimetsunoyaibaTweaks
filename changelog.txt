@@ -1,3 +1,17 @@
+1.6.5697
+- Added title announcements for ranks
+- Added support for Alex's Caves
+- Added some MCA integration support
+- Fixed some Mount Natagumo terrain glitches
+- Made civilian protection less crazy and aggressive
+- Began implementing the new Rui
+
+1.6.5696
+- Fixed the slayer rank potion effects
+- Slayer ranks now persist into demonhood
+- Added the KnY Servers button to the Multiplayer menu
+- Added ability to rank up past Mizunoto after completing quests
+
 1.6.5695
 - Improvements for Kyogai's BDA
 - Added WIP entities for demon makomo, demon sabito, demon kanawo, and demon kanae
@@ -7,6 +21,7 @@
 - Added the new `/setdsrank` command for force giving yourself demon slayer ranks
 - Added Fast Sprint passive skill
 - Adjusted the buffs for each demon slayer rank
+- Added ability to see your current buffs in the meditation menu
 
 1.6.5694
 - Fixed bugs with Kyogai's BDA

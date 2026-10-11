@@ -6,6 +6,9 @@ import net.minecraft.util.KeyDispatchDataCodec;
 /** Shifts vanilla density sampling downward inside a Natagumo region, preserving vanilla terrain systems. */
 public final class NatagumoDensityFunction implements DensityFunction {
     private static final double BASE_HEIGHT = 60.0;
+    private static final int SEARCH_TOP_Y = 320;
+    private static final int SEARCH_BOTTOM_Y = -64;
+    private static final int SEARCH_STEP = 8;
     private static final int OFFSET_CACHE_SIZE = 256;
     private static final int OFFSET_CACHE_MASK = OFFSET_CACHE_SIZE - 1;
 
@@ -103,18 +106,37 @@ public final class NatagumoDensityFunction implements DensityFunction {
     }
 
     private double estimateVanillaHeight(FunctionContext context) {
-        vanillaBaseContext.set(context, (int) BASE_HEIGHT);
-        vanillaTopContext.set(context, (int) BASE_HEIGHT + 128);
-        double baseDensity = delegate.compute(vanillaBaseContext);
-        double topDensity = delegate.compute(vanillaTopContext);
-        double densityChange = topDensity - baseDensity;
-        if (!Double.isFinite(baseDensity) || !Double.isFinite(topDensity)
-                || baseDensity * topDensity > 0.0 || Math.abs(densityChange) < 1.0E-6) {
+        vanillaTopContext.set(context, SEARCH_TOP_Y);
+        double upperDensity = delegate.compute(vanillaTopContext);
+        if (!Double.isFinite(upperDensity)) {
             return BASE_HEIGHT;
         }
 
-        double estimatedHeight = BASE_HEIGHT - baseDensity * 128.0 / densityChange;
-        return Math.max(-64.0, Math.min(280.0, estimatedHeight));
+        int upperY = SEARCH_TOP_Y;
+        for (int lowerY = SEARCH_TOP_Y - SEARCH_STEP;
+             lowerY >= SEARCH_BOTTOM_Y; lowerY -= SEARCH_STEP) {
+            vanillaBaseContext.set(context, lowerY);
+            double lowerDensity = delegate.compute(vanillaBaseContext);
+            if (!Double.isFinite(lowerDensity)) {
+                return BASE_HEIGHT;
+            }
+
+            // Vanilla terrain is solid below its first top-down density crossing.
+            if (upperDensity <= 0.0 && lowerDensity >= 0.0) {
+                double densityChange = lowerDensity - upperDensity;
+                if (Math.abs(densityChange) < 1.0E-6) {
+                    return lowerY;
+                }
+                double crossing = upperY
+                        + (lowerY - upperY) * (-upperDensity / densityChange);
+                return Math.max(-64.0, Math.min(280.0, crossing));
+            }
+
+            upperY = lowerY;
+            upperDensity = lowerDensity;
+        }
+
+        return BASE_HEIGHT;
     }
 
     private static int offsetSlot(long key) {

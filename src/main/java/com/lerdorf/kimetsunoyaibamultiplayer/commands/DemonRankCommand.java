@@ -70,10 +70,7 @@ public class DemonRankCommand {
                             source.sendFailure(Component.literal("Unknown rank."));
                             return 0;
                         }
-                        DemonRankingSavedData data = DemonRankingSavedData.get(target.serverLevel());
-                        data.assign(rank, target.getUUID());
-                        DemonRankManager.applyBuffs(target, rank);
-                        target.getPersistentData().putString("kizuki_rank", rank.displayName());
+                        DemonRankManager.assignRank(target, rank);
                         source.sendSuccess(() -> Component.literal(
                             "Set " + target.getName().getString() + "'s demon rank to " + rank.displayName() + "."), true);
                         return 1;

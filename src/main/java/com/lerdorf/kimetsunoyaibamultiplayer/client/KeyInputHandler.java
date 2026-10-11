@@ -94,6 +94,14 @@ public class KeyInputHandler {
 
                 Log.debug("[KeyInputHandler] Variation cycle key pressed (keyboard)");
 
+                if (mainHandItem.getItem() instanceof BloodDemonArtItem bloodDemonArtItem
+                    && com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.RuiBloodDemonArt.ART_ID
+                        .equals(bloodDemonArtItem.getArtId())) {
+                    com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToServer(
+                        new com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleRuiWebSnatchVariantPacket());
+                    return;
+                }
+
                 // Handle custom breathing swords
                 if (mainHandItem.getItem() instanceof BreathingSwordItem) {
                     Log.debug("[KeyInputHandler] Detected CUSTOM breathing sword");

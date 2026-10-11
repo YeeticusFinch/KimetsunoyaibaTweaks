@@ -127,6 +127,18 @@ public class EnhancedSpawnConfig {
             .comment("Maximum number of demon slayers to spawn in a protective spawn")
             .defineInRange("demon_slayer_group_size_max", 4, 1, 20);
 
+    private static final ForgeConfigSpec.IntValue PROTECTIVE_SPAWN_DELAY_TICKS = BUILDER
+            .comment("Delay before a civilian protection response spawns")
+            .defineInRange("protective_spawn_delay_ticks", 60, 0, 2400);
+
+    private static final ForgeConfigSpec.IntValue PROTECTIVE_SPAWN_COOLDOWN_TICKS = BUILDER
+            .comment("Cooldown between civilian protection responses for the same civilian")
+            .defineInRange("protective_spawn_cooldown_ticks", 600, 20, 12000);
+
+    private static final ForgeConfigSpec.IntValue MAX_NEARBY_PROTECTIVE_SLAYERS = BUILDER
+            .comment("Maximum demon slayers, Hashira, and Kamaboko members within 100 blocks of a civilian")
+            .defineInRange("max_nearby_protective_slayers", 5, 1, 100);
+
     static {
         BUILDER.pop(); // protective_spawning
     }
@@ -228,6 +240,9 @@ public class EnhancedSpawnConfig {
     public static double demonSlayerSpawnChance = 0.15;
     public static int demonSlayerGroupSizeMin = 2;
     public static int demonSlayerGroupSizeMax = 4;
+    public static int protectiveSpawnDelayTicks = 60;
+    public static int protectiveSpawnCooldownTicks = 600;
+    public static int maxNearbyProtectiveSlayers = 5;
     public static boolean enableKimetsuReplacer = true;
     public static boolean enableKimetsuMovieReplacer = false;
     public static final Map<String, Boolean> entityReplacerToggles = new HashMap<>();
@@ -269,6 +284,9 @@ public class EnhancedSpawnConfig {
         demonSlayerSpawnChance = DEMON_SLAYER_SPAWN_CHANCE.get();
         demonSlayerGroupSizeMin = DEMON_SLAYER_GROUP_SIZE_MIN.get();
         demonSlayerGroupSizeMax = DEMON_SLAYER_GROUP_SIZE_MAX.get();
+        protectiveSpawnDelayTicks = PROTECTIVE_SPAWN_DELAY_TICKS.get();
+        protectiveSpawnCooldownTicks = PROTECTIVE_SPAWN_COOLDOWN_TICKS.get();
+        maxNearbyProtectiveSlayers = MAX_NEARBY_PROTECTIVE_SLAYERS.get();
         enableKimetsuReplacer = ENABLE_KIMETSU_REPLACER.get();
         enableKimetsuMovieReplacer = ENABLE_KIMETSU_MOVIE_REPLACER.get();
 

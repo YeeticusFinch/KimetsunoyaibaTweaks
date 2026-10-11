@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.RuiBloodDemonArt;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
@@ -83,7 +84,15 @@ public class BreathingDisplayOverlay {
             return;
         }
 
-        MutableComponent display = Component.literal(displayText)
+        String renderedText = displayText;
+        Player player = mc.player;
+        if (player != null && RuiBloodDemonArt.ART_ID.equals(artId)
+            && RuiBloodDemonArt.isWebSnatchFormSelected(player.getMainHandItem())) {
+            int variantPosition = RuiBloodDemonArt.isSilkSnatchSnare(player.getMainHandItem()) ? 2 : 1;
+            renderedText += " §8(" + variantPosition + "/2)";
+        }
+
+        MutableComponent display = Component.literal(renderedText)
             .withStyle(style -> style.withColor(getBloodDemonArtDisplayColor(artId)));
         renderDisplayText(event.getGuiGraphics().pose(), display, event.getGuiGraphics());
     }

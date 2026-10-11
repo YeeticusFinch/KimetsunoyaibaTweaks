@@ -23,6 +23,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DirectionArrowRende
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanrojiRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroFPRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.RuiWebRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.RuiDecapitatedHeadRenderer;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.entity.EntityType;
@@ -56,7 +58,9 @@ public class CrowRendererManager {
         event.registerEntityRenderer(ModEntities.KANROJI.get(), KanrojiRenderer::new);
          event.registerEntityRenderer(ModEntities.KYOGAI.get(), KyogaiRenderer::new);
          event.registerEntityRenderer(ModEntities.KYOGAI_CLAW.get(), KyogaiClawRenderer::new);
-         event.registerEntityRenderer(ModEntities.DIRECTION_ARROW.get(), DirectionArrowRenderer::new);
+        event.registerEntityRenderer(ModEntities.DIRECTION_ARROW.get(), DirectionArrowRenderer::new);
+         event.registerEntityRenderer(ModEntities.RUI_WEB.get(), RuiWebRenderer::new);
+         event.registerEntityRenderer(ModEntities.RUI_DECAPITATED_HEAD.get(), RuiDecapitatedHeadRenderer::new);
 
         // Register renderers for Kanae and Kanawo (Flower Breathing)
         event.registerEntityRenderer(ModEntities.KANAE.get(), KanaeRenderer::new);

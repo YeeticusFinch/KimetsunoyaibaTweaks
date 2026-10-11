@@ -139,8 +139,9 @@ public final class PuppetryHandler {
         data.remove(ANCHOR_X_KEY);
         data.remove(ANCHOR_Y_KEY);
         data.remove(ANCHOR_Z_KEY);
-        boolean webTraversalActive = entity.hasEffect(ModEffects.WEB_TRAVERSAL.get());
-        if (!webTraversalActive) {
+        boolean lineEffectActive = entity.hasEffect(ModEffects.WEB_TRAVERSAL.get())
+            || entity.hasEffect(ModEffects.SPIDER_SNARE.get());
+        if (!lineEffectActive) {
             data.remove(LINE_ANCHORS_KEY);
         }
         data.remove(OWNER_KEY);
@@ -150,7 +151,7 @@ public final class PuppetryHandler {
         data.remove(ATTACK_COOLDOWN_KEY);
         data.remove(DAMAGE_PENALTY_COOLDOWN_KEY);
         data.remove(OWNER_LOOKUP_MISSING_TICKS_KEY);
-        if (webTraversalActive) {
+        if (lineEffectActive) {
             syncLineAnchors(entity);
         } else {
             syncPuppetryLines(entity, true);
@@ -696,7 +697,8 @@ public final class PuppetryHandler {
             return;
         }
         if (!target.hasEffect(ModEffects.PUPPETRY.get())
-            && !target.hasEffect(ModEffects.WEB_TRAVERSAL.get())) {
+            && !target.hasEffect(ModEffects.WEB_TRAVERSAL.get())
+            && !target.hasEffect(ModEffects.SPIDER_SNARE.get())) {
             return;
         }
         ensureLineAnchorsStored(target);

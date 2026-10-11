@@ -30,6 +30,7 @@ public class SilkRibbonRenderer extends EntityRenderer<SilkRibbonEntity> {
 
     private static final float RIBBON_WIDTH = 0.09F;
     private static final float ACID_RIBBON_WIDTH = 0.075F;
+    private static final float RUI_RIBBON_HALF_WIDTH = 0.002F;
     private static final int SPLINE_SUBDIVISIONS = 6;
 
     private static final float WHITE_R = 1.00F, WHITE_G = 1.00F, WHITE_B = 1.00F;
@@ -76,7 +77,10 @@ public class SilkRibbonRenderer extends EntityRenderer<SilkRibbonEntity> {
         VertexConsumer buffer = bufferSource.getBuffer(renderType);
 
         boolean acid = entity.getKind() == SilkRibbonEntity.RibbonKind.ACID;
-        float width = acid ? ACID_RIBBON_WIDTH : RIBBON_WIDTH;
+        boolean redThread = entity.isRedThread();
+        float width = entity.isRuiThread()
+            ? RUI_RIBBON_HALF_WIDTH
+            : (acid ? ACID_RIBBON_WIDTH : RIBBON_WIDTH);
 
         float alpha = 1.0F;
 
@@ -113,7 +117,9 @@ public class SilkRibbonRenderer extends EntityRenderer<SilkRibbonEntity> {
 
                 // Color: white for silk; alternating white/dark-green bands for acid.
                 float r, g, bl;
-                if (acid && (s / 2) % 2 == 1) {
+                if (redThread) {
+                    r = 0.85F; g = 0.06F; bl = 0.10F;
+                } else if (acid && (s / 2) % 2 == 1) {
                     r = ACID_R; g = ACID_G; bl = ACID_B;
                 } else {
                     r = WHITE_R; g = WHITE_G; bl = WHITE_B;

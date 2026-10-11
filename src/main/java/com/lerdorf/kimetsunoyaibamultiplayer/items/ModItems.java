@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.items;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CreepingRuin;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.DemonwebPuppetry;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.RuiBloodDemonArt;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.VindicatorsBane;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import java.util.ArrayList;
@@ -195,6 +196,12 @@ public class ModItems {
             0xE8E4DC, 0x5A1F2B,
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> RUI_SPAWN_EGG = ITEMS.register("rui_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.RUI,
+            0xE9E8F5, 0xD7B9E8,
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> MANTIS_DEMON_SPAWN_EGG = ITEMS.register("mantis_demon_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MANTIS_DEMON,
@@ -312,6 +319,9 @@ public class ModItems {
             4.0F, 1.6F, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> MOTHER_DEMON_ART = ITEMS.register("mother_demon_art",
         () -> new BloodDemonArtItem(DemonwebPuppetry.ART_ID, 4.0F, 1.6F,
+            new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> RUI_DEMON_ART = ITEMS.register("rui_demon_art",
+        () -> new BloodDemonArtItem(RuiBloodDemonArt.ART_ID, 4.0F, 1.6F,
             new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CUSTOM_DEMON_ART = ITEMS.register("custom_demon_art",
         () -> new CustomDemonArtItem(new Item.Properties()));
@@ -746,7 +756,8 @@ public class ModItems {
                     SWAMP_DEMON_SPAWN_EGG.get(),
                     NEZUKO_SPAWN_EGG.get(),
                      DAUGHTER_SPAWN_EGG.get(),
-                     MOTHER_SPAWN_EGG.get(),
+                      MOTHER_SPAWN_EGG.get(),
+                      RUI_SPAWN_EGG.get(),
                       MANTIS_DEMON_SPAWN_EGG.get(),
                       SIX_EYE_DEMON_SPAWN_EGG.get(),
                       DECORATIONAL_SILK_COCOON_SPAWN_EGG.get(),
@@ -762,7 +773,8 @@ public class ModItems {
                     SWAMP_DEMON_ART.get(),
                     COMBUSTIBLE_BLOOD.get(),
                     DAUGHTER_DEMON_ART.get(),
-                    MOTHER_DEMON_ART.get()
+                     MOTHER_DEMON_ART.get(),
+                     RUI_DEMON_ART.get()
                 );
                 addOptionalSpawnEggs(output);
 

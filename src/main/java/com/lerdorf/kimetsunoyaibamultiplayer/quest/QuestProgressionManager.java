@@ -9,6 +9,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuService;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuData;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRank;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.StructureLocationCache;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SunBreathingLevelHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
@@ -532,6 +533,52 @@ public final class QuestProgressionManager {
 
     public static void markPermanenceFirstTasteCompleted(ServerPlayer player) {
         player.getPersistentData().putBoolean(PERMANENCE_FIRST_TASTE_COMPLETED, true);
+    }
+
+    public static DemonSlayerRank getDemonSlayerRankCap(ServerPlayer player) {
+        if (player == null || !hasCompletedFinalSelection(player)) {
+            return null;
+        }
+
+        // These caps follow the planned Corps mission progression. The later
+        // stages are not playable yet, so completing the current last playable
+        // stage (Asakusa) temporarily removes the cap up to Kinoe.
+        if (hasCompletedQuestStage(player, "cruel", "mount_natagumo")
+            || hasCompletedQuestStage(player, "cruel", "mt_natagumo")) {
+            return DemonSlayerRank.KANOTO;
+        }
+        if (hasCompletedQuestStage(player, "cruel", "tsuzumi_mansion")) {
+            return DemonSlayerRank.MIZUNOE;
+        }
+        if (hasCompletedQuestStage(player, "cruel", "asakusa")) {
+            return DemonSlayerRank.KINOE;
+        }
+        return DemonSlayerRank.MIZUNOTO;
+    }
+
+    public static boolean hasCompletedQuestStage(ServerPlayer player, String groupId, String stageId) {
+        if (player == null || groupId == null || stageId == null) {
+            return false;
+        }
+        String key = "KnYQuestCompletedStage_" + groupId + "_" + stageId;
+        if (player.getPersistentData().getBoolean(key)) {
+            return true;
+        }
+
+        // Preserve progress for worlds created before completed-stage markers
+        // were added by treating a later active stage as proof of completion.
+        if ("cruel".equals(groupId) && "asakusa".equals(stageId)
+            && "cruel".equals(player.getPersistentData().getString(ACTIVE_GROUP_ID))) {
+            QuestGroupDefinition group = QuestGroupRegistry.get(groupId);
+            if (group != null) {
+                for (int i = 0; i < group.stages().size(); i++) {
+                    if (stageId.equals(group.stages().get(i).id())) {
+                        return player.getPersistentData().getInt(ACTIVE_STAGE_INDEX) > i;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public static void copyQuestProgressOnClone(Player original, Player clone) {
@@ -2088,6 +2135,8 @@ public final class QuestProgressionManager {
             return;
         }
 
+        player.getPersistentData().putBoolean(
+            "KnYQuestCompletedStage_" + context.group().id() + "_" + context.stage().id(), true);
         applyRewards(player, context.stage().rewards());
         int nextStageIndex = context.stageIndex() + 1;
         if (shouldDisableSpiderFamilyStage(context, nextStageIndex)) {
