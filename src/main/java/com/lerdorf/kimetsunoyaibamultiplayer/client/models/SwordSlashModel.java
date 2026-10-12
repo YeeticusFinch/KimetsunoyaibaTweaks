@@ -173,7 +173,10 @@ public class SwordSlashModel extends GeoModel<SwordSlashRenderState> {
 	}
 
 	private String getGeometryModelKey() {
-		return "moon".equals(modelKey) ? "generic" : modelKey;
+		return switch (modelKey) {
+			case "moon", "thunder", "serpent", "insect", "stone", "sun" -> "generic";
+			default -> modelKey;
+		};
 	}
 
 	private boolean isWebModel() {

@@ -147,9 +147,9 @@ public class KimetsunoyaibaMultiplayer
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SwordRackConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedMountBiomeConfig.class);
-        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.class);
-        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.class);
-        modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.class);
+         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.class);
+         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.class);
+         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.SurvivalRaidConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.FinalSelectionRaidConfig.class);
         modEventBus.register(com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.class);
@@ -173,9 +173,9 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SwordRackConfig.SPEC, "kimetsunoyaibamultiplayer/sword_rack.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.SPEC, "kimetsunoyaibamultiplayer/biomes.toml");
         context.registerConfig(ModConfig.Type.SERVER, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedMountBiomeConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_mount_biomes.toml");
-        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.SPEC, "kimetsunoyaibamultiplayer/spawn_rates.toml");
-        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_spawning.toml");
-        context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.SPEC, "kimetsunoyaibamultiplayer/raids.toml");
+         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SpawnRateConfig.SPEC, "kimetsunoyaibamultiplayer/spawn_rates.toml");
+         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedSpawnConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_spawning.toml");
+         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.RaidConfig.SPEC, "kimetsunoyaibamultiplayer/raids.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.SurvivalRaidConfig.SPEC, "kimetsunoyaibamultiplayer/survival_raids.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.FinalSelectionRaidConfig.SPEC, "kimetsunoyaibamultiplayer/final_selection_raids.toml");
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig.SPEC, "kimetsunoyaibamultiplayer/enhanced_breathing.toml");
@@ -188,6 +188,7 @@ public class KimetsunoyaibaMultiplayer
         context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.DemonRankingConfig.SPEC, "kimetsunoyaibamultiplayer/demon_ranking.toml");
         context.registerConfig(ModConfig.Type.CLIENT, com.lerdorf.kimetsunoyaibamultiplayer.config.ClientParticleConfig.SPEC, "kimetsunoyaibamultiplayer/client_particles.toml");
          context.registerConfig(ModConfig.Type.CLIENT, com.lerdorf.kimetsunoyaibamultiplayer.config.EntitySkinLayersConfig.SPEC, "kimetsunoyaibamultiplayer/entity_skin_layers.toml");
+         context.registerConfig(ModConfig.Type.CLIENT, com.lerdorf.kimetsunoyaibamultiplayer.config.RuiDisplayConfig.SPEC, "kimetsunoyaibamultiplayer/rui_display.toml");
          context.registerConfig(ModConfig.Type.COMMON, com.lerdorf.kimetsunoyaibamultiplayer.config.GravityConfig.SPEC, "kimetsunoyaibamultiplayer/gravity.toml");
         context.registerConfig(ModConfig.Type.SERVER, com.lerdorf.kimetsunoyaibamultiplayer.config.FutonConfig.SPEC, "kimetsunoyaibamultiplayer/futon.toml");
         Log.alwaysWarn("[INIT] Registered config specs");
@@ -1178,6 +1179,10 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SILK_RIBBON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SilkRibbonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.BEAST_BEZIER_CURVE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BeastBezierCurveRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.BEAST_SWORD_PROJECTILE.get(),
+                    context -> new net.minecraft.client.renderer.entity.ThrownItemRenderer<>(context));
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DISSOLUTION_COCOON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DissolutionCocoonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SWAMP_PUDDLE.get(),

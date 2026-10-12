@@ -14,6 +14,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.BeastSlashesSpawner;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.WhiteSlashesEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.WhiteSlashesSpawner;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BeastSlashesEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BeastBezierCurveEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BeastSwordProjectileEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.BleedingHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 
@@ -36,6 +38,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -45,14 +48,15 @@ import org.joml.Vector3f;
 
 /**
  * Enhanced Beast Breathing forms.
- * Placeholder implementation with 10 forms for future custom effects.
- * Form IDs in the 25000s range (25001-25010).
+ * Enhanced implementation of all eleven Beast Breathing forms.
+ * Form IDs in the 25000s range (25001-25011).
  */
 public class EnhancedBeastForms {
     private static final UUID DUAL_WIELD_ATTACK_SPEED_MODIFIER_UUID =
             UUID.fromString("8df74f20-6d63-4e62-bef7-c6fd4cff3651");
 
     private static final Vector3f WHITE = new Vector3f(255f/255f, 255f/255f, 255f/255f);
+    private static final Vector3f CYAN = new Vector3f(128f/255f, 255f/255f, 255f/255f);
     
 	/**
      * Unified animation helper that works with both players and GeckoLib entities.
@@ -177,9 +181,31 @@ public class EnhancedBeastForms {
     	}
 
     	String key = id.toString();
-    	return key.equals("kimetsunoyaiba:nichirinsword_inosuke")
-    			|| key.equals("kimetsunoyaibamultiplayer:nichirinsword_inosuke")
-    			|| key.equals("kimetsunoyaibamultiplayer:nichirinsword_beast");
+      return key.equals("kimetsunoyaiba:nichirinsword_inosuke")
+              || key.equals("kimetsunoyaibamultiplayer:nichirinsword_inosuke")
+              || key.equals("kimetsunoyaibamultiplayer:nichirinsword_beast");
+    }
+
+    private static BeastSwordProjectileEntity launchBeastSword(LivingEntity owner, Level level,
+                                                               ItemStack source, Vec3 direction) {
+        if (source == null || source.isEmpty() || level.isClientSide) {
+            return null;
+        }
+
+        ItemStack thrownStack = source.copy();
+        thrownStack.setCount(1);
+        source.shrink(1);
+
+        BeastSwordProjectileEntity projectile = new BeastSwordProjectileEntity(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.BEAST_SWORD_PROJECTILE.get(), owner, level);
+        Vec3 launchPosition = owner.getEyePosition().add(direction.scale(0.8D));
+        projectile.setPos(launchPosition.x, launchPosition.y, launchPosition.z);
+        projectile.setSwordStack(thrownStack);
+        projectile.shoot(direction.x, direction.y, direction.z, 1.7F, 0.0F);
+        level.addFreshEntity(projectile);
+        level.playSound(null, owner.blockPosition(), SoundEvents.TRIDENT_THROW,
+            SoundSource.PLAYERS, 0.8F, 1.25F);
+        return projectile;
     }
 
     private static boolean hurtWithBeastBleeding(LivingEntity attacker, LivingEntity target, float damage, boolean dualWield) {
@@ -1165,38 +1191,85 @@ public class EnhancedBeastForms {
     }
 	
 	public static BreathingForm ninthForm() {
-        return new BreathingForm(
-        	25009,
+         return new BreathingForm(
+            25009,
             "Ninth Fang: Extending Bendy Slash",
             "The user dislocates the joints of their arm to increase the range of their attack, and then unleashing a fast swinging forward strike.",
             5, // 5 second cooldown
-            (entity, level, formId) -> {
-            	boolean twoSwords = hasTwoSwords(entity);
-                float damage = (5.0F);
+             (entity, level, formId) -> {
+                boolean twoSwords = hasTwoSwords(entity);
+                float damage = twoSwords ? 10.0F : 5.0F;
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
-                
-                //setCancelAttackSwing(entity, true);
-                setCancelAttackSwing(entity, false); // we want the sword slaashes to happen
-                ServerLevel serverLevel = level instanceof ServerLevel ? (ServerLevel)level : null;
-                
-                int formDuration = 20;
-                
-                final float[] yawRad = {(float) Math.toRadians(-entity.getYRot())};
-                Vec3 forward = new Vec3(Math.sin(yawRad[0]), 0, Math.cos(yawRad[0])).normalize();
-                Vec3 right = new Vec3(-forward.z, 0, forward.x);
-                
-                
-                
-                
-                
-                // ===== CLEANUP =====
-                AbilityScheduler.scheduleOnce(entity, () -> {
+                setCancelAttackSwing(entity, true);
 
-                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
-                    GuardStateHelper.clearGuardState(entity);
-                    //setCancelAttackSwing(entity, false);
-                    
-                }, formDuration + 1);
+                final int formDuration = 26;
+                final double slashRange = 10.0D;
+                final double slashAoeRadius = 4.5D;
+                final Vec3 forward = entity.getLookAngle().multiply(1, 0, 1).normalize();
+                final Vec3 slashForward = forward.lengthSqr() < 1.0E-6D
+                    ? new Vec3(0, 0, 1) : forward;
+                final int[] tick = {0};
+                playEntityAnimationOnLayer(entity, "beast9", formDuration, 1.0F, 3000);
+
+                AbilityScheduler.scheduleRepeating(entity, () -> {
+                    int currentTick = tick[0]++;
+                    if (currentTick < 8 && currentTick % 2 == 0) {
+                        level.playSound(null, entity.blockPosition(), SoundEvents.GENERIC_BIG_FALL,
+                            SoundSource.PLAYERS, 0.8F, 0.8F);
+                    }
+
+                    if (currentTick == 16) {
+                        if (level instanceof ServerLevel serverLevel) {
+                            BonePositionTracker.sendRawHorizontalSlashToClients(
+                                level,
+                                slashForward.scale(slashRange).add(0, 0.35D, 0),
+                                modelKey,
+                                0.0F,
+                                false,
+                                160,
+                                16,
+                                0.0F,
+                                0.0F,
+                                0.0F,
+                                2.0F,
+                                2.0F,
+                                0.0F,
+                                entity.getUUID(),
+                                "beast9"
+                            );
+                            serverLevel.sendParticles(new DustParticleOptions(CYAN, 1.4F),
+                                entity.getX() + slashForward.x * slashRange,
+                                entity.getEyeY() + slashForward.y * slashRange,
+                                entity.getZ() + slashForward.z * slashRange,
+                                18, 0.35D, 0.35D, 0.35D, 0.08D);
+                        }
+
+                        Vec3 slashCenter = entity.getEyePosition().add(slashForward.scale(slashRange));
+                        AABB hitBox = new AABB(slashCenter, slashCenter).inflate(slashAoeRadius);
+                        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, hitBox,
+                                target -> target != entity && target.isAlive())) {
+                            hurtWithBeastBleeding(entity, target, damage, true, twoSwords);
+                        }
+
+                        entity.invulnerableTime = 0;
+                        entity.hurt(entity.damageSources().generic(), 10.0F);
+                        entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 4,
+                            false, false, false));
+                        entity.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 4,
+                            false, false, false));
+                        level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                            SoundSource.PLAYERS, 1.2F, 0.65F);
+                        level.playSound(null, entity.blockPosition(), SoundEvents.GENERIC_EXPLODE,
+                            SoundSource.PLAYERS, 0.65F, 1.25F);
+                    }
+                }, 1, formDuration);
+
+                // ===== CLEANUP =====
+                 AbilityScheduler.scheduleOnce(entity, () -> {
+                     GuardStateHelper.clearGuardState(entity);
+                     setCancelAttackSwing(entity, false);
+                     stopEntityAnimation(entity, "kimetsunoyaibamultiplayer:beast9");
+                 }, formDuration + 1);
             }
                 
         );
@@ -1208,71 +1281,210 @@ public class EnhancedBeastForms {
             "Tenth Fang: Whirling Fangs",
             "The user rapidly spins their swords in a circular motion, deflecting enemy attacks such as projectiles.",
             6, // 6 second cooldown
-            (entity, level, formId) -> {
-            	boolean twoSwords = hasTwoSwords(entity);
-                float damage = (5.0F);
+             (entity, level, formId) -> {
+                boolean twoSwords = hasTwoSwords(entity);
+                 float damage = twoSwords ? 5.0F : 3.0F;
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
-                
-                //setCancelAttackSwing(entity, true);
-                setCancelAttackSwing(entity, false); // we want the sword slaashes to happen
-                ServerLevel serverLevel = level instanceof ServerLevel ? (ServerLevel)level : null;
-                
-                int formDuration = 20;
-                
-                final float[] yawRad = {(float) Math.toRadians(-entity.getYRot())};
-                Vec3 forward = new Vec3(Math.sin(yawRad[0]), 0, Math.cos(yawRad[0])).normalize();
-                Vec3 right = new Vec3(-forward.z, 0, forward.x);
-                
-                
-                
-                
-                
-                // ===== CLEANUP =====
-                AbilityScheduler.scheduleOnce(entity, () -> {
+                setCancelAttackSwing(entity, true);
 
-                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
-                    GuardStateHelper.clearGuardState(entity);
-                    //setCancelAttackSwing(entity, false);
-                    
-                }, formDuration + 1);
+                final int formDuration = 60;
+                final int[] tick = {0};
+                 final double[] curveRadii = {0.5D, 0.7D, 0.9D, 1.1D};
+                 final double curveRotationSpeed = 1.92D; // triple the previous rotation speed
+                final List<BeastBezierCurveEntity> curves = new ArrayList<>();
+
+                if (level instanceof ServerLevel serverLevel) {
+                    Vec3 initialAxis = entity.getLookAngle().normalize();
+                    if (initialAxis.lengthSqr() < 1.0E-6D) {
+                        initialAxis = new Vec3(0, 0, 1);
+                    }
+                    Vec3 initialRight = initialAxis.cross(new Vec3(0, 1, 0));
+                    if (initialRight.lengthSqr() < 1.0E-6D) {
+                        initialRight = new Vec3(1, 0, 0);
+                    } else {
+                        initialRight = initialRight.normalize();
+                    }
+                    Vec3 initialHead = entity.getEyePosition().add(0, -0.375D, 0);
+                    Vec3 initialPoint1 = initialHead.add(initialAxis.scale(0.75D)).add(initialRight.scale(0.5D));
+                    Vec3 initialPoint2 = initialHead.add(initialAxis.scale(0.75D)).subtract(initialRight.scale(0.5D));
+
+                    for (int index = 0; index < curveRadii.length; index++) {
+                        double radius = curveRadii[index];
+                        BeastBezierCurveEntity curve = BeastBezierCurveEntity.create(
+                            level, initialPoint1, initialAxis, radius, 0.0D, formDuration + 3);
+                        curve.setWhiteColor(index % 2 == 1);
+                        serverLevel.addFreshEntity(curve);
+                        curves.add(curve);
+                    }
+                    if (twoSwords) {
+                        for (int index = 0; index < curveRadii.length; index++) {
+                            double radius = curveRadii[index];
+                            BeastBezierCurveEntity curve = BeastBezierCurveEntity.create(
+                                level, initialPoint2, initialAxis, radius, 0.0D, formDuration + 3);
+                            curve.setWhiteColor(index % 2 == 1);
+                            serverLevel.addFreshEntity(curve);
+                            curves.add(curve);
+                        }
+                    }
+                }
+
+                AbilityScheduler.scheduleRepeating(entity, () -> {
+                    int currentTick = tick[0]++;
+                    Vec3 look = entity.getLookAngle().normalize();
+                    Vec3 axis = look.lengthSqr() < 1.0E-6D ? new Vec3(0, 0, 1) : look;
+                    Vec3 right = axis.cross(new Vec3(0, 1, 0));
+                    if (right.lengthSqr() < 1.0E-6D) {
+                        right = new Vec3(1, 0, 0);
+                    } else {
+                        right = right.normalize();
+                    }
+
+                    Vec3 head = entity.getEyePosition().add(0, -0.375D, 0);
+                    Vec3 point1 = head.add(axis.scale(0.75D)).add(right.scale(0.5D));
+                    Vec3 point2 = head.add(axis.scale(0.75D)).subtract(right.scale(0.5D));
+                    if (level instanceof ServerLevel serverLevel) {
+                        double phase = currentTick * curveRotationSpeed;
+                         for (int index = 0; index < curveRadii.length; index++) {
+                            if (index < curves.size() && curves.get(index).isAlive()) {
+                                curves.get(index).setCurve(point1, axis, curveRadii[index], phase);
+                            }
+                             if (twoSwords) {
+                                 int secondIndex = index + curveRadii.length;
+                                 if (secondIndex < curves.size() && curves.get(secondIndex).isAlive()) {
+                                     curves.get(secondIndex).setCurve(point2, axis, curveRadii[index], -phase);
+                                 }
+                             }
+                        }
+                    }
+
+                    if (currentTick % 10 == 0) {
+                        // Refresh the looping animation without letting it expire before the form ends.
+                        playEntityAnimationOnLayer(entity, "beast10", formDuration, 1.0F, 3000);
+                        if (currentTick == 0) {
+                            level.playSound(null, entity.blockPosition(), SoundEvents.SHIELD_BLOCK,
+                                SoundSource.PLAYERS, 0.8F, 1.35F);
+                        }
+                    }
+
+                    if (currentTick % 4 == 0 || currentTick % 4 == 1) {
+                        level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
+                            SoundSource.PLAYERS, 0.7F, 1.5F);
+                    }
+
+                    double projectileDeflectionRange = twoSwords ? 5.0D : 3.0D;
+                    for (Projectile projectile : level.getEntitiesOfClass(Projectile.class,
+                            entity.getBoundingBox().inflate(projectileDeflectionRange))) {
+                        Vec3 away = projectile.position().subtract(entity.position());
+                        if (away.lengthSqr() < 1.0E-6D) {
+                            away = axis;
+                        }
+                        Vec3 reflectedVelocity = away.normalize().scale(
+                            Math.max(1.0D, projectile.getDeltaMovement().length() + 0.35D));
+                        projectile.setDeltaMovement(reflectedVelocity);
+                        projectile.hasImpulse = true;
+                        projectile.hurtMarked = true;
+                    }
+
+                    if (currentTick % 5 == 0) {
+                        AABB hitBox = entity.getBoundingBox().inflate(3.0D);
+                        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, hitBox,
+                                target -> target != entity && target.isAlive())) {
+                            Vec3 away = target.position().subtract(entity.position());
+                            Vec3 horizontalAway = new Vec3(away.x, 0, away.z);
+                            if (horizontalAway.lengthSqr() < 1.0E-6D) {
+                                horizontalAway = right;
+                            } else {
+                                horizontalAway = horizontalAway.normalize();
+                            }
+                            MovementHelper.setVelocity(target, horizontalAway.scale(0.8D).add(0, 0.18D, 0));
+                            hurtWithBeastBleeding(entity, target, damage, true, twoSwords);
+                        }
+                    }
+                }, 1, formDuration);
+
+                // ===== CLEANUP =====
+                 AbilityScheduler.scheduleOnce(entity, () -> {
+                     GuardStateHelper.clearGuardState(entity);
+                     setCancelAttackSwing(entity, false);
+                     stopEntityAnimation(entity, "kimetsunoyaibamultiplayer:beast10");
+                     for (BeastBezierCurveEntity curve : curves) {
+                         if (curve.isAlive()) {
+                             curve.discard();
+                         }
+                     }
+                 }, formDuration + 1);
             }
                 
         );
     }
 	
 	public static BreathingForm eleventhForm() {
-        return new BreathingForm(
-        	25010,
+         return new BreathingForm(
+            25011,
             "Eleventh Fang: Sudden Throwing Strike",
             "The user throws both of their blades in a spinning motion at an enemy.",
             6, // 6 second cooldown
-            (entity, level, formId) -> {
-            	boolean twoSwords = hasTwoSwords(entity);
-                float damage = (5.0F);
+             (entity, level, formId) -> {
+                boolean twoSwords = hasTwoSwords(entity);
+                float damage = 10.0F;
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
-                
-                //setCancelAttackSwing(entity, true);
-                setCancelAttackSwing(entity, false); // we want the sword slaashes to happen
-                ServerLevel serverLevel = level instanceof ServerLevel ? (ServerLevel)level : null;
-                
-                int formDuration = 20;
-                
-                final float[] yawRad = {(float) Math.toRadians(-entity.getYRot())};
-                Vec3 forward = new Vec3(Math.sin(yawRad[0]), 0, Math.cos(yawRad[0])).normalize();
-                Vec3 right = new Vec3(-forward.z, 0, forward.x);
-                
-                
-                
-                
-                
-                // ===== CLEANUP =====
-                AbilityScheduler.scheduleOnce(entity, () -> {
+                setCancelAttackSwing(entity, true);
 
-                    // Clear guard state (only touches Damage, guard, attack - not skill/breathes/cnt1)
-                    GuardStateHelper.clearGuardState(entity);
-                    //setCancelAttackSwing(entity, false);
-                    
-                }, formDuration + 1);
+                final int formDuration = 20;
+                final int[] tick = {0};
+                final List<BeastSwordProjectileEntity> thrownSwords = new ArrayList<>();
+                playEntityAnimationOnLayer(entity, "biped11", formDuration, 1.0F, 3000);
+
+                AbilityScheduler.scheduleRepeating(entity, () -> {
+                    int currentTick = tick[0]++;
+                    Vec3 look = entity.getLookAngle().normalize();
+                    Vec3 direction = look.lengthSqr() < 1.0E-6D ? new Vec3(0, 0, 1) : look;
+
+                    if (currentTick == 8) {
+                        BeastSwordProjectileEntity projectile = launchBeastSword(entity, level,
+                            entity.getMainHandItem(), direction);
+                        if (projectile != null) {
+                            thrownSwords.add(projectile);
+                        }
+                    }
+                    if (currentTick == 11 && twoSwords) {
+                        BeastSwordProjectileEntity projectile = launchBeastSword(entity, level,
+                            entity.getOffhandItem(), direction);
+                        if (projectile != null) {
+                            thrownSwords.add(projectile);
+                        }
+                    }
+
+                    if (level instanceof ServerLevel serverLevel) {
+                        Vec3 trailAxis = direction.cross(new Vec3(0, 1, 0));
+                        if (trailAxis.lengthSqr() < 1.0E-6D) {
+                            trailAxis = new Vec3(1, 0, 0);
+                        } else {
+                            trailAxis = trailAxis.normalize();
+                        }
+                        Vec3 trailPerpendicular = direction.cross(trailAxis).normalize();
+                        for (BeastSwordProjectileEntity projectile : thrownSwords) {
+                            if (!projectile.isAlive()) {
+                                continue;
+                            }
+                            for (int i = 0; i < 5; i++) {
+                                double angle = currentTick * 0.55D + i * Math.PI * 2.0D / 5.0D;
+                                Vec3 offset = trailAxis.scale(Math.cos(angle) * 0.22D)
+                                    .add(trailPerpendicular.scale(Math.sin(angle) * 0.22D));
+                                Vec3 point = projectile.position().add(offset);
+                                serverLevel.sendParticles(new DustParticleOptions(CYAN, 0.75F),
+                                    point.x, point.y, point.z, 1, 0, 0, 0, 0);
+                            }
+                        }
+                    }
+                }, 1, formDuration);
+
+                // ===== CLEANUP =====
+                 AbilityScheduler.scheduleOnce(entity, () -> {
+                     GuardStateHelper.clearGuardState(entity);
+                     setCancelAttackSwing(entity, false);
+                     stopEntityAnimation(entity, "kimetsunoyaibamultiplayer:biped11");
+                 }, formDuration + 1);
             }
                 
         );
@@ -1291,6 +1503,7 @@ public class EnhancedBeastForms {
         forms.add(eigthForm());
         forms.add(ninthForm());
         forms.add(tenthForm());
+        forms.add(eleventhForm());
 
         return new BreathingTechnique("Beast Breathing", forms, "§b", "§b");
     }

@@ -1,3 +1,14 @@
+1.6.5698
+- Rebalanced the fear effect
+- Added new fear effect visual for Akaza (WIP)
+- Improved the Rui blood demon art
+- Made Rui look better
+- Upgraded Enhanced Spawning to also include modded structures and biomes
+- Custom BDAs now give a guard state (proportional to the level of claws or martial arts skill)
+- Added in the missing forms for enhanced beast breathing
+- Rui BDA now has m1 AOE attacks
+- Added Akaza's demon eyes
+
 1.6.5697
 - Added title announcements for ranks
 - Added support for Alex's Caves

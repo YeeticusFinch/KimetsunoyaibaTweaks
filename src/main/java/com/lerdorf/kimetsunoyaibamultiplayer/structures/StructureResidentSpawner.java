@@ -41,7 +41,8 @@ public class StructureResidentSpawner {
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
         long startNanos = System.nanoTime();
-        if (!EnhancedSpawnConfig.enhancedSpawningRules) {
+        if (!EnhancedSpawnConfig.enhancedSpawningRules
+            || !EnhancedSpawnConfig.affectModdedBiomesAndStructures) {
             return;
         }
 

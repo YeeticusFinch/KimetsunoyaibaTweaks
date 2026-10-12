@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.meditation;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
@@ -56,6 +57,7 @@ public final class PassiveSkillManager {
 
     private static final String DEMON_LAST_DAMAGE_TICK = "KnYPassiveDemonLastDamageTick";
     private static final String DEMON_PASSIVE_ATTACK_TICK = "KnYPassiveDemonAttackTick";
+    private static final String DEMON_PASSIVE_ATTACK_GUARD_UNTIL = "KnYPassiveDemonAttackGuardUntil";
     private static final String MARTIAL_ART_INDEX = "KnYPassiveMartialArtIndex";
     private static final String CLAW_ART_INDEX = "KnYPassiveClawIndex";
     private static final String SLAYER_GUARD_ACTIVE = "KnYSlayerGuardActive";
@@ -89,6 +91,7 @@ public final class PassiveSkillManager {
         UUID.fromString("5d6f2e21-95b8-4da3-9c90-6c6d8b3e16ce");
     private static final int NIGHTVISION_LIGHT_THRESHOLD = 5;
     private static final int PASSIVE_ATTACK_COOLDOWN_TICKS = 8;
+    private static final int PASSIVE_ATTACK_GUARD_TICKS = 10;
     private static final float DEFAULT_AOE_BOX_SIZE = 5.0F;
 
     private static final String[] MARTIAL_ART_ANIMATIONS = {
@@ -653,6 +656,7 @@ public final class PassiveSkillManager {
         String animation = MARTIAL_ART_ANIMATIONS[index];
         player.getPersistentData().putInt(MARTIAL_ART_INDEX, (index + 1) % MARTIAL_ART_ANIMATIONS.length);
 
+        applyPassiveAttackGuard(player, level);
         AnimationHelper.playAnimation(player, animation, 10);
         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG,
             SoundSource.PLAYERS, 1.0F, 1.0F);
@@ -665,12 +669,27 @@ public final class PassiveSkillManager {
         String animation = CLAW_ANIMATIONS[index];
         player.getPersistentData().putInt(CLAW_ART_INDEX, (index + 1) % CLAW_ANIMATIONS.length);
 
+        applyPassiveAttackGuard(player, level);
         AnimationHelper.playAnimation(player, animation, 10);
         player.level().playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
             SoundSource.PLAYERS, 1.0F, 1.0F);
         ModNetworking.sendToAllClients(new MobSwordSlashPacket(
             player.getUUID(), normalizeSlashAnimation(animation), 0, "claw"));
         damageTargets(player, level, true, excludedTargetId);
+    }
+
+    private static void applyPassiveAttackGuard(ServerPlayer player, int level) {
+        long guardUntil = player.level().getGameTime() + PASSIVE_ATTACK_GUARD_TICKS;
+        player.getPersistentData().putLong(DEMON_PASSIVE_ATTACK_GUARD_UNTIL, guardUntil);
+        GuardStateHelper.setGuardState(player, 5.0D * level, 0.0D, false);
+        AbilityScheduler.scheduleOnce(player,
+            () -> {
+                if (player.getPersistentData().getLong(DEMON_PASSIVE_ATTACK_GUARD_UNTIL) != guardUntil) {
+                    return;
+                }
+                GuardStateHelper.clearGuardState(player);
+                player.getPersistentData().remove(DEMON_PASSIVE_ATTACK_GUARD_UNTIL);
+            }, PASSIVE_ATTACK_GUARD_TICKS);
     }
 
     private static void damageTargets(ServerPlayer player, int skillLevel, boolean claws, UUID excludedTargetId) {

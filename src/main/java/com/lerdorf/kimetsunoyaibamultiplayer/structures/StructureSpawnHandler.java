@@ -89,6 +89,11 @@ public class StructureSpawnHandler {
                     continue;
                 }
 
+                if (!EnhancedSpawnConfig.affectModdedBiomesAndStructures
+                    && !structureId.getNamespace().equals("minecraft")) {
+                    continue;
+                }
+
                 //Log.debug("[Structure Spawn] Found structure: " + structureId);
 
                 // Apply structure-specific rules

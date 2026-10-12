@@ -35,6 +35,11 @@ public class EnhancedSpawnConfig {
                     "If false, falls back to simple spawn priority system.")
             .define("enhanced_spawning_rules", true);
 
+    private static final ForgeConfigSpec.BooleanValue AFFECT_MODDED_BIOMES_AND_STRUCTURES = BUILDER
+            .comment("Apply enhanced spawning rules to modded biomes and structures.",
+                    "This includes areas such as Mt Natagumo, Mt Sagiri, Mt Yoko, Tamayo's house, and Ubuyashiki's mansion.")
+            .define("affect_modded_biomes_and_structures", true);
+
     private static final ForgeConfigSpec.BooleanValue DISABLE_TWEAKS_DEMONS = BUILDER
             .comment("Disable natural spawning of demons added by kimetsunoyaibamultiplayer.",
                     "This disables tweaks demon replacements and timed/natural demon spawns in the Infinity Castle.",
@@ -227,6 +232,7 @@ public class EnhancedSpawnConfig {
 
     // Runtime cache - Initialize with default values before config loads
     public static boolean enhancedSpawningRules = true;  // Default to true
+    public static boolean affectModdedBiomesAndStructures = true;
     public static boolean disableTweaksDemons = false;
     public static boolean replaceBaseGenericDemonSlayers = true;
     public static boolean replaceBaseNezuko = true;
@@ -271,6 +277,7 @@ public class EnhancedSpawnConfig {
 
     private static void updateCache() {
         enhancedSpawningRules = ENHANCED_SPAWNING_RULES.get();
+        affectModdedBiomesAndStructures = AFFECT_MODDED_BIOMES_AND_STRUCTURES.get();
         disableTweaksDemons = DISABLE_TWEAKS_DEMONS.get();
         replaceBaseGenericDemonSlayers = REPLACE_BASE_GENERIC_DEMON_SLAYERS.get();
         replaceBaseNezuko = REPLACE_BASE_NEZUKO.get();

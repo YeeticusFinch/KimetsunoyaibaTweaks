@@ -338,16 +338,19 @@ public class ClientRenderEvents {
         }
 
         // Route left_sword_* animations to offhand render.
-        // double_sword_overhead renders custom animation on BOTH hands.
+        // Double-hand animations render the custom keyframes on BOTH hands.
         boolean shouldRenderOffhandOnly = com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
                 .isOffhandAnimation(currentAnimation);
-        boolean isDoubleOverhead = currentAnimation.equals("double_sword_overhead");
+        boolean isDoubleHandAnimation = currentAnimation.equals("double_sword_overhead")
+                || currentAnimation.equals("beast10");
 
         // Determine the animation used for this hand.
         // During offhand-only swings, main hand plays sword_none to stay visible and stable.
         String animationForThisHand = currentAnimation;
         if (shouldRenderOffhandOnly && event.getHand() == InteractionHand.MAIN_HAND) {
             animationForThisHand = "sword_none";
+        } else if (currentAnimation.equals("beast10") && event.getHand() == InteractionHand.OFF_HAND) {
+            animationForThisHand = "beast10left";
         }
 
         // No keyframes for this hand's animation -> fall back to vanilla.
@@ -357,7 +360,7 @@ public class ClientRenderEvents {
             return;
         }
 
-        if (!isDoubleOverhead) {
+        if (!isDoubleHandAnimation) {
             if (shouldRenderOffhandOnly) {
                 if (event.getHand() != InteractionHand.OFF_HAND && event.getHand() != InteractionHand.MAIN_HAND) return;
             } else if (event.getHand() != InteractionHand.MAIN_HAND) {
@@ -388,7 +391,7 @@ public class ClientRenderEvents {
 
         // ✔ CUSTOM ANIMATION
         boolean applyOffhandZOffset = event.getHand() == InteractionHand.OFF_HAND
-                && (shouldRenderOffhandOnly || isDoubleOverhead);
+                && (shouldRenderOffhandOnly || isDoubleHandAnimation);
         applyCustomSwordAnimation(poseStack, player, event.getSwingProgress(), animationForThisHand, applyOffhandZOffset);
 
         // ✔ RENDER

@@ -89,6 +89,21 @@ public final class BloodDemonArtM1AttackHandler {
         }
     }
 
+    /** Applies Rui's close-range M1 area damage without replacing his thread animation. */
+    public static boolean performRuiM1Attack(LivingEntity attacker, UUID excludedTargetId) {
+        var previousGravityFrame = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(attacker);
+        try {
+            if (!markHandledThisTick(attacker)) {
+                return false;
+            }
+
+            damageTargets(attacker, 0.0D, excludedTargetId);
+            return true;
+        } finally {
+            com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.restore(previousGravityFrame);
+        }
+    }
+
     public static boolean performNichirinLikeSlashAttack(LivingEntity attacker, UUID excludedTargetId) {
         var previousGravityFrame = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.enter(attacker);
         try {

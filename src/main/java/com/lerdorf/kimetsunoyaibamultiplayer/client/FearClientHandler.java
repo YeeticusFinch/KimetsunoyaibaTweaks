@@ -17,6 +17,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Camera;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -40,6 +41,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
@@ -51,6 +53,8 @@ public class FearClientHandler {
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "shaders/post/fear_invert.json");
     private static final ResourceLocation KOKUSHIBO_EYES =
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "textures/overlay/fear_effect_kokushibo_eyes.png");
+    private static final ResourceLocation AKAZA_EYES =
+        ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "textures/overlay/fear_effect_akaza_eyes.png");
     private static final int BG_FRAMES = 14;
     private static final int FG_FRAMES = 23;
     private static final int MIN_NORMAL_TICKS = 20;
@@ -197,6 +201,9 @@ public class FearClientHandler {
         if (hasKokushiboNearby(player)) {
             renderScreenTexture(KOKUSHIBO_EYES, alpha, false);
         }
+        if (hasAkazaNearby(player)) {
+            renderScreenTexture(AKAZA_EYES, alpha, false);
+        }
         rerenderVisibleLivingEntities(mc, poseStack, partialTick);
     }
 
@@ -208,6 +215,9 @@ public class FearClientHandler {
         }
 
         renderScreenTexture(frameTexture("fear_effect_fg_", foregroundFrame(player)), overlayAlpha, isFearInversionActive());
+        if (hasAkazaNearby(player)) {
+            renderAkazaFearHead(guiGraphics, player);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -346,6 +356,17 @@ public class FearClientHandler {
         ).isEmpty();
     }
 
+    private static boolean hasAkazaNearby(LocalPlayer player) {
+        if (player.level() == null) {
+            return false;
+        }
+        return !player.level().getEntitiesOfClass(
+            LivingEntity.class,
+            player.getBoundingBox().inflate(KOKUSHIBO_RANGE),
+            entity -> entity != player && isAkaza(entity)
+        ).isEmpty();
+    }
+
     private static boolean isKokushibo(Entity entity) {
         ResourceLocation id = EntityType.getKey(entity.getType());
         if (id == null) {
@@ -353,6 +374,43 @@ public class FearClientHandler {
         }
         String value = id.toString();
         return "kimetsu:kokushibo".equals(value) || "kimetsunoyaiba:kokushibo".equals(value);
+    }
+
+    private static boolean isAkaza(Entity entity) {
+        ResourceLocation id = EntityType.getKey(entity.getType());
+        if (id == null) {
+            return false;
+        }
+        String value = id.toString();
+        return "kimetsu:akaza".equals(value) || "kimetsunoyaiba:akaza".equals(value);
+    }
+
+    private static void renderAkazaFearHead(GuiGraphics guiGraphics, LocalPlayer player) {
+        Minecraft mc = Minecraft.getInstance();
+        int centerX = mc.getWindow().getGuiScaledWidth() / 2;
+        int centerY = mc.getWindow().getGuiScaledHeight() / 2;
+        int headSize = 56;
+        int scale = 32;
+
+        guiGraphics.enableScissor(
+            centerX - headSize / 2,
+            centerY - headSize / 2,
+            centerX + headSize / 2,
+            centerY + headSize / 2
+        );
+        try {
+            InventoryScreen.renderEntityInInventory(
+                guiGraphics,
+                centerX,
+                centerY + Math.round(scale * 1.6F),
+                scale,
+                new Quaternionf().rotateZ((float) Math.PI),
+                new Quaternionf(),
+                player
+            );
+        } finally {
+            guiGraphics.disableScissor();
+        }
     }
 
     private static boolean shouldRenderOverlay(Minecraft mc, LocalPlayer player) {

@@ -33,12 +33,12 @@ public class FearEffectHandler {
     private static final int CYCLE_TICKS = 20;
     private static final int HOTBAR_COOLDOWN_TICKS = 6;
     private static final int PRESENCE_CHECK_TICKS = 200;
+    private static final int KIZUKI_FEAR_COOLDOWN_TICKS = 60 * 60 * 20;
     private static final double KIZUKI_FEAR_RANGE = 40.0D;
     private static final String KNY_NAMESPACE = "kimetsunoyaiba";
 
     private static final String PLAYER_LOCKED_KEY = "knymp_fear_locked";
     private static final String PLAYER_LOCK_X_KEY = "knymp_fear_lock_x";
-    private static final String PLAYER_LOCK_Y_KEY = "knymp_fear_lock_y";
     private static final String PLAYER_LOCK_Z_KEY = "knymp_fear_lock_z";
 
     private static final String MOB_NO_AI_STORED_KEY = "knymp_fear_no_ai_stored";
@@ -80,7 +80,7 @@ public class FearEffectHandler {
         }
 
         target.addEffect(new MobEffectInstance(ModEffects.FEAR.get(), durationTicks, amplifier, false, false, true));
-        target.addEffect(new MobEffectInstance(ModEffects.FEAR_COOLDOWN.get(), durationTicks * 10, amplifier, false, false, true));
+        target.addEffect(new MobEffectInstance(ModEffects.FEAR_COOLDOWN.get(), KIZUKI_FEAR_COOLDOWN_TICKS, amplifier, false, false, true));
         return true;
     }
 
@@ -122,7 +122,7 @@ public class FearEffectHandler {
         } else if (entity instanceof Mob mob) {
             enforceMobParalysis(mob);
         } else {
-            entity.setDeltaMovement(Vec3.ZERO);
+            stopHorizontalMotionAndJump(entity);
         }
     }
 
@@ -213,18 +213,16 @@ public class FearEffectHandler {
         }
 
         return switch (entityId.getPath()) {
-            case "muzan", "muzan_2", "tanjiro_demon" -> new KizukiFearProfile(9, 25 * 20);
-            case "kokushibo" -> new KizukiFearProfile(8, 20 * 20);
-            case "doma" -> new KizukiFearProfile(7, 15 * 20);
-            case "akaza" -> new KizukiFearProfile(6, 10 * 20);
-            case "nakime", "zohakuten" -> new KizukiFearProfile(5, 10 * 20);
-            case "gyokko", "gyokko_2" -> new KizukiFearProfile(4, 10 * 20);
-            case "daki", "gyutaro" -> new KizukiFearProfile(3, 8 * 20);
-            case "enmu" -> new KizukiFearProfile(2, 6 * 20);
-            case "rokuro" -> new KizukiFearProfile(1, 5 * 20);
-            case "rui", "mukago" -> new KizukiFearProfile(1, 4 * 20);
-            case "kamanue" -> new KizukiFearProfile(1, 3 * 20);
-            case "kyogai" -> new KizukiFearProfile(1, 2 * 20);
+            case "muzan", "muzan_2", "tanjiro_demon" -> new KizukiFearProfile(9, 15 * 20);
+            case "kokushibo" -> new KizukiFearProfile(8, 9 * 20);
+            case "doma" -> new KizukiFearProfile(7, 8 * 20);
+            case "akaza" -> new KizukiFearProfile(6, 7 * 20);
+            case "nakime", "zohakuten" -> new KizukiFearProfile(5, 5 * 20);
+            case "gyokko", "gyokko_2" -> new KizukiFearProfile(4, 4 * 20);
+            case "daki" -> new KizukiFearProfile(3, 3 * 20);
+            case "gyutaro" -> new KizukiFearProfile(4, 3 * 20);
+            case "enmu" -> new KizukiFearProfile(2, 2 * 20);
+            case "rokuro", "rui", "mukago", "kamanue", "kyogai" -> new KizukiFearProfile(1, 2 * 20);
             default -> null;
         };
     }
@@ -255,28 +253,26 @@ public class FearEffectHandler {
         if (!data.getBoolean(PLAYER_LOCKED_KEY)) {
             data.putBoolean(PLAYER_LOCKED_KEY, true);
             data.putDouble(PLAYER_LOCK_X_KEY, player.getX());
-            data.putDouble(PLAYER_LOCK_Y_KEY, player.getY());
             data.putDouble(PLAYER_LOCK_Z_KEY, player.getZ());
         }
 
         double lockX = data.getDouble(PLAYER_LOCK_X_KEY);
-        double lockY = data.getDouble(PLAYER_LOCK_Y_KEY);
         double lockZ = data.getDouble(PLAYER_LOCK_Z_KEY);
 
-        player.setDeltaMovement(Vec3.ZERO);
-        player.fallDistance = 0.0F;
+        stopHorizontalMotionAndJump(player);
         player.setSprinting(false);
 
         if (player.level().isClientSide()) {
-            player.setPos(lockX, lockY, lockZ);
+            player.setPos(lockX, player.getY(), lockZ);
             return;
         }
 
-        if (player.distanceToSqr(lockX, lockY, lockZ) > 0.0004D) {
+        double horizontalDistanceSqr = player.distanceToSqr(lockX, player.getY(), lockZ);
+        if (horizontalDistanceSqr > 0.0004D) {
             if (player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.connection.teleport(lockX, lockY, lockZ, player.getYRot(), player.getXRot());
+                serverPlayer.connection.teleport(lockX, player.getY(), lockZ, player.getYRot(), player.getXRot());
             } else {
-                player.setPos(lockX, lockY, lockZ);
+                player.setPos(lockX, player.getY(), lockZ);
             }
         }
     }
@@ -290,8 +286,13 @@ public class FearEffectHandler {
 
         mob.setNoAi(true);
         mob.getNavigation().stop();
-        mob.setDeltaMovement(Vec3.ZERO);
-        mob.fallDistance = 0.0F;
+        stopHorizontalMotionAndJump(mob);
+    }
+
+    private static void stopHorizontalMotionAndJump(LivingEntity entity) {
+        Vec3 movement = entity.getDeltaMovement();
+        entity.setDeltaMovement(0.0D, Math.min(0.0D, movement.y), 0.0D);
+        entity.setJumping(false);
     }
 
     private static void clearParalysis(LivingEntity entity) {
@@ -299,7 +300,6 @@ public class FearEffectHandler {
         if (entity instanceof Player) {
             data.remove(PLAYER_LOCKED_KEY);
             data.remove(PLAYER_LOCK_X_KEY);
-            data.remove(PLAYER_LOCK_Y_KEY);
             data.remove(PLAYER_LOCK_Z_KEY);
         }
 

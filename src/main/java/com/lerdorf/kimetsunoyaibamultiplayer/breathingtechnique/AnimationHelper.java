@@ -229,6 +229,7 @@ public class AnimationHelper {
             || animationName.startsWith("guard_")
             || animationName.startsWith("love_")
             || animationName.startsWith("beast")
+            || animationName.equals("biped11")
             || animationName.equals("headless")
             || animationName.equals("backflip")
             || animationName.equals("tilted_spin")

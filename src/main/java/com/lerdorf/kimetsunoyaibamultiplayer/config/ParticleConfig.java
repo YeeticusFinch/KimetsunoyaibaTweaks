@@ -112,7 +112,7 @@ public class ParticleConfig {
                     "kimetsunoyaiba:nichirinsword_love:kimetsunoyaiba:particle_love",
                     "kimetsunoyaiba:nichirinsword_mist:minecraft:dust:1.0:1.0:1.0:1.0",
                     "kimetsunoyaiba:nichirinsword_serpent:minecraft:dust:1.0:1.0:1.0:1.0",
-                    "kimetsunoyaiba:nichirinsword_beast:kimetsunoyaiba:particle_beast",
+                    "kimetsunoyaiba:nichirinsword_beast:minecraft:crit",
                     "kimetsunoyaiba:nichirinsword_black:minecraft:dust:0.8:1.0:1.0:1.0",
                     "kimetsunoyaiba:nichirinsword_inosuke:minecraft:crit",
                     "kimetsunoyaiba:nichirinsword_basic:minecraft:crit",

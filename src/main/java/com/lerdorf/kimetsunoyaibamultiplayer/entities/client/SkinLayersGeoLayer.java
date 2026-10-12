@@ -137,8 +137,8 @@ public class SkinLayersGeoLayer<T extends net.minecraft.world.entity.LivingEntit
 
         poseStack.pushPose();
         applyPartOffsets(poseStack, EntitySkinLayersConfig.HEAD);
-        float size = configFloat("headVoxelSize", 1.18F);
         poseStack.translate(0.0F, -0.25F, 0.0F);
+        float size = configFloat("headVoxelSize", 1.18F);
         poseStack.scale(size, size, size);
         poseStack.translate(0.0F, 0.25F, 0.0F);
         poseStack.translate(0.0F, -0.04F, 0.0F);

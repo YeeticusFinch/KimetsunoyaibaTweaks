@@ -87,7 +87,8 @@ public class MobSwordSlashPacket {
 
         // Use the entity's main-hand item to determine particles/model
         ItemStack swordItem = living.getMainHandItem();
-        ParticleOptions particleType = modelKeyOverride != null ? ParticleTypes.CLOUD
+        ParticleOptions particleType = "beast".equals(modelKeyOverride) ? ParticleTypes.CRIT
+            : modelKeyOverride != null ? ParticleTypes.CLOUD
             : SwordParticleMapping.getParticleForSword(
                 swordItem,
                 SwordParticleHandler.isDemonizedParticleWielder(living)

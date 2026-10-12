@@ -472,6 +472,28 @@ public class ModEntities {
                 .updateInterval(1)
                 .build("silk_ribbon"));
 
+    /** Temporary synchronized curve used by Beast Breathing's tenth form. */
+    public static final RegistryObject<EntityType<BeastBezierCurveEntity>> BEAST_BEZIER_CURVE =
+        ENTITY_TYPES.register("beast_bezier_curve",
+            () -> EntityType.Builder.<BeastBezierCurveEntity>of(BeastBezierCurveEntity::new, MobCategory.MISC)
+                .sized(0.1F, 0.1F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("beast_bezier_curve"));
+
+    /** Thrown, returning sword used by Beast Breathing's eleventh form. */
+    public static final RegistryObject<EntityType<BeastSwordProjectileEntity>> BEAST_SWORD_PROJECTILE =
+        ENTITY_TYPES.register("beast_sword_projectile",
+            () -> EntityType.Builder.<BeastSwordProjectileEntity>of(BeastSwordProjectileEntity::new, MobCategory.MISC)
+                .sized(0.25F, 0.25F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("beast_sword_projectile"));
+
     public static final RegistryObject<EntityType<RuiWebEntity>> RUI_WEB =
         ENTITY_TYPES.register("rui_web",
             () -> EntityType.Builder.<RuiWebEntity>of(RuiWebEntity::new, MobCategory.MISC)

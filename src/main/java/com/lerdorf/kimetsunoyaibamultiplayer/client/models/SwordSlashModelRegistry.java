@@ -124,6 +124,33 @@ public class SwordSlashModelRegistry {
         // Register sound breathing sword to use sound model
         SWORD_TO_MODEL_MAP.put("nichirinsword_sound", "sound");
 
+        // Register thunder breathing swords to use the generic slash geometry with a thunder texture.
+        SWORD_TO_MODEL_MAP.put("nichirinsword_thunder", "thunder");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_zenitsu", "thunder");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_kaigaku", "thunder");
+
+        // Register serpent breathing swords to use the generic slash geometry with a serpent texture.
+        SWORD_TO_MODEL_MAP.put("nichirinsword_serpent", "serpent");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_iguro", "serpent");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_snake", "serpent");
+
+        // Register insect breathing swords to use the generic slash geometry with an insect texture.
+        SWORD_TO_MODEL_MAP.put("nichirinsword_insect", "insect");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_kocho", "insect");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_shinobu", "insect");
+
+        // Register stone breathing swords to use the generic slash geometry with a stone texture.
+        SWORD_TO_MODEL_MAP.put("nichirinsword_stone", "stone");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_himejima_1", "stone");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_himejima_2", "stone");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_stone1", "stone");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_stone2", "stone");
+
+        // Register sun breathing swords to use the generic slash geometry with a sun texture.
+        SWORD_TO_MODEL_MAP.put("nichirinsword_sun", "sun");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_yoriichi", "sun");
+        SWORD_TO_MODEL_MAP.put("nichirinsword_tanjiro_2", "sun");
+
         // Register beast breathing sword to use beast model
         SWORD_TO_MODEL_MAP.put("nichirinsword_beast", "beast");
 
@@ -137,8 +164,6 @@ public class SwordSlashModelRegistry {
 
         // Hairo's sword uses the generic slash model and texture.
         SWORD_TO_MODEL_MAP.put("sword_hairo", "generic");
-
-        // Snake, insect, stone swords fall back to generic model automatically
 
         // Other swords will automatically fall back to generic model
     }

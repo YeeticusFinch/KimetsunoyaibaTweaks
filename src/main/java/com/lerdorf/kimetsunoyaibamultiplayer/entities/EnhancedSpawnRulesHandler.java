@@ -86,7 +86,8 @@ public class EnhancedSpawnRulesHandler {
             }
 
             // 2. Apply biome-specific rules (these allow some spawns that would otherwise be denied)
-            if (shouldDenyByBiome(entity, level, pos)) {
+            if (EnhancedSpawnConfig.affectModdedBiomesAndStructures
+                && shouldDenyByBiome(entity, level, pos)) {
                 event.setSpawnCancelled(true);
                 event.setCanceled(true);
                 return;
@@ -147,7 +148,9 @@ public class EnhancedSpawnRulesHandler {
         ResourceLocation biomeId = EntityTagHelper.getCurrentBiome(entity);
 
         // Check if in a biome that allows special spawns
-        boolean inMugenBiome = biomeId != null && biomeId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mugen_biome"));
+        boolean inMugenBiome = EnhancedSpawnConfig.affectModdedBiomesAndStructures
+            && biomeId != null
+            && biomeId.equals(ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "mugen_biome"));
         boolean inInfinityCastle = InfinityCastleCompat.isCastleDimension(level.dimension());
 
         // Twelve kizuki should never spawn naturally except in designated demon areas.
@@ -179,7 +182,7 @@ public class EnhancedSpawnRulesHandler {
     }
 
     private static boolean isAllowedNamedSlayerBiomeSpawn(Mob entity, ResourceLocation biomeId) {
-        if (biomeId == null) {
+        if (!EnhancedSpawnConfig.affectModdedBiomesAndStructures || biomeId == null) {
             return false;
         }
 

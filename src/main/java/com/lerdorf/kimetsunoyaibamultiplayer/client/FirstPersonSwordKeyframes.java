@@ -152,6 +152,21 @@ public class FirstPersonSwordKeyframes {
                     new FPKeyframe(1.00f, new Vec3(0.03865, 0.15204, -0.20870), new Quaternionf(0.066889f, -0.085005f, 0.705295f, 0.700613f))
         ));
 
+        // beast10 - exported from Blender
+        ANIMATION_KEYFRAMES.put("beast10", List.of(
+                    new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.10f, new Vec3(0.19012, 0.00000, -0.31098), new Quaternionf(-0.707080f, 0.006171f, -0.707080f, 0.006171f)),
+                    new FPKeyframe(0.20f, new Vec3(0.19012, 0.00000, -0.31098), new Quaternionf(-0.037415f, -0.706116f, 0.037415f, 0.706116f)),
+                    new FPKeyframe(0.30f, new Vec3(0.19012, 0.00000, -0.31098), new Quaternionf(-0.730227f, 0.032305f, -0.681641f, 0.033023f)),
+                    new FPKeyframe(0.40f, new Vec3(0.19012, 0.00000, -0.31098), new Quaternionf(-0.025931f, -0.730481f, 0.038970f, 0.681327f)),
+                    new FPKeyframe(0.50f, new Vec3(0.19012, 0.00000, -0.31098), new Quaternionf(-0.730680f, 0.019556f, -0.680961f, 0.044914f)),
+                    new FPKeyframe(0.60f, new Vec3(0.19012, 0.00000, -0.31098), new Quaternionf(-0.013179f, -0.730823f, 0.050855f, 0.680543f)),
+                    new FPKeyframe(0.70f, new Vec3(0.19012, 0.00000, -0.31098), new Quaternionf(-0.730910f, 0.006801f, -0.680073f, 0.056792f)),
+                    new FPKeyframe(0.80f, new Vec3(0.19012, 0.00000, -0.31098), new Quaternionf(-0.000422f, -0.730941f, 0.062724f, 0.679552f)),
+                    new FPKeyframe(0.90f, new Vec3(0.19012, 0.00000, -0.31098), new Quaternionf(-0.730917f, -0.005957f, -0.678978f, 0.068652f)),
+                    new FPKeyframe(1.00f, new Vec3(0.19012, 0.00000, -0.31098), new Quaternionf(0.012335f, -0.730837f, 0.074574f, 0.678354f))
+        ));
+
     	// sword_to_left - exported from Blender
         ANIMATION_KEYFRAMES.put("sword_to_left", List.of(
                     new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
@@ -270,6 +285,21 @@ public class FirstPersonSwordKeyframes {
                     new FPKeyframe(0.80f, new Vec3(0.00000, -0.46053, -0.95769), new Quaternionf(-0.665035f, 0.000000f, -0.000000f, 0.746813f)),
                     new FPKeyframe(0.90f, new Vec3(0.00000, -0.41322, -0.37623), new Quaternionf(-0.273546f, 0.000000f, -0.000000f, 0.961859f)),
                     new FPKeyframe(1.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f))
+        ));
+
+        // beast10left - exported from Blender
+        ANIMATION_KEYFRAMES.put("beast10left", List.of(
+                    new FPKeyframe(0.00f, new Vec3(0.00000, 0.00000, -0.00000), new Quaternionf(0.000000f, 0.000000f, -0.000000f, 1.000000f)),
+                    new FPKeyframe(0.10f, new Vec3(-0.08448, 0.00000, -0.31098), new Quaternionf(-0.707046f, -0.022287f, 0.706789f, 0.006168f)),
+                    new FPKeyframe(0.20f, new Vec3(-0.08448, 0.00000, -0.31098), new Quaternionf(-0.016116f, 0.707214f, -0.012336f, 0.706708f)),
+                    new FPKeyframe(0.30f, new Vec3(-0.08448, 0.00000, -0.31098), new Quaternionf(-0.707328f, -0.009944f, 0.706574f, 0.018502f)),
+                    new FPKeyframe(0.40f, new Vec3(-0.08448, 0.00000, -0.31098), new Quaternionf(-0.003771f, 0.707387f, -0.024668f, 0.706385f)),
+                    new FPKeyframe(0.50f, new Vec3(-0.08448, 0.00000, -0.31098), new Quaternionf(-0.707393f, 0.002402f, 0.706143f, 0.030831f)),
+                    new FPKeyframe(0.60f, new Vec3(-0.08448, 0.00000, -0.31098), new Quaternionf(0.008575f, 0.707345f, -0.036992f, 0.705847f)),
+                    new FPKeyframe(0.70f, new Vec3(-0.08448, 0.00000, -0.31098), new Quaternionf(-0.707244f, 0.014748f, 0.705498f, 0.043150f)),
+                    new FPKeyframe(0.80f, new Vec3(-0.08448, 0.00000, -0.31098), new Quaternionf(0.020919f, 0.707088f, -0.049305f, 0.705094f)),
+                    new FPKeyframe(0.90f, new Vec3(-0.08448, 0.00000, -0.31098), new Quaternionf(-0.706879f, 0.027088f, 0.704637f, 0.055456f)),
+                    new FPKeyframe(1.00f, new Vec3(-0.08448, 0.00000, -0.31098), new Quaternionf(0.033256f, 0.706615f, -0.061603f, 0.704126f))
         ));
 
         // Left-hand animations reuse the same keyframe curves but render on OFF_HAND.

@@ -277,6 +277,7 @@ Mount Natagumo's imaginary rings are concentric around each selected peak and cu
 | Option path | Description |
 | --- | --- |
 | `enhanced_spawning.enhanced_spawning_rules` | Master switch for enhanced spawning rules.<br>If true, uses complex biome/structure/dimension rules.<br>If false, falls back to simple spawn priority system. |
+| `enhanced_spawning.affect_modded_biomes_and_structures` | Apply enhanced spawning rules to modded biomes and structures, including Mt Natagumo, Mt Sagiri, Mt Yoko, Tamayo's house, and Ubuyashiki's mansion. Default: true |
 | `enhanced_spawning.disable_tweaks_demons` | Disable natural/timed spawning of demons added by kimetsunoyaibamultiplayer, including base-demon replacements and Infinity Castle timed spawns.<br>Commands, raids, and spawn eggs are unaffected. Default: false |
 | `enhanced_spawning.replace_base_generic_demon_slayers` | Replace base mod generic demon slayers with kimetsunoyaibamultiplayer demon slayers.<br>Replaces:<br>- kimetsunoyaiba:demon_slayer -> multiplayer demon slayer (rank 0-3)<br>- kimetsunoyaiba:dice_steak_senior -> multiplayer demon slayer (rank 4)<br>- kimetsunoyaiba:dice_steak_senior_super -> multiplayer demon slayer (rank 12, Super Senior) |
 | `enhanced_spawning.replace_base_nezuko` | Replace base mod Nezuko with kimetsunoyaibamultiplayer Nezuko.<br>Replaces:<br>- kimetsunoyaiba:nezuko -> kimetsunoyaibamultiplayer:nezuko |

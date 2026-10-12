@@ -125,7 +125,7 @@ public class SwordParticleMapping {
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_kanawo", flowerParticle);
 
         // Beast Breathing
-        ResourceLocation beastParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_beast");
+        ResourceLocation beastParticle = ResourceLocation.fromNamespaceAndPath("minecraft", "crit");
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_beast", beastParticle);
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_inosuke", beastParticle);
 

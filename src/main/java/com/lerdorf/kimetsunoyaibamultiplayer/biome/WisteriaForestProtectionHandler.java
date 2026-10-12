@@ -53,7 +53,8 @@ public class WisteriaForestProtectionHandler {
     @SubscribeEvent
     public static void onPositionCheck(MobSpawnEvent.PositionCheck event) {
         // Check if enhanced spawning rules are enabled
-        if (!EnhancedSpawnConfig.enhancedSpawningRules) {
+        if (!EnhancedSpawnConfig.enhancedSpawningRules
+            || !EnhancedSpawnConfig.affectModdedBiomesAndStructures) {
             return;
         }
 
@@ -91,7 +92,8 @@ public class WisteriaForestProtectionHandler {
     @SubscribeEvent
     public static void onChangeTarget(LivingChangeTargetEvent event) {
         // Check if enhanced spawning rules are enabled
-        if (!EnhancedSpawnConfig.enhancedSpawningRules) {
+        if (!EnhancedSpawnConfig.enhancedSpawningRules
+            || !EnhancedSpawnConfig.affectModdedBiomesAndStructures) {
             return;
         }
 
@@ -126,7 +128,8 @@ public class WisteriaForestProtectionHandler {
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
         long startNanos = System.nanoTime();
         // Check if enhanced spawning rules are enabled
-        if (!EnhancedSpawnConfig.enhancedSpawningRules) {
+        if (!EnhancedSpawnConfig.enhancedSpawningRules
+            || !EnhancedSpawnConfig.affectModdedBiomesAndStructures) {
             return;
         }
 
@@ -174,7 +177,8 @@ public class WisteriaForestProtectionHandler {
     @SubscribeEvent
     public static void onLivingTick(net.minecraftforge.event.entity.living.LivingEvent.LivingTickEvent event) {
         // Check if enhanced spawning rules are enabled
-        if (!EnhancedSpawnConfig.enhancedSpawningRules) {
+        if (!EnhancedSpawnConfig.enhancedSpawningRules
+            || !EnhancedSpawnConfig.affectModdedBiomesAndStructures) {
             return;
         }
 
