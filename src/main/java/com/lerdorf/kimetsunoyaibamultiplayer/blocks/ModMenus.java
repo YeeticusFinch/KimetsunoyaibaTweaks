@@ -21,6 +21,9 @@ public final class ModMenus {
     public static final RegistryObject<MenuType<BridgerBlockMenu>> BRIDGER_BLOCK =
         MENUS.register("bridger_block", () -> IForgeMenuType.create(BridgerBlockMenu::new));
 
+    public static final RegistryObject<MenuType<TrainingGourdMenu>> TRAINING_GOURD =
+        MENUS.register("training_gourd", () -> IForgeMenuType.create(TrainingGourdMenu::clientMenu));
+
     private ModMenus() {
     }
 

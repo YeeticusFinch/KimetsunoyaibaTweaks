@@ -1,6 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedBeastForms;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -28,6 +28,8 @@ public class BeastSwordProjectileEntity extends ThrowableItemProjectile {
     private static final float DAMAGE = 10.0F;
     private boolean bouncedBack;
     private boolean restored;
+    private boolean damageApplied;
+    private boolean dualWield;
     private CompoundTag storedSwordTag = new CompoundTag();
 
     public BeastSwordProjectileEntity(EntityType<? extends BeastSwordProjectileEntity> type, Level level) {
@@ -44,6 +46,10 @@ public class BeastSwordProjectileEntity extends ThrowableItemProjectile {
         copy.setCount(1);
         this.storedSwordTag = copy.save(new CompoundTag());
         this.setItem(copy);
+    }
+
+    public void setDualWield(boolean dualWield) {
+        this.dualWield = dualWield;
     }
 
     public boolean hasBouncedBack() {
@@ -95,8 +101,10 @@ public class BeastSwordProjectileEntity extends ThrowableItemProjectile {
             return;
         }
 
-        if (hitEntity instanceof LivingEntity target && owner instanceof LivingEntity attacker) {
-            Damager.hurt(attacker, target, DAMAGE, true, false, true);
+        if (!this.damageApplied && hitEntity instanceof LivingEntity target
+                && hitEntity != owner && owner instanceof LivingEntity attacker) {
+            this.damageApplied = true;
+            EnhancedBeastForms.hurtWithBeastBleeding(attacker, target, DAMAGE, true, this.dualWield);
         }
         beginReturn();
     }
@@ -107,7 +115,8 @@ public class BeastSwordProjectileEntity extends ThrowableItemProjectile {
             return;
         }
 
-        if (result instanceof EntityHitResult) {
+        if (result instanceof EntityHitResult entityHit) {
+            onHitEntity(entityHit);
             return;
         }
         if (this.bouncedBack) {
@@ -207,6 +216,8 @@ public class BeastSwordProjectileEntity extends ThrowableItemProjectile {
         tag.put("SwordItem", this.getStoredSword().save(new CompoundTag()));
         tag.putBoolean("BouncedBack", this.bouncedBack);
         tag.putBoolean("Restored", this.restored);
+        tag.putBoolean("DamageApplied", this.damageApplied);
+        tag.putBoolean("DualWield", this.dualWield);
     }
 
     @Override
@@ -218,6 +229,8 @@ public class BeastSwordProjectileEntity extends ThrowableItemProjectile {
         }
         this.bouncedBack = tag.getBoolean("BouncedBack");
         this.restored = tag.getBoolean("Restored");
+        this.damageApplied = tag.getBoolean("DamageApplied");
+        this.dualWield = tag.getBoolean("DualWield");
         if (this.bouncedBack) {
             this.setNoGravity(true);
         }

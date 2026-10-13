@@ -189,6 +189,24 @@ Mount Natagumo's imaginary rings are concentric around each selected peak and cu
 | --- | --- |
 | `custom_progression.demon_slayer_initiation.disable_base_mod_demon_slayer_initiation` | Disable the base mod's demon slayer initiation rewards<br>When enabled, this will prevent the following from happening when a player<br>earns the 'demon_slayer_corps' advancement:<br>- Automatic granting of uniform_chestplate, uniform_leggings, uniform_boots<br>- Automatic granting of nichirinsword<br>- Automatic spawning and taming of kasugai_crow<br>- Automatic granting of mizunoto advancement<br>- Retention of base rank advancements (mizunoto through strongest)<br>This is useful if:<br>- The base mod is bugging out and giving items multiple times<br>- You want to create custom progression via datapacks/commands<br>- You want to use your own rewards system<br>NOTE: This blocks the base mod's SupplyProcedure, AdvancementRewardProcedure,<br>CheckAdvancementDemonProcedure, Advanvement1Procedure, and ColorChangeProcedure<br>from granting these rewards and progression advancements.<br>It also enables a managed datapack that hides related base advancement chat/toast. |
 | `custom_progression.demon_slayer_initiation.grant_training_sword` | Grant a training sword when initiation is blocked<br>When enabled (and disable_base_mod_demon_slayer_initiation is also enabled),<br>the player will receive a nichirinsword that has been converted to a training sword.<br>Training swords can only use the 1st Form and have reduced damage.<br>This is useful for servers that want new demon slayers to start with a training sword<br>and earn a real sword through gameplay. |
+The rank progression values are incremental Slayer Experience costs. Each value is added to the previous costs to determine the player's cumulative experience requirement. All values accept `0` through `2147483647`; they are server-side settings and are read from `custom_progression.toml`.
+
+| Option path | Rank transition | Default incremental cost | Default cumulative requirement |
+| --- | --- | ---: | ---: |
+| `custom_progression.rank_progression.mizunoe_experience` | Mizunoto -> Mizunoe | 50 | 50 |
+| `custom_progression.rank_progression.kanoto_experience` | Mizunoe -> Kanoto | 100 | 150 |
+| `custom_progression.rank_progression.kanoe_experience` | Kanoto -> Kanoe | 150 | 300 |
+| `custom_progression.rank_progression.tsuchinoto_experience` | Kanoe -> Tsuchinoto | 200 | 500 |
+| `custom_progression.rank_progression.tsuchinoe_experience` | Tsuchinoto -> Tsuchinoe | 250 | 750 |
+| `custom_progression.rank_progression.hinoto_experience` | Tsuchinoe -> Hinoto | 300 | 1050 |
+| `custom_progression.rank_progression.hinoe_experience` | Hinoto -> Hinoe | 350 | 1400 |
+| `custom_progression.rank_progression.kinoto_experience` | Hinoe -> Kinoto | 400 | 1800 |
+| `custom_progression.rank_progression.kinoe_experience` | Kinoto -> Kinoe | 450 | 2250 |
+| `custom_progression.rank_progression.hashira_experience` | Kinoe -> Hashira | 500 | 2750 |
+| `custom_progression.rank_progression.strongest_experience` | Hashira -> Strongest | 550 | 3300 |
+
+| Option path | Description |
+| --- | --- |
 | `custom_progression.demon_progression.custom_demon_initiation` | Enable the custom demon initiation flow<br>When enabled, consuming kimetsunoyaibamultiplayer:blood_of_muzan starts a<br>custom demon transformation phase instead of immediately turning the player<br>into a demon.<br>During this phase:<br>- The player receives the Demon Transformation effect<br>- The player is tagged with oni_transform<br>- Demon slayers and demons stay neutral unless provoked<br>- Slowness, weakness, and hunger are continuously applied<br>When the effect expires naturally, the player is converted using the base<br>mod's blood_of_muzan logic. If the effect is removed early or the player dies,<br>the transformation is cancelled.<br>This also replaces base mod blood_of_muzan items in player inventories with<br>kimetsunoyaibamultiplayer:blood_of_muzan. |
 | `custom_progression.demon_progression.persistent_demonhood` | Persistent Demonhood<br>When enabled, demon players keep their demon progression through death.<br>On respawn the mod replays the remembered Muzan blood consumption so the<br>base mod restores demon state, then reapplies the tracked custom demon data.<br>Default: true |
 | `custom_progression.demon_progression.allow_empty_demon_eyes` | **Server-side.** Allow Empty Demon Eyes<br>When enabled, demon players can select the demon_eyes_empty texture from the Demon Eyes customization screen.<br>Default: true |

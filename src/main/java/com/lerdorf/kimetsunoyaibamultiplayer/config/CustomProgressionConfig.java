@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.config;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRank;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 /**
@@ -16,6 +17,19 @@ public class CustomProgressionConfig {
 
     // Grant training sword when initiation is blocked
     public static ForgeConfigSpec.BooleanValue grantTrainingSword;
+
+    // Slayer experience required to advance from the previous rank
+    public static ForgeConfigSpec.IntValue mizunoeExperience;
+    public static ForgeConfigSpec.IntValue kanotoExperience;
+    public static ForgeConfigSpec.IntValue kanoeExperience;
+    public static ForgeConfigSpec.IntValue tsuchinotoExperience;
+    public static ForgeConfigSpec.IntValue tsuchinoeExperience;
+    public static ForgeConfigSpec.IntValue hinotoExperience;
+    public static ForgeConfigSpec.IntValue hinoeExperience;
+    public static ForgeConfigSpec.IntValue kinotoExperience;
+    public static ForgeConfigSpec.IntValue kinoeExperience;
+    public static ForgeConfigSpec.IntValue hashiraExperience;
+    public static ForgeConfigSpec.IntValue strongestExperience;
 
     // Custom demon initiation flow
     public static ForgeConfigSpec.BooleanValue customDemonInitiation;
@@ -101,6 +115,26 @@ public class CustomProgressionConfig {
                     "This is useful for servers that want new demon slayers to start with a training sword",
                     "and earn a real sword through gameplay.")
             .define("grant_training_sword", true);
+
+        builder.pop();
+
+        // Demon slayer rank progression
+        builder.comment("Demon Slayer Rank Progression",
+                        "Slayer experience required to advance from the previous rank.",
+                        "These are incremental costs, not cumulative totals.")
+            .push("rank_progression");
+
+        mizunoeExperience = defineRankExperience(builder, "mizunoe_experience", 50, "Mizunoto -> Mizunoe");
+        kanotoExperience = defineRankExperience(builder, "kanoto_experience", 100, "Mizunoe -> Kanoto");
+        kanoeExperience = defineRankExperience(builder, "kanoe_experience", 150, "Kanoto -> Kanoe");
+        tsuchinotoExperience = defineRankExperience(builder, "tsuchinoto_experience", 200, "Kanoe -> Tsuchinoto");
+        tsuchinoeExperience = defineRankExperience(builder, "tsuchinoe_experience", 250, "Tsuchinoto -> Tsuchinoe");
+        hinotoExperience = defineRankExperience(builder, "hinoto_experience", 300, "Tsuchinoe -> Hinoto");
+        hinoeExperience = defineRankExperience(builder, "hinoe_experience", 350, "Hinoto -> Hinoe");
+        kinotoExperience = defineRankExperience(builder, "kinoto_experience", 400, "Hinoe -> Kinoto");
+        kinoeExperience = defineRankExperience(builder, "kinoe_experience", 450, "Kinoto -> Kinoe");
+        hashiraExperience = defineRankExperience(builder, "hashira_experience", 500, "Kinoe -> Hashira");
+        strongestExperience = defineRankExperience(builder, "strongest_experience", 550, "Hashira -> Strongest");
 
         builder.pop();
 
@@ -324,6 +358,26 @@ public class CustomProgressionConfig {
         return humanFleshPerEffectiveMuzanBlood == null ? 3 : Math.max(1, humanFleshPerEffectiveMuzanBlood.get());
     }
 
+    public static int getSlayerExperienceForRank(DemonSlayerRank rank) {
+        if (rank == null) {
+            return 0;
+        }
+        return switch (rank) {
+            case MIZUNOE -> getConfiguredValue(mizunoeExperience, 50);
+            case KANOTO -> getConfiguredValue(kanotoExperience, 100);
+            case KANOE -> getConfiguredValue(kanoeExperience, 150);
+            case TSUCHINOTO -> getConfiguredValue(tsuchinotoExperience, 200);
+            case TSUCHINOE -> getConfiguredValue(tsuchinoeExperience, 250);
+            case HINOTO -> getConfiguredValue(hinotoExperience, 300);
+            case HINOE -> getConfiguredValue(hinoeExperience, 350);
+            case KINOTO -> getConfiguredValue(kinotoExperience, 400);
+            case KINOE -> getConfiguredValue(kinoeExperience, 450);
+            case HASHIRA -> getConfiguredValue(hashiraExperience, 500);
+            case STRONGEST -> getConfiguredValue(strongestExperience, 550);
+            default -> 0;
+        };
+    }
+
     public static boolean isPersistentDemonhoodEnabled() {
         return persistentDemonhood != null && persistentDemonhood.get();
     }
@@ -348,5 +402,16 @@ public class CustomProgressionConfig {
         return infinityCastleUniqueDemonHorizontalRadius == null
             ? 800
             : Math.max(0, infinityCastleUniqueDemonHorizontalRadius.get());
+    }
+
+    private static ForgeConfigSpec.IntValue defineRankExperience(
+        ForgeConfigSpec.Builder builder, String name, int defaultValue, String transition) {
+        return builder
+            .comment("Experience required for " + transition + ". Default: " + defaultValue)
+            .defineInRange(name, defaultValue, 0, Integer.MAX_VALUE);
+    }
+
+    private static int getConfiguredValue(ForgeConfigSpec.IntValue value, int fallback) {
+        return value == null ? fallback : Math.max(0, value.get());
     }
 }

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "difficulty=0": { "model": "kimetsunoyaibamultiplayer:block/training_gourd_large" },
+    "difficulty=1": { "model": "kimetsunoyaibamultiplayer:block/training_gourd_large" },
+    "difficulty=2": { "model": "kimetsunoyaibamultiplayer:block/training_gourd_large" }
+  }
+}

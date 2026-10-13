@@ -961,6 +961,37 @@ public class ModBlocks {
             .strength(1.5f, 6.0f)
             .noOcclusion()));
 
+    // Training gourds
+    public static final RegistryObject<Block> TRAINING_GOURD_SMALL = registerBlockWithoutItem("training_gourd_small",
+        () -> new TrainingGourdBlock(BlockBehaviour.Properties.copy(Blocks.CLAY)
+            .sound(SoundType.MUD)
+            .strength(0.8f)
+            .noOcclusion(), TrainingGourdSize.SMALL));
+
+    public static final RegistryObject<Block> TRAINING_GOURD_MEDIUM = registerBlockWithoutItem("training_gourd_medium",
+        () -> new TrainingGourdBlock(BlockBehaviour.Properties.copy(Blocks.CLAY)
+            .sound(SoundType.MUD)
+            .strength(0.8f)
+            .noOcclusion(), TrainingGourdSize.MEDIUM));
+
+    public static final RegistryObject<Block> TRAINING_GOURD_LARGE = registerBlockWithoutItem("training_gourd_large",
+        () -> new TrainingGourdBlock(BlockBehaviour.Properties.copy(Blocks.CLAY)
+            .sound(SoundType.MUD)
+            .strength(0.8f)
+            .noOcclusion(), TrainingGourdSize.LARGE));
+
+    public static final RegistryObject<Block> TRAINING_GOURD_HUGE = registerBlockWithoutItem("training_gourd_huge",
+        () -> new TrainingGourdBlock(BlockBehaviour.Properties.copy(Blocks.CLAY)
+            .sound(SoundType.MUD)
+            .strength(0.8f)
+            .noOcclusion(), TrainingGourdSize.HUGE));
+
+    public static final RegistryObject<Block> TRAINING_GOURD_GARGANTUAN = registerBlockWithoutItem("training_gourd_gargantuan",
+        () -> new TrainingGourdBlock(BlockBehaviour.Properties.copy(Blocks.CLAY)
+            .sound(SoundType.MUD)
+            .strength(0.8f)
+            .noOcclusion(), TrainingGourdSize.GARGANTUAN));
+
     public static final RegistryObject<SixEyeDemonHeadBlock> SIX_EYE_DEMON_HEAD = registerBlockWithoutItem("six_eye_demon_head",
         () -> new SixEyeDemonHeadBlock(BlockBehaviour.Properties.copy(Blocks.PLAYER_HEAD)
             .strength(1.0f)

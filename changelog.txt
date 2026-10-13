@@ -1,3 +1,15 @@
+1.6.5700
+- Added training gourds
+- Fixed the issue where demon raids don't work after final selection (because the kidnapper's bog quest was blocking it)
+- Fixed the issue where Tanjiro's sword and black sword don't use sun breathing sword slash for sun breathing
+- Meditation menu now shows slayer experience progress
+
+1.6.5699
+- Rebalanced enhanced beast breathing
+- Improved demon slayer rank progression
+- Added selector to `/setdsrank` command, like `/setdsrank <rank> <username>`
+- Reduced the damage for Rui's Basic Thread attack
+
 1.6.5698
 - Rebalanced the fear effect
 - Added new fear effect visual for Akaza (WIP)

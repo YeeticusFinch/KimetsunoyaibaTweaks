@@ -79,7 +79,8 @@ public final class MeditationMenuService {
                 List.of(),
                 "",
                 "",
-                false,
+                 false,
+                 false, 0, 0, 0, "", "",
                 DemonEyesHelper.DEFAULT_DEMON_EYES_INDEX,
                 DemonEyesHelper.DEFAULT_DEMON_EYES_HUE,
                 SwordDisplayConfig.SwordDisplayPosition.HIP.name(), 0, 0, 0, 0, 0, 0, 0
@@ -93,6 +94,7 @@ public final class MeditationMenuService {
         String humansConsumed = resolveHumansConsumed(player);
         String kizukiRank = resolveKizukiRank(player);
         boolean demonPlayer = role == PlayerRole.DEMON;
+        SlayerExperienceProgress slayerExperience = buildSlayerExperience(player, role);
         int demonEyesIndex = DemonEyesHelper.getOrCreateIndex(player);
         int demonEyesHue = DemonEyesHelper.getHue(player);
         SwordDisplayConfig.SwordDisplayPosition sheathPosition = SheathCosmeticsHelper.getPosition(player);
@@ -141,6 +143,8 @@ public final class MeditationMenuService {
 
         return new MeditationMenuData(role.getDisplayName(), rank, slayerRank, muzanBlood, humansConsumed, kizukiRank,
             infoSections, quests, locations, passiveSkills, passiveSkillPoints, buffs, selectedType, selectedId, demonPlayer,
+            slayerExperience.visible(), slayerExperience.total(), slayerExperience.progress(),
+            slayerExperience.required(), slayerExperience.nextRank(), slayerExperience.questRequirement(),
             demonEyesIndex, demonEyesHue, sheathPosition.name(), sheathTextureIndex,
             SheathCosmeticsHelper.getTranslateX(player), SheathCosmeticsHelper.getTranslateY(player),
             SheathCosmeticsHelper.getTranslateZ(player), SheathCosmeticsHelper.getRotateX(player),
@@ -239,14 +243,34 @@ public final class MeditationMenuService {
         );
 
         List<MeditationMenuData.InfoSection> sections = new ArrayList<>();
-        if (role == PlayerRole.DEMON_SLAYER) {
-            sections.add(new MeditationMenuData.InfoSection(
-                "slayer_experience", "Slayer Experience", DemonSlayerRankManager.getSlayerExperience(player), List.of()));
-        }
         sections.add(demonsKilled);
         sections.add(humansKilled);
         sections.add(blueSpiderLilyTea);
         return sections;
+    }
+
+    private static SlayerExperienceProgress buildSlayerExperience(ServerPlayer player, PlayerRole role) {
+        if (role != PlayerRole.DEMON_SLAYER) {
+            return SlayerExperienceProgress.HIDDEN;
+        }
+
+        DemonSlayerRank currentRank = DemonSlayerRankManager.getRank(player);
+        if (currentRank == null) {
+            return SlayerExperienceProgress.HIDDEN;
+        }
+
+        int totalExperience = DemonSlayerRankManager.getSlayerExperience(player);
+        DemonSlayerRank nextRank = DemonSlayerRank.fromLevel(currentRank.level() + 1);
+        if (nextRank == null) {
+            return new SlayerExperienceProgress(true, totalExperience, 0, 0, "", "");
+        }
+
+        int currentRequirement = DemonSlayerRankManager.getRequiredExperience(currentRank);
+        int nextRequirement = DemonSlayerRankManager.getRequiredExperience(nextRank);
+        int required = Math.max(0, nextRequirement - currentRequirement);
+        int progress = Math.max(0, Math.min(required, totalExperience - currentRequirement));
+        return new SlayerExperienceProgress(true, totalExperience, progress, required, nextRank.displayName(),
+            QuestProgressionManager.getDemonSlayerQuestRequirement(player, nextRank));
     }
 
     private static List<MeditationMenuData.LocationEntry> buildLocations(PlayerRole role) {
@@ -535,6 +559,11 @@ public final class MeditationMenuService {
             return entityId;
         }
         return prettify(id.getPath());
+    }
+
+    private record SlayerExperienceProgress(boolean visible, int total, int progress, int required, String nextRank,
+                                            String questRequirement) {
+        private static final SlayerExperienceProgress HIDDEN = new SlayerExperienceProgress(false, 0, 0, 0, "", "");
     }
 
 }

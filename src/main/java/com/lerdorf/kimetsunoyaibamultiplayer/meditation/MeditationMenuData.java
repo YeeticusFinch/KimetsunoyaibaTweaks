@@ -21,6 +21,12 @@ public class MeditationMenuData {
     private final String selectedType;
     private final String selectedId;
     private final boolean demonPlayer;
+    private final boolean slayerExperienceVisible;
+    private final int slayerExperience;
+    private final int slayerExperienceProgress;
+    private final int slayerExperienceRequired;
+    private final String nextSlayerRank;
+    private final String slayerExperienceQuestRequirement;
     private final int demonEyesIndex;
     private final int demonEyesHue;
     private final String sheathPosition;
@@ -37,7 +43,11 @@ public class MeditationMenuData {
                                List<PassiveSkillEntry> passiveSkills,
                                int passiveSkillPoints,
                                List<BuffEntry> buffs,
-                                String selectedType, String selectedId, boolean demonPlayer, int demonEyesIndex, int demonEyesHue,
+                                String selectedType, String selectedId, boolean demonPlayer,
+                                boolean slayerExperienceVisible, int slayerExperience, int slayerExperienceProgress,
+                                 int slayerExperienceRequired, String nextSlayerRank,
+                                 String slayerExperienceQuestRequirement,
+                                int demonEyesIndex, int demonEyesHue,
                                String sheathPosition, int sheathTextureIndex,
                                double sheathTranslateX, double sheathTranslateY, double sheathTranslateZ,
                                double sheathRotateX, double sheathRotateY, double sheathRotateZ) {
@@ -56,6 +66,12 @@ public class MeditationMenuData {
         this.selectedType = selectedType;
         this.selectedId = selectedId;
         this.demonPlayer = demonPlayer;
+        this.slayerExperienceVisible = slayerExperienceVisible;
+        this.slayerExperience = slayerExperience;
+        this.slayerExperienceProgress = slayerExperienceProgress;
+        this.slayerExperienceRequired = slayerExperienceRequired;
+        this.nextSlayerRank = nextSlayerRank;
+        this.slayerExperienceQuestRequirement = slayerExperienceQuestRequirement;
         this.demonEyesIndex = demonEyesIndex;
         this.demonEyesHue = demonEyesHue;
         this.sheathPosition = sheathPosition;
@@ -84,6 +100,12 @@ public class MeditationMenuData {
         this.selectedType = buf.readUtf();
         this.selectedId = buf.readUtf();
         this.demonPlayer = buf.readBoolean();
+        this.slayerExperienceVisible = buf.readBoolean();
+        this.slayerExperience = buf.readVarInt();
+        this.slayerExperienceProgress = buf.readVarInt();
+        this.slayerExperienceRequired = buf.readVarInt();
+        this.nextSlayerRank = buf.readUtf();
+        this.slayerExperienceQuestRequirement = buf.readUtf();
         this.demonEyesIndex = buf.readVarInt();
         this.demonEyesHue = buf.readVarInt();
         this.sheathPosition = buf.readUtf();
@@ -112,6 +134,12 @@ public class MeditationMenuData {
         buf.writeUtf(selectedType);
         buf.writeUtf(selectedId);
         buf.writeBoolean(demonPlayer);
+        buf.writeBoolean(slayerExperienceVisible);
+        buf.writeVarInt(slayerExperience);
+        buf.writeVarInt(slayerExperienceProgress);
+        buf.writeVarInt(slayerExperienceRequired);
+        buf.writeUtf(nextSlayerRank);
+        buf.writeUtf(slayerExperienceQuestRequirement);
         buf.writeVarInt(demonEyesIndex);
         buf.writeVarInt(demonEyesHue);
         buf.writeUtf(sheathPosition);
@@ -198,6 +226,30 @@ public class MeditationMenuData {
 
     public boolean demonPlayer() {
         return demonPlayer;
+    }
+
+    public boolean slayerExperienceVisible() {
+        return slayerExperienceVisible;
+    }
+
+    public int slayerExperience() {
+        return slayerExperience;
+    }
+
+    public int slayerExperienceProgress() {
+        return slayerExperienceProgress;
+    }
+
+    public int slayerExperienceRequired() {
+        return slayerExperienceRequired;
+    }
+
+    public String nextSlayerRank() {
+        return nextSlayerRank;
+    }
+
+    public String slayerExperienceQuestRequirement() {
+        return slayerExperienceQuestRequirement;
     }
 
     public int demonEyesIndex() {

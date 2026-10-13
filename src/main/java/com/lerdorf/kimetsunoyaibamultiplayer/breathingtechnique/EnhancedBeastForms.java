@@ -187,7 +187,7 @@ public class EnhancedBeastForms {
     }
 
     private static BeastSwordProjectileEntity launchBeastSword(LivingEntity owner, Level level,
-                                                               ItemStack source, Vec3 direction) {
+                                                               ItemStack source, Vec3 direction, boolean dualWield) {
         if (source == null || source.isEmpty() || level.isClientSide) {
             return null;
         }
@@ -201,6 +201,7 @@ public class EnhancedBeastForms {
         Vec3 launchPosition = owner.getEyePosition().add(direction.scale(0.8D));
         projectile.setPos(launchPosition.x, launchPosition.y, launchPosition.z);
         projectile.setSwordStack(thrownStack);
+        projectile.setDualWield(dualWield);
         projectile.shoot(direction.x, direction.y, direction.z, 1.7F, 0.0F);
         level.addFreshEntity(projectile);
         level.playSound(null, owner.blockPosition(), SoundEvents.TRIDENT_THROW,
@@ -216,7 +217,7 @@ public class EnhancedBeastForms {
         return hurt;
     }
 
-    private static boolean hurtWithBeastBleeding(LivingEntity attacker, LivingEntity target, float damage, boolean resetInvulnerability, boolean dualWield) {
+    public static boolean hurtWithBeastBleeding(LivingEntity attacker, LivingEntity target, float damage, boolean resetInvulnerability, boolean dualWield) {
         boolean hurt = Damager.hurt(attacker, target, damage, resetInvulnerability, false, true);
         if (hurt) {
             BleedingHandler.applyBeastBleeding(target, dualWield);
@@ -718,7 +719,7 @@ public class EnhancedBeastForms {
 
                             // Deal moderate damage on contact
                                 //float damage = (6.0F);
-                                hurtWithBeastBleeding(entity, target, damage, true, twoSwords);
+                                hurtWithBeastBleeding(entity, target, damage, false, twoSwords);
                         }
                     }
                     
@@ -1039,7 +1040,7 @@ public class EnhancedBeastForms {
         	25008,
             "Eighth Form: Explosive Rush",
             "The user charges towards their opponent at blinding speeds, ignoring all incoming attacks.",
-            5, // 5 second cooldown
+            8, // 8 second cooldown
             (entity, level, formId) -> {
             	boolean twoSwords = hasTwoSwords(entity);
                 float damage = 14F;
@@ -1048,7 +1049,7 @@ public class EnhancedBeastForms {
                 setCancelAttackSwing(entity, true);
                 ServerLevel serverLevel = level instanceof ServerLevel ? (ServerLevel)level : null;
 
-                final int formDuration = 100; // 5 seconds
+                final int formDuration = 60; // 3 seconds
                 final double rushSpeed = twoSwords ? 1.9 : 1.35;
                 final float originalStepHeight = entity.maxUpStep();
                 entity.setMaxUpStep(2.0F);
@@ -1197,17 +1198,16 @@ public class EnhancedBeastForms {
             "The user dislocates the joints of their arm to increase the range of their attack, and then unleashing a fast swinging forward strike.",
             5, // 5 second cooldown
              (entity, level, formId) -> {
-                boolean twoSwords = hasTwoSwords(entity);
-                float damage = twoSwords ? 10.0F : 5.0F;
-                GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
+                //boolean twoSwords = hasTwoSwords(entity);
+                float damage = 40.0F;
+                GuardStateHelper.setGuardState(entity, 15.0F, formId);
                 setCancelAttackSwing(entity, true);
 
                 final int formDuration = 26;
                 final double slashRange = 10.0D;
                 final double slashAoeRadius = 4.5D;
                 final Vec3 forward = entity.getLookAngle().multiply(1, 0, 1).normalize();
-                final Vec3 slashForward = forward.lengthSqr() < 1.0E-6D
-                    ? new Vec3(0, 0, 1) : forward;
+                final Vec3 slashForward = forward.lengthSqr() < 1.0E-6D ? new Vec3(0, 0, 1) : forward;
                 final int[] tick = {0};
                 playEntityAnimationOnLayer(entity, "beast9", formDuration, 1.0F, 3000);
 
@@ -1248,15 +1248,12 @@ public class EnhancedBeastForms {
                         AABB hitBox = new AABB(slashCenter, slashCenter).inflate(slashAoeRadius);
                         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, hitBox,
                                 target -> target != entity && target.isAlive())) {
-                            hurtWithBeastBleeding(entity, target, damage, true, twoSwords);
+                            hurtWithBeastBleeding(entity, target, damage, true, true);
                         }
 
                         entity.invulnerableTime = 0;
-                        entity.hurt(entity.damageSources().generic(), 10.0F);
-                        entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 4,
-                            false, false, false));
-                        entity.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 200, 4,
-                            false, false, false));
+                        entity.hurt(entity.damageSources().generic(), 5.0F);
+                       
                         level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
                             SoundSource.PLAYERS, 1.2F, 0.65F);
                         level.playSound(null, entity.blockPosition(), SoundEvents.GENERIC_EXPLODE,
@@ -1265,7 +1262,11 @@ public class EnhancedBeastForms {
                 }, 1, formDuration);
 
                 // ===== CLEANUP =====
-                 AbilityScheduler.scheduleOnce(entity, () -> {
+                     AbilityScheduler.scheduleOnce(entity, () -> {
+                     entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 3,
+                            false, false, false));
+                    entity.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 3,
+                            false, false, false));
                      GuardStateHelper.clearGuardState(entity);
                      setCancelAttackSwing(entity, false);
                      stopEntityAnimation(entity, "kimetsunoyaibamultiplayer:beast9");
@@ -1283,14 +1284,14 @@ public class EnhancedBeastForms {
             6, // 6 second cooldown
              (entity, level, formId) -> {
                 boolean twoSwords = hasTwoSwords(entity);
-                 float damage = twoSwords ? 5.0F : 3.0F;
-                GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
+                 float damage = twoSwords ? 5.0F : 2.5F;
+                GuardStateHelper.setGuardState(entity, twoSwords ? 20.0F : 10.0F, formId);
                 setCancelAttackSwing(entity, true);
 
                 final int formDuration = 60;
                 final int[] tick = {0};
                  final double[] curveRadii = {0.5D, 0.7D, 0.9D, 1.1D};
-                 final double curveRotationSpeed = 1.92D; // triple the previous rotation speed
+                 final double curveRotationSpeed = 1.92D;
                 final List<BeastBezierCurveEntity> curves = new ArrayList<>();
 
                 if (level instanceof ServerLevel serverLevel) {
@@ -1397,7 +1398,7 @@ public class EnhancedBeastForms {
                                 horizontalAway = horizontalAway.normalize();
                             }
                             MovementHelper.setVelocity(target, horizontalAway.scale(0.8D).add(0, 0.18D, 0));
-                            hurtWithBeastBleeding(entity, target, damage, true, twoSwords);
+                            hurtWithBeastBleeding(entity, target, damage, false, twoSwords);
                         }
                     }
                 }, 1, formDuration);
@@ -1426,7 +1427,7 @@ public class EnhancedBeastForms {
             6, // 6 second cooldown
              (entity, level, formId) -> {
                 boolean twoSwords = hasTwoSwords(entity);
-                float damage = 10.0F;
+                float damage = 15.0F;
                 GuardStateHelper.setGuardState(entity, twoSwords ? 10.0F : 5.0F, formId);
                 setCancelAttackSwing(entity, true);
 
@@ -1442,14 +1443,14 @@ public class EnhancedBeastForms {
 
                     if (currentTick == 8) {
                         BeastSwordProjectileEntity projectile = launchBeastSword(entity, level,
-                            entity.getMainHandItem(), direction);
+                            entity.getMainHandItem(), direction, twoSwords);
                         if (projectile != null) {
                             thrownSwords.add(projectile);
                         }
                     }
                     if (currentTick == 11 && twoSwords) {
                         BeastSwordProjectileEntity projectile = launchBeastSword(entity, level,
-                            entity.getOffhandItem(), direction);
+                            entity.getOffhandItem(), direction, twoSwords);
                         if (projectile != null) {
                             thrownSwords.add(projectile);
                         }

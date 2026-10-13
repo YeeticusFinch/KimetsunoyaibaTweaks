@@ -190,13 +190,38 @@ public class MeditationMenuScreen extends Screen {
         int bodyTop = top + BODY_TOP;
         int bodyRight = left + PANEL_WIDTH - INNER_MARGIN;
         int bodyBottom = top + PANEL_HEIGHT - BODY_BOTTOM_MARGIN;
-        int statsTop = bodyTop + 48;
+        int statsTop = infoStatsTop(top);
         guiGraphics.fill(bodyLeft, statsTop, bodyRight, bodyBottom, 0xAA15100E);
 
         guiGraphics.drawString(font, "Role", bodyLeft, bodyTop, 0x8FD48C, false);
         guiGraphics.drawString(font, data.role(), bodyLeft + 52, bodyTop, 0xF0E3C2, false);
         guiGraphics.drawString(font, "Rank", bodyLeft, bodyTop + 18, 0x8FD48C, false);
         guiGraphics.drawString(font, data.rank(), bodyLeft + 52, bodyTop + 18, 0xF0E3C2, false);
+        if (data.slayerExperienceVisible()) {
+            guiGraphics.drawString(font, "Slayer Experience", bodyLeft, bodyTop + 36, 0x8FD48C, false);
+            String experienceText = data.slayerExperienceRequired() > 0
+                ? data.slayerExperience() + " XP | " + data.slayerExperienceProgress() + " / "
+                    + data.slayerExperienceRequired() + " to " + data.nextSlayerRank()
+                : data.slayerExperience() + " XP | Max Rank";
+            guiGraphics.drawString(font, font.plainSubstrByWidth(experienceText, bodyRight - bodyLeft - 100),
+                bodyLeft + 100, bodyTop + 36, 0xF0E3C2, false);
+
+            int barTop = bodyTop + 49;
+            int barHeight = 7;
+            int barWidth = bodyRight - bodyLeft;
+            guiGraphics.fill(bodyLeft, barTop, bodyRight, barTop + barHeight, 0xFF30251D);
+            int filledWidth = data.slayerExperienceRequired() <= 0
+                ? barWidth
+                : (int) ((long) barWidth * data.slayerExperienceProgress() / data.slayerExperienceRequired());
+            if (filledWidth > 0) {
+                guiGraphics.fill(bodyLeft, barTop, bodyLeft + filledWidth, barTop + barHeight, 0xFF8FBF65);
+            }
+            if (!data.slayerExperienceQuestRequirement().isBlank()) {
+                String requirement = "Quest required: " + data.slayerExperienceQuestRequirement();
+                guiGraphics.drawString(font, font.plainSubstrByWidth(requirement, bodyRight - bodyLeft),
+                    bodyLeft, bodyTop + 60, 0xE8B86A, false);
+            }
+        }
         if (data.demonPlayer()) {
             guiGraphics.drawString(font, "Slayer Rank", bodyLeft, bodyTop + 36, 0x8FD48C, false);
             guiGraphics.drawString(font, data.slayerRank(), bodyLeft + 78, bodyTop + 36, 0xF0E3C2, false);
@@ -749,7 +774,7 @@ public class MeditationMenuScreen extends Screen {
             int left = (width - PANEL_WIDTH) / 2;
             int top = (height - PANEL_HEIGHT) / 2;
             int bodyLeft = left + INNER_MARGIN;
-            int bodyTop = top + BODY_TOP + 48;
+            int bodyTop = infoStatsTop(top);
             int bodyRight = left + PANEL_WIDTH - INNER_MARGIN;
             int bodyBottom = top + PANEL_HEIGHT - BODY_BOTTOM_MARGIN;
             if (mouseX >= bodyLeft && mouseX <= bodyRight && mouseY >= bodyTop && mouseY <= bodyBottom) {
@@ -855,6 +880,12 @@ public class MeditationMenuScreen extends Screen {
         if (!expandedInfoSections.add(id)) {
             expandedInfoSections.remove(id);
         }
+    }
+
+    private int infoStatsTop(int top) {
+        return top + BODY_TOP + (data.slayerExperienceVisible()
+            ? (data.slayerExperienceQuestRequirement().isBlank() ? 62 : 74)
+            : 48);
     }
 
     private List<InfoRow> flattenInfoRows(List<MeditationMenuData.InfoSection> sections, int depth) {
@@ -974,6 +1005,12 @@ public class MeditationMenuScreen extends Screen {
             type,
             id,
             data.demonPlayer(),
+            data.slayerExperienceVisible(),
+            data.slayerExperience(),
+            data.slayerExperienceProgress(),
+            data.slayerExperienceRequired(),
+            data.nextSlayerRank(),
+            data.slayerExperienceQuestRequirement(),
             localDemonEyesIndex,
             localDemonEyesHue,
             localSheathPosition.name(), localSheathTextureIndex,

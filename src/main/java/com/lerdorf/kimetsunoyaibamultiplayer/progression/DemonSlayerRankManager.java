@@ -1,5 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.progression;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.config.CustomProgressionConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.meditation.PassiveSkillManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.quest.QuestProgressionManager;
 import net.minecraft.ChatFormatting;
@@ -15,15 +17,23 @@ import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.UUID;
 
 public final class DemonSlayerRankManager {
     private static final String RANK_TAG = "KnYCustomDemonSlayerRank";
     private static final String SLAYER_EXPERIENCE_TAG = "KnYSlayerExperience";
+    private static final String DEMON_DAMAGE_CONTRIBUTORS_TAG = "KnYDemonDamageContributors";
+    private static final String CONTRIBUTOR_UUID_TAG = "Player";
     private static final String RANK_BUFFS_ACTIVE_TAG = "KnYRankBuffsActive";
     private static final ResourceLocation CUSTOM_CORPS = ResourceLocation.fromNamespaceAndPath(
         "kimetsunoyaibamultiplayer", "demon_slayer_corps");
@@ -31,7 +41,8 @@ public final class DemonSlayerRankManager {
         "kimetsunoyaibamultiplayer", "completed_final_selectioni");
     private static final int BUFF_DURATION_TICKS = MobEffectInstance.INFINITE_DURATION;
     private static final int BUFF_REFRESH_INTERVAL_TICKS = 20 * 20;
-    private static final ThreadLocal<ServerPlayer> BREATHING_DAMAGE_PLAYER = new ThreadLocal<>();
+    private static final int DIRECT_DEMON_KILL_EXPERIENCE = 10;
+    private static final int ASSISTED_DEMON_KILL_EXPERIENCE = 5;
 
     private DemonSlayerRankManager() {
     }
@@ -193,45 +204,90 @@ public final class DemonSlayerRankManager {
         updateRankFromExperience(player);
     }
 
-    public static void addBreathingDamageExperience(ServerPlayer player, float damage) {
-        addSlayerExperience(player, Math.max(0, (int) Math.floor(damage)));
-    }
-
-    public static void beginBreathingDamage(ServerPlayer player) {
-        BREATHING_DAMAGE_PLAYER.set(Objects.requireNonNull(player));
-    }
-
-    public static void endBreathingDamage() {
-        BREATHING_DAMAGE_PLAYER.remove();
-    }
-
-    public static boolean isBreathingDamageInProgress(ServerPlayer player) {
-        return BREATHING_DAMAGE_PLAYER.get() == player;
-    }
-
-    public static void addNichirinAttackExperience(ServerPlayer player, float damage) {
-        if (!canGainSlayerExperience(player) || damage <= 0.0F) {
+    public static void recordDemonDamage(LivingEntity target, DamageSource source) {
+        if (target == null || source == null || target.level().isClientSide() || !Damager.isDemon(target)) {
             return;
         }
-        int points = Math.max(0, (int) Math.floor(damage));
-        int awarded = 0;
-        for (int i = 0; i < points; i++) {
-            if (player.getRandom().nextBoolean()) {
-                awarded++;
+        ServerPlayer player = getPlayerFromDamageSource(source);
+        if (!canGainSlayerExperience(player)) {
+            return;
+        }
+
+        ListTag contributors = target.getPersistentData().getList(
+            DEMON_DAMAGE_CONTRIBUTORS_TAG, Tag.TAG_COMPOUND);
+        for (int i = 0; i < contributors.size(); i++) {
+            if (contributors.getCompound(i).hasUUID(CONTRIBUTOR_UUID_TAG)
+                && contributors.getCompound(i).getUUID(CONTRIBUTOR_UUID_TAG).equals(player.getUUID())) {
+                return;
             }
         }
-        addSlayerExperience(player, awarded);
+
+        CompoundTag contributor = new CompoundTag();
+        contributor.putUUID(CONTRIBUTOR_UUID_TAG, player.getUUID());
+        contributors.add(contributor);
+        target.getPersistentData().put(DEMON_DAMAGE_CONTRIBUTORS_TAG, contributors);
+    }
+
+    public static void awardDemonKillExperience(LivingEntity target, DamageSource source) {
+        if (target == null || target.level().isClientSide() || !Damager.isDemon(target)) {
+            return;
+        }
+
+        ListTag contributors = target.getPersistentData().getList(
+            DEMON_DAMAGE_CONTRIBUTORS_TAG, Tag.TAG_COMPOUND);
+        target.getPersistentData().remove(DEMON_DAMAGE_CONTRIBUTORS_TAG);
+
+        ServerPlayer killer = source == null ? null : getPlayerFromDamageSource(source);
+        if (canGainSlayerExperience(killer)) {
+            addSlayerExperience(killer, DIRECT_DEMON_KILL_EXPERIENCE);
+        }
+
+        for (int i = 0; i < contributors.size(); i++) {
+            CompoundTag contributor = contributors.getCompound(i);
+            if (!contributor.hasUUID(CONTRIBUTOR_UUID_TAG)) {
+                continue;
+            }
+            UUID contributorId = contributor.getUUID(CONTRIBUTOR_UUID_TAG);
+            if (killer != null && contributorId.equals(killer.getUUID())) {
+                continue;
+            }
+            if (target.level().getServer() == null) {
+                continue;
+            }
+            ServerPlayer player = target.level().getServer().getPlayerList().getPlayer(contributorId);
+            if (canGainSlayerExperience(player)) {
+                addSlayerExperience(player, ASSISTED_DEMON_KILL_EXPERIENCE);
+            }
+        }
     }
 
     public static int getRequiredExperience(DemonSlayerRank rank) {
         if (rank == null || rank.level() <= 1) {
             return 0;
         }
-        int total = 0;
+        long total = 0L;
         for (int level = 2; level <= rank.level(); level++) {
-            total += level * 50;
+            total += CustomProgressionConfig.getSlayerExperienceForRank(DemonSlayerRank.fromLevel(level));
         }
-        return total;
+        return total >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) total;
+    }
+
+    private static ServerPlayer getPlayerFromDamageSource(DamageSource source) {
+        ServerPlayer player = getPlayerFromEntity(source.getEntity());
+        if (player != null) {
+            return player;
+        }
+        return getPlayerFromEntity(source.getDirectEntity());
+    }
+
+    private static ServerPlayer getPlayerFromEntity(Entity entity) {
+        if (entity instanceof ServerPlayer player) {
+            return player;
+        }
+        if (entity instanceof Projectile projectile && projectile.getOwner() instanceof ServerPlayer player) {
+            return player;
+        }
+        return null;
     }
 
     private static boolean canGainSlayerExperience(ServerPlayer player) {

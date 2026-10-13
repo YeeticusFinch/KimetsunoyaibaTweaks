@@ -5,6 +5,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CreepingRuin;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.DemonwebPuppetry;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.RuiBloodDemonArt;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.VindicatorsBane;
+import com.lerdorf.kimetsunoyaibamultiplayer.blocks.TrainingGourdDifficulty;
+import com.lerdorf.kimetsunoyaibamultiplayer.blocks.TrainingGourdSize;
 import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +18,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.RecordItem;
 import net.minecraft.world.item.Tiers;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -110,6 +113,57 @@ public class ModItems {
 
     public static final RegistryObject<Item> KYOGAI_DRUMS = ITEMS.register("kyogai_drums",
         () -> new KyogaiDrumsItem(new Item.Properties().stacksTo(1)));
+
+    // Training gourds: each size has separate easy, hard, and extreme items.
+    public static final RegistryObject<Item> TRAINING_GOURD_SMALL_EASY = registerTrainingGourd(
+        "training_gourd_small_easy", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_SMALL.get(),
+        TrainingGourdSize.SMALL, TrainingGourdDifficulty.EASY);
+    public static final RegistryObject<Item> TRAINING_GOURD_SMALL_HARD = registerTrainingGourd(
+        "training_gourd_small_hard", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_SMALL.get(),
+        TrainingGourdSize.SMALL, TrainingGourdDifficulty.HARD);
+    public static final RegistryObject<Item> TRAINING_GOURD_SMALL_EXTREME = registerTrainingGourd(
+        "training_gourd_small_extreme", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_SMALL.get(),
+        TrainingGourdSize.SMALL, TrainingGourdDifficulty.EXTREME);
+
+    public static final RegistryObject<Item> TRAINING_GOURD_MEDIUM_EASY = registerTrainingGourd(
+        "training_gourd_medium_easy", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_MEDIUM.get(),
+        TrainingGourdSize.MEDIUM, TrainingGourdDifficulty.EASY);
+    public static final RegistryObject<Item> TRAINING_GOURD_MEDIUM_HARD = registerTrainingGourd(
+        "training_gourd_medium_hard", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_MEDIUM.get(),
+        TrainingGourdSize.MEDIUM, TrainingGourdDifficulty.HARD);
+    public static final RegistryObject<Item> TRAINING_GOURD_MEDIUM_EXTREME = registerTrainingGourd(
+        "training_gourd_medium_extreme", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_MEDIUM.get(),
+        TrainingGourdSize.MEDIUM, TrainingGourdDifficulty.EXTREME);
+
+    public static final RegistryObject<Item> TRAINING_GOURD_LARGE_EASY = registerTrainingGourd(
+        "training_gourd_large_easy", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_LARGE.get(),
+        TrainingGourdSize.LARGE, TrainingGourdDifficulty.EASY);
+    public static final RegistryObject<Item> TRAINING_GOURD_LARGE_HARD = registerTrainingGourd(
+        "training_gourd_large_hard", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_LARGE.get(),
+        TrainingGourdSize.LARGE, TrainingGourdDifficulty.HARD);
+    public static final RegistryObject<Item> TRAINING_GOURD_LARGE_EXTREME = registerTrainingGourd(
+        "training_gourd_large_extreme", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_LARGE.get(),
+        TrainingGourdSize.LARGE, TrainingGourdDifficulty.EXTREME);
+
+    public static final RegistryObject<Item> TRAINING_GOURD_HUGE_EASY = registerTrainingGourd(
+        "training_gourd_huge_easy", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_HUGE.get(),
+        TrainingGourdSize.HUGE, TrainingGourdDifficulty.EASY);
+    public static final RegistryObject<Item> TRAINING_GOURD_HUGE_HARD = registerTrainingGourd(
+        "training_gourd_huge_hard", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_HUGE.get(),
+        TrainingGourdSize.HUGE, TrainingGourdDifficulty.HARD);
+    public static final RegistryObject<Item> TRAINING_GOURD_HUGE_EXTREME = registerTrainingGourd(
+        "training_gourd_huge_extreme", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_HUGE.get(),
+        TrainingGourdSize.HUGE, TrainingGourdDifficulty.EXTREME);
+
+    public static final RegistryObject<Item> TRAINING_GOURD_GARGANTUAN_EASY = registerTrainingGourd(
+        "training_gourd_gargantuan_easy", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_GARGANTUAN.get(),
+        TrainingGourdSize.GARGANTUAN, TrainingGourdDifficulty.EASY);
+    public static final RegistryObject<Item> TRAINING_GOURD_GARGANTUAN_HARD = registerTrainingGourd(
+        "training_gourd_gargantuan_hard", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_GARGANTUAN.get(),
+        TrainingGourdSize.GARGANTUAN, TrainingGourdDifficulty.HARD);
+    public static final RegistryObject<Item> TRAINING_GOURD_GARGANTUAN_EXTREME = registerTrainingGourd(
+        "training_gourd_gargantuan_extreme", () -> com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TRAINING_GOURD_GARGANTUAN.get(),
+        TrainingGourdSize.GARGANTUAN, TrainingGourdDifficulty.EXTREME);
 
     // Spawn eggs
     public static final RegistryObject<Item> MUICHIRO_SPAWN_EGG = ITEMS.register("muichiro_spawn_egg",
@@ -667,7 +721,12 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BLACK.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GRAVITY_BLOCK.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BRIDGER_BLOCK.get(),
-                     SIX_EYE_DEMON_HEAD.get(),
+                      TRAINING_GOURD_SMALL_EASY.get(), TRAINING_GOURD_SMALL_HARD.get(), TRAINING_GOURD_SMALL_EXTREME.get(),
+                      TRAINING_GOURD_MEDIUM_EASY.get(), TRAINING_GOURD_MEDIUM_HARD.get(), TRAINING_GOURD_MEDIUM_EXTREME.get(),
+                      TRAINING_GOURD_LARGE_EASY.get(), TRAINING_GOURD_LARGE_HARD.get(), TRAINING_GOURD_LARGE_EXTREME.get(),
+                      TRAINING_GOURD_HUGE_EASY.get(), TRAINING_GOURD_HUGE_HARD.get(), TRAINING_GOURD_HUGE_EXTREME.get(),
+                      TRAINING_GOURD_GARGANTUAN_EASY.get(), TRAINING_GOURD_GARGANTUAN_HARD.get(), TRAINING_GOURD_GARGANTUAN_EXTREME.get(),
+                      SIX_EYE_DEMON_HEAD.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_PINK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_CYAN.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_LAVENDER.get(),
@@ -802,6 +861,43 @@ public class ModItems {
                     HUMAN_FLESH_3.get(), HUMAN_FLESH_4.get(), HUMAN_FLESH_5.get());
             })
             .build());
+
+    private static RegistryObject<Item> registerTrainingGourd(String name,
+                                                               java.util.function.Supplier<? extends Block> block,
+                                                               TrainingGourdSize size,
+                                                               TrainingGourdDifficulty difficulty) {
+        return ITEMS.register(name, () -> new TrainingGourdItem(block.get(), new Item.Properties(), size, difficulty));
+    }
+
+    public static Item getTrainingGourdItem(TrainingGourdSize size, TrainingGourdDifficulty difficulty) {
+        return switch (size) {
+            case SMALL -> switch (difficulty) {
+                case EASY -> TRAINING_GOURD_SMALL_EASY.get();
+                case HARD -> TRAINING_GOURD_SMALL_HARD.get();
+                case EXTREME -> TRAINING_GOURD_SMALL_EXTREME.get();
+            };
+            case MEDIUM -> switch (difficulty) {
+                case EASY -> TRAINING_GOURD_MEDIUM_EASY.get();
+                case HARD -> TRAINING_GOURD_MEDIUM_HARD.get();
+                case EXTREME -> TRAINING_GOURD_MEDIUM_EXTREME.get();
+            };
+            case LARGE -> switch (difficulty) {
+                case EASY -> TRAINING_GOURD_LARGE_EASY.get();
+                case HARD -> TRAINING_GOURD_LARGE_HARD.get();
+                case EXTREME -> TRAINING_GOURD_LARGE_EXTREME.get();
+            };
+            case HUGE -> switch (difficulty) {
+                case EASY -> TRAINING_GOURD_HUGE_EASY.get();
+                case HARD -> TRAINING_GOURD_HUGE_HARD.get();
+                case EXTREME -> TRAINING_GOURD_HUGE_EXTREME.get();
+            };
+            case GARGANTUAN -> switch (difficulty) {
+                case EASY -> TRAINING_GOURD_GARGANTUAN_EASY.get();
+                case HARD -> TRAINING_GOURD_GARGANTUAN_HARD.get();
+                case EXTREME -> TRAINING_GOURD_GARGANTUAN_EXTREME.get();
+            };
+        };
+    }
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

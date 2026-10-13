@@ -10,6 +10,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.meditation.MeditationMenuData;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRank;
+import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRankManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.raids.StructureLocationCache;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SunBreathingLevelHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
@@ -100,6 +101,7 @@ public final class QuestProgressionManager {
     private static final int PERMANENCE_HUNGER_UNENDING_REQUIRED = 10;
     private static final TagKey<EntityType<?>> WOMAN =
         TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath("forge", "woman"));
+    private static final ResourceLocation VILLAGE_SWAMP = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "village_swamp");
     private static final ResourceLocation HOUSE_TAMAYO = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_tamayo");
     private static final ResourceLocation SUSAMARU_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "susamaru");
     private static final ResourceLocation YAHABA_ID = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "yahaba");
@@ -324,7 +326,7 @@ public final class QuestProgressionManager {
         return true;
     }
 
-    public static boolean isRaidSuppressedForPlayer(ServerPlayer player, ResourceLocation structureId) {
+    public static boolean isDemonRaidSuppressedForPlayer(ServerPlayer player, ResourceLocation structureId) {
         if (!CustomProgressionConfig.isCustomProgressionEnabled() || player == null || structureId == null) {
             return false;
         }
@@ -339,7 +341,7 @@ public final class QuestProgressionManager {
         }
 
         if ("kidnappers_bog".equals(context.stage().id())) {
-            return true;
+            return VILLAGE_SWAMP.equals(structureId);
         }
 
         return "asakusa".equals(context.stage().id()) && HOUSE_TAMAYO.equals(structureId);
@@ -554,6 +556,50 @@ public final class QuestProgressionManager {
             return DemonSlayerRank.KINOE;
         }
         return DemonSlayerRank.MIZUNOTO;
+    }
+
+    public static String getDemonSlayerQuestRequirement(ServerPlayer player, DemonSlayerRank nextRank) {
+        if (player == null || nextRank == null) {
+            return "";
+        }
+
+        DemonSlayerRank cap = getDemonSlayerRankCap(player);
+        if (cap == null || nextRank.level() <= cap.level()) {
+            return "";
+        }
+
+        String stageId = switch (nextRank) {
+            case MIZUNOE -> "tsuzumi_mansion";
+            case KANOTO -> "mount_natagumo";
+            case KINOE -> "asakusa";
+            default -> "";
+        };
+        if (stageId.isBlank()) {
+            return "";
+        }
+
+        QuestGroupDefinition group = QuestGroupRegistry.get("cruel");
+        if (group == null) {
+            return "";
+        }
+        for (QuestStageDefinition stage : group.stages()) {
+            if (stage.id().equals(stageId)) {
+                return "Complete " + stage.name();
+            }
+        }
+        return "";
+    }
+
+    public static DemonSlayerRank getDemonSlayerRankUnlockedByQuest(String groupId, String stageId) {
+        if (!"cruel".equals(groupId) || stageId == null) {
+            return null;
+        }
+        return switch (stageId) {
+            case "tsuzumi_mansion" -> DemonSlayerRank.MIZUNOE;
+            case "mount_natagumo", "mt_natagumo" -> DemonSlayerRank.KANOTO;
+            case "asakusa" -> DemonSlayerRank.KINOE;
+            default -> null;
+        };
     }
 
     public static boolean hasCompletedQuestStage(ServerPlayer player, String groupId, String stageId) {
@@ -1694,6 +1740,14 @@ public final class QuestProgressionManager {
                 description.add("");
                 description.add("Current Quest: " + stage.name());
                 description.add(stage.summary());
+                DemonSlayerRank rankUnlock = getDemonSlayerRankUnlockedByQuest(group.id(), stage.id());
+                DemonSlayerRank currentSlayerRank = role == PlayerRole.DEMON_SLAYER
+                    ? DemonSlayerRankManager.getRank(player) : null;
+                if (role == PlayerRole.DEMON_SLAYER && rankUnlock != null
+                    && (currentSlayerRank == null || rankUnlock.level() > currentSlayerRank.level())) {
+                    description.add("");
+                    description.add("Slayer Rank Unlock: " + rankUnlock.displayName());
+                }
 
                 if (isActive) {
                     description.add("");

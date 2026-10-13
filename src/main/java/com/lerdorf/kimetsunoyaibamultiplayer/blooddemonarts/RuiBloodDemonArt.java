@@ -65,6 +65,8 @@ public final class RuiBloodDemonArt {
     private static final double RANGE = 28.0D;
     private static final double M1_RANGE = RANGE * 0.70D;
     private static final float THREAD_DAMAGE = 7.0F;
+    private static final float BASIC_THREAD_DAMAGE = 5.0F;
+    private static final float BASIC_RED_THREAD_MULTIPLIER = 1.50F;
     private static final int GUARD_STATE_TICKS = 10;
     private static final String AXIS_TAG = "KnYRuiThreadAxis";
     private static final String ANIMATION_SIDE_TAG = "KnYRuiThreadAnimationSide";
@@ -130,7 +132,7 @@ public final class RuiBloodDemonArt {
             && !caster.getPersistentData().getBoolean(AXIS_TAG);
         caster.getPersistentData().putBoolean(AXIS_TAG, vertical);
         playAttackAnimation(caster, whipAnimation(caster, vertical), 10);
-        boolean spawned = spawnM1Thread(caster, target, 0.0D, vertical ? 1.0D : 0.0D, vertical);
+        boolean spawned = spawnBasicThread(caster, target, 0.0D, vertical ? 1.0D : 0.0D, vertical);
         if (spawned) {
             BloodDemonArtM1AttackHandler.performRuiM1Attack(caster, target.getUUID());
         }
@@ -306,7 +308,7 @@ public final class RuiBloodDemonArt {
                 && !caster.getPersistentData().getBoolean(AXIS_TAG);
             caster.getPersistentData().putBoolean(AXIS_TAG, vertical);
             playAttackAnimation(caster, whipAnimation(caster, vertical), 10);
-            if (spawnM1Thread(caster, null, 0.0D, vertical ? 1.0D : 0.0D, vertical)) {
+            if (spawnBasicThread(caster, null, 0.0D, vertical ? 1.0D : 0.0D, vertical)) {
                 BloodDemonArtM1AttackHandler.performRuiM1Attack(caster, null);
             }
         }
@@ -610,14 +612,22 @@ public final class RuiBloodDemonArt {
                                        boolean whipMode, boolean whipVertical, double whipAngle,
                                        boolean snatchMode, boolean snareVariant, Vec3 snatchOffset) {
         return spawnThread(caster, target, offsetX, offsetY, liftOnHit,
-            whipMode, whipVertical, whipAngle, snatchMode, snareVariant, snatchOffset, 1.0F, RANGE);
+            whipMode, whipVertical, whipAngle, snatchMode, snareVariant, snatchOffset,
+            1.0F, RANGE, damageFor(caster));
     }
 
     private static boolean spawnM1Thread(LivingEntity caster, LivingEntity target,
                                           double offsetX, double offsetY, boolean whipVertical) {
         return spawnThread(caster, target, offsetX, offsetY, false,
             true, whipVertical, whipVertical ? Math.PI * 0.5D : 0.0D,
-            false, false, Vec3.ZERO, 1.0F, M1_RANGE);
+            false, false, Vec3.ZERO, 1.0F, M1_RANGE, damageFor(caster));
+    }
+
+    private static boolean spawnBasicThread(LivingEntity caster, LivingEntity target,
+                                             double offsetX, double offsetY, boolean whipVertical) {
+        return spawnThread(caster, target, offsetX, offsetY, false,
+            true, whipVertical, whipVertical ? Math.PI * 0.5D : 0.0D,
+            false, false, Vec3.ZERO, 1.0F, M1_RANGE, basicThreadDamage(caster));
     }
 
     private static boolean spawnThread(LivingEntity caster, LivingEntity target,
@@ -627,14 +637,14 @@ public final class RuiBloodDemonArt {
                                        float whipLengthScale) {
         return spawnThread(caster, target, offsetX, offsetY, liftOnHit,
             whipMode, whipVertical, whipAngle, snatchMode, snareVariant, snatchOffset,
-            whipLengthScale, RANGE);
+            whipLengthScale, RANGE, damageFor(caster));
     }
 
     private static boolean spawnThread(LivingEntity caster, LivingEntity target,
                                        double offsetX, double offsetY, boolean liftOnHit,
                                        boolean whipMode, boolean whipVertical, double whipAngle,
                                        boolean snatchMode, boolean snareVariant, Vec3 snatchOffset,
-                                       float whipLengthScale, double threadRange) {
+                                       float whipLengthScale, double threadRange, float threadDamage) {
         Vec3 look = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(caster).normalize();
         Vec3 start = whipMode || snatchMode
             ? getThreadAnchor(caster)
@@ -652,7 +662,7 @@ public final class RuiBloodDemonArt {
                 : target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D)
                     .add(side.scale(offsetX)).add(0.0D, offsetY, 0.0D);
         SilkRibbonEntity thread = SilkRibbonEntity.spawn(caster.level(), caster, start, end,
-            SilkRibbonEntity.RibbonKind.SILK, damageFor(caster), false, target);
+            SilkRibbonEntity.RibbonKind.SILK, threadDamage, false, target);
         thread.setLiftOnHit(liftOnHit);
         thread.setRedThread(isRedThreads(caster));
         thread.setRuiThread(true);
@@ -677,6 +687,10 @@ public final class RuiBloodDemonArt {
 
     public static float damageFor(LivingEntity caster) {
         return THREAD_DAMAGE * (isRedThreads(caster) ? 1.30F : 1.0F);
+    }
+
+    private static float basicThreadDamage(LivingEntity caster) {
+        return BASIC_THREAD_DAMAGE * (isRedThreads(caster) ? BASIC_RED_THREAD_MULTIPLIER : 1.0F);
     }
 
     /** The shared head-side anchor used by Rui's threads that return to the caster. */

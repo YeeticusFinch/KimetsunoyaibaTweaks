@@ -760,8 +760,12 @@ public class KimetsunoyaibaMultiplayer
             firstPlayerTickProbeLogged = true;
             Log.startupProbe("KimetsunoyaibaMultiplayer.onPlayerTick");
         }
-        net.minecraft.world.entity.player.Player player = event.player;
-        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedBeastForms.syncDualWieldAttackSpeed(player);
+         net.minecraft.world.entity.player.Player player = event.player;
+         if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+             && serverPlayer.containerMenu instanceof com.lerdorf.kimetsunoyaibamultiplayer.blocks.TrainingGourdMenu trainingGourdMenu) {
+             trainingGourdMenu.serverTick(serverPlayer);
+         }
+         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedBeastForms.syncDualWieldAttackSpeed(player);
         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
 
@@ -1039,6 +1043,10 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.BRIDGER_BLOCK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.BridgerBlockScreen::new
                 );
+                net.minecraft.client.gui.screens.MenuScreens.register(
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.TRAINING_GOURD.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.TrainingGourdScreen::new
+                );
                 net.minecraft.client.renderer.item.ItemProperties.register(
                     com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems.NEZUKO_BOX.get(),
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "open"),
@@ -1223,6 +1231,10 @@ public class KimetsunoyaibaMultiplayer
             event.registerBlockEntityRenderer(
                 com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.TRAIN_WHEEL.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.TrainWheelRenderer::new
+            );
+            event.registerBlockEntityRenderer(
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.TRAINING_GOURD.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.TrainingGourdRenderer::new
             );
 
             if (Config.logDebug)

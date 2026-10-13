@@ -28,6 +28,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectMeditationTar
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WebTraversalInputPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.KyogaiGravityArrowPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.TrainingGourdActionPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -466,6 +467,13 @@ public class ModNetworking {
                 .decoder(RuiHeadCameraPacket::new)
                 .encoder(RuiHeadCameraPacket::toBytes)
                 .consumerMainThread(RuiHeadCameraPacket::handle)
+                .add();
+
+        int trainingGourdActionPacketId = id();
+        net.messageBuilder(TrainingGourdActionPacket.class, trainingGourdActionPacketId)
+                .decoder(TrainingGourdActionPacket::new)
+                .encoder(TrainingGourdActionPacket::toBytes)
+                .consumerMainThread(TrainingGourdActionPacket::handle)
                 .add();
     }
 

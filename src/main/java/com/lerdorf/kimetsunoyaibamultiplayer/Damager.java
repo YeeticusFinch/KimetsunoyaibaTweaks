@@ -7,8 +7,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.DemonSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.ModEffects;
-import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRankManager;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.registries.Registries;
@@ -21,7 +19,6 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.server.level.ServerPlayer;
 
 public class Damager {
 	private static final String NBT_MIDAS_OWNER = "knymp_midas_owner";
@@ -372,25 +369,7 @@ public class Damager {
     }
 
     private static boolean applyDamage(LivingEntity source, LivingEntity target, float damage) {
-        ServerPlayer breathingPlayer = source instanceof ServerPlayer player
-            && !isDemon(player)
-            && BreathingInfoDetector.isNichirinSword(player.getMainHandItem())
-            ? (ServerPlayer) source : null;
-        if (breathingPlayer != null) {
-            DemonSlayerRankManager.beginBreathingDamage(breathingPlayer);
-        }
-        boolean damaged;
-        try {
-            damaged = target.hurt(DamageCalculator.getDamageSource(source), damage);
-        } finally {
-            if (breathingPlayer != null) {
-                DemonSlayerRankManager.endBreathingDamage();
-            }
-        }
-        if (damaged && breathingPlayer != null) {
-            DemonSlayerRankManager.addBreathingDamageExperience(breathingPlayer, damage);
-        }
-        return damaged;
+        return target.hurt(DamageCalculator.getDamageSource(source), damage);
     }
 
 	private static float applyMidasBonus(LivingEntity source, LivingEntity target, float damage) {

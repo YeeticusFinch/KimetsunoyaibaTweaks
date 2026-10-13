@@ -68,6 +68,12 @@ public final class ModBlockEntities {
                 ModBlocks.LARGE_TRAIN_WHEEL.get(),
                 ModBlocks.LARGE_TRAIN_WHEEL_BAR.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<TrainingGourdBlockEntity>> TRAINING_GOURD =
+        BLOCK_ENTITIES.register("training_gourd",
+            () -> BlockEntityType.Builder.of(TrainingGourdBlockEntity::new,
+                ModBlocks.TRAINING_GOURD_HUGE.get(),
+                ModBlocks.TRAINING_GOURD_GARGANTUAN.get()).build(null));
+
     private ModBlockEntities() {
     }
 

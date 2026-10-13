@@ -92,8 +92,9 @@ public class RaidTriggerHandler {
         // Only trigger at civilian structures
         if (!CivilianStructureRegistry.isCivilianStructure(s.structureId)) return;
 
-        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
-            && QuestProgressionManager.isRaidSuppressedForPlayer(serverPlayer, s.structureId)) {
+        if (hasMuzan
+            && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer
+            && QuestProgressionManager.isDemonRaidSuppressedForPlayer(serverPlayer, s.structureId)) {
             return;
         }
 

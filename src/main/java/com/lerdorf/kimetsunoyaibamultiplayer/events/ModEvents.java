@@ -21,7 +21,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.raids.RaidTriggerHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.progression.DemonSlayerRankManager;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.EntityTagHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.FamiliarEntityHelper;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.SlayerFleshHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -168,18 +167,10 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onLivingDamage(LivingDamageEvent event) {
-        if (event.getEntity().level().isClientSide()
-            || !(event.getSource().getEntity() instanceof ServerPlayer player)
-            || !BreathingInfoDetector.isNichirinSword(player.getMainHandItem())
-            || DemonSlayerRankManager.isBreathingDamageInProgress(player)) {
+        if (event.getEntity().level().isClientSide() || event.getAmount() <= 0.0F) {
             return;
         }
-
-        if (event.getSource().is(DamageTypes.PLAYER_ATTACK)) {
-            DemonSlayerRankManager.addNichirinAttackExperience(player, event.getAmount());
-        } else {
-            DemonSlayerRankManager.addBreathingDamageExperience(player, event.getAmount());
-        }
+        DemonSlayerRankManager.recordDemonDamage(event.getEntity(), event.getSource());
     }
 
     private static boolean isDrowningImmuneQuestEntity(LivingEntity entity) {
@@ -223,6 +214,10 @@ public class ModEvents {
     public static void onLivingDeath(LivingDeathEvent event) {
         LivingEntity target = event.getEntity();
         LivingEntity source = null;
+
+        if (!target.level().isClientSide()) {
+            DemonSlayerRankManager.awardDemonKillExperience(target, event.getSource());
+        }
 
         if (event.getSource().getEntity() instanceof LivingEntity livingEntity) {
             source = livingEntity;
