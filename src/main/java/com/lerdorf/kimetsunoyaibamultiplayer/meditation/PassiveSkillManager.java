@@ -81,6 +81,8 @@ public final class PassiveSkillManager {
     private static final int FAST_SPRINT_DURATION_TICKS = 20 * 2;
     private static final int FAST_SPRINT_REFRESH_TICKS = 15;
     private static final String FAST_SPRINT_ACTIVE = "KnYFastSprintActive";
+    private static final String FAST_SPRINT_BASE_AMPLIFIER = "KnYFastSprintBaseAmplifier";
+    private static final String FAST_SPRINT_BASE_EFFECT = "KnYFastSprintBaseEffect";
     private static final int SPRINT_JUMP_DURATION_TICKS = 20 * 2;
     private static final int SPRINT_JUMP_REFRESH_TICKS = 20;
     private static final String SPRINT_JUMP_ACTIVE = "KnYSprintJumpActive";
@@ -315,9 +317,16 @@ public final class PassiveSkillManager {
             return;
         }
 
-        int powerSpeedAmplifier = demon
-            ? Math.max(0, DemonTransformationHandler.getEffectiveMuzanBlood(player))
-            : Math.max(0, DemonSlayerRankManager.getSpeedAmplifier(player));
+        boolean fastSprintActive = player.getPersistentData().getBoolean(FAST_SPRINT_ACTIVE);
+        int powerSpeedAmplifier;
+        if (fastSprintActive) {
+            powerSpeedAmplifier = player.getPersistentData().getInt(FAST_SPRINT_BASE_AMPLIFIER);
+        } else {
+            powerSpeedAmplifier = getPowerSpeedAmplifier(player);
+            player.getPersistentData().putInt(FAST_SPRINT_BASE_AMPLIFIER, powerSpeedAmplifier);
+            player.getPersistentData().putBoolean(FAST_SPRINT_BASE_EFFECT,
+                player.hasEffect(MobEffects.MOVEMENT_SPEED));
+        }
         int speedAmplifier = powerSpeedAmplifier + skillLevel;
 
         // Replace the normal speed effect while sprinting so the temporary
@@ -342,7 +351,17 @@ public final class PassiveSkillManager {
         player.removeEffect(MobEffects.MOVEMENT_SPEED);
         if (demonSlayer) {
             DemonSlayerRankManager.refreshSpeedEffect(player);
+        } else if (player.getPersistentData().getBoolean(FAST_SPRINT_BASE_EFFECT)) {
+            player.addEffect(new MobEffectInstance(
+                MobEffects.MOVEMENT_SPEED,
+                MobEffectInstance.INFINITE_DURATION,
+                player.getPersistentData().getInt(FAST_SPRINT_BASE_AMPLIFIER),
+                true,
+                false,
+                true));
         }
+        player.getPersistentData().remove(FAST_SPRINT_BASE_AMPLIFIER);
+        player.getPersistentData().remove(FAST_SPRINT_BASE_EFFECT);
     }
 
     private static void tickSprintJump(ServerPlayer player) {
@@ -854,7 +873,8 @@ public final class PassiveSkillManager {
 
     private static int getPowerSpeedAmplifier(ServerPlayer player) {
         if (isDemon(player)) {
-            return Math.max(0, DemonTransformationHandler.getEffectiveMuzanBlood(player));
+            MobEffectInstance speed = player.getEffect(MobEffects.MOVEMENT_SPEED);
+            return speed == null ? 0 : Math.max(0, speed.getAmplifier());
         }
         return Math.max(0, DemonSlayerRankManager.getSpeedAmplifier(player));
     }

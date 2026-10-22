@@ -155,6 +155,21 @@ public final class CustomBloodDemonArtRuntime {
         int nextIndex = Math.floorMod(currentIndex + (direction < 0 ? -1 : 1), filledSlots.size());
         int slotIndex = filledSlots.get(nextIndex);
 
+        return selectForm(player, stack, slotIndex);
+    }
+
+    public static boolean selectForm(ServerPlayer player, ItemStack stack, int slotIndex) {
+        if (!(player.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        CustomBloodDemonArtSavedData savedData = CustomBloodDemonArtSavedData.get(serverLevel);
+        CustomBloodDemonArtSavedData.PlayerArtData data = savedData.getOrCreate(player);
+        int unlockedSlots = savedData.getUnlockedSlots(player);
+        if (slotIndex < 0 || slotIndex >= Math.min(unlockedSlots, data.slots().size())
+            || !data.slots().get(slotIndex).filled()) {
+            return false;
+        }
+
         CustomDemonArtItem.setSelectedSlot(stack, slotIndex);
         savedData.setSelectedSlot(player, slotIndex);
         CustomDemonArtItem.setDisplayInfo(stack, safeArtName(data), safeFormName(data, slotIndex), data.coreSettings().chatColor());

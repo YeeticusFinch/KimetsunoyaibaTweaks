@@ -133,6 +133,8 @@ public class KimetsunoyaibaMultiplayer
         // Register tree decorators
         com.lerdorf.kimetsunoyaibamultiplayer.worldgen.ModTreeDecorators.register(modEventBus);
         Log.alwaysWarn("[INIT] Registered tree decorators");
+        com.lerdorf.kimetsunoyaibamultiplayer.worldgen.ModPlacementModifiers.register(modEventBus);
+        Log.alwaysWarn("[INIT] Registered placement modifiers");
 
         // Register particles
         com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.register(modEventBus);
@@ -1040,6 +1042,10 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.GravityBlockScreen::new
                 );
                 net.minecraft.client.gui.screens.MenuScreens.register(
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.BLOCK_DOOR.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.BlockDoorScreen::new
+                );
+                net.minecraft.client.gui.screens.MenuScreens.register(
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.BRIDGER_BLOCK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.BridgerBlockScreen::new
                 );
@@ -1185,6 +1191,14 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_ZURI.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.NamedDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.PURPLE_DEMON_0.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.PurpleDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.PURPLE_DEMON_1.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.PurpleDemon1Renderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MUGEN_DEMON_0.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MugenDemonRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MUGEN_DEMON_1.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MugenDemon1Renderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SILK_RIBBON.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.SilkRibbonRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.BEAST_BEZIER_CURVE.get(),
@@ -1211,6 +1225,10 @@ public class KimetsunoyaibaMultiplayer
             event.registerBlockEntityRenderer(
                 com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.CHEST_OF_DRAWERS.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.ChestOfDrawersRenderer::new
+            );
+            event.registerBlockEntityRenderer(
+                com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.LARGE_DOOR.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.LargeDoorRenderer::new
             );
             event.registerBlockEntityRenderer(
                 com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.SWORD_RACK.get(),
@@ -1291,6 +1309,7 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.client.CrowQuestMarkerHandlerClient.clientTick();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.SwordDisplayTracker.tick();
                 com.lerdorf.kimetsunoyaibamultiplayer.client.DemonSlayerSkillClient.tick();
+                com.lerdorf.kimetsunoyaibamultiplayer.client.EnhancedFormCycleHandler.tick();
 
                 // Update gun animations for local player
                 if (net.minecraft.client.Minecraft.getInstance().player != null) {
@@ -1501,6 +1520,7 @@ public class KimetsunoyaibaMultiplayer
         public static void onRenderGuiOverlay(net.minecraftforge.client.event.RenderGuiOverlayEvent.Post event)
         {
             com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingDisplayOverlay.onRenderGuiOverlay(event);
+            com.lerdorf.kimetsunoyaibamultiplayer.client.EnhancedFormCycleHandler.render(event);
         }
 
         /**

@@ -1,0 +1,62 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"open": {
+			"loop": true,
+			"bones": {
+				"door": {
+					"position": {
+						"vector": [-31, 0, 0]
+					}
+				}
+			}
+		},
+		"closed": {
+			"loop": true
+		},
+		"opening": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.5,
+			"bones": {
+				"door": {
+					"position": {
+						"0.0": {
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"0.5": {
+							"post": {
+								"vector": [-31, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		},
+		"closing": {
+			"loop": "hold_on_last_frame",
+			"animation_length": 0.5,
+			"bones": {
+				"door": {
+					"position": {
+						"0.0": {
+							"post": {
+								"vector": [-31, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						},
+						"0.4583": {
+							"post": {
+								"vector": [0, 0, 0]
+							},
+							"lerp_mode": "catmullrom"
+						}
+					}
+				}
+			}
+		}
+	}
+}

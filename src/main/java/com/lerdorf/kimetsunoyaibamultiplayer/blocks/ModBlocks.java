@@ -111,6 +111,27 @@ public class ModBlocks {
             .strength(2.0f, 3.0f)
             .noOcclusion()));
 
+    public static final RegistryObject<Block> BAMBOO_SIDEWAYS_FENCE = registerBlock("bamboo_sideways_fence",
+        () -> new SidewaysFenceBlock(BlockBehaviour.Properties.copy(Blocks.BAMBOO_FENCE)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.BAMBOO_WOOD)
+            .strength(1.5f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> DARK_BAMBOO_SIDEWAYS_FENCE = registerBlock("dark_bamboo_sideways_fence",
+        () -> new SidewaysFenceBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BARS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.BAMBOO_WOOD)
+            .strength(2.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> DARK_BAMBOO_SIDEWAYS_FENCE_DARKER = registerBlock("dark_bamboo_sideways_fence_darker",
+        () -> new SidewaysFenceBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BARS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.BAMBOO_WOOD)
+            .strength(2.0f)
+            .noOcclusion()));
+
     public static final RegistryObject<Block> SIDEWAYS_LANTERN_1 = registerBlock("sideways_lantern_1",
         () -> new SidewaysLanternBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN)
             .mapColor(MapColor.TERRACOTTA_ORANGE)
@@ -141,6 +162,24 @@ public class ModBlocks {
             .sound(SoundType.LANTERN)
             .strength(0.3f)
             .lightLevel(state -> 15)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> HANGING_LAMP = registerBlock("hanging_lamp",
+        () -> new HangingLampBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN)
+            .mapColor(MapColor.TERRACOTTA_ORANGE)
+            .sound(SoundType.LANTERN)
+            .strength(0.3f)
+            .lightLevel(state -> 15)
+            .emissiveRendering((state, level, pos) -> true)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> DIM_ORANGE_LAMP = registerBlock("dim_orange_lamp",
+        () -> new HangingLampBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN)
+            .mapColor(MapColor.TERRACOTTA_ORANGE)
+            .sound(SoundType.LANTERN)
+            .strength(0.3f)
+            .lightLevel(state -> 7)
+            .emissiveRendering((state, level, pos) -> true)
             .noOcclusion()));
 
     public static final RegistryObject<Block> LANTERN_TSUZUMI = registerBlock("lantern_tsuzumi",
@@ -195,6 +234,24 @@ public class ModBlocks {
             .sound(SoundType.BAMBOO_WOOD)
             .strength(2.0f)));
 
+    public static final RegistryObject<Block> DARK_BAMBOO_FENCE_DARKER = registerBlock("dark_bamboo_fence_darker",
+        () -> new IronBarsBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BARS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.BAMBOO_WOOD)
+            .strength(2.0f)));
+
+    public static final RegistryObject<Block> DARK_BAMBOO_BLOCK = registerBlock("dark_bamboo_block",
+        () -> new DarkBambooBlock(BlockBehaviour.Properties.copy(Blocks.BAMBOO_BLOCK)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.BAMBOO_WOOD)
+            .strength(2.0f, 3.0f)));
+
+    public static final RegistryObject<Block> DARK_BAMBOO_BLOCK_DARKER = registerBlock("dark_bamboo_block_darker",
+        () -> new DarkBambooBlock(BlockBehaviour.Properties.copy(Blocks.BAMBOO_BLOCK)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.BAMBOO_WOOD)
+            .strength(2.0f, 3.0f)));
+
     public static final RegistryObject<Block> FUSUMA_BARS = registerBlock("fusuma_bars",
         () -> new FusumaBarsBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
             .mapColor(MapColor.WOOD)
@@ -225,6 +282,13 @@ public class ModBlocks {
             .strength(1.0f, 10.0f)
             .noOcclusion()));
 
+    public static final RegistryObject<Block> DARK_BAMBOO_FUSUMA_DARKER = registerBlock("dark_bamboo_fusuma_darker",
+        () -> new DarkBambooFusumaBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(1.0f, 10.0f)
+            .noOcclusion()));
+
     public static final RegistryObject<Block> DARK_OAK_WALL = registerBlock("dark_oak_wall",
         () -> new WallBlock(BlockBehaviour.Properties.copy(Blocks.DARK_OAK_LOG)
             .mapColor(MapColor.WOOD)
@@ -239,6 +303,20 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> CHEST_OF_DRAWERS = registerBlock("chest_of_drawers",
         () -> new ChestOfDrawersBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> LARGE_DOOR = registerBlock("large_door",
+        () -> new LargeDoorBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion()));
+
+    public static final RegistryObject<Block> LARGE_DOOR_DARKER = registerBlock("large_door_darker",
+        () -> new LargeDoorBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
             .mapColor(MapColor.WOOD)
             .sound(SoundType.WOOD)
             .strength(2.0f, 3.0f)
@@ -953,6 +1031,12 @@ public class ModBlocks {
             .noLootTable()
             .strength(-1.0f, 3600000.0f)
             .noParticlesOnBreak()));
+
+    public static final RegistryObject<Block> BLOCK_DOOR = registerBlock("block_door",
+        () -> new BlockDoorBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+            .mapColor(MapColor.METAL)
+            .sound(SoundType.METAL)
+            .strength(3.0f, 6.0f)));
 
     public static final RegistryObject<Block> BRIDGER_BLOCK = registerBlock("bridger_block",
         () -> new BridgerBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)

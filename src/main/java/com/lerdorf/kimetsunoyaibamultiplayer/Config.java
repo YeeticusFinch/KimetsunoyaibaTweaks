@@ -59,6 +59,51 @@ public class Config
             .comment("Suppress chat messages when cycling breathing forms with R key")
             .define("suppress-form-cycle-chat", false);
 
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_FORM_CYCLE = BUILDER
+            .comment("Hold the form cycle key to open a radial form selector instead of cycling one form at a time. Default: true")
+            .define("enhanced-form-cycle", true);
+
+    static {
+        BUILDER.comment("Enhanced form cycle HUD")
+                .push("enhanced-form-cycle-hud");
+    }
+
+    private static final ForgeConfigSpec.DoubleValue ENHANCED_FORM_CYCLE_HUD_DIAMETER = BUILDER
+            .comment("Wheel diameter in GUI-scaled pixels before the automatic viewport fit. Default: 452.4")
+            .defineInRange("hud-diameter", 452.4, 64.0, 2000.0);
+
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_FORM_CYCLE_HUD_SHOW_ALL_NAMES = BUILDER
+            .comment("Show every form name on the wheel. When false, only the selected form name is shown")
+            .define("show-all-form-names", true);
+
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_FORM_CYCLE_HUD_ENABLE_MOUSE_ROTATION_SELECTION = BUILDER
+            .comment("Allow mouse/camera rotation to move the selector and select a form")
+            .define("enable-mouse-rotation-selection", true);
+
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_FORM_CYCLE_HUD_ENABLE_NUMBER_SELECTION = BUILDER
+            .comment("Allow number keys to select a form")
+            .define("enable-number-selection", true);
+
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_FORM_CYCLE_HUD_ENABLE_SCROLLWHEEL_SELECTION = BUILDER
+            .comment("Allow the scroll wheel to select a form")
+            .define("enable-scrollwheel-selection", true);
+
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_FORM_CYCLE_HUD_SHOW_DIRECTION_LINE = BUILDER
+            .comment("Show the line from the crosshair to the mouse/camera movement direction")
+            .define("show-direction-line", true);
+
+    private static final ForgeConfigSpec.DoubleValue ENHANCED_FORM_CYCLE_HUD_NUMBER_FONT_SIZE = BUILDER
+            .comment("Font scale for the large form numbers on the wheel. Default: 2.1")
+            .defineInRange("number-font-size", 2.1, 0.5, 5.0);
+
+    private static final ForgeConfigSpec.DoubleValue ENHANCED_FORM_CYCLE_HUD_NAME_FONT_SIZE = BUILDER
+            .comment("Font scale for form names on the wheel. Default: 1.12")
+            .defineInRange("form-name-font-size", 1.12, 0.25, 4.0);
+
+    static {
+        BUILDER.pop();
+    }
+
     private static final ForgeConfigSpec.BooleanValue ENABLE_SWORD_CLASHING = BUILDER
             .comment("Enable sword clashing system where attacks can be deflected or mitigated")
             .define("enable-sword-clashing", true);
@@ -165,6 +210,15 @@ public class Config
     public static DisplayPosition breathingDisplayPosition;
     public static double breathingDisplayScale;
     public static boolean suppressFormCycleChat;
+    public static boolean enhancedFormCycle;
+    public static double enhancedFormCycleHudDiameter;
+    public static boolean enhancedFormCycleHudShowAllNames;
+    public static boolean enhancedFormCycleHudEnableMouseRotationSelection;
+    public static boolean enhancedFormCycleHudEnableNumberSelection;
+    public static boolean enhancedFormCycleHudEnableScrollwheelSelection;
+    public static boolean enhancedFormCycleHudShowDirectionLine;
+    public static double enhancedFormCycleHudNumberFontSize;
+    public static double enhancedFormCycleHudNameFontSize;
     public static boolean enableSwordClashing;
     public static boolean enableNichirinSprintAnimation;
     public static boolean disableBaseModSwordSwingParticles;
@@ -216,6 +270,15 @@ public class Config
         breathingDisplayPosition = BREATHING_DISPLAY_POSITION.get();
         breathingDisplayScale = BREATHING_DISPLAY_SCALE.get();
         suppressFormCycleChat = SUPPRESS_FORM_CYCLE_CHAT.get();
+        enhancedFormCycle = ENHANCED_FORM_CYCLE.get();
+        enhancedFormCycleHudDiameter = ENHANCED_FORM_CYCLE_HUD_DIAMETER.get();
+        enhancedFormCycleHudShowAllNames = ENHANCED_FORM_CYCLE_HUD_SHOW_ALL_NAMES.get();
+        enhancedFormCycleHudEnableMouseRotationSelection = ENHANCED_FORM_CYCLE_HUD_ENABLE_MOUSE_ROTATION_SELECTION.get();
+        enhancedFormCycleHudEnableNumberSelection = ENHANCED_FORM_CYCLE_HUD_ENABLE_NUMBER_SELECTION.get();
+        enhancedFormCycleHudEnableScrollwheelSelection = ENHANCED_FORM_CYCLE_HUD_ENABLE_SCROLLWHEEL_SELECTION.get();
+        enhancedFormCycleHudShowDirectionLine = ENHANCED_FORM_CYCLE_HUD_SHOW_DIRECTION_LINE.get();
+        enhancedFormCycleHudNumberFontSize = ENHANCED_FORM_CYCLE_HUD_NUMBER_FONT_SIZE.get();
+        enhancedFormCycleHudNameFontSize = ENHANCED_FORM_CYCLE_HUD_NAME_FONT_SIZE.get();
         enableSwordClashing = ENABLE_SWORD_CLASHING.get();
         enableNichirinSprintAnimation = ENABLE_NICHIRIN_SPRINT_ANIMATION.get();
         disableBaseModSwordSwingParticles = DISABLE_BASE_MOD_SWORD_SWING_PARTICLES.get();
@@ -250,9 +313,9 @@ public class Config
         counterSwingTranslateZ2 = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.counterSwingTranslateZ2.get();
         translateScale = com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.translateScale.get();
         
-        Log.debug("Common config loaded: logDebug={}, onScreenDebug={}, showBreathingDisplay={}, breathingDisplayPosition={}, breathingDisplayScale={}, suppressFormCycleChat={}, enableSwordClashing={}, enableNichirinSprintAnimation={}, playersAnnounceBreathingForms={}, entitiesAnnounceBreathingForms={}, breathingFormAnnouncementRadius={}, mobSlashBroadcastRange={}",
+        Log.debug("Common config loaded: logDebug={}, onScreenDebug={}, showBreathingDisplay={}, breathingDisplayPosition={}, breathingDisplayScale={}, suppressFormCycleChat={}, enhancedFormCycle={}, enableSwordClashing={}, enableNichirinSprintAnimation={}, playersAnnounceBreathingForms={}, entitiesAnnounceBreathingForms={}, breathingFormAnnouncementRadius={}, mobSlashBroadcastRange={}",
             logDebug, onScreenDebug, showBreathingDisplay, breathingDisplayPosition, breathingDisplayScale,
-            suppressFormCycleChat, enableSwordClashing, enableNichirinSprintAnimation,
+            suppressFormCycleChat, enhancedFormCycle, enableSwordClashing, enableNichirinSprintAnimation,
             playersAnnounceBreathingForms, entitiesAnnounceBreathingForms,
             breathingFormAnnouncementRadius, mobSlashBroadcastRange);
     }

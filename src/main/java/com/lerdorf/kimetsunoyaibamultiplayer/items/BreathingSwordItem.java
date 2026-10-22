@@ -281,13 +281,27 @@ public abstract class BreathingSwordItem extends SwordItem {
         BreathingTechnique technique = getBreathingTechnique();
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
         String styleKey = getTechniqueFormStateKey(technique);
+        int currentIndex = data.getCurrentFormIndex(styleKey);
+        int newIndex = Math.floorMod(currentIndex + (backward ? -1 : 1), technique.getFormCount());
+        selectForm(player, newIndex);
+    }
 
-        if (backward) {
-            data.cycleFormBackward(styleKey, technique.getFormCount());
-        } else {
-            data.cycleForm(styleKey, technique.getFormCount());
+    /**
+     * Select an exact form index after validating it against this sword's technique.
+     */
+    public void selectForm(Player player, int formIndex) {
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler.isParalyzed(player)) {
+            return;
         }
 
+        BreathingTechnique technique = getBreathingTechnique();
+        if (technique == null || formIndex < 0 || formIndex >= technique.getFormCount()) {
+            return;
+        }
+
+        PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
+        String styleKey = getTechniqueFormStateKey(technique);
+        data.setCurrentFormIndex(styleKey, formIndex);
         int newIndex = data.getCurrentFormIndex(styleKey);
         BreathingForm form = technique.getForm(newIndex);
 
@@ -307,10 +321,10 @@ public abstract class BreathingSwordItem extends SwordItem {
 
         // Debug logging
         if (!player.level().isClientSide && com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("BreathingSwordItem.cycleForm() - Server side");
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("BreathingSwordItem.selectForm() - Server side");
             com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Player: " + player.getName().getString());
             com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Technique: " + technique.getName());
-            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Direction: " + (backward ? "backward" : "forward"));
+            com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Direction: exact selection");
             com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  New Index: " + newIndex);
             com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("  Form: " + (form != null ? form.getName() : "null"));
         }

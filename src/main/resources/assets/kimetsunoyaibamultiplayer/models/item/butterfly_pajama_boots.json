@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "kimetsunoyaibamultiplayer:item/butterfly_pajama_slippers"
+  }
+}

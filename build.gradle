@@ -308,3 +308,8 @@ publishing {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
+
+// Standalone worldgen checks do not run Mixin's processor or overwrite the mod refmap.
+tasks.named('compileTestJava', JavaCompile).configure {
+    options.compilerArgs = ['-proc:none']
+}

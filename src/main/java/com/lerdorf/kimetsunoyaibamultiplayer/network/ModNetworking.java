@@ -110,6 +110,29 @@ public class ModNetworking {
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleBloodDemonArtFormPacket::handle)
                 .add();
 
+        int selectFormPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectFormPacket.class, selectFormPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectFormPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectFormPacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectFormPacket::handle)
+                .add();
+
+        int requestEnhancedFormCycleDataPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestEnhancedFormCycleDataPacket.class,
+                requestEnhancedFormCycleDataPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestEnhancedFormCycleDataPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestEnhancedFormCycleDataPacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestEnhancedFormCycleDataPacket::handle)
+                .add();
+
+        int enhancedFormCycleDataPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.EnhancedFormCycleDataPacket.class,
+                enhancedFormCycleDataPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.EnhancedFormCycleDataPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.EnhancedFormCycleDataPacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.EnhancedFormCycleDataPacket::handle)
+                .add();
+
         int cycleRuiWebSnatchVariantPacketId = id();
         net.messageBuilder(CycleRuiWebSnatchVariantPacket.class, cycleRuiWebSnatchVariantPacketId)
                 .decoder(CycleRuiWebSnatchVariantPacket::new)
@@ -425,6 +448,13 @@ public class ModNetworking {
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateGravityBlockPacket::new)
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateGravityBlockPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateGravityBlockPacket::handle)
+                .add();
+
+        int updateBlockDoorPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateBlockDoorPacket.class, updateBlockDoorPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateBlockDoorPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateBlockDoorPacket::toBytes)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateBlockDoorPacket::handle)
                 .add();
 
         int demonRankSyncPacketId = id();

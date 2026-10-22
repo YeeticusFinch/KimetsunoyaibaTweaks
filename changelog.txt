@@ -1,8 +1,17 @@
 1.6.5700
+- Added enhanced form cycler
 - Added training gourds
 - Fixed the issue where demon raids don't work after final selection (because the kidnapper's bog quest was blocking it)
 - Fixed the issue where Tanjiro's sword and black sword don't use sun breathing sword slash for sun breathing
 - Meditation menu now shows slayer experience progress
+- Added config presets (in the tweaks menu)
+- Mount Natagumo optimizations and fixes to make it less laggy
+- Added hanging lamp and hanging orange lamp and dark bamboo blocks
+- Added giant door
+- Added sideways bamboo fences
+- Added darker bamboo blocks (if dark bamboo just doesn't cut it)
+- Rebalanced the demon slayer rank potion effects
+- Updated dark bamboo texture (made it darker)
 
 1.6.5699
 - Rebalanced enhanced beast breathing

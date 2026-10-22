@@ -28,16 +28,6 @@ public final class KnyServersScreen extends Screen {
             texture("server_photos/wibsversehero.png"),
             2000,
             667
-        ),
-        new ServerEntry(
-            "Kimetsunoyaiba Ultra",
-            "Come join us, explore the world of Demon Slayer, take on quests, become stronger, and play with the community!",
-            "kimetsunoyaiba.ultraga.me:19007",
-            null,
-            "https://discord.gg/9HUucjqT2X",
-            texture("server_photos/kny_ultra.png"),
-            512,
-            512
         )
     );
 

@@ -124,12 +124,18 @@ public final class DemonSpawnReplacementHandler {
                 ModEntities.DEMON_MAKENA.get(),
                 ModEntities.DEMON_NOOR.get(),
                 ModEntities.DEMON_SUNNY.get(),
-                ModEntities.DEMON_ZURI.get()
+                ModEntities.DEMON_ZURI.get(),
+                ModEntities.PURPLE_DEMON_0.get(),
+                ModEntities.PURPLE_DEMON_1.get()
             );
         } else if (SWAMP_DEMONS.contains(baseId)) {
             candidates = List.of(ModEntities.SWAMP_DEMON.get());
         } else if (HARD_DEMONS.contains(baseId)) {
-            candidates = List.of(ModEntities.SIX_EYE_DEMON.get());
+            candidates = List.of(
+                ModEntities.SIX_EYE_DEMON.get(),
+                ModEntities.MUGEN_DEMON_0.get(),
+                ModEntities.MUGEN_DEMON_1.get()
+            );
         } else {
             return null;
         }

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=north": {"model":"kimetsunoyaibamultiplayer:block/dark_bamboo_fusuma_darker"},
+    "facing=east": {"model":"kimetsunoyaibamultiplayer:block/dark_bamboo_fusuma_darker","y":90},
+    "facing=south": {"model":"kimetsunoyaibamultiplayer:block/dark_bamboo_fusuma_darker","y":180},
+    "facing=west": {"model":"kimetsunoyaibamultiplayer:block/dark_bamboo_fusuma_darker","y":270},
+    "facing=up": {"model":"kimetsunoyaibamultiplayer:block/dark_bamboo_fusuma_darker","x":270},
+    "facing=down": {"model":"kimetsunoyaibamultiplayer:block/dark_bamboo_fusuma_darker","x":90}
+  }
+}

@@ -503,12 +503,28 @@ public class NichirinSwordBlack extends BreathingSwordItem {
 
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
         String styleKey = PlayerBreathingData.getTechniqueKey(technique.getName());
-        if (backward) {
-            data.cycleFormBackward(styleKey, technique.getFormCount());
-        } else {
-            data.cycleForm(styleKey, technique.getFormCount());
+        int currentIndex = data.getCurrentFormIndex(styleKey);
+        int newIndex = Math.floorMod(currentIndex + (backward ? -1 : 1), technique.getFormCount());
+        selectForm(player, newIndex);
+    }
+
+    @Override
+    public void selectForm(Player player, int formIndex) {
+        if (com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler.isParalyzed(player)) {
+            return;
         }
 
+        ItemStack held = player.getMainHandItem();
+        BreathingTechnique technique = (held.getItem() == this)
+            ? resolveTechnique(held, player.level(), player)
+            : getBreathingTechnique();
+        if (technique == null || formIndex < 0 || formIndex >= technique.getFormCount()) {
+            return;
+        }
+
+        PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
+        String styleKey = PlayerBreathingData.getTechniqueKey(technique.getName());
+        data.setCurrentFormIndex(styleKey, formIndex);
         int newIndex = data.getCurrentFormIndex(styleKey);
         BreathingForm form = technique.getForm(newIndex);
 

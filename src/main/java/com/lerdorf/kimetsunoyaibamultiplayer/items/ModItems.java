@@ -310,6 +310,26 @@ public class ModItems {
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_ZURI,
             0x6B536A, 0xE8C6B5, new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> PURPLE_DEMON_0_SPAWN_EGG = ITEMS.register("purple_demon_0_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.PURPLE_DEMON_0,
+            0x4D1C67, 0xD4A5FF, new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> PURPLE_DEMON_1_SPAWN_EGG = ITEMS.register("purple_demon_1_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.PURPLE_DEMON_1,
+            0x4D1C67, 0xD4A5FF, new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> MUGEN_DEMON_0_SPAWN_EGG = ITEMS.register("mugen_demon_0_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MUGEN_DEMON_0,
+            0x241234, 0xA66BCE, new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> MUGEN_DEMON_1_SPAWN_EGG = ITEMS.register("mugen_demon_1_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MUGEN_DEMON_1,
+            0x241234, 0xA66BCE, new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> DEMON_SLAYER_SPAWN_EGG = ITEMS.register("demon_slayer_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER,
@@ -588,6 +608,33 @@ public class ModItems {
             net.minecraft.world.item.ArmorItem.Type.HELMET,
             new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> BUTTERFLY_PAJAMA_CHESTPLATE = ITEMS.register("butterfly_pajama_chestplate",
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.COSMETIC,
+            net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
+            new Item.Properties().stacksTo(1),
+            "geo/slayer_uniform.geo.json",
+            "textures/armor/butterfly_pajama_layer_1.png",
+            "textures/armor/butterfly_pajama_layer_2.png",
+            "textures/armor/butterfly_pajama_layer_1.png"));
+
+    public static final RegistryObject<Item> BUTTERFLY_PAJAMA_LEGGINGS = ITEMS.register("butterfly_pajama_leggings",
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.COSMETIC,
+            net.minecraft.world.item.ArmorItem.Type.LEGGINGS,
+            new Item.Properties().stacksTo(1),
+            "geo/slayer_uniform.geo.json",
+            "textures/armor/butterfly_pajama_layer_1.png",
+            "textures/armor/butterfly_pajama_layer_2.png",
+            "textures/armor/butterfly_pajama_layer_1.png"));
+
+    public static final RegistryObject<Item> BUTTERFLY_PAJAMA_BOOTS = ITEMS.register("butterfly_pajama_boots",
+        () -> new SlayerUniformArmorItem(CosmeticArmorMaterial.COSMETIC,
+            net.minecraft.world.item.ArmorItem.Type.BOOTS,
+            new Item.Properties().stacksTo(1),
+            "geo/slayer_uniform.geo.json",
+            "textures/armor/butterfly_pajama_layer_1.png",
+            "textures/armor/butterfly_pajama_layer_2.png",
+            "textures/armor/butterfly_pajama_layer_1.png"));
+
     public static final RegistryObject<Item> HAHNAFUDA_SIMPLE = ITEMS.register("hahnafuda_simple",
         () -> new HanafudaClassicItem(new Item.Properties().stacksTo(1)));
 
@@ -677,13 +724,18 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPRUCE_VERTICAL_SLAB.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPRUCE_SIDEWAYS_STAIRS.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TILE_VERTICAL_SLAB.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TILE_SIDEWAYS_STAIRS.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPRUCE_SIDEWAYS_FENCE.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_1.get(),
+                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.TILE_SIDEWAYS_STAIRS.get(),
+                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SPRUCE_SIDEWAYS_FENCE.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BAMBOO_SIDEWAYS_FENCE.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_SIDEWAYS_FENCE.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_SIDEWAYS_FENCE_DARKER.get(),
+                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_1.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_2.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_2RED.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIDEWAYS_LANTERN_3.get(),
-                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.LANTERN_TSUZUMI.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.HANGING_LAMP.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DIM_ORANGE_LAMP.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.LANTERN_TSUZUMI.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SEPULCHRAL_PILLAR.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SEPULCHRAL_PILLAR_BASE.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_STAIRS.get(),
@@ -691,17 +743,23 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_FENCE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_FENCE_GATE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_PRESSURE_PLATE.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_BUTTON.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FENCE.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.FUSUMA_BARS.get(),
+                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_BUTTON.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FENCE.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FENCE_DARKER.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_BLOCK.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_BLOCK_DARKER.get(),
+                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.FUSUMA_BARS.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.FUSUMA_WINDOW_2.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BIRDHOUSE.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.LOTUS.get(),
-                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FUSUMA.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FUSUMA.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FUSUMA_DARKER.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_OAK_WALL.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_DARK_OAK_WALL.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SWORD_RACK.get(),
+                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_DARK_OAK_WALL.get(),
+                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.LARGE_DOOR.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.LARGE_DOOR_DARKER.get(),
+                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SWORD_RACK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_WHITE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_ORANGE.get(),
@@ -718,9 +776,10 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BROWN.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_GREEN.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_RED.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BLACK.get(),
-                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GRAVITY_BLOCK.get(),
-                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BRIDGER_BLOCK.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BLACK.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GRAVITY_BLOCK.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BLOCK_DOOR.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BRIDGER_BLOCK.get(),
                       TRAINING_GOURD_SMALL_EASY.get(), TRAINING_GOURD_SMALL_HARD.get(), TRAINING_GOURD_SMALL_EXTREME.get(),
                       TRAINING_GOURD_MEDIUM_EASY.get(), TRAINING_GOURD_MEDIUM_HARD.get(), TRAINING_GOURD_MEDIUM_EXTREME.get(),
                       TRAINING_GOURD_LARGE_EASY.get(), TRAINING_GOURD_LARGE_HARD.get(), TRAINING_GOURD_LARGE_EXTREME.get(),
@@ -789,6 +848,9 @@ public class ModItems {
                      HAIR_TANJURO.get(),
                      BLINDFOLD.get(),
                      SATOKOS_BOW.get(),
+                     BUTTERFLY_PAJAMA_CHESTPLATE.get(),
+                     BUTTERFLY_PAJAMA_LEGGINGS.get(),
+                     BUTTERFLY_PAJAMA_BOOTS.get(),
                      HAHNAFUDA_SIMPLE.get(),
                      KYOGAI_DRUMS.get()
                  );
@@ -824,10 +886,14 @@ public class ModItems {
                      DEMON_ARI_SPAWN_EGG.get(),
                      DEMON_KAI_SPAWN_EGG.get(),
                      DEMON_MAKENA_SPAWN_EGG.get(),
-                     DEMON_NOOR_SPAWN_EGG.get(),
-                     DEMON_SUNNY_SPAWN_EGG.get(),
-                     DEMON_ZURI_SPAWN_EGG.get(),
-                     CREEPER_DEMON_ART.get(),
+                      DEMON_NOOR_SPAWN_EGG.get(),
+                      DEMON_SUNNY_SPAWN_EGG.get(),
+                      DEMON_ZURI_SPAWN_EGG.get(),
+                      PURPLE_DEMON_0_SPAWN_EGG.get(),
+                      PURPLE_DEMON_1_SPAWN_EGG.get(),
+                      MUGEN_DEMON_0_SPAWN_EGG.get(),
+                      MUGEN_DEMON_1_SPAWN_EGG.get(),
+                      CREEPER_DEMON_ART.get(),
                     VINDICATOR_DEMON_ART.get(),
                     SWAMP_DEMON_ART.get(),
                     COMBUSTIBLE_BLOOD.get(),

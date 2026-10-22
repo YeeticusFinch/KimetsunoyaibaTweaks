@@ -2,7 +2,7 @@
   "feature": "kimetsunoyaibamultiplayer:natagumo_dark_oak_wall_tree",
   "placement": [
     {
-      "type": "minecraft:count",
+      "type": "kimetsunoyaibamultiplayer:natagumo_tree_density",
       "count": 4
     },
     {

@@ -20,7 +20,7 @@ public abstract class NatagumoDensityMixin {
         NatagumoTerrainContext.Context context = NatagumoTerrainContext.get();
         return context == null
                 ? delegate
-                : new NatagumoDensityFunction(delegate, context.source(), context.sampler(), context.cache());
+                : new NatagumoDensityFunction(delegate, context);
     }
 
 }

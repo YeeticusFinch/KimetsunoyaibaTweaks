@@ -1,178 +1,125 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.biome;
 
-import net.minecraft.world.level.levelgen.DensityFunction;
+import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import net.minecraft.util.KeyDispatchDataCodec;
+import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.levelgen.DensityFunction;
+import net.minecraft.world.level.levelgen.NoiseSettings;
 
-/** Shifts vanilla density sampling downward inside a Natagumo region, preserving vanilla terrain systems. */
+/** Vertically translates interpolated vanilla density, with exact per-column offsets. */
 public final class NatagumoDensityFunction implements DensityFunction {
-    private static final double BASE_HEIGHT = 60.0;
-    private static final int SEARCH_TOP_Y = 320;
-    private static final int SEARCH_BOTTOM_Y = -64;
-    private static final int SEARCH_STEP = 8;
-    private static final int OFFSET_CACHE_SIZE = 256;
-    private static final int OFFSET_CACHE_MASK = OFFSET_CACHE_SIZE - 1;
-
     private final DensityFunction delegate;
-    private final EnhancedMountBiomeSource source;
-    private final net.minecraft.world.level.biome.Climate.Sampler sampler;
-    private final NatagumoTerrainContext.TerrainOffsetCache profileCache;
-    private final long[] offsetKeys = new long[OFFSET_CACHE_SIZE];
-    private final double[] offsets = new double[OFFSET_CACHE_SIZE];
-    private final boolean[] offsetOccupied = new boolean[OFFSET_CACHE_SIZE];
-    private final VerticalContext vanillaBaseContext = new VerticalContext();
-    private final VerticalContext vanillaTopContext = new VerticalContext();
-    private final VerticalContext shiftedLowerContext = new VerticalContext();
-    private final VerticalContext shiftedUpperContext = new VerticalContext();
+    private final Columns columns;
 
-    public NatagumoDensityFunction(DensityFunction delegate, EnhancedMountBiomeSource source,
-                                   net.minecraft.world.level.biome.Climate.Sampler sampler,
-                                   NatagumoTerrainContext.TerrainOffsetCache profileCache) {
+    public NatagumoDensityFunction(DensityFunction delegate, NatagumoTerrainContext.Context context) {
+        this(delegate, new Columns(context));
+    }
+
+    private NatagumoDensityFunction(DensityFunction delegate, Columns columns) {
         this.delegate = delegate;
-        this.source = source;
-        this.sampler = sampler;
-        this.profileCache = profileCache;
+        this.columns = columns;
     }
 
     @Override
     public double compute(FunctionContext context) {
-        double offset = getOrComputeOffset(context);
+        int x = context.blockX();
+        int z = context.blockZ();
+        double offset = columns.offset(x, z);
         if (offset == 0.0) {
             return delegate.compute(context);
         }
-
         double shiftedY = context.blockY() - offset;
         int lowerY = (int) Math.floor(shiftedY);
         double fraction = shiftedY - lowerY;
-        shiftedLowerContext.set(context, lowerY);
-        double lowerDensity = delegate.compute(shiftedLowerContext);
+        double lower = columns.noise.compute(x, lowerY, z);
         if (fraction == 0.0) {
-            return lowerDensity;
+            return lower;
         }
-
-        shiftedUpperContext.set(context, lowerY + 1);
-        double upperDensity = delegate.compute(shiftedUpperContext);
-        return lowerDensity + fraction * (upperDensity - lowerDensity);
+        double upper = columns.noise.compute(x, lowerY + 1, z);
+        return lower + fraction * (upper - lower);
     }
 
     @Override
-    public void fillArray(double[] densities, ContextProvider contextProvider) {
-        for (int i = 0; i < densities.length; i++) {
-            densities[i] = compute(contextProvider.forIndex(i));
-        }
+    public void fillArray(double[] densities, ContextProvider provider) {
+        provider.fillAllDirectly(densities, this);
     }
 
     @Override
     public DensityFunction mapAll(Visitor visitor) {
-        return new NatagumoDensityFunction(delegate.mapAll(visitor), source, sampler, profileCache);
+        // Only the unshifted delegate belongs to NoiseChunk's visitor. The private
+        // seeded evaluator and its caches must never be rewrapped as vanilla caches.
+        return visitor.apply(new NatagumoDensityFunction(delegate.mapAll(visitor), columns));
     }
 
-    @Override
-    public double minValue() {
-        return delegate.minValue();
-    }
+    @Override public double minValue() { return delegate.minValue(); }
+    @Override public double maxValue() { return delegate.maxValue(); }
+    @Override public KeyDispatchDataCodec<? extends DensityFunction> codec() { return delegate.codec(); }
 
-    @Override
-    public double maxValue() {
-        return delegate.maxValue();
-    }
+    public long heightSearches() { return columns.heightSearches; }
+    public long cornerEvaluations() { return columns.noise.cornerEvaluations(); }
 
-    @Override
-    public KeyDispatchDataCodec<? extends DensityFunction> codec() {
-        return delegate.codec();
-    }
+    private static final class Columns {
+        private final EnhancedMountBiomeSource source;
+        private final Climate.Sampler climate;
+        private final NatagumoNoiseSampler noise;
+        private final int minY;
+        private final int maxY;
+        private final int searchStep;
+        private final Long2DoubleOpenHashMap offsets = new Long2DoubleOpenHashMap(289);
+        private long heightSearches;
 
-    private double getOrComputeOffset(FunctionContext context) {
-        int blockX = context.blockX();
-        int blockZ = context.blockZ();
-        long key = ((long) blockX << 32) ^ (blockZ & 0xFFFFFFFFL);
-        int slot = offsetSlot(key);
-        if (offsetOccupied[slot] && offsetKeys[slot] == key) {
-            return offsets[slot];
+        private Columns(NatagumoTerrainContext.Context context) {
+            source = context.source();
+            climate = context.state().sampler();
+            NoiseSettings settings = context.settings();
+            minY = settings.minY();
+            maxY = minY + settings.height();
+            searchStep = settings.getCellHeight();
+            noise = new NatagumoNoiseSampler(context.state().router().finalDensity(),
+                    settings.getCellWidth(), searchStep, context.blender());
+            offsets.defaultReturnValue(Double.NaN);
         }
 
-        double profile = profileCache.getOrCompute(source, sampler, blockX, blockZ);
-        double offset = 0.0;
-        if (profile > 0.0) {
-            double vanillaHeight = estimateVanillaHeight(context);
-            double finalHeight = source.natagumoSurfaceHeight(
-                    blockX, blockZ, vanillaHeight, profile);
-            offset = finalHeight - vanillaHeight;
-        }
-
-        offsetOccupied[slot] = true;
-        offsetKeys[slot] = key;
-        offsets[slot] = offset;
-        return offset;
-    }
-
-    private double estimateVanillaHeight(FunctionContext context) {
-        vanillaTopContext.set(context, SEARCH_TOP_Y);
-        double upperDensity = delegate.compute(vanillaTopContext);
-        if (!Double.isFinite(upperDensity)) {
-            return BASE_HEIGHT;
-        }
-
-        int upperY = SEARCH_TOP_Y;
-        for (int lowerY = SEARCH_TOP_Y - SEARCH_STEP;
-             lowerY >= SEARCH_BOTTOM_Y; lowerY -= SEARCH_STEP) {
-            vanillaBaseContext.set(context, lowerY);
-            double lowerDensity = delegate.compute(vanillaBaseContext);
-            if (!Double.isFinite(lowerDensity)) {
-                return BASE_HEIGHT;
+        private double offset(int x, int z) {
+            long key = NatagumoNoiseSampler.columnKey(x, z);
+            double offset = offsets.get(key);
+            if (!Double.isNaN(offset)) {
+                return offset;
             }
+            double profile = source.natagumoTerrainProfile(x, z, climate);
+            offset = 0.0;
+            if (profile > 0.0) {
+                double base = vanillaHeight(x, z);
+                offset = source.natagumoSurfaceHeight(x, z, base, profile) - base;
+            }
+            // Normal chunk + border sampling fits without eviction. Bound unusual
+            // modded callers too; open addressing resolves collisions correctly.
+            if (offsets.size() >= 4096) {
+                offsets.clear();
+            }
+            offsets.put(key, offset);
+            return offset;
+        }
 
-            // Vanilla terrain is solid below its first top-down density crossing.
-            if (upperDensity <= 0.0 && lowerDensity >= 0.0) {
-                double densityChange = lowerDensity - upperDensity;
-                if (Math.abs(densityChange) < 1.0E-6) {
-                    return lowerY;
+        private double vanillaHeight(int x, int z) {
+            heightSearches++;
+            double upperDensity = noise.compute(x, maxY, z);
+            int upperY = maxY;
+            for (int lowerY = maxY - searchStep; lowerY >= minY; lowerY -= searchStep) {
+                double lowerDensity = noise.compute(x, lowerY, z);
+                if (!Double.isFinite(upperDensity) || !Double.isFinite(lowerDensity)) {
+                    return 60.0;
                 }
-                double crossing = upperY
-                        + (lowerY - upperY) * (-upperDensity / densityChange);
-                return Math.max(-64.0, Math.min(280.0, crossing));
+                if (upperDensity <= 0.0 && lowerDensity >= 0.0) {
+                    double change = lowerDensity - upperDensity;
+                    double crossing = Math.abs(change) < 1.0E-6 ? lowerY
+                            : upperY + (lowerY - upperY) * (-upperDensity / change);
+                    return Math.max(minY, Math.min(280.0, crossing));
+                }
+                upperY = lowerY;
+                upperDensity = lowerDensity;
             }
-
-            upperY = lowerY;
-            upperDensity = lowerDensity;
-        }
-
-        return BASE_HEIGHT;
-    }
-
-    private static int offsetSlot(long key) {
-        key ^= key >>> 33;
-        key *= 0xFF51AFD7ED558CCDL;
-        key ^= key >>> 33;
-        return (int) key & OFFSET_CACHE_MASK;
-    }
-
-    private static final class VerticalContext implements FunctionContext {
-        private FunctionContext delegate;
-        private int blockY;
-
-        private void set(FunctionContext delegate, int blockY) {
-            this.delegate = delegate;
-            this.blockY = blockY;
-        }
-
-        @Override
-        public int blockX() {
-            return delegate.blockX();
-        }
-
-        @Override
-        public int blockY() {
-            return blockY;
-        }
-
-        @Override
-        public int blockZ() {
-            return delegate.blockZ();
-        }
-
-        @Override
-        public net.minecraft.world.level.levelgen.blending.Blender getBlender() {
-            return delegate.getBlender();
+            return 60.0;
         }
     }
 }

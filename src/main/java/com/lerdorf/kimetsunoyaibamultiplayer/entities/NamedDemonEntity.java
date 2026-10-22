@@ -37,19 +37,20 @@ public class NamedDemonEntity extends AbstractDemonEntity {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return createAttributes(40.0D, 0.30D, 5.0D, 0.3D, 0.3D);
+        return createAttributes(40.0D, 3.0D, 0.30D, 5.0D, 0.3D, 0.3D);
     }
 
     public static AttributeSupplier.Builder createMakenaAttributes() {
-        return createAttributes(60.0D, 0.28D, 12.0D, 1.0D, 1.2D);
+        return createAttributes(60.0D, 12.0D, 0.28D, 12.0D, 1.0D, 1.2D);
     }
 
-    private static AttributeSupplier.Builder createAttributes(double health, double movementSpeed,
-                                                               double armor, double armorToughness,
-                                                               double knockbackResistance) {
+    protected static AttributeSupplier.Builder createAttributes(double health, double attackDamage,
+                                                                 double movementSpeed, double armor,
+                                                                 double armorToughness,
+                                                                 double knockbackResistance) {
         return AbstractDemonEntity.createDemonAttributes()
             .add(Attributes.MAX_HEALTH, health)
-            .add(Attributes.ATTACK_DAMAGE, 3.0D)
+            .add(Attributes.ATTACK_DAMAGE, attackDamage)
             .add(Attributes.MOVEMENT_SPEED, movementSpeed)
             .add(Attributes.ARMOR, armor)
             .add(Attributes.FOLLOW_RANGE, 16.0D)

@@ -32,12 +32,27 @@ public final class EnhancedMountBiomeConfig {
             .define("natagumo-overwrite-oceans", true);
 
     private static final ForgeConfigSpec.IntValue NATAGUMO_PEAK_HEIGHT = BUILDER
-            .comment("Legacy Natagumo peak-height setting; the enhanced profile targets Y=280")
+            .comment("Legacy compatibility setting (unused); use natagumo-height-scale")
             .defineInRange("natagumo-peak-height", 211, 20, 280);
 
     private static final ForgeConfigSpec.IntValue NATAGUMO_MAX_SURFACE_Y = BUILDER
             .comment("Absolute maximum surface Y for the Natagumo mountain")
             .defineInRange("natagumo-max-surface-y", 280, 100, 280);
+
+    private static final ForgeConfigSpec.DoubleValue NATAGUMO_WIDTH_SCALE = BUILDER
+            .comment("Horizontal scale of enhanced Mount Natagumo; 0.70 produces a 70% width mountain")
+            .worldRestart()
+            .defineInRange("natagumo-width-scale", 0.70, 0.01, 1.00);
+
+    private static final ForgeConfigSpec.DoubleValue NATAGUMO_HEIGHT_SCALE = BUILDER
+            .comment("Vertical scale of enhanced Mount Natagumo above the local vanilla terrain")
+            .worldRestart()
+            .defineInRange("natagumo-height-scale", 0.70, 0.01, 1.00);
+
+    private static final ForgeConfigSpec.DoubleValue NATAGUMO_TREE_DENSITY = BUILDER
+            .comment("Multiplier for enhanced Mount Natagumo tree placement attempts")
+            .worldRestart()
+            .defineInRange("natagumo-tree-density", 0.75, 0.0, 1.0);
 
     private static final ForgeConfigSpec.BooleanValue ENHANCED_MOUNT_YOKO_ENABLED = BUILDER
             .comment("Replace the base mod's Mount Yoko climate placement with mountain-only placement")
@@ -72,6 +87,9 @@ public final class EnhancedMountBiomeConfig {
     public static boolean natagumoOverwriteOceans;
     public static int natagumoPeakHeight;
     public static int natagumoMaxSurfaceY;
+    public static double natagumoWidthScale = 0.70;
+    public static double natagumoHeightScale = 0.70;
+    public static double natagumoTreeDensity = 0.75;
     public static boolean enhancedMountYokoEnabled;
     public static double yokoMountainChance;
     public static double yokoNoiseScale;
@@ -88,6 +106,12 @@ public final class EnhancedMountBiomeConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        // Keep a single generation-settings snapshot for the loaded world. Hot
+        // reloads must not mix old noise caches with a new radius/height/profile.
+        if (event.getConfig().getSpec() != SPEC || !(event instanceof ModConfigEvent.Loading)) {
+            return;
+        }
+        try {
         enhancedMountNatagumoEnabled = ENHANCED_MOUNT_NATAGUMO_ENABLED.get();
         natagumoRingSpacing = NATAGUMO_RING_SPACING.get();
         natagumoFirstRingRadius = NATAGUMO_FIRST_RING_RADIUS.get();
@@ -95,11 +119,17 @@ public final class EnhancedMountBiomeConfig {
         natagumoOverwriteOceans = NATAGUMO_OVERWRITE_OCEANS.get();
         natagumoPeakHeight = NATAGUMO_PEAK_HEIGHT.get();
         natagumoMaxSurfaceY = NATAGUMO_MAX_SURFACE_Y.get();
+        natagumoWidthScale = NATAGUMO_WIDTH_SCALE.get();
+        natagumoHeightScale = NATAGUMO_HEIGHT_SCALE.get();
+        natagumoTreeDensity = NATAGUMO_TREE_DENSITY.get();
         enhancedMountYokoEnabled = ENHANCED_MOUNT_YOKO_ENABLED.get();
         yokoMountainChance = YOKO_MOUNTAIN_CHANCE.get();
         yokoNoiseScale = YOKO_NOISE_SCALE.get();
         mountainContinentalnessMin = MOUNTAIN_CONTINENTALNESS_MIN.get();
         mountainErosionMax = MOUNTAIN_EROSION_MAX.get();
         mountainWeirdnessMin = MOUNTAIN_WEIRDNESS_MIN.get();
+        } catch (Exception exception) {
+            System.err.println("Failed to load enhanced mount config: " + exception.getMessage());
+        }
     }
 }

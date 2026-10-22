@@ -162,14 +162,25 @@ public class BloodDemonArtItem extends Item {
 
         int current = getSelectedFormIndex(stack);
         int next = Math.floorMod(current + (direction < 0 ? -1 : 1), technique.getFormCount());
-        setSelectedFormIndex(stack, next);
+        selectForm(player, stack, next);
+    }
 
-        BloodDemonArtForm form = technique.getForm(next);
+    public boolean selectForm(Player player, ItemStack stack, int index) {
+        BloodDemonArtRegistry.RegisteredBloodDemonArt art = BloodDemonArtRegistry.getArt(artId);
+        if (art == null || art.getTechnique() == null
+            || index < 0 || index >= art.getTechnique().getFormCount()) {
+            return false;
+        }
+
+        setSelectedFormIndex(stack, index);
+
+        BloodDemonArtForm form = art.getTechnique().getForm(index);
         if (form != null) {
             int displayColor = getArtDisplayColor(artId);
             player.sendSystemMessage(formatFormName(artId, form)
                 .withStyle(style -> style.withColor(displayColor).withBold(true)));
         }
+        return form != null;
     }
 
     public String getArtId() {

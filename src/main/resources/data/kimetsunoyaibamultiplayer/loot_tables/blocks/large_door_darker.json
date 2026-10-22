@@ -1,0 +1,4 @@
+{
+  "type": "minecraft:block",
+  "pools": [{"rolls":1,"entries":[{"type":"minecraft:item","name":"kimetsunoyaibamultiplayer:large_door_darker"}],"conditions":[{"condition":"minecraft:survives_explosion"}]}]
+}

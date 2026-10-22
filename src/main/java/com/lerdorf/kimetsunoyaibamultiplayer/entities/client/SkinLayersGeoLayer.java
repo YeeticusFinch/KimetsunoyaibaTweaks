@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.config.EntitySkinLayersConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.DaughterEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.MantisDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.MotherEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.PurpleDemonEntity;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -73,6 +74,10 @@ public class SkinLayersGeoLayer<T extends net.minecraft.world.entity.LivingEntit
     public void renderForBone(PoseStack poseStack, T animatable, GeoBone bone, RenderType renderType,
                               MultiBufferSource bufferSource, VertexConsumer buffer, float partialTick,
                               int packedLight, int packedOverlay) {
+        if (animatable instanceof PurpleDemonEntity) {
+            return;
+        }
+
         MeshApi api = getMeshApi();
         if (api == null || !withinRenderDistance(animatable)) {
             return;

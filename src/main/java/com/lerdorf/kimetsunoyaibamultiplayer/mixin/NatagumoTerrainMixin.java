@@ -2,98 +2,116 @@ package com.lerdorf.kimetsunoyaibamultiplayer.mixin;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.biome.EnhancedMountBiomeSource;
 import com.lerdorf.kimetsunoyaibamultiplayer.biome.NatagumoTerrainContext;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.StructureManager;
-import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseChunk;
+import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.NoiseColumn;
+import org.apache.commons.lang3.mutable.MutableObject;
+import java.util.OptionalInt;
+import java.util.function.Predicate;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Makes the active Natagumo source available while NoiseChunk builds vanilla density functions. */
 @Mixin(NoiseBasedChunkGenerator.class)
 public abstract class NatagumoTerrainMixin {
     private static final int SURFACE_REPAIR_MAX_SLOPE = 2;
     private static final int SURFACE_REPAIR_DEPTH = 3;
-    private static final int NATAGUMO_MAX_SURFACE_Y = 280;
     private static final int RIVER_HEADROOM = 5;
 
-    @Inject(method = "createNoiseChunk", at = @At("HEAD"))
-    private void kimetsu$startNatagumoDensity(
-            net.minecraft.world.level.chunk.ChunkAccess chunk,
-            net.minecraft.world.level.StructureManager structureManager,
-            net.minecraft.world.level.levelgen.blending.Blender blender,
-            RandomState randomState,
-            CallbackInfoReturnable<?> cir) {
-        if (!(((NoiseBasedChunkGenerator) (Object) this).getBiomeSource()
-                instanceof EnhancedMountBiomeSource enhancedSource)) {
-            return;
-        }
-        NatagumoTerrainContext.set(enhancedSource, randomState.sampler());
-    }
-
-    @Inject(method = "createNoiseChunk", at = @At("RETURN"))
-    private void kimetsu$finishNatagumoDensity(CallbackInfoReturnable<?> cir) {
+    @WrapMethod(method = "createNoiseChunk")
+    private NoiseChunk kimetsu$withNatagumoDensity(ChunkAccess chunk, StructureManager structureManager,
+                                                  Blender blender, RandomState state,
+                                                  Operation<NoiseChunk> original) {
+        NatagumoTerrainContext.Context previous = NatagumoTerrainContext.get();
         NatagumoTerrainContext.clear();
+        try {
+            NoiseBasedChunkGenerator generator = (NoiseBasedChunkGenerator) (Object) this;
+            if (generator.getBiomeSource() instanceof EnhancedMountBiomeSource source
+                    && source.mayAffectChunk(chunk.getPos().getMinBlockX(), chunk.getPos().getMinBlockZ(), 16)) {
+                NatagumoTerrainContext.set(source, state,
+                        generator.generatorSettings().value().noiseSettings().clampToHeightAccessor(chunk), blender);
+            }
+            return original.call(chunk, structureManager, blender, state);
+        } finally {
+            NatagumoTerrainContext.restore(previous);
+        }
     }
 
-    @Inject(method = "buildSurface(Lnet/minecraft/server/level/WorldGenRegion;"
+    @WrapMethod(method = "buildSurface(Lnet/minecraft/server/level/WorldGenRegion;"
             + "Lnet/minecraft/world/level/StructureManager;"
             + "Lnet/minecraft/world/level/levelgen/RandomState;"
-            + "Lnet/minecraft/world/level/chunk/ChunkAccess;)V", at = @At("HEAD"))
-    private void kimetsu$protectNatagumoSurface(WorldGenRegion region, StructureManager structureManager,
-                                                 RandomState randomState, ChunkAccess chunk,
-                                                 CallbackInfo callbackInfo) {
-        BiomeSource biomeSource = ((NoiseBasedChunkGenerator) (Object) this).getBiomeSource();
-        if (!(biomeSource instanceof EnhancedMountBiomeSource enhancedSource)) {
+            + "Lnet/minecraft/world/level/chunk/ChunkAccess;)V")
+    private void kimetsu$surface(WorldGenRegion region, StructureManager structureManager,
+                                 RandomState state, ChunkAccess chunk, Operation<Void> original) {
+        if (!(((NoiseBasedChunkGenerator) (Object) this).getBiomeSource() instanceof EnhancedMountBiomeSource source)
+                || !source.mayAffectChunk(chunk.getPos().getMinBlockX(), chunk.getPos().getMinBlockZ(), 16)) {
+            original.call(region, structureManager, state, chunk);
             return;
         }
-        protectNatagumoSurface(randomState, enhancedSource, chunk);
-    }
-
-    @Inject(method = "buildSurface(Lnet/minecraft/server/level/WorldGenRegion;"
-            + "Lnet/minecraft/world/level/StructureManager;"
-            + "Lnet/minecraft/world/level/levelgen/RandomState;"
-            + "Lnet/minecraft/world/level/chunk/ChunkAccess;)V", at = @At("RETURN"))
-    private void kimetsu$applyNatagumoSurfaceAndRiver(WorldGenRegion region,
-                                                       StructureManager structureManager,
-                                                       RandomState randomState, ChunkAccess chunk,
-                                                       CallbackInfo callbackInfo) {
-        BiomeSource biomeSource = ((NoiseBasedChunkGenerator) (Object) this).getBiomeSource();
-        if (!(biomeSource instanceof EnhancedMountBiomeSource enhancedSource)) {
-            return;
+        EnhancedMountBiomeSource.SurfaceColumn[] columns = new EnhancedMountBiomeSource.SurfaceColumn[256];
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                columns[x * 16 + z] = source.surfaceColumn(chunk.getPos().getMinBlockX() + x,
+                        chunk.getPos().getMinBlockZ() + z, state.sampler());
+            }
         }
-
-        applySurfaceRepair(region, randomState, enhancedSource, chunk);
-        applyRiverColumns(region, randomState, enhancedSource, chunk);
+        protectNatagumoSurface(chunk, columns);
+        original.call(region, structureManager, state, chunk);
+        applySurfaceRepair(region, chunk, columns);
+        applyRiverColumns(region, chunk, columns);
     }
 
-    private static void protectNatagumoSurface(RandomState randomState,
-                                                EnhancedMountBiomeSource source, ChunkAccess chunk) {
+    /** Structure height queries construct NoiseChunk directly, bypassing createNoiseChunk. */
+    @WrapMethod(method = "iterateNoiseColumn")
+    private OptionalInt kimetsu$heightQuery(LevelHeightAccessor height, RandomState state, int x, int z,
+            MutableObject<NoiseColumn> column, Predicate<BlockState> predicate, Operation<OptionalInt> original) {
+        NatagumoTerrainContext.Context previous = NatagumoTerrainContext.get();
+        NatagumoTerrainContext.clear();
+        try {
+            NoiseBasedChunkGenerator generator = (NoiseBasedChunkGenerator) (Object) this;
+            if (generator.getBiomeSource() instanceof EnhancedMountBiomeSource source && source.mayAffectChunk(x, z, 1)) {
+                NatagumoTerrainContext.set(source, state,
+                        generator.generatorSettings().value().noiseSettings().clampToHeightAccessor(height), Blender.empty());
+            }
+            return original.call(height, state, x, z, column, predicate);
+        } finally {
+            NatagumoTerrainContext.restore(previous);
+        }
+    }
+
+    private static void protectNatagumoSurface(ChunkAccess chunk, EnhancedMountBiomeSource.SurfaceColumn[] columns) {
         BlockPos.MutableBlockPos position = new BlockPos.MutableBlockPos(0, 0, 0);
         int minBlockX = chunk.getPos().getMinBlockX();
         int minBlockZ = chunk.getPos().getMinBlockZ();
         int maxBuildY = chunk.getMinBuildHeight() + chunk.getHeight() - 1;
+        int maxSurfaceY = EnhancedMountBiomeSource.natagumoMaxSurfaceY();
         for (int localX = 0; localX < 16; localX++) {
             for (int localZ = 0; localZ < 16; localZ++) {
                 int blockX = minBlockX + localX;
                 int blockZ = minBlockZ + localZ;
-                double profile = source.natagumoTerrainProfile(blockX, blockZ, randomState.sampler());
+                double profile = columns[localX * 16 + localZ].profile();
                 if (profile <= 0.0) {
                     continue;
                 }
 
                 // Keep an inaccurate vanilla-height estimate from producing Y=320 plateaus.
-                for (int y = maxBuildY; y > NATAGUMO_MAX_SURFACE_Y; y--) {
+                int surfaceY = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, localX, localZ) - 1;
+                if (surfaceY <= maxSurfaceY) {
+                    continue;
+                }
+                for (int y = Math.min(maxBuildY, surfaceY); y > maxSurfaceY; y--) {
                     position.set(blockX, y, blockZ);
                     if (!chunk.getBlockState(position).isAir()) {
                         chunk.setBlockState(position, Blocks.AIR.defaultBlockState(), false);
@@ -103,8 +121,8 @@ public abstract class NatagumoTerrainMixin {
         }
     }
 
-    private static void applySurfaceRepair(WorldGenRegion region, RandomState randomState,
-                                           EnhancedMountBiomeSource source, ChunkAccess chunk) {
+    private static void applySurfaceRepair(WorldGenRegion region, ChunkAccess chunk,
+                                           EnhancedMountBiomeSource.SurfaceColumn[] columns) {
         BlockPos.MutableBlockPos position = new BlockPos.MutableBlockPos(0, 0, 0);
         int minBlockX = chunk.getPos().getMinBlockX();
         int minBlockZ = chunk.getPos().getMinBlockZ();
@@ -112,8 +130,8 @@ public abstract class NatagumoTerrainMixin {
             for (int localZ = 0; localZ < 16; localZ++) {
                 int blockX = minBlockX + localX;
                 int blockZ = minBlockZ + localZ;
-                double profile = source.natagumoTerrainProfile(blockX, blockZ, randomState.sampler());
-                if (profile <= 0.0 || localX == 0 || localX == 15 || localZ == 0 || localZ == 15) {
+                double profile = columns[localX * 16 + localZ].profile();
+                if (profile <= 0.0) {
                     continue;
                 }
 
@@ -134,29 +152,35 @@ public abstract class NatagumoTerrainMixin {
                     if (position.getY() < region.getMinBuildHeight()) {
                         break;
                     }
+                    BlockState below = chunk.getBlockState(position);
+                    if (!below.is(Blocks.STONE) && !below.is(Blocks.DIRT) && !below.is(Blocks.GRASS_BLOCK)) {
+                        break;
+                    }
                     chunk.setBlockState(position, Blocks.DIRT.defaultBlockState(), false);
                 }
             }
         }
     }
 
-    private static void applyRiverColumns(WorldGenRegion region, RandomState randomState,
-                                           EnhancedMountBiomeSource source, ChunkAccess chunk) {
+    private static void applyRiverColumns(WorldGenRegion region, ChunkAccess chunk,
+                                           EnhancedMountBiomeSource.SurfaceColumn[] columns) {
         BlockPos.MutableBlockPos position = new BlockPos.MutableBlockPos(0, 0, 0);
         int minBlockX = chunk.getPos().getMinBlockX();
         int minBlockZ = chunk.getPos().getMinBlockZ();
         int maxBuildY = chunk.getMinBuildHeight() + chunk.getHeight() - 1;
+        int depth = EnhancedMountBiomeSource.riverDepth();
+        if (depth == 0) return;
         for (int localX = 0; localX < 16; localX++) {
             for (int localZ = 0; localZ < 16; localZ++) {
                 int blockX = minBlockX + localX;
                 int blockZ = minBlockZ + localZ;
-                if (!source.isRiverColumn(blockX, blockZ, randomState.sampler())) {
+                if (!columns[localX * 16 + localZ].river()) {
                     continue;
                 }
 
                 int surfaceY = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, localX, localZ) - 1;
-                int waterY = surfaceY - 1;
-                int bedY = surfaceY - 2;
+                int waterY = surfaceY - depth + 1;
+                int bedY = surfaceY - depth;
                 if (bedY < region.getMinBuildHeight()) {
                     continue;
                 }
@@ -176,12 +200,15 @@ public abstract class NatagumoTerrainMixin {
     }
 
     private static boolean isSteepColumn(ChunkAccess chunk, int localX, int localZ) {
-        int west = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, localX - 1, localZ) - 1;
-        int east = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, localX + 1, localZ) - 1;
-        int north = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, localX, localZ - 1) - 1;
-        int south = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, localX, localZ + 1) - 1;
-        int slopeX = Math.abs(east - west) / 2;
-        int slopeZ = Math.abs(south - north) / 2;
+        int westX = Math.max(0, localX - 1), eastX = Math.min(15, localX + 1);
+        int northZ = Math.max(0, localZ - 1), southZ = Math.min(15, localZ + 1);
+        int west = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, westX, localZ) - 1;
+        int east = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, eastX, localZ) - 1;
+        int north = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, localX, northZ) - 1;
+        int south = chunk.getHeight(Heightmap.Types.WORLD_SURFACE_WG, localX, southZ) - 1;
+        int slopeX = Math.abs(east - west) / (eastX - westX);
+        int slopeZ = Math.abs(south - north) / (southZ - northZ);
         return Math.max(slopeX, slopeZ) > SURFACE_REPAIR_MAX_SLOPE;
     }
+
 }

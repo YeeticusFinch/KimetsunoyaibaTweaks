@@ -36,6 +36,8 @@ public class KeyInputHandler {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null)
                 return;
+            if (EnhancedFormCycleHandler.handleKeyInput(event))
+                return;
             if (DemonSlayerSkillClient.handleKeyInput(event))
                 return;
             if (event.getAction() != GLFW.GLFW_PRESS)
@@ -261,6 +263,7 @@ public class KeyInputHandler {
         try {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null) return;
+            if (EnhancedFormCycleHandler.handleMouseInput(event)) return;
             if (DemonSlayerSkillClient.handleMouseInput(event)) return;
             if (event.getAction() != GLFW.GLFW_PRESS) return;
             if (mc.screen != null) return;
@@ -422,6 +425,18 @@ public class KeyInputHandler {
 
         } catch (Exception e) {
             // Silently catch exceptions to prevent crashes
+            System.err.println("[KeyInputHandler] EXCEPTION: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onMouseScrolling(InputEvent.MouseScrollingEvent event) {
+        try {
+            if (EnhancedFormCycleHandler.handleScroll(event)) {
+                event.setCanceled(true);
+            }
+        } catch (Exception e) {
             System.err.println("[KeyInputHandler] EXCEPTION: " + e.getMessage());
             e.printStackTrace();
         }

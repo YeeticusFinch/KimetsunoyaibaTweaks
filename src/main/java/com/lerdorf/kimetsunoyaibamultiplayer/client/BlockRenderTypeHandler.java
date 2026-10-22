@@ -28,6 +28,10 @@ public class BlockRenderTypeHandler {
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.SIDEWAYS_LANTERN_2RED.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.SIDEWAYS_LANTERN_3.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.LANTERN_TSUZUMI.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.HANGING_LAMP.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.DIM_ORANGE_LAMP.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.BAMBOO_SIDEWAYS_FENCE.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.DARK_BAMBOO_SIDEWAYS_FENCE.get(), RenderType.cutout());
 
             // Set all wisteria petals variants to use cutout rendering (for transparency)
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.WISTERIA_PETALS_PINK.get(), RenderType.cutout());

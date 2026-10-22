@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.gravity.field;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.GravityBlockEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.BlockDoorBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -31,7 +32,9 @@ public final class GravityFieldOutlineManager {
             return;
         }
 
-        if (GravityBlockEntity.isHoldingGravityBlock(player)) {
+        boolean holdingGravityBlock = GravityBlockEntity.isHoldingGravityBlock(player);
+        boolean holdingBlockDoor = BlockDoorBlockEntity.isHoldingBlockDoor(player);
+        if (holdingGravityBlock || holdingBlockDoor) {
             BlockPos center = player.blockPosition();
             BlockPos min = center.offset(-PREVIEW_RADIUS, -PREVIEW_RADIUS, -PREVIEW_RADIUS);
             BlockPos max = center.offset(PREVIEW_RADIUS, PREVIEW_RADIUS, PREVIEW_RADIUS);
@@ -40,9 +43,13 @@ public final class GravityFieldOutlineManager {
                 if (pos.distSqr(center) > maxDistanceSqr) {
                     continue;
                 }
-                if (level.getBlockEntity(pos) instanceof GravityBlockEntity gravityBlock) {
+                if (holdingGravityBlock && level.getBlockEntity(pos) instanceof GravityBlockEntity gravityBlock) {
                     spawnBox(level, player, gravityBlock.getFieldBox());
                     spawnArrow(level, player, gravityBlock.getBlockPos(), gravityBlock.getWorldGravityDirection());
+                }
+                if (holdingBlockDoor && level.getBlockEntity(pos) instanceof BlockDoorBlockEntity blockDoor) {
+                    spawnBox(level, player, blockDoor.getRegionBox());
+                    spawnArrow(level, player, blockDoor.getBlockPos(), blockDoor.getFacing());
                 }
             }
         }

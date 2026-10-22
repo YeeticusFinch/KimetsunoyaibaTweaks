@@ -127,21 +127,20 @@ public final class DemonSlayerRankManager {
     }
 
     public static int getStrengthAmplifier(DemonSlayerRank rank) {
-        if (rank == null) {
-            return -1;
-        }
-        int amplifier = rank.level() == 1 ? 0 : rank.level() - 2;
-        if (rank.level() >= 11) {
-            amplifier += 2;
-        }
-        return Math.min(11, amplifier);
+        return rank == null ? -1 : rank.level() - 1;
     }
 
     public static int getResistanceAmplifier(DemonSlayerRank rank) {
         if (rank == null) {
             return -1;
         }
-        return rank.level() <= 5 ? 0 : rank.level() <= 10 ? 1 : 2;
+        return switch (rank.level()) {
+            case 1, 2 -> 0; // Resistance I
+            case 3, 4, 5, 6 -> 1; // Resistance II
+            case 7, 8, 9, 10 -> 2; // Resistance III
+            case 11, 12 -> 3; // Resistance IV
+            default -> -1;
+        };
     }
 
     public static int getHealthBoostAmplifier(DemonSlayerRank rank) {
@@ -149,16 +148,11 @@ public final class DemonSlayerRankManager {
             return -1;
         }
         return switch (rank.level()) {
-            case 2, 3 -> 0;
-            case 4 -> 1;
-            case 5 -> 2;
-            case 6 -> 3;
-            case 7 -> 4;
-            case 8 -> 5;
-            case 9 -> 6;
-            case 10 -> 7;
-            case 11 -> 8;
-            case 12 -> 9;
+            case 1, 2 -> 0; // Health Boost I
+            case 3, 4, 5 -> 1; // Health Boost II
+            case 6, 7, 8 -> 2; // Health Boost III
+            case 9, 10 -> 3; // Health Boost IV
+            case 11, 12 -> 4; // Health Boost V
             default -> -1;
         };
     }

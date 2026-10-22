@@ -15,14 +15,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 
 /** Persists the discovered center of each generated Natagumo ring region. */
 @Mod.EventBusSubscriber(modid = com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer.MODID)
 public final class NatagumoPeakSavedData extends SavedData {
     private static final String DATA_NAME = "kimetsunoyaibamultiplayer_natagumo_peaks";
     private static final String PEAKS_TAG = "peaks";
-    private static final int DISPLAY_PEAK_Y = 280;
-    private static final Map<Long, Map<Integer, Peak>> PENDING = new ConcurrentHashMap<>();
+    private static final Map<Long, ConcurrentLinkedQueue<Peak>> PENDING = new ConcurrentHashMap<>();
 
     private final Map<Integer, Peak> peaks = new ConcurrentHashMap<>();
 
@@ -38,12 +39,12 @@ public final class NatagumoPeakSavedData extends SavedData {
         if (region == null || region.strength() < EnhancedMountBiomeConfig.natagumoBiomeThreshold) {
             return;
         }
-        PENDING.computeIfAbsent(seed, ignored -> new ConcurrentHashMap<>())
-                .putIfAbsent(region.ring(), new Peak(
+        PENDING.computeIfAbsent(seed, ignored -> new ConcurrentLinkedQueue<>())
+                .add(new Peak(
                         region.ring(),
                         region.centerX(),
                         region.centerZ(),
-                        DISPLAY_PEAK_Y));
+                        EnhancedMountBiomeSource.natagumoPeakDisplayY()));
     }
 
     public static void flush(MinecraftServer server) {
@@ -51,14 +52,14 @@ public final class NatagumoPeakSavedData extends SavedData {
         if (overworld == null) {
             return;
         }
-        Map<Integer, Peak> pending = PENDING.remove(overworld.getSeed());
+        ConcurrentLinkedQueue<Peak> pending = PENDING.get(overworld.getSeed());
         if (pending == null || pending.isEmpty()) {
             return;
         }
 
         NatagumoPeakSavedData data = get(overworld);
         boolean changed = false;
-        for (Peak peak : pending.values()) {
+        for (Peak peak; (peak = pending.poll()) != null;) {
             if (data.peaks.putIfAbsent(peak.ring(), peak) == null) {
                 changed = true;
             }
@@ -99,6 +100,15 @@ public final class NatagumoPeakSavedData extends SavedData {
         }
         tag.put(PEAKS_TAG, peakTags);
         return tag;
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        try {
+            PENDING.clear();
+        } catch (Exception exception) {
+            System.err.println("Failed to clear Natagumo discoveries: " + exception.getMessage());
+        }
     }
 
     @SubscribeEvent

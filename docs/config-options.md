@@ -56,6 +56,15 @@ Player sheath position is selected per player in the meditation menu Cosmetics t
 | `common.breathing-display-position` | Position of the breathing form display on screen: TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CENTER_BELOW_CROSSHAIR |
 | `common.breathing-display-scale` | Scale/size of the breathing form display text (0.5 = half size, 1.0 = normal, 2.0 = double size) |
 | `common.suppress-form-cycle-chat` | Suppress chat messages when cycling breathing forms with R key |
+| `common.enhanced-form-cycle` | Hold the form cycle key to open a radial form selector instead of cycling one form at a time. Default: true |
+| `common.enhanced-form-cycle-hud.hud-diameter` | Enhanced form cycle wheel diameter in GUI-scaled pixels before viewport fitting. Default: 452.4 |
+| `common.enhanced-form-cycle-hud.show-all-form-names` | Show all form names on the wheel. When false, only the selected form name is shown and other slices show numbers. Default: true |
+| `common.enhanced-form-cycle-hud.enable-mouse-rotation-selection` | Allow mouse/camera rotation to move the selector and select a form. Default: true |
+| `common.enhanced-form-cycle-hud.enable-number-selection` | Allow number keys to select a form. Default: true |
+| `common.enhanced-form-cycle-hud.enable-scrollwheel-selection` | Allow the scroll wheel to select a form. Default: true |
+| `common.enhanced-form-cycle-hud.show-direction-line` | Show the line from the crosshair to the mouse/camera movement direction. Default: true |
+| `common.enhanced-form-cycle-hud.number-font-size` | Font scale for the large form numbers on the wheel. Default: 2.1 |
+| `common.enhanced-form-cycle-hud.form-name-font-size` | Font scale for form names on the wheel. Default: 1.12 |
 | `common.enable-sword-clashing` | Enable sword clashing system where attacks can be deflected or mitigated |
 | `common.enable-nichirin-sprint-animation` | Enable custom sprint animation when holding a nichirin sword |
 | `common.disable-base-mod-sword-swing-particles` | Disable sword swing particles from the base KimetsunoYaiba mod (left-click particles only, does not affect breathing form or right-click particles) |
@@ -143,8 +152,11 @@ Player sheath position is selected per player in the meditation menu Cosmetics t
 | `natagumo-first-ring-radius` | Radius of the first Mount Natagumo spawn ring in blocks. Default: 3000 |
 | `natagumo-biome-threshold` | Minimum Natagumo region strength required for the biome. Default: 0.05 |
 | `natagumo-overwrite-oceans` | Allow Mount Natagumo to replace ocean biomes inside its selected region. Default: true |
-| `natagumo-peak-height` | Legacy setting; the enhanced Natagumo profile targets Y=280. Default: 211 |
+| `natagumo-peak-height` | Legacy setting retained for config compatibility; terrain height is controlled by `natagumo-height-scale`. Default: 211 |
 | `natagumo-max-surface-y` | Hard maximum Natagumo surface Y. Default: 280 |
+| `natagumo-width-scale` | Horizontal scale of the enhanced Mount Natagumo terrain. Default: 0.70; range: 0.01-1.00. A value of 0.70 reduces the base 800-block radius to 560 blocks; 0.01 produces an 8-block-radius hill. Requires a server restart when changed. |
+| `natagumo-height-scale` | Scales the mountain's elevation above local vanilla terrain. Default: 0.70; range: 0.01-1.00. Below 0.25 the river channel shallows, and below 0.125 it is not carved at all. Requires a server restart when changed. |
+| `natagumo-tree-density` | Multiplier for Mount Natagumo tree placement attempts, including the base giant spruce and both custom dark-oak tree types. Default: 0.75; range: 0.0-1.0. Requires a server restart when changed. |
 | `natagumo-mountain-chance` | Approximate fraction of mountainous terrain selected for Mount Natagumo. Default: 0.10; range: 0.0-1.0 |
 | `natagumo-noise-scale` | Horizontal scale of Mount Natagumo regions in blocks. Default: 1200; range: 800-2000 |
 | `enhanced-mount-yoko-enabled` | Replace the base Mount Yoko climate placement with mountain-only placement. Default: true |
@@ -154,7 +166,7 @@ Player sheath position is selected per player in the meditation menu Cosmetics t
 | `mountain-erosion-max` | Maximum erosion for enhanced mount placement; lower values are more mountainous. Default: 0.0 |
 | `mountain-weirdness-min` | Minimum absolute weirdness for enhanced mount placement. Default: 0.35 |
 
-Mount Natagumo's imaginary rings are concentric around each selected peak and currently divide its 800-block radius into five 160-block bands: Boss Ring, Boss Minions Ring, Mother Ring, Headless Puppet Ring, and Puppet Ring from the center outward. The Boss Minions Ring is divided by compass heading into the Father Region to the south (+/- 60 degrees), the Sister Region to the north-east, and the Brother Region to the north-west. Use `/natagumoregion` to check the current ring.
+Mount Natagumo's imaginary rings are concentric around each selected peak and divide its configured radius into five bands. The default 0.70 width scale produces a 560-block radius and approximately 112-block bands: Boss Ring, Boss Minions Ring, Mother Ring, Headless Puppet Ring, and Puppet Ring from the center outward. The Boss Minions Ring is divided by compass heading into the Father Region to the south (+/- 60 degrees), the Sister Region to the north-east, and the Brother Region to the north-west. Use `/natagumoregion` to check the current ring.
 
 ### CustomNPCConfig
 

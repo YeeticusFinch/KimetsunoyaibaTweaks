@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=down": {"model": "kimetsunoyaibamultiplayer:block/block_door", "x": 270},
+    "facing=up": {"model": "kimetsunoyaibamultiplayer:block/block_door", "x": 90},
+    "facing=north": {"model": "kimetsunoyaibamultiplayer:block/block_door"},
+    "facing=south": {"model": "kimetsunoyaibamultiplayer:block/block_door", "y": 180},
+    "facing=west": {"model": "kimetsunoyaibamultiplayer:block/block_door", "y": 270},
+    "facing=east": {"model": "kimetsunoyaibamultiplayer:block/block_door", "y": 90}
+  }
+}

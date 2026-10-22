@@ -17,6 +17,12 @@ public final class ModBlockEntities {
         BLOCK_ENTITIES.register("chest_of_drawers",
             () -> BlockEntityType.Builder.of(ChestOfDrawersBlockEntity::new, ModBlocks.CHEST_OF_DRAWERS.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<LargeDoorBlockEntity>> LARGE_DOOR =
+        BLOCK_ENTITIES.register("large_door",
+            () -> BlockEntityType.Builder.of(LargeDoorBlockEntity::new,
+                ModBlocks.LARGE_DOOR.get(),
+                ModBlocks.LARGE_DOOR_DARKER.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<SwordRackBlockEntity>> SWORD_RACK =
         BLOCK_ENTITIES.register("sword_rack",
             () -> BlockEntityType.Builder.of(SwordRackBlockEntity::new, ModBlocks.SWORD_RACK.get()).build(null));
@@ -46,6 +52,10 @@ public final class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<GravityBlockEntity>> GRAVITY_BLOCK =
         BLOCK_ENTITIES.register("gravity_block",
             () -> BlockEntityType.Builder.of(GravityBlockEntity::new, ModBlocks.GRAVITY_BLOCK.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<BlockDoorBlockEntity>> BLOCK_DOOR =
+        BLOCK_ENTITIES.register("block_door",
+            () -> BlockEntityType.Builder.of(BlockDoorBlockEntity::new, ModBlocks.BLOCK_DOOR.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<BridgerBlockEntity>> BRIDGER_BLOCK =
         BLOCK_ENTITIES.register("bridger_block",

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "kimetsunoyaibamultiplayer:bamboo_sideways_fence"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "kimetsunoyaibamultiplayer:blocks/bamboo_sideways_fence"
+}

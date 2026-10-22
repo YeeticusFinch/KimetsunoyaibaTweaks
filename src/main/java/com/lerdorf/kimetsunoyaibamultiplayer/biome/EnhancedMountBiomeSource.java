@@ -2,6 +2,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.biome;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedMountBiomeConfig;
 import com.mojang.serialization.Codec;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import net.minecraft.core.Holder;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.level.biome.Biome;
@@ -11,6 +13,7 @@ import net.minecraft.world.level.biome.Climate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 /**
@@ -19,16 +22,19 @@ import java.util.stream.Stream;
  */
 public final class EnhancedMountBiomeSource extends BiomeSource {
     private static final int YOKO_SALT = 0x594F4B4F;
-    private static final double NATAGUMO_RADIUS = 800.0;
+    private static final double NATAGUMO_BASE_RADIUS = 800.0;
     private static final double NATAGUMO_BASE_Y = 75.0;
     private static final double NATAGUMO_TARGET_SUMMIT_Y = 280.0;
-    private static final double NATAGUMO_MAX_Y = 280.0;
     static final double RIVER_WATER_HALF_WIDTH = 3.0;
+    private static final int CHUNK_SAMPLE_MARGIN = 32;
+    private static final Cache<CenterKey, Center> CENTERS = CacheBuilder.newBuilder()
+            .maximumSize(2048).build();
 
     private final BiomeSource delegate;
     private final long seed;
     private final Holder<Biome> natagumo;
     private final Holder<Biome> yoko;
+    private final Set<Integer> discoveredRings = ConcurrentHashMap.newKeySet();
 
     public EnhancedMountBiomeSource(BiomeSource delegate, long seed,
                                     Holder<Biome> natagumo, Holder<Biome> yoko) {
@@ -72,18 +78,17 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
     public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler) {
         int blockX = quartX * 4;
         int blockZ = quartZ * 4;
-        NatagumoRegion region = getNatagumoRegion(seed, blockX, blockZ);
-
-        if (natagumo != null && EnhancedMountBiomeConfig.enhancedMountNatagumoEnabled
-                && isEligibleNatagumoRegion(region, blockX, blockZ, sampler)) {
-            NatagumoPeakSavedData.queue(seed, region);
-            return natagumo;
+        if (natagumo != null && EnhancedMountBiomeConfig.enhancedMountNatagumoEnabled) {
+            NatagumoRegion region = getNatagumoRegion(seed, blockX, blockZ);
+            if (isEligibleNatagumoRegion(region, blockX, blockZ, sampler)) {
+                discover(region);
+                return natagumo;
+            }
         }
 
         // Keep the original enhanced Yoko behavior for the separate Yoko feature.
-        Climate.TargetPoint target = sampler.sample(quartX, quartY, quartZ);
         if (yoko != null && EnhancedMountBiomeConfig.enhancedMountYokoEnabled
-                && isMountainClimate(target)
+                && isMountainClimate(sampler.sample(quartX, quartY, quartZ))
                 && isRegionSelected(seed, blockX, blockZ,
                 EnhancedMountBiomeConfig.yokoNoiseScale,
                 EnhancedMountBiomeConfig.yokoMountainChance, YOKO_SALT)) {
@@ -110,19 +115,56 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
                 (distanceFromOrigin - firstRadius) / (double) spacing) + 1);
 
         NatagumoRegion best = null;
+        double radius = natagumoRadius();
         for (int ring = Math.max(1, nearestRing - 1); ring <= nearestRing + 1; ring++) {
-            double ringRadius = firstRadius + (ring - 1L) * spacing;
-            double angle = hashToUnit(seed, ring, 0x52494E47) * Math.PI * 2.0;
-            int centerX = (int) Math.round(Math.cos(angle) * ringRadius);
-            int centerZ = (int) Math.round(Math.sin(angle) * ringRadius);
-            double distance = distance(centerX, centerZ, blockX, blockZ);
-            double strength = profileStrength(distance);
+            Center center = center(seed, ring, spacing, firstRadius);
+            double squared = distanceSquared(center.x(), center.z(), blockX, blockZ);
+            if (squared >= radius * radius) {
+                continue;
+            }
+            double distance = Math.sqrt(squared);
+            double strength = profileStrength(distance, radius);
             if (strength > 0.0 && (best == null || strength > best.strength())) {
-                best = new NatagumoRegion(ring, centerX, centerZ, NATAGUMO_RADIUS,
+                best = new NatagumoRegion(ring, center.x(), center.z(), radius,
                         strength, distance);
             }
         }
         return best;
+    }
+
+    /** Returns whether a chunk's noise-border sample area can intersect any mountain. */
+    public boolean mayAffectChunk(int minBlockX, int minBlockZ, int chunkSize) {
+        if (!EnhancedMountBiomeConfig.enhancedMountNatagumoEnabled) {
+            return false;
+        }
+
+        int minX = minBlockX - CHUNK_SAMPLE_MARGIN;
+        int minZ = minBlockZ - CHUNK_SAMPLE_MARGIN;
+        int maxX = minBlockX + chunkSize - 1 + CHUNK_SAMPLE_MARGIN;
+        int maxZ = minBlockZ + chunkSize - 1 + CHUNK_SAMPLE_MARGIN;
+        double minDistance = Math.sqrt(distanceSquaredToBox(0, 0, minX, minZ, maxX, maxZ));
+        double maxDistance = Math.sqrt(Math.max(
+                distanceSquared(0, 0, minX, minZ),
+                Math.max(distanceSquared(0, 0, minX, maxZ),
+                Math.max(distanceSquared(0, 0, maxX, minZ),
+                        distanceSquared(0, 0, maxX, maxZ)))));
+
+        int spacing = Math.max(1, EnhancedMountBiomeConfig.natagumoRingSpacing);
+        int firstRadius = Math.max(1, EnhancedMountBiomeConfig.natagumoFirstRingRadius);
+        int firstRing = Math.max(1, (int) Math.floor((minDistance - firstRadius) / spacing) - 3);
+        int lastRing = Math.max(firstRing,
+                (int) Math.ceil((maxDistance - firstRadius) / spacing) + 3);
+        double mountainRadius = natagumoRadius();
+        double mountainRadiusSquared = mountainRadius * mountainRadius;
+
+        for (int ring = firstRing; ring <= lastRing; ring++) {
+            Center center = center(seed, ring, spacing, firstRadius);
+            if (distanceSquaredToBox(center.x(), center.z(), minX, minZ, maxX, maxZ)
+                    <= mountainRadiusSquared) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static double natagumoStrength(long seed, int blockX, int blockZ) {
@@ -154,13 +196,14 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
 
         double clampedProfile = clamp(profile, 0.0, 1.0);
         double targetHeight = vanillaHeight
-                + (NATAGUMO_TARGET_SUMMIT_Y - vanillaHeight) * clampedProfile
-                + detailNoise(seed, blockX, blockZ) * clampedProfile;
+                + ((NATAGUMO_TARGET_SUMMIT_Y - vanillaHeight) * clampedProfile
+                + detailNoise(seed, blockX, blockZ) * clampedProfile)
+                * natagumoHeightScale();
         // Interpolate from the local vanilla surface so the edge never imposes an absolute base Y.
         double mountainHeight = Math.max(vanillaHeight, targetHeight);
         double mountainBlend = smootherStep(clampedProfile);
         double finalHeight = lerp(vanillaHeight, mountainHeight, mountainBlend);
-        return Math.max(vanillaHeight, clamp(finalHeight, -64.0, NATAGUMO_MAX_Y));
+        return Math.max(vanillaHeight, clamp(finalHeight, -64.0, natagumoMaxSurfaceY()));
     }
 
     /** Returns the local mountain target used by the river; it never carries height downstream. */
@@ -168,21 +211,52 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
         double clampedProfile = clamp(profile, 0.0, 1.0);
         double targetHeight = lerp(NATAGUMO_BASE_Y, NATAGUMO_TARGET_SUMMIT_Y, clampedProfile)
                 + detailNoise(seed, blockX, blockZ) * clampedProfile;
-        return clamp(targetHeight, NATAGUMO_BASE_Y, NATAGUMO_MAX_Y);
+        targetHeight = NATAGUMO_BASE_Y + (targetHeight - NATAGUMO_BASE_Y) * natagumoHeightScale();
+        return clamp(targetHeight, NATAGUMO_BASE_Y, natagumoMaxSurfaceY());
     }
 
     /** Returns true only for the narrow water corridor over the raw mountain surface. */
     public boolean isRiverColumn(int blockX, int blockZ, Climate.Sampler sampler) {
-        if (natagumoTerrainProfile(blockX, blockZ, sampler) <= 0.0) {
+        if (!EnhancedMountBiomeConfig.enhancedMountNatagumoEnabled) {
             return false;
         }
         NatagumoRegion region = getNatagumoRegion(seed, blockX, blockZ);
-        if (region == null) {
+        if (region == null || !isNatagumoTerrainProfile(region, blockX, blockZ, sampler)) {
             return false;
         }
-        NatagumoRiverPath.Sample sample = riverPath(region).sample(blockX, blockZ);
-        return sample.distance() <= RIVER_WATER_HALF_WIDTH;
+        return riverColumn(region, blockX, blockZ);
     }
+
+    /** Surface passes share one region/ocean query per column. */
+    public SurfaceColumn surfaceColumn(int x, int z, Climate.Sampler sampler) {
+        if (!EnhancedMountBiomeConfig.enhancedMountNatagumoEnabled) {
+            return new SurfaceColumn(0.0, false);
+        }
+        NatagumoRegion region = getNatagumoRegion(seed, x, z);
+        if (!isNatagumoTerrainProfile(region, x, z, sampler)) {
+            return new SurfaceColumn(0.0, false);
+        }
+        return new SurfaceColumn(region.strength(), riverColumn(region, x, z));
+    }
+
+    private boolean riverColumn(NatagumoRegion region, int x, int z) {
+        return riverDepth() > 0 && riverPath(region).contains(x, z, RIVER_WATER_HALF_WIDTH);
+    }
+
+    /**
+     * Water depth of the carved river channel. The default profile keeps the
+     * original two-block trench; hairline mountains disable or shallow it so the
+     * channel never dominates the hill.
+     */
+    public static int riverDepth() {
+        double heightScale = natagumoHeightScale();
+        if (heightScale >= 0.25) {
+            return 2;
+        }
+        return (int) Math.round(2.0 * heightScale / 0.25);
+    }
+
+    public record SurfaceColumn(double profile, boolean river) { }
 
     /**
      * Returns the imaginary ring or sub-region containing the position. The rings use
@@ -237,7 +311,7 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
         if (!isEligibleNatagumoRegion(region, blockX, blockZ, sampler)) {
             return 0.0;
         }
-        NatagumoPeakSavedData.queue(seed, region);
+        discover(region);
         return terrainStrength(region);
     }
 
@@ -253,17 +327,18 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
                 || isOceanAt(region.centerX(), region.centerZ(), sampler)))) {
             return 0.0;
         }
-        NatagumoPeakSavedData.queue(seed, region);
         return terrainStrength(region);
     }
 
     /** Returns true when both terrain and biome generation may use this Natagumo region. */
     public boolean isNatagumoTerrain(int blockX, int blockZ, Climate.Sampler sampler) {
+        if (!EnhancedMountBiomeConfig.enhancedMountNatagumoEnabled) {
+            return false;
+        }
         NatagumoRegion region = getNatagumoRegion(seed, blockX, blockZ);
-        boolean eligible = EnhancedMountBiomeConfig.enhancedMountNatagumoEnabled
-                && isEligibleNatagumoRegion(region, blockX, blockZ, sampler);
+        boolean eligible = isEligibleNatagumoRegion(region, blockX, blockZ, sampler);
         if (eligible) {
-            NatagumoPeakSavedData.queue(seed, region);
+            discover(region);
         }
         return eligible;
     }
@@ -281,23 +356,32 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
     }
 
     private static double distance(int centerX, int centerZ, int blockX, int blockZ) {
-        double dx = blockX - centerX;
-        double dz = blockZ - centerZ;
-        return Math.sqrt(dx * dx + dz * dz);
+        return Math.sqrt(distanceSquared(centerX, centerZ, blockX, blockZ));
     }
 
-    private static double profileStrength(double distance) {
-        if (distance > NATAGUMO_RADIUS) {
+    private static double distanceSquared(int centerX, int centerZ, int blockX, int blockZ) {
+        double dx = blockX - centerX;
+        double dz = blockZ - centerZ;
+        return dx * dx + dz * dz;
+    }
+
+    private static double distanceSquaredToBox(int pointX, int pointZ,
+                                               int minX, int minZ, int maxX, int maxZ) {
+        double dx = pointX < minX ? minX - pointX : pointX > maxX ? pointX - maxX : 0.0;
+        double dz = pointZ < minZ ? minZ - pointZ : pointZ > maxZ ? pointZ - maxZ : 0.0;
+        return dx * dx + dz * dz;
+    }
+
+    private static double profileStrength(double distance, double radius) {
+        if (distance > radius) {
             return 0.0;
         }
-        double t = clamp(1.0 - distance / NATAGUMO_RADIUS, 0.0, 1.0);
+        double t = clamp(1.0 - distance / radius, 0.0, 1.0);
         return smootherStep(t);
     }
 
     private static double terrainStrength(NatagumoRegion region) {
-        double effectiveDistance = region.effectiveDistance();
-        double t = clamp(1.0 - effectiveDistance / NATAGUMO_RADIUS, 0.0, 1.0);
-        return smootherStep(t);
+        return region.strength();
     }
 
     private static double detailNoise(long seed, int blockX, int blockZ) {
@@ -361,13 +445,59 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
     }
 
     private boolean isEligibleNatagumoRegion(NatagumoRegion region, int blockX, int blockZ,
-                                             Climate.Sampler sampler) {
+                                              Climate.Sampler sampler) {
         return region != null
                 && region.strength() >= EnhancedMountBiomeConfig.natagumoBiomeThreshold
                 && (EnhancedMountBiomeConfig.natagumoOverwriteOceans
                 || (!isOceanAt(blockX, blockZ, sampler)
                 && !isOceanAt(region.centerX(), region.centerZ(), sampler)));
     }
+
+    private boolean isNatagumoTerrainProfile(NatagumoRegion region, int blockX, int blockZ,
+                                              Climate.Sampler sampler) {
+        return region != null && (EnhancedMountBiomeConfig.natagumoOverwriteOceans
+                || (!isOceanAt(blockX, blockZ, sampler)
+                && !isOceanAt(region.centerX(), region.centerZ(), sampler)));
+    }
+
+    public static double natagumoRadius() {
+        return NATAGUMO_BASE_RADIUS * clamp(EnhancedMountBiomeConfig.natagumoWidthScale, 0.01, 1.0);
+    }
+
+    public static int natagumoPeakDisplayY() {
+        double height = NATAGUMO_BASE_Y
+                + (NATAGUMO_TARGET_SUMMIT_Y - NATAGUMO_BASE_Y) * natagumoHeightScale();
+        return (int) Math.round(Math.min(natagumoMaxSurfaceY(), height));
+    }
+
+    public static int natagumoMaxSurfaceY() {
+        return Math.max(100, Math.min(280, EnhancedMountBiomeConfig.natagumoMaxSurfaceY));
+    }
+
+    private static double natagumoHeightScale() {
+        return clamp(EnhancedMountBiomeConfig.natagumoHeightScale, 0.01, 1.0);
+    }
+
+    private void discover(NatagumoRegion region) {
+        if (discoveredRings.add(region.ring())) {
+            NatagumoPeakSavedData.queue(seed, region);
+        }
+    }
+
+    private static Center center(long seed, int ring, int spacing, int firstRadius) {
+        CenterKey key = new CenterKey(seed, ring, spacing, firstRadius);
+        Center cached = CENTERS.getIfPresent(key);
+        if (cached != null) return cached;
+        double ringRadius = firstRadius + (ring - 1L) * spacing;
+        double angle = hashToUnit(seed, ring, 0x52494E47) * Math.PI * 2.0;
+        Center result = new Center((int) Math.round(Math.cos(angle) * ringRadius),
+                (int) Math.round(Math.sin(angle) * ringRadius));
+        CENTERS.put(key, result);
+        return result;
+    }
+
+    private record CenterKey(long seed, int ring, int spacing, int firstRadius) { }
+    private record Center(int x, int z) { }
 
     public record NatagumoRegion(int ring, int centerX, int centerZ, double radius,
                                  double strength, double effectiveDistance) {

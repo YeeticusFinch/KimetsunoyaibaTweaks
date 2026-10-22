@@ -132,6 +132,18 @@
       "g": 70,
       "b": 107,
       "a": 255
+    },
+    "hanging_lamp_white": {
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "dim_orange_lamp_glow": {
+      "r": 255,
+      "g": 97,
+      "b": 40,
+      "a": 255
     }
   },
   "LightBlock": [
@@ -234,6 +246,16 @@
       "block": "kimetsunoyaibamultiplayer:lotus",
       "color": "#lotus_glow",
       "radius": 3
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:hanging_lamp",
+      "color": "#hanging_lamp_white",
+      "radius": 14
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:dim_orange_lamp",
+      "color": "#dim_orange_lamp_glow",
+      "radius": 7
     }
   ],
   "Bloom": [
@@ -281,6 +303,12 @@
     },
     {
       "block": "kimetsunoyaibamultiplayer:lotus"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:hanging_lamp"
+    },
+    {
+      "block": "kimetsunoyaibamultiplayer:dim_orange_lamp"
     },
     {
       "block": "kimetsunoyaibamultiplayer:wisteria_petals_cyan"

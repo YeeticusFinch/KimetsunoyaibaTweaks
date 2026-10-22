@@ -1,0 +1,29 @@
+{
+  "variants": {
+    "down_direction=down": {
+      "model": "kimetsunoyaibamultiplayer:block/dim_orange_lamp"
+    },
+    "down_direction=up": {
+      "model": "kimetsunoyaibamultiplayer:block/dim_orange_lamp",
+      "x": 180
+    },
+    "down_direction=north": {
+      "model": "kimetsunoyaibamultiplayer:block/dim_orange_lamp",
+      "x": 90
+    },
+    "down_direction=south": {
+      "model": "kimetsunoyaibamultiplayer:block/dim_orange_lamp",
+      "x": 270
+    },
+    "down_direction=east": {
+      "model": "kimetsunoyaibamultiplayer:block/dim_orange_lamp",
+      "x": 90,
+      "y": 90
+    },
+    "down_direction=west": {
+      "model": "kimetsunoyaibamultiplayer:block/dim_orange_lamp",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

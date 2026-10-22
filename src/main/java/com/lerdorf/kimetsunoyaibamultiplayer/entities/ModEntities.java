@@ -376,6 +376,38 @@ public class ModEntities {
                 .updateInterval(3)
                 .build("demon_zuri"));
 
+    public static final RegistryObject<EntityType<PurpleDemonEntity>> PURPLE_DEMON_0 =
+        ENTITY_TYPES.register("purple_demon_0",
+            () -> EntityType.Builder.of(PurpleDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("purple_demon_0"));
+
+    public static final RegistryObject<EntityType<PurpleDemon1Entity>> PURPLE_DEMON_1 =
+        ENTITY_TYPES.register("purple_demon_1",
+            () -> EntityType.Builder.of(PurpleDemon1Entity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("purple_demon_1"));
+
+    public static final RegistryObject<EntityType<MugenDemonEntity>> MUGEN_DEMON_0 =
+        ENTITY_TYPES.register("mugen_demon_0",
+            () -> EntityType.Builder.of(MugenDemonEntity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("mugen_demon_0"));
+
+    public static final RegistryObject<EntityType<MugenDemon1Entity>> MUGEN_DEMON_1 =
+        ENTITY_TYPES.register("mugen_demon_1",
+            () -> EntityType.Builder.of(MugenDemon1Entity::new, MobCategory.MONSTER)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(64)
+                .updateInterval(3)
+                .build("mugen_demon_1"));
+
     public static final RegistryObject<EntityType<DemonCreeperEntity>> DEMON_CREEPER =
         ENTITY_TYPES.register("demon_creeper",
             () -> EntityType.Builder.of(DemonCreeperEntity::new, MobCategory.MONSTER)
@@ -697,6 +729,10 @@ public class ModEntities {
             event.put(DEMON_NOOR.get(), NamedDemonEntity.createAttributes().build());
             event.put(DEMON_SUNNY.get(), NamedDemonEntity.createAttributes().build());
             event.put(DEMON_ZURI.get(), NamedDemonEntity.createAttributes().build());
+            event.put(PURPLE_DEMON_0.get(), PurpleDemonEntity.createAttributes().build());
+            event.put(PURPLE_DEMON_1.get(), PurpleDemonEntity.createAttributes().build());
+            event.put(MUGEN_DEMON_0.get(), MugenDemonEntity.createAttributes().build());
+            event.put(MUGEN_DEMON_1.get(), MugenDemonEntity.createAttributes().build());
 
             if (Config.logDebug)
             Log.info("Entity attributes registered successfully");
