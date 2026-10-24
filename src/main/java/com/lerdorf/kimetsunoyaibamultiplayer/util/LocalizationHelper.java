@@ -118,7 +118,7 @@ public final class LocalizationHelper {
         }
         return Component.literal(safeTechniqueColor)
             .append(styleComponent)
-            .append(Component.literal(" - " + safeFormColor))
+            .append(Component.literal(" " + safeFormColor))
             .append(formComponent);
     }
 

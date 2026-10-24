@@ -1,3 +1,9 @@
+1.6.5701
+- Improved shimmer compatibility
+- Implemented colored light (requires shimmer)
+- Updated darker bamboo block texture
+- Fixed enhanced form cycler for base mod breathing forms
+
 1.6.5700
 - Added enhanced form cycler
 - Added training gourds

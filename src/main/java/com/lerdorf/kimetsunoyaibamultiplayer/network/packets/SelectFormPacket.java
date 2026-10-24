@@ -1,7 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
-import com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.customdemonart.CustomBloodDemonArtRuntime;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
@@ -9,12 +8,13 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtAxeItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BloodDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModBloodDemonArtFormRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
@@ -66,32 +66,24 @@ public class SelectFormPacket {
                 return;
             }
 
+            if (BaseModBloodDemonArtFormRegistry.isSupported(stack)) {
+                if (BaseModFormExecutionHelper.selectBaseModBloodDemonArt(player, selection)) {
+                    player.getInventory().setChanged();
+                }
+                return;
+            }
+
             selectBaseModForm(player, stack, selection);
         });
         context.setPacketHandled(true);
     }
 
     private static void selectBaseModForm(ServerPlayer player, ItemStack stack, int formId) {
-        if (!BreathingInfoDetector.isNichirinSword(stack)) {
+        if (!BaseModSwordFormRegistry.isSupported(stack)
+            || !BaseModFormExecutionHelper.selectBaseModForm(player, formId)) {
             return;
         }
 
-        double currentBreathes = player.getPersistentData().getDouble("breathes");
-        int currentFormId = VariationEncoder.getFormId(currentBreathes);
-        int styleRange = (currentFormId / 100) * 100;
-        int[] forms = BaseModStyleMapping.getFormsForStyle(styleRange);
-        boolean valid = false;
-        for (int candidate : forms) {
-            if (candidate == formId) {
-                valid = true;
-                break;
-            }
-        }
-        if (!valid) {
-            return;
-        }
-
-        player.getPersistentData().putDouble("breathes", formId);
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
         data.setBaseModBreathesValue(formId);
         data.setCurrentVariationIndex(0);
@@ -103,17 +95,16 @@ public class SelectFormPacket {
         com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
             new VariationIndexSyncPacket(player.getUUID(), 0), player);
 
-        BaseKnYForms.BaseForm form = BaseKnYForms.forms.get(formId);
+        BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(formId);
         if (form != null) {
             if (!Config.suppressFormCycleChat) {
                 player.sendSystemMessage(LocalizationHelper.coloredBreathingSelection(
                     formId,
-                    form.name,
-                    LocalizationHelper.breathingForm(formId),
-                    form.color,
-                    form.color));
+                    form.name(),
+                    Component.literal(form.name()),
+                    BaseModSwordFormRegistry.getColor(stack, formId),
+                    BaseModSwordFormRegistry.getColor(stack, formId)));
             }
-            BreathingFormAnnouncementHelper.announceBaseModForm(player, formId);
         }
     }
 }

@@ -1053,6 +1053,10 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.TRAINING_GOURD.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.client.TrainingGourdScreen::new
                 );
+                net.minecraft.client.gui.screens.MenuScreens.register(
+                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModMenus.STRUCTURE_MARKER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.StructureMarkerScreen::new
+                );
                 net.minecraft.client.renderer.item.ItemProperties.register(
                     com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems.NEZUKO_BOX.get(),
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "open"),
@@ -1221,6 +1225,8 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.OrochiRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.EYE_FAMILIAR.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.EyeFamiliarRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.STRUCTURE_MARKER.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.client.StructureMarkerRenderer::new);
 
             event.registerBlockEntityRenderer(
                 com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.ModBlockEntities.CHEST_OF_DRAWERS.get(),

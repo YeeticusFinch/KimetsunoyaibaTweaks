@@ -71,13 +71,13 @@
       "r": 243,
       "g": 243,
       "b": 237,
-      "a": 170
+      "a": 145
     },
     "lantern_2red_weight_average_color": {
       "r": 255,
-      "g": 89,
-      "b": 85,
-      "a": 170
+      "g": 24,
+      "b": 18,
+      "a": 255
     },
     "cherry_blossoms_weight_average_color": {
       "r": 255,
@@ -95,12 +95,12 @@
       "r": 219,
       "g": 208,
       "b": 195,
-      "a": 170
+      "a": 145
     },
     "lantern_tsuzumi_glow": {
       "r": 255,
-      "g": 156,
-      "b": 81,
+      "g": 108,
+      "b": 18,
       "a": 255
     },
     "kaede_leaves_weight_average_color": {
@@ -125,7 +125,7 @@
       "r": 223,
       "g": 215,
       "b": 205,
-      "a": 170
+      "a": 145
     },
     "lotus_glow": {
       "r": 255,
@@ -137,35 +137,35 @@
       "r": 255,
       "g": 255,
       "b": 255,
-      "a": 255
+      "a": 145
     },
     "dim_orange_lamp_glow": {
       "r": 255,
-      "g": 97,
-      "b": 40,
-      "a": 255
+      "g": 58,
+      "b": 10,
+      "a": 220
     }
   },
   "LightBlock": [
     {
       "block": "kimetsunoyaiba:lantern_2",
       "color": "#lantern_2_weight_average_color",
-      "radius": 11
+      "radius": 9
     },
     {
       "block": "kimetsunoyaibamultiplayer:sideways_lantern_2",
       "color": "#lantern_2_weight_average_color",
-      "radius": 11
+      "radius": 9
     },
     {
       "block": "kimetsunoyaiba:lantern_2red",
       "color": "#lantern_2red_weight_average_color",
-      "radius": 12
+      "radius": 9
     },
     {
       "block": "kimetsunoyaibamultiplayer:sideways_lantern_2red",
       "color": "#lantern_2red_weight_average_color",
-      "radius": 12
+      "radius": 9
     },
     {
       "block": "kimetsunoyaiba:cherry_blossoms",
@@ -180,17 +180,17 @@
     {
       "block": "kimetsunoyaiba:lantern_3",
       "color": "#lantern_3_weight_average_color",
-      "radius": 14
+      "radius": 10
     },
     {
       "block": "kimetsunoyaibamultiplayer:sideways_lantern_3",
       "color": "#lantern_3_weight_average_color",
-      "radius": 14
+      "radius": 10
     },
     {
       "block": "kimetsunoyaibamultiplayer:lantern_tsuzumi",
       "color": "#lantern_tsuzumi_glow",
-      "radius": 18
+      "radius": 11
     },
     {
       "block": "kimetsunoyaiba:kaede_leaves",
@@ -210,12 +210,12 @@
     {
       "block": "kimetsunoyaiba:lantern_1",
       "color": "#lantern_1_weight_average_color",
-      "radius": 14
+      "radius": 10
     },
     {
       "block": "kimetsunoyaibamultiplayer:sideways_lantern_1",
       "color": "#lantern_1_weight_average_color",
-      "radius": 14
+      "radius": 10
     },
     {
       "block": "kimetsunoyaibamultiplayer:train_headlight",
@@ -250,12 +250,12 @@
     {
       "block": "kimetsunoyaibamultiplayer:hanging_lamp",
       "color": "#hanging_lamp_white",
-      "radius": 14
+      "radius": 10
     },
     {
       "block": "kimetsunoyaibamultiplayer:dim_orange_lamp",
       "color": "#dim_orange_lamp_glow",
-      "radius": 7
+      "radius": 4
     }
   ],
   "Bloom": [
@@ -664,7 +664,7 @@
     {
       "item_id": "kimetsunoyaibamultiplayer:lantern_tsuzumi",
       "color": "#lantern_tsuzumi_glow",
-      "radius": 18
+      "radius": 12
     },
     {
       "item_id": "kimetsunoyaiba:kaede_leaves",

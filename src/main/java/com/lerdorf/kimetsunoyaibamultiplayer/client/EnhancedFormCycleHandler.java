@@ -16,7 +16,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordBlack;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestEnhancedFormCycleDataPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectFormPacket;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModBloodDemonArtFormRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -91,6 +92,7 @@ public final class EnhancedFormCycleHandler {
     private static float lastYaw;
     private static float lastPitch;
     private static int openingTicks;
+    private static boolean cycleHeld;
 
     private EnhancedFormCycleHandler() {
     }
@@ -121,7 +123,7 @@ public final class EnhancedFormCycleHandler {
                 return false;
             }
             if (!active && !awaitingCustomData && tryOpen()) {
-                suppressBaseCycleClick();
+                suppressBaseCycleState();
                 return true;
             }
             return active || awaitingCustomData;
@@ -146,7 +148,7 @@ public final class EnhancedFormCycleHandler {
 
         if (event.getAction() == GLFW.GLFW_PRESS && MC.screen == null && !active && !awaitingCustomData) {
             if (tryOpen()) {
-                suppressBaseCycleClick();
+                suppressBaseCycleState();
                 return true;
             }
         }
@@ -335,6 +337,7 @@ public final class EnhancedFormCycleHandler {
             || !(MC.player.getMainHandItem().getItem() instanceof CustomDemonArtItem)
             || indices.isEmpty() || indices.size() != names.size()) {
             awaitingCustomData = false;
+            cycleHeld = false;
             return;
         }
 
@@ -353,6 +356,7 @@ public final class EnhancedFormCycleHandler {
         }
         awaitingCustomData = false;
         active = true;
+        cycleHeld = true;
         heldStack = MC.player.getMainHandItem().copy();
         lockedHotbarSlot = MC.player.getInventory().selected;
         resetPointerForSelection();
@@ -368,6 +372,7 @@ public final class EnhancedFormCycleHandler {
         if (resolved == null) {
             if (stack.getItem() instanceof CustomDemonArtItem) {
                 awaitingCustomData = true;
+                cycleHeld = true;
                 lockedHotbarSlot = MC.player.getInventory().selected;
                 heldStack = stack.copy();
                 ModNetworking.sendToServer(new RequestEnhancedFormCycleDataPacket());
@@ -383,6 +388,7 @@ public final class EnhancedFormCycleHandler {
         selectedOption = findCurrentOption(stack, options);
         heldStack = stack.copy();
         active = true;
+        cycleHeld = true;
         lockedHotbarSlot = MC.player.getInventory().selected;
         resetPointerForSelection();
         lastYaw = MC.player.getYRot();
@@ -413,6 +419,12 @@ public final class EnhancedFormCycleHandler {
                 : sword.getBreathingTechnique();
             return technique == null ? List.of() : breathingOptions(technique);
         }
+        if (BaseModBloodDemonArtFormRegistry.isSupported(stack)) {
+            return baseModBloodDemonArtOptions(stack);
+        }
+        if (BaseModSwordFormRegistry.isSupported(stack)) {
+            return baseModSwordOptions(stack);
+        }
         if (!BreathingInfoDetector.isNichirinSword(stack)) {
             return List.of();
         }
@@ -422,21 +434,35 @@ public final class EnhancedFormCycleHandler {
             breathes = MC.player.getPersistentData().getDouble("breathes");
         }
         int currentFormId = VariationEncoder.getFormId(breathes);
-        int styleRange = (currentFormId / 100) * 100;
-        int[] formIds = BaseModStyleMapping.getFormsForStyle(styleRange);
-        if (formIds.length == 0) {
-            return List.of();
-        }
+        return List.of();
+    }
 
+    private static List<FormOption> baseModSwordOptions(ItemStack stack) {
+        int[] formIds = BaseModSwordFormRegistry.getFormIds(stack);
         List<FormOption> result = new ArrayList<>(formIds.length);
         for (int i = 0; i < formIds.length; i++) {
             int formId = formIds[i];
-            BaseKnYForms.BaseForm form = BaseKnYForms.forms.get(formId);
-            String fullName = form == null ? "Form " + formId : form.name;
-            int fallback = form == null ? 0x55FFFF : legacyColor(form.color, 0x55FFFF);
+            BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(formId);
+            String fullName = form == null ? "Form " + formId : form.name();
+            int color = form == null ? 0x55FFFF
+                : legacyColor(BaseModSwordFormRegistry.getColor(stack, formId), 0x55FFFF);
             int formNumber = Math.floorMod(formId, 100);
             result.add(new FormOption(formId, formNumber > 0 ? formNumber : i + 1,
-                shortFormName(fullName), cachedBaseColor(formId, fallback)));
+                shortFormName(fullName), color));
+        }
+        return result;
+    }
+
+    private static List<FormOption> baseModBloodDemonArtOptions(ItemStack stack) {
+        int[] formIds = BaseModBloodDemonArtFormRegistry.getFormIds(stack);
+        List<FormOption> result = new ArrayList<>(formIds.length);
+        for (int i = 0; i < formIds.length; i++) {
+            int formId = formIds[i];
+            BaseModBloodDemonArtFormRegistry.FormDefinition form =
+                BaseModBloodDemonArtFormRegistry.getForm(formId);
+            String fullName = form == null ? "Blood Demon Art " + formId : form.name();
+            int color = form == null ? 0x55FFFF : legacyColor(form.color(), 0x55FFFF);
+            result.add(new FormOption(formId, formId % 100 + 1, shortFormName(fullName), color));
         }
         return result;
     }
@@ -479,6 +505,19 @@ public final class EnhancedFormCycleHandler {
                 : sword.getBreathingTechnique();
             current = PlayerBreathingData.getOrCreate(MC.player)
                 .getCurrentFormIndex(PlayerBreathingData.getTechniqueKey(technique.getName()));
+        } else if (BaseModBloodDemonArtFormRegistry.isSupported(stack)) {
+            current = (int) MC.player.getPersistentData().getDouble("demon_art");
+            if (current == 0) {
+                current = (int) stack.getOrCreateTag().getDouble("select");
+                int[] formIds = BaseModBloodDemonArtFormRegistry.getFormIds(stack);
+                current = current >= 0 && current < formIds.length ? formIds[current] : 0;
+            }
+        } else if (BaseModSwordFormRegistry.isSupported(stack)) {
+            double breathes = BreathingFormTracker.getCachedForm(MC.player.getUUID(), stack);
+            if (breathes == 0.0D) {
+                breathes = MC.player.getPersistentData().getDouble("breathes");
+            }
+            current = VariationEncoder.getFormId(breathes);
         } else {
             double breathes = BreathingFormTracker.getCachedForm(MC.player.getUUID(), stack);
             if (breathes == 0.0D) {
@@ -607,6 +646,7 @@ public final class EnhancedFormCycleHandler {
     private static void cancelSelection() {
         active = false;
         awaitingCustomData = false;
+        cycleHeld = false;
         ignoreRotationTick = false;
         heldStack = ItemStack.EMPTY;
         options = List.of();
@@ -621,7 +661,7 @@ public final class EnhancedFormCycleHandler {
     }
 
     private static boolean isCycleKeyDown() {
-        return net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART.isDown();
+        return cycleHeld;
     }
 
     private static void suppressBaseCycleClick() {
@@ -629,6 +669,10 @@ public final class EnhancedFormCycleHandler {
         while (cycleKey.consumeClick()) {
             // Prevent the base mod from processing the same press as a normal cycle.
         }
+    }
+
+    private static void suppressBaseCycleState() {
+        suppressBaseCycleClick();
     }
 
     private static void drawAnnularSlice(GuiGraphics guiGraphics, int centerX, int centerY,
@@ -811,10 +855,7 @@ public final class EnhancedFormCycleHandler {
             if (!suffix.isEmpty()) {
                 return suffix;
             }
-            String[] words = stripped.split("\\s+");
-            if (words.length > 0) {
-                return words[words.length - 1];
-            }
+            return stripped;
         }
         return stripped.isEmpty() ? "Unnamed" : stripped;
     }

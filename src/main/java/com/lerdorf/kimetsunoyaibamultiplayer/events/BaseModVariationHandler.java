@@ -8,9 +8,13 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingD
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathesValueSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -33,10 +37,6 @@ public class BaseModVariationHandler {
     private static final String NBT_CNT4 = "cnt4";
     private static final String NBT_CNT5 = "cnt5";
     private static final String NBT_CNT_X = "cnt_x";
-
-    // Track last execution time to prevent double-triggering
-    private static long lastExecutionTime = 0;
-    private static final long DOUBLE_TRIGGER_COOLDOWN_MS = 100; // 100ms cooldown to prevent double-triggering
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
@@ -77,12 +77,6 @@ public class BaseModVariationHandler {
             return;
         }
 
-        // Prevent double-triggering from client/server
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastExecutionTime < DOUBLE_TRIGGER_COOLDOWN_MS) {
-            return;
-        }
-
         // Only execute on server side
         if (player.level().isClientSide()) {
             return;
@@ -92,12 +86,15 @@ public class BaseModVariationHandler {
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player.getUUID());
         String currentFormName = data.getBaseModFormName();
         int variationIndex = data.getCurrentVariationIndex();
+        double selectedBreathes = data.getBaseModBreathesValue();
+        if (selectedBreathes <= 0) {
+            selectedBreathes = player.getPersistentData().getDouble("breathes");
+        }
 
         // Fallback: If form name not cached, try to get it from breathes value
         if (currentFormName == null || currentFormName.isEmpty()) {
-            double breathes = player.getPersistentData().getDouble("breathes");
-            if (breathes > 0) {
-                int formId = (int) breathes;
+            if (selectedBreathes > 0) {
+                int formId = (int) selectedBreathes;
                 com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.BaseForm form =
                     com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.forms.get(formId);
                 if (form != null) {
@@ -115,6 +112,19 @@ public class BaseModVariationHandler {
         }
 
         if (variationIndex == 0) {
+            // Selection feedback is local; announce only when the form is actually used.
+            int formId = (int) selectedBreathes;
+            if (player instanceof ServerPlayer serverPlayer && formId > 0) {
+                ModNetworking.sendToPlayer(new BreathesValueSyncPacket(player.getUUID(), formId), serverPlayer);
+                Component actionBar = BreathingFormAnnouncementHelper.getBaseModSwordFormDisplay(heldItem, formId);
+                serverPlayer.getServer().execute(() -> {
+                    if (serverPlayer.isAlive()) {
+                        serverPlayer.displayClientMessage(actionBar, true);
+                    }
+                });
+            }
+            BreathingFormAnnouncementHelper.announceBaseModSwordForm(
+                player, heldItem, formId);
             return; // Base form, no variation - let base mod handle it
         }
 
@@ -144,11 +154,9 @@ public class BaseModVariationHandler {
         }
 
         // Execute the variation's effect
-        lastExecutionTime = currentTime;
-
         // Get the form ID from player's breathes value
-        double breathes = player.getPersistentData().getDouble("breathes");
-        int formId = (int) breathes;
+        double breathes = selectedBreathes;
+        int formId = (int) selectedBreathes;
 
         if (Config.logDebug) {
             Log.debug("Executing base mod variation: " + variation.getName() +

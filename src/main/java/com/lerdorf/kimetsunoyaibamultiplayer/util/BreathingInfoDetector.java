@@ -41,6 +41,10 @@ public class BreathingInfoDetector {
             return getOurModBreathingInfo(player, heldSword, breathingSword);
         }
 
+        if (BaseModSwordFormRegistry.isSupported(heldSword)) {
+            return getBaseModSwordInfo(player, heldSword);
+        }
+
         // For kimetsunoyaiba mod swords: Try to get display text from cache first
         if (player.level().isClientSide()) {
             String cachedText = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.getCachedDisplayText(
@@ -129,7 +133,7 @@ public class BreathingInfoDetector {
                         String displayFormName = variationName != null ? variationName : info.formName;
                         String rebuiltColored = null;
                         if (stylePart != null && formColor != null) {
-                            rebuiltColored = stylePart + " - " + formColor + displayFormName;
+                            rebuiltColored = stylePart + " " + formColor + displayFormName;
                         }
 
                         return new BreathingInfo(
@@ -152,6 +156,40 @@ public class BreathingInfoDetector {
 
         // Fallback: Use NBT-based detection (for when cache doesn't have it yet)
         return getBreathingInfoFromNBT(player, heldSword);
+    }
+
+    private static BreathingInfo getBaseModSwordInfo(Player player, ItemStack heldSword) {
+        double cachedBreathes = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
+            .getCachedForm(player.getUUID(), heldSword);
+        double breathes = cachedBreathes > 0.0
+            ? cachedBreathes : player.getPersistentData().getDouble("breathes");
+        int formId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(breathes);
+        BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(formId);
+        if (form == null) {
+            return null;
+        }
+
+        String swordId = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(heldSword.getItem()).toString();
+        com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
+        int variationIndex = data.getCurrentVariationIndex();
+        int totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+            .getVariationCount(formId, swordId);
+        String styleName = LocalizationHelper.breathingStyleFromFormId(formId, "").getString();
+        String baseDisplayName = styleName.isBlank() ? form.name() : styleName + " " + form.name();
+        String displayName = baseDisplayName;
+        if (variationIndex > 0) {
+            var variation = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+                .getVariation(formId, variationIndex, swordId);
+            if (variation != null) {
+                displayName = variation.getName();
+            }
+        }
+
+        String formColor = BaseModSwordFormRegistry.getColor(heldSword, formId);
+        return new BreathingInfo(styleName, displayName, formId % 100, (formId / 100) * 100,
+            formId, formColor + displayName, variationIndex, totalVariations,
+            displayName.equals(baseDisplayName) ? null : displayName);
     }
 
     private static BreathingInfo getBloodDemonArtInfo(ItemStack stack,
@@ -689,14 +727,14 @@ public class BreathingInfoDetector {
          */
         public String getColoredDisplay() {
             if (originalColoredText != null && !originalColoredText.isEmpty()) {
-                return originalColoredText; // Use exact text from chat
+                return originalColoredText.replace(" - ", " ");
             }
-            return styleName + " - " + formName; // Plain text fallback
+            return styleName + " " + formName; // Plain text fallback
         }
 
         @Override
         public String toString() {
-            return styleName + " - " + formName;
+            return styleName + " " + formName;
         }
     }
 }

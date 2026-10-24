@@ -72,6 +72,46 @@ public final class BaseModFormExecutionHelper {
         }
     }
 
+    /**
+     * Select a base-mod sword form without executing its attack procedure.
+     * The base mod derives the active form from the held item's select tag.
+     */
+    public static boolean selectBaseModForm(LivingEntity entity, int formId) {
+        if (entity == null || entity.level().isClientSide) {
+            return false;
+        }
+
+        ItemStack heldItem = entity.getMainHandItem();
+        int selectIndex = BaseModSwordFormRegistry.getSelectIndex(heldItem, formId);
+        if (selectIndex < 0) {
+            return false;
+        }
+
+        heldItem.getOrCreateTag().putDouble("select", selectIndex);
+        entity.getPersistentData().putBoolean("ChangeArt", false);
+        entity.getPersistentData().putDouble("breathes", formId);
+        return true;
+    }
+
+    /** Select a base-mod Blood Demon Art without executing its attack. */
+    public static boolean selectBaseModBloodDemonArt(LivingEntity entity, int formId) {
+        if (entity == null || entity.level().isClientSide) {
+            return false;
+        }
+
+        ItemStack heldItem = entity.getMainHandItem();
+        int selectIndex = BaseModBloodDemonArtFormRegistry.getSelectIndex(heldItem, formId);
+        if (selectIndex < 0) {
+            return false;
+        }
+
+        heldItem.getOrCreateTag().putDouble("select", selectIndex);
+        entity.getPersistentData().putBoolean("ChangeArt", false);
+        entity.getPersistentData().putDouble("demon_art", formId);
+        entity.getPersistentData().putDouble("skill", formId);
+        return true;
+    }
+
     public static void executeBaseModFormInGravityFrame(LivingEntity entity, Level level, int formId) {
         if (entity == null || level == null || level.isClientSide
             || PuppetryHandler.isAbilityUseBlocked(entity)) {

@@ -137,6 +137,10 @@ repositories {
         url 'https://maven.kosmx.dev/'
     }
     maven {
+        name 'First Dark Development Maven'
+        url 'https://maven.firstdarkdev.xyz/snapshots'
+    }
+    maven {
         url "https://cursemaven.com"
     }
     maven {
@@ -201,6 +205,12 @@ dependencies {
     compileOnly fg.deobf(files("libs/KimetsunoYaiba-ver3-forge-1.20.1.jar"))
     runtimeOnly fg.deobf(files("libs/KimetsunoYaiba-ver3-forge-1.20.1.jar"))
     implementation fg.deobf("curse.maven:demonslayer-471263:7151280")
+    // Optional client-side colored-light compatibility. The mod remains usable without Shimmer.
+    implementation(fg.deobf("com.lowdragmc.shimmer:Shimmer-forge:${minecraft_version}-${shimmer_version}")) {
+        transitive = false
+        exclude group: 'dev.engine-room.flywheel', module: 'flywheel-forge-1.20.1'
+        exclude group: 'maven.modrinth', module: 'embeddium'
+    }
     // Optional development/runtime dependency for the MCA compatibility layer.
     // The released mod does not bundle MCA; the integration is guarded by mod detection.
     runtimeOnly fg.deobf(files("../minecraft-comes-alive-7.6.28-beta.9+1.20.1-universal.jar"))
@@ -221,6 +231,13 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
+// Shimmer publishes renderer integrations as runtime dependencies, but they are not
+// needed for its light API and are not part of this mod's compatibility surface.
+configurations.configureEach {
+    exclude group: 'dev.engine-room.flywheel', module: 'flywheel-forge-1.20.1'
+    exclude group: 'maven.modrinth', module: 'embeddium'
+}
+
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
 // When "copyIdeResources" is enabled, this will also run before the game launches in IDE environments.
@@ -235,6 +252,7 @@ tasks.named('processResources', ProcessResources).configure {
             player_anim_version: player_anim_version, player_anim_version_min: player_anim_version_min, player_anim_version_range: player_anim_version_range,
             mob_player_anim_version: mob_player_anim_version, mob_player_anim_version_min: mob_player_anim_version_min, mob_player_anim_version_range: mob_player_anim_version_range,
             geckolib_version: geckolib_version, geckolib_version_range: geckolib_version_range,
+            shimmer_version: shimmer_version,
     ]
     inputs.properties replaceProperties
 

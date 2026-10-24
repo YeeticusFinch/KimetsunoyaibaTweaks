@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 
 public final class BreathingFormAnnouncementHelper {
@@ -46,8 +47,13 @@ public final class BreathingFormAnnouncementHelper {
     }
 
     public static void announceBaseModForm(LivingEntity source, int formId) {
+        announceBaseModSwordForm(source, ItemStack.EMPTY, formId);
+    }
+
+    public static void announceBaseModSwordForm(LivingEntity source, ItemStack sword, int formId) {
         BaseKnYForms.BaseForm baseForm = BaseKnYForms.forms.get(formId);
-        if (baseForm == null || baseForm.name == null || baseForm.name.isBlank()) {
+        BaseModSwordFormRegistry.FormDefinition swordForm = BaseModSwordFormRegistry.getForm(formId);
+        if ((baseForm == null || baseForm.name == null || baseForm.name.isBlank()) && swordForm == null) {
             return;
         }
 
@@ -58,7 +64,32 @@ public final class BreathingFormAnnouncementHelper {
             return;
         }
 
+        if (swordForm != null) {
+            announce(source, getBaseModSwordFormDisplay(sword, formId), BaseModSwordFormRegistry.getColor(sword, formId));
+            return;
+        }
+
         announce(source, LocalizationHelper.breathingForm(formId), baseForm.color);
+    }
+
+    public static MutableComponent getBaseModSwordFormDisplay(ItemStack sword, int formId) {
+        BaseKnYForms.BaseForm baseForm = BaseKnYForms.forms.get(formId);
+        BaseModSwordFormRegistry.FormDefinition swordForm = BaseModSwordFormRegistry.getForm(formId);
+        if (swordForm == null) {
+            return LocalizationHelper.breathingForm(formId).copy();
+        }
+
+        MutableComponent fullName = LocalizationHelper.breathingStyleFromFormId(
+            formId, baseForm == null ? "" : baseForm.name).copy();
+        if (!fullName.getString().isBlank()) {
+            fullName.append(" ");
+        }
+        fullName.append(swordForm.name());
+        ChatFormatting color = parseLegacyColor(BaseModSwordFormRegistry.getColor(sword, formId));
+        if (color != null) {
+            fullName.withStyle(color);
+        }
+        return fullName;
     }
 
     private static void announce(LivingEntity source, Component formName, String colorCode) {

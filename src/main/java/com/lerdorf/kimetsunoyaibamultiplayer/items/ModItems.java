@@ -693,6 +693,9 @@ public class ModItems {
     public static final RegistryObject<Item> SAKE = ITEMS.register("sake",
         () -> new SakeItem(new Item.Properties().stacksTo(16)));
 
+    public static final RegistryObject<Item> STRUCTURE_MARKER = ITEMS.register("structure_marker",
+        () -> new StructureMarkerItem(new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> DISC_TANJIRO_VS_ENMU = ITEMS.register("disc_tanjiro_vs_enmu",
         () -> new RecordItem(13, ModSounds.DISC_TANJIRO_VS_ENMU.get(),
             new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.RARE), 347));
@@ -923,7 +926,7 @@ public class ModItems {
                     FAVOR_OF_UBUYASHIKI_POTION_3.get()
                 );
 
-                addItems(output, UBUYASHIKI_INVITATION.get(), BLOOM_CALENDAR.get(), SAKE.get(), DISC_TANJIRO_VS_ENMU.get(), TIPPED_KUNAI.get(), NEZUKO_BOX.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
+                addItems(output, UBUYASHIKI_INVITATION.get(), BLOOM_CALENDAR.get(), SAKE.get(), STRUCTURE_MARKER.get(), DISC_TANJIRO_VS_ENMU.get(), TIPPED_KUNAI.get(), NEZUKO_BOX.get(), NICHIRIN_ORE.get(), HEMOLITH_DUST.get(), YEN.get(),
                     HUMAN_FLESH_3.get(), HUMAN_FLESH_4.get(), HUMAN_FLESH_5.get());
             })
             .build());

@@ -153,7 +153,7 @@ public class ModBlocks {
             .mapColor(MapColor.COLOR_RED)
             .sound(SoundType.LANTERN)
             .strength(0.3f)
-            .lightLevel(state -> 15)
+            .lightLevel(state -> 10)
             .noOcclusion()));
 
     public static final RegistryObject<Block> SIDEWAYS_LANTERN_3 = registerBlock("sideways_lantern_3",
@@ -161,7 +161,7 @@ public class ModBlocks {
             .mapColor(MapColor.TERRACOTTA_ORANGE)
             .sound(SoundType.LANTERN)
             .strength(0.3f)
-            .lightLevel(state -> 15)
+            .lightLevel(state -> 10)
             .noOcclusion()));
 
     public static final RegistryObject<Block> HANGING_LAMP = registerBlock("hanging_lamp",
@@ -169,7 +169,7 @@ public class ModBlocks {
             .mapColor(MapColor.TERRACOTTA_ORANGE)
             .sound(SoundType.LANTERN)
             .strength(0.3f)
-            .lightLevel(state -> 15)
+            .lightLevel(state -> 12)
             .emissiveRendering((state, level, pos) -> true)
             .noOcclusion()));
 
@@ -178,7 +178,7 @@ public class ModBlocks {
             .mapColor(MapColor.TERRACOTTA_ORANGE)
             .sound(SoundType.LANTERN)
             .strength(0.3f)
-            .lightLevel(state -> 7)
+            .lightLevel(state -> 6)
             .emissiveRendering((state, level, pos) -> true)
             .noOcclusion()));
 
@@ -187,7 +187,7 @@ public class ModBlocks {
             .mapColor(MapColor.TERRACOTTA_ORANGE)
             .sound(SoundType.LANTERN)
             .strength(0.3f)
-            .lightLevel(state -> 15)
+            .lightLevel(state -> 13)
             .noOcclusion()));
 
     public static final RegistryObject<Block> WISTERIA_STAIRS = registerBlock("wisteria_stairs",

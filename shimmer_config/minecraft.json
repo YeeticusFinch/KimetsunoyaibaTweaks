@@ -4,505 +4,505 @@
       "r": 213,
       "g": 94,
       "b": 20,
-      "a": 170
+      "a": 145
     },
     "brown_mushroom_weight_average_color": {
       "r": 203,
       "g": 172,
       "b": 121,
-      "a": 170
+      "a": 145
     },
     "torch_weight_average_color": {
       "r": 235,
       "g": 196,
       "b": 85,
-      "a": 170
+      "a": 145
     },
     "wall_torch_weight_average_color": {
       "r": 235,
       "g": 196,
       "b": 85,
-      "a": 170
+      "a": 145
     },
     "fire_weight_average_color": {
       "r": 222,
       "g": 165,
       "b": 81,
-      "a": 170
+      "a": 145
     },
     "soul_fire_weight_average_color": {
       "r": 91,
       "g": 219,
       "b": 223,
-      "a": 170
+      "a": 145
     },
     "furnace_weight_average_color": {
       "r": 201,
       "g": 175,
       "b": 102,
-      "a": 170
+      "a": 145
     },
     "redstone_ore_weight_average_color": {
       "r": 201,
       "g": 80,
       "b": 80,
-      "a": 170
+      "a": 145
     },
     "deepslate_redstone_ore_weight_average_color": {
       "r": 218,
       "g": 54,
       "b": 54,
-      "a": 170
+      "a": 145
     },
     "redstone_torch_weight_average_color": {
       "r": 245,
       "g": 85,
       "b": 36,
-      "a": 170
+      "a": 145
     },
     "redstone_wall_torch_weight_average_color": {
       "r": 245,
       "g": 85,
       "b": 36,
-      "a": 170
+      "a": 145
     },
     "soul_torch_weight_average_color": {
       "r": 131,
       "g": 209,
       "b": 202,
-      "a": 170
+      "a": 145
     },
     "soul_wall_torch_weight_average_color": {
       "r": 131,
       "g": 209,
       "b": 202,
-      "a": 170
+      "a": 145
     },
     "glowstone_weight_average_color": {
       "r": 233,
       "g": 200,
       "b": 142,
-      "a": 170
+      "a": 145
     },
     "nether_portal_weight_average_color": {
       "r": 99,
       "g": 17,
       "b": 199,
-      "a": 170
+      "a": 145
     },
     "jack_o_lantern_weight_average_color": {
       "r": 222,
       "g": 151,
       "b": 48,
-      "a": 170
+      "a": 145
     },
     "enchanting_table_weight_average_color": {
       "r": 145,
       "g": 202,
       "b": 190,
-      "a": 170
+      "a": 145
     },
     "brewing_stand_weight_average_color": {
       "r": 181,
       "g": 158,
       "b": 123,
-      "a": 170
+      "a": 145
     },
     "lava_cauldron_weight_average_color": {
       "r": 213,
       "g": 94,
       "b": 20,
-      "a": 170
+      "a": 145
     },
     "end_portal_weight_average_color": {
       "r": 52,
       "g": 36,
       "b": 75,
-      "a": 170
+      "a": 145
     },
     "end_portal_frame_weight_average_color": {
       "r": 216,
       "g": 222,
       "b": 159,
-      "a": 170
+      "a": 145
     },
     "dragon_egg_weight_average_color": {
       "r": 44,
       "g": 1,
       "b": 49,
-      "a": 170
+      "a": 145
     },
     "redstone_lamp_weight_average_color": {
       "r": 232,
       "g": 176,
       "b": 111,
-      "a": 170
+      "a": 145
     },
     "ender_chest_weight_average_color": {
       "r": 52,
       "g": 36,
       "b": 75,
-      "a": 170
+      "a": 145
     },
     "beacon_weight_average_color": {
       "r": 146,
       "g": 226,
       "b": 223,
-      "a": 170
+      "a": 145
     },
     "light_weight_average_color": {
       "r": 0,
       "g": 0,
       "b": 0,
-      "a": 170
+      "a": 145
     },
     "sea_lantern_weight_average_color": {
       "r": 204,
       "g": 222,
       "b": 213,
-      "a": 170
+      "a": 145
     },
     "end_rod_weight_average_color": {
       "r": 244,
       "g": 234,
       "b": 219,
-      "a": 170
+      "a": 145
     },
     "end_gateway_weight_average_color": {
       "r": 52,
       "g": 36,
       "b": 75,
-      "a": 170
+      "a": 145
     },
     "magma_block_weight_average_color": {
       "r": 228,
       "g": 115,
       "b": 31,
-      "a": 170
+      "a": 145
     },
     "sea_pickle_weight_average_color": {
       "r": 162,
       "g": 193,
       "b": 139,
-      "a": 170
+      "a": 145
     },
     "conduit_weight_average_color": {
       "r": 180,
       "g": 158,
       "b": 134,
-      "a": 170
+      "a": 145
     },
     "smoker_weight_average_color": {
       "r": 186,
       "g": 142,
       "b": 64,
-      "a": 170
+      "a": 145
     },
     "blast_furnace_weight_average_color": {
       "r": 174,
       "g": 141,
       "b": 108,
-      "a": 170
+      "a": 145
     },
     "lantern_weight_average_color": {
       "r": 227,
       "g": 176,
       "b": 100,
-      "a": 170
+      "a": 145
     },
     "soul_lantern_weight_average_color": {
       "r": 120,
       "g": 220,
       "b": 225,
-      "a": 170
+      "a": 145
     },
     "campfire_weight_average_color": {
       "r": 225,
       "g": 176,
       "b": 71,
-      "a": 170
+      "a": 145
     },
     "soul_campfire_weight_average_color": {
       "r": 111,
       "g": 221,
       "b": 224,
-      "a": 170
+      "a": 145
     },
     "shroomlight_weight_average_color": {
       "r": 246,
       "g": 157,
       "b": 82,
-      "a": 170
+      "a": 145
     },
     "crying_obsidian_weight_average_color": {
       "r": 107,
       "g": 7,
       "b": 191,
-      "a": 170
+      "a": 145
     },
     "candle_weight_average_color": {
       "r": 247,
       "g": 223,
       "b": 185,
-      "a": 170
+      "a": 145
     },
     "white_candle_weight_average_color": {
       "r": 234,
       "g": 230,
       "b": 212,
-      "a": 170
+      "a": 145
     },
     "orange_candle_weight_average_color": {
       "r": 243,
       "g": 151,
       "b": 34,
-      "a": 170
+      "a": 145
     },
     "magenta_candle_weight_average_color": {
       "r": 217,
       "g": 103,
       "b": 180,
-      "a": 170
+      "a": 145
     },
     "light_blue_candle_weight_average_color": {
       "r": 86,
       "g": 180,
       "b": 213,
-      "a": 170
+      "a": 145
     },
     "yellow_candle_weight_average_color": {
       "r": 236,
       "g": 206,
       "b": 92,
-      "a": 170
+      "a": 145
     },
     "lime_candle_weight_average_color": {
       "r": 150,
       "g": 199,
       "b": 37,
-      "a": 170
+      "a": 145
     },
     "pink_candle_weight_average_color": {
       "r": 236,
       "g": 154,
       "b": 164,
-      "a": 170
+      "a": 145
     },
     "gray_candle_weight_average_color": {
       "r": 215,
       "g": 186,
       "b": 140,
-      "a": 170
+      "a": 145
     },
     "light_gray_candle_weight_average_color": {
       "r": 230,
       "g": 211,
       "b": 161,
-      "a": 170
+      "a": 145
     },
     "cyan_candle_weight_average_color": {
       "r": 84,
       "g": 194,
       "b": 164,
-      "a": 170
+      "a": 145
     },
     "purple_candle_weight_average_color": {
       "r": 150,
       "g": 36,
       "b": 145,
-      "a": 170
+      "a": 145
     },
     "blue_candle_weight_average_color": {
       "r": 81,
       "g": 104,
       "b": 214,
-      "a": 170
+      "a": 145
     },
     "brown_candle_weight_average_color": {
       "r": 231,
       "g": 160,
       "b": 82,
-      "a": 170
+      "a": 145
     },
     "green_candle_weight_average_color": {
       "r": 174,
       "g": 165,
       "b": 25,
-      "a": 170
+      "a": 145
     },
     "red_candle_weight_average_color": {
       "r": 227,
       "g": 106,
       "b": 65,
-      "a": 170
+      "a": 145
     },
     "black_candle_weight_average_color": {
       "r": 210,
       "g": 97,
       "b": 39,
-      "a": 170
+      "a": 145
     },
     "candle_cake_weight_average_color": {
       "r": 240,
       "g": 217,
       "b": 201,
-      "a": 170
+      "a": 145
     },
     "white_candle_cake_weight_average_color": {
       "r": 239,
       "g": 217,
       "b": 203,
-      "a": 170
+      "a": 145
     },
     "orange_candle_cake_weight_average_color": {
       "r": 240,
       "g": 212,
       "b": 191,
-      "a": 170
+      "a": 145
     },
     "magenta_candle_cake_weight_average_color": {
       "r": 239,
       "g": 212,
       "b": 202,
-      "a": 170
+      "a": 145
     },
     "light_blue_candle_cake_weight_average_color": {
       "r": 233,
       "g": 215,
       "b": 203,
-      "a": 170
+      "a": 145
     },
     "yellow_candle_cake_weight_average_color": {
       "r": 239,
       "g": 216,
       "b": 196,
-      "a": 170
+      "a": 145
     },
     "lime_candle_cake_weight_average_color": {
       "r": 237,
       "g": 216,
       "b": 197,
-      "a": 170
+      "a": 145
     },
     "pink_candle_cake_weight_average_color": {
       "r": 239,
       "g": 213,
       "b": 200,
-      "a": 170
+      "a": 145
     },
     "gray_candle_cake_weight_average_color": {
       "r": 239,
       "g": 216,
       "b": 201,
-      "a": 170
+      "a": 145
     },
     "light_gray_candle_cake_weight_average_color": {
       "r": 239,
       "g": 216,
       "b": 201,
-      "a": 170
+      "a": 145
     },
     "cyan_candle_cake_weight_average_color": {
       "r": 237,
       "g": 216,
       "b": 202,
-      "a": 170
+      "a": 145
     },
     "purple_candle_cake_weight_average_color": {
       "r": 238,
       "g": 213,
       "b": 201,
-      "a": 170
+      "a": 145
     },
     "blue_candle_cake_weight_average_color": {
       "r": 235,
       "g": 213,
       "b": 203,
-      "a": 170
+      "a": 145
     },
     "brown_candle_cake_weight_average_color": {
       "r": 239,
       "g": 215,
       "b": 200,
-      "a": 170
+      "a": 145
     },
     "green_candle_cake_weight_average_color": {
       "r": 239,
       "g": 216,
       "b": 201,
-      "a": 170
+      "a": 145
     },
     "red_candle_cake_weight_average_color": {
       "r": 239,
       "g": 213,
       "b": 198,
-      "a": 170
+      "a": 145
     },
     "black_candle_cake_weight_average_color": {
       "r": 239,
       "g": 215,
       "b": 201,
-      "a": 170
+      "a": 145
     },
     "amethyst_cluster_weight_average_color": {
       "r": 192,
       "g": 151,
       "b": 223,
-      "a": 170
+      "a": 145
     },
     "large_amethyst_bud_weight_average_color": {
       "r": 193,
       "g": 156,
       "b": 220,
-      "a": 170
+      "a": 145
     },
     "medium_amethyst_bud_weight_average_color": {
       "r": 192,
       "g": 149,
       "b": 222,
-      "a": 170
+      "a": 145
     },
     "small_amethyst_bud_weight_average_color": {
       "r": 151,
       "g": 116,
       "b": 213,
-      "a": 170
+      "a": 145
     },
     "sculk_sensor_weight_average_color": {
       "r": 26,
       "g": 178,
       "b": 188,
-      "a": 170
+      "a": 145
     },
     "calibrated_sculk_sensor_weight_average_color": {
       "r": 26,
       "g": 178,
       "b": 188,
-      "a": 170
+      "a": 145
     },
     "sculk_catalyst_weight_average_color": {
       "r": 112,
       "g": 187,
       "b": 172,
-      "a": 170
+      "a": 145
     },
     "ochre_froglight_weight_average_color": {
       "r": 249,
       "g": 242,
       "b": 198,
-      "a": 170
+      "a": 145
     },
     "verdant_froglight_weight_average_color": {
       "r": 228,
       "g": 244,
       "b": 227,
-      "a": 170
+      "a": 145
     },
     "pearlescent_froglight_weight_average_color": {
       "r": 245,
       "g": 239,
       "b": 239,
-      "a": 170
+      "a": 145
     }
   },
   "LightBlock": [
@@ -533,7 +533,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 4,
+      "radius": 3,
       "state": {
         "level": "3"
       }
@@ -541,7 +541,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 5,
+      "radius": 4,
       "state": {
         "level": "4"
       }
@@ -549,7 +549,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 6,
+      "radius": 5,
       "state": {
         "level": "5"
       }
@@ -557,7 +557,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 7,
+      "radius": 5,
       "state": {
         "level": "6"
       }
@@ -565,7 +565,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 8,
+      "radius": 6,
       "state": {
         "level": "7"
       }
@@ -573,7 +573,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 9,
+      "radius": 7,
       "state": {
         "level": "8"
       }
@@ -581,7 +581,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 10,
+      "radius": 8,
       "state": {
         "level": "9"
       }
@@ -589,7 +589,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 11,
+      "radius": 8,
       "state": {
         "level": "10"
       }
@@ -597,7 +597,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 12,
+      "radius": 9,
       "state": {
         "level": "11"
       }
@@ -605,7 +605,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 13,
+      "radius": 10,
       "state": {
         "level": "12"
       }
@@ -613,7 +613,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 14,
+      "radius": 11,
       "state": {
         "level": "13"
       }
@@ -621,7 +621,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 15,
+      "radius": 12,
       "state": {
         "level": "14"
       }
@@ -629,7 +629,7 @@
     {
       "fluid": "minecraft:lava",
       "color": "#lava_weight_average_color",
-      "radius": 15,
+      "radius": 12,
       "state": {
         "level": "15"
       }
@@ -642,27 +642,27 @@
     {
       "block": "minecraft:torch",
       "color": "#torch_weight_average_color",
-      "radius": 13
+      "radius": 10
     },
     {
       "block": "minecraft:wall_torch",
       "color": "#wall_torch_weight_average_color",
-      "radius": 13
+      "radius": 10
     },
     {
       "block": "minecraft:fire",
       "color": "#fire_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "block": "minecraft:soul_fire",
       "color": "#soul_fire_weight_average_color",
-      "radius": 9
+      "radius": 7
     },
     {
       "block": "minecraft:furnace",
       "color": "#furnace_weight_average_color",
-      "radius": 13,
+      "radius": 10,
       "state": {
         "lit": "true"
       }
@@ -670,7 +670,7 @@
     {
       "block": "minecraft:redstone_ore",
       "color": "#redstone_ore_weight_average_color",
-      "radius": 9,
+      "radius": 7,
       "state": {
         "lit": "true"
       }
@@ -678,7 +678,7 @@
     {
       "block": "minecraft:deepslate_redstone_ore",
       "color": "#deepslate_redstone_ore_weight_average_color",
-      "radius": 9,
+      "radius": 7,
       "state": {
         "lit": "true"
       }
@@ -686,7 +686,7 @@
     {
       "block": "minecraft:redstone_torch",
       "color": "#redstone_torch_weight_average_color",
-      "radius": 7,
+      "radius": 5,
       "state": {
         "lit": "true"
       }
@@ -694,7 +694,7 @@
     {
       "block": "minecraft:redstone_wall_torch",
       "color": "#redstone_wall_torch_weight_average_color",
-      "radius": 7,
+      "radius": 5,
       "state": {
         "lit": "true"
       }
@@ -702,32 +702,32 @@
     {
       "block": "minecraft:soul_torch",
       "color": "#soul_torch_weight_average_color",
-      "radius": 9
+      "radius": 7
     },
     {
       "block": "minecraft:soul_wall_torch",
       "color": "#soul_wall_torch_weight_average_color",
-      "radius": 9
+      "radius": 7
     },
     {
       "block": "minecraft:glowstone",
       "color": "#glowstone_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "block": "minecraft:nether_portal",
       "color": "#nether_portal_weight_average_color",
-      "radius": 11
+      "radius": 8
     },
     {
       "block": "minecraft:jack_o_lantern",
       "color": "#jack_o_lantern_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "block": "minecraft:enchanting_table",
       "color": "#enchanting_table_weight_average_color",
-      "radius": 6
+      "radius": 5
     },
     {
       "block": "minecraft:brewing_stand",
@@ -737,12 +737,12 @@
     {
       "block": "minecraft:lava_cauldron",
       "color": "#lava_cauldron_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "block": "minecraft:end_portal",
       "color": "#end_portal_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "block": "minecraft:end_portal_frame",
@@ -757,7 +757,7 @@
     {
       "block": "minecraft:redstone_lamp",
       "color": "#redstone_lamp_weight_average_color",
-      "radius": 14,
+      "radius": 11,
       "state": {
         "lit": "true"
       }
@@ -765,12 +765,12 @@
     {
       "block": "minecraft:ender_chest",
       "color": "#ender_chest_weight_average_color",
-      "radius": 8
+      "radius": 6
     },
     {
       "block": "minecraft:beacon",
       "color": "#beacon_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "block": "minecraft:light",
@@ -791,7 +791,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 4,
+      "radius": 3,
       "state": {
         "level": "3"
       }
@@ -799,7 +799,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 5,
+      "radius": 4,
       "state": {
         "level": "4"
       }
@@ -807,7 +807,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 6,
+      "radius": 5,
       "state": {
         "level": "5"
       }
@@ -815,7 +815,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 7,
+      "radius": 5,
       "state": {
         "level": "6"
       }
@@ -823,7 +823,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 8,
+      "radius": 6,
       "state": {
         "level": "7"
       }
@@ -831,7 +831,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 9,
+      "radius": 7,
       "state": {
         "level": "8"
       }
@@ -839,7 +839,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 10,
+      "radius": 8,
       "state": {
         "level": "9"
       }
@@ -847,7 +847,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 11,
+      "radius": 8,
       "state": {
         "level": "10"
       }
@@ -855,7 +855,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 12,
+      "radius": 9,
       "state": {
         "level": "11"
       }
@@ -863,7 +863,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 13,
+      "radius": 10,
       "state": {
         "level": "12"
       }
@@ -871,7 +871,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 14,
+      "radius": 11,
       "state": {
         "level": "13"
       }
@@ -879,7 +879,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 15,
+      "radius": 12,
       "state": {
         "level": "14"
       }
@@ -887,7 +887,7 @@
     {
       "block": "minecraft:light",
       "color": "#light_weight_average_color",
-      "radius": 15,
+      "radius": 12,
       "state": {
         "level": "15"
       }
@@ -895,17 +895,17 @@
     {
       "block": "minecraft:sea_lantern",
       "color": "#sea_lantern_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "block": "minecraft:end_rod",
       "color": "#end_rod_weight_average_color",
-      "radius": 13
+      "radius": 10
     },
     {
       "block": "minecraft:end_gateway",
       "color": "#end_gateway_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "block": "minecraft:magma_block",
@@ -915,17 +915,17 @@
     {
       "block": "minecraft:sea_pickle",
       "color": "#sea_pickle_weight_average_color",
-      "radius": 6
+      "radius": 5
     },
     {
       "block": "minecraft:conduit",
       "color": "#conduit_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "block": "minecraft:smoker",
       "color": "#smoker_weight_average_color",
-      "radius": 13,
+      "radius": 10,
       "state": {
         "lit": "true"
       }
@@ -933,7 +933,7 @@
     {
       "block": "minecraft:blast_furnace",
       "color": "#blast_furnace_weight_average_color",
-      "radius": 13,
+      "radius": 10,
       "state": {
         "lit": "true"
       }
@@ -941,17 +941,17 @@
     {
       "block": "minecraft:lantern",
       "color": "#lantern_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "block": "minecraft:soul_lantern",
       "color": "#soul_lantern_weight_average_color",
-      "radius": 9
+      "radius": 7
     },
     {
       "block": "minecraft:campfire",
       "color": "#campfire_weight_average_color",
-      "radius": 15,
+      "radius": 12,
       "state": {
         "lit": "true"
       }
@@ -959,7 +959,7 @@
     {
       "block": "minecraft:soul_campfire",
       "color": "#soul_campfire_weight_average_color",
-      "radius": 9,
+      "radius": 7,
       "state": {
         "lit": "true"
       }
@@ -967,12 +967,12 @@
     {
       "block": "minecraft:shroomlight",
       "color": "#shroomlight_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "block": "minecraft:crying_obsidian",
       "color": "#crying_obsidian_weight_average_color",
-      "radius": 10
+      "radius": 8
     },
     {
       "block": "minecraft:candle",
@@ -1249,7 +1249,7 @@
     {
       "block": "minecraft:amethyst_cluster",
       "color": "#amethyst_cluster_weight_average_color",
-      "radius": 4
+      "radius": 3
     },
     {
       "block": "minecraft:large_amethyst_bud",
@@ -1279,22 +1279,22 @@
     {
       "block": "minecraft:sculk_catalyst",
       "color": "#sculk_catalyst_weight_average_color",
-      "radius": 6
+      "radius": 5
     },
     {
       "block": "minecraft:ochre_froglight",
       "color": "#ochre_froglight_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "block": "minecraft:verdant_froglight",
       "color": "#verdant_froglight_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "block": "minecraft:pearlescent_froglight",
       "color": "#pearlescent_froglight_weight_average_color",
-      "radius": 14
+      "radius": 11
     }
   ],
   "Bloom": [
@@ -1872,47 +1872,47 @@
     {
       "item_id": "minecraft:torch",
       "color": "#torch_weight_average_color",
-      "radius": 13
+      "radius": 10
     },
     {
       "item_id": "minecraft:furnace",
       "color": "#furnace_weight_average_color",
-      "radius": 13
+      "radius": 10
     },
     {
       "item_id": "minecraft:redstone_ore",
       "color": "#redstone_ore_weight_average_color",
-      "radius": 9
+      "radius": 7
     },
     {
       "item_id": "minecraft:deepslate_redstone_ore",
       "color": "#deepslate_redstone_ore_weight_average_color",
-      "radius": 9
+      "radius": 7
     },
     {
       "item_id": "minecraft:redstone_torch",
       "color": "#redstone_torch_weight_average_color",
-      "radius": 7
+      "radius": 5
     },
     {
       "item_id": "minecraft:soul_torch",
       "color": "#soul_torch_weight_average_color",
-      "radius": 9
+      "radius": 7
     },
     {
       "item_id": "minecraft:glowstone",
       "color": "#glowstone_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "item_id": "minecraft:jack_o_lantern",
       "color": "#jack_o_lantern_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "item_id": "minecraft:enchanting_table",
       "color": "#enchanting_table_weight_average_color",
-      "radius": 6
+      "radius": 5
     },
     {
       "item_id": "minecraft:brewing_stand",
@@ -1932,17 +1932,17 @@
     {
       "item_id": "minecraft:redstone_lamp",
       "color": "#redstone_lamp_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "item_id": "minecraft:ender_chest",
       "color": "#ender_chest_weight_average_color",
-      "radius": 8
+      "radius": 6
     },
     {
       "item_id": "minecraft:beacon",
       "color": "#beacon_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "item_id": "minecraft:light",
@@ -1952,12 +1952,12 @@
     {
       "item_id": "minecraft:sea_lantern",
       "color": "#sea_lantern_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "item_id": "minecraft:end_rod",
       "color": "#end_rod_weight_average_color",
-      "radius": 13
+      "radius": 10
     },
     {
       "item_id": "minecraft:magma_block",
@@ -1967,52 +1967,52 @@
     {
       "item_id": "minecraft:sea_pickle",
       "color": "#sea_pickle_weight_average_color",
-      "radius": 6
+      "radius": 5
     },
     {
       "item_id": "minecraft:conduit",
       "color": "#conduit_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "item_id": "minecraft:smoker",
       "color": "#smoker_weight_average_color",
-      "radius": 13
+      "radius": 10
     },
     {
       "item_id": "minecraft:blast_furnace",
       "color": "#blast_furnace_weight_average_color",
-      "radius": 13
+      "radius": 10
     },
     {
       "item_id": "minecraft:lantern",
       "color": "#lantern_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "item_id": "minecraft:soul_lantern",
       "color": "#soul_lantern_weight_average_color",
-      "radius": 9
+      "radius": 7
     },
     {
       "item_id": "minecraft:campfire",
       "color": "#campfire_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "item_id": "minecraft:soul_campfire",
       "color": "#soul_campfire_weight_average_color",
-      "radius": 9
+      "radius": 7
     },
     {
       "item_id": "minecraft:shroomlight",
       "color": "#shroomlight_weight_average_color",
-      "radius": 15
+      "radius": 12
     },
     {
       "item_id": "minecraft:crying_obsidian",
       "color": "#crying_obsidian_weight_average_color",
-      "radius": 10
+      "radius": 8
     },
     {
       "item_id": "minecraft:candle",
@@ -2102,7 +2102,7 @@
     {
       "item_id": "minecraft:amethyst_cluster",
       "color": "#amethyst_cluster_weight_average_color",
-      "radius": 4
+      "radius": 3
     },
     {
       "item_id": "minecraft:large_amethyst_bud",
@@ -2132,22 +2132,22 @@
     {
       "item_id": "minecraft:sculk_catalyst",
       "color": "#sculk_catalyst_weight_average_color",
-      "radius": 6
+      "radius": 5
     },
     {
       "item_id": "minecraft:ochre_froglight",
       "color": "#ochre_froglight_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "item_id": "minecraft:verdant_froglight",
       "color": "#verdant_froglight_weight_average_color",
-      "radius": 14
+      "radius": 11
     },
     {
       "item_id": "minecraft:pearlescent_froglight",
       "color": "#pearlescent_froglight_weight_average_color",
-      "radius": 14
+      "radius": 11
     }
   ]
 }

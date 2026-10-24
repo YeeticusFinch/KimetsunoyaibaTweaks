@@ -635,6 +635,16 @@ public class ModEntities {
                 .updateInterval(1)
                 .build("bench_seat"));
 
+    /** Persistent, non-physical entity used as a named structure location marker. */
+    public static final RegistryObject<EntityType<StructureMarkerEntity>> STRUCTURE_MARKER =
+        ENTITY_TYPES.register("structure_marker",
+            () -> EntityType.Builder.of(StructureMarkerEntity::new, MobCategory.MISC)
+                .sized(0.01F, 0.01F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .fireImmune()
+                .build("structure_marker"));
+
     /**
      * Register entity types to the mod event bus
      */

@@ -839,5 +839,11 @@
   "block.kimetsunoyaibamultiplayer.bench_green": "Green Bench",
   "block.kimetsunoyaibamultiplayer.bench_red": "Red Bench",
   "block.kimetsunoyaibamultiplayer.bench_black": "Black Bench",
-  "entity.kimetsunoyaibamultiplayer.bench_seat": "Bench"
+  "entity.kimetsunoyaibamultiplayer.bench_seat": "Bench",
+  "item.kimetsunoyaibamultiplayer.structure_marker": "Structure Marker",
+  "entity.kimetsunoyaibamultiplayer.structure_marker": "Structure Marker",
+  "menu.kimetsunoyaibamultiplayer.structure_marker": "Structure Marker",
+  "menu.kimetsunoyaibamultiplayer.structure_marker.id": "ID",
+  "menu.kimetsunoyaibamultiplayer.structure_marker.save": "Save",
+  "menu.kimetsunoyaibamultiplayer.structure_marker.delete": "Delete"
 }

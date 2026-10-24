@@ -227,7 +227,7 @@ public class BreathingFormAttackGoal extends Goal {
             formId = forms.get(this.entity.getRandom().nextInt(forms.size()));
         }
 
-        BreathingFormAnnouncementHelper.announceBaseModForm(this.entity, formId);
+        BreathingFormAnnouncementHelper.announceBaseModSwordForm(this.entity, swordStack, formId);
         BaseModFormExecutionHelper.executeBaseModForm(this.entity, this.entity.level(), formId);
         this.entity.setBreathingFormCooldown(Math.max(minCooldownTicks, 60));
     }

@@ -29,6 +29,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerP
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WebTraversalInputPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.KyogaiGravityArrowPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.TrainingGourdActionPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateStructureMarkerPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DeleteStructureMarkerPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -504,6 +506,20 @@ public class ModNetworking {
                 .decoder(TrainingGourdActionPacket::new)
                 .encoder(TrainingGourdActionPacket::toBytes)
                 .consumerMainThread(TrainingGourdActionPacket::handle)
+                .add();
+
+        int updateStructureMarkerPacketId = id();
+        net.messageBuilder(UpdateStructureMarkerPacket.class, updateStructureMarkerPacketId)
+                .decoder(UpdateStructureMarkerPacket::new)
+                .encoder(UpdateStructureMarkerPacket::toBytes)
+                .consumerMainThread(UpdateStructureMarkerPacket::handle)
+                .add();
+
+        int deleteStructureMarkerPacketId = id();
+        net.messageBuilder(DeleteStructureMarkerPacket.class, deleteStructureMarkerPacketId)
+                .decoder(DeleteStructureMarkerPacket::new)
+                .encoder(DeleteStructureMarkerPacket::toBytes)
+                .consumerMainThread(DeleteStructureMarkerPacket::handle)
                 .add();
     }
 

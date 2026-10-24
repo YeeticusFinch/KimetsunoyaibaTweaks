@@ -27,6 +27,9 @@ public final class ModMenus {
     public static final RegistryObject<MenuType<TrainingGourdMenu>> TRAINING_GOURD =
         MENUS.register("training_gourd", () -> IForgeMenuType.create(TrainingGourdMenu::clientMenu));
 
+    public static final RegistryObject<MenuType<StructureMarkerMenu>> STRUCTURE_MARKER =
+        MENUS.register("structure_marker", () -> IForgeMenuType.create(StructureMarkerMenu::new));
+
     private ModMenus() {
     }
 

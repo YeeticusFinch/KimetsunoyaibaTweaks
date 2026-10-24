@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
@@ -50,6 +51,30 @@ public class SidewaysLanternBlock extends Block {
     }
 
     @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos,
+                        BlockState oldState, boolean movedByPiston) {
+        super.onPlace(state, level, pos, oldState, movedByPiston);
+        if (!state.is(oldState.getBlock())) {
+            level.getChunkSource().getLightEngine().checkBlock(pos);
+            if (level.isClientSide) {
+                level.sendBlockUpdated(pos, oldState, state, Block.UPDATE_ALL);
+            }
+        }
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos,
+                         BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) {
+            level.getChunkSource().getLightEngine().checkBlock(pos);
+            if (level.isClientSide) {
+                level.sendBlockUpdated(pos, state, newState, Block.UPDATE_ALL);
+            }
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
+    }
+
+    @Override
     public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
         Direction face = state.getValue(FACING);
         BlockPos supportPos = pos.relative(face.getOpposite());
@@ -78,12 +103,17 @@ public class SidewaysLanternBlock extends Block {
 
     @Override
     public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
-        return shapeFor(state.getValue(FACING));
+        return Shapes.empty();
     }
 
     @Override
     public boolean useShapeForLightOcclusion(BlockState state) {
-        return true;
+        return false;
+    }
+
+    @Override
+    public int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
+        return 0;
     }
 
     @Override

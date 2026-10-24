@@ -68,6 +68,7 @@ public class BreathesValueSyncPacket {
 
         // Update the cached breathes value in BreathingFormTracker
         // We'll store it in the player's current held sword
+        player.getPersistentData().putDouble("breathes", breathesValue);
         if (!player.getMainHandItem().isEmpty()) {
             com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker.updateForm(
                 playerUUID,
