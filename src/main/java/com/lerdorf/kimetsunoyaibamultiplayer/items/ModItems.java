@@ -256,6 +256,12 @@ public class ModItems {
             0xE9E8F5, 0xD7B9E8,
             new Item.Properties().stacksTo(64)));
 
+    public static final RegistryObject<Item> RUI_FATHER_SPAWN_EGG = ITEMS.register("rui_father_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.RUI_FATHER,
+            0x3B302D, 0xB9A18E,
+            new Item.Properties().stacksTo(64)));
+
     public static final RegistryObject<Item> MANTIS_DEMON_SPAWN_EGG = ITEMS.register("mantis_demon_spawn_egg",
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.MANTIS_DEMON,
@@ -882,6 +888,7 @@ public class ModItems {
                      DAUGHTER_SPAWN_EGG.get(),
                       MOTHER_SPAWN_EGG.get(),
                       RUI_SPAWN_EGG.get(),
+                       RUI_FATHER_SPAWN_EGG.get(),
                       MANTIS_DEMON_SPAWN_EGG.get(),
                       SIX_EYE_DEMON_SPAWN_EGG.get(),
                       DECORATIONAL_SILK_COCOON_SPAWN_EGG.get(),

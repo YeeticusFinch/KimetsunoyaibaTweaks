@@ -480,6 +480,14 @@ public class ModEntities {
                 .updateInterval(2)
                 .build("rui"));
 
+    public static final RegistryObject<EntityType<RuiFatherEntity>> RUI_FATHER =
+        ENTITY_TYPES.register("rui_father",
+            () -> EntityType.Builder.of(RuiFatherEntity::new, MobCategory.MONSTER)
+                .sized(1.1F, 3.0F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .build("rui_father"));
+
     public static final RegistryObject<EntityType<MantisDemonEntity>> MANTIS_DEMON =
         ENTITY_TYPES.register("mantis_demon",
             () -> EntityType.Builder.of(MantisDemonEntity::new, MobCategory.MONSTER)
@@ -685,6 +693,7 @@ public class ModEntities {
             event.put(DAUGHTER.get(), DaughterEntity.createAttributes().build());
             event.put(MOTHER.get(), MotherEntity.createAttributes().build());
             event.put(RUI.get(), RuiEntity.createAttributes().build());
+            event.put(RUI_FATHER.get(), RuiFatherEntity.createAttributes().build());
             event.put(MANTIS_DEMON.get(), MantisDemonEntity.createAttributes().build());
             event.put(SIX_EYE_DEMON.get(), SixEyeDemonEntity.createAttributes().build());
             event.put(SILK_RIBBON.get(), SilkRibbonEntity.createAttributes().build());

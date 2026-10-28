@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -17,6 +18,7 @@ public final class ConfigMenuScreen extends Screen {
 
     private final Screen parent;
     private final boolean configuredInstalled;
+    private Button enhancedCycleButton;
 
     public ConfigMenuScreen(Screen parent) {
         super(Component.literal("Config"));
@@ -32,6 +34,10 @@ public final class ConfigMenuScreen extends Screen {
 
         addRenderableWidget(Button.builder(Component.literal("Config Presets"), button ->
                 minecraft.setScreen(new ConfigPresetsScreen(this)))
+            .bounds(left + 35, buttonY, panelWidth() - 70, 24).build());
+        buttonY += 30;
+
+        enhancedCycleButton = addRenderableWidget(Button.builder(enhancedCycleButtonText(), button -> toggleEnhancedCycle())
             .bounds(left + 35, buttonY, panelWidth() - 70, 24).build());
         buttonY += 30;
 
@@ -77,6 +83,9 @@ public final class ConfigMenuScreen extends Screen {
                 ? "Choose a preset or edit a mod through Configured"
                 : "Install Configured to edit mod settings in-game"),
             width / 2, top + 44, 0xFFC8B9AC);
+        if (enhancedCycleButton != null) {
+            enhancedCycleButton.setMessage(enhancedCycleButtonText());
+        }
         super.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
@@ -102,7 +111,7 @@ public final class ConfigMenuScreen extends Screen {
     }
 
     private int panelHeight() {
-        int buttonCount = configuredInstalled ? 4 : 5;
+        int buttonCount = configuredInstalled ? 5 : 6;
         return 80 + buttonCount * 30;
     }
 
@@ -112,5 +121,16 @@ public final class ConfigMenuScreen extends Screen {
 
     private int panelTop() {
         return Math.max(8, (height - panelHeight()) / 2);
+    }
+
+    private Component enhancedCycleButtonText() {
+        boolean enabled = Config.isEnhancedFormCycleEnabled();
+        return Component.literal("Ability Cycle Wheel HUD: ")
+            .append(Component.literal(enabled ? "ON" : "OFF")
+                .withStyle(style -> style.withColor(enabled ? 0x55FF55 : 0xFF5555)));
+    }
+
+    private void toggleEnhancedCycle() {
+        Config.setEnhancedFormCycle(!Config.isEnhancedFormCycleEnabled());
     }
 }

@@ -31,6 +31,9 @@ public class ModParticles {
     public static final RegistryObject<SimpleParticleType> BLOOD_FLAME = PARTICLE_TYPES.register("blood_flame",
         () -> new SimpleParticleType(false));
 
+    public static final RegistryObject<SimpleParticleType> STRUCTURE_MARKER = PARTICLE_TYPES.register("structure_marker",
+        () -> new SimpleParticleType(false));
+
     @SuppressWarnings("deprecation")
     public static final RegistryObject<ParticleType<ImpactParticleOptions>> IMPACT = PARTICLE_TYPES.register("impact",
         () -> new ParticleType<ImpactParticleOptions>(false, ImpactParticleOptions.DESERIALIZER) {

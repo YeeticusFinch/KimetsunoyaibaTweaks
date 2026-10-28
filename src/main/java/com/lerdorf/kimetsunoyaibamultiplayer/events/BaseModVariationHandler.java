@@ -86,7 +86,9 @@ public class BaseModVariationHandler {
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player.getUUID());
         String currentFormName = data.getBaseModFormName();
         int variationIndex = data.getCurrentVariationIndex();
-        double selectedBreathes = data.getBaseModBreathesValue();
+        double selectedBreathes = Config.isEnhancedFormCycleEnabled()
+            ? data.getBaseModBreathesValue()
+            : player.getPersistentData().getDouble("breathes");
         if (selectedBreathes <= 0) {
             selectedBreathes = player.getPersistentData().getDouble("breathes");
         }
@@ -112,19 +114,21 @@ public class BaseModVariationHandler {
         }
 
         if (variationIndex == 0) {
-            // Selection feedback is local; announce only when the form is actually used.
-            int formId = (int) selectedBreathes;
-            if (player instanceof ServerPlayer serverPlayer && formId > 0) {
-                ModNetworking.sendToPlayer(new BreathesValueSyncPacket(player.getUUID(), formId), serverPlayer);
-                Component actionBar = BreathingFormAnnouncementHelper.getBaseModSwordFormDisplay(heldItem, formId);
-                serverPlayer.getServer().execute(() -> {
-                    if (serverPlayer.isAlive()) {
-                        serverPlayer.displayClientMessage(actionBar, true);
-                    }
-                });
+            if (Config.isEnhancedFormCycleEnabled()) {
+                // Selection feedback is local; announce only when the form is actually used.
+                int formId = (int) selectedBreathes;
+                if (player instanceof ServerPlayer serverPlayer && formId > 0) {
+                    ModNetworking.sendToPlayer(new BreathesValueSyncPacket(player.getUUID(), formId), serverPlayer);
+                    Component actionBar = BreathingFormAnnouncementHelper.getBaseModSwordFormDisplay(heldItem, formId);
+                    serverPlayer.getServer().execute(() -> {
+                        if (serverPlayer.isAlive()) {
+                            serverPlayer.displayClientMessage(actionBar, true);
+                        }
+                    });
+                }
+                BreathingFormAnnouncementHelper.announceBaseModSwordForm(
+                    player, heldItem, formId);
             }
-            BreathingFormAnnouncementHelper.announceBaseModSwordForm(
-                player, heldItem, formId);
             return; // Base form, no variation - let base mod handle it
         }
 

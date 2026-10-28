@@ -1,14 +1,25 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.util;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utility class for detecting current breathing technique and form information.
  * Works with both single-style and multi-style nichirin swords.
  */
 public class BreathingInfoDetector {
+    private static final Pattern FORM_LABEL = Pattern.compile(
+        "^(.*?)(?:(\\d+)(?:st|nd|rd|th)|(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|"
+            + "eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|eighteenth|nineteenth|twentieth))"
+            + "\\s+(form|fang)\\b(.*)$",
+        Pattern.CASE_INSENSITIVE);
+    private static final Pattern COLOR_CODE = Pattern.compile("§[0-9a-f]", Pattern.CASE_INSENSITIVE);
     private static final java.util.Set<net.minecraft.resources.ResourceLocation> BAMBOO_SWORD_IDS = java.util.Set.of(
         net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "bamboo_sword"),
         net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "nichirinsword_bamboo"),
@@ -41,7 +52,10 @@ public class BreathingInfoDetector {
             return getOurModBreathingInfo(player, heldSword, breathingSword);
         }
 
-        if (BaseModSwordFormRegistry.isSupported(heldSword)) {
+        // The enhanced selector owns the registry-backed base-sword display path.
+        // When it is disabled, preserve the base mod/chat-backed path so the base
+        // mod remains the sole source of form names and colors.
+        if (Config.isEnhancedFormCycleEnabled() && BaseModSwordFormRegistry.isSupported(heldSword)) {
             return getBaseModSwordInfo(player, heldSword);
         }
 
@@ -70,13 +84,18 @@ public class BreathingInfoDetector {
                 // Parse the cached display text to create BreathingInfo
                 // Keep the original text WITH color codes for display
                 BreathingInfo info = parseDisplayText(cachedText);
+                if (info == null) {
+                    return getBreathingInfoFromNBT(player, heldSword);
+                }
 
                 // Use the best-known breathes value (synced from server) for variation decoding
                 double cachedBreathes = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
                     .getCachedForm(player.getUUID(), heldSword);
-                double breathesValue = cachedBreathes > 0.0
-                    ? cachedBreathes
-                    : player.getPersistentData().getDouble("breathes");
+                double breathesValue = !Config.isEnhancedFormCycleEnabled()
+                    ? info.fullBreathesValue
+                    : cachedBreathes > 0.0
+                        ? cachedBreathes
+                        : player.getPersistentData().getDouble("breathes");
 
                 if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
                     com.lerdorf.kimetsunoyaibamultiplayer.Log.debugEvery("breathing-cache-values:" + player.getUUID(), 2000,
@@ -85,10 +104,12 @@ public class BreathingInfoDetector {
                 }
 
                 int formIdFromBreathes = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(breathesValue);
-                String baseFormText = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
-                    .getDisplayTextForForm(player.getUUID(), formIdFromBreathes);
+                String baseFormText = Config.isEnhancedFormCycleEnabled()
+                    ? com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
+                        .getDisplayTextForForm(player.getUUID(), formIdFromBreathes)
+                    : info.originalColoredText;
 
-                if (info != null && breathesValue > 0) {
+                if (breathesValue > 0) {
                     int formId = formIdFromBreathes;
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData pdata =
                         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player);
@@ -257,7 +278,7 @@ public class BreathingInfoDetector {
         String[] parts = cleanText.split(" - ");
         if (parts.length != 2) {
             // Try alternate separators
-            parts = cleanText.split(":");
+            parts = cleanText.split(":", 2);
             if (parts.length < 2) {
                 return null;
             }
@@ -727,14 +748,150 @@ public class BreathingInfoDetector {
          */
         public String getColoredDisplay() {
             if (originalColoredText != null && !originalColoredText.isEmpty()) {
-                return originalColoredText.replace(" - ", " ");
+                return canonicalizeDisplay(originalColoredText);
             }
-            return styleName + " " + formName; // Plain text fallback
+            return styleName + " " + formName;
         }
 
         @Override
         public String toString() {
             return styleName + " " + formName;
+        }
+
+        private String canonicalizeDisplay(String displayText) {
+            String clean = displayText.replaceAll("§.", "").trim();
+            String style = styleName == null ? "" : styleName.trim();
+            String form = formName == null ? "" : formName.trim();
+            int number = formNumber;
+
+            Matcher styleMatch = FORM_LABEL.matcher(style);
+            if (styleMatch.matches() && !styleMatch.group(1).trim().isEmpty()) {
+                String prefix = styleMatch.group(1) != null ? styleMatch.group(1) : styleMatch.group(3);
+                style = prefix == null ? "" : prefix.trim();
+            }
+
+            Matcher formMatch = FORM_LABEL.matcher(form);
+            String formType = "Form";
+            String suffix = form;
+            if (formMatch.matches()) {
+                String writtenNumber = formMatch.group(3);
+                if (formMatch.group(2) != null) {
+                    number = Integer.parseInt(formMatch.group(2));
+                } else if (writtenNumber != null) {
+                    number = ordinalNumber(writtenNumber);
+                }
+                formType = formMatch.group(4);
+                suffix = formMatch.group(5).trim();
+                if (suffix.startsWith(":")) {
+                    suffix = suffix.substring(1).trim();
+                }
+            } else {
+                int colon = form.indexOf(':');
+                if (colon >= 0) {
+                    suffix = form.substring(colon + 1).trim();
+                }
+            }
+
+            if (number <= 0 || style.isEmpty()) {
+                return clean.replace(" - ", " ");
+            }
+
+            Matcher sourceLabel = FORM_LABEL.matcher(clean);
+            int sourceFormStart = sourceLabel.matches()
+                ? sourceLabel.start(sourceLabel.group(2) != null ? 2 : 3) : -1;
+            int sourceSuffixStart = sourceFormStart >= 0 ? clean.indexOf(':', sourceFormStart) + 1 : -1;
+            if (sourceSuffixStart > 0) {
+                while (sourceSuffixStart < clean.length() && Character.isWhitespace(clean.charAt(sourceSuffixStart))) {
+                    sourceSuffixStart++;
+                }
+            }
+
+            StringBuilder result = new StringBuilder(style)
+                .insert(0, colorAt(displayText, 0))
+                .append(' ');
+            String activeColor = colorAt(displayText, 0);
+            activeColor = appendColorTransition(result, activeColor,
+                sourceFormStart >= 0 ? colorAt(displayText, sourceFormStart) : activeColor);
+            result.append(ordinal(number))
+                .append(' ')
+                .append(Character.toUpperCase(formType.charAt(0)))
+                .append(formType.substring(1).toLowerCase(Locale.ROOT));
+            if (!suffix.isEmpty()) {
+                result.append(": ");
+                activeColor = appendColorTransition(result, activeColor,
+                    sourceSuffixStart >= 0 ? colorAt(displayText, sourceSuffixStart) : activeColor);
+                result.append(suffix);
+            }
+
+            return result.toString();
+        }
+
+        private static int ordinalNumber(String value) {
+            return switch (value.toLowerCase(Locale.ROOT)) {
+                case "first" -> 1;
+                case "second" -> 2;
+                case "third" -> 3;
+                case "fourth" -> 4;
+                case "fifth" -> 5;
+                case "sixth" -> 6;
+                case "seventh" -> 7;
+                case "eighth" -> 8;
+                case "ninth" -> 9;
+                case "tenth" -> 10;
+                case "eleventh" -> 11;
+                case "twelfth" -> 12;
+                case "thirteenth" -> 13;
+                case "fourteenth" -> 14;
+                case "fifteenth" -> 15;
+                case "sixteenth" -> 16;
+                case "seventeenth" -> 17;
+                case "eighteenth" -> 18;
+                case "nineteenth" -> 19;
+                case "twentieth" -> 20;
+                default -> 0;
+            };
+        }
+
+        private static String ordinal(int number) {
+            int mod100 = number % 100;
+            if (mod100 >= 11 && mod100 <= 13) {
+                return number + "th";
+            }
+            return number + switch (number % 10) {
+                case 1 -> "st";
+                case 2 -> "nd";
+                case 3 -> "rd";
+                default -> "th";
+            };
+        }
+
+        private static String colorAt(String text, int visibleIndex) {
+            String activeColor = "";
+            int visibleCharacters = 0;
+            for (int i = 0; i < text.length(); i++) {
+                if (text.charAt(i) == '§' && i + 1 < text.length()) {
+                    String code = text.substring(i, i + 2);
+                    if (COLOR_CODE.matcher(code).matches()) {
+                        activeColor = code;
+                    } else if (code.equalsIgnoreCase("§r")) {
+                        activeColor = "";
+                    }
+                    i++;
+                } else {
+                    if (visibleCharacters++ >= visibleIndex) {
+                        return activeColor;
+                    }
+                }
+            }
+            return activeColor;
+        }
+
+        private static String appendColorTransition(StringBuilder result, String activeColor, String targetColor) {
+            if (activeColor.equalsIgnoreCase(targetColor)) {
+                return activeColor;
+            }
+            result.append(targetColor.isEmpty() ? "§r" : targetColor);
+            return targetColor;
         }
     }
 }

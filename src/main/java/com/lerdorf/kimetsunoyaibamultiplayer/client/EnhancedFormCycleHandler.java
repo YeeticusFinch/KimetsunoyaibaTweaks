@@ -98,7 +98,7 @@ public final class EnhancedFormCycleHandler {
     }
 
     public static boolean handleKeyInput(InputEvent.Key event) {
-        if (!Config.enhancedFormCycle || MC.player == null) {
+        if (!Config.isEnhancedFormCycleEnabled() || MC.player == null) {
             return false;
         }
 
@@ -137,7 +137,7 @@ public final class EnhancedFormCycleHandler {
     }
 
     public static boolean handleMouseInput(InputEvent.MouseButton event) {
-        if (!Config.enhancedFormCycle || MC.player == null) {
+        if (!Config.isEnhancedFormCycleEnabled() || MC.player == null) {
             return false;
         }
 
@@ -160,7 +160,7 @@ public final class EnhancedFormCycleHandler {
     }
 
     public static boolean handleScroll(InputEvent.MouseScrollingEvent event) {
-        if (!Config.enhancedFormCycle || (!active && !awaitingCustomData)) {
+        if (!Config.isEnhancedFormCycleEnabled() || (!active && !awaitingCustomData)) {
             return false;
         }
 
@@ -176,7 +176,7 @@ public final class EnhancedFormCycleHandler {
     }
 
     public static void onClientTickStart(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.START || !Config.enhancedFormCycle
+        if (event.phase != TickEvent.Phase.START || !Config.isEnhancedFormCycleEnabled()
             || (!active && !awaitingCustomData)) {
             return;
         }
@@ -208,7 +208,7 @@ public final class EnhancedFormCycleHandler {
     }
 
     public static void tick() {
-        if (!Config.enhancedFormCycle) {
+        if (!Config.isEnhancedFormCycleEnabled()) {
             cancelSelection();
             return;
         }
@@ -256,8 +256,10 @@ public final class EnhancedFormCycleHandler {
         }
 
         GuiGraphics guiGraphics = event.getGuiGraphics();
-        int centerX = MC.getWindow().getGuiScaledWidth() / 2;
-        int centerY = MC.getWindow().getGuiScaledHeight() / 2;
+        int centerX = MC.getWindow().getGuiScaledWidth() / 2
+            + (int) Math.round(Config.enhancedFormCycleHudOffsetX);
+        int centerY = MC.getWindow().getGuiScaledHeight() / 2
+            + (int) Math.round(Config.enhancedFormCycleHudOffsetY);
         float openingProgress = 1.0F - openingTicks / (float) OPEN_ANIMATION_TICKS;
         openingProgress = Mth.clamp(openingProgress, 0.0F, 1.0F);
         float easedProgress = 1.0F - (1.0F - openingProgress) * (1.0F - openingProgress)

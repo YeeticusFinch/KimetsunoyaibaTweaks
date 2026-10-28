@@ -28,7 +28,7 @@ public class RequestEnhancedFormCycleDataPacket {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
-            if (!Config.enhancedFormCycle || player == null || !(player.level() instanceof ServerLevel serverLevel)
+            if (!Config.isEnhancedFormCycleEnabled() || player == null || !(player.level() instanceof ServerLevel serverLevel)
                 || !(player.getMainHandItem().getItem() instanceof CustomDemonArtItem)) {
                 return;
             }

@@ -43,7 +43,7 @@ public abstract class BaseModCycleKeyMappingMixin {
     }
 
     private static boolean kimetsu$shouldSuppressNativeCycle() {
-        if (!Config.enhancedFormCycle || Minecraft.getInstance().player == null) {
+        if (!Config.isEnhancedFormCycleEnabled() || Minecraft.getInstance().player == null) {
             return false;
         }
 

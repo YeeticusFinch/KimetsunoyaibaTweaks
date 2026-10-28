@@ -65,6 +65,8 @@ Player sheath position is selected per player in the meditation menu Cosmetics t
 | `common.enhanced-form-cycle-hud.show-direction-line` | Show the line from the crosshair to the mouse/camera movement direction. Default: true |
 | `common.enhanced-form-cycle-hud.number-font-size` | Font scale for the large form numbers on the wheel. Default: 2.1 |
 | `common.enhanced-form-cycle-hud.form-name-font-size` | Font scale for form names on the wheel. Default: 1.12 |
+| `common.enhanced-form-cycle-hud.offset-x` | Horizontal HUD offset from screen center in GUI-scaled pixels. Default: 0 |
+| `common.enhanced-form-cycle-hud.offset-y` | Vertical HUD offset from screen center in GUI-scaled pixels. Default: 0 |
 | `common.enable-sword-clashing` | Enable sword clashing system where attacks can be deflected or mitigated |
 | `common.enable-nichirin-sprint-animation` | Enable custom sprint animation when holding a nichirin sword |
 | `common.disable-base-mod-sword-swing-particles` | Disable sword swing particles from the base KimetsunoYaiba mod (left-click particles only, does not affect breathing form or right-click particles) |

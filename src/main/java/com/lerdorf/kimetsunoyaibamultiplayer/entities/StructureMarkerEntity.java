@@ -92,7 +92,9 @@ public class StructureMarkerEntity extends Entity {
 
     @Override
     public boolean isPickable() {
-        return true;
+        // The client supplies a marker-only interaction ray so this entity never
+        // wins normal block targeting or prevents block placement.
+        return false;
     }
 
     @Override
@@ -118,11 +120,6 @@ public class StructureMarkerEntity extends Entity {
     }
 
     @Override
-    public float getPickRadius() {
-        return 0.5F;
-    }
-
-    @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putString("MarkerId", getMarkerId());
     }
@@ -140,5 +137,10 @@ public class StructureMarkerEntity extends Entity {
     @Override
     public Component getName() {
         return Component.translatable("entity.kimetsunoyaibamultiplayer.structure_marker");
+    }
+
+    @Override
+    public float getNameTagOffsetY() {
+        return 1.0F;
     }
 }

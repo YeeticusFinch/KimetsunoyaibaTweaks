@@ -100,6 +100,14 @@ public class Config
             .comment("Font scale for form names on the wheel. Default: 1.12")
             .defineInRange("form-name-font-size", 1.12, 0.25, 4.0);
 
+    private static final ForgeConfigSpec.DoubleValue ENHANCED_FORM_CYCLE_HUD_OFFSET_X = BUILDER
+            .comment("Horizontal HUD offset from screen center. Default: 0")
+            .defineInRange("offset-x", 0.0, -1_000_000.0, 1_000_000.0);
+
+    private static final ForgeConfigSpec.DoubleValue ENHANCED_FORM_CYCLE_HUD_OFFSET_Y = BUILDER
+            .comment("Vertical HUD offset from screen center. Default: 0")
+            .defineInRange("offset-y", 0.0, -1_000_000.0, 1_000_000.0);
+
     static {
         BUILDER.pop();
     }
@@ -219,6 +227,8 @@ public class Config
     public static boolean enhancedFormCycleHudShowDirectionLine;
     public static double enhancedFormCycleHudNumberFontSize;
     public static double enhancedFormCycleHudNameFontSize;
+    public static double enhancedFormCycleHudOffsetX;
+    public static double enhancedFormCycleHudOffsetY;
     public static boolean enableSwordClashing;
     public static boolean enableNichirinSprintAnimation;
     public static boolean disableBaseModSwordSwingParticles;
@@ -235,6 +245,24 @@ public class Config
     public static double kanrojiEntityHandOffsetX;
     public static double kanrojiEntityHandOffsetY;
     public static double kanrojiEntityHandOffsetZ;
+
+    /**
+     * Reads the persisted master switch and keeps the runtime mirror synchronized.
+     */
+    public static boolean isEnhancedFormCycleEnabled() {
+        enhancedFormCycle = ENHANCED_FORM_CYCLE.get();
+        return enhancedFormCycle;
+    }
+
+    /**
+     * Updates and persists the master switch used by both the wheel and base cycling.
+     */
+    public static boolean setEnhancedFormCycle(boolean enabled) {
+        ENHANCED_FORM_CYCLE.set(enabled);
+        ENHANCED_FORM_CYCLE.save();
+        SPEC.save();
+        return isEnhancedFormCycleEnabled();
+    }
 
     // First-person sword swing config
     public static boolean customFirstPersonSwingEnabled;
@@ -257,6 +285,9 @@ public class Config
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event)
     {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
         Log.debug("COMMON CONFIG LOADING...");
         logDebug = LOG_DEBUG.get();
         logWarning = LOG_WARNING.get();
@@ -279,6 +310,8 @@ public class Config
         enhancedFormCycleHudShowDirectionLine = ENHANCED_FORM_CYCLE_HUD_SHOW_DIRECTION_LINE.get();
         enhancedFormCycleHudNumberFontSize = ENHANCED_FORM_CYCLE_HUD_NUMBER_FONT_SIZE.get();
         enhancedFormCycleHudNameFontSize = ENHANCED_FORM_CYCLE_HUD_NAME_FONT_SIZE.get();
+        enhancedFormCycleHudOffsetX = ENHANCED_FORM_CYCLE_HUD_OFFSET_X.get();
+        enhancedFormCycleHudOffsetY = ENHANCED_FORM_CYCLE_HUD_OFFSET_Y.get();
         enableSwordClashing = ENABLE_SWORD_CLASHING.get();
         enableNichirinSprintAnimation = ENABLE_NICHIRIN_SPRINT_ANIMATION.get();
         disableBaseModSwordSwingParticles = DISABLE_BASE_MOD_SWORD_SWING_PARTICLES.get();
