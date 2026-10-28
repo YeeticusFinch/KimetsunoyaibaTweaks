@@ -449,6 +449,9 @@ public final class EnhancedFormCycleHandler {
             int color = form == null ? 0x55FFFF
                 : legacyColor(BaseModSwordFormRegistry.getColor(stack, formId), 0x55FFFF);
             int formNumber = Math.floorMod(formId, 100);
+            if (BaseModSwordFormRegistry.isZenitsuSword(stack)) {
+                formNumber = i + 1;
+            }
             result.add(new FormOption(formId, formNumber > 0 ? formNumber : i + 1,
                 shortFormName(fullName), color));
         }

@@ -87,7 +87,20 @@ public final class BaseModFormExecutionHelper {
             return false;
         }
 
-        heldItem.getOrCreateTag().putDouble("select", selectIndex);
+        var tag = heldItem.getOrCreateTag();
+        if (BaseModSwordFormRegistry.isTanjiroSword(heldItem)) {
+            if (BaseModSwordFormRegistry.isHinokamiSwitchForm(formId)) {
+                boolean enableHinokami = !tag.getBoolean("switch");
+                tag.putBoolean("switch", enableHinokami);
+                tag.putDouble("select", 0.0D);
+                formId = enableHinokami ? 201 : 601;
+            } else {
+                tag.putBoolean("switch", BaseModSwordFormRegistry.isHinokamiForm(formId));
+                tag.putDouble("select", selectIndex);
+            }
+        } else {
+            tag.putDouble("select", selectIndex);
+        }
         entity.getPersistentData().putBoolean("ChangeArt", false);
         entity.getPersistentData().putDouble("breathes", formId);
         return true;
@@ -123,11 +136,11 @@ public final class BaseModFormExecutionHelper {
             return;
         }
 
-        int runtimeFormId = mapToRuntimeFormId(formId);
+        int runtimeFormId = mapToRuntimeFormId(heldItem, formId);
         if (Config.logDebug && runtimeFormId != formId) {
             Log.debug("Mapped custom form ID {} -> base runtime form ID {}", formId, runtimeFormId);
         }
-        int selectIndex = resolveSelectIndex(runtimeFormId);
+        int selectIndex = resolveSelectIndex(heldItem, runtimeFormId);
         ItemStack executionStack = createExecutionStack(heldItem, runtimeFormId);
 
         heldItem.getOrCreateTag().putDouble("select", selectIndex);
@@ -190,7 +203,11 @@ public final class BaseModFormExecutionHelper {
      * Map our legacy/registry-facing form IDs to the base mod's runtime breathes IDs.
      * This keeps existing custom sword form lists stable while executing the correct base procedures.
      */
-    private static int mapToRuntimeFormId(int formId) {
+    private static int mapToRuntimeFormId(ItemStack heldItem, int formId) {
+        if (BaseModSwordFormRegistry.isSupported(heldItem)) {
+            return formId;
+        }
+
         // Stone Breathing: legacy 601+ maps to runtime 1601+
         if (formId >= 601 && formId <= 609) {
             return formId + 1000;
@@ -245,7 +262,14 @@ public final class BaseModFormExecutionHelper {
      * Convert a base-mod form ID to the base-mod "select" index for the held item.
      * Falls back to (formNumber - 1) when exact mapping is unknown.
      */
-    private static int resolveSelectIndex(int formId) {
+    private static int resolveSelectIndex(ItemStack heldItem, int formId) {
+        if (BaseModSwordFormRegistry.isSupported(heldItem)) {
+            int itemSelectIndex = BaseModSwordFormRegistry.getSelectIndex(heldItem, formId);
+            if (itemSelectIndex >= 0) {
+                return itemSelectIndex;
+            }
+        }
+
         int styleRange = (formId / 100) * 100;
 
         // Moon breathing has gaps in our exposed form list but base runtime select

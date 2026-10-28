@@ -86,12 +86,12 @@ public final class RuiBloodDemonArt {
         if (BloodDemonArtRegistry.isRegistered(ART_ID)) {
             return;
         }
-        KnYAPI.registerBloodDemonArt(ART_ID, "Blood Demon Art: Rui's Thread Manipulation", createTechnique());
+        KnYAPI.registerBloodDemonArt(ART_ID, "Blood Demon Art: Filukinesis", createTechnique());
     }
 
     private static BloodDemonArtTechnique createTechnique() {
         return new BloodDemonArtTechnique(
-            "Rui's Thread Manipulation",
+            "Filukinesis",
             List.of(
                 new BloodDemonArtForm(FORM_SILK_BARRAGE, "Silk Barrage",
                     "Fire crossing threads that form an X through the target area.", 6,

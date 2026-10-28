@@ -12,9 +12,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModBloodDemonArtFormRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
@@ -84,26 +82,25 @@ public class SelectFormPacket {
             return;
         }
 
+        int selectedFormId = BaseModSwordFormRegistry.getEffectiveSelectedFormId(stack, formId);
+        player.getInventory().setChanged();
+
         PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
-        data.setBaseModBreathesValue(formId);
+        data.setBaseModBreathesValue(selectedFormId);
         data.setCurrentVariationIndex(0);
         data.setBaseModFormName("");
         PlayerBreathingData.saveToNBT(player);
 
         com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
-            new BreathesValueSyncPacket(player.getUUID(), formId), player);
+            new BreathesValueSyncPacket(player.getUUID(), selectedFormId), player);
         com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
             new VariationIndexSyncPacket(player.getUUID(), 0), player);
 
-        BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(formId);
+        BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(selectedFormId);
         if (form != null) {
             if (!Config.suppressFormCycleChat) {
-                player.sendSystemMessage(LocalizationHelper.coloredBreathingSelection(
-                    formId,
-                    form.name(),
-                    Component.literal(form.name()),
-                    BaseModSwordFormRegistry.getColor(stack, formId),
-                    BaseModSwordFormRegistry.getColor(stack, formId)));
+                player.sendSystemMessage(BreathingFormAnnouncementHelper
+                    .getBaseModSwordFormDisplay(stack, selectedFormId));
             }
         }
     }

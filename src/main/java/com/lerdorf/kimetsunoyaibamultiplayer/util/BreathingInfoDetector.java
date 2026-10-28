@@ -185,6 +185,15 @@ public class BreathingInfoDetector {
         double breathes = cachedBreathes > 0.0
             ? cachedBreathes : player.getPersistentData().getDouble("breathes");
         int formId = com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder.getFormId(breathes);
+        boolean tanjiroSword = BaseModSwordFormRegistry.isTanjiroSword(heldSword);
+        boolean hinokamiMode = tanjiroSword && heldSword.hasTag() && heldSword.getTag().getBoolean("switch");
+        if (tanjiroSword && hinokamiMode && !BaseModSwordFormRegistry.isHinokamiForm(formId)) {
+            formId = 201;
+        } else if (tanjiroSword && !hinokamiMode &&
+            (BaseModSwordFormRegistry.isHinokamiForm(formId)
+                || BaseModSwordFormRegistry.isHinokamiSwitchForm(formId))) {
+            formId = 601;
+        }
         BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(formId);
         if (form == null) {
             return null;
@@ -196,8 +205,19 @@ public class BreathingInfoDetector {
         int variationIndex = data.getCurrentVariationIndex();
         int totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
             .getVariationCount(formId, swordId);
-        String styleName = LocalizationHelper.breathingStyleFromFormId(formId, "").getString();
-        String baseDisplayName = styleName.isBlank() ? form.name() : styleName + " " + form.name();
+        String styleName = BaseModSwordFormRegistry.getStyleName(heldSword);
+        if (styleName.isBlank()) {
+            styleName = LocalizationHelper.breathingStyleFromFormId(formId, "").getString();
+        }
+        if (hinokamiMode) {
+            String display = "Hinokami Kagura: " + form.name();
+            return new BreathingInfo("Hinokami Kagura", form.name(), 0, 200, formId,
+                BaseModSwordFormRegistry.getColor(heldSword, formId) + display,
+                variationIndex, totalVariations, null);
+        }
+        boolean formIncludesStyle = !styleName.isBlank() && form.name().startsWith(styleName + " ");
+        String baseDisplayName = styleName.isBlank() || formIncludesStyle
+            ? form.name() : styleName + " " + form.name();
         String displayName = baseDisplayName;
         if (variationIndex > 0) {
             var variation = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
@@ -793,7 +813,7 @@ public class BreathingInfoDetector {
             }
 
             if (number <= 0 || style.isEmpty()) {
-                return clean.replace(" - ", " ");
+                return displayText.replace(" - ", " ");
             }
 
             Matcher sourceLabel = FORM_LABEL.matcher(clean);

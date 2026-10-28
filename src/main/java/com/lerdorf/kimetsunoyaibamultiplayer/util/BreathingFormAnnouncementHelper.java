@@ -79,12 +79,32 @@ public final class BreathingFormAnnouncementHelper {
             return LocalizationHelper.breathingForm(formId).copy();
         }
 
-        MutableComponent fullName = LocalizationHelper.breathingStyleFromFormId(
-            formId, baseForm == null ? "" : baseForm.name).copy();
-        if (!fullName.getString().isBlank()) {
+        if (BaseModSwordFormRegistry.isTanjiroSword(sword)
+            && BaseModSwordFormRegistry.isHinokamiForm(formId)) {
+            MutableComponent hinokami = Component.literal("Hinokami Kagura: " + swordForm.name());
+            ChatFormatting color = parseLegacyColor(BaseModSwordFormRegistry.getColor(sword, formId));
+            if (color != null) {
+                hinokami.withStyle(color);
+            }
+            return hinokami;
+        }
+
+        String swordStyle = BaseModSwordFormRegistry.getStyleName(sword);
+        String formName = swordForm.name();
+        boolean formIncludesStyle = !swordStyle.isBlank()
+            && formName.startsWith(swordStyle + " ");
+        MutableComponent fullName = swordStyle.isBlank()
+            ? LocalizationHelper.breathingStyleFromFormId(
+                formId, baseForm == null ? "" : baseForm.name).copy()
+            : Component.literal(swordStyle);
+        if (!formIncludesStyle && !fullName.getString().isBlank()) {
             fullName.append(" ");
         }
-        fullName.append(swordForm.name());
+        if (formIncludesStyle) {
+            fullName = Component.literal(formName);
+        } else {
+            fullName.append(formName);
+        }
         ChatFormatting color = parseLegacyColor(BaseModSwordFormRegistry.getColor(sword, formId));
         if (color != null) {
             fullName.withStyle(color);

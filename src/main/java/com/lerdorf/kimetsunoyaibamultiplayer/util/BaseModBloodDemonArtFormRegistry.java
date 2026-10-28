@@ -7,6 +7,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /** Runtime demon-art IDs and item-specific availability for the base mod. */
 public final class BaseModBloodDemonArtFormRegistry {
@@ -15,6 +16,30 @@ public final class BaseModBloodDemonArtFormRegistry {
 
     private static final Map<String, int[]> ITEM_FORMS = new HashMap<>();
     private static final Map<Integer, FormDefinition> FORMS = new HashMap<>();
+    private static final Set<String> ENHANCED_CYCLE_EXCLUDED_ITEMS = Set.of(
+        "handfan",
+        "rifle",
+        "sword_hairo",
+        "blooddemonart_rokuro",
+        "blooddemonart_enmu",
+        "blooddemonart_nezuko",
+        "blooddemonart_yahaba",
+        "kemari",
+        "drum",
+        "blooddemonart_kamanue",
+        "blooddemonart_rui",
+        "chigama",
+        "nichirinsword_kaigaky",
+        "nichirinsword_kaigaku",
+        "blooddemonart_gyokko",
+        "khakkhara",
+        "spear",
+        "tengu_handfan",
+        "urogi_hand",
+        "blooddemonart_zohakuten",
+        "blooddemonart_nakime",
+        "blooddemonart_akaza"
+    );
 
     static {
         register("handfan", new int[]{100, 101, 102, 103, 104, 105, 106, 107, 108});
@@ -97,7 +122,8 @@ public final class BaseModBloodDemonArtFormRegistry {
     }
 
     public static boolean isSupported(ItemStack stack) {
-        return ITEM_FORMS.containsKey(getItemPath(stack));
+        String itemPath = getItemPath(stack);
+        return !ENHANCED_CYCLE_EXCLUDED_ITEMS.contains(itemPath) && ITEM_FORMS.containsKey(itemPath);
     }
 
     public static int getSelectIndex(ItemStack stack, int formId) {
