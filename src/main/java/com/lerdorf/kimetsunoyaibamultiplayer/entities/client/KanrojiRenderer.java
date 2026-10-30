@@ -2,56 +2,23 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.KanrojiEntity;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceManager;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 /**
  * Renderer for Mitsuri Kanroji entity using GeckoLib
  *
- * Uses the same texture and model as the base mod's Kanroji entity:
- * - Texture: kimetsunoyaiba:textures/entities/kanroji.png
- * - Model: kimetsunoyaiba:geo/biped.geo.json (or biped_kanroji.geo.json if in resourcepack)
- *
- * Supports resourcepack overrides:
- * - If a resourcepack provides biped_kanroji.geo.json, it will be used automatically
- * - If a resourcepack modifies kanroji.png, it will apply to this entity
- *
- * Uses the same model resolution logic as KimetsunoyaibaModels mod to ensure
- * our custom Kanroji entity uses the same resourcepack models as the base mod's Kanroji.
+ * Uses the Kanroji-specific model and textures bundled with this mod.
  */
 public class KanrojiRenderer extends GeoEntityRenderer<KanrojiEntity> {
-    private static ResourceLocation cachedModelResource = null;
-
     public KanrojiRenderer(EntityRendererProvider.Context context) {
         super(context, new GeoModel<KanrojiEntity>() {
             @Override
             public ResourceLocation getModelResource(KanrojiEntity entity) {
-                // Check cache first
-                if (cachedModelResource != null) {
-                    return cachedModelResource;
-                }
-
-                // Default model
-                ResourceLocation defaultModel = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "geo/biped.geo.json");
-
-                // Try to find entity-specific model (biped_kanroji.geo.json)
-                ResourceLocation specificModel = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "geo/biped_kanroji.geo.json");
-
-                // Check if specific model exists in resourcepacks
-                if (resourceExists(specificModel)) {
-                    com.lerdorf.kimetsunoyaibamultiplayer.Log.info("[KanrojiRenderer] Using resourcepack model: {}", specificModel);
-                    cachedModelResource = specificModel;
-                    return specificModel;
-                }
-
-                // Fall back to default biped model
-                com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("[KanrojiRenderer] Using default biped model");
-                cachedModelResource = defaultModel;
-                return defaultModel;
+                return ResourceLocation.fromNamespaceAndPath(
+                    KimetsunoyaibaMultiplayer.MODID, "geo/biped_kanroji.geo.json");
             }
 
             @Override
@@ -59,9 +26,8 @@ public class KanrojiRenderer extends GeoEntityRenderer<KanrojiEntity> {
                 if (entity != null && entity.isDemonized() && entity.getDemonizedTextureOverride() != null) {
                     return entity.getDemonizedTextureOverride();
                 }
-                // Use kanroji texture from base mod's namespace
-                // This ensures resourcepack texture overrides work automatically
-                return ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "textures/entities/kanroji.png");
+                return ResourceLocation.fromNamespaceAndPath(
+                    KimetsunoyaibaMultiplayer.MODID, "textures/entity/kanroji.png");
             }
 
             @Override
@@ -70,17 +36,6 @@ public class KanrojiRenderer extends GeoEntityRenderer<KanrojiEntity> {
                 return ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "animations/biped.animation.json");
             }
 
-            /**
-             * Check if a resource exists in the resource manager
-             */
-            private boolean resourceExists(ResourceLocation location) {
-                try {
-                    ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
-                    return resourceManager.getResource(location).isPresent();
-                } catch (Exception e) {
-                    return false;
-                }
-            }
         });
 
         // Add armor rendering layer (though Kanroji doesn't wear armor by default)
@@ -92,7 +47,7 @@ public class KanrojiRenderer extends GeoEntityRenderer<KanrojiEntity> {
         // Sword display on back/hip (GeoRenderLayer, matches player positioning)
         this.addRenderLayer(new GeoSwordDisplayLayer<>(this));
         this.addRenderLayer(new SkinLayersGeoLayer<>(this));
-        this.addRenderLayer(new DemonSlayerDemonEyesLayer<>(this, "geo/biped.geo.json", "animations/biped.animation.json"));
+        this.addRenderLayer(new DemonSlayerDemonEyesLayer<>(this, "geo/biped_kanroji.geo.json", "animations/biped.animation.json"));
 
         // Add demon slayer mark rendering layer - renders Love mark on torso when activated
         this.addRenderLayer(new com.lerdorf.kimetsunoyaibamultiplayer.client.DemonSlayerMarkLayer<>(
@@ -127,11 +82,8 @@ public class KanrojiRenderer extends GeoEntityRenderer<KanrojiEntity> {
     }
 
     /**
-     * Clear the cached model resource when resourcepacks are reloaded
-     * This ensures we pick up new resourcepack models when F3+T is pressed
+     * Kept for the shared resource reload hook. The model is now a fixed bundled resource.
      */
     public static void clearModelCache() {
-        cachedModelResource = null;
-        com.lerdorf.kimetsunoyaibamultiplayer.Log.info("[KanrojiRenderer] Model cache cleared");
     }
 }

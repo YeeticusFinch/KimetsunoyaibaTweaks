@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.client.CustomRenderTypes;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.ShimmerCompat;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.models.LoveSwordSlashesModel;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -23,6 +24,15 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 public class LoveSwordSlashesRenderer extends GeoEntityRenderer<LoveSwordSlashesEntity> {
     public LoveSwordSlashesRenderer(EntityRendererProvider.Context context) {
         super(context, new LoveSwordSlashesModel());
+    }
+
+    @Override
+    public void render(LoveSwordSlashesEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
+                       MultiBufferSource bufferSource, int packedLight) {
+        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        ShimmerCompat.updateEntityLight(entity, partialTick, 0xFFFFB8, 6.0F);
+        ShimmerCompat.postEntityBloom(postBuffer ->
+            super.render(entity, entityYaw, partialTick, poseStack, postBuffer, packedLight));
     }
 
     @Override

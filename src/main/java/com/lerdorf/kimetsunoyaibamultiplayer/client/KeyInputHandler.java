@@ -141,14 +141,14 @@ public class KeyInputHandler {
                             formName = formName.replaceAll("§.", "");
                             Log.debug("[KeyInputHandler] Using form name from chat cache (formId={}): {}", formId, formName);
                         } else {
-                            // Fallback: use BaseKnYForms map
-                            com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.BaseForm form =
-                                com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.forms.get(formId);
+                            // Fallback: resolve the item-specific runtime ID.
+                            com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry.FormDefinition form =
+                                com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry.getForm(mainHandItem, formId);
                             if (form != null) {
-                                formName = form.name;
-                                Log.debug("[KeyInputHandler] Form name from BaseKnYForms (formId={}): {}", formId, formName);
+                                formName = form.name();
+                                Log.debug("[KeyInputHandler] Form name from runtime registry (formId={}): {}", formId, formName);
                             } else {
-                                Log.warn("[KeyInputHandler] Form ID {} not found in chat cache or BaseKnYForms!", formId);
+                                Log.warn("[KeyInputHandler] Form ID {} not found in chat cache or runtime registry!", formId);
                             }
                         }
                     } else {
@@ -316,10 +316,10 @@ public class KeyInputHandler {
 
                     if (breathes > 0) {
                         int formId = (int) breathes;
-                        com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.BaseForm form =
-                            com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.forms.get(formId);
+                        com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry.FormDefinition form =
+                            com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry.getForm(mainHandItem, formId);
                         if (form != null) {
-                            formName = form.name;
+                            formName = form.name();
                         }
                     }
 

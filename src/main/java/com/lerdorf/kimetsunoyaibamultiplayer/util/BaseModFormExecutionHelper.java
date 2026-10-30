@@ -57,6 +57,18 @@ public final class BaseModFormExecutionHelper {
     }
 
     /**
+     * Prevent custom Stone forms from colliding with the base mod's Water IDs in
+     * the shared entity breathes tag.
+     */
+    public static int getSelectionBreathesFormId(ItemStack stack, int formId) {
+        if (stack != null && stack.getItem() instanceof com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem
+            && formId >= 601 && formId <= 611) {
+            return formId + 1000;
+        }
+        return formId;
+    }
+
+    /**
      * Execute a specific base-mod form ID for an entity holding a sword.
      *
      * @param entity Entity using the form
@@ -206,6 +218,11 @@ public final class BaseModFormExecutionHelper {
     private static int mapToRuntimeFormId(ItemStack heldItem, int formId) {
         if (BaseModSwordFormRegistry.isSupported(heldItem)) {
             return formId;
+        }
+
+        int customSelectionFormId = getSelectionBreathesFormId(heldItem, formId);
+        if (customSelectionFormId != formId) {
+            return customSelectionFormId;
         }
 
         // Stone Breathing: legacy 601+ maps to runtime 1601+

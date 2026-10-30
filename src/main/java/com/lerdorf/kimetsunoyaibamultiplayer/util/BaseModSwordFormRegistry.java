@@ -1,5 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.util;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -24,6 +25,7 @@ public final class BaseModSwordFormRegistry {
 
     private static final Map<String, int[]> ITEM_FORMS = new HashMap<>();
     private static final Map<Integer, FormDefinition> FORMS = new HashMap<>();
+    private static final Map<String, Map<Integer, FormDefinition>> ITEM_DEFINITIONS = new HashMap<>();
 
     static {
         register("nichirinsword_thunder", new int[]{101, 102, 103, 104, 105, 106});
@@ -32,6 +34,7 @@ public final class BaseModSwordFormRegistry {
         register("nichirinsword_rengoku", new int[]{301, 302, 303, 304, 305, 309});
         register("nichirinsword_mist", new int[]{401, 402, 403, 404, 405, 407});
         register("nichirinsword_wind", new int[]{501, 502, 503, 504, 505, 506, 507, 508, 509});
+        register("nichirinsword_shinazugawa", new int[]{501, 502, 503, 504, 505, 506, 507, 508, 509});
         register("nichirinsword_water", new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 610});
         register("nichirinsword_tomioka", new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611});
         register("nichirinsword_inosuke", new int[]{701, 702, 703, 704, 705, 706, 707, 708, 709, 710});
@@ -136,6 +139,27 @@ public final class BaseModSwordFormRegistry {
         add(209, "Fire Wheel", "§c");
         add(210, "Fake Rainbow", "§c");
         add(211, "Flame Dance", "§c");
+
+        // Base-mod swords use runtime IDs that overlap the legacy semantic IDs.
+        // Resolve those IDs by item so Water 601 is not mistaken for Stone 601,
+        // Thunder 101 is not mistaken for Water 101, and so on.
+        aliasByPosition("nichirinsword_thunder", new int[]{301, 302, 303, 304, 305, 306});
+        aliasByPosition("nichirinsword_flame", new int[]{401, 402, 403, 404, 405});
+        aliasByPosition("nichirinsword_rengoku", new int[]{401, 402, 403, 404, 405, 409});
+        aliasByPosition("nichirinsword_mist", new int[]{701, 702, 703, 704, 705, 707});
+        aliasByPosition("nichirinsword_water", new int[]{101, 102, 103, 104, 105, 106, 107, 108, 109, 110});
+        aliasByPosition("nichirinsword_tomioka", new int[]{101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111});
+        aliasByPosition("nichirinsword_inosuke", new int[]{201, 202, 203, 204, 205, 206, 207, 208, 209, 210});
+        aliasByPosition("nichirinsword_kocho", new int[]{1401, 1402, 1404, 1405});
+        aliasByPosition("nichirinsword_uzui", new int[]{901, 902, 903});
+        aliasByPosition("nichirinsword_kanawo", new int[]{1301, 1302, 1304, 1305});
+        aliasByPosition("nichirinsword_kanae", new int[]{1301, 1302, 1304, 1305});
+        aliasByPosition("nichirinsword_himejima_1",
+            new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 611});
+        aliasByPosition("nichirinsword_himejima_2",
+            new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 611});
+        aliasPrefix("nichirinsword_tanjiro", new int[]{101, 102, 103, 104, 105, 106, 107, 108, 109, 110});
+        aliasPrefix("nichirinsword_tanjiro_2", new int[]{101, 102, 103, 104, 105, 106, 107, 108, 109, 110});
     }
 
     private BaseModSwordFormRegistry() {
@@ -153,6 +177,27 @@ public final class BaseModSwordFormRegistry {
         for (int id = start; id <= end; id++) {
             add(id, style + " " + ordinal(id % 100) + " Form", color);
         }
+    }
+
+    private static void aliasByPosition(String itemPath, int[] semanticIds) {
+        aliasPrefix(itemPath, semanticIds);
+    }
+
+    private static void aliasPrefix(String itemPath, int[] semanticIds) {
+        int[] runtimeIds = ITEM_FORMS.get(itemPath);
+        if (runtimeIds == null) {
+            return;
+        }
+        Map<Integer, FormDefinition> definitions = new HashMap<>();
+        int count = Math.min(runtimeIds.length, semanticIds.length);
+        for (int i = 0; i < count; i++) {
+            BaseKnYForms.BaseForm semantic = BaseKnYForms.forms.get(semanticIds[i]);
+            if (semantic != null) {
+                definitions.put(runtimeIds[i],
+                    new FormDefinition(runtimeIds[i], semantic.name, semantic.color));
+            }
+        }
+        ITEM_DEFINITIONS.put(itemPath, definitions);
     }
 
     private static String ordinal(int number) {
@@ -199,11 +244,35 @@ public final class BaseModSwordFormRegistry {
         return FORMS.get(formId);
     }
 
+    public static FormDefinition getForm(ItemStack stack, int formId) {
+        Map<Integer, FormDefinition> definitions = ITEM_DEFINITIONS.get(getItemPath(stack));
+        FormDefinition itemForm = definitions == null ? null : definitions.get(formId);
+        return itemForm != null ? itemForm : getForm(formId);
+    }
+
+    /** Resolves a displayed base-mod form name back to the sword's runtime ID. */
+    public static int findFormIdByDisplayName(ItemStack stack, String displayText) {
+        if (displayText == null || displayText.isBlank()) {
+            return 0;
+        }
+        Map<Integer, FormDefinition> definitions = ITEM_DEFINITIONS.get(getItemPath(stack));
+        if (definitions == null) {
+            return 0;
+        }
+        String normalizedText = displayText.replaceAll("§.", "").trim();
+        for (FormDefinition definition : definitions.values()) {
+            if (normalizedText.equals(definition.name()) || normalizedText.endsWith(definition.name())) {
+                return definition.id();
+            }
+        }
+        return 0;
+    }
+
     public static String getColor(ItemStack stack, int formId) {
         if (formId == 1121 && "sword_kokushibo_2".equals(getItemPath(stack))) {
             return "§6";
         }
-        FormDefinition form = getForm(formId);
+        FormDefinition form = getForm(stack, formId);
         return form == null ? "" : form.color();
     }
 
@@ -234,11 +303,22 @@ public final class BaseModSwordFormRegistry {
     public static String getStyleName(ItemStack stack) {
         return switch (getItemPath(stack)) {
             case "nichirinsword_thunder", "nichirinsword_zenitsu" -> "Thunder Breathing";
+            case "nichirinsword_inosuke" -> "Beast Breathing";
             case "nichirinsword_water", "nichirinsword_tomioka", "nichirinsword_tanjiro", "nichirinsword_tanjiro_2" -> "Water Breathing";
             case "nichirinsword_flame", "nichirinsword_rengoku" -> "Flame Breathing";
-            case "nichirinsword_wind" -> "Wind Breathing";
+            case "nichirinsword_wind", "nichirinsword_shinazugawa" -> "Wind Breathing";
+            case "nichirinsword_mist" -> "Mist Breathing";
+            case "nichirinsword_iguro" -> "Serpent Breathing";
             case "nichirinsword_kocho" -> "Insect Breathing";
+            case "nichirinsword_uzui" -> "Sound Breathing";
+            case "nichirinsword_senior", "nichirinsword_senior_2" -> "Senior Breathing";
             case "nichirinswordmoon", "sword_kokushibo_1", "sword_kokushibo_2" -> "Moon Breathing";
+            case "nichirinsword_yoriichi" -> "Sun Breathing";
+            case "nichirinsword_kanawo", "nichirinsword_kanae" -> "Flower Breathing";
+            case "nichirinsword_kanroji" -> "Love Breathing";
+            case "nichirinsword_himejima_1", "nichirinsword_himejima_2" -> "Stone Breathing";
+            case "nichirinsword_bamboo", "nichirinsword_bamboo_2" -> "Bamboo Breathing";
+            case "nichirinsword_cherry_blossom" -> "Sakura Breathing";
             default -> "";
         };
     }

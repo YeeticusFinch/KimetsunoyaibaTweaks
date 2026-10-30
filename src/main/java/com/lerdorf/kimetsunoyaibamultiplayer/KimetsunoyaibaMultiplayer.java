@@ -1480,15 +1480,16 @@ public class KimetsunoyaibaMultiplayer
                             com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.BreathingInfo info =
                                 com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector.parseDisplayText(message);
                             if (info != null) {
-                                // Correct out-of-range breathes (e.g., 602 → 102)
+                                // Chat uses semantic form numbers, while the base mod stores
+                                // item-specific runtime IDs. Resolve the runtime ID first.
+                                int runtimeFormId = com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry
+                                    .findFormIdByDisplayName(heldSword, info.originalColoredText);
                                 double displayBreathes = info.fullBreathesValue;
-                                int expectedRange = com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping.getExpectedRangeForSword(heldSword);
-                                int actualRange = ((int)displayBreathes / 100) * 100;
-
-                                double trueBreathes = displayBreathes;
-                                if (expectedRange > 0 && actualRange == expectedRange + 500) {
-                                    trueBreathes = displayBreathes - 500;
-                                }
+                                double cachedBreathes = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingFormTracker
+                                    .getCachedForm(mc.player.getUUID(), heldSword);
+                                double trueBreathes = runtimeFormId > 0
+                                    ? runtimeFormId
+                                    : cachedBreathes > 0.0 ? cachedBreathes : displayBreathes;
 
                                 int trueFormId = (int) trueBreathes;
 

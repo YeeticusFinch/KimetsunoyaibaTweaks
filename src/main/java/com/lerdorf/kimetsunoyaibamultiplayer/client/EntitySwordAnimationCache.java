@@ -31,6 +31,7 @@ public class EntitySwordAnimationCache {
         EntityAnimationController(NichirinSwordKanrojiAnimated swordItem) {
             // Create a shared controller for this entity
             controller = new AnimationController<>(swordItem, "entity_sword", 0, state -> {
+                controllerSpeed(state);
                 // Check if animation needs to change
                 if (state.getController().getCurrentAnimation() != null) {
                     String currentAnim = state.getController().getCurrentAnimation().animation().name();
@@ -50,6 +51,12 @@ public class EntitySwordAnimationCache {
                     return state.setAndContinue(RawAnimation.begin().thenPlay(currentAnimation).thenLoop("idle"));
                 }
             });
+        }
+
+        private void controllerSpeed(software.bernie.geckolib.core.animation.AnimationState<?> state) {
+            state.getController().setAnimationSpeed(
+                currentAnimation.equals("love_sixth_form_short") ? 1.1875D
+                    : currentAnimation.equals("love_fourth_form_short") ? 0.8335D : 1.0D);
         }
 
         void setAnimation(String animName) {

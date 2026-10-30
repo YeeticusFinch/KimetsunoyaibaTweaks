@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.VermilionEyeEffect;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
 import net.minecraft.network.chat.Component;
@@ -308,11 +309,13 @@ public abstract class BreathingSwordItem extends SwordItem {
         // CRITICAL: Also update the "breathes" NBT tag with the form's ID
         // This is what the execution system reads when activating forms
         if (form != null && !player.level().isClientSide) {
-            double formId = form.getFormId();
-            player.getPersistentData().putDouble("breathes", formId);
+            int formId = form.getFormId();
+            int runtimeFormId = BaseModFormExecutionHelper.getSelectionBreathesFormId(
+                player.getMainHandItem(), formId);
+            player.getPersistentData().putDouble("breathes", runtimeFormId);
 
             // Also update the cached base mod breathes value
-            data.setBaseModBreathesValue(formId);
+            data.setBaseModBreathesValue(runtimeFormId);
 
             if (com.lerdorf.kimetsunoyaibamultiplayer.Config.logDebug) {
                 com.lerdorf.kimetsunoyaibamultiplayer.Log.debug("Updated breathes tag to formId: " + formId);

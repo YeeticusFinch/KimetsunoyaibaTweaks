@@ -60,8 +60,8 @@ public class Config
             .define("suppress-form-cycle-chat", false);
 
     private static final ForgeConfigSpec.BooleanValue ENHANCED_FORM_CYCLE = BUILDER
-            .comment("Hold the form cycle key to open a radial form selector instead of cycling one form at a time. Default: true")
-            .define("enhanced-form-cycle", true);
+            .comment("Hold the form cycle key to open a radial form selector instead of cycling one form at a time. Default: false")
+            .define("enhanced-form-cycle", false);
 
     static {
         BUILDER.comment("Enhanced form cycle HUD")
@@ -79,6 +79,10 @@ public class Config
     private static final ForgeConfigSpec.BooleanValue ENHANCED_FORM_CYCLE_HUD_ENABLE_MOUSE_ROTATION_SELECTION = BUILDER
             .comment("Allow mouse/camera rotation to move the selector and select a form")
             .define("enable-mouse-rotation-selection", true);
+
+    private static final ForgeConfigSpec.BooleanValue ENHANCED_FORM_CYCLE_HUD_LOCK_CAMERA_MOVEMENTS = BUILDER
+            .comment("Prevent mouse movement from rotating the camera while the form wheel is open; use the movement for wheel selection instead")
+            .define("lock-camera-movements", true);
 
     private static final ForgeConfigSpec.BooleanValue ENHANCED_FORM_CYCLE_HUD_ENABLE_NUMBER_SELECTION = BUILDER
             .comment("Allow number keys to select a form")
@@ -222,6 +226,7 @@ public class Config
     public static double enhancedFormCycleHudDiameter;
     public static boolean enhancedFormCycleHudShowAllNames;
     public static boolean enhancedFormCycleHudEnableMouseRotationSelection;
+    public static boolean enhancedFormCycleHudLockCameraMovements;
     public static boolean enhancedFormCycleHudEnableNumberSelection;
     public static boolean enhancedFormCycleHudEnableScrollwheelSelection;
     public static boolean enhancedFormCycleHudShowDirectionLine;
@@ -305,6 +310,7 @@ public class Config
         enhancedFormCycleHudDiameter = ENHANCED_FORM_CYCLE_HUD_DIAMETER.get();
         enhancedFormCycleHudShowAllNames = ENHANCED_FORM_CYCLE_HUD_SHOW_ALL_NAMES.get();
         enhancedFormCycleHudEnableMouseRotationSelection = ENHANCED_FORM_CYCLE_HUD_ENABLE_MOUSE_ROTATION_SELECTION.get();
+        enhancedFormCycleHudLockCameraMovements = ENHANCED_FORM_CYCLE_HUD_LOCK_CAMERA_MOVEMENTS.get();
         enhancedFormCycleHudEnableNumberSelection = ENHANCED_FORM_CYCLE_HUD_ENABLE_NUMBER_SELECTION.get();
         enhancedFormCycleHudEnableScrollwheelSelection = ENHANCED_FORM_CYCLE_HUD_ENABLE_SCROLLWHEEL_SELECTION.get();
         enhancedFormCycleHudShowDirectionLine = ENHANCED_FORM_CYCLE_HUD_SHOW_DIRECTION_LINE.get();

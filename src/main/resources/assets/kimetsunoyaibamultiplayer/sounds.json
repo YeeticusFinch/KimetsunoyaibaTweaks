@@ -97,5 +97,50 @@
         "stream": false
       }
     ]
+  },
+  "love_launch": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.love_launch",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:love_launch",
+        "stream": false
+      }
+    ]
+  },
+  "love_lands": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.love_lands",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:love_lands",
+        "stream": false
+      }
+    ]
+  },
+  "love_hit_sparkles": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.love_hit_sparkles",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:love_hit_sparkles",
+        "stream": false
+      }
+    ]
+  },
+  "love_cats_and_cuts": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.love_cats_and_cuts",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:love_cats_and_cuts",
+        "stream": false
+      }
+    ]
+  },
+  "love_big_slash_meow": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.love_big_slash_meow",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:love_big_slash_meow",
+        "stream": false
+      }
+    ]
   }
 }

@@ -190,6 +190,9 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
                 // Determine if it's a looping animation
                 boolean isLooping = entityAnim.equals("idle") || entityAnim.equals("walk") ||
                                    entityAnim.equals("sprint") || entityAnim.equals("sheath");
+                state.getController().setAnimationSpeed(
+                    entityAnim.equals("love_sixth_form_short") ? 1.1875D
+                        : entityAnim.equals("love_fourth_form_short") ? 0.8335D : 1.0D);
 
                 // Use cached RawAnimation instances to prevent recreation every frame
                 // This prevents GeckoLib from seeing a "new" animation and resetting to base pose
@@ -245,6 +248,10 @@ public class NichirinSwordKanrojiAnimated extends BreathingSwordItem implements 
             if (animName == null || animName.isEmpty() || animName.equals("empty")) {
                 animName = "idle";
             }
+
+            state.getController().setAnimationSpeed(
+                animName.equals("love_sixth_form_short") ? 1.1875D
+                    : animName.equals("love_fourth_form_short") ? 0.8335D : 1.0D);
 
             // Only change animation if it's different from current
             if (state.getController().getCurrentAnimation() != null) {

@@ -97,10 +97,10 @@ public class BaseModVariationHandler {
         if (currentFormName == null || currentFormName.isEmpty()) {
             if (selectedBreathes > 0) {
                 int formId = (int) selectedBreathes;
-                com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.BaseForm form =
-                    com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms.forms.get(formId);
+                com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry.FormDefinition form =
+                    com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry.getForm(heldItem, formId);
                 if (form != null) {
-                    currentFormName = form.name;
+                    currentFormName = form.name();
                     data.setBaseModFormName(currentFormName); // Cache it
                     if (Config.logDebug) {
                         Log.debug("[BaseModVariationHandler] Populated form name from breathes: " + formId + " -> " + currentFormName);

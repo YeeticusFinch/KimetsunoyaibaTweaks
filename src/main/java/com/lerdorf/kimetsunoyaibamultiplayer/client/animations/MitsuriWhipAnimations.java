@@ -416,7 +416,7 @@ public class MitsuriWhipAnimations {
                 new Vec3(4.0, 0.3, 0.5),
                 new Vec3(5.5, 0.1, 1.0),
                 new Vec3(7.0, 0.0, 1.5),
-                0.2, 2
+                0.2, 3
             ),
             // Spin 2 (forward)
             new WhipPose(
@@ -424,7 +424,7 @@ public class MitsuriWhipAnimations {
                 new Vec3(2.0, 0.4, 4.0),
                 new Vec3(2.5, 0.2, 5.5),
                 new Vec3(3.0, 0.0, 7.0),
-                0.2, 2
+                0.2, 3
             ),
             // Spin 3 (left)
             new WhipPose(
@@ -432,7 +432,7 @@ public class MitsuriWhipAnimations {
                 new Vec3(-4.0, 0.3, 2.0),
                 new Vec3(-5.5, 0.1, 2.0),
                 new Vec3(-7.0, 0.0, 2.0),
-                0.2, 2
+                0.2, 3
             ),
             // Spin 4 (back-left)
             new WhipPose(
@@ -440,7 +440,7 @@ public class MitsuriWhipAnimations {
                 new Vec3(-4.0, 0.2, -2.0),
                 new Vec3(-5.0, 0.1, -3.0),
                 new Vec3(-6.0, 0.0, -4.0),
-                0.2, 2
+                0.2, 3
             ),
             // Spin 5 (back-right, rising)
             new WhipPose(
@@ -448,7 +448,7 @@ public class MitsuriWhipAnimations {
                 new Vec3(3.5, 0.6, -2.5),
                 new Vec3(5.0, 0.4, -3.0),
                 new Vec3(6.5, 0.2, -3.5),
-                0.2, 2
+                0.2, 3
             ),
             // Final spin (overhead)
             new WhipPose(
@@ -456,7 +456,7 @@ public class MitsuriWhipAnimations {
                 new Vec3(0.0, 2.5, 2.5),
                 new Vec3(0.0, 3.0, 4.0),
                 new Vec3(0.0, 3.5, 5.5),
-                0.3, 3
+                0.3, 4
             ),
             // Slam finish
             new WhipPose(
@@ -464,7 +464,7 @@ public class MitsuriWhipAnimations {
                 new Vec3(0.0, 0.3, 5.0),
                 new Vec3(0.0, 0.0, 7.0),
                 new Vec3(0.0, -0.3, 9.0),
-                0.4, 4
+                0.4, 6
             ),
             // Recovery
             new WhipPose(
@@ -472,7 +472,45 @@ public class MitsuriWhipAnimations {
                 new Vec3(0.0, -0.4, 1.5),
                 new Vec3(0.0, -0.6, 2.0),
                 new Vec3(0.0, -0.8, 2.5),
-                0.8, 10
+                0.8, 15
+            )
+        ), false));
+
+        // Keep the shortened Sixth Form on the same 40-tick timeline as the
+        // player and entity animations.
+        ANIMATIONS.put("love_sixth_form_short", ANIMATIONS.get("love_form_6"));
+
+        ANIMATIONS.put("love_fourth_form_short", new WhipAnimation("love_fourth_form_short", List.of(
+            // Extend toward the capture point during the first ten ticks.
+            new WhipPose(
+                new Vec3(0.0, 0.1, 1.0),
+                new Vec3(0.0, 0.1, 3.5),
+                new Vec3(0.0, 0.0, 6.0),
+                new Vec3(0.0, 0.0, 9.0),
+                0.2, 10
+            ),
+            // Reach the fifteen-block endpoint and hold it through impact.
+            new WhipPose(
+                new Vec3(0.0, 0.1, 4.0),
+                new Vec3(0.0, 0.1, 8.0),
+                new Vec3(0.0, 0.0, 12.0),
+                new Vec3(0.0, 0.0, 15.0),
+                0.1, 8
+            ),
+            new WhipPose(
+                new Vec3(0.0, 0.1, 4.0),
+                new Vec3(0.0, 0.1, 8.0),
+                new Vec3(0.0, 0.0, 12.0),
+                new Vec3(0.0, 0.0, 15.0),
+                0.1, 10
+            ),
+            // Retract during the cleanup portion of the form.
+            new WhipPose(
+                new Vec3(0.0, -0.2, 1.0),
+                new Vec3(0.0, -0.4, 1.5),
+                new Vec3(0.0, -0.6, 2.0),
+                new Vec3(0.0, -0.8, 2.5),
+                0.8, 12
             )
         ), false));
     }

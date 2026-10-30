@@ -7,9 +7,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesSpawner;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveTornadoSpawner;
-import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
-import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
-import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation;
@@ -20,8 +17,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ParticleHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.models.SwordSlashModelRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
-import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
+import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
@@ -85,7 +82,9 @@ public class LoveVariations {
         Log.info("Registering Love Breathing variations from Tweaks...");
 
         registerFirstFormVariation();
-        registerFifthFormVariation();
+		registerFourthFormVariation();
+		registerFifthFormVariation();
+		registerSixthFormVariation();
 
         Log.info("Finished registering Love Breathing variations from Tweaks");
     }
@@ -538,432 +537,706 @@ public class LoveVariations {
         VariationRegistry.register(22001, variation);
         Log.debug("DEBUG: Registered '" + variation.getName() + "' for form ID 22001");
     }
+
+    /**
+     * Love Breathing Fourth Form: The Heartbreak of Unrequited Love, Whipped.
+     * This preserves the current Fourth Form implementation while the base form
+     * is held for a future redesign.
+     */
+    private static void registerFourthFormVariation() {
+        BreathingFormVariation variation = new BreathingFormVariation(
+            "The Heartbreak of Unrequited Love, Whipped",
+            "Catch incoming targets with the whip-blade, toss them aside, and open them for a counterattack",
+            6,
+            (entity, level, formId) -> {
+                ServerLevel serverLevel = level instanceof ServerLevel ? (ServerLevel) level : null;
+                float[][][] particlePoints = ParticlePositions.fourth_form.get("point_a");
+                float damage = 24.0F;
+                boolean isDemon = Damager.isDemon(entity);
+
+                GuardStateHelper.setGuardState(entity, damage, formId);
+
+                if (entity instanceof Player player) {
+                    AnimationHelper.playAnimationOnLayer(player, "love_fourth_form", -1, 1.0F, 3000);
+                } else {
+                    playEntityAnimation(entity, "love_fourth_form");
+                }
+                EnhancedLoveForms.triggerWhipAnimation(entity, "love_fourth_form", 1.0);
+                AnimationHelper.triggerKanrojiSwordAnimation(entity, "love_fourth_form");
+                setCancelAttackSwing(entity, true);
+
+                final int totalDuration = 60;
+                final int[] currentTick = {0};
+                final List<LivingEntity> targets = new ArrayList<>();
+                final Vec3[] vectors = new Vec3[4];
+                float yawStart = (float) Math.toRadians(-entity.getYRot());
+
+                vectors[0] = entity.position();
+                vectors[1] = entity.getLookAngle();
+                vectors[2] = new Vec3(Math.sin(yawStart + Math.PI / 2.0D), 0,
+                    Math.cos(yawStart + Math.PI / 2.0D)).normalize();
+                vectors[3] = vectors[2].cross(vectors[1]).normalize();
+
+                AbilityScheduler.scheduleRepeating(entity, () -> {
+                    if (currentTick[0] == 38 || (currentTick[0] < 38 && currentTick[0] % 3 == 0)) {
+                        float yaw = (float) Math.toRadians(-entity.getYRot());
+                        vectors[0] = entity.position();
+                        vectors[1] = entity.getLookAngle();
+                        if (vectors[1].y > 0) {
+                            vectors[1] = new Vec3(vectors[1].x, 0, vectors[1].z);
+                        }
+                        vectors[2] = new Vec3(Math.sin(yaw + Math.PI / 2.0D), 0,
+                            Math.cos(yaw + Math.PI / 2.0D)).normalize();
+                        vectors[3] = vectors[2].cross(vectors[1]).scale(-1).normalize();
+                    }
+
+                    if (currentTick[0] <= 15 && currentTick[0] % 2 == 0) {
+                        int radius = 4;
+                        AABB rayBox = new AABB(vectors[0].subtract(radius, radius, radius),
+                            vectors[0].add(radius, radius, radius));
+                        List<LivingEntity> nearby = level.getEntitiesOfClass(
+                            LivingEntity.class, rayBox,
+                            target -> target != entity && target.isAlive()
+                                && EnhancedLoveForms.isTargetable(entity, target)
+                                && !targets.contains(target));
+                        targets.addAll(nearby);
+
+                        rayBox = new AABB(vectors[0].add(vectors[1].scale(5)).subtract(radius, radius, radius),
+                            vectors[0].add(vectors[1].scale(5)).add(radius, radius, radius));
+                        nearby = level.getEntitiesOfClass(
+                            LivingEntity.class, rayBox,
+                            target -> target != entity && target.isAlive()
+                                && EnhancedLoveForms.isTargetable(entity, target)
+                                && !targets.contains(target));
+                        targets.addAll(nearby);
+
+                        for (LivingEntity target : nearby) {
+                            level.playSound(null, target.getX(), target.getY(), target.getZ(),
+                                SoundEvents.FISHING_BOBBER_THROW, SoundSource.PLAYERS, 1.0F, 1.2F);
+                            MovementHelper.setVelocity(target, new Vec3(0, 0.8F, 0));
+
+                            if (serverLevel != null) {
+                                for (float angle = 0; angle < Math.PI * 2.0F; angle += 0.2F) {
+                                    Vec3 position = target.position().add(1.5F * Math.sin(angle), 1, 1.5F * Math.cos(angle));
+                                    serverLevel.sendParticles(
+                                        EnhancedLoveForms.createLoveParticleOptions(
+                                            isDemon ? new Vector3f(0.8196F, 0, 0.286F)
+                                                : new Vector3f(1.0F, 0.4F, 0.7F), 1.8F),
+                                        position.x, position.y, position.z, 2,
+                                        0.05, 0.05, 0.05, 0);
+                                }
+                            }
+                        }
+                    } else if (currentTick[0] < 35) {
+                        Vec3 point = vectors[0].add(vectors[1].scale(7)).add(0, 5, 0);
+                        for (LivingEntity target : targets) {
+                            MovementHelper.setVelocity(target, point.subtract(target.position()));
+                        }
+                    } else if (currentTick[0] < 38) {
+                        Vec3 point = vectors[0].add(vectors[1].scale(6)).add(0, 7, 0)
+                            .add(vectors[2].scale(-8));
+                        for (LivingEntity target : targets) {
+                            MovementHelper.setVelocity(target, point.subtract(target.position()));
+                        }
+                    } else if (currentTick[0] < 41) {
+                        if (currentTick[0] == 39) {
+                            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                                SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.5F, 0.8F);
+                            for (LivingEntity target : targets) {
+                                Damager.hurt(entity, target, damage);
+                            }
+                        }
+                        for (LivingEntity target : targets) {
+                            MovementHelper.setVelocity(target, vectors[1].scale(1.5F).add(0, 0.8F, 0));
+                        }
+                    }
+
+                    EnhancedLoveForms.renderLovePointFrame(serverLevel, entity, particlePoints, currentTick[0],
+                        vectors[1], vectors[2], vectors[3], isDemon, 1.8F, 1.5F);
+                    currentTick[0]++;
+                }, 1, totalDuration);
+
+                AbilityScheduler.scheduleOnce(entity, () -> {
+                    EnhancedLoveForms.clearLovePointFrame(entity);
+                    GuardStateHelper.clearGuardState(entity);
+                    setCancelAttackSwing(entity, false);
+                }, totalDuration + 2);
+            },
+            Collections.emptySet()
+        );
+
+        VariationRegistry.register(22004, variation);
+        Log.debug("DEBUG: Registered '" + variation.getName() + "' for form ID 22004");
+    }
     
     /**
      * Fifth Form: Swaying Love, Wildclaw, Everlasting Beauty
      * Enhanced Love Fifth Form (22005)
      */
-    private static void registerFifthFormVariation() {
-        BreathingFormVariation variation = new BreathingFormVariation(
-            "Fifth Form: Swaying Love, Wildclaw, Everlasting Beauty",
-            "Whip the target and do a spin to knock them back, and then hit them with the love tornado",
-            16,
+	private static void registerFifthFormVariation() {
+		BreathingFormVariation variation = new BreathingFormVariation(
+				"Fifth Form: Swaying Love, Wildclaw, Everlasting Beauty",
+				"Whip the target and do a spin to knock them back, and then hit them with the love tornado",
+				16,
+				(entity, level, formId) -> {
+					final int fifthFormStart = 30; // Start the og fifth form 3 seconds later
+
+					ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel) level : null);
+					float[][][] particlePointsFifthForm = ParticlePositions.fifth_form.get("point_a");
+					float[][][] particlePointsSwingLeft = ParticlePositions.sword_to_left.get("point_a");
+					float[][][] particlePointsSwingRight = ParticlePositions.sword_to_right.get("point_a");
+					float[][][] particlePointsRotate = ParticlePositions.sword_rotate.get("point_a");
+
+					float damage = (10.0F);
+					// Set guard state (formId auto-injected as 22005)
+					GuardStateHelper.setGuardState(entity, damage * 0.75f, formId);
+
+					// Prevent normal attack swing
+					setCancelAttackSwing(entity, true);
+
+					final int totalDuration = 96 + fifthFormStart; // 5.8 seconds
+					final int[] currentTick = { 0 };
+					final int interval = 1;
+
+					final Vec3[] vecs = new Vec3[5]; // 0=position, 1=forward, 2=right, 3=up, 4=target
+					float yawStart = (float) Math.toRadians(
+							-com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
+
+					// Build orthonormal basis (forward, right, up)
+					vecs[0] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
+					vecs[1] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity); // Forward vector
+					vecs[2] = new Vec3(Math.sin(yawStart + Math.PI / 2), 0, Math.cos(yawStart + Math.PI / 2))
+							.normalize(); // Right vector (90° from forward on horizontal plane)
+					vecs[3] = vecs[2].cross(vecs[1]).normalize(); // Up vector (right × forward, perpendicular to both)
+
+					final float[] yawPitch = { 0, 0 };
+
+					final int range = 60;
+
+					AbilityScheduler.scheduleRepeating(entity, () -> {
+
+						if (currentTick[0] == fifthFormStart) {
+							// Play player animation
+							playEntityAnimation(entity, "love_fifth_form");
+
+							// Trigger whip animation (client-side)
+							EnhancedLoveForms.triggerWhipAnimation(entity, "love_fifth_form", 1.0);
+						}
+
+						if (currentTick[0] - fifthFormStart == 25
+								|| (currentTick[0] - fifthFormStart < 25 && currentTick[0] % 4 == 0)) {
+							float yaw = (float) Math.toRadians(
+									-com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
+
+							// Build orthonormal basis (forward, right, up)
+							vecs[0] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame
+									.position(entity);
+							vecs[1] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity); // Forward vector
+							if (vecs[1].y > 0)
+								vecs[1] = new Vec3(vecs[1].x, 0, vecs[1].z);
+							vecs[2] = new Vec3(Math.sin(yaw + Math.PI / 2), 0, Math.cos(yaw + Math.PI / 2)).normalize(); // Right vector (90° from forward on horizontal plane)
+							vecs[3] = vecs[2].cross(vecs[1]).scale(-1).normalize(); // Up vector (right × forward, perpendicular to both)
+							if (currentTick[0] - fifthFormStart == 25) {
+								yawPitch[0] = (float) Math.toDegrees(Math.atan2(-vecs[1].x, vecs[1].z));
+								yawPitch[1] = (float) Math.toDegrees(Math.atan2(-vecs[1].y,
+										Math.sqrt(vecs[1].x * vecs[1].x + vecs[1].z * vecs[1].z)));
+
+								Vec3 eyePos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame
+										.eye(entity);
+								// Find the target block
+								for (int i = 1; i < range; i++) {
+									Vec3 vec = eyePos.add(vecs[1].scale(i));
+
+									vecs[4] = vec; // Set the target position
+
+									// Check block collision
+									BlockPos blockPos = BlockPos.containing(
+											com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame
+													.world(vec));
+									if (!level.getBlockState(blockPos).isAir()) {
+
+										break; // Stop at first block hit
+									}
+								}
+							}
+						}
+
+						float[][][] particlePoints = null;
+						int particlePointsOffset = 0;
+
+						if (currentTick[0] >= fifthFormStart) {
+							particlePoints = particlePointsFifthForm;
+							particlePointsOffset = -fifthFormStart;
+						} else if (currentTick[0] < fifthFormStart / 3) { // right
+							particlePoints = particlePointsSwingRight;
+							particlePointsOffset = 0;
+							if (currentTick[0] == 0) {
+								// Play player animation
+								playEntityAnimation(entity, "sword_to_right");
+
+								// Trigger whip animation (client-side)
+								EnhancedLoveForms.triggerWhipAnimation(entity, "sword_to_right", 1.0);
+
+								// Hit all the targets in front of you forward (big sweep with knockback)
+
+								AABB hitBox = new AABB(
+										entity.position().add(entity.getLookAngle().scale(9)).add(-9, -4, -9),
+										entity.position().add(entity.getLookAngle().scale(5).add(9, 4, 9)));
+								List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
+
+								for (Entity target : targets) {
+									if (target instanceof LivingEntity le
+											&& EnhancedLoveForms.isTargetable(entity, le)) {
+										MovementHelper.setVelocity(le, le.getDeltaMovement().add(
+												(le.position().subtract(entity.position())).normalize().scale(1.5f)));
+										Damager.hurt(entity, le, damage * 0.4f);
+										if (serverLevel != null)
+											serverLevel.sendParticles(
+													ModParticles.LOVE_IMPACT.get(),
+													le.position().x, le.position().y, le.position().z,
+													1, 0.3, 0.3, 0.3, 0);
+									}
+								}
+							}
+						} else if (currentTick[0] < fifthFormStart * 2 / 3) { // left
+							particlePoints = particlePointsSwingLeft;
+							particlePointsOffset = fifthFormStart / 3;
+							if (currentTick[0] == fifthFormStart / 3) {
+								// Play player animation
+								playEntityAnimation(entity, "sword_to_left");
+
+								// Trigger whip animation (client-side)
+								EnhancedLoveForms.triggerWhipAnimation(entity, "sword_to_left", 1.0);
+
+								// Hit all the targets in front of you forward (big sweep with knockback)
+
+								AABB hitBox = new AABB(
+										entity.position().add(entity.getLookAngle().scale(9)).add(-9, -4, -9),
+										entity.position().add(entity.getLookAngle().scale(5).add(9, 4, 9)));
+								List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
+
+								for (Entity target : targets) {
+									if (target instanceof LivingEntity le
+											&& EnhancedLoveForms.isTargetable(entity, le)) {
+										MovementHelper.setVelocity(le, le.getDeltaMovement().add(
+												(le.position().subtract(entity.position())).normalize().scale(1.5f)));
+										Damager.hurt(entity, le, damage * 0.9f);
+										if (serverLevel != null)
+											serverLevel.sendParticles(
+													ModParticles.LOVE_IMPACT.get(),
+													le.position().x, le.position().y, le.position().z,
+													1, 0.3, 0.3, 0.3, 0);
+									}
+								}
+							}
+						} else if (currentTick[0] < fifthFormStart) { // rotate
+							particlePoints = particlePointsRotate;
+							particlePointsOffset = fifthFormStart * 2 / 3;
+							if (currentTick[0] == fifthFormStart * 2 / 3) {
+								// Play player animation
+								playEntityAnimation(entity, "sword_rotate");
+
+								// Trigger whip animation (client-side)
+								EnhancedLoveForms.triggerWhipAnimation(entity, "sword_rotate", 1.0);
+
+								// Hit all the targets around you forward (big sweep with knockback)
+
+								AABB hitBox = entity.getBoundingBox().inflate(12.0);
+								List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
+
+								for (Entity target : targets) {
+									if (target instanceof LivingEntity le
+											&& EnhancedLoveForms.isTargetable(entity, le)) {
+										MovementHelper.setVelocity(le, le.getDeltaMovement().add(
+												(le.position().subtract(entity.position())).normalize().scale(1.5f)));
+										Damager.hurt(entity, le, damage * 0.4f);
+										if (serverLevel != null)
+											serverLevel.sendParticles(
+													ModParticles.LOVE_IMPACT.get(),
+													le.position().x, le.position().y, le.position().z,
+													1, 0.3, 0.3, 0.3, 0);
+									}
+								}
+							}
+						}
+
+						if (serverLevel != null && particlePoints != null
+								&& currentTick[0] + particlePointsOffset < particlePoints.length
+								&& particlePoints[currentTick[0] + particlePointsOffset].length > 0) {
+							for (int i = 0; i < particlePoints[currentTick[0] + particlePointsOffset].length; i++) {
+								float x = particlePoints[currentTick[0] + particlePointsOffset][i][0];
+								float y = particlePoints[currentTick[0] + particlePointsOffset][i][1];
+								float z = particlePoints[currentTick[0] + particlePointsOffset][i][2];
+
+								Vec3 pos = entity.position()
+										.add(vecs[1].scale(z).add(vecs[2].scale(x)).add(vecs[3].scale(y)));
+
+								// Spawn pink dust particle at pos
+								serverLevel.sendParticles(
+										EnhancedLoveForms.createLoveParticleOptions(
+												new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+												1.8f // scale
+								),
+										pos.x, pos.y, pos.z,
+										2, 0.05, 0.05, 0.05, 0 // count, velocity
+								);
+
+								// Spawn white dust particle at pos
+								serverLevel.sendParticles(
+										EnhancedLoveForms.createLoveParticleOptions(
+												new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
+												1.5f // scale
+								),
+										pos.x, pos.y, pos.z,
+										1, 0, 0, 0, 0 // count, velocity
+								);
+							}
+						}
+
+						if (currentTick[0] >= fifthFormStart && currentTick[0] - fifthFormStart < 14) {
+							// Jump upwards and backwards (do the backflip)
+							MovementHelper.lookAtTarget(entity);
+							MovementHelper.setVelocity(entity,
+									entity.getLookAngle().normalize().scale(-0.65).add(0, 1.5f, 0));
+						} else if (currentTick[0] >= fifthFormStart && currentTick[0] - fifthFormStart < 25) {
+							// Hover and aim
+							MovementHelper.setVelocity(entity, entity.getDeltaMovement().multiply(1, 0, 1));
+							MovementHelper.lookAtTarget(entity);
+						} else if (currentTick[0] >= fifthFormStart && currentTick[0] - fifthFormStart == 26) {
+							// Start the sword slashes and tornado
+							LoveTornadoSpawner.spawnLoveTornado(
+									level,
+									vecs[4],
+									yawPitch[0] + 180,
+									yawPitch[1],
+									"love_fifth_form",
+									85);
+							LoveSwordSlashesSpawner.spawnLoveSwordSlashes(
+									level,
+									vecs[4],
+									yawPitch[0] + 180,
+									yawPitch[1],
+									"love_fifth_form",
+									85);
+							entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING,
+									totalDuration + 2 - currentTick[0] - fifthFormStart, 3)); // To stop the fall damage
+						} else if (currentTick[0] >= fifthFormStart && currentTick[0] - fifthFormStart < 31) {
+							// Tornado is starting in the thin phase
+							// Launch in the direction
+							MovementHelper.setRotation(entity, yawPitch[0], yawPitch[1]);
+							float percent = (float) (currentTick[0] - fifthFormStart - 25f) / (31f - 25f);
+							Vec3 targetPos = vecs[0].scale(1 - percent).add(vecs[4].scale(percent)); // Go from position vecs[0] to position vecs[4]
+							MovementHelper.setVelocity(entity, targetPos.subtract(entity.position())); // Set the velocity to the difference in position to target position
+
+							int r = 6;
+							AABB rayBox = new AABB(targetPos.subtract(r, r, r), targetPos.add(r, r, r));
+							List<LivingEntity> entitiesInRay = level.getEntitiesOfClass(
+									LivingEntity.class, rayBox,
+									e -> e != entity && e.isAlive() && EnhancedLoveForms.isTargetable(entity, e));
+							for (LivingEntity le : entitiesInRay) {
+								float x = (float) (le.position().x + (Math.random() - 0.5) * le.getEyeHeight());
+								float y = (float) (le.position().y + (Math.random() - 0.5) * le.getEyeHeight());
+								float z = (float) (le.position().z + (Math.random() - 0.5) * le.getEyeHeight());
+								serverLevel.sendParticles(
+										ModParticles.LOVE_IMPACT.get(),
+										x, y, z,
+										1, 0.3, 0.3, 0.3, 0);
+
+								level.playSound(null, x, y, z,
+										SoundEvents.PLAYER_ATTACK_STRONG,
+										SoundSource.PLAYERS, 1.0f, 1f);
+								Damager.hurt(entity, le, damage * 0.5f, true);
+							}
+						} else if (currentTick[0] > fifthFormStart && currentTick[0] - fifthFormStart < 41) {
+							// Landed on the ground
+							MovementHelper.setVelocity(entity, vecs[4].subtract(entity.position())); // entity is supposed to be at vecs[4] position
+						} else if (currentTick[0] > fifthFormStart && currentTick[0] - fifthFormStart < 45) {
+							// Big cloud of slashes at the end of the tornado
+							MovementHelper.setVelocity(entity, vecs[4].subtract(entity.position())); // entity is supposed to be at vecs[4] position
+							if (serverLevel != null) {
+								for (int i = 0; i < 5; i++) {
+									// Spawn a cloud of sword slashes at the target point
+									float x = (float) (vecs[4].x + (Math.random() - 0.5) * 15);
+									float y = (float) (vecs[4].y + (Math.random() - 0.5) * 15);
+									float z = (float) (vecs[4].z + (Math.random() - 0.5) * 15);
+									serverLevel.sendParticles(
+											ModParticles.LOVE_SLASH.get(),
+											x, y, z,
+											3, 0.3, 0.3, 0.3, 0);
+
+									level.playSound(null, x, y, z,
+											ForgeRegistries.SOUND_EVENTS
+													.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+											SoundSource.PLAYERS, 1.0f, 1.5f);
+								}
+							}
+							if (currentTick[0] > fifthFormStart && currentTick[0] % 2 == 0) {
+								int r = (10 + currentTick[0] - fifthFormStart - 41);
+								AABB rayBox = new AABB(vecs[4].subtract(r, r, r), vecs[4].add(r, r, r));
+								List<LivingEntity> entitiesInRay = level.getEntitiesOfClass(
+										LivingEntity.class, rayBox,
+										e -> e != entity && e.isAlive() && EnhancedLoveForms.isTargetable(entity, e));
+								for (LivingEntity le : entitiesInRay) {
+									if (Math.random() > 0.5)
+										continue;
+									float x = (float) (le.position().x + (Math.random() - 0.5) * le.getEyeHeight());
+									float y = (float) (le.position().y + (Math.random() - 0.5) * le.getEyeHeight());
+									float z = (float) (le.position().z + (Math.random() - 0.5) * le.getEyeHeight());
+									serverLevel.sendParticles(
+											ModParticles.LOVE_IMPACT.get(),
+											x, y, z,
+											1, 0.3, 0.3, 0.3, 0);
+
+									level.playSound(null, x, y, z,
+											SoundEvents.PLAYER_ATTACK_STRONG,
+											SoundSource.PLAYERS, 1.0f, 1f);
+									Damager.hurt(entity, le, damage * 0.5f, true);
+								}
+							}
+						} else if (currentTick[0] > fifthFormStart && currentTick[0] - fifthFormStart < 55) {
+							// Big explosion
+							MovementHelper.setVelocity(entity, vecs[4].subtract(entity.position())); // entity is supposed to be at vecs[4] position
+
+							if (currentTick[0] % 2 == 0) {
+								int r = (10 + currentTick[0] - fifthFormStart - 45);
+								AABB rayBox = new AABB(vecs[4].subtract(r, r, r), vecs[4].add(r, r, r));
+								List<LivingEntity> entitiesInRay = level.getEntitiesOfClass(
+										LivingEntity.class, rayBox,
+										e -> e != entity && e.isAlive() && EnhancedLoveForms.isTargetable(entity, e));
+								for (LivingEntity le : entitiesInRay) {
+									float x = (float) (le.position().x + (Math.random() - 0.5) * le.getEyeHeight());
+									float y = (float) (le.position().y + (Math.random() - 0.5) * le.getEyeHeight());
+									float z = (float) (le.position().z + (Math.random() - 0.5) * le.getEyeHeight());
+									serverLevel.sendParticles(
+											ModParticles.LOVE_IMPACT.get(),
+											x, y, z,
+											1, 0.3, 0.3, 0.3, 0);
+
+									level.playSound(null, x, y, z,
+											SoundEvents.PLAYER_ATTACK_STRONG,
+											SoundSource.PLAYERS, 1.0f, 1f);
+									Damager.hurt(entity, le, damage);
+								}
+							}
+
+							if (serverLevel != null) {
+								level.playSound(null, vecs[4].x, vecs[4].y, vecs[4].z, SoundEvents.GENERIC_EXPLODE,
+										SoundSource.PLAYERS, 1.0f, 1.0f);
+								for (int i = 0; i < 25; i++) {
+									// Spawn an explosion that gets bigger and bigger (from tick 41 to 54)
+									float explosionRadius = 2 + (currentTick[0] - fifthFormStart - 41) * 1.4f; // Scale from 0 to ~10 blocks
+									Vec3 pos = vecs[4].add(
+											(new Vec3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5))
+													.normalize().scale(explosionRadius));
+
+									if (Math.random() > 0.8) {
+										level.playSound(null, vecs[4].x, vecs[4].y, vecs[4].z,
+												SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 1.0f, 1.5f);
+									}
+
+									if (Math.random() < 0.3) {
+										serverLevel.sendParticles(
+												EnhancedLoveForms.createLoveParticleOptions(
+														new Vector3f(1.0f, 0.4f, 0.7f), // PINK
+														2.5f // scale
+										),
+												pos.x, pos.y, pos.z,
+												8, 0.5, 0.5, 0.5, 0 // count, velocity
+										);
+									} else {
+
+										serverLevel.sendParticles(
+												Math.random() > 0.5 ? ParticleTypes.CAMPFIRE_COSY_SMOKE
+														: ParticleTypes.EXPLOSION,
+												pos.x, pos.y, pos.z,
+												8, 0.5, 0.5, 0.5, 0);
+									}
+								}
+							}
+						} else if (currentTick[0] > fifthFormStart && currentTick[0] - fifthFormStart < 75) {
+							// Post explosion rings
+
+							int r = Math.min(currentTick[0] - fifthFormStart - 55, 15);
+
+							for (float f = 0.2f; f < 0.9f; f += 0.3f) {
+								Vec3 ringPos = vecs[4].subtract(vecs[1].scale(f * 50));
+								//Vec3 ringPos = vecs[0].scale(1-f).add(vecs[4].scale(f)); // Go from position vecs[0] to position vecs[4]
+
+								for (float t = 0; t < 2 * Math.PI; t += 2f / r) {
+									// Create proper circle: right*cos(t)*r + up*sin(t)*r
+									Vec3 diff = vecs[2].scale(Math.cos(t) * r).add(vecs[3].scale(Math.sin(t) * r));
+									Vec3 pos = ringPos.add(diff);
+									Vec3 pos2 = ringPos.subtract(diff);
+									serverLevel.sendParticles(
+											ParticleTypes.EXPLOSION,
+											pos.x,
+											pos.y,
+											pos.z,
+											2, 0.3, 0.3, 0.3, 0);
+
+									serverLevel.sendParticles(
+											ParticleTypes.EXPLOSION,
+											pos2.x,
+											pos2.y,
+											pos2.z,
+											2, 0.3, 0.3, 0.3, 0);
+								}
+							}
+						}
+
+						currentTick[0] += interval;
+					}, interval, totalDuration);
+
+					// Schedule cleanup
+					AbilityScheduler.scheduleOnce(entity, () -> {
+						GuardStateHelper.clearGuardState(entity);
+						setCancelAttackSwing(entity, false);
+					}, totalDuration + 2); // 3.2 seconds
+				},
+				Collections.emptySet() // Applies to all Love Breathing swords
+		);
+
+		VariationRegistry.register(22005, variation);
+		Log.debug("DEBUG: Registered '" + variation.getName() + "' for form ID 22005");
+	}
+
+	/**
+	 * Love Breathing Sixth Form variation. This keeps the longer opening sequence
+	 * while the base Sixth Form uses the shortened animation.
+	 */
+	private static void registerSixthFormVariation() {
+		BreathingFormVariation variation = new BreathingFormVariation(
+            "Sixth Form: Cat-Legged Winds of Love, Feral Fury",
+            "Spinning tornado whip attack",
+            5,
             (entity, level, formId) -> {
-            	final int fifthFormStart = 30; // Start the og fifth form 3 seconds later
-            	
+				boolean isDemon = Damager.isDemon(entity);
+            	float damage = (10.0F);
             	ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
-            	float [][][] particlePointsFifthForm = ParticlePositions.fifth_form.get("point_a");
-            	float [][][] particlePointsSwingLeft = ParticlePositions.sword_to_left.get("point_a");
-            	float [][][] particlePointsSwingRight = ParticlePositions.sword_to_right.get("point_a");
-            	float [][][] particlePointsRotate = ParticlePositions.sword_rotate.get("point_a");
+            	float [][][] particlePoints = ParticlePositions.sixth_form.get("point_a");
+            	 // Set guard state (formId auto-injected as 22006)
+                GuardStateHelper.setGuardState(entity, damage*1.75f, formId); // extra protection
 
-				float damage = (10.0F);
-            	 // Set guard state (formId auto-injected as 22005)
-                GuardStateHelper.setGuardState(entity, damage*0.75f, formId);
-
+                // Play player animation
+                 playEntityAnimation(entity, "love_sixth_form");
                 
+                // Trigger whip animation (client-side)
+                 // The variation starts with two separate whip attacks before the tornado.
 
                 // Prevent normal attack swing
                 setCancelAttackSwing(entity, true);
 
-                final int totalDuration = 96+fifthFormStart; // 5.8 seconds
+                final int totalDuration = 90; // 4.5 seconds
                 final int[] currentTick = {0};
                 final int interval = 1;
                 
-                final Vec3[] vecs = new Vec3[5]; // 0=position, 1=forward, 2=right, 3=up, 4=target
-              				float yawStart = (float) Math.toRadians(-com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
-
-        		// Build orthonormal basis (forward, right, up)
-         				vecs[0] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
-         				vecs[1] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity); // Forward vector
-        		vecs[2] = new Vec3(Math.sin(yawStart + Math.PI/2), 0, Math.cos(yawStart + Math.PI/2)).normalize(); // Right vector (90° from forward on horizontal plane)
-        		vecs[3] = vecs[2].cross(vecs[1]).normalize(); // Up vector (right × forward, perpendicular to both)
-        		
-        		final float[] yawPitch = {0,0};
-        		
-        		final int range = 60;
+                final Vec3[] vectors = new Vec3[3];
+                // Get initial forward and right vectors using yaw (handles looking up/down)
+                float yawRad = (float) Math.toRadians(-entity.getYRot());
+                vectors[0] = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
+                // Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
+                vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
                 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
             	
-                	if (currentTick[0] == fifthFormStart) {
-                		// Play player animation
-                        playEntityAnimation(entity, "love_fifth_form");
-                        
-                        // Trigger whip animation (client-side)
-                        EnhancedLoveForms.triggerWhipAnimation(entity, "love_fifth_form", 1.0);
+                	if (currentTick[0] == 0) {
+						EnhancedLoveForms.triggerWhipAnimation(entity, "sword_to_right", 1.0);
+                		MovementHelper.setVelocity(entity, entity.getLookAngle().scale(0.9f));
+                	}
+                	else if (currentTick[0] == 10) {
+						EnhancedLoveForms.triggerWhipAnimation(entity, "sword_to_left", 1.0);
+                		MovementHelper.setVelocity(entity, entity.getLookAngle().scale(0.9f));
+                	}
+                  else if (currentTick[0] == 20) {
+                   		EnhancedLoveForms.triggerWhipAnimation(entity, "love_sixth_form", 1.0);
+                  		level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                  				ModSounds.LOVE_BIG_SLASH_MEOW.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                  		MovementHelper.setVelocity(entity, entity.getLookAngle().scale(0.5f).add(0, 1, 0));
+                		entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 3));
                 	}
                 	
-                	if (currentTick[0]-fifthFormStart == 25 || (currentTick[0]-fifthFormStart < 25 && currentTick[0] %4 == 0)) {
-                  		float yaw = (float) Math.toRadians(-com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.yaw(entity));
-
-                		// Build orthonormal basis (forward, right, up)
-                  		vecs[0] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.position(entity);
-                  		vecs[1] = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.look(entity); // Forward vector
-                		if (vecs[1].y > 0) vecs[1] = new Vec3(vecs[1].x, 0, vecs[1].z);
-                		vecs[2] = new Vec3(Math.sin(yaw + Math.PI/2), 0, Math.cos(yaw + Math.PI/2)).normalize(); // Right vector (90° from forward on horizontal plane)
-                		vecs[3] = vecs[2].cross(vecs[1]).scale(-1).normalize(); // Up vector (right × forward, perpendicular to both)
-                		if (currentTick[0]-fifthFormStart == 25) {
-                			yawPitch[0] = (float) Math.toDegrees(Math.atan2(-vecs[1].x, vecs[1].z));
-                			yawPitch[1] = (float) Math.toDegrees(Math.atan2(-vecs[1].y, Math.sqrt(vecs[1].x*vecs[1].x + vecs[1].z*vecs[1].z)));
-                			
-                  			Vec3 eyePos = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity);
-                			// Find the target block
-                			for (int i = 1; i < range; i++) {
-                  				Vec3 vec = eyePos.add(vecs[1].scale(i));
-                    			
-                    			vecs[4] = vec; // Set the target position
-
-                    			// Check block collision
-                      			BlockPos blockPos = BlockPos.containing(
-                      				com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.world(vec));
-                    			if (!level.getBlockState(blockPos).isAir()) {
-                    				
-                    				break; // Stop at first block hit
-                    			}
-                			}
-                		}
-                	}
-                	
-                	float[][][] particlePoints = null;
-                	int particlePointsOffset = 0;
-                	
-                	if (currentTick[0] >= fifthFormStart) {
-                		particlePoints = particlePointsFifthForm;
-                		particlePointsOffset = -fifthFormStart;
-                	}
-                	else if (currentTick[0] < fifthFormStart / 3) { // right
-                		particlePoints = particlePointsSwingRight;
-                		particlePointsOffset = 0;
-                		if (currentTick[0] == 0) {
-                			// Play player animation
-                            playEntityAnimation(entity, "sword_to_right");
-                            
-                            // Trigger whip animation (client-side)
-                            EnhancedLoveForms.triggerWhipAnimation(entity, "sword_to_right", 1.0);
-                            
-                            // Hit all the targets in front of you forward (big sweep with knockback)
-                            
-                            AABB hitBox = new AABB(entity.position().add(entity.getLookAngle().scale(9)).add(-9, -4, -9), entity.position().add(entity.getLookAngle().scale(5).add(9, 4, 9)));
-                            List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
-                            
-                            for (Entity target : targets) {
-                            	if (target instanceof LivingEntity le && EnhancedLoveForms.isTargetable(entity, le)) {
-                            		MovementHelper.setVelocity(le, le.getDeltaMovement().add((le.position().subtract(entity.position())).normalize().scale(1.5f)));
-                            		Damager.hurt(entity, le, damage * 0.4f);
-                            		if (serverLevel != null)
-	                            		serverLevel.sendParticles(
-	        	        						ModParticles.LOVE_IMPACT.get(),
-	        	        						le.position().x, le.position().y, le.position().z,
-	        	        						1, 0.3, 0.3, 0.3, 0
-	        	        					);
-                            	}
-                            }
-                		}
-                	}
-                	else if (currentTick[0] < fifthFormStart * 2 / 3) { // left
-                		particlePoints = particlePointsSwingLeft;
-                		particlePointsOffset = fifthFormStart / 3;
-                		if (currentTick[0] == fifthFormStart / 3) {
-                			// Play player animation
-                            playEntityAnimation(entity, "sword_to_left");
-                            
-                            // Trigger whip animation (client-side)
-                            EnhancedLoveForms.triggerWhipAnimation(entity, "sword_to_left", 1.0);
-                            
-                            // Hit all the targets in front of you forward (big sweep with knockback)
-                            
-                            AABB hitBox = new AABB(entity.position().add(entity.getLookAngle().scale(9)).add(-9, -4, -9), entity.position().add(entity.getLookAngle().scale(5).add(9, 4, 9)));
-                            List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
-                            
-                            for (Entity target : targets) {
-                            	if (target instanceof LivingEntity le && EnhancedLoveForms.isTargetable(entity, le)) {
-                            		MovementHelper.setVelocity(le, le.getDeltaMovement().add((le.position().subtract(entity.position())).normalize().scale(1.5f)));
-                            		Damager.hurt(entity, le, damage*0.9f);
-                            		if (serverLevel != null)
-	                            		serverLevel.sendParticles(
-	        	        						ModParticles.LOVE_IMPACT.get(),
-	        	        						le.position().x, le.position().y, le.position().z,
-	        	        						1, 0.3, 0.3, 0.3, 0
-	        	        					);
-                            	}
-                            }
-                		}
-                	}
-                	else if (currentTick[0] < fifthFormStart) { // rotate
-                		particlePoints = particlePointsRotate;
-                		particlePointsOffset = fifthFormStart * 2 / 3;
-                		if (currentTick[0] == fifthFormStart * 2 / 3) {
-                			// Play player animation
-                            playEntityAnimation(entity, "sword_rotate");
-                            
-                            // Trigger whip animation (client-side)
-                            EnhancedLoveForms.triggerWhipAnimation(entity, "sword_rotate", 1.0);
-                            
-                            // Hit all the targets around you forward (big sweep with knockback)
-                            
-                            AABB hitBox = entity.getBoundingBox().inflate(12.0);
-                            List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
-                            
-                            for (Entity target : targets) {
-                            	if (target instanceof LivingEntity le && EnhancedLoveForms.isTargetable(entity, le)) {
-                            		MovementHelper.setVelocity(le, le.getDeltaMovement().add((le.position().subtract(entity.position())).normalize().scale(1.5f)));
-                            		Damager.hurt(entity, le, damage*0.4f);
-                            		if (serverLevel != null)
-	                            		serverLevel.sendParticles(
-	        	        						ModParticles.LOVE_IMPACT.get(),
-	        	        						le.position().x, le.position().y, le.position().z,
-	        	        						1, 0.3, 0.3, 0.3, 0
-	        	        					);
-                            	}
-                            }
-                		}
-                	}
-                	
-                	if (serverLevel != null && particlePoints != null && currentTick[0]+particlePointsOffset < particlePoints.length && particlePoints[currentTick[0]+particlePointsOffset].length > 0) {
-                		for (int i = 0; i < particlePoints[currentTick[0]].length; i++) {
-                			float x = particlePoints[currentTick[0]+particlePointsOffset][i][0];
-                			float y = particlePoints[currentTick[0]+particlePointsOffset][i][1];
-                			float z = particlePoints[currentTick[0]+particlePointsOffset][i][2];
-
-                			Vec3 pos = entity.position().add(vecs[1].scale(z).add(vecs[2].scale(x)).add(vecs[3].scale(y)));
-
-                			// Spawn pink dust particle at pos
-                			serverLevel.sendParticles(
-                             EnhancedLoveForms.createLoveParticleOptions(
-                		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
-                		                1.8f                           // scale
-                		            ),
-                		            pos.x, pos.y, pos.z,
-                		            2, 0.05, 0.05, 0.05, 0 // count, velocity
-                		        );
-                			
-                			// Spawn white dust particle at pos
-                			serverLevel.sendParticles(
-                             EnhancedLoveForms.createLoveParticleOptions(
-                    		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
-                    		                1.5f                           // scale
-                    		            ),
-                		            pos.x, pos.y, pos.z,
-                		            1, 0, 0, 0, 0 // count, velocity
-                		        );
-                		}
-                	}
-                	
-                	if (currentTick[0] >= fifthFormStart && currentTick[0]-fifthFormStart < 14) {
-                		// Jump upwards and backwards (do the backflip)
-                		MovementHelper.lookAtTarget(entity);
-                		MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(-0.65).add(0, 1.5f, 0));
-                	}
-                	else if (currentTick[0] >= fifthFormStart && currentTick[0]-fifthFormStart < 25) {
-                		// Hover and aim
-                		MovementHelper.setVelocity(entity, entity.getDeltaMovement().multiply(1, 0, 1));
-                		MovementHelper.lookAtTarget(entity);
-                	}
-                	else if (currentTick[0] >= fifthFormStart && currentTick[0]-fifthFormStart == 26) {
-                		// Start the sword slashes and tornado
-                		LoveTornadoSpawner.spawnLoveTornado(
-                				level,
-                				vecs[4],
-                				yawPitch[0]+180,
-                				yawPitch[1],
-                				"love_fifth_form",
-                				85);
-                		LoveSwordSlashesSpawner.spawnLoveSwordSlashes(
-                				level,
-                				vecs[4],
-                				yawPitch[0]+180,
-                				yawPitch[1],
-                				"love_fifth_form",
-                				85);
-                		entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, totalDuration+2-currentTick[0]-fifthFormStart, 3)); // To stop the fall damage
-                	}
-                	else if (currentTick[0] >= fifthFormStart && currentTick[0]-fifthFormStart < 31) {
-                		// Tornado is starting in the thin phase
-                		// Launch in the direction
-                		MovementHelper.setRotation(entity, yawPitch[0], yawPitch[1]);
-                		float percent = (float)(currentTick[0]-fifthFormStart-25f)/(31f-25f);
-                		Vec3 targetPos = vecs[0].scale(1-percent).add(vecs[4].scale(percent)); // Go from position vecs[0] to position vecs[4]
-                		MovementHelper.setVelocity(entity, targetPos.subtract(entity.position())); // Set the velocity to the difference in position to target position
-                		
-                		int r = 6;
-                		AABB rayBox = new AABB(targetPos.subtract(r, r, r), targetPos.add(r, r, r));
-            			List<LivingEntity> entitiesInRay = level.getEntitiesOfClass(
-            				LivingEntity.class, rayBox,
-            				e -> e != entity && e.isAlive() && EnhancedLoveForms.isTargetable(entity, e)
-            			);
-            			for (LivingEntity le : entitiesInRay) {
-            				float x = (float)(le.position().x + (Math.random()-0.5)*le.getEyeHeight());
-                			float y = (float)(le.position().y + (Math.random()-0.5)*le.getEyeHeight());
-                			float z = (float)(le.position().z + (Math.random()-0.5)*le.getEyeHeight());
-	                		serverLevel.sendParticles(
-	        						ModParticles.LOVE_IMPACT.get(),
-	        						x, y, z,
-	        						1, 0.3, 0.3, 0.3, 0
-	        					);
-	                		
-	                		
-	        				level.playSound(null, x, y, z,
-	                				   SoundEvents.PLAYER_ATTACK_STRONG,
-	                				    SoundSource.PLAYERS, 1.0f, 1f);
-            				Damager.hurt(entity, le, damage*0.5f, true);
-            			}
-                	}
-                	else if (currentTick[0] > fifthFormStart && currentTick[0]-fifthFormStart < 41) {
-                		// Landed on the ground
-                		MovementHelper.setVelocity(entity, vecs[4].subtract(entity.position())); // entity is supposed to be at vecs[4] position
-                	}
-                	else if (currentTick[0] > fifthFormStart && currentTick[0]-fifthFormStart < 45) {
-                		// Big cloud of slashes at the end of the tornado
-                		MovementHelper.setVelocity(entity, vecs[4].subtract(entity.position())); // entity is supposed to be at vecs[4] position
+                	if (currentTick[0] == 2 || currentTick[0] == 12 || currentTick[0] == 32) {
+                		// Damage the idiots in front of you
                 		if (serverLevel != null) {
-                			for (int i = 0; i < 5; i++) {
-	                			// Spawn a cloud of sword slashes at the target point
-	                			float x = (float)(vecs[4].x + (Math.random()-0.5)*15);
-	                			float y = (float)(vecs[4].y + (Math.random()-0.5)*15);
-	                			float z = (float)(vecs[4].z + (Math.random()-0.5)*15);
-		                		serverLevel.sendParticles(
-		        						ModParticles.LOVE_SLASH.get(),
-		        						x, y, z,
-		        						3, 0.3, 0.3, 0.3, 0
-		        					);
-		                		
-		        				level.playSound(null, x, y, z,
-		                				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
-		                				    SoundSource.PLAYERS, 1.0f, 1.5f);
-                			}
-                		}
-                		if (currentTick[0] > fifthFormStart && currentTick[0] % 2 == 0) {
-                			int r = (10 + currentTick[0]-fifthFormStart-41);
-                    		AABB rayBox = new AABB(vecs[4].subtract(r, r, r), vecs[4].add(r, r, r));
-                			List<LivingEntity> entitiesInRay = level.getEntitiesOfClass(
-                				LivingEntity.class, rayBox,
-                				e -> e != entity && e.isAlive() && EnhancedLoveForms.isTargetable(entity, e)
+                			Vec3 centerPos = entity.getEyePosition().add(entity.getLookAngle().scale(6));
+                			AABB searchBox = new AABB(centerPos, centerPos).inflate(6.0);
+                			List<LivingEntity> nearby = level.getEntitiesOfClass(
+                				LivingEntity.class, searchBox,
+								e -> e != entity && e.isAlive() && EnhancedLoveForms.isTargetable(entity, e)
                 			);
-                			for (LivingEntity le : entitiesInRay) {
-                				if (Math.random() > 0.5) continue;
-                				float x = (float)(le.position().x + (Math.random()-0.5)*le.getEyeHeight());
-                    			float y = (float)(le.position().y + (Math.random()-0.5)*le.getEyeHeight());
-                    			float z = (float)(le.position().z + (Math.random()-0.5)*le.getEyeHeight());
-    	                		serverLevel.sendParticles(
-    	        						ModParticles.LOVE_IMPACT.get(),
-    	        						x, y, z,
-    	        						1, 0.3, 0.3, 0.3, 0
-    	        					);
-    	                		
-    	        				level.playSound(null, x, y, z,
-    	                				   SoundEvents.PLAYER_ATTACK_STRONG,
-    	                				    SoundSource.PLAYERS, 1.0f, 1f);
-                				Damager.hurt(entity, le, damage*0.5f, true);
-                			}
-                		}
-                	}
-                	else if (currentTick[0] > fifthFormStart && currentTick[0]-fifthFormStart < 55) {
-                		// Big explosion
-                		MovementHelper.setVelocity(entity, vecs[4].subtract(entity.position())); // entity is supposed to be at vecs[4] position
-                		
-                		if (currentTick[0] % 2 == 0) {
-                			int r = (10 + currentTick[0]-fifthFormStart-45);
-                    		AABB rayBox = new AABB(vecs[4].subtract(r, r, r), vecs[4].add(r, r, r));
-                			List<LivingEntity> entitiesInRay = level.getEntitiesOfClass(
-                				LivingEntity.class, rayBox,
-                				e -> e != entity && e.isAlive() && EnhancedLoveForms.isTargetable(entity, e)
-                			);
-                			for (LivingEntity le : entitiesInRay) {
-                				float x = (float)(le.position().x + (Math.random()-0.5)*le.getEyeHeight());
-                    			float y = (float)(le.position().y + (Math.random()-0.5)*le.getEyeHeight());
-                    			float z = (float)(le.position().z + (Math.random()-0.5)*le.getEyeHeight());
-    	                		serverLevel.sendParticles(
-    	        						ModParticles.LOVE_IMPACT.get(),
-    	        						x, y, z,
-    	        						1, 0.3, 0.3, 0.3, 0
-    	        					);
-    	                		
-    	        				level.playSound(null, x, y, z,
-    	                				   SoundEvents.PLAYER_ATTACK_STRONG,
-    	                				    SoundSource.PLAYERS, 1.0f, 1f);
-                				Damager.hurt(entity, le, damage);
-                			}
-                		}
-                		
-                		if (serverLevel != null) {
-                			level.playSound(null, vecs[4].x, vecs[4].y, vecs[4].z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 1.0f);
-                			for (int i = 0; i < 25; i++) {
-	                			// Spawn an explosion that gets bigger and bigger (from tick 41 to 54)
-                				float explosionRadius = 2+(currentTick[0]-fifthFormStart - 41) * 1.4f; // Scale from 0 to ~10 blocks
-                				Vec3 pos = vecs[4].add((new Vec3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5)).normalize().scale(explosionRadius));
-		                		
-                				if (Math.random() > 0.8) {
-                					level.playSound(null, vecs[4].x, vecs[4].y, vecs[4].z, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 1.0f, 1.5f);
-                				}
-                				
-                				if (Math.random() < 0.3) {
+
+                			for (LivingEntity target : nearby) {
+                				//if (Math.random() < 0.8) {
+                					Damager.hurt(entity, target, damage, true, false, true);
+                					// Spawn love_slash particles on newly added target
+                					double particleY = target.getY() + target.getBbHeight() * 0.5;
                 					serverLevel.sendParticles(
-                             EnhancedLoveForms.createLoveParticleOptions(
-                        		                new Vector3f(1.0f, 0.4f, 0.7f), // PINK
-                        		                2.5f                           // scale
-                        		            ),
-                        		            pos.x, pos.y, pos.z,
-                        		            8, 0.5, 0.5, 0.5, 0 // count, velocity
-                        		        );
-                				} else {
-                				
-			                		serverLevel.sendParticles(
-			        						Math.random() > 0.5 ? ParticleTypes.CAMPFIRE_COSY_SMOKE : ParticleTypes.EXPLOSION,
-			        						pos.x, pos.y, pos.z,
-			        						8, 0.5, 0.5, 0.5, 0
-			        					);
-                				}
-                			}
-                		}
-                	}
-                	else if (currentTick[0] > fifthFormStart && currentTick[0]-fifthFormStart < 75) {
-                		// Post explosion rings
-                		
-                		int r = Math.min(currentTick[0]-fifthFormStart-55, 15);
-                		
-                		for (float f = 0.2f; f < 0.9f; f += 0.3f) {
-                			Vec3 ringPos = vecs[4].subtract(vecs[1].scale(f*50));
-                			//Vec3 ringPos = vecs[0].scale(1-f).add(vecs[4].scale(f)); // Go from position vecs[0] to position vecs[4]
-                			
-                			for (float t = 0; t < 2*Math.PI; t+=2f/r) {
-                				// Create proper circle: right*cos(t)*r + up*sin(t)*r
-                				Vec3 diff = vecs[2].scale(Math.cos(t) * r).add(vecs[3].scale(Math.sin(t) * r));
-                				Vec3 pos = ringPos.add(diff);
-                				Vec3 pos2 = ringPos.subtract(diff);
-                				serverLevel.sendParticles(
-		        						ParticleTypes.EXPLOSION,
-		        						pos.x, 
-		        						pos.y, 
-		        						pos.z,
-		        						2, 0.3, 0.3, 0.3, 0
-		        					);
+                						ModParticles.LOVE_SLASH.get(),
+                						target.getX(), particleY, target.getZ(),
+                						3, 0.3, 0.3, 0.3, 0
+                					);
+                					level.playSound(null, target.getX(), target.getY(), target.getZ(),
+                        				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                        				    SoundSource.PLAYERS, 1.0f, 1.5f);
+                				//}
 
-                				serverLevel.sendParticles(
-		        						ParticleTypes.EXPLOSION,
-		        						pos2.x, 
-		        						pos2.y, 
-		        						pos2.z,
-		        						2, 0.3, 0.3, 0.3, 0
-		        					);
                 			}
                 		}
                 	}
+                	
+                	if (currentTick[0] % 4 == 0) {
+                		// Use yaw rotation to get forward direction (works even when looking up/down)
+                		float yaw = (float) Math.toRadians(-entity.getYRot());
+                		vectors[0] = new Vec3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
+                		// Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
+                		vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
+                	}
+                	
+                	if (currentTick[0] > 30 && currentTick[0] % 2 == 0) {
+                		Vec3 hitBoxCenter = entity.getEyePosition().add(entity.getLookAngle().scale(6));
+                		AABB hitBox = new AABB(hitBoxCenter, hitBoxCenter).inflate(6.0);
+                        List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
+
+                        for (Entity target : targets) {
+                        	/*if (target instanceof LivingEntity livingTarget) {
+    	                        Damager.hurt(entity, livingTarget, damage/2);
+    	
+    	                        // Brief confusion
+    	                        //livingTarget.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 40, 0));
+                        	}*/
+                        	// Knockback away from center
+                            Vec3 knockbackDir = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame
+                                .local(target.position()).subtract(com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.eye(entity));
+                            if (knockbackDir.lengthSqr() > 1.0E-4D && target instanceof LivingEntity livingTarget) {
+                                MovementHelper.addVelocity(livingTarget, knockbackDir.normalize());
+                            }
+                        }
+                	}
+                	
+                 	if (currentTick[0] >= 20) { // Particles from particle positions (starting at tick 20
+                         EnhancedLoveForms.renderLovePointFrame(serverLevel, entity, particlePoints, currentTick[0] - 20,
+                            vectors[0], vectors[1], new Vec3(0, 1, 0), isDemon, 1.2f, 1.0f);
+                    }
             	
 	            	currentTick[0] += interval;
 	            }, interval, totalDuration);
                 
                
+               
+                
                 // Schedule cleanup
-                AbilityScheduler.scheduleOnce(entity, () -> {
-                    GuardStateHelper.clearGuardState(entity);
-                    setCancelAttackSwing(entity, false);
-                }, totalDuration+2); // 3.2 seconds
-            },
-            Collections.emptySet()  // Applies to all Love Breathing swords
-        );
+                 AbilityScheduler.scheduleOnce(entity, () -> {
+                     EnhancedLoveForms.clearLovePointFrame(entity);
+                     GuardStateHelper.clearGuardState(entity);
+                     setCancelAttackSwing(entity, false);
+                 }, totalDuration+2);
+             },
+             Collections.emptySet()
+         );
 
-        VariationRegistry.register(22005, variation);
-        Log.debug("DEBUG: Registered '" + variation.getName() + "' for form ID 22005");
-    }
+         VariationRegistry.register(22006, variation);
+         Log.debug("DEBUG: Registered '" + variation.getName() + "' for form ID 22006");
+     }
+    
 
 }

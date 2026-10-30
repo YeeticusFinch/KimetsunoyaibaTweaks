@@ -31,6 +31,13 @@ public class ModSounds {
     public static final RegistryObject<SoundEvent> DRUM_NAVEL = registerSoundEvent("drum_navel");
     public static final RegistryObject<SoundEvent> DRUM_BACK = registerSoundEvent("drum_back");
 
+    // Love Breathing form effects
+    public static final RegistryObject<SoundEvent> LOVE_LAUNCH = registerSoundEvent("love_launch");
+    public static final RegistryObject<SoundEvent> LOVE_LANDS = registerSoundEvent("love_lands");
+    public static final RegistryObject<SoundEvent> LOVE_HIT_SPARKLES = registerSoundEvent("love_hit_sparkles");
+    public static final RegistryObject<SoundEvent> LOVE_CATS_AND_CUTS = registerSoundEvent("love_cats_and_cuts");
+    public static final RegistryObject<SoundEvent> LOVE_BIG_SLASH_MEOW = registerSoundEvent("love_big_slash_meow");
+
     private static RegistryObject<SoundEvent> registerSoundEvent(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

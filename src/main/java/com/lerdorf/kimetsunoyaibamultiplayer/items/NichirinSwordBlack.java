@@ -529,9 +529,10 @@ public class NichirinSwordBlack extends BreathingSwordItem {
         BreathingForm form = technique.getForm(newIndex);
 
         if (form != null && !player.level().isClientSide) {
-            double formId = form.getFormId();
-            player.getPersistentData().putDouble("breathes", formId);
-            data.setBaseModBreathesValue(formId);
+            int formId = form.getFormId();
+            int runtimeFormId = BaseModFormExecutionHelper.getSelectionBreathesFormId(held, formId);
+            player.getPersistentData().putDouble("breathes", runtimeFormId);
+            data.setBaseModBreathesValue(runtimeFormId);
         }
 
         if (!player.level().isClientSide) {

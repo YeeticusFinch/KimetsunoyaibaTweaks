@@ -37,6 +37,7 @@
     "BaseKanaeRendererMixin",
       "BaseBackstepHudOverlayMixin",
       "BaseModCycleKeyMappingMixin",
+      "EnhancedFormCycleMouseMixin",
       "EntityGlowingMixin",
     "PuppetGeoBoneCaptureMixin",
     "DustParticleMixin",

@@ -143,8 +143,10 @@ public class KanrojiSwordAnimationTrigger {
             case "love_second_form":
             case "love_third_form":
             case "love_fourth_form":
+            case "love_fourth_form_short":
             case "love_fifth_form":
             case "love_sixth_form":
+            case "love_sixth_form_short":
                 return entityAnimationName;
 
             // Walk/sprint animations

@@ -13,7 +13,11 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesSpawner;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveTornadoSpawner;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.LoveLineSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
+import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
@@ -44,6 +48,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.particles.EnergyParticleOptions;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 
 import org.joml.Vector3f;
 
@@ -59,11 +65,219 @@ import org.joml.Vector3f;
  * This is a PLACEHOLDER implementation. Full forms will be added later.
  */
 public class EnhancedLoveForms {
+    private static final int LOVE_FAIRY_DUST_MOTES = 5;
+    private static final int LOVE_RING_COUNT = 3;
+    private static final int LOVE_RING_POINTS = 18;
+    private static final String FOURTH_FORM_ANIMATION = "love_fourth_form_short";
+    private static final int FOURTH_FORM_DURATION_TICKS = 40;
+    private static final String SIXTH_FORM_ANIMATION = "love_sixth_form_short";
+    private static final int SIXTH_FORM_DURATION_TICKS = 40;
 
     static ParticleOptions createLoveParticleOptions(Vector3f color, float size) {
-        return EnhancedBreathingConfig.loveUseDustParticles
+        return "dust".equals(EnhancedBreathingConfig.loveParticleMode)
                 ? new DustParticleOptions(color, size)
                 : new EnergyParticleOptions(color, size);
+    }
+
+    /** Renders one point frame either as legacy particles or as a synced curve. */
+    static void renderLovePointFrame(ServerLevel serverLevel, LivingEntity entity,
+                                     float[][][] particlePoints, int frame,
+                                     Vec3 forward, Vec3 right, Vec3 up,
+                                     boolean isDemon, float pinkSize, float whiteSize) {
+        if (serverLevel == null) {
+            return;
+        }
+
+        if ("lines".equals(EnhancedBreathingConfig.loveParticleMode)) {
+            if (particlePoints == null || frame < 0 || frame >= particlePoints.length
+                || particlePoints[frame].length < 2) {
+                ModNetworking.sendToTrackingAndSelf(
+                    new LoveLineSyncPacket(entity.getUUID(), entity.getId(), false, null), entity);
+                return;
+            }
+
+            float[][] framePoints = particlePoints[frame];
+            Vec3[] worldPoints = new Vec3[framePoints.length];
+            for (int i = 0; i < framePoints.length; i++) {
+                float x = framePoints[i][0];
+                float y = framePoints[i][1];
+                float z = framePoints[i][2];
+                worldPoints[i] = entity.position()
+                    .add(forward.scale(z).add(right.scale(x)).add(up.scale(y)));
+            }
+            ModNetworking.sendToTrackingAndSelf(
+                new LoveLineSyncPacket(entity.getUUID(), entity.getId(), true, worldPoints), entity);
+            for (Vec3 point : worldPoints) {
+                spawnLoveFairyDust(serverLevel, point);
+            }
+            return;
+        }
+
+        if (particlePoints == null || frame < 0 || frame >= particlePoints.length
+            || particlePoints[frame].length == 0) {
+            return;
+        }
+        for (int i = 0; i < particlePoints[frame].length; i++) {
+            float x = particlePoints[frame][i][0];
+            float y = particlePoints[frame][i][1];
+            float z = particlePoints[frame][i][2];
+            Vec3 pos = entity.position()
+                .add(forward.scale(z).add(right.scale(x)).add(up.scale(y)));
+
+            serverLevel.sendParticles(
+                createLoveParticleOptions(
+                    isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f),
+                    pinkSize),
+                pos.x, pos.y, pos.z, 2, 0.05, 0.05, 0.05, 0);
+            serverLevel.sendParticles(
+                createLoveParticleOptions(new Vector3f(1.0f, 1.0f, 1.0f), whiteSize),
+                pos.x, pos.y, pos.z, 1, 0, 0, 0, 0);
+        }
+    }
+
+    static void clearLovePointFrame(LivingEntity entity) {
+        if (entity.level() instanceof ServerLevel) {
+            ModNetworking.sendToTrackingAndSelf(
+                new LoveLineSyncPacket(entity.getUUID(), entity.getId(), false, null), entity);
+            for (int ring = 0; ring < LOVE_RING_COUNT; ring++) {
+                ModNetworking.sendToTrackingAndSelf(
+                    new LoveLineSyncPacket(loveRingUuid(entity.getUUID(), ring), entity.getId(), false, null),
+                    entity);
+            }
+        }
+    }
+
+    /** Renders the three wide, swirling rings used by Fifth Form's impact. */
+    private static void renderLoveRingFrame(ServerLevel serverLevel, LivingEntity entity, Vec3 center,
+                                            Vec3 forward, Vec3 right, Vec3 up, int tick, boolean isDemon) {
+        if (serverLevel == null) {
+            return;
+        }
+
+        double spin = tick * 0.22D;
+        Vector3f pink = isDemon
+            ? new Vector3f(0.8196f, 0.0f, 0.286f)
+            : new Vector3f(1.0f, 0.4f, 0.7f);
+
+        for (int ring = 0; ring < LOVE_RING_COUNT; ring++) {
+            double ringSpin = spin * (ring % 2 == 0 ? 1.0D : -1.0D) + ring * (Math.PI * 2.0D / 3.0D);
+            double radius = 4.0D + ring * 1.25D;
+            Vec3 ringCenter = center.add(forward.scale((ring - 1) * 1.15D
+                + Math.sin(spin + ring) * 0.35D));
+            Vec3[] points = new Vec3[LOVE_RING_POINTS + 1];
+
+            for (int pointIndex = 0; pointIndex <= LOVE_RING_POINTS; pointIndex++) {
+                double angle = Math.PI * 2.0D * pointIndex / LOVE_RING_POINTS;
+                double wobble = Math.sin(angle * 3.0D + ringSpin) * 0.35D;
+                double pointRadius = radius + wobble;
+                points[pointIndex] = ringCenter
+                    .add(right.scale(Math.cos(angle + ringSpin) * pointRadius))
+                    .add(up.scale(Math.sin(angle + ringSpin) * pointRadius));
+            }
+
+            if ("lines".equals(EnhancedBreathingConfig.loveParticleMode)) {
+                ModNetworking.sendToTrackingAndSelf(
+                    new LoveLineSyncPacket(loveRingUuid(entity.getUUID(), ring), entity.getId(), true, points),
+                    entity);
+            } else {
+                for (int pointIndex = 0; pointIndex < LOVE_RING_POINTS; pointIndex++) {
+                    Vec3 point = points[pointIndex];
+                    serverLevel.sendParticles(createLoveParticleOptions(pink, 1.4f),
+                        point.x, point.y, point.z, 1, 0, 0, 0, 0);
+                    serverLevel.sendParticles(createLoveParticleOptions(new Vector3f(1.0f, 1.0f, 1.0f), 0.8f),
+                        point.x, point.y, point.z, 1, 0, 0, 0, 0);
+                }
+            }
+
+            // Keep the dust sparse enough that the three rings remain readable.
+            for (int pointIndex = 0; pointIndex < LOVE_RING_POINTS; pointIndex += 2) {
+                spawnLoveFairyDust(serverLevel, points[pointIndex]);
+            }
+        }
+    }
+
+    private static UUID loveRingUuid(UUID entityUuid, int ring) {
+        return UUID.nameUUIDFromBytes((entityUuid.toString() + ":love_ring:" + ring)
+            .getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** Spawns the tiny pink/green dust motes used to decorate Love line effects. */
+    private static void spawnLoveFairyDust(ServerLevel serverLevel, Vec3 center) {
+        spawnLoveFairyDust(serverLevel, center, new Vector3f(1.0f, 0.2f, 0.7f));
+        spawnLoveFairyDust(serverLevel, center, new Vector3f(0.6f, 1.0f, 0.4f));
+    }
+
+    private static void spawnLoveFairyDust(ServerLevel serverLevel, Vec3 center, Vector3f color) {
+        double x;
+        double y;
+        double z;
+        do {
+            x = Math.random() * 2.0D - 1.0D;
+            y = Math.random() * 2.0D - 1.0D;
+            z = Math.random() * 2.0D - 1.0D;
+        } while (x * x + y * y + z * z > 1.0D);
+
+        Vec3 position = center.add(x, y, z);
+        for (int i = 0; i < LOVE_FAIRY_DUST_MOTES; i++) {
+            serverLevel.sendParticles(
+                new DustParticleOptions(color, 0.1f + (float) Math.random() * 0.3f),
+                position.x, position.y, position.z, 1, 0, 0, 0, 0);
+        }
+    }
+
+    private static boolean isLoveLineMode() {
+        return "lines".equals(EnhancedBreathingConfig.loveParticleMode);
+    }
+
+    private static boolean isWithinLoveLine(Vec3 point, Vec3 start, Vec3 end, double radius) {
+        Vec3 line = end.subtract(start);
+        double lineLengthSquared = line.lengthSqr();
+        if (lineLengthSquared <= 1.0E-6D) {
+            return point.distanceToSqr(start) <= radius * radius;
+        }
+
+        double projection = point.subtract(start).dot(line) / lineLengthSquared;
+        projection = Math.max(0.0D, Math.min(1.0D, projection));
+        Vec3 closestPoint = start.add(line.scale(projection));
+        return point.distanceToSqr(closestPoint) <= radius * radius;
+    }
+
+    /** Applies the Fifth Form tornado field independently of its damage ticks. */
+    private static void applyLoveTornadoMovement(Level level, LivingEntity source, Vec3 center,
+                                                 Vec3 orbitRight, int tick) {
+        double tornadoRadius = tick < 45
+            ? 6.0D
+            : Math.min(12.0D, 6.0D + (tick - 45) * 0.2D);
+        AABB tornadoBox = new AABB(center, center).inflate(tornadoRadius);
+        List<LivingEntity> targets = level.getEntitiesOfClass(
+            LivingEntity.class,
+            tornadoBox,
+            target -> target != source && target.isAlive() && isTargetable(source, target));
+
+        double progress = Math.max(0.0D, Math.min(1.0D, (tick - 26) / 49.0D));
+        double orbitStrength = 0.18D + progress * 0.16D;
+        double upwardStrength = 0.025D + progress * 0.045D;
+        Vec3 fallbackRadial = new Vec3(orbitRight.x, 0.0D, orbitRight.z).normalize();
+
+        for (LivingEntity target : targets) {
+            Vec3 offset = target.getBoundingBox().getCenter().subtract(center);
+            Vec3 horizontalOffset = new Vec3(offset.x, 0.0D, offset.z);
+            Vec3 radialDirection = horizontalOffset.lengthSqr() > 1.0E-6D
+                ? horizontalOffset.normalize()
+                : fallbackRadial;
+            Vec3 tangentDirection = new Vec3(-radialDirection.z, 0.0D, radialDirection.x);
+            double inwardStrength = Math.min(0.2D, Math.max(0.025D, horizontalOffset.length() * 0.035D));
+
+            MovementHelper.addVelocity(target,
+                tangentDirection.scale(orbitStrength)
+                    .add(radialDirection.scale(-inwardStrength))
+                    .add(0.0D, upwardStrength, 0.0D));
+
+            if (tick == 75) {
+                MovementHelper.addVelocity(target,
+                    tangentDirection.scale(0.25D).add(0.0D, 1.35D, 0.0D));
+            }
+        }
     }
 
 	/**
@@ -190,6 +404,21 @@ public class EnhancedLoveForms {
         AnimationHelper.playAnimation(player, animationName);
     }
 
+    private static void playSynchronizedAnimation(LivingEntity entity, String animationName,
+                                                  int durationTicks) {
+        if (entity instanceof Player player) {
+            AnimationHelper.playAnimation(player, animationName, -1, 1.0F);
+        } else if (entity instanceof BreathingSlayerEntity slayer) {
+            slayer.playGeckoAnimation(animationName, durationTicks);
+        } else {
+            AnimationHelper.playAnimationOnLayer(entity, animationName, durationTicks, 1.0F, 3000);
+        }
+    }
+
+    private static void playSixthFormAnimation(LivingEntity entity) {
+        playSynchronizedAnimation(entity, SIXTH_FORM_ANIMATION, SIXTH_FORM_DURATION_TICKS);
+    }
+
     /**
      * Unified animation helper with layer and speed control.
      * Safe version that doesn't require SwordRegistry lookups.
@@ -305,9 +534,9 @@ public class EnhancedLoveForms {
                 final Vec3[] vectors = new Vec3[2];
                 // Get initial forward and right vectors using yaw (handles looking up/down)
                 float yawRad = (float) Math.toRadians(-entity.getYRot());
-                vectors[0] = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
-                // Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
-                vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
+                 vectors[0] = new Vec3(Math.sin(yawRad), 0, Math.cos(yawRad)).normalize();
+                 // Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
+                 vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
 
                 // Give player strong slowness to immobilize
         		//if (currentTick[0] == 0) {
@@ -316,7 +545,8 @@ public class EnhancedLoveForms {
         			
         		float [][][] particlePoints = ParticlePositions.first_form.get("point_a");
                 
-                AbilityScheduler.scheduleRepeating(entity, () -> {
+                 final boolean[] hitThisTick = {false};
+                 AbilityScheduler.scheduleRepeating(entity, () -> {
 
                 	if (currentTick[0] % 4 == 0) {
                 		// Use yaw rotation to get forward direction (works even when looking up/down)
@@ -327,82 +557,45 @@ public class EnhancedLoveForms {
                 	}
 
                 	
-                	if (serverLevel != null && particlePoints != null && currentTick[0] < particlePoints.length && particlePoints[currentTick[0]].length > 0) {
-                		for (int i = 0; i < particlePoints[currentTick[0]].length; i++) {
-                			float x = particlePoints[currentTick[0]][i][0];
-                			float y = particlePoints[currentTick[0]][i][1];
-                			float z = particlePoints[currentTick[0]][i][2];
+                    renderLovePointFrame(serverLevel, entity, particlePoints, currentTick[0],
+                        vectors[0], vectors[1], new Vec3(0, 1, 0), isDemon, 1.2f, 1.0f);
 
-                			Vec3 pos = entity.position().add(vectors[0].scale(z).add(vectors[1].scale(x)).add(0, y, 0));
-
-                			// Spawn pink dust particle at pos
-                			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) :new Vector3f(1.0f, 0.4f, 0.7f), // PINK
-                		                1.2f                           // scale
-                		            ),
-                		            pos.x, pos.y, pos.z,
-                		            2, 0.05, 0.05, 0.05, 0 // count, velocity
-                		        );
-                			
-                			// Spawn white dust particle at pos
-                			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                    		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
-                    		                1f                           // scale
-                    		            ),
-                		            pos.x, pos.y, pos.z,
-                		            1, 0, 0, 0, 0 // count, velocity
-                		        );
-                		}
-                	}
-
-                	if (currentTick[0] < 26) { // Preparing for the pounce (1.31 seconds)
-                		if (currentTick[0] % 5 == 0 && currentTick[0] < 10) {
-                			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
-                				    SoundSource.PLAYERS, 1.0f, 1.5f);
-                		}
-                	}
-                	else if (currentTick[0] < 52) { // Sprinting fast (2.6 seconds)
-                		if (currentTick[0] < 27) {
-                			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                				    SoundEvents.EVOKER_PREPARE_ATTACK, SoundSource.PLAYERS, 1.0f, 2.0f);
-                			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                				    SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.7f);
-                		}
-                		if (currentTick[0] < 31 && serverLevel != null) {
-                			serverLevel.sendParticles(
+                  	if (currentTick[0] >= 26 && currentTick[0] < 52) { // Sprinting fast (2.6 seconds)
+                 		if (currentTick[0] == 26) {
+                 			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                 				    ModSounds.LOVE_LAUNCH.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                 		}
+                  		if (currentTick[0] < 31 && serverLevel != null) {
+                  			serverLevel.sendParticles(
             						ModParticles.LOVE_IMPACT.get(),
             						entity.getX(), entity.getY(), entity.getZ(),
-            						3, 0.3, 0.3, 0.3, 0
-            					);
-                		}
-                		if (currentTick[0] % 2 == 0) {
-                			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                				    SoundEvents.HORSE_STEP, SoundSource.PLAYERS, 1.0f, 2f);
-                		}
-                		// Make the player zoom forward
+                  					3, 0.3, 0.3, 0.3, 0
+                  				);
+                  		}
+                  		if (serverLevel != null && isLoveLineMode()) {
+                  			spawnLoveFairyDust(serverLevel,
+                  				entity.position().add(0.0D, entity.getBbHeight() * 0.5D, 0.0D));
+                  		}
+                 		// Make the player zoom forward
                 		Vec3 forward = vectors[0].scale(1.4); // Speed boost
                 		MovementHelper.setVelocity(entity, new Vec3(forward.x, entity.getDeltaMovement().y, forward.z));
                 		//entity.setDeltaMovement(forward.x, entity.getDeltaMovement().y, forward.z);
 
                 		
                 	}
-                	else if (currentTick[0] < 55) { // Floating and spinning (2.75 seconds)
-                		// Give the player slow falling
+                 	else if (currentTick[0] < 55) { // Floating and spinning (2.75 seconds)
+                 		if (currentTick[0] == 52) {
+                 			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                 				    ModSounds.LOVE_LANDS.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                 		}
+                 		// Give the player slow falling
                 		if (currentTick[0] == 52) {
                 			entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 0, false, false));
                 		}
                 	}
                 	else if (currentTick[0] > 55 && currentTick[0] % 2 == 1 && currentTick[0] < 80) { // Sword swing - damage all targets
 
-                		if (currentTick[0] % 3 == 0) {
-                			level.playSound(null, entity.blockPosition(), SoundEvents.PLAYER_ATTACK_SWEEP,
-                        			SoundSource.PLAYERS, 1.5F, 1.3F);
-                		}
-
-                	}
+                 	}
                 	
                 	if (currentTick[0] >= 27 && currentTick[0] < 70) {
                 		// Collect targets within 6 blocks that are targetable
@@ -418,16 +611,18 @@ public class EnhancedLoveForms {
                 					targets.add(target);
                 					// Spawn love_slash particles on newly added target
                 					double particleY = target.getY() + target.getBbHeight() * 0.5;
-                					if (serverLevel != null) {
-                					serverLevel.sendParticles(
-                						ModParticles.LOVE_SLASH.get(),
-                						target.getX(), particleY, target.getZ(),
-                						3, 0.3, 0.3, 0.3, 0
-                					);
-                					level.playSound(null, target.getX(), target.getY(), target.getZ(),
-                        				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
-                        				    SoundSource.PLAYERS, 1.0f, 1.5f);
-                				}
+                  					if (serverLevel != null) {
+                  					if (isLoveLineMode() && currentTick[0] < 52) {
+                  						spawnLoveFairyDust(serverLevel,
+                  							target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D));
+                  					} else {
+                  						serverLevel.sendParticles(
+                  							ModParticles.LOVE_SLASH.get(),
+                  							target.getX(), particleY, target.getZ(),
+                  							3, 0.3, 0.3, 0.3, 0
+                  						);
+                  					}
+                  				}
                 			}
                 		}
                 	}
@@ -435,7 +630,8 @@ public class EnhancedLoveForms {
                 		if (Config.logDebug)
                 			Log.debugEvery("enhanced-love-damage:" + entity.getUUID(), 1000,
                 			    "Damaging {} targets on tick {}", targets.size(), currentTick[0]);
-                		for (LivingEntity target : targets) {
+                  		hitThisTick[0] = false;
+                 		for (LivingEntity target : targets) {
                 			if (Math.random() < 0.4) {
 	                			//System.out.println("Trying to damage " + target.getName().getString());
 	                			float damage = (8.0F);
@@ -467,21 +663,27 @@ public class EnhancedLoveForms {
 //	                				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "punch1")),
 //	                				    SoundSource.PLAYERS, 1.0f, 1.5f);
 	
-	    						level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-	                				    SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0f, 0.7f);
-	
-	    						level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-	                				    SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 2f);
-                			}
-                		}
-                	}
+                 					if (damaged) {
+                  						hitThisTick[0] = true;
+                 						level.playSound(null, target.getX(), target.getY(), target.getZ(),
+                 										    ModSounds.LOVE_HIT_SPARKLES.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                 									}
+                 							}
+                 						}
+                 	}
+                   		if (hitThisTick[0] && currentTick[0] > 50 && currentTick[0] < 80
+                   			&& currentTick[0] % 2 == 0) {
+                 			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                 				ModSounds.LOVE_HIT_SPARKLES.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                 		}
 
 	            	currentTick[0] += interval;
 	            }, interval, totalDuration);
                 
                
                 // Schedule cleanup
-                AbilityScheduler.scheduleOnce(entity, () -> {
+                 AbilityScheduler.scheduleOnce(entity, () -> {
+                    clearLovePointFrame(entity);
                     GuardStateHelper.clearGuardState(entity);
                     setCancelAttackSwing(entity, false);
                     
@@ -509,6 +711,7 @@ public class EnhancedLoveForms {
 					GuardStateHelper.setGuardState(entity, 8.0, formId);
 				
 					boolean isDemon = Damager.isDemon(entity);
+					final ServerLevel loveServerLevel = level instanceof ServerLevel ? (ServerLevel) level : null;
 
                 // Play player animation
                 playEntityAnimation(entity, "love_second_form");
@@ -545,37 +748,16 @@ public class EnhancedLoveForms {
                 	}
 
                 	
-                	if (level instanceof ServerLevel serverLevel && particlePoints != null && currentTick[0] < particlePoints.length && particlePoints[currentTick[0]].length > 0) {
-                		for (int i = 0; i < particlePoints[currentTick[0]].length; i++) {
-                			float x = particlePoints[currentTick[0]][i][0];
-                			float y = particlePoints[currentTick[0]][i][1];
-                			float z = particlePoints[currentTick[0]][i][2];
+                    renderLovePointFrame(loveServerLevel, entity, particlePoints, currentTick[0],
+                        vectors[0], vectors[1], new Vec3(0, 1, 0), isDemon, 1.2f, 1.0f);
 
-                			Vec3 pos = entity.position().add(vectors[0].scale(z).add(vectors[1].scale(x)).add(0, y, 0));
-
-                			// Spawn pink dust particle at pos
-                			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
-                		                1.2f                           // scale
-                		            ),
-                		            pos.x, pos.y, pos.z,
-                		            2, 0.05, 0.05, 0.05, 0 // count, velocity
-                		        );
-                			
-                			// Spawn white dust particle at pos
-                			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                    		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
-                    		                1f                           // scale
-                    		            ),
-                		            pos.x, pos.y, pos.z,
-                		            1, 0, 0, 0, 0 // count, velocity
-                		        );
-                		}
-                	}
-                	
-                	if (currentTick[0] < 12) {
+                    // Keep a fairy-dust trail around the user for the full form duration.
+                    if (loveServerLevel != null) {
+                        spawnLoveFairyDust(loveServerLevel,
+                            entity.position().add(0, entity.getBbHeight() * 0.5, 0));
+                    }
+                 	
+                 	if (currentTick[0] < 12) {
                 		// Jump up (0.6 seconds)
                 		MovementHelper.lookAtTarget(entity);
                 		MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(-0.2).add(0, 0.5f, 0));
@@ -619,10 +801,15 @@ public class EnhancedLoveForms {
                 
                
                 // Schedule cleanup
-                AbilityScheduler.scheduleOnce(entity, () -> {
-                    GuardStateHelper.clearGuardState(entity);
-                    setCancelAttackSwing(entity, false);
-                }, totalDuration+2);
+                 AbilityScheduler.scheduleOnce(entity, () -> {
+                     clearLovePointFrame(entity);
+                     GuardStateHelper.clearGuardState(entity);
+                     setCancelAttackSwing(entity, false);
+                     if (entity instanceof ServerPlayer serverPlayer) {
+                         ModNetworking.sendToAllClients(
+                             AnimationSyncPacket.createStopPacket(serverPlayer.getUUID()));
+                     }
+                 }, totalDuration+2);
             }
         );
     }
@@ -676,16 +863,21 @@ public class EnhancedLoveForms {
                 // Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
                 vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
                 
-                float [][][] particlePoints = ParticlePositions.third_form.get("point_a");
+                 float [][][] particlePoints = ParticlePositions.third_form.get("point_a");
+                 final Vec3 activationEyePosition = entity.getEyePosition();
+                 final Vec3[] targetDirection = {vectors[0].scale(-1.0D)};
+                 
+                 double ogY = entity.position().y; // TODO: Measure the delta Y and add that to the Y position of the love sword slashes
                 
-                double ogY = entity.position().y; // TODO: Measure the delta Y and add that to the Y position of the love sword slashes
-                
-                MovementHelper.setVelocity(entity, new Vec3(0, 0.75f, 0));
+                 MovementHelper.setVelocity(entity, vectors[0].scale(-0.75).add(0, 1.5, 0));
                 entity.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 5, 10, false, false));
                 entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, totalDuration+10, 10, false, false));
                 
                 HashMap<Integer, List<LivingEntity>> targets = new HashMap<Integer, List<LivingEntity>>();
-                ArrayList<LivingEntity> hitTargets = new ArrayList<LivingEntity>();
+                ArrayList<LivingEntity> reversePropagationTargets = new ArrayList<LivingEntity>();
+                HashMap<UUID, Integer> damageHitCounts = new HashMap<UUID, Integer>();
+                Vec3[] damageLine = new Vec3[2];
+                boolean[] damageSnapshotCaptured = {false};
                 
                 //LoveSwordSlashesEntity[] swordSlashes = {null};
                 
@@ -693,127 +885,96 @@ public class EnhancedLoveForms {
                 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
 
-                	if (currentTick[0] % 4 == 0) {
+                 	if (currentTick[0] % 4 == 0 || currentTick[0] == 30) {
                 		// Use yaw rotation to get forward direction (works even when looking up/down)
                 		float yaw = (float) Math.toRadians(-entity.getYRot());
                 		vectors[0] = new Vec3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
                 		// Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
                 		vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
                 		
-                		// Raycast to find collision point (block or entity)
-                		Vec3 eyePos = entity.getEyePosition();
-                		Vec3 lookAngle = entity.getLookAngle();
-                		vectors[2] = eyePos.add(lookAngle.scale(range)); // Default to max range
-                		
-                		MovementHelper.lookAtTarget(entity);
+                  		// Raycast back toward where the form was activated, stopping at the first block.
+                        Vec3 eyePos = entity.getEyePosition();
+                        Vec3 directionToActivation = activationEyePosition.subtract(eyePos);
+                        targetDirection[0] = directionToActivation.lengthSqr() > 1.0E-6D
+                            ? directionToActivation.normalize()
+                            : vectors[0].scale(-1.0D);
+                        Vec3 lookAngle = targetDirection[0];
+                  		vectors[2] = eyePos.add(lookAngle.scale(range)); // Default to max range
+                  		
+                        MovementHelper.lookInDirection(entity, targetDirection[0]);
 
                 		for (int i = 1; i < range; i++) {
                 			Vec3 vec = eyePos.add(lookAngle.scale(i));
 
-                			// Check block collision
-                			BlockPos blockPos = new BlockPos((int)Math.floor(vec.x), (int)Math.floor(vec.y), (int)Math.floor(vec.z));
-                			if (!level.getBlockState(blockPos).isAir()) {
-                				vectors[2] = vec;
-                				int r = 15;
-                    			// Check entity collision for the giant cloud at the bottom
-                    			AABB rayBox = new AABB(vec.subtract(r, r, r), vec.add(r, r, r));
-                    			List<LivingEntity> entitiesInRay = level.getEntitiesOfClass(
-                    				LivingEntity.class, rayBox,
-                    				e -> e != entity && e.isAlive() && isTargetable(entity, e)
-                    			);
-                    			targets.put(i, entitiesInRay);
-                    			for (LivingEntity le : entitiesInRay) {
-                    				float x = (float)(le.position().x + (Math.random()-0.5)*le.getEyeHeight());
-    	                			float y = (float)(le.position().y + (Math.random()-0.5)*le.getEyeHeight());
-    	                			float z = (float)(le.position().z + (Math.random()-0.5)*le.getEyeHeight());
-    	                			if (serverLevel != null) {
-	    		                		serverLevel.sendParticles(
-	    		        						ModParticles.LOVE_IMPACT.get(),
-	    		        						x, y, z,
-	    		        						3, 0.3, 0.3, 0.3, 0
-	    		        					);
-    	                			}
-    		                		
-    		        				level.playSound(null, x, y, z,
-    		                				   SoundEvents.PLAYER_ATTACK_STRONG,
-    		                				    SoundSource.PLAYERS, 1.0f, 1f);
-    		        				float damage = (8.0F);
-                    				Damager.hurt(entity, le, damage);
-                    			}
-                				break; // Stop at first block hit
-                			}
-                			
-                			int r = 5;
-                			// Check entity collision
-                			AABB rayBox = new AABB(vec.subtract(r, r, r), vec.add(r, r, r));
-                			List<LivingEntity> entitiesInRay = level.getEntitiesOfClass(
-                				LivingEntity.class, rayBox,
-                				e -> e != entity && e.isAlive() && isTargetable(entity, e)
-                			);
-                			targets.put(i, entitiesInRay);
-                			/*
-                			if (!entitiesInRay.isEmpty()) {
-                				vectors[2] = vec;
-                				break; // Stop at first entity hit
-                			}
-                		*/
-                			
-                		}
-                	}
+                  			// Check block collision
+                  			BlockPos blockPos = new BlockPos((int)Math.floor(vec.x), (int)Math.floor(vec.y), (int)Math.floor(vec.z));
+                  			if (!level.getBlockState(blockPos).isAir()) {
+                  				vectors[2] = vec;
+                  				break; // Stop at first block hit
+                  			}
+                  		}
+
+                        // Query one broad box, then keep only entities inside the 6-block-radius cylinder.
+                        targets.clear();
+                        for (int i = 1; i < range; i++) {
+                            targets.put(i, new ArrayList<LivingEntity>());
+                        }
+                        Vec3 lineEnd = vectors[2];
+                        AABB lineBox = new AABB(
+                            Math.min(eyePos.x, lineEnd.x) - 6.0D,
+                            Math.min(eyePos.y, lineEnd.y) - 6.0D,
+                            Math.min(eyePos.z, lineEnd.z) - 6.0D,
+                            Math.max(eyePos.x, lineEnd.x) + 6.0D,
+                            Math.max(eyePos.y, lineEnd.y) + 6.0D,
+                            Math.max(eyePos.z, lineEnd.z) + 6.0D);
+                        List<LivingEntity> entitiesAlongLine = level.getEntitiesOfClass(
+                            LivingEntity.class, lineBox,
+                            e -> e != entity && e.isAlive() && isTargetable(entity, e)
+                                && isWithinLoveLine(
+                                    e.position().add(0, e.getBbHeight() * 0.5, 0), eyePos, lineEnd, 6.0D));
+                        Vec3 line = lineEnd.subtract(eyePos);
+                        double lineLengthSquared = line.lengthSqr();
+                        for (LivingEntity target : entitiesAlongLine) {
+                            Vec3 targetCenter = target.position().add(0, target.getBbHeight() * 0.5, 0);
+                            double projection = lineLengthSquared <= 1.0E-6D
+                                ? 0.0D
+                                : targetCenter.subtract(eyePos).dot(line) / lineLengthSquared;
+                            int segmentIndex = Math.max(1, Math.min(range - 1,
+                                (int) (projection * (range - 1)) + 1));
+                            targets.get(segmentIndex).add(target);
+                        }
+
+                        if (currentTick[0] == 30 && !damageSnapshotCaptured[0]) {
+                            damageLine[0] = eyePos;
+                            damageLine[1] = lineEnd;
+                            for (int segment = range - 1; segment >= 1; segment--) {
+                                List<LivingEntity> segmentTargets = targets.get(segment);
+                                if (segmentTargets != null) {
+                                    reversePropagationTargets.addAll(segmentTargets);
+                                }
+                            }
+                            damageSnapshotCaptured[0] = true;
+                        }
+                   	}
 
                 	
-                	if (serverLevel != null && particlePoints != null && currentTick[0] < particlePoints.length && particlePoints[currentTick[0]].length > 0) {
-                		for (int i = 0; i < particlePoints[currentTick[0]].length; i++) {
-                			float x = particlePoints[currentTick[0]][i][0];
-                			float y = particlePoints[currentTick[0]][i][1];
-                			float z = particlePoints[currentTick[0]][i][2];
-
-                			Vec3 pos = entity.position().add(vectors[0].scale(z).add(vectors[1].scale(x)).add(0, y, 0));
-
-                			// Spawn pink dust particle at pos
-                			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
-                		                1.2f                           // scale
-                		            ),
-                		            pos.x, pos.y, pos.z,
-                		            2, 0.05, 0.05, 0.05, 0 // count, velocity
-                		        );
-                			
-                			// Spawn white dust particle at pos
-                			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                    		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
-                    		                1f                           // scale
-                    		            ),
-                		            pos.x, pos.y, pos.z,
-                		            1, 0, 0, 0, 0 // count, velocity
-                		        );
-                		}
-                	}
+                    renderLovePointFrame(serverLevel, entity, particlePoints, currentTick[0],
+                        vectors[0], vectors[1], new Vec3(0, 1, 0), isDemon, 1.2f, 1.0f);
                 	
-                	if (currentTick[0] > 15 && currentTick[0] < 35) {
-                		MovementHelper.lookAtTarget(entity);
+                 	if (currentTick[0] > 15 && currentTick[0] < 35) {
+                 		if (currentTick[0] == 16) {
+                 			level.playSound(null, vectors[2].x, vectors[2].y, vectors[2].z,
+                 				    ModSounds.LOVE_CATS_AND_CUTS.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                 			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                 				    ModSounds.LOVE_CATS_AND_CUTS.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                 		}
+                        MovementHelper.lookInDirection(entity, targetDirection[0]);
                         Vec3 localVelocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
                         MovementHelper.setVelocity(entity, localVelocity.x, Math.max(localVelocity.y, 0), localVelocity.z);
                 		if (serverLevel != null) {
                 			for (int i = 0; i < 5; i++) {
                 				String slashAnim = slashAnimations[(int) (Math.random() * slashAnimations.length)];
-	                			// Spawn a cloud of sword slashes at the target point
-	                			float x = (float)(vectors[2].x + (Math.random()-0.5)*15);
-	                			float y = (float)(vectors[2].y + (Math.random()-0.5)*15);
-	                			float z = (float)(vectors[2].z + (Math.random()-0.5)*15);
-		                		serverLevel.sendParticles(
-		        						ModParticles.LOVE_SLASH.get(),
-		        						x, y, z,
-		        						3, 0.3, 0.3, 0.3, 0
-		        					);
-		                		
-		                		
-		                		
-		        				level.playSound(null, x, y, z,
-		                				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
-		                				    SoundSource.PLAYERS, 1.0f, 1.5f);
+ 	                 			// Spawn local slash animations without a target-point particle cloud.
 
                                 double slashAngle = (Math.random() - 0.5) * 12.0;
                                 int arcLength = (int) (100 + Math.random() * 80);
@@ -860,28 +1021,11 @@ public class EnhancedLoveForms {
                                     );
                                 }
 		        				
-		        				x = (float)(vectors[2].x + (Math.random()-0.5)*15);
-	                			y = (float)(vectors[2].y + (Math.random()-0.5)*15);
-	                			z = (float)(vectors[2].z + (Math.random()-0.5)*15);
-		                		serverLevel.sendParticles(
-		        						ParticleTypes.CAMPFIRE_COSY_SMOKE,
-		        						x, y, z,
-		        						3, 0.3, 0.3, 0.3, 0
-		        					);
-		                		
-		                		x = (float)(vectors[2].x + (Math.random()-0.5)*15);
-	                			y = (float)(vectors[2].y + (Math.random()-0.5)*15);
-	                			z = (float)(vectors[2].z + (Math.random()-0.5)*15);
-		                		serverLevel.sendParticles(
-		        						ParticleTypes.EXPLOSION,
-		        						x, y, z,
-		        						3, 0.3, 0.3, 0.3, 0
-		        					);
                 			}
                 		}
                 	}
                 	if (currentTick[0] >= 30) {
-                		MovementHelper.lookAtTarget(entity);
+                        MovementHelper.lookInDirection(entity, targetDirection[0]);
                 		MovementHelper.setVelocity(entity, entity.getDeltaMovement().x, Math.max(entity.getDeltaMovement().y, 0), entity.getDeltaMovement().z);
                 		// Launch the sword slashes forward
                 		if (spawnedLoveSlashes[0] == false) {
@@ -904,33 +1048,56 @@ public class EnhancedLoveForms {
                                 yawSlashRot, pitchSlashRot, "love_third_form", 40
                             );
                 		}
-                		if (serverLevel != null) {
-                			// Hit them in reverse order, starting from furthest and then coming to the closest
-                			int totalHits = totalDuration - 30;
-                			int currentHit = currentTick[0] - 30;
-                			int windowSize = targets.size() / totalHits;
-                			for (int i = targets.size()-1-currentHit * windowSize; i >= targets.size()-1-(currentHit+1) * windowSize; i--)
-                    			for (LivingEntity le : targets.get(i)) {
-                    				//if (!hitTargets.contains(le)) {
-                    				//	hitTargets.add(le);
-	                    				float x = (float)(le.position().x + (Math.random()-0.5)*le.getEyeHeight());
-	    	                			float y = (float)(le.position().y + (Math.random()-0.5)*le.getEyeHeight());
-	    	                			float z = (float)(le.position().z + (Math.random()-0.5)*le.getEyeHeight());
-	    		                		serverLevel.sendParticles(
-	    		        						ModParticles.LOVE_IMPACT.get(),
-	    		        						x, y, z,
-	    		        						3, 0.3, 0.3, 0.3, 0
-	    		        					);
-	    		                		
-	    		                		
-	    		        				level.playSound(null, x, y, z,
-	    		                				   SoundEvents.PLAYER_ATTACK_STRONG,
-	    		                				    SoundSource.PLAYERS, 1.0f, 1f);
-	    		        				float damage = (8.0F);
-	                    				Damager.hurt(entity, le, damage);
-                    				//}
-                    			}
-                		}
+                        if (serverLevel != null && damageSnapshotCaptured[0]) {
+                            // Keep the slash impact effect moving from the farthest target to the nearest.
+                            int propagationTick = currentTick[0] - 30;
+                            for (int index = 0; index < reversePropagationTargets.size(); index++) {
+                                int targetWave = Math.min(9,
+                                    (int) ((long) index * 10 / reversePropagationTargets.size()));
+                                if (targetWave != propagationTick) {
+                                    continue;
+                                }
+
+                                LivingEntity target = reversePropagationTargets.get(index);
+                                if (!target.isAlive()
+                                    || !isWithinLoveLine(
+                                        target.position().add(0, target.getBbHeight() * 0.5, 0),
+                                        damageLine[0], damageLine[1], 6.0D)) {
+                                    continue;
+                                }
+
+                                float x = (float) (target.position().x
+                                    + (Math.random() - 0.5) * target.getEyeHeight());
+                                float y = (float) (target.position().y
+                                    + (Math.random() - 0.5) * target.getEyeHeight());
+                                float z = (float) (target.position().z
+                                    + (Math.random() - 0.5) * target.getEyeHeight());
+                                serverLevel.sendParticles(
+                                    ModParticles.LOVE_IMPACT.get(), x, y, z,
+                                    3, 0.3, 0.3, 0.3, 0);
+                                level.playSound(null, x, y, z,
+                                    SoundEvents.PLAYER_ATTACK_STRONG,
+                                    SoundSource.PLAYERS, 1.0f, 1f);
+                            }
+
+                            // Four evenly spaced hits over the ten-tick slash propagation window.
+                            if (currentTick[0] == 30 || currentTick[0] == 33
+                                || currentTick[0] == 36 || currentTick[0] == 39) {
+                                for (LivingEntity target : reversePropagationTargets) {
+                                    int hitCount = damageHitCounts.getOrDefault(target.getUUID(), 0);
+                                    if (hitCount >= 4 || !target.isAlive()
+                                        || !isWithinLoveLine(
+                                            target.position().add(0, target.getBbHeight() * 0.5, 0),
+                                            damageLine[0], damageLine[1], 6.0D)) {
+                                        continue;
+                                    }
+
+                                    if (Damager.hurt(entity, target, 8.0F, true, false, true)) {
+                                        damageHitCounts.put(target.getUUID(), hitCount + 1);
+                                    }
+                                }
+                            }
+                        }
                 	}
 
 	            	currentTick[0] += interval;
@@ -938,7 +1105,8 @@ public class EnhancedLoveForms {
 
 
                 // Schedule cleanup
-                AbilityScheduler.scheduleOnce(entity, () -> {
+                 AbilityScheduler.scheduleOnce(entity, () -> {
+                    clearLovePointFrame(entity);
                     GuardStateHelper.clearGuardState(entity);
                     setCancelAttackSwing(entity, false);
                 }, totalDuration+2); // 3.2 seconds
@@ -947,10 +1115,140 @@ public class EnhancedLoveForms {
     }
     
     /**
-     * Fourth Form: The Heartbreak of Unrequited Love
+     * Fourth Form: The Heartbreak of Unrequited Love.
+     *
+     * The moving 3x3x3 capture box reaches a fixed point 15 blocks ahead in
+     * ten ticks. Captured targets are pulled toward that box until the impact
+     * resolves at tick 18.
      */
     public static BreathingForm fourthForm() {
-    	return new BreathingForm(
+        return new BreathingForm(
+            22004,
+            "Fourth Form: The Heartbreak of Unrequited Love",
+            "Drag targets along a forward Love line and detonate the gathered group",
+            6,
+            (entity, level, formId) -> {
+                final ServerLevel serverLevel = level instanceof ServerLevel ? (ServerLevel) level : null;
+                final float damage = 36.0F;
+                final boolean isDemon = Damager.isDemon(entity);
+                final float originalYaw = entity.getYRot();
+                final float originalPitch = entity.getXRot();
+                final float originalHeadYaw = entity.getYHeadRot();
+                final float originalBodyYaw = entity.yBodyRot;
+                final Vec3 origin = entity.getEyePosition();
+                Vec3 forward = entity.getLookAngle();
+                if (forward.lengthSqr() < 1.0E-6D) {
+                    forward = new Vec3(0.0D, 0.0D, 1.0D);
+                } else {
+                    forward = forward.normalize();
+                }
+                final Vec3 lockedForward = forward;
+                final Vec3 targetPoint = origin.add(lockedForward.scale(15.0D));
+                final Vec3 worldUp = Math.abs(lockedForward.y) > 0.98D
+                    ? new Vec3(1.0D, 0.0D, 0.0D)
+                    : new Vec3(0.0D, 1.0D, 0.0D);
+                final Vec3 right = lockedForward.cross(worldUp).normalize();
+                final Vec3 up = right.cross(lockedForward).normalize();
+                final float lockedYaw = (float) Math.toDegrees(Math.atan2(-lockedForward.x, lockedForward.z));
+                final float lockedPitch = (float) Math.toDegrees(-Math.asin(lockedForward.y));
+                final float[][][] particlePoints = ParticlePositions.love_fourth_form_short.get("point_a");
+                final List<LivingEntity> collectedTargets = new ArrayList<>();
+                final boolean[] impactResolved = {false};
+
+                GuardStateHelper.setGuardState(entity, damage, formId);
+                setCancelAttackSwing(entity, true);
+
+                // Start the player/entity, item, first-person, and curve timelines together.
+                playSynchronizedAnimation(entity, FOURTH_FORM_ANIMATION, FOURTH_FORM_DURATION_TICKS);
+                triggerWhipAnimation(entity, FOURTH_FORM_ANIMATION, 1.0D);
+                MovementHelper.setRotation(entity, lockedYaw, lockedPitch);
+
+                final int[] currentTick = {0};
+                AbilityScheduler.scheduleRepeating(entity, () -> {
+                    int tick = currentTick[0];
+                    MovementHelper.setRotation(entity, lockedYaw, lockedPitch);
+
+                    Vec3 boxCenter;
+                    if (tick <= 10) {
+                        double progress = tick / 10.0D;
+                        boxCenter = origin.add(lockedForward.scale(15.0D * progress));
+
+                        AABB scanBox = new AABB(
+                            boxCenter.x - 1.5D, boxCenter.y - 1.5D, boxCenter.z - 1.5D,
+                            boxCenter.x + 1.5D, boxCenter.y + 1.5D, boxCenter.z + 1.5D);
+                        List<LivingEntity> newlyCollected = level.getEntitiesOfClass(
+                            LivingEntity.class,
+                            scanBox,
+                            target -> target != entity
+                                && target.isAlive()
+                                && isTargetable(entity, target)
+                                && !collectedTargets.contains(target));
+                        collectedTargets.addAll(newlyCollected);
+                    } else {
+                        boxCenter = targetPoint;
+                    }
+
+                    // Add only the difference between the box and each target's
+                    // current center so the pull remains responsive to movement.
+                    for (LivingEntity target : collectedTargets) {
+                        if (target.isAlive()) {
+                            MovementHelper.addVelocity(target,
+                                boxCenter.subtract(target.getBoundingBox().getCenter()));
+                        }
+                    }
+
+                    if (tick == 18 && !impactResolved[0]) {
+                        impactResolved[0] = true;
+                        if (serverLevel != null) {
+                            serverLevel.sendParticles(ParticleTypes.FLASH,
+                                targetPoint.x, targetPoint.y, targetPoint.z,
+                                1, 0.0D, 0.0D, 0.0D, 0.0D);
+                            serverLevel.sendParticles(ModParticles.LOVE_SLASH.get(),
+                                targetPoint.x, targetPoint.y, targetPoint.z,
+                                32, 1.5D, 1.5D, 1.5D, 0.08D);
+                            serverLevel.sendParticles(ModParticles.LOVE_IMPACT.get(),
+                                targetPoint.x, targetPoint.y, targetPoint.z,
+                                24, 1.2D, 1.2D, 1.2D, 0.08D);
+                        }
+
+                        for (LivingEntity target : collectedTargets) {
+                            if (target.isAlive()
+                                && target.getBoundingBox().getCenter().distanceTo(targetPoint) <= 3.0D) {
+                                Damager.hurt(entity, target, damage);
+                            }
+                        }
+                    }
+
+                    int pointFrame = particlePoints == null || particlePoints.length <= 1
+                        ? 0
+                        : Math.min(particlePoints.length - 1,
+                            Math.round(tick * (particlePoints.length - 1)
+                                / (float) (FOURTH_FORM_DURATION_TICKS - 1)));
+                    renderLovePointFrame(serverLevel, entity, particlePoints, pointFrame,
+                        lockedForward, right, up, isDemon, 1.8F, 1.5F);
+
+                    currentTick[0]++;
+                }, 1, FOURTH_FORM_DURATION_TICKS);
+
+                AbilityScheduler.scheduleOnce(entity, () -> {
+                    clearLovePointFrame(entity);
+                    GuardStateHelper.clearGuardState(entity);
+                    setCancelAttackSwing(entity, false);
+                    MovementHelper.setRotation(entity, originalYaw, originalPitch);
+                    entity.setYHeadRot(originalHeadYaw);
+                    entity.setYBodyRot(originalBodyYaw);
+                    entity.yHeadRotO = originalHeadYaw;
+                    entity.yBodyRotO = originalBodyYaw;
+                }, FOURTH_FORM_DURATION_TICKS + 2);
+            }
+        );
+    }
+
+    /**
+     * Legacy Fourth Form implementation, now preserved by LoveVariations.
+     */
+    private static BreathingForm legacyFourthForm() {
+     	return new BreathingForm(
     			22004, // Love Fourth Form ID
     			"Fourth Form: The Heartbreak of Unrequited Love",
     			"The slayer catches an oncoming attack with their whip-blade, tossing it aside leaving the target open for a counter, or a retreat",
@@ -1087,42 +1385,16 @@ public class EnhancedLoveForms {
                     		}
                     	}
                     	
-                    	if (serverLevel != null && particlePoints != null && currentTick[0] < particlePoints.length && particlePoints[currentTick[0]].length > 0) {
-                    		for (int i = 0; i < particlePoints[currentTick[0]].length; i++) {
-                    			float x = particlePoints[currentTick[0]][i][0];
-                    			float y = particlePoints[currentTick[0]][i][1];
-                    			float z = particlePoints[currentTick[0]][i][2];
-
-                    			Vec3 pos = entity.position().add(vecs[1].scale(z).add(vecs[2].scale(x)).add(vecs[3].scale(y)));
-
-                    			// Spawn pink dust particle at pos
-                    			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                    		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
-                    		                1.8f                           // scale
-                    		            ),
-                    		            pos.x, pos.y, pos.z,
-                    		            2, 0.05, 0.05, 0.05, 0 // count, velocity
-                    		        );
-                    			
-                    			// Spawn white dust particle at pos
-                    			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                        		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
-                        		                1.5f                           // scale
-                        		            ),
-                    		            pos.x, pos.y, pos.z,
-                    		            1, 0, 0, 0, 0 // count, velocity
-                    		        );
-                    		}
-                    	}
+                        renderLovePointFrame(serverLevel, entity, particlePoints, currentTick[0],
+                            vecs[1], vecs[2], vecs[3], isDemon, 1.8f, 1.5f);
                     	
                     	currentTick[0] += interval;
     	            }, interval, totalDuration);
                     
                    
                     // Schedule cleanup
-                    AbilityScheduler.scheduleOnce(entity, () -> {
+                     AbilityScheduler.scheduleOnce(entity, () -> {
+                        clearLovePointFrame(entity);
                         GuardStateHelper.clearGuardState(entity);
                         setCancelAttackSwing(entity, false);
                     }, totalDuration+2);
@@ -1226,37 +1498,14 @@ public class EnhancedLoveForms {
                 		}
                 	}
                 	
-                	if (serverLevel != null && particlePoints != null && currentTick[0] < particlePoints.length && particlePoints[currentTick[0]].length > 0) {
-                		for (int i = 0; i < particlePoints[currentTick[0]].length; i++) {
-                			float x = particlePoints[currentTick[0]][i][0];
-                			float y = particlePoints[currentTick[0]][i][1];
-                			float z = particlePoints[currentTick[0]][i][2];
+                    renderLovePointFrame(serverLevel, entity, particlePoints, currentTick[0],
+                        vecs[1], vecs[2], vecs[3], isDemon, 1.8f, 1.5f);
 
-                			Vec3 pos = entity.position().add(vecs[1].scale(z).add(vecs[2].scale(x)).add(vecs[3].scale(y)));
-
-                			// Spawn pink dust particle at pos
-                			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
-                		                1.8f                           // scale
-                		            ),
-                		            pos.x, pos.y, pos.z,
-                		            2, 0.05, 0.05, 0.05, 0 // count, velocity
-                		        );
-                			
-                			// Spawn white dust particle at pos
-                			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                    		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
-                    		                1.5f                           // scale
-                    		            ),
-                		            pos.x, pos.y, pos.z,
-                		            1, 0, 0, 0, 0 // count, velocity
-                		        );
-                		}
-                	}
-                	
-                	if (currentTick[0] < 14) {
+                    if (serverLevel != null && currentTick[0] >= 26 && currentTick[0] <= 75) {
+                        applyLoveTornadoMovement(level, entity, vecs[4], vecs[2], currentTick[0]);
+                    }
+                 	
+                 	if (currentTick[0] < 14) {
                 		// Jump upwards and backwards (do the backflip)
                 		if (mob != null) {
                     		if (mainTargetEntityFinal != null && mainTargetEntityFinal.isAlive())
@@ -1386,9 +1635,11 @@ public class EnhancedLoveForms {
                 			}
                 		}
                 	}
-                	else if (currentTick[0] < 55) {
-                		// Big explosion
-                		MovementHelper.setVelocity(entity, vecs[4].subtract(entity.position())); // entity is supposed to be at vecs[4] position
+                 	else if (currentTick[0] < 55) {
+                 		// The impact expands into three wide, swirling Love rings.
+                 		renderLoveRingFrame(serverLevel, entity, vecs[4], vecs[1], vecs[2], vecs[3],
+                 			currentTick[0], isDemon);
+                 		MovementHelper.setVelocity(entity, vecs[4].subtract(entity.position())); // entity is supposed to be at vecs[4] position
                 		
                 		if (currentTick[0] % 2 == 0) {
                 			int r = (10 + currentTick[0]-45);
@@ -1414,77 +1665,21 @@ public class EnhancedLoveForms {
                 			}
                 		}
                 		
-                		if (serverLevel != null) {
-                			level.playSound(null, vecs[4].x, vecs[4].y, vecs[4].z, SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, 1.0f, 1.0f);
-                			for (int i = 0; i < 25; i++) {
-	                			// Spawn an explosion that gets bigger and bigger (from tick 41 to 54)
-                				float explosionRadius = 2+(currentTick[0] - 41) * 1.4f; // Scale from 0 to ~10 blocks
-                				Vec3 pos = vecs[4].add((new Vec3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5)).normalize().scale(explosionRadius));
-		                		
-                				if (Math.random() > 0.8) {
-                					level.playSound(null, vecs[4].x, vecs[4].y, vecs[4].z, SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.PLAYERS, 1.0f, 1.5f);
-                				}
-                				
-                				if (Math.random() < 0.3) {
-                					serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                        		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
-                        		                2.5f                           // scale
-                        		            ),
-                        		            pos.x, pos.y, pos.z,
-                        		            8, 0.5, 0.5, 0.5, 0 // count, velocity
-                        		        );
-                				} else {
-                				
-			                		serverLevel.sendParticles(
-			        						Math.random() > 0.5 ? ParticleTypes.CAMPFIRE_COSY_SMOKE : ParticleTypes.EXPLOSION,
-			        						pos.x, pos.y, pos.z,
-			        						8, 0.5, 0.5, 0.5, 0
-			        					);
-                				}
-                			}
-                		}
-                	}
-                	else if (currentTick[0] < 75) {
-                		// Post explosion rings
-                		
-                		int r = Math.min(currentTick[0]-55, 15);
-                		
-                		for (float f = 0.2f; f < 0.9f; f += 0.3f) {
-                			Vec3 ringPos = vecs[4].subtract(vecs[1].scale(f*50));
-                			//Vec3 ringPos = vecs[0].scale(1-f).add(vecs[4].scale(f)); // Go from position vecs[0] to position vecs[4]
-                			
-                			for (float t = 0; t < 2*Math.PI; t+=2f/r) {
-                				// Create proper circle: right*cos(t)*r + up*sin(t)*r
-                				Vec3 diff = vecs[2].scale(Math.cos(t) * r).add(vecs[3].scale(Math.sin(t) * r));
-                				Vec3 pos = ringPos.add(diff);
-                				Vec3 pos2 = ringPos.subtract(diff);
-                				serverLevel.sendParticles(
-		        						ParticleTypes.EXPLOSION,
-		        						pos.x, 
-		        						pos.y, 
-		        						pos.z,
-		        						2, 0.3, 0.3, 0.3, 0
-		        					);
-
-                				serverLevel.sendParticles(
-		        						ParticleTypes.EXPLOSION,
-		        						pos2.x, 
-		        						pos2.y, 
-		        						pos2.z,
-		        						2, 0.3, 0.3, 0.3, 0
-		        					);
-                			}
-                		}
-                	}
+                 	}
+                 	else if (currentTick[0] < 75) {
+                 		renderLoveRingFrame(serverLevel, entity, vecs[4], vecs[1], vecs[2], vecs[3],
+                 			currentTick[0], isDemon);
+                 		MovementHelper.setVelocity(entity, vecs[4].subtract(entity.position()));
+                 	}
             	
 	            	currentTick[0] += interval;
 	            }, interval, totalDuration);
                 
                
                 // Schedule cleanup
-                AbilityScheduler.scheduleOnce(entity, () -> {
-                    GuardStateHelper.clearGuardState(entity);
+                     AbilityScheduler.scheduleOnce(entity, () -> {
+                        clearLovePointFrame(entity);
+                        GuardStateHelper.clearGuardState(entity);
                     setCancelAttackSwing(entity, false);
                 }, totalDuration+2); // 3.2 seconds
             }
@@ -1492,8 +1687,9 @@ public class EnhancedLoveForms {
     }
 
 	/**
-     * Sixth Form: Cat-Legged Winds of Love (PLACEHOLDER)
-     * TODO: Implement
+     * Sixth Form: Cat-Legged Winds of Love
+     * The base form uses the shortened attack animation; the longer opening
+     * sequence remains available through LoveVariations.
      */
     public static BreathingForm sixthForm() {
         return new BreathingForm(
@@ -1505,20 +1701,18 @@ public class EnhancedLoveForms {
 				boolean isDemon = Damager.isDemon(entity);
             	float damage = (10.0F);
             	ServerLevel serverLevel = (level instanceof ServerLevel ? (ServerLevel)level : null);
-            	float [][][] particlePoints = ParticlePositions.sixth_form.get("point_a");
+             	float [][][] particlePoints = ParticlePositions.sixth_form_short.get("point_a");
             	 // Set guard state (formId auto-injected as 22006)
                 GuardStateHelper.setGuardState(entity, damage*1.75f, formId); // extra protection
 
-                // Play player animation
-                playEntityAnimation(entity, "love_sixth_form");
-                
-                // Trigger whip animation (client-side)
-                //triggerWhipAnimation(entity, "love_sixth_form", 1.0);
+                // Start the user, sword, and whip timelines from the same form tick.
+                playSixthFormAnimation(entity);
+                triggerWhipAnimation(entity, SIXTH_FORM_ANIMATION, 1.0);
 
                 // Prevent normal attack swing
                 setCancelAttackSwing(entity, true);
 
-                final int totalDuration = 90; // 4.5 seconds
+                final int totalDuration = SIXTH_FORM_DURATION_TICKS;
                 final int[] currentTick = {0};
                 final int interval = 1;
                 
@@ -1531,21 +1725,14 @@ public class EnhancedLoveForms {
                 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
             	
-                	if (currentTick[0] == 0) {
-                		triggerWhipAnimation(entity, "sword_to_right", 1.0);
-                		MovementHelper.setVelocity(entity, entity.getLookAngle().scale(0.9f));
-                	}
-                	else if (currentTick[0] == 10) {
-                		triggerWhipAnimation(entity, "sword_to_left", 1.0);
-                		MovementHelper.setVelocity(entity, entity.getLookAngle().scale(0.9f));
-                	}
-                	else if (currentTick[0] == 20) {
-                		triggerWhipAnimation(entity, "love_sixth_form", 1.0);
-                		MovementHelper.setVelocity(entity, entity.getLookAngle().scale(0.5f).add(0, 1, 0));
+                  if (currentTick[0] == 0) {
+                    	level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                  				ModSounds.LOVE_BIG_SLASH_MEOW.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                  		MovementHelper.setVelocity(entity, entity.getLookAngle().scale(0.5f).add(0, 1, 0));
                 		entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 40, 3));
                 	}
                 	
-                	if (currentTick[0] == 2 || currentTick[0] == 12 || currentTick[0] == 32) {
+                 	if (currentTick[0] == 12 || currentTick[0] == 20 || currentTick[0] == 28) {
                 		// Damage the idiots in front of you
                 		if (serverLevel != null) {
                 			Vec3 centerPos = entity.getEyePosition().add(entity.getLookAngle().scale(6));
@@ -1582,7 +1769,7 @@ public class EnhancedLoveForms {
                 		vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
                 	}
                 	
-                	if (currentTick[0] > 30 && currentTick[0] % 2 == 0) {
+                	if (currentTick[0] > 10 && currentTick[0] % 2 == 0) {
                 		Vec3 hitBoxCenter = entity.getEyePosition().add(entity.getLookAngle().scale(6));
                 		AABB hitBox = new AABB(hitBoxCenter, hitBoxCenter).inflate(6.0);
                         List<Entity> targets = entity.level().getEntities(entity, hitBox, e -> e != entity);
@@ -1603,37 +1790,13 @@ public class EnhancedLoveForms {
                         }
                 	}
                 	
-                	if (currentTick[0] >= 20) { // Particles from particle positions (starting at tick 20
-                    	if (serverLevel != null && particlePoints != null && currentTick[0] < particlePoints.length && particlePoints[currentTick[0]-20].length > 0) {
-                    		for (int i = 0; i < particlePoints[currentTick[0]-20].length; i++) {
-                    			float x = particlePoints[currentTick[0]-20][i][0];
-                    			float y = particlePoints[currentTick[0]-20][i][1];
-                    			float z = particlePoints[currentTick[0]-20][i][2];
-
-                    			Vec3 pos = entity.position().add(vectors[0].scale(z).add(vectors[1].scale(x)).add(0, y, 0));
-
-                    			// Spawn pink dust particle at pos
-                    			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                    		                isDemon ? new Vector3f(0.8196f, 0, 0.286f) : new Vector3f(1.0f, 0.4f, 0.7f), // PINK
-                    		                1.2f                           // scale
-                    		            ),
-                    		            pos.x, pos.y, pos.z,
-                    		            2, 0.05, 0.05, 0.05, 0 // count, velocity
-                    		        );
-                    			
-                    			// Spawn white dust particle at pos
-                    			serverLevel.sendParticles(
-                             createLoveParticleOptions(
-                        		                new Vector3f(1.0f, 1.0f, 1.0f), // WHITE
-                        		                1f                           // scale
-                        		            ),
-                    		            pos.x, pos.y, pos.z,
-                    		            1, 0, 0, 0, 0 // count, velocity
-                    		        );
-                    		}
-                    	}
-                    }
+                    int pointFrame = particlePoints == null || particlePoints.length <= 1
+                        ? 0
+                        : Math.min(particlePoints.length - 1,
+                            Math.round(currentTick[0] * (particlePoints.length - 1)
+                                / (float) (totalDuration - 1)));
+                    renderLovePointFrame(serverLevel, entity, particlePoints, pointFrame,
+                            vectors[0], vectors[1], new Vec3(0, 1, 0), isDemon, 1.2f, 1.0f);
             	
 	            	currentTick[0] += interval;
 	            }, interval, totalDuration);
@@ -1642,7 +1805,8 @@ public class EnhancedLoveForms {
                
                 
                 // Schedule cleanup
-                AbilityScheduler.scheduleOnce(entity, () -> {
+                 AbilityScheduler.scheduleOnce(entity, () -> {
+                    clearLovePointFrame(entity);
                     GuardStateHelper.clearGuardState(entity);
                     setCancelAttackSwing(entity, false);
                 }, totalDuration+2);

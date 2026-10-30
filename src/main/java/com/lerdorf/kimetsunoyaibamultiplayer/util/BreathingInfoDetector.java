@@ -194,7 +194,7 @@ public class BreathingInfoDetector {
                 || BaseModSwordFormRegistry.isHinokamiSwitchForm(formId))) {
             formId = 601;
         }
-        BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(formId);
+        BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(heldSword, formId);
         if (form == null) {
             return null;
         }

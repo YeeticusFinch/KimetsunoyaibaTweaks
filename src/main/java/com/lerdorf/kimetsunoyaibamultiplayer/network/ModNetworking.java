@@ -19,6 +19,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenDemonPropositio
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PuppetLineSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.LoveLineSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonPropositionStatePacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonEyesPacket;
@@ -471,6 +472,13 @@ public class ModNetworking {
                 .decoder(PuppetLineSyncPacket::new)
                 .encoder(PuppetLineSyncPacket::toBytes)
                 .consumerMainThread(PuppetLineSyncPacket::handle)
+                .add();
+
+        int loveLineSyncPacketId = id();
+        net.messageBuilder(LoveLineSyncPacket.class, loveLineSyncPacketId)
+                .decoder(LoveLineSyncPacket::new)
+                .encoder(LoveLineSyncPacket::toBytes)
+                .consumerMainThread(LoveLineSyncPacket::handle)
                 .add();
 
         int webTraversalInputPacketId = id();

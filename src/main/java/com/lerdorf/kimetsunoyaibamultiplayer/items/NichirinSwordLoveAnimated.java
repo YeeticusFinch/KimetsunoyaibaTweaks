@@ -132,6 +132,9 @@ public class NichirinSwordLoveAnimated extends BreathingSwordItem implements Geo
                 }
                 boolean isLooping = entityAnim.equals("idle") || entityAnim.equals("walk") ||
                                    entityAnim.equals("sprint") || entityAnim.equals("sheath");
+                state.getController().setAnimationSpeed(
+                    entityAnim.equals("love_sixth_form_short") ? 1.1875D
+                        : entityAnim.equals("love_fourth_form_short") ? 0.8335D : 1.0D);
                 if (isLooping) {
                     RawAnimation anim = CACHED_LOOPING_ANIMATIONS.computeIfAbsent(entityAnim,
                         key -> RawAnimation.begin().thenLoop(key));
@@ -175,6 +178,10 @@ public class NichirinSwordLoveAnimated extends BreathingSwordItem implements Geo
             if (animName == null || animName.isEmpty() || animName.equals("empty")) {
                 animName = "idle";
             }
+
+            state.getController().setAnimationSpeed(
+                animName.equals("love_sixth_form_short") ? 1.1875D
+                    : animName.equals("love_fourth_form_short") ? 0.8335D : 1.0D);
 
             if (state.getController().getCurrentAnimation() != null) {
                 String currentAnim = state.getController().getCurrentAnimation().animation().name();

@@ -1,6 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.BaseKnYForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
@@ -250,6 +249,23 @@ public final class EnhancedFormCycleHandler {
         suppressBaseCycleClick();
     }
 
+    public static boolean isCameraMovementLocked() {
+        return active && Config.enhancedFormCycleHudLockCameraMovements;
+    }
+
+    /** Applies raw mouse movement to the wheel without changing the player's view. */
+    public static void handleLockedMouseMovement(double deltaX, double deltaY) {
+        if (!isCameraMovementLocked() || !Config.enhancedFormCycleHudEnableMouseRotationSelection) {
+            return;
+        }
+
+        double sensitivity = MC.options.sensitivity().get() * 0.6D + 0.2D;
+        double sensitivityScale = sensitivity * sensitivity * sensitivity * 8.0D;
+        updatePointerFromMovement(
+            (float) (deltaX * sensitivityScale),
+            (float) (deltaY * sensitivityScale));
+    }
+
     public static void render(RenderGuiOverlayEvent.Post event) {
         if (!active || options.isEmpty() || !event.getOverlay().id().toString().equals("minecraft:hotbar")) {
             return;
@@ -444,7 +460,7 @@ public final class EnhancedFormCycleHandler {
         List<FormOption> result = new ArrayList<>(formIds.length);
         for (int i = 0; i < formIds.length; i++) {
             int formId = formIds[i];
-            BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(formId);
+            BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(stack, formId);
             String fullName = form == null ? "Form " + formId : form.name();
             int color = form == null ? 0x55FFFF
                 : legacyColor(BaseModSwordFormRegistry.getColor(stack, formId), 0x55FFFF);
@@ -554,8 +570,12 @@ public final class EnhancedFormCycleHandler {
             return;
         }
 
-        pointerX += yawDelta * CAMERA_DEGREES_TO_POINTER;
-        pointerY += pitchDelta * CAMERA_DEGREES_TO_POINTER;
+        updatePointerFromMovement(yawDelta, pitchDelta);
+    }
+
+    private static void updatePointerFromMovement(float horizontal, float vertical) {
+        pointerX += horizontal * CAMERA_DEGREES_TO_POINTER;
+        pointerY += vertical * CAMERA_DEGREES_TO_POINTER;
         float distance = (float) Math.hypot(pointerX, pointerY);
         if (distance > POINTER_RADIUS) {
             float factor = POINTER_RADIUS / distance;

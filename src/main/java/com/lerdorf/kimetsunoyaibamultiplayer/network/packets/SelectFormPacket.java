@@ -96,7 +96,7 @@ public class SelectFormPacket {
         com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
             new VariationIndexSyncPacket(player.getUUID(), 0), player);
 
-        BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(selectedFormId);
+        BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(stack, selectedFormId);
         if (form != null) {
             if (!Config.suppressFormCycleChat) {
                 player.sendSystemMessage(BreathingFormAnnouncementHelper

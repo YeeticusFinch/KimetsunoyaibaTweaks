@@ -363,8 +363,10 @@ public class KanrojiSwordAnimationHandler {
             case "love_second_form":
             case "love_third_form":
             case "love_fourth_form":
+            case "love_fourth_form_short":
             case "love_fifth_form":
             case "love_sixth_form":
+            case "love_sixth_form_short":
                 return true;
             default:
                 return false;
@@ -421,10 +423,14 @@ public class KanrojiSwordAnimationHandler {
                 return 2400; // 2.4 seconds (48 ticks)
             case "love_fourth_form":
                 return 2500; // 2.5 seconds
+            case "love_fourth_form_short":
+                return 2000; // 2 seconds (40 ticks)
             case "love_fifth_form":
                 return 7500; // 7.5 seconds (150 ticks)
             case "love_sixth_form":
                 return 2500; // 2.5 seconds (50 ticks)
+            case "love_sixth_form_short":
+                return 2000; // 2 seconds (40 ticks)
             default:
                 return 1000; // Default 1 second
         }

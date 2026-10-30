@@ -52,7 +52,7 @@ public final class BreathingFormAnnouncementHelper {
 
     public static void announceBaseModSwordForm(LivingEntity source, ItemStack sword, int formId) {
         BaseKnYForms.BaseForm baseForm = BaseKnYForms.forms.get(formId);
-        BaseModSwordFormRegistry.FormDefinition swordForm = BaseModSwordFormRegistry.getForm(formId);
+        BaseModSwordFormRegistry.FormDefinition swordForm = BaseModSwordFormRegistry.getForm(sword, formId);
         if ((baseForm == null || baseForm.name == null || baseForm.name.isBlank()) && swordForm == null) {
             return;
         }
@@ -74,7 +74,7 @@ public final class BreathingFormAnnouncementHelper {
 
     public static MutableComponent getBaseModSwordFormDisplay(ItemStack sword, int formId) {
         BaseKnYForms.BaseForm baseForm = BaseKnYForms.forms.get(formId);
-        BaseModSwordFormRegistry.FormDefinition swordForm = BaseModSwordFormRegistry.getForm(formId);
+        BaseModSwordFormRegistry.FormDefinition swordForm = BaseModSwordFormRegistry.getForm(sword, formId);
         if (swordForm == null) {
             return LocalizationHelper.breathingForm(formId).copy();
         }

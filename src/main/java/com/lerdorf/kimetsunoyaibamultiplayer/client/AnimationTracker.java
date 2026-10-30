@@ -447,7 +447,8 @@ public class AnimationTracker {
 
         // Skip particles for animations that don't need them (like speed_attack_sword, ragnaraku animations)
         if (animationName != null && (animationName.equals("speed_attack_sword") ||
-                                      animationName.startsWith("ragnaraku"))) {
+                                      animationName.startsWith("ragnaraku") ||
+                                      animationName.equals("love_third_form"))) {
             return;
         }
 
