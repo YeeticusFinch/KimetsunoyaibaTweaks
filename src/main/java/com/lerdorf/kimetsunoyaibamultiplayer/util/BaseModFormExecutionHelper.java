@@ -113,8 +113,11 @@ public final class BaseModFormExecutionHelper {
         } else {
             tag.putDouble("select", selectIndex);
         }
+        // The enhanced HUD already selected the form directly; do not let the
+        // base sword's selected-item tick advance it a second time.
         entity.getPersistentData().putBoolean("ChangeArt", false);
         entity.getPersistentData().putDouble("breathes", formId);
+        BaseModEnhancedSwingState.setActive(entity, true);
         return true;
     }
 

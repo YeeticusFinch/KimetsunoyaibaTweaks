@@ -30,11 +30,13 @@ public class AnimationSyncHandler {
     private static class ActiveAnimation {
         ModifierLayer<IAnimation> modifierLayer;
         ResourceLocation animationId;
+        int layerPriority;
         int lastUpdateTick;
 
-        ActiveAnimation(ModifierLayer<IAnimation> layer, ResourceLocation id) {
+        ActiveAnimation(ModifierLayer<IAnimation> layer, ResourceLocation id, int layerPriority) {
             this.modifierLayer = layer;
             this.animationId = id;
+            this.layerPriority = layerPriority;
             this.lastUpdateTick = 0;
         }
     }
@@ -177,6 +179,7 @@ public class AnimationSyncHandler {
                 AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
                 if (animationStack != null) {
                     activeAnim.modifierLayer.setAnimation(null);
+                    animationStack.removeLayer(activeAnim.layerPriority);
                 }
 
                 if (Config.logDebug) {
@@ -220,7 +223,7 @@ public class AnimationSyncHandler {
             animationStack.addAnimLayer(layerPriority, modifierLayer);
 
             // Track the animation
-            syncedAnimations.put(playerUUID, new ActiveAnimation(modifierLayer, animationId));
+            syncedAnimations.put(playerUUID, new ActiveAnimation(modifierLayer, animationId, layerPriority));
 
             if (Config.logDebug) {
                 Log.info("Successfully applied animation {} to player {} (speed={}, layer={})", animationId, player.getName().getString(), speed, layerPriority);
@@ -327,7 +330,7 @@ public class AnimationSyncHandler {
                 ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
 
                 // Track this as an active animation
-                syncedAnimations.put(playerUUID, new ActiveAnimation(modifierLayer, animationId));
+                 syncedAnimations.put(playerUUID, new ActiveAnimation(modifierLayer, animationId, 1000));
 
                 // Add the empty modifier layer (Mob Player Animator should allow this to work on other players)
                 animationStack.addAnimLayer(1000, modifierLayer);

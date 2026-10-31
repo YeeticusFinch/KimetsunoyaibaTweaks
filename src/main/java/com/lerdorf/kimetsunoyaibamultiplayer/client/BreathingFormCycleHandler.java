@@ -28,6 +28,13 @@ public class BreathingFormCycleHandler {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onKeyInput(InputEvent.Key event) {
+        // EnhancedFormCycleHandler owns both cycle keys while the wheel is enabled.
+        // Keeping this legacy handler active would send the -2 compatibility packet
+        // alongside the wheel selection.
+        if (Config.isEnhancedFormCycleEnabled()) {
+            return;
+        }
+
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) {
             return;

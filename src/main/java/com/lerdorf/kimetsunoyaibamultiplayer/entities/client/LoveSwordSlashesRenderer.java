@@ -22,6 +22,8 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
  * Uses translucent emissive rendering for proper alpha blending with glowing appearance.
  */
 public class LoveSwordSlashesRenderer extends GeoEntityRenderer<LoveSwordSlashesEntity> {
+    private boolean renderingBloomPass;
+
     public LoveSwordSlashesRenderer(EntityRendererProvider.Context context) {
         super(context, new LoveSwordSlashesModel());
     }
@@ -30,9 +32,15 @@ public class LoveSwordSlashesRenderer extends GeoEntityRenderer<LoveSwordSlashes
     public void render(LoveSwordSlashesEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-        ShimmerCompat.updateEntityLight(entity, partialTick, 0xFFFFB8, 6.0F);
-        ShimmerCompat.postEntityBloom(postBuffer ->
-            super.render(entity, entityYaw, partialTick, poseStack, postBuffer, packedLight));
+        ShimmerCompat.updateEntityLight(entity, partialTick, 0xFF69B4, 6.0F);
+        ShimmerCompat.postEntityBloom(poseStack, (bloomPoseStack, bloomBufferSource) -> {
+            renderingBloomPass = true;
+            try {
+                super.render(entity, entityYaw, partialTick, bloomPoseStack, bloomBufferSource, packedLight);
+            } finally {
+                renderingBloomPass = false;
+            }
+        });
     }
 
     @Override
@@ -55,8 +63,12 @@ public class LoveSwordSlashesRenderer extends GeoEntityRenderer<LoveSwordSlashes
                          float partialTick, int packedLight, int packedOverlay, float red, float green,
                          float blue, float alpha) {
         // Use full bright lighting for emissive/glowing effect
-        super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
-                       partialTick, 0xF000F0, packedOverlay, red, green, blue, alpha);
+         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
+                        partialTick, 0xF000F0, packedOverlay,
+                        renderingBloomPass ? 1.0F : red,
+                        renderingBloomPass ? 0.41F : green,
+                        renderingBloomPass ? 0.71F : blue,
+                        alpha);
     }
 
     @Override

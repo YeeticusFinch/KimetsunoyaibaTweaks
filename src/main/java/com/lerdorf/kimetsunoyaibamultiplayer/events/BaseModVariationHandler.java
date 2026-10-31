@@ -13,6 +13,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathesValueSyncPa
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModEnhancedSwingState;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedSwingStateSyncPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -129,6 +131,7 @@ public class BaseModVariationHandler {
                 BreathingFormAnnouncementHelper.announceBaseModSwordForm(
                     player, heldItem, formId);
             }
+            clearEnhancedSwingFallback(player);
             return; // Base form, no variation - let base mod handle it
         }
 
@@ -170,6 +173,8 @@ public class BaseModVariationHandler {
         try {
             variation.getEffect().execute(player, player.level(), formId);
 
+            clearEnhancedSwingFallback(player);
+
             // CRITICAL: Restore breathes value after execution
             // The base mod or variation execution might have changed it
             player.getPersistentData().putDouble("breathes", breathes);
@@ -202,6 +207,18 @@ public class BaseModVariationHandler {
         } catch (Exception e) {
             Log.error("Error executing variation " + variation.getName() + ": " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private static void clearEnhancedSwingFallback(Player player) {
+        if (!BaseModEnhancedSwingState.isActive(player)) {
+            return;
+        }
+
+        BaseModEnhancedSwingState.setActive(player, false);
+        if (player instanceof ServerPlayer serverPlayer) {
+            ModNetworking.sendToPlayer(
+                new BaseModEnhancedSwingStateSyncPacket(player.getUUID(), false), serverPlayer);
         }
     }
 

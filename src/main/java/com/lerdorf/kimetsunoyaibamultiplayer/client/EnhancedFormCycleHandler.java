@@ -112,8 +112,7 @@ public final class EnhancedFormCycleHandler {
             }
         }
 
-        var cycleKey = net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART;
-        if (!cycleKey.matches(event.getKey(), event.getScanCode())) {
+        if (!isCycleKey(event.getKey(), event.getScanCode())) {
             return active || awaitingCustomData;
         }
 
@@ -135,13 +134,45 @@ public final class EnhancedFormCycleHandler {
         return active || awaitingCustomData;
     }
 
+    /**
+     * The base mod key mapping is updated before Forge's input event reaches the
+     * regular handlers. This predicate lets the mixin make the same ownership
+     * decision without duplicating the item checks.
+     */
+    public static boolean shouldSuppressNativeBaseCycle() {
+        if (!Config.isEnhancedFormCycleEnabled() || MC.player == null) {
+            return false;
+        }
+
+        ItemStack stack = MC.player.getMainHandItem();
+        if (stack.getItem() instanceof CustomDemonArtItem) {
+            return true;
+        }
+
+        List<FormOption> resolved = resolveOptions(stack);
+        return resolved != null && !resolved.isEmpty();
+    }
+
+    private static boolean isCycleKey(int key, int scanCode) {
+        var cycleKey = net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART;
+        var reverseKey = ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD;
+        return cycleKey.matches(key, scanCode)
+            || (reverseKey != null && reverseKey.matches(key, scanCode));
+    }
+
+    private static boolean isCycleMouseButton(int button) {
+        var cycleKey = net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART;
+        var reverseKey = ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD;
+        return cycleKey.matchesMouse(button)
+            || (reverseKey != null && reverseKey.matchesMouse(button));
+    }
+
     public static boolean handleMouseInput(InputEvent.MouseButton event) {
         if (!Config.isEnhancedFormCycleEnabled() || MC.player == null) {
             return false;
         }
 
-        var cycleKey = net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.CHANGE_BREATHES_AND_BLOOD_ART;
-        if (!cycleKey.matchesMouse(event.getButton())) {
+        if (!isCycleMouseButton(event.getButton())) {
             return active || awaitingCustomData;
         }
 
@@ -250,7 +281,9 @@ public final class EnhancedFormCycleHandler {
     }
 
     public static boolean isCameraMovementLocked() {
-        return active && Config.enhancedFormCycleHudLockCameraMovements;
+        return Config.isEnhancedFormCycleEnabled()
+            && active
+            && Config.enhancedFormCycleHudLockCameraMovements;
     }
 
     /** Applies raw mouse movement to the wheel without changing the player's view. */

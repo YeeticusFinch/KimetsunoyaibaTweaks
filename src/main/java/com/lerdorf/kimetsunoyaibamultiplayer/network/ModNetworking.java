@@ -255,6 +255,13 @@ public class ModNetworking {
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathesValueSyncPacket::handle)
                 .add();
 
+        int baseModEnhancedSwingStateSyncPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedSwingStateSyncPacket.class, baseModEnhancedSwingStateSyncPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedSwingStateSyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedSwingStateSyncPacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedSwingStateSyncPacket::handle)
+                .add();
+
         // Register variation index sync packet (server -> client)
         int variationIndexSyncPacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket.class, variationIndexSyncPacketId)

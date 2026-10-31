@@ -11,8 +11,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /** Routes mouse movement to the form wheel without rotating the camera when configured. */
 @Mixin(MouseHandler.class)
 public abstract class EnhancedFormCycleMouseMixin {
-    @Shadow private double accumulatedDX;
-    @Shadow private double accumulatedDY;
+    @Shadow(remap = false) private double f_91516_;
+    @Shadow(remap = false) private double f_91517_;
 
     @Inject(method = "turnPlayer", at = @At("HEAD"), cancellable = true)
     private void kimetsu$lockCameraForFormWheel(CallbackInfo ci) {
@@ -20,10 +20,10 @@ public abstract class EnhancedFormCycleMouseMixin {
             return;
         }
 
-        double deltaX = accumulatedDX;
-        double deltaY = accumulatedDY;
-        accumulatedDX = 0.0D;
-        accumulatedDY = 0.0D;
+        double deltaX = f_91516_;
+        double deltaY = f_91517_;
+        f_91516_ = 0.0D;
+        f_91517_ = 0.0D;
         EnhancedFormCycleHandler.handleLockedMouseMovement(deltaX, deltaY);
         ci.cancel();
     }

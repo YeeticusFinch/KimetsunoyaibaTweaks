@@ -8,8 +8,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
@@ -26,17 +30,59 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
  * - Custom rotation handling for precise orientation
  */
 public class LoveTornadoRenderer extends GeoEntityRenderer<LoveTornadoEntity> {
+    private static final ThreadLocal<Boolean> LATE_RENDER_PASS = ThreadLocal.withInitial(() -> false);
+    private boolean renderingBloomPass;
+    private static final float PINK_RED = 1.0F;
+    private static final float PINK_GREEN = 0.28F;
+    private static final float PINK_BLUE = 0.65F;
+    private static final float BLOOM_GREEN = 0.41F;
+    private static final float BLOOM_BLUE = 0.71F;
+
     public LoveTornadoRenderer(EntityRendererProvider.Context context) {
         super(context, new LoveTornadoModel());
+        this.shadowRadius = 0.0F;
+    }
+
+    /**
+     * Render after translucent world geometry, including water. The regular entity pass
+     * is skipped so the tornado is not drawn twice.
+     */
+    public static void renderAfterTranslucent(LoveTornadoEntity entity, float partialTick,
+                                              PoseStack poseStack, MultiBufferSource.BufferSource bufferSource,
+                                              Vec3 cameraPosition) {
+        Minecraft minecraft = Minecraft.getInstance();
+        EntityRenderDispatcher dispatcher = minecraft.getEntityRenderDispatcher();
+        double x = Mth.lerp(partialTick, entity.xOld, entity.getX());
+        double y = Mth.lerp(partialTick, entity.yOld, entity.getY());
+        double z = Mth.lerp(partialTick, entity.zOld, entity.getZ());
+        float yaw = Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
+
+        LATE_RENDER_PASS.set(true);
+        try {
+            dispatcher.render(entity, x - cameraPosition.x, y - cameraPosition.y, z - cameraPosition.z,
+                    yaw, partialTick, poseStack, bufferSource,
+                    dispatcher.getPackedLightCoords(entity, partialTick));
+        } finally {
+            LATE_RENDER_PASS.set(false);
+        }
     }
 
     @Override
     public void render(LoveTornadoEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
+        if (!LATE_RENDER_PASS.get()) {
+            return;
+        }
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-        ShimmerCompat.updateEntityLight(entity, partialTick, 0xFF5AB4, 8.0F);
-        ShimmerCompat.postEntityBloom(postBuffer ->
-            super.render(entity, entityYaw, partialTick, poseStack, postBuffer, packedLight));
+        ShimmerCompat.updateTornadoLight(entity, partialTick, 0xFF3FA3, 8.0F);
+        ShimmerCompat.postEntityBloom(poseStack, (bloomPoseStack, bloomBufferSource) -> {
+            renderingBloomPass = true;
+            try {
+                super.render(entity, entityYaw, partialTick, bloomPoseStack, bloomBufferSource, packedLight);
+            } finally {
+                renderingBloomPass = false;
+            }
+        });
     }
 
     @Override
@@ -62,8 +108,12 @@ public class LoveTornadoRenderer extends GeoEntityRenderer<LoveTornadoEntity> {
         // Use FULL BRIGHT lighting for maximum glow effect
         // 0xF000F0 = maximum brightness (15 in both sky and block light)
         // This makes the tornado render at full brightness regardless of surrounding lighting
-        super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
-                       partialTick, 0xF000F0, packedOverlay, red, green, blue, alpha);
+         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
+                        partialTick, 0xF000F0, packedOverlay,
+                        PINK_RED,
+                        renderingBloomPass ? BLOOM_GREEN : PINK_GREEN,
+                        renderingBloomPass ? BLOOM_BLUE : PINK_BLUE,
+                        alpha);
     }
 
     @Override

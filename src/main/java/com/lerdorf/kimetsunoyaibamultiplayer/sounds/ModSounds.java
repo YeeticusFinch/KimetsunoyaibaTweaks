@@ -33,6 +33,8 @@ public class ModSounds {
 
     // Love Breathing form effects
     public static final RegistryObject<SoundEvent> LOVE_LAUNCH = registerSoundEvent("love_launch");
+    public static final RegistryObject<SoundEvent> LOVE_TORNADO_WIND = registerSoundEvent("love_tornado_wind");
+    public static final RegistryObject<SoundEvent> LOVE_TORNADO_ZOOM = registerSoundEvent("love_tornado_zoom");
     public static final RegistryObject<SoundEvent> LOVE_LANDS = registerSoundEvent("love_lands");
     public static final RegistryObject<SoundEvent> LOVE_HIT_SPARKLES = registerSoundEvent("love_hit_sparkles");
     public static final RegistryObject<SoundEvent> LOVE_CATS_AND_CUTS = registerSoundEvent("love_cats_and_cuts");

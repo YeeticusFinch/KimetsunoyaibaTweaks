@@ -17,7 +17,28 @@ public final class BaseModSwordFormRegistry {
         601, 602, 603, 604, 605, 606, 607, 608, 609, 610, TANJIRO_HINOKAMI_SWITCH_FORM
     };
     private static final int[] TANJIRO_HINOKAMI_FORMS = {
-        201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, TANJIRO_HINOKAMI_SWITCH_FORM
+        201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, TANJIRO_HINOKAMI_SWITCH_FORM
+    };
+    private static final String[] TANJIRO_HINOKAMI_NAMES = {
+        "Dance",
+        "Clear Blue Sky",
+        "Raging Sun",
+        "Burning Bones, Summer Sun",
+        "Setting Sun Transformation",
+        "Solar Heat Haze",
+        "Beneficent Radiance",
+        "Sunflower Thrust",
+        "Sun Halo Dragon Head Dance",
+        "Fire Wheel",
+        "Fake Rainbow",
+        "Flame Dance"
+    };
+    private static final String[] IGURO_SERPENT_NAMES = {
+        "Serpent Breathing 1st Form: Winding Serpent Slash",
+        "Serpent Breathing 2nd Form: Venom Fangs of the Narrow Head",
+        "Serpent Breathing 3rd Form: Coil Choke",
+        "Serpent Breathing 4th Form: Twin-Headed Reptile",
+        "Serpent Breathing 5th Form: Slithering Serpent"
     };
 
     public record FormDefinition(int id, String name, String color) {
@@ -51,8 +72,8 @@ public final class BaseModSwordFormRegistry {
         register("nichirinsword_kanawo", new int[]{1401, 1402, 1404, 1405});
         register("nichirinsword_kanae", new int[]{1401, 1402, 1404, 1405});
         register("nichirinsword_kanroji", new int[]{1501, 1502, 1505, 1506});
-        register("nichirinsword_himejima_1", new int[]{1601, 1602, 1603, 1604, 1605, 1606, 1607, 1608, 1609, 1611});
-        register("nichirinsword_himejima_2", new int[]{1601, 1602, 1603, 1604, 1605, 1606, 1607, 1608, 1609, 1611});
+        register("nichirinsword_himejima_1", new int[]{1601, 1602, 1603, 1604, 1605});
+        register("nichirinsword_himejima_2", new int[]{1601, 1602, 1603, 1604, 1605});
         register("nichirinsword_bamboo", new int[]{1701, 1702, 1703, 1704, 1705, 1706, 1707, 1708, 1709, 1710, 1711, 1712});
         register("nichirinsword_bamboo_2", new int[]{1701, 1702, 1703, 1704, 1705, 1706, 1707, 1708, 1709, 1710, 1711, 1712});
         register("nichirinsword_cherry_blossom", new int[]{1801, 1802, 1805, 1806});
@@ -147,6 +168,9 @@ public final class BaseModSwordFormRegistry {
         aliasByPosition("nichirinsword_flame", new int[]{401, 402, 403, 404, 405});
         aliasByPosition("nichirinsword_rengoku", new int[]{401, 402, 403, 404, 405, 409});
         aliasByPosition("nichirinsword_mist", new int[]{701, 702, 703, 704, 705, 707});
+        aliasByPosition("nichirinsword_wind", new int[]{501, 502, 503, 504, 505, 506, 507, 508, 509});
+        aliasByPosition("nichirinsword_shinazugawa",
+            new int[]{501, 502, 503, 504, 505, 506, 507, 508, 509});
         aliasByPosition("nichirinsword_water", new int[]{101, 102, 103, 104, 105, 106, 107, 108, 109, 110});
         aliasByPosition("nichirinsword_tomioka", new int[]{101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111});
         aliasByPosition("nichirinsword_inosuke", new int[]{201, 202, 203, 204, 205, 206, 207, 208, 209, 210});
@@ -154,10 +178,8 @@ public final class BaseModSwordFormRegistry {
         aliasByPosition("nichirinsword_uzui", new int[]{901, 902, 903});
         aliasByPosition("nichirinsword_kanawo", new int[]{1301, 1302, 1304, 1305});
         aliasByPosition("nichirinsword_kanae", new int[]{1301, 1302, 1304, 1305});
-        aliasByPosition("nichirinsword_himejima_1",
-            new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 611});
-        aliasByPosition("nichirinsword_himejima_2",
-            new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 611});
+        aliasByPosition("nichirinsword_himejima_1", new int[]{601, 602, 603, 604, 605});
+        aliasByPosition("nichirinsword_himejima_2", new int[]{601, 602, 603, 604, 605});
         aliasPrefix("nichirinsword_tanjiro", new int[]{101, 102, 103, 104, 105, 106, 107, 108, 109, 110});
         aliasPrefix("nichirinsword_tanjiro_2", new int[]{101, 102, 103, 104, 105, 106, 107, 108, 109, 110});
     }
@@ -229,12 +251,19 @@ public final class BaseModSwordFormRegistry {
     }
 
     public static int getSelectIndex(ItemStack stack, int formId) {
-        if (isTanjiroPath(getItemPath(stack)) && formId == TANJIRO_HINOKAMI_SWITCH_FORM) {
-            return 20;
-        }
-        for (int id : getFormIds(stack)) {
-            if (id == formId) {
-                return formId / 100 == 11 && formId == 1121 ? 20 : formId % 100 - 1;
+        for (int registeredFormId : getFormIds(stack)) {
+            if (registeredFormId == formId) {
+                // These two base-mod mode-switch entries use a special select
+                // value rather than their position in the exposed form list.
+                if (isTanjiroPath(getItemPath(stack)) && formId == TANJIRO_HINOKAMI_SWITCH_FORM) {
+                    return 20;
+                }
+                if (formId == 1121) {
+                    return 20;
+                }
+                // The base mod derives the form from the style-specific select
+                // offset, so sparse and overlapping IDs cannot use list position.
+                return formId % 100 - 1;
             }
         }
         return -1;
@@ -245,7 +274,29 @@ public final class BaseModSwordFormRegistry {
     }
 
     public static FormDefinition getForm(ItemStack stack, int formId) {
-        Map<Integer, FormDefinition> definitions = ITEM_DEFINITIONS.get(getItemPath(stack));
+        String itemPath = getItemPath(stack);
+        if (isTanjiroPath(itemPath)) {
+            boolean hinokamiMode = stack.hasTag() && stack.getTag().getBoolean("switch");
+            if (hinokamiMode) {
+                if (formId == TANJIRO_HINOKAMI_SWITCH_FORM) {
+                    return new FormDefinition(formId, "Water Breathing", "§9");
+                }
+                int nameIndex = formId - 201;
+                if (nameIndex >= 0 && nameIndex < TANJIRO_HINOKAMI_NAMES.length) {
+                    return new FormDefinition(formId, TANJIRO_HINOKAMI_NAMES[nameIndex], "§c");
+                }
+            } else if (formId == TANJIRO_HINOKAMI_SWITCH_FORM) {
+                return new FormDefinition(formId, "Hinokami Kagura", "§c");
+            }
+        }
+        if ("nichirinsword_iguro".equals(itemPath)) {
+            int nameIndex = formId - 801;
+            if (nameIndex >= 0 && nameIndex < IGURO_SERPENT_NAMES.length) {
+                return new FormDefinition(formId, IGURO_SERPENT_NAMES[nameIndex], "§5");
+            }
+        }
+
+        Map<Integer, FormDefinition> definitions = ITEM_DEFINITIONS.get(itemPath);
         FormDefinition itemForm = definitions == null ? null : definitions.get(formId);
         return itemForm != null ? itemForm : getForm(formId);
     }
@@ -285,7 +336,7 @@ public final class BaseModSwordFormRegistry {
     }
 
     public static boolean isHinokamiForm(int formId) {
-        return formId >= 201 && formId <= 211;
+        return formId >= 201 && formId <= 212;
     }
 
     public static boolean isHinokamiSwitchForm(int formId) {

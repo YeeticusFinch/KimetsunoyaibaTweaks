@@ -4,6 +4,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.DualWieldHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModEnhancedSwingState;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -50,7 +51,8 @@ public class BreathingSwordAnimationHandler {
 
                 // For base mod swords, check if the base mod is already playing an animation
                 // Only intervene if no sword animation is currently playing
-                if (isBaseModSword && isPlayerPlayingSwordAnimation(player)) {
+                if (isBaseModSword && !BaseModEnhancedSwingState.isActive(player)
+                        && isPlayerPlayingSwordAnimation(player)) {
                     // Base mod animation is working, don't interfere
                     return null;
                 }

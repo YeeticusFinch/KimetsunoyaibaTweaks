@@ -21,6 +21,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.Ba
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.AttackDamageHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModEnhancedSwingState;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -78,6 +79,8 @@ public class BreathingSwordSwingPacket {
             boolean isCustomSword = heldItem.getItem() instanceof BreathingSwordItem;
             boolean isBaseModNichirinSword = BaseModBreathingExecutor.isBaseModNichirinSword(heldItem.getItem());
             if (!isCustomSword && !isBaseModNichirinSword) return;
+            boolean useModCombat = isCustomSword
+                || (isBaseModNichirinSword && BaseModEnhancedSwingState.isActive(player));
 
             // Base-mod training swords should only do normal melee damage, never form execution side effects.
             if (isBaseModNichirinSword && TrainingSwordHelper.isTrainingSword(heldItem)) {
@@ -95,8 +98,8 @@ public class BreathingSwordSwingPacket {
             // Broadcast slash rendering to nearby players so left-click slashes are visible in multiplayer.
             broadcastSlashToNearbyPlayers(player, animationName);
 
-            // Base mod swords only need slash sync; AOE/combat state override is custom-sword behavior.
-            if (!isCustomSword) {
+            // Base mod swords use our combat path only while enhanced form cycling owns their left-clicks.
+            if (!useModCombat) {
                 return;
             }
 

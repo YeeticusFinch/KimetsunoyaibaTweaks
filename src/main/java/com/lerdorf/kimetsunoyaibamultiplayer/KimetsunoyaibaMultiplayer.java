@@ -1633,7 +1633,9 @@ public class KimetsunoyaibaMultiplayer
                 // Check if holding nichirinsword from kimetsunoyaiba mod - only handle particles, no AOE
                 else if (SwordParticleMapping.isKimetsunoyaibaSword(heldItem) &&
                          !isBaseTrainingSword &&
-                         heldItem.getItem().toString().contains("nichirinsword")) {
+                         (heldItem.getItem().toString().contains("nichirinsword")
+                             || com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor
+                                 .isBaseModNichirinSword(heldItem.getItem()))) {
 
                     // Play similar attack animation for kimetsunoyaiba swords
                     String animationName = com.lerdorf.kimetsunoyaibamultiplayer.client.BreathingSwordAnimationHandler.onAttack(mc.player);

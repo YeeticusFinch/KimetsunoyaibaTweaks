@@ -107,6 +107,24 @@
       }
     ]
   },
+  "love_tornado_wind": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.love_tornado_wind",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:love_tornado_wind",
+        "stream": false
+      }
+    ]
+  },
+  "love_tornado_zoom": {
+    "subtitle": "subtitles.kimetsunoyaibamultiplayer.love_tornado_zoom",
+    "sounds": [
+      {
+        "name": "kimetsunoyaibamultiplayer:love_tornado_zoom",
+        "stream": false
+      }
+    ]
+  },
   "love_lands": {
     "subtitle": "subtitles.kimetsunoyaibamultiplayer.love_lands",
     "sounds": [

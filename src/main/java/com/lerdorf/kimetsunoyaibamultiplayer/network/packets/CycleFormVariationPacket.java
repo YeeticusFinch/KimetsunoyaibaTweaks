@@ -12,6 +12,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -218,6 +219,10 @@ public class CycleFormVariationPacket {
         // Note: Chat handler will NOT cache these messages (they contain variation names and/or counters)
         if (!Config.suppressFormCycleChat) {
             Component displayName = getBaseModVariationDisplayNameByString(currentFormName, newVariation, swordId);
+            ChatFormatting formColor = getBaseModFormColor(player, data);
+            if (formColor != null) {
+                displayName = displayName.copy().withStyle(formColor);
+            }
             player.sendSystemMessage(
                 displayName.copy().append(Component.literal(" (" + (newVariation + 1) + "/" + (variationCount + 1) + ")"))
             );
@@ -230,6 +235,18 @@ public class CycleFormVariationPacket {
             Log.debug("Base mod variation cycled: form '" + currentFormName +
                      "', variation " + newVariation + "/" + variationCount);
         }
+    }
+
+    private ChatFormatting getBaseModFormColor(ServerPlayer player, PlayerBreathingData.PlayerData data) {
+        int formId = (int) data.getBaseModBreathesValue();
+        if (formId <= 0) {
+            formId = (int) player.getPersistentData().getDouble("breathes");
+        }
+        String color = com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry
+            .getColor(player.getMainHandItem(), formId);
+        return color != null && color.length() >= 2 && color.charAt(0) == '§'
+            ? ChatFormatting.getByCode(color.charAt(1))
+            : null;
     }
 
     /**

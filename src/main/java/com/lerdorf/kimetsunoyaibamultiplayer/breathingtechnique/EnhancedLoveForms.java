@@ -28,6 +28,7 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -59,7 +60,7 @@ import org.joml.Vector3f;
  * Features:
  * - Flexible whip-like attacks with physics-based motion
  * - Multi-target damage along whip curve
- * - Heart particle effects
+ * - Heart particle effects (remove this)
  * - Dynamic whip extension during forms
  *
  * This is a PLACEHOLDER implementation. Full forms will be added later.
@@ -70,8 +71,26 @@ public class EnhancedLoveForms {
     private static final int LOVE_RING_POINTS = 18;
     private static final String FOURTH_FORM_ANIMATION = "love_fourth_form_short";
     private static final int FOURTH_FORM_DURATION_TICKS = 40;
+    private static final double FOURTH_FORM_DISTANCE = 20.0D;
     private static final String SIXTH_FORM_ANIMATION = "love_sixth_form_short";
     private static final int SIXTH_FORM_DURATION_TICKS = 40;
+    private static final float LOVE_FORM_SOUND_VOLUME = 2.0F;
+
+    private static void playLoveFormSound(Level level, LivingEntity entity, SoundEvent sound, float pitch) {
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), sound,
+            SoundSource.PLAYERS, LOVE_FORM_SOUND_VOLUME, pitch);
+    }
+
+    private static void playLovePlayerStepSound(LivingEntity entity) {
+        BlockPos blockPos = entity.getOnPos();
+        var blockState = entity.level().getBlockState(blockPos);
+        if (blockState.liquid()) {
+            return;
+        }
+
+        SoundType soundType = blockState.getSoundType();
+        entity.playSound(soundType.getStepSound(), soundType.getVolume() * 0.15F, soundType.getPitch());
+    }
 
     static ParticleOptions createLoveParticleOptions(Vector3f color, float size) {
         return "dust".equals(EnhancedBreathingConfig.loveParticleMode)
@@ -240,6 +259,26 @@ public class EnhancedLoveForms {
         projection = Math.max(0.0D, Math.min(1.0D, projection));
         Vec3 closestPoint = start.add(line.scale(projection));
         return point.distanceToSqr(closestPoint) <= radius * radius;
+    }
+
+    /** Keeps Third Form aim at least five degrees below horizontal. */
+    private static Vec3 getLoveThirdFormAim(LivingEntity entity) {
+        final double minimumDownwardAngle = Math.toRadians(5.0D);
+        final double minimumDownwardY = -Math.sin(minimumDownwardAngle);
+        Vec3 look = entity.getLookAngle().normalize();
+        Vec3 horizontal = new Vec3(look.x, 0.0D, look.z);
+        if (horizontal.lengthSqr() < 1.0E-6D) {
+            float yawRadians = (float) Math.toRadians(-entity.getYRot());
+            horizontal = new Vec3(Math.sin(yawRadians), 0.0D, Math.cos(yawRadians));
+        } else {
+            horizontal = horizontal.normalize();
+        }
+
+        if (look.y > minimumDownwardY) {
+            double horizontalScale = Math.cos(minimumDownwardAngle);
+            return horizontal.scale(horizontalScale).add(0.0D, minimumDownwardY, 0.0D);
+        }
+        return look;
     }
 
     /** Applies the Fifth Form tornado field independently of its damage ticks. */
@@ -546,6 +585,8 @@ public class EnhancedLoveForms {
         		float [][][] particlePoints = ParticlePositions.first_form.get("point_a");
                 
                  final boolean[] hitThisTick = {false};
+                 final boolean[] noTargetSweepFallbackStarted = {false};
+                 final int[] noTargetSweepFallbackCount = {0};
                  AbilityScheduler.scheduleRepeating(entity, () -> {
 
                 	if (currentTick[0] % 4 == 0) {
@@ -560,12 +601,15 @@ public class EnhancedLoveForms {
                     renderLovePointFrame(serverLevel, entity, particlePoints, currentTick[0],
                         vectors[0], vectors[1], new Vec3(0, 1, 0), isDemon, 1.2f, 1.0f);
 
-                  	if (currentTick[0] >= 26 && currentTick[0] < 52) { // Sprinting fast (2.6 seconds)
-                 		if (currentTick[0] == 26) {
-                 			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                 				    ModSounds.LOVE_LAUNCH.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
-                 		}
-                  		if (currentTick[0] < 31 && serverLevel != null) {
+                   	if (currentTick[0] >= 26 && currentTick[0] < 52) { // Sprinting fast (2.6 seconds)
+                  		if (currentTick[0] == 26) {
+                  			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                  				    ModSounds.LOVE_LAUNCH.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                        }
+                        if (currentTick[0] % 2 == 0) {
+                            playLovePlayerStepSound(entity);
+                        }
+                   		if (currentTick[0] < 31 && serverLevel != null) {
                   			serverLevel.sendParticles(
             						ModParticles.LOVE_IMPACT.get(),
             						entity.getX(), entity.getY(), entity.getZ(),
@@ -627,10 +671,19 @@ public class EnhancedLoveForms {
                 		}
                 	}
                 	if (currentTick[0] > 50 && currentTick[0] < 80 && currentTick[0] % 2 == 0) {
-                		if (Config.logDebug)
-                			Log.debugEvery("enhanced-love-damage:" + entity.getUUID(), 1000,
-                			    "Damaging {} targets on tick {}", targets.size(), currentTick[0]);
-                  		hitThisTick[0] = false;
+                  		if (Config.logDebug)
+                  			Log.debugEvery("enhanced-love-damage:" + entity.getUUID(), 1000,
+                  			    "Damaging {} targets on tick {}", targets.size(), currentTick[0]);
+                        if (targets.isEmpty()) {
+                            noTargetSweepFallbackStarted[0] = true;
+                        }
+                        if (noTargetSweepFallbackStarted[0] && noTargetSweepFallbackCount[0] < 5) {
+                            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                                ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                                SoundSource.PLAYERS, 1.0F, 1.0F);
+                            noTargetSweepFallbackCount[0]++;
+                        }
+                   	 hitThisTick[0] = false;
                  		for (LivingEntity target : targets) {
                 			if (Math.random() < 0.4) {
 	                			//System.out.println("Trying to damage " + target.getName().getString());
@@ -760,22 +813,33 @@ public class EnhancedLoveForms {
                  	if (currentTick[0] < 12) {
                 		// Jump up (0.6 seconds)
                 		MovementHelper.lookAtTarget(entity);
-                		MovementHelper.setVelocity(entity, entity.getLookAngle().normalize().scale(-0.2).add(0, 0.5f, 0));
+							MovementHelper.setVelocity(entity,
+									entity.getLookAngle().normalize().scale(-0.2).add(0, 0.5f, 0));
+ 						if (currentTick[0] == 0)
+							level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                 				    ModSounds.LOVE_LAUNCH.get(), SoundSource.PLAYERS, 1.0f, 1.2f);
                 	}
-                	else if (currentTick[0] < 40) {
+					else if (currentTick[0] < 40) {
+						if (currentTick[0] == 13)
+							level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                 				    ModSounds.LOVE_TORNADO_ZOOM.get(), SoundSource.PLAYERS, 1.0f, 1.7f);
                 		// Launch forward and attack (2.9 seconds)
                 		MovementHelper.lookAtTarget(entity);
                 		Vec3 vel = new Vec3(entity.getLookAngle().x, Math.min(entity.getLookAngle().y, -0.01), entity.getLookAngle().z);
                 		MovementHelper.setVelocity(entity, vel.scale(0.8f));
                 		
-                		if (level instanceof ServerLevel serverLevel && currentTick[0] % 2 == 0) {
-                			AABB searchBox = entity.getBoundingBox().inflate(6.0);
+                 		if (level instanceof ServerLevel serverLevel && currentTick[0] % 2 == 0) {
+                            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                                ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                                SoundSource.PLAYERS, 1.0f, 1.8f);
+
+                 			AABB searchBox = entity.getBoundingBox().inflate(6.0);
                 			List<LivingEntity> nearby = level.getEntitiesOfClass(
                 				LivingEntity.class, searchBox,
                 				e -> e != entity && e.isAlive() && isTargetable(entity, e)
-                			);
-
-                			for (LivingEntity target : nearby) {
+							);
+							
+                  			for (LivingEntity target : nearby) {
                 				if (Math.random() < 0.8) {
                 					Damager.hurt(entity, target, damage);
                 					// Spawn love_slash particles on newly added target
@@ -785,10 +849,7 @@ public class EnhancedLoveForms {
                 						target.getX(), particleY, target.getZ(),
                 						3, 0.3, 0.3, 0.3, 0
                 					);
-                					level.playSound(null, target.getX(), target.getY(), target.getZ(),
-                        				    ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
-                        				    SoundSource.PLAYERS, 1.0f, 1.5f);
-                				}
+                  					}
 
                 			}
                 		}
@@ -805,18 +866,13 @@ public class EnhancedLoveForms {
                      clearLovePointFrame(entity);
                      GuardStateHelper.clearGuardState(entity);
                      setCancelAttackSwing(entity, false);
-                     if (entity instanceof ServerPlayer serverPlayer) {
-                         ModNetworking.sendToAllClients(
-                             AnimationSyncPacket.createStopPacket(serverPlayer.getUUID()));
-                     }
                  }, totalDuration+2);
             }
         );
     }
 
     /**
-     * Third Form: Catlove Shower (PLACEHOLDER)
-     * TODO: Implement
+     * Third Form: Catlove Shower
      */
     public static BreathingForm thirdForm() {
         return new BreathingForm(
@@ -825,8 +881,10 @@ public class EnhancedLoveForms {
             "Overhead rain of whip slashes",
             4,
             (entity, level, formId) -> {
-            	 // Set guard state (formId auto-injected as 22003)
+             	 // Set guard state (formId auto-injected as 22003)
                 GuardStateHelper.setGuardState(entity, 8.0, formId);
+                level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                    ModSounds.LOVE_LAUNCH.get(), SoundSource.PLAYERS, 1.0F, 1.4F);
 
                 // Play player animation
                 playEntityAnimation(entity, "love_third_form");
@@ -864,12 +922,11 @@ public class EnhancedLoveForms {
                 vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
                 
                  float [][][] particlePoints = ParticlePositions.third_form.get("point_a");
-                 final Vec3 activationEyePosition = entity.getEyePosition();
-                 final Vec3[] targetDirection = {vectors[0].scale(-1.0D)};
+                 final Vec3[] targetDirection = {getLoveThirdFormAim(entity)};
                  
                  double ogY = entity.position().y; // TODO: Measure the delta Y and add that to the Y position of the love sword slashes
                 
-                 MovementHelper.setVelocity(entity, vectors[0].scale(-0.75).add(0, 1.5, 0));
+                 MovementHelper.setVelocity(entity, vectors[0].scale(-2).add(0, 2, 0));
                 entity.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 5, 10, false, false));
                 entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, totalDuration+10, 10, false, false));
                 
@@ -892,12 +949,9 @@ public class EnhancedLoveForms {
                 		// Rotate 90 degrees counter-clockwise for RIGHT direction: (x, 0, z) -> (-z, 0, x)
                 		vectors[1] = new Vec3(-vectors[0].z, 0, vectors[0].x);
                 		
-                  		// Raycast back toward where the form was activated, stopping at the first block.
+                    					// Raycast along the player's current chosen aim, stopping at the first block.
                         Vec3 eyePos = entity.getEyePosition();
-                        Vec3 directionToActivation = activationEyePosition.subtract(eyePos);
-                        targetDirection[0] = directionToActivation.lengthSqr() > 1.0E-6D
-                            ? directionToActivation.normalize()
-                            : vectors[0].scale(-1.0D);
+                        targetDirection[0] = getLoveThirdFormAim(entity);
                         Vec3 lookAngle = targetDirection[0];
                   		vectors[2] = eyePos.add(lookAngle.scale(range)); // Default to max range
                   		
@@ -971,8 +1025,8 @@ public class EnhancedLoveForms {
                         MovementHelper.lookInDirection(entity, targetDirection[0]);
                         Vec3 localVelocity = com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.velocity(entity);
                         MovementHelper.setVelocity(entity, localVelocity.x, Math.max(localVelocity.y, 0), localVelocity.z);
-                		if (serverLevel != null) {
-                			for (int i = 0; i < 5; i++) {
+                		if (serverLevel != null && currentTick[0] % 3 == 0) {
+                			for (int i = 0; i < 1; i++) {
                 				String slashAnim = slashAnimations[(int) (Math.random() * slashAnimations.length)];
  	                 			// Spawn local slash animations without a target-point particle cloud.
 
@@ -1117,7 +1171,7 @@ public class EnhancedLoveForms {
     /**
      * Fourth Form: The Heartbreak of Unrequited Love.
      *
-     * The moving 3x3x3 capture box reaches a fixed point 15 blocks ahead in
+     * The moving 3x3x3 capture box reaches a fixed point 20 blocks ahead in
      * ten ticks. Captured targets are pulled toward that box until the impact
      * resolves at tick 18.
      */
@@ -1143,7 +1197,7 @@ public class EnhancedLoveForms {
                     forward = forward.normalize();
                 }
                 final Vec3 lockedForward = forward;
-                final Vec3 targetPoint = origin.add(lockedForward.scale(15.0D));
+                 final Vec3 targetPoint = origin.add(lockedForward.scale(FOURTH_FORM_DISTANCE));
                 final Vec3 worldUp = Math.abs(lockedForward.y) > 0.98D
                     ? new Vec3(1.0D, 0.0D, 0.0D)
                     : new Vec3(0.0D, 1.0D, 0.0D);
@@ -1162,6 +1216,10 @@ public class EnhancedLoveForms {
                 playSynchronizedAnimation(entity, FOURTH_FORM_ANIMATION, FOURTH_FORM_DURATION_TICKS);
                 triggerWhipAnimation(entity, FOURTH_FORM_ANIMATION, 1.0D);
                 MovementHelper.setRotation(entity, lockedYaw, lockedPitch);
+                level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                    SoundEvents.ARROW_SHOOT, SoundSource.PLAYERS, 1.0F, 1.0F);
+                level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                    SoundEvents.FISHING_BOBBER_THROW, SoundSource.PLAYERS, 1.0F, 1.0F);
 
                 final int[] currentTick = {0};
                 AbilityScheduler.scheduleRepeating(entity, () -> {
@@ -1171,7 +1229,7 @@ public class EnhancedLoveForms {
                     Vec3 boxCenter;
                     if (tick <= 10) {
                         double progress = tick / 10.0D;
-                        boxCenter = origin.add(lockedForward.scale(15.0D * progress));
+                         boxCenter = origin.add(lockedForward.scale(FOURTH_FORM_DISTANCE * progress));
 
                         AABB scanBox = new AABB(
                             boxCenter.x - 1.5D, boxCenter.y - 1.5D, boxCenter.z - 1.5D,
@@ -1199,6 +1257,13 @@ public class EnhancedLoveForms {
 
                     if (tick == 18 && !impactResolved[0]) {
                         impactResolved[0] = true;
+                        level.playSound(null, targetPoint.x, targetPoint.y, targetPoint.z,
+                            ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                            SoundSource.PLAYERS, 1.0F, 1.6F);
+                        level.playSound(null, targetPoint.x, targetPoint.y, targetPoint.z,
+                            SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.PLAYERS, 1.0F, 2.0F);
+                        level.playSound(null, targetPoint.x, targetPoint.y, targetPoint.z,
+                            SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0F, 1.0F);
                         if (serverLevel != null) {
                             serverLevel.sendParticles(ParticleTypes.FLASH,
                                 targetPoint.x, targetPoint.y, targetPoint.z,
@@ -1218,6 +1283,17 @@ public class EnhancedLoveForms {
                             }
                         }
                     }
+                    if (tick == 19) {
+                        level.playSound(null, targetPoint.x, targetPoint.y, targetPoint.z,
+                            ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                            SoundSource.PLAYERS, 1.0F, 2.0F);
+                        level.playSound(null, targetPoint.x, targetPoint.y, targetPoint.z,
+                            ModSounds.LOVE_TORNADO_ZOOM.get(), SoundSource.PLAYERS, 1.0F, 2.0F);
+                    }
+                    if (tick == 20) {
+                        level.playSound(null, targetPoint.x, targetPoint.y, targetPoint.z,
+                            SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 0.8F);
+                    }
 
                     int pointFrame = particlePoints == null || particlePoints.length <= 1
                         ? 0
@@ -1233,13 +1309,17 @@ public class EnhancedLoveForms {
                 AbilityScheduler.scheduleOnce(entity, () -> {
                     clearLovePointFrame(entity);
                     GuardStateHelper.clearGuardState(entity);
-                    setCancelAttackSwing(entity, false);
-                    MovementHelper.setRotation(entity, originalYaw, originalPitch);
-                    entity.setYHeadRot(originalHeadYaw);
-                    entity.setYBodyRot(originalBodyYaw);
-                    entity.yHeadRotO = originalHeadYaw;
-                    entity.yBodyRotO = originalBodyYaw;
-                }, FOURTH_FORM_DURATION_TICKS + 2);
+                     setCancelAttackSwing(entity, false);
+                     MovementHelper.setRotation(entity, originalYaw, originalPitch);
+                     entity.setYHeadRot(originalHeadYaw);
+                     entity.setYBodyRot(originalBodyYaw);
+                     entity.yHeadRotO = originalHeadYaw;
+                     entity.yBodyRotO = originalBodyYaw;
+                     if (entity instanceof ServerPlayer serverPlayer) {
+                         ModNetworking.sendToAllClients(
+                             AnimationSyncPacket.createStopPacket(serverPlayer.getUUID()));
+                     }
+                 }, FOURTH_FORM_DURATION_TICKS + 2);
             }
         );
     }
@@ -1393,11 +1473,11 @@ public class EnhancedLoveForms {
                     
                    
                     // Schedule cleanup
-                     AbilityScheduler.scheduleOnce(entity, () -> {
-                        clearLovePointFrame(entity);
-                        GuardStateHelper.clearGuardState(entity);
-                        setCancelAttackSwing(entity, false);
-                    }, totalDuration+2);
+                 AbilityScheduler.scheduleOnce(entity, () -> {
+                     clearLovePointFrame(entity);
+                     GuardStateHelper.clearGuardState(entity);
+                     setCancelAttackSwing(entity, false);
+                 }, totalDuration+2);
     			}
     			);
     			
@@ -1464,10 +1544,33 @@ public class EnhancedLoveForms {
         		
         		final float[] yawPitch = {0,0};
         		
-        		final int range = 60;
+                final int range = 60;
                 
                 AbilityScheduler.scheduleRepeating(entity, () -> {
-            	
+                    if (currentTick[0] == 0) {
+                        playLoveFormSound(level, entity, ModSounds.LOVE_LAUNCH.get(), 1.0F);
+                        playLoveFormSound(level, entity, ModSounds.LOVE_TORNADO_WIND.get(), 1.0F);
+                    }
+                    if (currentTick[0] == 24) {
+                        playLoveFormSound(level, entity, ModSounds.LOVE_TORNADO_ZOOM.get(), 1.0F);
+                    }
+                    if (currentTick[0] >= 30 && currentTick[0] <= 38 && currentTick[0] % 2 == 0) {
+                        playLoveFormSound(level, entity,
+                            ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                            1.4F);
+                    }
+                    if (currentTick[0] == 41) {
+                        playLoveFormSound(level, entity, SoundEvents.LIGHTNING_BOLT_THUNDER, 2.0F);
+                        playLoveFormSound(level, entity, SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, 2.0F);
+                        playLoveFormSound(level, entity,
+                            ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                            1.8F);
+                    }
+                    if (currentTick[0] >= 43 && currentTick[0] <= 69 && currentTick[0] % 2 == 1) {
+                        float thunderPitch = 2.0F - ((currentTick[0] - 41) / 2) * 0.1F;
+                        playLoveFormSound(level, entity, SoundEvents.LIGHTNING_BOLT_THUNDER, thunderPitch);
+                    }
+             	
                 	if (currentTick[0] == 25 || (currentTick[0] < 25 && currentTick[0] %4 == 0)) {
                 		float yaw = (float) Math.toRadians(-entity.getYRot());
 
@@ -1806,10 +1909,14 @@ public class EnhancedLoveForms {
                 
                 // Schedule cleanup
                  AbilityScheduler.scheduleOnce(entity, () -> {
-                    clearLovePointFrame(entity);
-                    GuardStateHelper.clearGuardState(entity);
-                    setCancelAttackSwing(entity, false);
-                }, totalDuration+2);
+                     clearLovePointFrame(entity);
+                     GuardStateHelper.clearGuardState(entity);
+                     setCancelAttackSwing(entity, false);
+                     if (entity instanceof ServerPlayer serverPlayer) {
+                         ModNetworking.sendToAllClients(
+                             AnimationSyncPacket.createStopPacket(serverPlayer.getUUID()));
+                     }
+                 }, totalDuration+2);
             }
         );
     }

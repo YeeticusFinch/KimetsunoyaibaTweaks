@@ -6,7 +6,6 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracke
 import dev.kosmx.playerAnim.core.util.Vector3;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -120,21 +119,7 @@ public class RawSlashRenderPacket {
                 var level = ClientPacketHandler.getClientLevel();
                 if (!(level instanceof ClientLevel clientLevel)) return;
 
-                // Find the entity by UUID
-                Entity entity = clientLevel.getEntity(entityId.hashCode());
-                LivingEntity livingEntity = null;
-
-                if (entity instanceof LivingEntity) {
-                    livingEntity = (LivingEntity) entity;
-                } else {
-                    // Try alternate lookup
-                    for (Entity e : clientLevel.entitiesForRendering()) {
-                        if (e.getUUID().equals(entityId) && e instanceof LivingEntity) {
-                            livingEntity = (LivingEntity) e;
-                            break;
-                        }
-                    }
-                }
+                 LivingEntity livingEntity = ClientPacketHandler.findLivingEntity(clientLevel, entityId);
 
                 if (livingEntity == null) return;
 

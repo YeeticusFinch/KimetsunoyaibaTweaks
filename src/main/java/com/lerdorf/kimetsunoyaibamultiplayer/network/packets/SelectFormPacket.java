@@ -95,6 +95,8 @@ public class SelectFormPacket {
             new BreathesValueSyncPacket(player.getUUID(), selectedFormId), player);
         com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
             new VariationIndexSyncPacket(player.getUUID(), 0), player);
+        com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking.sendToPlayer(
+            new BaseModEnhancedSwingStateSyncPacket(player.getUUID(), true), player);
 
         BaseModSwordFormRegistry.FormDefinition form = BaseModSwordFormRegistry.getForm(stack, selectedFormId);
         if (form != null) {

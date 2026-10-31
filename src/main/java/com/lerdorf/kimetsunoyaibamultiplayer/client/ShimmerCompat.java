@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
@@ -19,6 +20,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /** Registers colored block lights when the optional Shimmer mod is installed. */
@@ -33,13 +35,17 @@ public final class ShimmerCompat {
     private static final String POST_PROCESSING_CLASS = "com.lowdragmc.shimmer.client.postprocessing.PostProcessing";
 
     private static final Map<Integer, Object> ENTITY_LIGHTS = new HashMap<>();
+    private static final Map<Integer, Object> TORNADO_LIGHTS = new HashMap<>();
 
     private static Object lightManager;
     private static Object bloomPost;
     private static Method registerBlockLight;
     private static Method addLight;
+    private static Method addPlayerItemLight;
     private static Method postEntityForce;
+    private static Method copyPoseStack;
     private static Method setPos;
+    private static Method updateLight;
     private static Method isRemoved;
     private static Method remove;
     private static ClientLevel lastLevel;
@@ -97,14 +103,18 @@ public final class ShimmerCompat {
         }
     }
 
-    /** Adds this entity to Shimmer's bloom pass without making Shimmer mandatory. */
-    public static void postEntityBloom(Consumer<MultiBufferSource> renderer) {
+    /** Adds an entity to Shimmer's bloom pass using a detached pose stack. */
+    public static void postEntityBloom(PoseStack poseStack,
+                                       BiConsumer<PoseStack, MultiBufferSource> renderer) {
         if (!isShimmerLoaded() || !initializeApi()) {
             return;
         }
 
         try {
-            postEntityForce.invoke(bloomPost, renderer);
+            PoseStack copiedPoseStack = (PoseStack) copyPoseStack.invoke(null, poseStack);
+            Consumer<MultiBufferSource> bloomRenderer = bufferSource ->
+                renderer.accept(copiedPoseStack, bufferSource);
+            postEntityForce.invoke(bloomPost, bloomRenderer);
         } catch (ReflectiveOperationException exception) {
             reportApiFailure(exception);
         }
@@ -129,10 +139,45 @@ public final class ShimmerCompat {
             } else {
                 Vec3Position position = new Vec3Position(entity.getPosition(partialTick));
                 setPos.invoke(light, position.x, position.y, position.z);
+                updateLight.invoke(light);
             }
         } catch (ReflectiveOperationException exception) {
             reportApiFailure(exception);
         }
+    }
+
+    /** Maintains a pink Shimmer light attached to a Love tornado. */
+    public static void updateTornadoLight(Entity entity, float partialTick, int color, float radius) {
+        if (!isShimmerLoaded() || !initializeApi()) {
+            return;
+        }
+
+        cleanupEntityLights();
+        try {
+            Vec3Position position = new Vec3Position(entity.getPosition(partialTick));
+            Object light = TORNADO_LIGHTS.get(entity.getId());
+            if (light == null || (boolean) isRemoved.invoke(light)) {
+                light = addPlayerItemLight.invoke(lightManager,
+                    new Vector3f(position.x, position.y, position.z), color, radius, entity.getUUID());
+                if (light == null) {
+                    return;
+                }
+                TORNADO_LIGHTS.put(entity.getId(), light);
+            } else {
+                setPos.invoke(light, position.x, position.y, position.z);
+                updateLight.invoke(light);
+            }
+        } catch (ReflectiveOperationException exception) {
+            reportApiFailure(exception);
+        }
+    }
+
+    /** Removes lights whose client-side entities or world no longer exist. */
+    public static void cleanupDynamicLights() {
+        if (!isShimmerLoaded() || !initializeApi()) {
+            return;
+        }
+        cleanupEntityLights();
     }
 
     private static boolean isShimmerLoaded() {
@@ -140,7 +185,8 @@ public final class ShimmerCompat {
     }
 
     private static boolean initializeApi() {
-        if (lightManager != null && bloomPost != null) {
+        if (lightManager != null && bloomPost != null && copyPoseStack != null
+            && addPlayerItemLight != null && updateLight != null) {
             return true;
         }
 
@@ -150,14 +196,19 @@ public final class ShimmerCompat {
             lightManager = lightManagerField.get(null);
             registerBlockLight = lightManagerType.getMethod("registerBlockLight", Block.class, int.class, float.class);
             addLight = lightManagerType.getMethod("addLight", Vector3f.class, int.class, float.class);
+            addPlayerItemLight = lightManagerType.getMethod("addPlayerItemLight",
+                Vector3f.class, int.class, float.class, java.util.UUID.class);
 
             Class<?> postProcessingType = Class.forName(POST_PROCESSING_CLASS);
             Field bloomField = postProcessingType.getField("BLOOM_UNREAL");
             bloomPost = bloomField.get(null);
             postEntityForce = postProcessingType.getMethod("postEntityForce", Consumer.class);
+            Class<?> renderUtilsType = Class.forName("com.lowdragmc.shimmer.client.shader.RenderUtils");
+            copyPoseStack = renderUtilsType.getMethod("copyPoseStack", PoseStack.class);
 
             Class<?> colorPointLightType = Class.forName("com.lowdragmc.shimmer.client.light.ColorPointLight");
             setPos = colorPointLightType.getMethod("setPos", float.class, float.class, float.class);
+            updateLight = colorPointLightType.getMethod("update");
             isRemoved = colorPointLightType.getMethod("isRemoved");
             remove = colorPointLightType.getMethod("remove");
             return true;
@@ -178,7 +229,13 @@ public final class ShimmerCompat {
             return;
         }
 
-        Iterator<Map.Entry<Integer, Object>> iterator = ENTITY_LIGHTS.entrySet().iterator();
+        cleanupLights(ENTITY_LIGHTS);
+        cleanupLights(TORNADO_LIGHTS);
+    }
+
+    private static void cleanupLights(Map<Integer, Object> lights) {
+        Minecraft minecraft = Minecraft.getInstance();
+        Iterator<Map.Entry<Integer, Object>> iterator = lights.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<Integer, Object> entry = iterator.next();
             Entity entity = minecraft.level.getEntity(entry.getKey());
@@ -195,14 +252,19 @@ public final class ShimmerCompat {
     }
 
     private static void removeAllEntityLights() {
-        for (Object light : ENTITY_LIGHTS.values()) {
+        removeLights(ENTITY_LIGHTS);
+        removeLights(TORNADO_LIGHTS);
+    }
+
+    private static void removeLights(Map<Integer, Object> lights) {
+        for (Object light : lights.values()) {
             try {
                 remove.invoke(light);
             } catch (ReflectiveOperationException exception) {
                 reportApiFailure(exception);
             }
         }
-        ENTITY_LIGHTS.clear();
+        lights.clear();
     }
 
     private static void reportApiFailure(Throwable throwable) {

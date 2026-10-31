@@ -1,9 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.mixin;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.Config;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModBloodDemonArtFormRegistry;
-import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry;
-import net.minecraft.client.Minecraft;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.EnhancedFormCycleHandler;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.simple.SimpleChannel;
 import org.spongepowered.asm.mixin.Mixin;
@@ -43,12 +40,6 @@ public abstract class BaseModCycleKeyMappingMixin {
     }
 
     private static boolean kimetsu$shouldSuppressNativeCycle() {
-        if (!Config.isEnhancedFormCycleEnabled() || Minecraft.getInstance().player == null) {
-            return false;
-        }
-
-        var heldItem = Minecraft.getInstance().player.getMainHandItem();
-        return BaseModSwordFormRegistry.isSupported(heldItem)
-            || BaseModBloodDemonArtFormRegistry.isSupported(heldItem);
+        return EnhancedFormCycleHandler.shouldSuppressNativeBaseCycle();
     }
 }

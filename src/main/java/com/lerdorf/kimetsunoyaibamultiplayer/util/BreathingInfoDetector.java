@@ -203,8 +203,7 @@ public class BreathingInfoDetector {
         com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.PlayerData data =
             com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData.getOrCreate(player.getUUID());
         int variationIndex = data.getCurrentVariationIndex();
-        int totalVariations = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
-            .getVariationCount(formId, swordId);
+        int totalVariations = getBaseModVariationCount(formId, form.name(), swordId);
         String styleName = BaseModSwordFormRegistry.getStyleName(heldSword);
         if (styleName.isBlank()) {
             styleName = LocalizationHelper.breathingStyleFromFormId(formId, "").getString();
@@ -220,8 +219,7 @@ public class BreathingInfoDetector {
             ? form.name() : styleName + " " + form.name();
         String displayName = baseDisplayName;
         if (variationIndex > 0) {
-            var variation = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
-                .getVariation(formId, variationIndex, swordId);
+            var variation = getBaseModVariation(formId, form.name(), variationIndex, swordId);
             if (variation != null) {
                 displayName = variation.getName();
             }
@@ -231,6 +229,25 @@ public class BreathingInfoDetector {
         return new BreathingInfo(styleName, displayName, formId % 100, (formId / 100) * 100,
             formId, formColor + displayName, variationIndex, totalVariations,
             displayName.equals(baseDisplayName) ? null : displayName);
+    }
+
+    private static int getBaseModVariationCount(int formId, String formName, String swordId) {
+        int count = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+            .getVariationCount(formId, swordId);
+        return count > 0
+            ? count
+            : com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+                .getVariationCountBySubstring(formName, swordId);
+    }
+
+    private static com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.BreathingFormVariation
+        getBaseModVariation(int formId, String formName, int variationIndex, String swordId) {
+        var variation = com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+            .getVariation(formId, variationIndex, swordId);
+        return variation != null
+            ? variation
+            : com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.VariationRegistry
+                .getVariationBySubstring(formName, variationIndex, swordId);
     }
 
     private static BreathingInfo getBloodDemonArtInfo(ItemStack stack,

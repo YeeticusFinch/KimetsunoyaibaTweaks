@@ -89,6 +89,16 @@ public final class BreathingFormAnnouncementHelper {
             return hinokami;
         }
 
+        if (BaseModSwordFormRegistry.isTanjiroSword(sword)
+            && BaseModSwordFormRegistry.isHinokamiSwitchForm(formId)) {
+            MutableComponent switchName = Component.literal(swordForm.name());
+            ChatFormatting color = parseLegacyColor(BaseModSwordFormRegistry.getColor(sword, formId));
+            if (color != null) {
+                switchName.withStyle(color);
+            }
+            return switchName;
+        }
+
         String swordStyle = BaseModSwordFormRegistry.getStyleName(sword);
         String formName = swordForm.name();
         boolean formIncludesStyle = !swordStyle.isBlank()
