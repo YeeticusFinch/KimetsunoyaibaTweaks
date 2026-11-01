@@ -361,7 +361,7 @@ public class KimetsunoyaibaMultiplayer
                 (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KANROJI.get(),
                 "love_breathing",
                 com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
-                ParticleTypes.HEART,
+                 new DustParticleOptions(new Vector3f(1.0F, 0.2F, 0.7F), 0.5F),
                 SoundEvents.AMETHYST_BLOCK_CHIME,
                 null,
                 true,
@@ -423,7 +423,7 @@ public class KimetsunoyaibaMultiplayer
                     "Love Breathing",
                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms.createLoveBreathing(),
                     21000,
-                    ParticleTypes.HEART,
+                     new DustParticleOptions(new Vector3f(1.0F, 0.2F, 0.7F), 0.5F),
                     null
                 );
             }

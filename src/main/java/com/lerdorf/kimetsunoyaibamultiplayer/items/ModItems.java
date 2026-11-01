@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -24,6 +25,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import org.joml.Vector3f;
 
 // All item classes are in the same package, no imports needed
 
@@ -1063,7 +1065,7 @@ public class ModItems {
             (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_KANROJI.get(),
             "love_breathing", // Love breathing style
             com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
-            net.minecraft.core.particles.ParticleTypes.HEART, // Pink heart particles for love breathing
+             new DustParticleOptions(new Vector3f(1.0F, 0.2F, 0.7F), 0.5F),
             null, // No custom sound
             kanrojiAnimReplacements,
             true, // Show in creative tab
@@ -1139,7 +1141,7 @@ public class ModItems {
             (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) NICHIRINSWORD_LOVE.get(),
             "love_breathing",
             com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
-            net.minecraft.core.particles.ParticleTypes.HEART,
+             new DustParticleOptions(new Vector3f(1.0F, 0.2F, 0.7F), 0.5F),
             null, null, true, 0
         );
 

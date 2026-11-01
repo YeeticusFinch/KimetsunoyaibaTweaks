@@ -80,7 +80,7 @@ public class EnhancedBreathingConfig {
                     "Enhanced features:",
                     "  - Flexible whip-like sword rendering",
                     "  - 6 Love Breathing forms",
-                    "  - Dual-layer emissive rendering with heart particle trails",
+                     "  - Dual-layer emissive rendering with pink and green pixie dust trails",
                     "  - Physics-based whip motion with keyframe animations",
                     "",
                     "Default: true")

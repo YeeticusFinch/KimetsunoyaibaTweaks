@@ -58,6 +58,10 @@ public class SwordParticleMapping {
             ResourceLocation.fromNamespaceAndPath("minecraft", "end_rod")));
     private static final ParticleOptions MIST_COLORED_DUST_PARTICLE = new DustParticleOptions(
         new Vector3f(138.0F / 255.0F, 195.0F / 255.0F, 194.0F / 255.0F), 0.5F);
+    private static final ParticleOptions LOVE_PINK_DUST_PARTICLE = new DustParticleOptions(
+        new Vector3f(1.0F, 0.2F, 0.7F), 0.5F);
+    private static final ParticleOptions LOVE_GREEN_DUST_PARTICLE = new DustParticleOptions(
+        new Vector3f(0.6F, 1.0F, 0.4F), 0.35F);
     private static final ParticleOptions MOON_ENERGY_PARTICLE = new EnergyParticleOptions(255, 169, 250, 1.0F);
     private static final ParticleOptions DEMONIZED_SERPENT_PARTICLE =
         new DustParticleOptions(new Vector3f(0.0F, 0.0F, 0.0F), 1.0F);
@@ -178,6 +182,11 @@ public class SwordParticleMapping {
             return null;
         }
 
+        if ("love_breathing".equals(styleId)) {
+            return ThreadLocalRandom.current().nextBoolean()
+                ? LOVE_PINK_DUST_PARTICLE : LOVE_GREEN_DUST_PARTICLE;
+        }
+
         if ("mist_breathing".equals(styleId)) {
             primary = (ParticleOptions) ModParticles.SMALL_MIST_PARTICLE.get();
             if (ThreadLocalRandom.current().nextInt(3) < 2) {
@@ -238,6 +247,10 @@ public class SwordParticleMapping {
                 Log.debug("Using registered particle for sword: " + itemIdString);
                 return effectiveParticle;
             }
+        }
+
+        if ("love_breathing".equals(getBreathingStyleId(swordItem))) {
+            return LOVE_PINK_DUST_PARTICLE;
         }
 
         // Second, check config-based particle mappings
@@ -325,6 +338,7 @@ public class SwordParticleMapping {
         if (path.contains("thunder") || path.contains("zenitsu") || path.contains("kaigaku")) return "thunder_breathing";
         if (path.contains("water") || path.contains("tomioka") || path.contains("tanjiro")) return "water_breathing";
         if (path.contains("flower") || path.contains("kanae") || path.contains("kanawo")) return "flower_breathing";
+        if (path.contains("love") || path.contains("kanroji")) return "love_breathing";
         if (path.contains("moon") || path.contains("kokushibo")) return "moon_breathing";
         return null;
     }

@@ -13,6 +13,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveSwordSlashesSpawner;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.LoveTornadoSpawner;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DamageTracker;
+import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.LoveLineSyncPacket;
@@ -38,7 +39,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -81,17 +81,6 @@ public class EnhancedLoveForms {
             SoundSource.PLAYERS, LOVE_FORM_SOUND_VOLUME, pitch);
     }
 
-    private static void playLovePlayerStepSound(LivingEntity entity) {
-        BlockPos blockPos = entity.getOnPos();
-        var blockState = entity.level().getBlockState(blockPos);
-        if (blockState.liquid()) {
-            return;
-        }
-
-        SoundType soundType = blockState.getSoundType();
-        entity.playSound(soundType.getStepSound(), soundType.getVolume() * 0.15F, soundType.getPitch());
-    }
-
     static ParticleOptions createLoveParticleOptions(Vector3f color, float size) {
         return "dust".equals(EnhancedBreathingConfig.loveParticleMode)
                 ? new DustParticleOptions(color, size)
@@ -103,6 +92,16 @@ public class EnhancedLoveForms {
                                      float[][][] particlePoints, int frame,
                                      Vec3 forward, Vec3 right, Vec3 up,
                                      boolean isDemon, float pinkSize, float whiteSize) {
+        renderLovePointFrame(serverLevel, entity, entity.position(), particlePoints, frame,
+            forward, right, up, isDemon, pinkSize, whiteSize, false);
+    }
+
+    /** Renders a frame authored in a gravity-relative coordinate system when requested. */
+    static void renderLovePointFrame(ServerLevel serverLevel, LivingEntity entity, Vec3 frameOrigin,
+                                     float[][][] particlePoints, int frame,
+                                     Vec3 forward, Vec3 right, Vec3 up,
+                                     boolean isDemon, float pinkSize, float whiteSize,
+                                     boolean gravityRelative) {
         if (serverLevel == null) {
             return;
         }
@@ -121,8 +120,9 @@ public class EnhancedLoveForms {
                 float x = framePoints[i][0];
                 float y = framePoints[i][1];
                 float z = framePoints[i][2];
-                worldPoints[i] = entity.position()
+                Vec3 localPoint = frameOrigin
                     .add(forward.scale(z).add(right.scale(x)).add(up.scale(y)));
+                worldPoints[i] = gravityRelative ? CombatGravityFrame.world(localPoint) : localPoint;
             }
             ModNetworking.sendToTrackingAndSelf(
                 new LoveLineSyncPacket(entity.getUUID(), entity.getId(), true, worldPoints), entity);
@@ -140,8 +140,9 @@ public class EnhancedLoveForms {
             float x = particlePoints[frame][i][0];
             float y = particlePoints[frame][i][1];
             float z = particlePoints[frame][i][2];
-            Vec3 pos = entity.position()
+            Vec3 localPoint = frameOrigin
                 .add(forward.scale(z).add(right.scale(x)).add(up.scale(y)));
+            Vec3 pos = gravityRelative ? CombatGravityFrame.world(localPoint) : localPoint;
 
             serverLevel.sendParticles(
                 createLoveParticleOptions(
@@ -167,8 +168,8 @@ public class EnhancedLoveForms {
     }
 
     /** Renders the three wide, swirling rings used by Fifth Form's impact. */
-    private static void renderLoveRingFrame(ServerLevel serverLevel, LivingEntity entity, Vec3 center,
-                                            Vec3 forward, Vec3 right, Vec3 up, int tick, boolean isDemon) {
+    static void renderLoveRingFrame(ServerLevel serverLevel, LivingEntity entity, Vec3 center,
+                                    Vec3 forward, Vec3 right, Vec3 up, int tick, boolean isDemon) {
         if (serverLevel == null) {
             return;
         }
@@ -180,7 +181,8 @@ public class EnhancedLoveForms {
 
         for (int ring = 0; ring < LOVE_RING_COUNT; ring++) {
             double ringSpin = spin * (ring % 2 == 0 ? 1.0D : -1.0D) + ring * (Math.PI * 2.0D / 3.0D);
-            double radius = 4.0D + ring * 1.25D;
+            double expansion = Math.max(0.0D, Math.min(1.0D, (tick - 45.0D) / 30.0D));
+            double radius = 0.75D + expansion * (13.5D + ring * 0.75D);
             Vec3 ringCenter = center.add(forward.scale((ring - 1) * 1.15D
                 + Math.sin(spin + ring) * 0.35D));
             Vec3[] points = new Vec3[LOVE_RING_POINTS + 1];
@@ -221,7 +223,7 @@ public class EnhancedLoveForms {
     }
 
     /** Spawns the tiny pink/green dust motes used to decorate Love line effects. */
-    private static void spawnLoveFairyDust(ServerLevel serverLevel, Vec3 center) {
+    static void spawnLoveFairyDust(ServerLevel serverLevel, Vec3 center) {
         spawnLoveFairyDust(serverLevel, center, new Vector3f(1.0f, 0.2f, 0.7f));
         spawnLoveFairyDust(serverLevel, center, new Vector3f(0.6f, 1.0f, 0.4f));
     }
@@ -607,7 +609,8 @@ public class EnhancedLoveForms {
                   				    ModSounds.LOVE_LAUNCH.get(), SoundSource.PLAYERS, 1.0f, 1.0f);
                         }
                         if (currentTick[0] % 2 == 0) {
-                            playLovePlayerStepSound(entity);
+                            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
+                                SoundEvents.GRASS_STEP, SoundSource.PLAYERS, 1.0F, 1.4F);
                         }
                    		if (currentTick[0] < 31 && serverLevel != null) {
                   			serverLevel.sendParticles(

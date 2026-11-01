@@ -4,17 +4,24 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.WhipPhysics;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedBreathingConfig;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
 import java.util.List;
 
 /**
  * Particle trail renderer for Mitsuri's whip sword.
  *
- * Spawns heart particles along the whip curve for a glowing trail effect.
+ * Spawns pink and green pixie dust along the whip curve for a glowing trail effect.
  */
 public class WhipParticleRenderer {
+
+    private static final DustParticleOptions PINK_DUST =
+        new DustParticleOptions(new Vector3f(1.0F, 0.2F, 0.7F), 0.35F);
+    private static final DustParticleOptions GREEN_DUST =
+        new DustParticleOptions(new Vector3f(0.6F, 1.0F, 0.4F), 0.25F);
 
     private static int tickCounter = 0;
 
@@ -68,9 +75,9 @@ public class WhipParticleRenderer {
                         0, 0.01, 0);
                 }
             } else {
-                // Front half: More particles, hearts
+                // Front half: More particles, alternating pink and green pixie dust.
                 if (level.random.nextFloat() < 0.6f) {
-                    level.addParticle(ParticleTypes.HEART,
+                    level.addParticle(level.random.nextBoolean() ? PINK_DUST : GREEN_DUST,
                         pos.x + offsetX, pos.y + offsetY, pos.z + offsetZ,
                         0, 0.02, 0);
                 }

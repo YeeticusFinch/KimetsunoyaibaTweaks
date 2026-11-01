@@ -33,8 +33,9 @@ public final class LoveLineRenderer {
     private static final RenderType LINE_RENDER_TYPE = CustomRenderTypes.geoEntityTranslucentEmissive(BLANK_TEXTURE);
 
     private static final int BEZIER_SUBDIVISIONS = 6;
-    private static final float GLOW_HALF_WIDTH = 0.18F;
-    private static final float CORE_HALF_WIDTH = 0.075F;
+    private static final float GLOW_HALF_WIDTH = 0.42F;
+    private static final float CORE_HALF_WIDTH = 0.16F;
+    private static final double TAPER_LENGTH = 0.12D;
     private static final float PINK_R = 1.0F;
     private static final float PINK_G = 0.25F;
     private static final float PINK_B = 0.68F;
@@ -102,6 +103,8 @@ public final class LoveLineRenderer {
 
     private static void renderPath(Vec3[] points, Vec3 cameraPosition, Matrix4f matrix,
                                    Matrix3f normal, VertexConsumer buffer) {
+        boolean closed = points.length > 2
+            && points[0].distanceToSqr(points[points.length - 1]) < 0.01D;
         for (int segment = 0; segment < points.length - 1; segment++) {
             Vec3 p0 = points[Math.max(0, segment - 1)];
             Vec3 p1 = points[segment];
@@ -117,11 +120,15 @@ public final class LoveLineRenderer {
                 Vec3 end = cubicBezier(p1, control1, control2, p2, endT);
                 double startProgress = (segment + startT) / (points.length - 1);
                 double endProgress = (segment + endT) / (points.length - 1);
+                float startTaper = closed ? 1.0F : taperScale(startProgress);
+                float endTaper = closed ? 1.0F : taperScale(endProgress);
 
                 drawRibbonSegment(start, end, startProgress, endProgress, cameraPosition,
-                    matrix, normal, buffer, GLOW_HALF_WIDTH, 0.30F);
+                    matrix, normal, buffer, GLOW_HALF_WIDTH * startTaper,
+                    GLOW_HALF_WIDTH * endTaper, 0.30F * startTaper, 0.30F * endTaper);
                 drawRibbonSegment(start, end, startProgress, endProgress, cameraPosition,
-                    matrix, normal, buffer, CORE_HALF_WIDTH, 0.98F);
+                    matrix, normal, buffer, CORE_HALF_WIDTH * startTaper,
+                    CORE_HALF_WIDTH * endTaper, 0.98F * startTaper, 0.98F * endTaper);
             }
         }
     }
@@ -129,7 +136,8 @@ public final class LoveLineRenderer {
     private static void drawRibbonSegment(Vec3 start, Vec3 end, double startProgress,
                                           double endProgress, Vec3 cameraPosition,
                                           Matrix4f matrix, Matrix3f normal, VertexConsumer buffer,
-                                          float halfWidth, float opacity) {
+                                          float startHalfWidth, float endHalfWidth,
+                                          float startOpacity, float endOpacity) {
         Vec3 tangent = end.subtract(start);
         if (tangent.lengthSqr() < 1.0E-8D) {
             return;
@@ -144,17 +152,22 @@ public final class LoveLineRenderer {
         }
         side = side.normalize();
 
-        Vec3 leftStart = start.add(side.scale(halfWidth)).subtract(cameraPosition);
-        Vec3 rightStart = start.subtract(side.scale(halfWidth)).subtract(cameraPosition);
-        Vec3 leftEnd = end.add(side.scale(halfWidth)).subtract(cameraPosition);
-        Vec3 rightEnd = end.subtract(side.scale(halfWidth)).subtract(cameraPosition);
+        Vec3 leftStart = start.add(side.scale(startHalfWidth)).subtract(cameraPosition);
+        Vec3 rightStart = start.subtract(side.scale(startHalfWidth)).subtract(cameraPosition);
+        Vec3 leftEnd = end.add(side.scale(endHalfWidth)).subtract(cameraPosition);
+        Vec3 rightEnd = end.subtract(side.scale(endHalfWidth)).subtract(cameraPosition);
 
         float[] startColor = gradientColor(startProgress);
         float[] endColor = gradientColor(endProgress);
-        vertex(buffer, matrix, normal, leftStart, 0.0F, 0.0F, startColor, opacity);
-        vertex(buffer, matrix, normal, leftEnd, 0.0F, 1.0F, endColor, opacity);
-        vertex(buffer, matrix, normal, rightEnd, 1.0F, 1.0F, endColor, opacity);
-        vertex(buffer, matrix, normal, rightStart, 1.0F, 0.0F, startColor, opacity);
+        vertex(buffer, matrix, normal, leftStart, 0.0F, 0.0F, startColor, startOpacity);
+        vertex(buffer, matrix, normal, leftEnd, 0.0F, 1.0F, endColor, endOpacity);
+        vertex(buffer, matrix, normal, rightEnd, 1.0F, 1.0F, endColor, endOpacity);
+        vertex(buffer, matrix, normal, rightStart, 1.0F, 0.0F, startColor, startOpacity);
+    }
+
+    private static float taperScale(double progress) {
+        double distanceFromEdge = Math.min(progress, 1.0D - progress);
+        return (float) Math.min(1.0D, distanceFromEdge / TAPER_LENGTH);
     }
 
     private static float[] gradientColor(double progress) {
