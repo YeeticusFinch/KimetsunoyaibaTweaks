@@ -404,7 +404,7 @@ public class LoveVariations {
                 		}
 						if ((currentTick[0] - firstFormStart) % 2 == 0) {
                   			level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-					    SoundEvents.GRASS_STEP, SoundSource.PLAYERS, 1.0f, 1.4f);
+                                            SoundEvents.HORSE_STEP, SoundSource.PLAYERS, 1.0f, 2.0f);
                 		}
                 		// Make the player zoom forward
                 		Vec3 forward = vectors[0].scale(1.4); // Speed boost

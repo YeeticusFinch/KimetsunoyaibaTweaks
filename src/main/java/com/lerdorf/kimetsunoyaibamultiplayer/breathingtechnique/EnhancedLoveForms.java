@@ -610,7 +610,7 @@ public class EnhancedLoveForms {
                         }
                         if (currentTick[0] % 2 == 0) {
                             level.playSound(null, entity.getX(), entity.getY(), entity.getZ(),
-                                SoundEvents.GRASS_STEP, SoundSource.PLAYERS, 1.0F, 1.4F);
+                                SoundEvents.HORSE_STEP, SoundSource.PLAYERS, 1.0F, 1.4F);
                         }
                    		if (currentTick[0] < 31 && serverLevel != null) {
                   			serverLevel.sendParticles(
