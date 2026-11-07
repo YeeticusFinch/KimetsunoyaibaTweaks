@@ -15,6 +15,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelpe
 import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModEnhancedSwingState;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedSwingStateSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedAbilityStateSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModEnhancedAbilityState;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -81,6 +84,18 @@ public class BaseModVariationHandler {
 
         // Only execute on server side
         if (player.level().isClientSide()) {
+            if (Config.isEnhancedFormCycleEnabled() && BaseModEnhancedAbilityState.isActive(player)) {
+                event.setCanceled(true);
+                event.setCancellationResult(InteractionResult.FAIL);
+            }
+            return;
+        }
+
+        if (Config.isEnhancedFormCycleEnabled() && BaseModEnhancedAbilityState.isActive(player)) {
+            // Keep the base procedure that is already running from being started
+            // again through a newly held sword.
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.FAIL);
             return;
         }
 
@@ -117,6 +132,14 @@ public class BaseModVariationHandler {
 
         if (variationIndex == 0) {
             if (Config.isEnhancedFormCycleEnabled()) {
+                if (BaseModSwordFormRegistry.isSupported(heldItem) && selectedBreathes > 0) {
+                    BaseModEnhancedAbilityState.start(player, (int) selectedBreathes, heldItem);
+                    if (player instanceof ServerPlayer serverPlayer) {
+                        ModNetworking.sendToPlayer(
+                            new BaseModEnhancedAbilityStateSyncPacket(
+                                player.getUUID(), true, (int) selectedBreathes), serverPlayer);
+                    }
+                }
                 // Selection feedback is local; announce only when the form is actually used.
                 int formId = (int) selectedBreathes;
                 if (player instanceof ServerPlayer serverPlayer && formId > 0) {

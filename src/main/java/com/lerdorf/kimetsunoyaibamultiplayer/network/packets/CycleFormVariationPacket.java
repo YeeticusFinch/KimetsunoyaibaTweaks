@@ -11,6 +11,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModEnhancedAbilityState;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
@@ -63,6 +64,11 @@ public class CycleFormVariationPacket {
 
             ItemStack heldItem = player.getMainHandItem();
             Log.debug("[CycleFormVariationPacket] Player holding: {}", heldItem.getItem());
+
+            if (Config.isEnhancedFormCycleEnabled()
+                && BaseModEnhancedAbilityState.isActive(player)) {
+                return;
+            }
 
             // Custom breathing swords
             if (heldItem.getItem() instanceof BreathingSwordItem breathingSword) {

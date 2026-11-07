@@ -7,13 +7,22 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.PlayerBreathingData;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedSwingStateSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedAbilityStateSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathesValueSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwordWielderSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModEnhancedAbilityState;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModEnhancedSwingState;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -66,6 +75,23 @@ public class SwordSwitchHandler {
 
         String oldSwordType = getSwordType(oldStack);
         String newSwordType = getSwordType(newStack);
+
+        if (Config.isEnhancedFormCycleEnabled()
+            && BaseModEnhancedAbilityState.isActive(player)) {
+            BaseModEnhancedAbilityState.queueSwordSwitch(player, newStack);
+            return;
+        }
+
+        // Base-mod ability state lives on the player, so switching between two
+        // base swords can otherwise carry the previous sword's skill/counters over.
+        if (Config.isEnhancedFormCycleEnabled()
+            && SWORD_TYPE_BASE.equals(oldSwordType)
+            && SWORD_TYPE_BASE.equals(newSwordType)
+            && !ItemStack.isSameItem(oldStack, newStack)) {
+            resetEnhancedBaseModState(player, newStack);
+            player.getPersistentData().putString(NBT_LAST_SWORD_TYPE, newSwordType);
+            return;
+        }
 
         // Only handle cases where sword type changes
         if (oldSwordType.equals(newSwordType)) {
@@ -171,6 +197,95 @@ public class SwordSwitchHandler {
 
         // Update last sword type tracker
         player.getPersistentData().putString(NBT_LAST_SWORD_TYPE, newSwordType);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide) {
+            return;
+        }
+        if (!Config.isEnhancedFormCycleEnabled()) {
+            if (BaseModEnhancedAbilityState.isActive(event.player)) {
+                BaseModEnhancedAbilityState.clear(event.player);
+            }
+            return;
+        }
+        if (!BaseModEnhancedAbilityState.isActive(event.player)) {
+            return;
+        }
+
+        if (!BaseModEnhancedAbilityState.isFinishedOrRestore(event.player)) {
+            return;
+        }
+
+        finishEnhancedBaseModAbility(event.player);
+    }
+
+    private static void finishEnhancedBaseModAbility(Player player) {
+        int pendingForm = BaseModEnhancedAbilityState.getPendingForm(player);
+        String pendingItem = BaseModEnhancedAbilityState.getPendingItem(player);
+        ItemStack heldItem = player.getMainHandItem();
+        boolean applyPendingForm = pendingForm > 0
+            && pendingItem.equals(BaseModEnhancedAbilityState.getItemId(heldItem))
+            && BaseModSwordFormRegistry.isSupported(heldItem);
+
+        BaseModEnhancedAbilityState.clear(player);
+
+        PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
+        data.setCurrentVariationIndex(0);
+        data.setBaseModFormName("");
+        if (applyPendingForm) {
+            // Apply the queued item select/switch tags and breathes value together
+            // only after the active base-mod ability has released the lock.
+            BaseModFormExecutionHelper.selectBaseModForm(player, pendingForm);
+            player.getInventory().setChanged();
+            data.setBaseModBreathesValue(player.getPersistentData().getDouble("breathes"));
+        }
+        PlayerBreathingData.saveToNBT(player);
+
+        if (player instanceof ServerPlayer serverPlayer) {
+            if (applyPendingForm) {
+                ModNetworking.sendToPlayer(
+                    new BreathesValueSyncPacket(player.getUUID(), pendingForm), serverPlayer);
+                BaseModEnhancedSwingState.setActive(player, true);
+                ModNetworking.sendToPlayer(
+                    new BaseModEnhancedSwingStateSyncPacket(player.getUUID(), true), serverPlayer);
+            } else {
+                BaseModEnhancedSwingState.setActive(player, false);
+                ModNetworking.sendToPlayer(
+                    new BaseModEnhancedSwingStateSyncPacket(player.getUUID(), false), serverPlayer);
+            }
+            ModNetworking.sendToPlayer(
+                new VariationIndexSyncPacket(player.getUUID(), 0), serverPlayer);
+            ModNetworking.sendToPlayer(
+                new BaseModEnhancedAbilityStateSyncPacket(player.getUUID(), false, 0), serverPlayer);
+        }
+    }
+
+    private static void resetEnhancedBaseModState(Player player, ItemStack newStack) {
+        BaseModEnhancedSwingState.resetTransientState(player);
+
+        PlayerBreathingData.PlayerData data = PlayerBreathingData.getOrCreate(player);
+        data.setCurrentVariationIndex(0);
+        data.setBaseModFormName("");
+
+        int selectedFormId = BaseModSwordFormRegistry.getSelectedFormId(newStack);
+        if (selectedFormId > 0) {
+            player.getPersistentData().putDouble("breathes", selectedFormId);
+            data.setBaseModBreathesValue(selectedFormId);
+        }
+        PlayerBreathingData.saveToNBT(player);
+
+        if (player instanceof ServerPlayer serverPlayer) {
+            if (selectedFormId > 0) {
+                ModNetworking.sendToPlayer(
+                    new BreathesValueSyncPacket(player.getUUID(), selectedFormId), serverPlayer);
+            }
+            ModNetworking.sendToPlayer(
+                new VariationIndexSyncPacket(player.getUUID(), 0), serverPlayer);
+            ModNetworking.sendToPlayer(
+                new BaseModEnhancedSwingStateSyncPacket(player.getUUID(), false, true), serverPlayer);
+        }
     }
 
     /**

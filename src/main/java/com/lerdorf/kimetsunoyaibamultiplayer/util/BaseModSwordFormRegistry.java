@@ -24,11 +24,11 @@ public final class BaseModSwordFormRegistry {
         "Clear Blue Sky",
         "Raging Sun",
         "Burning Bones, Summer Sun",
+        "Sunflower Thrust",
+        "Dragon Sun Halo Head Dance",
         "Setting Sun Transformation",
         "Solar Heat Haze",
         "Beneficent Radiance",
-        "Sunflower Thrust",
-        "Sun Halo Dragon Head Dance",
         "Fire Wheel",
         "Fake Rainbow",
         "Flame Dance"
@@ -50,6 +50,8 @@ public final class BaseModSwordFormRegistry {
 
     static {
         register("nichirinsword_thunder", new int[]{101, 102, 103, 104, 105, 106});
+        // Kaigaku cannot use Thunder Breathing's 1st Form.
+        register("nichirinsword_kaigaku", new int[]{102, 103, 104, 105, 106});
         register("nichirinsword_zenitsu", new int[]{111, 112, 113, 101, 107});
         register("nichirinsword_flame", new int[]{301, 302, 303, 304, 305});
         register("nichirinsword_rengoku", new int[]{301, 302, 303, 304, 305, 309});
@@ -60,7 +62,9 @@ public final class BaseModSwordFormRegistry {
         register("nichirinsword_tomioka", new int[]{601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611});
         register("nichirinsword_inosuke", new int[]{701, 702, 703, 704, 705, 706, 707, 708, 709, 710});
         register("nichirinsword_iguro", new int[]{801, 802, 803, 804, 805});
-        register("nichirinsword_kocho", new int[]{901, 902, 904, 905});
+        // Kocho's base item uses contiguous runtime slots 901-904; the
+        // semantic Insect IDs remain sparse and are applied by the alias map.
+        register("nichirinsword_kocho", new int[]{901, 902, 903, 904});
         register("nichirinsword_senior", new int[]{1001, 1002, 1003, 1004, 1005, 1006, 1007});
         register("nichirinsword_senior_2", new int[]{1001, 1002, 1003, 1004, 1005, 1006, 1007});
         register("nichirinswordmoon", new int[]{1101, 1102, 1103, 1105, 1106});
@@ -149,22 +153,24 @@ public final class BaseModSwordFormRegistry {
         addRange(1801, 1806, "Sakura Breathing", "§d");
 
         add(TANJIRO_HINOKAMI_SWITCH_FORM, "Hinokami Kagura", "§c");
-        add(201, "Clear Blue Sky", "§c");
-        add(202, "Raging Sun", "§c");
-        add(203, "Burning Bones, Summer Sun", "§c");
-        add(204, "Sunflower Thrust", "§c");
-        add(205, "Dragon Sun Halo Dance", "§c");
-        add(206, "Setting Sun Transformation", "§c");
-        add(207, "Solar Heat Haze", "§c");
-        add(208, "Beneficent Radiance", "§c");
-        add(209, "Fire Wheel", "§c");
-        add(210, "Fake Rainbow", "§c");
-        add(211, "Flame Dance", "§c");
+        add(201, "Dance", "§c");
+        add(202, "Clear Blue Sky", "§c");
+        add(203, "Raging Sun", "§c");
+        add(204, "Burning Bones, Summer Sun", "§c");
+        add(205, "Sunflower Thrust", "§c");
+        add(206, "Dragon Sun Halo Head Dance", "§c");
+        add(207, "Setting Sun Transformation", "§c");
+        add(208, "Solar Heat Haze", "§c");
+        add(209, "Beneficent Radiance", "§c");
+        add(210, "Fire Wheel", "§c");
+        add(211, "Fake Rainbow", "§c");
+        add(212, "Flame Dance", "§c");
 
         // Base-mod swords use runtime IDs that overlap the legacy semantic IDs.
         // Resolve those IDs by item so Water 601 is not mistaken for Stone 601,
         // Thunder 101 is not mistaken for Water 101, and so on.
         aliasByPosition("nichirinsword_thunder", new int[]{301, 302, 303, 304, 305, 306});
+        aliasByPosition("nichirinsword_kaigaku", new int[]{302, 303, 304, 305, 306});
         aliasByPosition("nichirinsword_flame", new int[]{401, 402, 403, 404, 405});
         aliasByPosition("nichirinsword_rengoku", new int[]{401, 402, 403, 404, 405, 409});
         aliasByPosition("nichirinsword_mist", new int[]{701, 702, 703, 704, 705, 707});
@@ -269,6 +275,22 @@ public final class BaseModSwordFormRegistry {
         return -1;
     }
 
+    /** Resolves the form currently selected on a base-mod sword stack. */
+    public static int getSelectedFormId(ItemStack stack) {
+        int[] formIds = getFormIds(stack);
+        if (formIds.length == 0) {
+            return 0;
+        }
+
+        int select = stack.hasTag() ? (int) stack.getTag().getDouble("select") : 0;
+        for (int formId : formIds) {
+            if (getSelectIndex(stack, formId) == select) {
+                return getEffectiveSelectedFormId(stack, formId);
+            }
+        }
+        return getEffectiveSelectedFormId(stack, formIds[0]);
+    }
+
     public static FormDefinition getForm(int formId) {
         return FORMS.get(formId);
     }
@@ -307,12 +329,18 @@ public final class BaseModSwordFormRegistry {
             return 0;
         }
         Map<Integer, FormDefinition> definitions = ITEM_DEFINITIONS.get(getItemPath(stack));
-        if (definitions == null) {
-            return 0;
-        }
         String normalizedText = displayText.replaceAll("§.", "").trim();
-        for (FormDefinition definition : definitions.values()) {
-            if (normalizedText.equals(definition.name()) || normalizedText.endsWith(definition.name())) {
+        if (definitions != null) {
+            for (FormDefinition definition : definitions.values()) {
+                if (normalizedText.equals(definition.name()) || normalizedText.endsWith(definition.name())) {
+                    return definition.id();
+                }
+            }
+        }
+        for (int formId : getFormIds(stack)) {
+            FormDefinition definition = getForm(stack, formId);
+            if (definition != null
+                && (normalizedText.equals(definition.name()) || normalizedText.endsWith(definition.name()))) {
                 return definition.id();
             }
         }
@@ -353,7 +381,7 @@ public final class BaseModSwordFormRegistry {
 
     public static String getStyleName(ItemStack stack) {
         return switch (getItemPath(stack)) {
-            case "nichirinsword_thunder", "nichirinsword_zenitsu" -> "Thunder Breathing";
+            case "nichirinsword_thunder", "nichirinsword_kaigaku", "nichirinsword_zenitsu" -> "Thunder Breathing";
             case "nichirinsword_inosuke" -> "Beast Breathing";
             case "nichirinsword_water", "nichirinsword_tomioka", "nichirinsword_tanjiro", "nichirinsword_tanjiro_2" -> "Water Breathing";
             case "nichirinsword_flame", "nichirinsword_rengoku" -> "Flame Breathing";

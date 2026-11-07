@@ -11,7 +11,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModFormExecutionHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModBloodDemonArtFormRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModEnhancedAbilityState;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingFormAnnouncementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -43,6 +45,20 @@ public class SelectFormPacket {
             }
 
             ItemStack stack = player.getMainHandItem();
+            boolean abilityActive = Config.isEnhancedFormCycleEnabled()
+                && BaseModEnhancedAbilityState.isActive(player);
+            if (abilityActive && TrainingSwordHelper.isTrainingSword(stack)) {
+                return;
+            }
+            if (TrainingSwordHelper.isTrainingSword(stack)) {
+                // Enhanced selection must not bypass the training-sword restriction,
+                // even if a client sends a forged selection packet.
+                TrainingSwordHelper.resetToFirstForm(stack, player);
+                return;
+            }
+            if (abilityActive && !BaseModSwordFormRegistry.isSupported(stack)) {
+                return;
+            }
             if (stack.getItem() instanceof BreathingSwordItem sword) {
                 sword.selectForm(player, selection);
                 return;
@@ -77,8 +93,15 @@ public class SelectFormPacket {
     }
 
     private static void selectBaseModForm(ServerPlayer player, ItemStack stack, int formId) {
+        boolean abilityActive = Config.isEnhancedFormCycleEnabled()
+            && BaseModEnhancedAbilityState.isActive(player);
         if (!BaseModSwordFormRegistry.isSupported(stack)
             || !BaseModFormExecutionHelper.selectBaseModForm(player, formId)) {
+            return;
+        }
+        if (abilityActive) {
+            // The helper queued the request; keep the active form and client HUD
+            // unchanged until the base-mod ability finishes.
             return;
         }
 

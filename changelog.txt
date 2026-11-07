@@ -1,3 +1,17 @@
+1.6.5705
+- Fixed the glitch where you can use multiple forms at the same time with enhanced form cycler
+- Fixed the crash in Asakusa quest when Tamayo dies
+
+1.6.5704
+- Fixed glitches with enhanced form cycler (hopefully it's all fixed now)
+- Implemented enhanced form cycler for kaigaku's sword
+- Fixed the order of Hinokami Kagura
+
+1.6.5703
+- Improvements to enhanced love breathing
+- Bugfixes with the enhanced form cycler
+- Bugfixes with form cycling on base mod items
+
 1.6.5702
 - Added new Spider Demon Father
 - Bugfixes with the enhanced form cycler

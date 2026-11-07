@@ -262,6 +262,13 @@ public class ModNetworking {
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedSwingStateSyncPacket::handle)
                 .add();
 
+        int baseModEnhancedAbilityStateSyncPacketId = id();
+        net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedAbilityStateSyncPacket.class, baseModEnhancedAbilityStateSyncPacketId)
+                .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedAbilityStateSyncPacket::new)
+                .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedAbilityStateSyncPacket::encode)
+                .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BaseModEnhancedAbilityStateSyncPacket::handle)
+                .add();
+
         // Register variation index sync packet (server -> client)
         int variationIndexSyncPacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.VariationIndexSyncPacket.class, variationIndexSyncPacketId)

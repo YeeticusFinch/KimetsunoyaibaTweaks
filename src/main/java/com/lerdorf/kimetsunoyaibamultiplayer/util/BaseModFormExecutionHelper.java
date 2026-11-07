@@ -99,24 +99,38 @@ public final class BaseModFormExecutionHelper {
             return false;
         }
 
-        var tag = heldItem.getOrCreateTag();
+        boolean setSwitch = false;
+        boolean switchValue = false;
+        double selectValue = selectIndex;
+        int selectedFormId = formId;
         if (BaseModSwordFormRegistry.isTanjiroSword(heldItem)) {
             if (BaseModSwordFormRegistry.isHinokamiSwitchForm(formId)) {
-                boolean enableHinokami = !tag.getBoolean("switch");
-                tag.putBoolean("switch", enableHinokami);
-                tag.putDouble("select", 0.0D);
-                formId = enableHinokami ? 201 : 601;
+                switchValue = !heldItem.getOrCreateTag().getBoolean("switch");
+                setSwitch = true;
+                selectValue = 0.0D;
+                selectedFormId = switchValue ? 201 : 601;
             } else {
-                tag.putBoolean("switch", BaseModSwordFormRegistry.isHinokamiForm(formId));
-                tag.putDouble("select", selectIndex);
+                switchValue = BaseModSwordFormRegistry.isHinokamiForm(formId);
+                setSwitch = true;
             }
-        } else {
-            tag.putDouble("select", selectIndex);
         }
+
+        if (Config.isEnhancedFormCycleEnabled()
+            && BaseModEnhancedAbilityState.isActive(entity)) {
+            BaseModEnhancedAbilityState.queueSelection(entity, heldItem, selectedFormId);
+            return true;
+        }
+
+        var tag = heldItem.getOrCreateTag();
+        if (setSwitch) {
+            tag.putBoolean("switch", switchValue);
+        }
+        tag.putDouble("select", selectValue);
+
         // The enhanced HUD already selected the form directly; do not let the
         // base sword's selected-item tick advance it a second time.
         entity.getPersistentData().putBoolean("ChangeArt", false);
-        entity.getPersistentData().putDouble("breathes", formId);
+        entity.getPersistentData().putDouble("breathes", selectedFormId);
         BaseModEnhancedSwingState.setActive(entity, true);
         return true;
     }

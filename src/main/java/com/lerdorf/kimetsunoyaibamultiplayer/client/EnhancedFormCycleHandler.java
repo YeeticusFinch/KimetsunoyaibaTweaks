@@ -18,6 +18,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectFormPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModBloodDemonArtFormRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModSwordFormRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BreathingInfoDetector;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.VariationEncoder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -145,6 +146,9 @@ public final class EnhancedFormCycleHandler {
         }
 
         ItemStack stack = MC.player.getMainHandItem();
+        if (TrainingSwordHelper.isTrainingSword(stack)) {
+            return false;
+        }
         if (stack.getItem() instanceof CustomDemonArtItem) {
             return true;
         }
@@ -450,6 +454,11 @@ public final class EnhancedFormCycleHandler {
     }
 
     private static List<FormOption> resolveOptions(ItemStack stack) {
+        // Training swords intentionally expose only their first form. Do not let
+        // the enhanced wheel bypass that restriction by reading the full registry.
+        if (TrainingSwordHelper.isTrainingSword(stack)) {
+            return List.of();
+        }
         if (stack.getItem() instanceof CustomDemonArtItem) {
             return null;
         }

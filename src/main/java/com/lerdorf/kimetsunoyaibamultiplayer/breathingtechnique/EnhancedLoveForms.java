@@ -69,6 +69,8 @@ public class EnhancedLoveForms {
     private static final int LOVE_FAIRY_DUST_MOTES = 5;
     private static final int LOVE_RING_COUNT = 3;
     private static final int LOVE_RING_POINTS = 18;
+    private static final double THIRD_FORM_TARGET_AOE_RADIUS = 4.0D;
+    private static final float THIRD_FORM_TARGET_AOE_DAMAGE = 8.0F;
     private static final String FOURTH_FORM_ANIMATION = "love_fourth_form_short";
     private static final int FOURTH_FORM_DURATION_TICKS = 40;
     private static final double FOURTH_FORM_DISTANCE = 20.0D;
@@ -935,9 +937,10 @@ public class EnhancedLoveForms {
                 
                 HashMap<Integer, List<LivingEntity>> targets = new HashMap<Integer, List<LivingEntity>>();
                 ArrayList<LivingEntity> reversePropagationTargets = new ArrayList<LivingEntity>();
-                HashMap<UUID, Integer> damageHitCounts = new HashMap<UUID, Integer>();
-                Vec3[] damageLine = new Vec3[2];
-                boolean[] damageSnapshotCaptured = {false};
+                 HashMap<UUID, Integer> damageHitCounts = new HashMap<UUID, Integer>();
+                 Vec3[] damageLine = new Vec3[2];
+                 boolean[] damageSnapshotCaptured = {false};
+                 boolean[] targetPointImpactApplied = {false};
                 
                 //LoveSwordSlashesEntity[] swordSlashes = {null};
                 
@@ -1081,10 +1084,41 @@ public class EnhancedLoveForms {
                 			}
                 		}
                 	}
-                	if (currentTick[0] >= 30) {
+                        if (currentTick[0] >= 30) {
                         MovementHelper.lookInDirection(entity, targetDirection[0]);
-                		MovementHelper.setVelocity(entity, entity.getDeltaMovement().x, Math.max(entity.getDeltaMovement().y, 0), entity.getDeltaMovement().z);
-                		// Launch the sword slashes forward
+                 		MovementHelper.setVelocity(entity, entity.getDeltaMovement().x, Math.max(entity.getDeltaMovement().y, 0), entity.getDeltaMovement().z);
+                        if (serverLevel != null && damageSnapshotCaptured[0]
+                            && !targetPointImpactApplied[0]) {
+                            targetPointImpactApplied[0] = true;
+                            Vec3 targetPoint = damageLine[1];
+                            serverLevel.sendParticles(ModParticles.LOVE_SLASH.get(),
+                                targetPoint.x, targetPoint.y, targetPoint.z,
+                                32, 1.5D, 1.5D, 1.5D, 0.08D);
+                            serverLevel.sendParticles(ModParticles.LOVE_IMPACT.get(),
+                                targetPoint.x, targetPoint.y, targetPoint.z,
+                                24, 1.2D, 1.2D, 1.2D, 0.08D);
+
+                            AABB targetPointBox = new AABB(
+                                targetPoint.x - THIRD_FORM_TARGET_AOE_RADIUS,
+                                targetPoint.y - THIRD_FORM_TARGET_AOE_RADIUS,
+                                targetPoint.z - THIRD_FORM_TARGET_AOE_RADIUS,
+                                targetPoint.x + THIRD_FORM_TARGET_AOE_RADIUS,
+                                targetPoint.y + THIRD_FORM_TARGET_AOE_RADIUS,
+                                targetPoint.z + THIRD_FORM_TARGET_AOE_RADIUS);
+                            double targetPointRadiusSquared =
+                                THIRD_FORM_TARGET_AOE_RADIUS * THIRD_FORM_TARGET_AOE_RADIUS;
+                            List<LivingEntity> targetPointTargets = level.getEntitiesOfClass(
+                                LivingEntity.class, targetPointBox,
+                                target -> target != entity && target.isAlive()
+                                    && isTargetable(entity, target)
+                                    && target.getBoundingBox().getCenter().distanceToSqr(targetPoint)
+                                        <= targetPointRadiusSquared);
+                            for (LivingEntity target : targetPointTargets) {
+                                Damager.hurt(entity, target, THIRD_FORM_TARGET_AOE_DAMAGE,
+                                    true, false, true);
+                            }
+                        }
+                        // Launch the sword slashes forward
                 		if (spawnedLoveSlashes[0] == false) {
                 			spawnedLoveSlashes[0] = true;
 
@@ -1267,6 +1301,18 @@ public class EnhancedLoveForms {
                             SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.PLAYERS, 1.0F, 2.0F);
                         level.playSound(null, targetPoint.x, targetPoint.y, targetPoint.z,
                             SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0F, 1.0F);
+                        
+                         double midX = (targetPoint.x + entity.getX()) / 2.0D;
+                         double midY = (targetPoint.y + entity.getY()) / 2.0D;
+                         double midZ = (targetPoint.z + entity.getZ()) / 2.0D;
+                        level.playSound(null, midX, midY, midZ,
+                            ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                            SoundSource.PLAYERS, 1.0F, 1.6F);
+                        level.playSound(null, midX, midY, midZ,
+                            SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR, SoundSource.PLAYERS, 1.0F, 2.0F);
+                        level.playSound(null, midX, midY, midZ,
+                            SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0F, 1.0F);
+
                         if (serverLevel != null) {
                             serverLevel.sendParticles(ParticleTypes.FLASH,
                                 targetPoint.x, targetPoint.y, targetPoint.z,
@@ -1287,14 +1333,29 @@ public class EnhancedLoveForms {
                         }
                     }
                     if (tick == 19) {
+                         double midX = (targetPoint.x + entity.getX()) / 2.0D;
+                         double midY = (targetPoint.y + entity.getY()) / 2.0D;
+                         double midZ = (targetPoint.z + entity.getZ()) / 2.0D;
                         level.playSound(null, targetPoint.x, targetPoint.y, targetPoint.z,
                             ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
                             SoundSource.PLAYERS, 1.0F, 2.0F);
                         level.playSound(null, targetPoint.x, targetPoint.y, targetPoint.z,
                             ModSounds.LOVE_TORNADO_ZOOM.get(), SoundSource.PLAYERS, 1.0F, 2.0F);
+
+                        level.playSound(null, midX, midY, midZ,
+                            ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("kimetsunoyaiba", "sword_sweep")),
+                            SoundSource.PLAYERS, 1.0F, 2.0F);
+                        level.playSound(null, midX, midY, midZ,
+                            ModSounds.LOVE_TORNADO_ZOOM.get(), SoundSource.PLAYERS, 1.0F, 2.0F);
                     }
                     if (tick == 20) {
+                         double midX = (targetPoint.x + entity.getX()) / 2.0D;
+                         double midY = (targetPoint.y + entity.getY()) / 2.0D;
+                         double midZ = (targetPoint.z + entity.getZ()) / 2.0D;
                         level.playSound(null, targetPoint.x, targetPoint.y, targetPoint.z,
+                            SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 0.8F);
+
+                        level.playSound(null, midX, midY, midZ,
                             SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.PLAYERS, 1.0F, 0.8F);
                     }
 

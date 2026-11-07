@@ -391,10 +391,40 @@ public final class QuestProgressionManager {
         if ("cruel".equals(context.group().id())
             && "asakusa".equals(context.stage().id())
             && "defeat_susamaru_and_yahaba".equals(context.step().id())) {
-            QuestScenarioActions.resetTamayoHouseFailure(player);
-            restartCurrentQuestStageAfterDelay(player, 100);
-            player.sendSystemMessage(Component.literal("§cQuest Failed: §fYou were slain while defending Tamayo. Restarting Asakusa from the beginning."));
+            failAsakusaQuest(player, "You were slain while defending Tamayo.");
         }
+    }
+
+    public static boolean failAsakusaQuest(ServerPlayer player, String reason) {
+        if (player == null || !CustomProgressionConfig.isCustomProgressionEnabled()
+            || QuestScenarioActions.isTamayoHouseFailureHandled(player)) {
+            return false;
+        }
+
+        QuestRuntimeContext context = getOrInitializeContext(
+            player,
+            MeditationMenuService.resolveRoleForProgression(player)
+        );
+        if (context == null
+            || !"cruel".equals(context.group().id())
+            || !"asakusa".equals(context.stage().id())
+            || !"defeat_susamaru_and_yahaba".equals(context.step().id())) {
+            return false;
+        }
+
+        QuestScenarioActions.markTamayoHouseFailureHandled(player);
+        QuestScenarioActions.resetTamayoHouseFailure(player);
+        RestartQuestStageResult result = restartCurrentQuestStageAfterDelay(player, 100);
+        if (!result.success()) {
+            player.getPersistentData().remove("KnYTamayoHouseFailureHandled");
+            return false;
+        }
+
+        String failureReason = reason == null || reason.isBlank() ? "The mission objective failed." : reason;
+        player.sendSystemMessage(Component.literal(
+            "§cQuest Failed: §f" + failureReason + " Restarting Asakusa from the beginning."
+        ));
+        return true;
     }
 
     public static void scheduleCurrentStepRestart(ServerPlayer player, int cooldownTicks) {
@@ -1923,6 +1953,7 @@ public final class QuestProgressionManager {
             data.remove(QuestScenarioActions.CURRENT_STRUCTURE_Z);
         } else if ("cruel".equals(context.group().id()) && "asakusa".equals(context.stage().id())) {
             clearKeysWithPrefixes(data, "KnYTamayo", "KnYSusamaru", "KnYYahaba", "KnYYushiro");
+            data.remove("KnYTamayoHouseFailureHandled");
             data.remove("KnYDoctorsRequestUnlocked");
         } else if ("permanence".equals(context.group().id()) && "first_taste_of_blood".equals(context.stage().id())) {
             data.remove(PERMANENCE_FIRST_TASTE_EATEN);

@@ -15,20 +15,28 @@ import java.util.function.Supplier;
 public class BaseModEnhancedSwingStateSyncPacket {
     private final UUID playerUUID;
     private final boolean active;
+    private final boolean resetTransientState;
 
     public BaseModEnhancedSwingStateSyncPacket(UUID playerUUID, boolean active) {
+        this(playerUUID, active, false);
+    }
+
+    public BaseModEnhancedSwingStateSyncPacket(UUID playerUUID, boolean active, boolean resetTransientState) {
         this.playerUUID = playerUUID;
         this.active = active;
+        this.resetTransientState = resetTransientState;
     }
 
     public BaseModEnhancedSwingStateSyncPacket(FriendlyByteBuf buf) {
         this.playerUUID = buf.readUUID();
         this.active = buf.readBoolean();
+        this.resetTransientState = buf.readBoolean();
     }
 
     public void encode(FriendlyByteBuf buf) {
         buf.writeUUID(playerUUID);
         buf.writeBoolean(active);
+        buf.writeBoolean(resetTransientState);
     }
 
     public void handle(Supplier<NetworkEvent.Context> contextSupplier) {
@@ -40,7 +48,11 @@ public class BaseModEnhancedSwingStateSyncPacket {
     private void handleClient() {
         Player player = ClientPacketHandler.getClientPlayer();
         if (player != null && player.getUUID().equals(playerUUID)) {
-            BaseModEnhancedSwingState.setActive(player, active);
+            if (resetTransientState) {
+                BaseModEnhancedSwingState.resetTransientState(player);
+            } else {
+                BaseModEnhancedSwingState.setActive(player, active);
+            }
         }
     }
 }

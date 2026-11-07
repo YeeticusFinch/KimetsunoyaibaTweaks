@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModStyleMapping;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.util.BaseModEnhancedAbilityState;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -43,6 +44,11 @@ public class CycleBreathingFormPacket {
             }
 
             ItemStack heldItem = player.getMainHandItem();
+
+            if (Config.isEnhancedFormCycleEnabled()
+                && BaseModEnhancedAbilityState.isActive(player)) {
+                return;
+            }
 
             // Check if this is a training sword - training swords can only use first form
             if (TrainingSwordHelper.isTrainingSword(heldItem)) {
