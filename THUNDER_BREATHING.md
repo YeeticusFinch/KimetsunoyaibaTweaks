@@ -1,4 +1,5 @@
 **Colors**
+
 The normal thunder breathing colors are yellow and light blue
 The blue variant of thunder breathing (for the blue thunder breathing swords) are dark blue and light blue
 For Kaigaku's sword, the colors are dark blue and black
