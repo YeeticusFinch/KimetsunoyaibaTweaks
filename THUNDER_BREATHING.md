@@ -44,12 +44,18 @@ Lightning Sparks are similar to lightning bolts. However they are simpler and us
 
 Lightning Sparks don't take an array of positions, they just take a start position and an end position as inputs, along with a width (in blocks). The width is a float, so it can be less than a block. The inputted width refers to the width of the outer beam, and then the inner beam is half that width. It also takes in two colors, an outer color (default light blue) and an inner color (default white). The Lightning Spark is also given a tick lifetime as an input. Also, the start position and end position of the lightning sparks should be changeable. And it should also be possible to give the Lightning Sparks a velocity vector (the velocity vector gets added to both the start position and the end position on every tick).
 
+Lightning Sparks also take a flickering boolean. If flickering is true, then they only render every other tick, so visible for 1 tick, not visible for 1 tick, visible for 1 tick, not visible for 1 tick.
+
+Lightning Sparks also takes in an optional arcing vector. The arcing vector (default 0 0 0) provides both a direction and magnitude to arc the spark segments.
+
 Lightning sparks are just two beams, an outer beam and an inner beam of half size.
 - The outer beam is 50% opacity
 - The inner beam is 100% opacity
 - Both beams are glowing
 
 A Lightning Spark can have multiple segments depending on its length and width. If the length squared of the segment (length squared because it's distance between start position and end position, and square roots are expensive, so just multipy the coefficients by eachother to avoid doing any power functions), if the length squared of the segment is less than 25x the width, then there will only be one segment. If the length squared is 25x the width, then there will be two segments. So ergo the number of segments equals the length squared divided by 25 multiplied by the width (length squared is in numerator, the width multiplying 25 is in the denominator). There will be a minimum of 1 segment, and a maximum of 50 segments (let's guard for divide by 0 errors).
+
+If there is a non-zero arcing vector, then each of the segments will arc in the direction of that arcing vector, depending on proximity to middle. So like the edges (start position and end position) aren't affected at all. The middle position is shifted by 100% of the arc vector, so for that position in the middle of the segments, the arc vector should be added directly to it. For the position at 25% through the segments, and 75% through the segments, half of the arc vector should be added.
 
 The first segment starts at the start position of the Lightning Spark. The last segment ends at the end position of the Lightning Spark. The positions of all the other points for the segments are calculated every other tick (so half are calculated on one tick, the other half are calculated on the other tick). These intermediate point locations are just calculated locally, like in rendering, no need to sync this with server, as it's just graphics. They are calculated by arranging the points sequentially in a straight line between the start position and end position, and then adding a random offset to every point in a random direction, the offset magnitude being a maximum of 5*width.
 
@@ -80,6 +86,7 @@ Tick 25
 - Do some flash particles with some spark particles
 - The lightning bolt's end position gets permanently set to the target location
 - All valid target entities within 2 blocks of the trajectory (between the start location and target location) get damaged and get flash particles on them
+- Create 4 Lightning Sparks, with the start location being the center of the user (halfway between the user's position and head position, accounting for local gravity direction), the end location being a random solid block within 2 blocks (or if no solid blocks are near, then just a random point 2 blocks away and no arcing), and the arcing vector being [0, 1, 0]. ANd they should be flickering=true, and they should last 8 ticks lifetime duration
 
 Ticks 26-36
 - User plays the unsheathing animation
