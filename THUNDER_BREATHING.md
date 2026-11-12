@@ -25,18 +25,33 @@ Blue Variant Swords (demons) and Kaigaku's Sword:
 Thunder breathing relies on lightning bolts for visual effects
 These lightning bolts are similar to the vanilla ones, except they have a start position and an end position, and they have multiple colors
 A lightning bolt is a square beam that is one block wide. It is drawn as multiple beams super imposed on each-other.
-- The outer beam is a full block wide, and it has 40% opacity
-- Then there is another beam that is 0.8 blocks wide with 60% opacity
-- Then another beam that is 0.6 blocks wide with 80% opacity
+- The outer beam is a full block wide, and it has 20% opacity
+- Then there is another beam that is 0.8 blocks wide with 50% opacity
+- Then another beam that is 0.6 blocks wide with 75% opacity
 - Then a final inner beam that is 0.5 blocks wide with 100% opacity (this one is always white)
 
-All 3 outer beams (the 40% opacity, 60%, and 80%) all have the same color, they use a gradient color, shifting between primary color and secondary color, with primary color being at the start location and secondary color being at the end location
+All 3 outer beams (the 20% opacity, 50%, and 75%) all have the same color, they use a gradient color, shifting between primary color and secondary color, with primary color being at the start location and secondary color being at the end location
 - For the normal swords (the ones that are yellow and light blue), it should shift to white in the middle of the gradient instead of green, so the gradient should go yellow -> white -> lightb-lue
 
 The beams are glowing too.
 
 When a lightning bolt spawns, it is given an array of positions that define its path, with the first item being the start position and the last item being the end position, and it's given a lifetime too (default lifetime 15 ticks)
 - During its lifetime, more positions can be appended to the lightning bolt, and the existing positions can be modified
+
+**Lightning Sparks**
+
+Lightning Sparks are similar to lightning bolts. However they are simpler and usually smaller.
+
+Lightning Sparks don't take an array of positions, they just take a start position and an end position as inputs, along with a width (in blocks). The width is a float, so it can be less than a block. The inputted width refers to the width of the outer beam, and then the inner beam is half that width. It also takes in two colors, an outer color (default light blue) and an inner color (default white). The Lightning Spark is also given a tick lifetime as an input. Also, the start position and end position of the lightning sparks should be changeable. And it should also be possible to give the Lightning Sparks a velocity vector (the velocity vector gets added to both the start position and the end position on every tick).
+
+Lightning sparks are just two beams, an outer beam and an inner beam of half size.
+- The outer beam is 50% opacity
+- The inner beam is 100% opacity
+- Both beams are glowing
+
+A Lightning Spark can have multiple segments depending on its length and width. If the length squared of the segment (length squared because it's distance between start position and end position, and square roots are expensive, so just multipy the coefficients by eachother to avoid doing any power functions), if the length squared of the segment is less than 25x the width, then there will only be one segment. If the length squared is 25x the width, then there will be two segments. So ergo the number of segments equals the length squared divided by 25 multiplied by the width (length squared is in numerator, the width multiplying 25 is in the denominator). There will be a minimum of 1 segment, and a maximum of 50 segments (let's guard for divide by 0 errors).
+
+The first segment starts at the start position of the Lightning Spark. The last segment ends at the end position of the Lightning Spark. The positions of all the other points for the segments are calculated every other tick (so half are calculated on one tick, the other half are calculated on the other tick). These intermediate point locations are just calculated locally, like in rendering, no need to sync this with server, as it's just graphics. They are calculated by arranging the points sequentially in a straight line between the start position and end position, and then adding a random offset to every point in a random direction, the offset magnitude being a maximum of 5*width.
 
 ## First form: Thunderclap and Flash
 
