@@ -86,6 +86,18 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_BLACK = ITEMS.register("nichirinsword_black",
         () -> new NichirinSwordBlack(new Item.Properties().stacksTo(1).durability(2000)));
 
+    public static final RegistryObject<Item> NICHIRINSWORD_THUNDER = ITEMS.register("nichirinsword_thunder",
+        () -> new NichirinSwordThunder(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_THUNDER_BLUE = ITEMS.register("nichirinsword_thunder_blue",
+        () -> new NichirinSwordThunderBlue(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_ZENITSU = ITEMS.register("nichirinsword_zenitsu",
+        () -> new NichirinSwordZenitsu(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_KAIGAKU = ITEMS.register("nichirinsword_kaigaku",
+        () -> new NichirinSwordKaigaku(new Item.Properties().stacksTo(1).durability(2000)));
+
     public static final RegistryObject<Item> NICHIRINSWORD_GOLD = ITEMS.register("nichirinsword_gold",
         () -> new NichirinSwordGold(new Item.Properties().stacksTo(1).durability(2000)));
 
@@ -214,6 +226,24 @@ public class ModItems {
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KIRIYA,
             0xDEE4EE, 0xA7B2C2, // Cool pale body, muted blue-gray spots
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> SHOICHI_SPAWN_EGG = ITEMS.register("shoichi_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.SHOICHI,
+            0xB58B72, 0xE7C4A8,
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> KIYOSHI_SPAWN_EGG = ITEMS.register("kiyoshi_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KIYOSHI,
+            0x6D83A6, 0xD9E2F2,
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> TERUKO_SPAWN_EGG = ITEMS.register("teruko_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.TERUKO,
+            0x8E6C83, 0xF0C9D8,
             new Item.Properties().stacksTo(64)));
 
     public static final RegistryObject<Item> KAZUMI_SPAWN_EGG = ITEMS.register("kazumi_spawn_egg",
@@ -875,6 +905,9 @@ public class ModItems {
                     KANAWO_SPAWN_EGG.get(),
                     KANATA_SPAWN_EGG.get(),
                     KIRIYA_SPAWN_EGG.get(),
+                    SHOICHI_SPAWN_EGG.get(),
+                    KIYOSHI_SPAWN_EGG.get(),
+                    TERUKO_SPAWN_EGG.get(),
                     KAZUMI_SPAWN_EGG.get(),
                     PRINCESS_SPAWN_EGG.get(),
                     OROCHI_SPAWN_EGG.get(),
@@ -1004,8 +1037,12 @@ public class ModItems {
         addIfNotRegistryManaged(swords, NICHIRINSWORD_INSECT.get());
         addIfNotRegistryManaged(swords, NICHIRINSWORD_SNAKE.get());
         addIfNotRegistryManaged(swords, NICHIRINSWORD_LOVE.get());
-        addIfNotRegistryManaged(swords, NICHIRINSWORD_SOUND.get());
-        addIfNotRegistryManaged(swords, NICHIRINSWORD_BLACK.get());
+         addIfNotRegistryManaged(swords, NICHIRINSWORD_SOUND.get());
+         addIfNotRegistryManaged(swords, NICHIRINSWORD_BLACK.get());
+         addIfNotRegistryManaged(swords, NICHIRINSWORD_THUNDER.get());
+         addIfNotRegistryManaged(swords, NICHIRINSWORD_THUNDER_BLUE.get());
+         addIfNotRegistryManaged(swords, NICHIRINSWORD_ZENITSU.get());
+         addIfNotRegistryManaged(swords, NICHIRINSWORD_KAIGAKU.get());
 
         swords.sort(Comparator.comparing(ModItems::getCreativeSortName));
         swords.forEach(output::accept);

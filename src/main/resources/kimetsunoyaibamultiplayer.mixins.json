@@ -10,6 +10,7 @@
     "TargetGoalAccessor",
     "NearestAttackableTargetGoalMixin",
     "LivingEntityFoodParticleMixin",
+    "ElectrocutedParticlesMixin",
     "BaseSunBreathingSunlightImmunityMixin",
     "BaseFireResistanceSunlightImmunityMixin",
     "ImmvableEffectCategoryMixin",

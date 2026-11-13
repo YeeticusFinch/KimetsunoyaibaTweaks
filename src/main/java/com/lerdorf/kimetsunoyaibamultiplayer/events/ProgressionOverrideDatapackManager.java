@@ -53,6 +53,7 @@ public class ProgressionOverrideDatapackManager {
 
     @SubscribeEvent
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
+        System.err.println("[KnY-MP startup] ProgressionOverrideDatapackManager start");
         Path datapacksDir = event.getServer().getWorldPath(LevelResource.DATAPACK_DIR);
         Path packDir = datapacksDir.resolve(PACK_FOLDER_NAME);
         boolean enabled = CustomProgressionConfig.disableBaseModDemonSlayerInitiation.get();
@@ -68,6 +69,7 @@ public class ProgressionOverrideDatapackManager {
             System.err.println("[KnY-MP Progression] Failed to manage progression override datapack: " + e.getMessage());
             e.printStackTrace();
         }
+        System.err.println("[KnY-MP startup] ProgressionOverrideDatapackManager end");
     }
 
     @SubscribeEvent

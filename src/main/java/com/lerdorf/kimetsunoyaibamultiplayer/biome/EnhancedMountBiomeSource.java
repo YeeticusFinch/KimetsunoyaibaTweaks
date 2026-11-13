@@ -464,6 +464,26 @@ public final class EnhancedMountBiomeSource extends BiomeSource {
         return NATAGUMO_BASE_RADIUS * clamp(EnhancedMountBiomeConfig.natagumoWidthScale, 0.01, 1.0);
     }
 
+    /** Returns whether a point is inside or close to any enhanced Natagumo ring region. */
+    public static boolean isNearNatagumoRegion(long seed, int blockX, int blockZ, double clearance) {
+        if (!EnhancedMountBiomeConfig.enhancedMountNatagumoEnabled) {
+            return false;
+        }
+
+        int spacing = Math.max(1, EnhancedMountBiomeConfig.natagumoRingSpacing);
+        int firstRadius = Math.max(1, EnhancedMountBiomeConfig.natagumoFirstRingRadius);
+        double radialDistance = Math.hypot(blockX, blockZ);
+        int nearestRing = Math.max(1, (int) Math.round((radialDistance - firstRadius) / spacing) + 1);
+        double protectedRadius = natagumoRadius() + Math.max(0.0D, clearance);
+        for (int ring = Math.max(1, nearestRing - 1); ring <= nearestRing + 1; ring++) {
+            Center center = center(seed, ring, spacing, firstRadius);
+            if (Math.hypot(blockX - center.x(), blockZ - center.z()) <= protectedRadius) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static int natagumoPeakDisplayY() {
         double height = NATAGUMO_BASE_Y
                 + (NATAGUMO_TARGET_SUMMIT_Y - NATAGUMO_BASE_Y) * natagumoHeightScale();

@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.mixin;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.biome.EnhancedMountBiomeSource;
 import com.lerdorf.kimetsunoyaibamultiplayer.biome.NatagumoStructureCandidates;
+import com.lerdorf.kimetsunoyaibamultiplayer.biome.TsuzumiMansionCandidates;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EnhancedMountBiomeConfig;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
@@ -35,15 +36,27 @@ public class EnhancedMountStructureMixin {
     private static final ResourceKey<Structure> RUI_BROTHER = ResourceKey.create(
             net.minecraft.core.registries.Registries.STRUCTURE,
             ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "house_rui_brother"));
+    private static final ResourceKey<Structure> TSUZUMI_MANSION = ResourceKey.create(
+            net.minecraft.core.registries.Registries.STRUCTURE,
+            ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "tsuzumi_mansion"));
 
     @Inject(method = "tryGenerateStructure", at = @At("HEAD"), cancellable = true)
     private void kimetsu$limitNatagumoStructures(StructureSet.StructureSelectionEntry entry,
             StructureManager structureManager, RegistryAccess registryAccess, RandomState randomState,
             StructureTemplateManager structureTemplateManager, long seed, ChunkAccess chunk,
             ChunkPos chunkPos, SectionPos sectionPos, CallbackInfoReturnable<Boolean> cir) {
+        ResourceKey<Structure> key = entry.structure().unwrapKey().orElse(null);
+        if (TSUZUMI_MANSION.equals(key)) {
+            if (!TsuzumiMansionCandidates.isPreferred(
+                    new RandomSpreadStructurePlacement(8, 4, RandomSpreadType.LINEAR, 733184921),
+                    seed,
+                    chunkPos)) {
+                cir.setReturnValue(false);
+            }
+            return;
+        }
         if (!EnhancedMountBiomeConfig.enhancedMountNatagumoEnabled
                 || !(((ChunkGenerator) (Object) this).getBiomeSource() instanceof EnhancedMountBiomeSource)) return;
-        ResourceKey<Structure> key = entry.structure().unwrapKey().orElse(null);
         if (!RUI.equals(key) && !RUI_BROTHER.equals(key)) return;
         boolean rui = RUI.equals(key);
         if (!NatagumoStructureCandidates.isPreferred(rui ? RUI_PLACEMENT : BROTHER_PLACEMENT,

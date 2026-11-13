@@ -79,6 +79,9 @@ public class ModEffects {
     public static final RegistryObject<MobEffect> SPIDER_SNARE = MOB_EFFECTS.register("spider_snare",
             SpiderSnareEffect::new);
 
+    public static final RegistryObject<MobEffect> ELECTROCUTED = MOB_EFFECTS.register("electrocuted",
+            ElectrocutedEffect::new);
+
     public static void register(IEventBus eventBus) {
         MOB_EFFECTS.register(eventBus);
     }

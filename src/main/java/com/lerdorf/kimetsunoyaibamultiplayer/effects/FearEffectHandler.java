@@ -14,6 +14,9 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -28,21 +31,32 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.UUID;
+
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID)
 public class FearEffectHandler {
-    private static final int CYCLE_TICKS = 20;
     private static final int HOTBAR_COOLDOWN_TICKS = 6;
     private static final int PRESENCE_CHECK_TICKS = 200;
     private static final int KIZUKI_FEAR_COOLDOWN_TICKS = 60 * 60 * 20;
     private static final double KIZUKI_FEAR_RANGE = 40.0D;
+    private static final int MAX_MOVEMENT_CURVE_LEVEL = 9;
+    private static final int FREEZE_START_LEVEL = 5;
+    private static final int MAX_FREEZE_TICKS = 40;
+    private static final int MIN_SLOW_TICKS = 5;
+    private static final int MAX_SLOW_TICKS = 100;
+    private static final double MIN_SLOW_MOVEMENT_MULTIPLIER = 0.2D;
     private static final String KNY_NAMESPACE = "kimetsunoyaiba";
 
+    private static final String FEAR_PHASE_ACTIVE_KEY = "knymp_fear_phase_active";
+    private static final String FEAR_PHASE_START_TICK_KEY = "knymp_fear_phase_start_tick";
+    private static final String FEAR_PHASE_LEVEL_KEY = "knymp_fear_phase_level";
     private static final String PLAYER_LOCKED_KEY = "knymp_fear_locked";
     private static final String PLAYER_LOCK_X_KEY = "knymp_fear_lock_x";
     private static final String PLAYER_LOCK_Z_KEY = "knymp_fear_lock_z";
 
     private static final String MOB_NO_AI_STORED_KEY = "knymp_fear_no_ai_stored";
     private static final String MOB_ORIGINAL_NO_AI_KEY = "knymp_fear_original_no_ai";
+    private static final UUID FEAR_SLOWDOWN_MODIFIER_UUID = UUID.fromString("d7adca67-5b84-4c5c-9bb8-000000000001");
 
     private record KizukiFearProfile(int level, int durationTicks) {
     }
@@ -97,8 +111,7 @@ public class FearEffectHandler {
         if (level <= 0) {
             return false;
         }
-        int paralyzedTicks = Math.min(CYCLE_TICKS, level * 2);
-        return Math.floorMod(entity.tickCount, CYCLE_TICKS) < paralyzedTicks;
+        return getFearPhaseElapsed(entity, level) < getFreezeTicks(level);
     }
 
     @SubscribeEvent
@@ -112,17 +125,26 @@ public class FearEffectHandler {
             applyKizukiPresenceFear(entity);
         }
 
-        if (!isParalyzed(entity)) {
-            clearParalysis(entity);
+        int fearLevel = getFearLevel(entity);
+        if (fearLevel <= 0) {
+            clearFearMovementState(entity);
             return;
         }
 
-        if (entity instanceof Player player) {
-            enforcePlayerParalysis(player);
-        } else if (entity instanceof Mob mob) {
-            enforceMobParalysis(mob);
+        ensureFearPhase(entity, fearLevel);
+        int phaseElapsed = getFearPhaseElapsed(entity, fearLevel);
+        if (phaseElapsed >= getFreezeTicks(fearLevel)) {
+            clearParalysis(entity);
+            applyFearSlowdown(entity, phaseElapsed, fearLevel);
         } else {
-            stopHorizontalMotionAndJump(entity);
+            removeFearSlowdown(entity);
+            if (entity instanceof Player player) {
+                enforcePlayerParalysis(player);
+            } else if (entity instanceof Mob mob) {
+                enforceMobParalysis(mob);
+            } else {
+                stopHorizontalMotionAndJump(entity);
+            }
         }
     }
 
@@ -293,6 +315,74 @@ public class FearEffectHandler {
         Vec3 movement = entity.getDeltaMovement();
         entity.setDeltaMovement(0.0D, Math.min(0.0D, movement.y), 0.0D);
         entity.setJumping(false);
+    }
+
+    private static void ensureFearPhase(LivingEntity entity, int fearLevel) {
+        CompoundTag data = entity.getPersistentData();
+        if (!data.getBoolean(FEAR_PHASE_ACTIVE_KEY) || data.getInt(FEAR_PHASE_LEVEL_KEY) != fearLevel) {
+            data.putBoolean(FEAR_PHASE_ACTIVE_KEY, true);
+            data.putInt(FEAR_PHASE_START_TICK_KEY, entity.tickCount);
+            data.putInt(FEAR_PHASE_LEVEL_KEY, fearLevel);
+        }
+    }
+
+    private static int getFearPhaseElapsed(LivingEntity entity, int fearLevel) {
+        ensureFearPhase(entity, fearLevel);
+        return Math.max(0, entity.tickCount - entity.getPersistentData().getInt(FEAR_PHASE_START_TICK_KEY));
+    }
+
+    private static int getFreezeTicks(int fearLevel) {
+        int curveLevel = Math.min(MAX_MOVEMENT_CURVE_LEVEL, Math.max(1, fearLevel));
+        if (curveLevel < FREEZE_START_LEVEL) {
+            return 0;
+        }
+        return Math.round((curveLevel - FREEZE_START_LEVEL + 1) * (MAX_FREEZE_TICKS / 5.0F));
+    }
+
+    private static int getSlowTicks(int fearLevel) {
+        int curveLevel = Math.min(MAX_MOVEMENT_CURVE_LEVEL, Math.max(1, fearLevel));
+        return MIN_SLOW_TICKS + Math.round((curveLevel - 1) * (MAX_SLOW_TICKS - MIN_SLOW_TICKS) / 8.0F);
+    }
+
+    private static void applyFearSlowdown(LivingEntity entity, int phaseElapsed, int fearLevel) {
+        int slowTicks = getSlowTicks(fearLevel);
+        int slowElapsed = phaseElapsed - getFreezeTicks(fearLevel);
+        double multiplier = 1.0D;
+        if (slowElapsed < slowTicks) {
+            double progress = (slowElapsed + 1.0D) / slowTicks;
+            multiplier = MIN_SLOW_MOVEMENT_MULTIPLIER
+                    + (1.0D - MIN_SLOW_MOVEMENT_MULTIPLIER) * Math.min(1.0D, progress);
+        }
+
+        AttributeInstance movementSpeed = entity.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (movementSpeed == null) {
+            return;
+        }
+
+        movementSpeed.removeModifier(FEAR_SLOWDOWN_MODIFIER_UUID);
+        if (multiplier < 1.0D) {
+            movementSpeed.addTransientModifier(new AttributeModifier(
+                    FEAR_SLOWDOWN_MODIFIER_UUID,
+                    "Fear movement slowdown",
+                    multiplier - 1.0D,
+                    AttributeModifier.Operation.MULTIPLY_TOTAL));
+        }
+    }
+
+    private static void removeFearSlowdown(LivingEntity entity) {
+        AttributeInstance movementSpeed = entity.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (movementSpeed != null) {
+            movementSpeed.removeModifier(FEAR_SLOWDOWN_MODIFIER_UUID);
+        }
+    }
+
+    private static void clearFearMovementState(LivingEntity entity) {
+        clearParalysis(entity);
+        removeFearSlowdown(entity);
+        CompoundTag data = entity.getPersistentData();
+        data.remove(FEAR_PHASE_ACTIVE_KEY);
+        data.remove(FEAR_PHASE_START_TICK_KEY);
+        data.remove(FEAR_PHASE_LEVEL_KEY);
     }
 
     private static void clearParalysis(LivingEntity entity) {

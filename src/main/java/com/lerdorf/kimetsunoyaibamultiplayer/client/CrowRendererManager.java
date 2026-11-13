@@ -17,6 +17,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanataRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanaeRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanawoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KiriyaRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.CivilianKidRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KyogaiRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KyogaiClawRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DirectionArrowRenderer;
@@ -65,8 +66,14 @@ public class CrowRendererManager {
         // Register renderers for Kanae and Kanawo (Flower Breathing)
         event.registerEntityRenderer(ModEntities.KANAE.get(), KanaeRenderer::new);
         event.registerEntityRenderer(ModEntities.KANAWO.get(), KanawoRenderer::new);
-        event.registerEntityRenderer(ModEntities.KANATA.get(), KanataRenderer::new);
-        event.registerEntityRenderer(ModEntities.KIRIYA.get(), KiriyaRenderer::new);
+         event.registerEntityRenderer(ModEntities.KANATA.get(), KanataRenderer::new);
+         event.registerEntityRenderer(ModEntities.KIRIYA.get(), KiriyaRenderer::new);
+         event.registerEntityRenderer(ModEntities.SHOICHI.get(),
+             context -> new CivilianKidRenderer<>(context, "shoichi", 0.80F));
+         event.registerEntityRenderer(ModEntities.KIYOSHI.get(),
+             context -> new CivilianKidRenderer<>(context, "kiyoshi", 0.76F));
+         event.registerEntityRenderer(ModEntities.TERUKO.get(),
+             context -> new CivilianKidRenderer<>(context, "teruko", 0.725F));
 
         // Register renderer for after image entity (Flower Breathing 7th Form effect)
         event.registerEntityRenderer(ModEntities.AFTER_IMAGE.get(), AfterImageRenderer::new);

@@ -1,0 +1,7 @@
+{
+  "parent": "kimetsunoyaiba:custom/nitirintou_zenitsu",
+  "textures": {
+    "0": "kimetsunoyaiba:block/nitirintou_kaigaku_",
+    "particle": "kimetsunoyaiba:item/icon_sword"
+  }
+}

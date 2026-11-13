@@ -336,20 +336,42 @@ public final class QuestGroupRegistry {
                 new QuestStageDefinition(
                     "tsuzumi_mansion",
                     "Mission No.3 - Tsuzumi Mansion",
-                    "This mission is WIP and will be released in a future update.",
+                    "Enter the rotating mansion, defeat the demons in every room, and defeat Kyogai.",
                     List.of(
                         QuestStepDefinition.builder(
-                                "tsuzumi_mansion_wip",
-                                "Tsuzumi Mansion",
-                                "This mission is WIP and will be released in a future update.",
+                                "enter_tsuzumi_mansion",
+                                "Reach Tsuzumi Mansion",
+                                "Find and enter the Tsuzumi Mansion.",
+                                QuestStepType.ENTER_STRUCTURE
+                            )
+                            .targetId(ResourceLocation.fromNamespaceAndPath(
+                                KimetsunoyaibaMultiplayer.MODID, "tsuzumi_mansion"))
+                            .onStart(TsuzumiMansionScenario::startStage)
+                            .markerResolver(TsuzumiMansionScenario::resolveOutsideMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "clear_tsuzumi_rooms",
+                                "Clear the Mansion",
+                                "Defeat the demon in each marked room. Natural demons already in a room are left alone.",
                                 QuestStepType.CUSTOM
                             )
-                            .onStart((player, context) ->
-                                player.sendSystemMessage(Component.literal("§7Mission No.3 - Tsuzumi Mansion is WIP and will be released in a future update.")))
-                            .customCheck((player, context) -> false)
+                            .onStart(TsuzumiMansionScenario::spawnRoomDemons)
+                            .onTick(TsuzumiMansionScenario::spawnRoomDemons)
+                            .customCheck(TsuzumiMansionScenario::areRoomDemonsDefeated)
+                            .markerResolver(TsuzumiMansionScenario::resolveRoomMarker)
+                            .build(),
+                        QuestStepDefinition.builder(
+                                "defeat_kyogai",
+                                "Defeat Kyogai",
+                                "Find Kyogai inside the mansion and defeat him.",
+                                QuestStepType.CUSTOM
+                            )
+                            .onStart(TsuzumiMansionScenario::spawnKyogai)
+                            .customCheck(TsuzumiMansionScenario::isKyogaiDefeated)
+                            .markerResolver(TsuzumiMansionScenario::resolveKyogaiMarker)
                             .build()
                     ),
-                    new QuestRewardDefinition()
+                    new QuestRewardDefinition().experiencePoints(100)
                 )
             )
         ));

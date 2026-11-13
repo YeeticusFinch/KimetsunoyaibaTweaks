@@ -1,7 +1,5 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
-import com.lerdorf.kimetsunoyaibamultiplayer.client.ClientPacketHandler;
-import com.lerdorf.kimetsunoyaibamultiplayer.entities.CrowQuestMarkerHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -43,12 +41,14 @@ public class BossArrowPacket {
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
             if (remainingTicks <= 0) return;
-
-            var level = ClientPacketHandler.getClientLevel();
-            var player = ClientPacketHandler.getClientPlayer();
-            if (level == null || player == null) return;
-
-            CrowQuestMarkerHandler.drawQuestArrow(player, new Vec3(bossX, bossY, bossZ), level);
+            try {
+                Class<?> renderer = Class.forName(
+                    "com.lerdorf.kimetsunoyaibamultiplayer.client.CrowQuestMarkerRenderer");
+                renderer.getMethod("setBossArrow", Vec3.class, long.class)
+                    .invoke(null, new Vec3(bossX, bossY, bossZ), (long) remainingTicks);
+            } catch (ReflectiveOperationException exception) {
+                throw new IllegalStateException("Unable to show boss direction arrow", exception);
+            }
         }));
         ctx.get().setPacketHandled(true);
     }

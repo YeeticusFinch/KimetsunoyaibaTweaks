@@ -28,6 +28,7 @@ public final class TrainingSwordAdvancementDatapackManager {
 
     @SubscribeEvent
     public static void onServerAboutToStart(ServerAboutToStartEvent event) {
+        System.err.println("[KnY-MP startup] TrainingSwordAdvancementDatapackManager start");
         Path datapacksDir = event.getServer().getWorldPath(LevelResource.DATAPACK_DIR);
         Path packDir = datapacksDir.resolve(PACK_FOLDER_NAME);
 
@@ -38,6 +39,7 @@ public final class TrainingSwordAdvancementDatapackManager {
             System.err.println("[KnY-MP TrainingAdvancements] Failed to generate training sword datapack: " + e.getMessage());
             e.printStackTrace();
         }
+        System.err.println("[KnY-MP startup] TrainingSwordAdvancementDatapackManager end");
     }
 
     @SubscribeEvent

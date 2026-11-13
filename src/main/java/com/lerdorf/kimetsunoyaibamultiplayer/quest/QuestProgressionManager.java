@@ -97,6 +97,8 @@ public final class QuestProgressionManager {
     private static final double SLAYERS_BLOOD_INITIAL_SPAWN_RADIUS = 20.0D;
     private static final double SLAYERS_BLOOD_REINFORCEMENT_SPAWN_RADIUS = 40.0D;
     private static final Map<UUID, ServerBossEvent> SLAYERS_BLOOD_BOSS_BARS = new HashMap<>();
+    private static final ThreadLocal<Boolean> TSUZUMI_SHARED_RESTART =
+        ThreadLocal.withInitial(() -> false);
     private static final int PERMANENCE_FIRST_TASTE_REQUIRED = 10;
     private static final int PERMANENCE_HUNGER_UNENDING_REQUIRED = 10;
     private static final TagKey<EntityType<?>> WOMAN =
@@ -392,6 +394,9 @@ public final class QuestProgressionManager {
             && "asakusa".equals(context.stage().id())
             && "defeat_susamaru_and_yahaba".equals(context.step().id())) {
             failAsakusaQuest(player, "You were slain while defending Tamayo.");
+        } else if ("cruel".equals(context.group().id())
+            && "tsuzumi_mansion".equals(context.stage().id())) {
+            TsuzumiMansionScenario.failForPlayer(player, "A player was slain inside the mansion.");
         }
     }
 
@@ -1922,6 +1927,30 @@ public final class QuestProgressionManager {
             return RestartQuestStageResult.forDisabledProgression();
         }
 
+        if (!TSUZUMI_SHARED_RESTART.get() && TsuzumiMansionScenario.isActive(player)) {
+            List<ServerPlayer> involved = TsuzumiMansionScenario.involvedPlayers(player);
+            TsuzumiMansionScenario.teleportPlayersOutside(involved);
+            TSUZUMI_SHARED_RESTART.set(true);
+            try {
+                RestartQuestStageResult result = restartCurrentQuestStageInternal(player, role);
+                for (ServerPlayer involvedPlayer : involved) {
+                    if (involvedPlayer == player) {
+                        continue;
+                    }
+                    restartCurrentQuestStageInternal(
+                        involvedPlayer, MeditationMenuService.resolveRoleForProgression(involvedPlayer));
+                }
+                return result;
+            } finally {
+                TSUZUMI_SHARED_RESTART.set(false);
+            }
+        }
+
+        return restartCurrentQuestStageInternal(player, role);
+    }
+
+    private static RestartQuestStageResult restartCurrentQuestStageInternal(ServerPlayer player, PlayerRole role) {
+
         QuestRuntimeContext active = getOrInitializeContext(player, role);
         if (active == null) {
             return RestartQuestStageResult.forNoQuest();
@@ -1955,6 +1984,8 @@ public final class QuestProgressionManager {
             clearKeysWithPrefixes(data, "KnYTamayo", "KnYSusamaru", "KnYYahaba", "KnYYushiro");
             data.remove("KnYTamayoHouseFailureHandled");
             data.remove("KnYDoctorsRequestUnlocked");
+        } else if ("cruel".equals(context.group().id()) && "tsuzumi_mansion".equals(context.stage().id())) {
+            clearKeysWithPrefixes(data, "KnYTsuzumi");
         } else if ("permanence".equals(context.group().id()) && "first_taste_of_blood".equals(context.stage().id())) {
             data.remove(PERMANENCE_FIRST_TASTE_EATEN);
             data.remove(PERMANENCE_FIRST_TASTE_KILLS);

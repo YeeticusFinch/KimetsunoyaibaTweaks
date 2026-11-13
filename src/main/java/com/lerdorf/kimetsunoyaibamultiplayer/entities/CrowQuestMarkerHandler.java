@@ -3,7 +3,6 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.EntityConfig;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
@@ -17,8 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Handles quest markers for kasugai crows - draws particle arrows pointing to quest locations
- * and spawns waypoint markers at the target locations.
+ * Handles the shared state for quest markers supplied by kasugai crows.
  *
  * NOTE: This is the SHARED (server-safe) part. Client-only methods are in CrowQuestMarkerHandlerClient.
  */
@@ -94,27 +92,6 @@ public class CrowQuestMarkerHandler {
         // Play success sound
         level.playSound(player, player.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 0.5f, 1.0f);
 
-        // Spawn celebration particles
-        for (int i = 0; i < 50; i++) {
-            double angle = Math.random() * Math.PI * 2;
-            double radius = Math.random() * 2;
-            double offsetX = Math.cos(angle) * radius;
-            double offsetZ = Math.sin(angle) * radius;
-            double offsetY = Math.random() * 2;
-
-            level.addParticle(ParticleTypes.HAPPY_VILLAGER,
-                    location.x + offsetX,
-                    location.y + offsetY,
-                    location.z + offsetZ,
-                    0, 0.1, 0);
-
-            level.addParticle(ParticleTypes.END_ROD,
-                    location.x + offsetX,
-                    location.y + offsetY,
-                    location.z + offsetZ,
-                    0, 0.05, 0);
-        }
-
         if (Config.logDebug) {
             Log.info("Player reached waypoint at {}", location);
         }
@@ -157,88 +134,6 @@ public class CrowQuestMarkerHandler {
      */
     static void onChatMessage(String message) {
         // Implementation moved to client wrapper to avoid Minecraft.getInstance()
-    }
-
-    /**
-     * Draws a particle arrow from the player pointing towards the quest location
-     */
-    public static void drawQuestArrow(Player player, Vec3 target, Level level) {
-        Vec3 playerPos = player.position().add(0, player.getEyeHeight(), 0);
-        Vec3 toTarget = target.subtract(playerPos);
-        if (toTarget.lengthSqr() < 1.0E-6D) {
-            return;
-        }
-        Vec3 direction = toTarget.normalize();
-
-        // Draw arrow particles in front of the player
-        double arrowLength = EntityConfig.crowArrowLength;
-        int particleCount = (int) (arrowLength * 4); // 4 particles per block
-
-        for (int i = 0; i < particleCount; i++) {
-            double progress = (double) i / particleCount;
-            Vec3 particlePos = playerPos.add(direction.scale(0.5 + progress * arrowLength));
-
-            // Main arrow shaft
-            level.addParticle(ParticleTypes.END_ROD,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    0, 0, 0);
-
-            // Arrow head at the end
-            if (progress > 0.7 && progress < 0.9) {
-                // Create arrow head effect with angled particles
-                Vec3 basis = Math.abs(direction.y) > 0.9D ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
-                Vec3 perpendicular1 = direction.cross(basis).normalize().scale(0.2);
-                Vec3 perpendicular2 = direction.cross(perpendicular1).normalize().scale(0.2);
-
-                level.addParticle(ParticleTypes.END_ROD,
-                        particlePos.x + perpendicular1.x, particlePos.y + perpendicular1.y, particlePos.z + perpendicular1.z,
-                        0, 0, 0);
-                level.addParticle(ParticleTypes.END_ROD,
-                        particlePos.x - perpendicular1.x, particlePos.y - perpendicular1.y, particlePos.z - perpendicular1.z,
-                        0, 0, 0);
-                level.addParticle(ParticleTypes.END_ROD,
-                        particlePos.x + perpendicular2.x, particlePos.y + perpendicular2.y, particlePos.z + perpendicular2.z,
-                        0, 0, 0);
-                level.addParticle(ParticleTypes.END_ROD,
-                        particlePos.x - perpendicular2.x, particlePos.y - perpendicular2.y, particlePos.z - perpendicular2.z,
-                        0, 0, 0);
-            }
-        }
-    }
-
-    /**
-     * Draws a waypoint marker at the target location
-     */
-    public static void drawWaypoint(Vec3 target, Level level) {
-        // Draw a vertical beam of particles
-        for (int i = 0; i < 20; i++) {
-            double y = target.y + i * 0.5;
-            level.addParticle(ParticleTypes.FLAME,
-                    target.x, y, target.z,
-                    0, 0.05, 0);
-
-            // Add some circling particles around the beam
-            double angle = (level.getGameTime() + i * 18) * 0.1;
-            double radius = 0.5;
-            double offsetX = Math.cos(angle) * radius;
-            double offsetZ = Math.sin(angle) * radius;
-
-            level.addParticle(ParticleTypes.END_ROD,
-                    target.x + offsetX, y, target.z + offsetZ,
-                    0, 0, 0);
-        }
-
-        // Add a glowing sphere at the base
-        for (int i = 0; i < 8; i++) {
-            double angle = i * Math.PI / 4;
-            double radius = 0.8;
-            double offsetX = Math.cos(angle) * radius;
-            double offsetZ = Math.sin(angle) * radius;
-
-            level.addParticle(ParticleTypes.GLOW,
-                    target.x + offsetX, target.y + 0.5, target.z + offsetZ,
-                    0, 0, 0);
-        }
     }
 
     /**

@@ -14,7 +14,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordZenitsu;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ThunderBreathingForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.integration.customnpcs.executors.BaseModBreathingExecutor;
@@ -76,6 +78,10 @@ public class BreathingSwordSwingPacket {
             if (FearEffectHandler.isParalyzed(player)) return;
 
             ItemStack heldItem = player.getItemInHand(InteractionHand.MAIN_HAND);
+            if (heldItem.getItem() instanceof NichirinSwordZenitsu
+                && ThunderBreathingForms.handleZenitsuClick(player)) {
+                return;
+            }
             boolean isCustomSword = heldItem.getItem() instanceof BreathingSwordItem;
             boolean isBaseModNichirinSword = BaseModBreathingExecutor.isBaseModNichirinSword(heldItem.getItem());
             if (!isCustomSword && !isBaseModNichirinSword) return;

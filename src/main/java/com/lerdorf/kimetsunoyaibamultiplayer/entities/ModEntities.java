@@ -163,6 +163,33 @@ public class ModEntities {
                 .updateInterval(3)
                 .build("kiriya"));
 
+    /** Shoichi - passive civilian child. */
+    public static final RegistryObject<EntityType<ShoichiEntity>> SHOICHI =
+        ENTITY_TYPES.register("shoichi",
+            () -> EntityType.Builder.of(ShoichiEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.6F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("shoichi"));
+
+    /** Kiyoshi - passive civilian child. */
+    public static final RegistryObject<EntityType<KiyoshiEntity>> KIYOSHI =
+        ENTITY_TYPES.register("kiyoshi",
+            () -> EntityType.Builder.of(KiyoshiEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.52F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("kiyoshi"));
+
+    /** Teruko - passive civilian child. */
+    public static final RegistryObject<EntityType<TerukoEntity>> TERUKO =
+        ENTITY_TYPES.register("teruko",
+            () -> EntityType.Builder.of(TerukoEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.45F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("teruko"));
+
     public static final RegistryObject<EntityType<KazumiEntity>> KAZUMI =
         ENTITY_TYPES.register("kazumi",
             () -> EntityType.Builder.of(KazumiEntity::new, MobCategory.MISC)
@@ -706,6 +733,9 @@ public class ModEntities {
             event.put(KANAWO.get(), KanawoEntity.createAttributes().build());
             event.put(KANATA.get(), KanataEntity.createAttributes().build());
             event.put(KIRIYA.get(), KiriyaEntity.createAttributes().build());
+            event.put(SHOICHI.get(), ShoichiEntity.createAttributes().build());
+            event.put(KIYOSHI.get(), KiyoshiEntity.createAttributes().build());
+            event.put(TERUKO.get(), TerukoEntity.createAttributes().build());
             event.put(KAZUMI.get(), KazumiEntity.createAttributes().build());
             event.put(PRINCESS.get(), PrincessEntity.createAttributes().build());
             event.put(OROCHI.get(), OrochiEntity.createAttributes().build());

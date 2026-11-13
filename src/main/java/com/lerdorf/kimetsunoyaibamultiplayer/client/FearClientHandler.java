@@ -59,12 +59,12 @@ public class FearClientHandler {
     private static final int FG_FRAMES = 23;
     private static final int MIN_NORMAL_TICKS = 20;
     private static final int MAX_NORMAL_TICKS = 60;
-    private static final int MIN_OVERLAY_PULSE_TICKS = 80;
-    private static final int MAX_OVERLAY_PULSE_TICKS = 160;
+    private static final int MIN_OVERLAY_PULSE_TICKS = 240;
+    private static final int MAX_OVERLAY_PULSE_TICKS = 360;
     private static final int PULSE_TOTAL_TICKS = 15;
     private static final double KOKUSHIBO_RANGE = 40.0D;
     private static final double ENTITY_RERENDER_RANGE = 96.0D;
-    private static final float OVERLAY_FADE_STEP = 1.0F / 6.0F;
+    private static final float OVERLAY_FADE_STEP = 1.0F / 10.0F;
 
     private static final Random RANDOM = new Random();
     private static int normalTicksRemaining = randomNormalDelay();
@@ -86,8 +86,8 @@ public class FearClientHandler {
         LocalPlayer player = mc.player;
         boolean fearActive = player != null && mc.level != null && FearEffectHandler.getFearLevel(player) > 0;
         boolean paralysisActive = fearActive && FearEffectHandler.isParalyzed(player);
-        updateOverlayAlpha(paralysisActive);
-        updateOverlayPulse(paralysisActive || overlayAlpha > 0.01F);
+        updateOverlayAlpha(fearActive);
+        updateOverlayPulse(fearActive || overlayAlpha > 0.01F);
         if (!fearActive) {
             if (fearWasActive || shaderLoaded) {
                 cleanupShader(mc);
@@ -216,7 +216,7 @@ public class FearClientHandler {
 
         renderScreenTexture(frameTexture("fear_effect_fg_", foregroundFrame(player)), overlayAlpha, isFearInversionActive());
         if (hasAkazaNearby(player)) {
-            renderAkazaFearHead(guiGraphics, player);
+            renderAkazaFearHead(guiGraphics, player, overlayAlpha);
         }
     }
 
@@ -270,8 +270,8 @@ public class FearClientHandler {
         }
     }
 
-    private static void updateOverlayAlpha(boolean paralysisActive) {
-        float target = paralysisActive ? 1.0F : 0.0F;
+    private static void updateOverlayAlpha(boolean fearActive) {
+        float target = fearActive ? 1.0F : 0.0F;
         if (overlayAlpha < target) {
             overlayAlpha = Math.min(target, overlayAlpha + OVERLAY_FADE_STEP);
         } else if (overlayAlpha > target) {
@@ -385,7 +385,7 @@ public class FearClientHandler {
         return "kimetsu:akaza".equals(value) || "kimetsunoyaiba:akaza".equals(value);
     }
 
-    private static void renderAkazaFearHead(GuiGraphics guiGraphics, LocalPlayer player) {
+    private static void renderAkazaFearHead(GuiGraphics guiGraphics, LocalPlayer player, float alpha) {
         Minecraft mc = Minecraft.getInstance();
         int centerX = mc.getWindow().getGuiScaledWidth() / 2;
         int centerY = mc.getWindow().getGuiScaledHeight() / 2;
@@ -398,6 +398,9 @@ public class FearClientHandler {
             centerX + headSize / 2,
             centerY + headSize / 2
         );
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
         try {
             InventoryScreen.renderEntityInInventory(
                 guiGraphics,
@@ -410,6 +413,8 @@ public class FearClientHandler {
             );
         } finally {
             guiGraphics.disableScissor();
+            RenderSystem.disableBlend();
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
 

@@ -71,6 +71,7 @@ public class CivilianStructureRegistry {
         // Fix typo: swamp
         registerStructure("village_swamp", StructureSize.LARGE, "kimetsunoyaiba");
         registerStructure("village_yukak", StructureSize.LARGE, "kimetsunoyaiba");
+        registerStructure("tsuzumi_mansion", StructureSize.LARGE, "kimetsunoyaibamultiplayer");
 
         // Vanilla villages (all LARGE)
         registerVanillaVillage("village_plains");

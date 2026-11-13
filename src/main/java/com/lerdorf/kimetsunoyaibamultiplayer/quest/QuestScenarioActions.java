@@ -969,6 +969,8 @@ public final class QuestScenarioActions {
             cleanupAsakusaEntities(player);
         } else if ("permanence".equals(groupId) && "slayers_blood".equals(stageId)) {
             cleanupSlayersBloodEntities(player);
+        } else if ("cruel".equals(groupId) && "tsuzumi_mansion".equals(stageId)) {
+            TsuzumiMansionScenario.cleanupForRestart(player);
         }
     }
 

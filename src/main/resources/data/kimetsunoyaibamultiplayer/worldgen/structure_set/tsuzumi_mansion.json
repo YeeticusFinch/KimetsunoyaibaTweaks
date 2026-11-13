@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "kimetsunoyaibamultiplayer:tsuzumi_mansion",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 8,
+    "separation": 4,
+    "salt": 733184921
+  }
+}

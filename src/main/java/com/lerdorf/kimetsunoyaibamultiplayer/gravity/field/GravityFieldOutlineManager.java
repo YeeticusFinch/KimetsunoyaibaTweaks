@@ -2,6 +2,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer.gravity.field;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.GravityBlockEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.entity.BlockDoorBlockEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.KyogaiGravityFieldPreviewPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -56,8 +58,11 @@ public final class GravityFieldOutlineManager {
 
         for (GravityField field : GravityFieldManager.getFieldsNear(level, player.position(), PREVIEW_RADIUS)) {
             if (player.getUUID().equals(field.excludedEntity())) {
-                spawnBox(level, player, field.box());
-                spawnArrow(level, player, field.sourcePos(), field.gravityDirection());
+                // Kyogai's preview is persistent client geometry rather than a stream of particles.
+                // The excluded entity is the Kyogai caster's player UUID; entity casters therefore
+                // never match a ServerPlayer and never receive a preview packet.
+                ModNetworking.sendToPlayer(new KyogaiGravityFieldPreviewPacket(
+                    field.box(), field.sourcePos(), field.gravityDirection(), PREVIEW_INTERVAL_TICKS * 3), player);
             }
         }
     }

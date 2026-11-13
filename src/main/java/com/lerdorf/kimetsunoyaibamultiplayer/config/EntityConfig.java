@@ -41,7 +41,7 @@ public class EntityConfig {
             .defineInRange("circle-radius", 15.0, 10.0, 50.0);
 
     private static final ForgeConfigSpec.BooleanValue CROW_QUEST_ARROW_ENABLED = BUILDER
-            .comment("Enable particle arrow pointing to quest locations when crow gives a quest")
+            .comment("Enable the line arrow pointing to quest locations when a crow gives a quest")
             .define("quest-arrow-enabled", true);
 
     private static final ForgeConfigSpec.BooleanValue CROW_WAYPOINT_ENABLED = BUILDER
@@ -49,7 +49,7 @@ public class EntityConfig {
             .define("waypoint-enabled", true);
 
     private static final ForgeConfigSpec.IntValue CROW_ARROW_UPDATE_INTERVAL = BUILDER
-            .comment("How often to update the quest arrow particles in ticks (lower = smoother but more particles)")
+            .comment("Legacy quest arrow update interval; line graphics render every frame")
             .defineInRange("arrow-update-interval", 5, 1, 20);
 
     private static final ForgeConfigSpec.DoubleValue CROW_ARROW_LENGTH = BUILDER

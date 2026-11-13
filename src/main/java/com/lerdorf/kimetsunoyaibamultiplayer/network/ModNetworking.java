@@ -20,6 +20,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenBloodDemonArtBu
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.OpenMeditationMenuPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PuppetLineSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.LoveLineSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderLightningSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderLightningSparkSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderZenitsuClickPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonPropositionStatePacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonEyesPacket;
@@ -29,6 +32,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SelectMeditationTar
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetCrowQuestMarkerPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.WebTraversalInputPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.KyogaiGravityArrowPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.KyogaiGravityFieldPreviewPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.TrainingGourdActionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.UpdateStructureMarkerPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.DeleteStructureMarkerPacket;
@@ -292,6 +296,13 @@ public class ModNetworking {
                 .consumerMainThread(KyogaiGravityArrowPacket::handle)
                 .add();
 
+        int kyogaiGravityFieldPreviewPacketId = id();
+        net.messageBuilder(KyogaiGravityFieldPreviewPacket.class, kyogaiGravityFieldPreviewPacketId)
+                .decoder(KyogaiGravityFieldPreviewPacket::new)
+                .encoder(KyogaiGravityFieldPreviewPacket::toBytes)
+                .consumerMainThread(KyogaiGravityFieldPreviewPacket::handle)
+                .add();
+
         int orochiDismountPacketId = id();
         net.messageBuilder(OrochiDismountPacket.class, orochiDismountPacketId)
                 .decoder(OrochiDismountPacket::new)
@@ -493,6 +504,27 @@ public class ModNetworking {
                 .decoder(LoveLineSyncPacket::new)
                 .encoder(LoveLineSyncPacket::toBytes)
                 .consumerMainThread(LoveLineSyncPacket::handle)
+                .add();
+
+        int thunderLightningSyncPacketId = id();
+        net.messageBuilder(ThunderLightningSyncPacket.class, thunderLightningSyncPacketId)
+                .decoder(ThunderLightningSyncPacket::new)
+                .encoder(ThunderLightningSyncPacket::toBytes)
+                .consumerMainThread(ThunderLightningSyncPacket::handle)
+                .add();
+
+        int thunderLightningSparkSyncPacketId = id();
+        net.messageBuilder(ThunderLightningSparkSyncPacket.class, thunderLightningSparkSyncPacketId)
+                .decoder(ThunderLightningSparkSyncPacket::new)
+                .encoder(ThunderLightningSparkSyncPacket::toBytes)
+                .consumerMainThread(ThunderLightningSparkSyncPacket::handle)
+                .add();
+
+        int thunderZenitsuClickPacketId = id();
+        net.messageBuilder(ThunderZenitsuClickPacket.class, thunderZenitsuClickPacketId)
+                .decoder(ThunderZenitsuClickPacket::new)
+                .encoder(ThunderZenitsuClickPacket::toBytes)
+                .consumerMainThread(ThunderZenitsuClickPacket::handle)
                 .add();
 
         int webTraversalInputPacketId = id();

@@ -45,8 +45,11 @@ public class KnYBiomeSpawnFixer {
      */
     @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOW)
     public static void fixBiomeSpawning(ServerAboutToStartEvent event) {
+        com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer.beginServerHangWatchdog(event.getServer());
+        System.err.println("[KnY-MP startup] KnYBiomeSpawnFixer start");
         boolean enhancedMountBiomes = EnhancedMountBiomeConfig.anyEnhancedMountEnabled();
         if (!com.lerdorf.kimetsunoyaibamultiplayer.config.BiomeConfig.enableBiomeFix && !enhancedMountBiomes) {
+            System.err.println("[KnY-MP startup] KnYBiomeSpawnFixer skipped");
             return;
         }
         MinecraftServer server = event.getServer();
@@ -230,6 +233,7 @@ public class KnYBiomeSpawnFixer {
                 }
             }
         }
+        System.err.println("[KnY-MP startup] KnYBiomeSpawnFixer end");
     }
 
     /**

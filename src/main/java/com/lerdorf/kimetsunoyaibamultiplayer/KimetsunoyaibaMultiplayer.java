@@ -369,8 +369,8 @@ public class KimetsunoyaibaMultiplayer
             );
 
             // Register Flower Breathing swords (base, Kanawo, Kanae)
-            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
-                "nichirinsword_flower",
+             com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                 "nichirinsword_flower",
                 (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_FLOWER.get(),
                 "flower_breathing",
                 com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
@@ -378,10 +378,67 @@ public class KimetsunoyaibaMultiplayer
                 null,
                 null,
                 true,
-                0 // Base sword level
-            );
+                 0 // Base sword level
+             );
 
-            com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+             // Enhanced Thunder Breathing swords: standard and blue lightning variants.
+             DustParticleOptions thunderParticle = new DustParticleOptions(
+                 new Vector3f(1.0F, 0.9F, 0.12F), 0.6F);
+             DustParticleOptions blueThunderParticle = new DustParticleOptions(
+                 new Vector3f(0.05F, 0.16F, 0.72F), 0.6F);
+             com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                 "nichirinsword_thunder",
+                 (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_THUNDER.get(),
+                 "thunder_breathing",
+                 com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+                 thunderParticle,
+                 SoundEvents.LIGHTNING_BOLT_THUNDER,
+                 null,
+                 true,
+                 0);
+              com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                  "nichirinsword_thunder_blue",
+                  (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_THUNDER_BLUE.get(),
+                 "thunder_breathing",
+                 com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+                 blueThunderParticle,
+                 SoundEvents.LIGHTNING_BOLT_THUNDER,
+                 null,
+                  true,
+                  0);
+              com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                  "nichirinsword_zenitsu",
+                  (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_ZENITSU.get(),
+                  "thunder_breathing",
+                  com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
+                  thunderParticle,
+                  SoundEvents.LIGHTNING_BOLT_THUNDER,
+                  null,
+                  true,
+                  1);
+              DustParticleOptions kaigakuThunderParticle = new DustParticleOptions(
+                  new Vector3f(0.05F, 0.16F, 0.72F), 0.6F);
+              com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                  "nichirinsword_kaigaku",
+                  (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KAIGAKU.get(),
+                  "thunder_breathing",
+                  com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
+                  kaigakuThunderParticle,
+                  SoundEvents.LIGHTNING_BOLT_THUNDER,
+                  null,
+                  true,
+                  1);
+             if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("thunder_breathing")) {
+                 com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
+                     "thunder_breathing",
+                     "Thunder Breathing",
+                     com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ThunderBreathingForms.createThunderBreathing(false),
+                     30000,
+                     thunderParticle,
+                     null);
+             }
+
+             com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
                 "nichirinsword_kanawo",
                 (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KANAWO.get(),
                 "flower_breathing",
@@ -614,8 +671,18 @@ public class KimetsunoyaibaMultiplayer
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event)
     {
+        beginServerHangWatchdog(event.getServer());
         Log.startupProbe("KimetsunoyaibaMultiplayer.onServerStarting");
         Log.info("Kimetsunoyaiba Multiplayer server starting");
+    }
+
+    public static void beginServerHangWatchdog(net.minecraft.server.MinecraftServer server) {
+        if (server == null) {
+            return;
+        }
+        observedServerThread = Thread.currentThread();
+        lastServerTickHeartbeatMs = System.currentTimeMillis();
+        startServerHangWatchdogIfNeeded();
     }
 
     /**
@@ -947,10 +1014,8 @@ public class KimetsunoyaibaMultiplayer
     {
         if (event.phase == TickEvent.Phase.END) {
             if (event.getServer() != null) {
-                observedServerThread = Thread.currentThread();
-                lastServerTickHeartbeatMs = System.currentTimeMillis();
+                beginServerHangWatchdog(event.getServer());
                 SERVER_HANG_DUMPED_FOR_CURRENT_STALL.set(false);
-                startServerHangWatchdogIfNeeded();
                 if (!firstServerTickProbeLogged) {
                     firstServerTickProbeLogged = true;
                     Log.startupProbe("KimetsunoyaibaMultiplayer.onServerTick");
@@ -996,18 +1061,18 @@ public class KimetsunoyaibaMultiplayer
                         continue;
                     }
 
-                    Log.startupProbe("KimetsunoyaibaMultiplayer.serverHangWatchdog");
-                    Log.alwaysWarn("[WATCHDOG] Server thread '{}' has not advanced for {} ms", serverThread.getName(), stallMs);
+                    System.err.println("[KnY-MP WATCHDOG] Server thread '" + serverThread.getName()
+                            + "' has not advanced for " + stallMs + " ms");
                     StackTraceElement[] stack = serverThread.getStackTrace();
                     if (stack.length == 0) {
-                        Log.alwaysWarn("[WATCHDOG] No stack trace available for stalled server thread");
+                        System.err.println("[KnY-MP WATCHDOG] No stack trace available for stalled server thread");
                         continue;
                     }
 
                     for (int i = 0; i < stack.length; i++) {
-                        Log.alwaysWarn("[WATCHDOG] at {}", stack[i]);
+                        System.err.println("[KnY-MP WATCHDOG] at " + stack[i]);
                         if (i >= 39) {
-                            Log.alwaysWarn("[WATCHDOG] stack trace truncated after {} frames", i + 1);
+                            System.err.println("[KnY-MP WATCHDOG] stack trace truncated after " + (i + 1) + " frames");
                             break;
                         }
                     }

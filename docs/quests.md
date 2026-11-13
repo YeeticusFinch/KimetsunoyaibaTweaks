@@ -157,25 +157,96 @@ The player(s) will venture to the nearest Tsuzumi Mansion structure.
 "Your Kasugai Crow has received new orders."
 "Kids are trapped in a building with demons, they need rescuing before it's too late."
 
-Step 1: Travel to Tsuzumi Mansion
-The waypoint will point to the nearest Tsuzumi Mansion structure
+Step 1: Before arriving to the mansion, slightly earlier in the way you’ll meet Zenitsu, he’s crying and complaining that a girl just rejected him, he’ll cry and yell about him being weak, about how scared he is.
 
-Step 2: Talk to Teruko and Shoichi
+- When the player enters within 100 blocks of the Tsuzumi mansion structure (`tzusumi_mansion.nbt` structure), kimetsunoyaiba:zenitsu will spawn (if the mod has a kimetsunoyaibamultiplayer:zenitsu, then it will use that entity instead).
+
+- When Zenitsu spawns, he should be using the crying animation from our biped.animation.json geckolib animation file in kimetsunoyaibamultiplayer, this animation will be playing on repeat. While crying, he cannot move.
+
+_There should be a 30 tick delay between each of these dialogs_
+
+Zenitsu: Waaaahhh...
+Zenitsu: She rejected me!
+Zenitsu: I went into financial dept to win her affection, but she left me for another guy!
+Zenitsu: Jigoro-san paid my depts. But I will never be a Demon Slayer! I'm too weak!
+Zenitsu: I hear demons in that house... I'm so scared
+Zenitsu: The kids need my help and I'm too scared and weak!
+Player: It's okay, I'm here now, I'm strong and fearless, we'll save the kids together!
+
+_At this point Zenitsu stops playing the crying animation_
+
+Step 2: After calming Zenitsu down, he’ll follow you to the Tsuzumi mansion outside you’ll find (Teruko and Shoichi) letting you know their brother (Kiyoshi) is inside with a demon, you will ask Zenitsu to join you but he’ll tell you he can’t and he’s weak, after a bit, he’ll tell you he’ll go in when he’s calmed down, which won’t be soon, you must go in alone and take his word for it (that way there’s no need to do more for Zen)
+
+_The waypoint is set to the structure marker of id "outside" from the `tzusumi_mansion` structure, and that is where Teruko and Shoichi have spawned, Teruko and Shoichi entities are from our mod_
 
 Teruko: Help! A demon has kidnapped our older brother Kiyoshi!
 Shoichi: Kiyoshi is trapped in the mansion! Please help us kind sir!
+Player: We are demon slayers! We will go save your brother!
+Zenitsu: Actually... I'll stay out here with the kids...
 
-Step 3: Find Kiyoshi
-The inside of Tsuzumi Mansion is built like a maze.
-Kiyoshi is hiding inside a closet in the mansion.
-Inside the Tsuzumi Mansion there are regular demons, tongue demons, and horned demons.
+Next quest step is called "Find the demon"
 
-Step 4: Defeat Kyogai 
-If Kiyoshi dies then the quest fails and must be restarted.
+_The waypoint will then point to the "entrance" structure marker_
 
-Step 5: Exit the Tsuzumi Mansion
-Exit the mansion and bring Kiyoshi back to his siblings (Teruko and Shoichi).
+_Once entrance is reached, waypoint will point to `hall_0`, then `hall_1`, then `hall_2`, then `hall_3`, then `hall_4`, then `hall_5`, then `room_center`_
 
+_Once `room_center` is reached, kimetsunoyaibamultiplayer:kyogai will spawn at the structure marker with id `kyogai`, facing the `room_center` structure marker_
+
+If during this time (before step 3) any of the players participating in the quest approaches within 4 blocks of `stairs_top` structure marker, then the `kimetsunoyaibamultiplayer:drum_back` sound effect will be played on that player and they will immediately be teleported to the `stairs_bottom` structure marker, facing the direction of the `hall_0` structure marker.
+
+Step 3: Inside you’ll encounter Kyogai, after a bit of dialogue, Inosuke walks in, you’ll fight alongside him for a bit, but you’ll suddenly be teleported to another room, where Kiyoshi and Teruko have a Kyogai drum, (skipping protecting the little girl Teruko), after they explain about the rare blood and about the drum (Kiyoshi is holding the drum), they’ll tell you they’ll stay hiding here, you must find Kyogai in a room
+
+_Kyogai doesn't attack yet, and for the duration of this dialog he is immune to all damage and attacks. Each dialog line should take 20 ticks between lines_
+
+Kyogai: Who dares enter my mansion?
+Player: I do, I'm looking for Kiyoshi.
+Kyogai: This mansion is my masterpiece!
+Kyogai: Kiyoshi and his siblings have the rare Marechi blood type. Eating one kid is like eating 100 humans!
+Kyogai: Once I eat all 3 kids, I will regain my place amongst the Kizuki ranks!
+Inosuke: Step aside, I'm COMING THROUGH!
+
+_Inosuke (from our mod) spawns at the structure marker of id `inosuke`, and then a redstone block is temporarily placed at the structure marker of id `door_open`, and then 40 ticks later that redstone block is removed and replaced by air_
+
+_At this point, Kyogai is no longer invulnerable. Inosuke will target kyogai and attack him. And kyogai will start attacking the quest players and also attacking Inosuke._
+
+_Once Kyogai's HP drops below 75%, Kyogai will become invulnerable again and all players in the quest will instantly be teleported to the structure marker labeled `kiyoshi` while the `drum_back` sound effect plays. And Inosuke will be removed._
+
+_Our Kiyoshi entity will spawn at the `kiyoshi` structure marker, alongside Teruko, if Teruko is already in this world, like within render distance, then it will teleport the nearest Teruko over to the kiyoshi structure marker. Otherwise, it will spawn a new Teruko entity on the kiyoshi structure marker location._
+
+Kiyoshi: I found you! You're safe now.
+Teruko: Please kind sir, help us find the exit.
+Kiyoshi: The demons can smell our rare Marechi blood type, they want to eat us!
+Player: I will go slay the demon. If a demon approaches, use the drum!
+
+_The quest waypoint will then point to `top_0`, then to `top_1`, then to `top_2`, then to `top_3`, and finally to the structure marker with id `inosuke`._
+
+_The quest will prompt the players to push the button to open the hidden door, and the waypoint will be pointing back towards kyogai (kyogai must be a persistent entity, such that he doesn't despawn during this)_
+
+Step 4: Round two against Kyogai, without Inosuke’s help, defeat Kyogai
+
+_Kyogai is no longer invulnerable, the player(s) must now defeat Kyogai._
+
+Kyogai: You have returned, shall we finish what we started?
+Player: Yes, I came back to slaughter you!
+
+Step 5: get out of the mansion, outside, Zenitsu and Inosuke will be there with the kids (Teruko, Shoichi, and Kiyoshi), to your surprise, Zenitsu led them out and saved them from demons, as Inosuke will brag about how he defeated some
+
+Waypoint will point to hall_5, then hall_4, then hall_3, then hall_2, then hall_1, then hall_0, then entrance, then outside.
+
+At this point, Shoichi, Kiyoshi, Teruko, Zenitsu, and Inosuke will all be teleported to the outside structure marker
+
+Once the players reach the outside structure marker, Zenitsu and Inosuke will begin following the player, teleporting to the player if either of them ever finds themselves in a chunk that is getting unloaded, or more than 100 blocks away from the player.
+
+Zenitsu: I got all the kids out of the house and I slayed some demons!
+Inosuke: And I killed even more demons!
+Inosuke: Did you know that I completed final selection the fastest?
+Zenitsu: Yes, he was the first one up the mountain, and the first one down.
+Teruko: Thank you for saving us from the demons.
+Zenitsu: It was our pleasure!
+
+Step 6: Travel with Zenitsu and Inosuke to the Wisteria House to meet the old lady, quests here will be temporarily paused, you can continue the quests whenever you're ready and whenever you have obtained enough resources again, when you’re ready, talk to your crow again
+
+The waypoint will point to the nearest `kimetsunoyaiba:house_1` structure. Once you arrive at this structure, Zenitsu and Inosuke will stop following the player, and the quest will be complete
 
 ### Mission No.4 - Mount Natagumo
 
@@ -315,7 +386,7 @@ Step 5: Talk to Ryoko’s mother
 
 At this point, both Ryoko and Spider Demon Mother are invulnerable for quest purposes
 This is Spider Demon Mother. As soon as you approach Mother, Ryoko will say “No! Please don’t bring me back here!”, and then spider webs will grab her and trap her here. Ryoko’s mother will thank the player for bringing back her Daughter, and then she will reprimand Daughter for running away, and also say “you know He doesn’t like when you don’t keep up appearances”, and then Ryoko will transform back into Spider Demon Daughter form.
-As a reward, Spider Demon Mother will offer the player a place in the Spider Family. 
+As a reward, Spider Demon Mother will offer the player a place in the Spider Family.
 
 Step 6: Join the Spider Family
 
@@ -339,11 +410,12 @@ Step 2: Talk to Daughter
 
 After Rui and the rest of the family leaves, the player will talk to Daughter, and she will say that this is a violent and abusive family, and that Rui must be destroyed. Daughter will say that she is too weak to run away again, and that no demon is strong enough to defeat Rui, so you must find the demon slayers.
 
-Step 3: Talk to Rui 
+Step 3: Talk to Rui
 
 Rui will say that the Spider Family is built on trust, and they protect each other from the horrors of this cruel world (such as the demon slayers), and that he is Muzan’s favorite. He will then tell the player that Daughter trusts the player, and that she has broken the family’s trust and brings danger to the family, so she must die. He will then tell the player to kill Daughter, to prove loyalty to the family, otherwise Rui will kill both the player and Daughter
 
-At this point there are two paths the player can follow: 
+At this point there are two paths the player can follow:
+
 - Daughter Path (kill Rui)
 - Rui Path (kill Daughter)
 
@@ -405,7 +477,7 @@ Daughter: “Now’s our chance to run away! Mother is dead, Rui is distracted�
 
 Player: “You betrayed me, you will die with the rest of your wretched family”
 
-*Shinobu spawns*
+_Shinobu spawns_
 
 Shinobu: “You will all die”
 
@@ -427,7 +499,7 @@ Find Daughter. Once the player finds Daughter, they will discover that Daughter 
 
 Daughter: “You aim to betray me? Fine, I do not need your help, I will get the demon slayers myself and burn this whole family to the ground!”
 
-*Father spawns*
+_Father spawns_
 
 Father: “<player> you will be punished for your insolence!"
 
@@ -445,9 +517,9 @@ Daughter will be in the center of the village in Ryoko form (resembling a human)
 
 Ryoko: Help! The demon is here!
 
-*Zenitsu spawns*
+_Zenitsu spawns_
 
-Zenitsu: I'll save you Ryoko-chan! 
+Zenitsu: I'll save you Ryoko-chan!
 
 Zenitsu picks up Ryoko (Daughter) and they both disappear in a flash of thunder.
 

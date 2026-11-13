@@ -91,7 +91,8 @@ public class CrowQuestMarkerHandlerClient {
     }
 
     /**
-     * Client-only: Tick quest markers (spawn particles, etc.)
+     * Client-only: update quest marker lifetime and completion state.
+     * World rendering is handled by CrowQuestMarkerRenderer every frame.
      */
     public static void clientTick() {
         if (!EntityConfig.crowEnhancementsEnabled) {
@@ -123,27 +124,18 @@ public class CrowQuestMarkerHandlerClient {
         if (!marker.completed && marker.isNearTarget(player.position())) {
             marker.completed = true;
             CrowQuestMarkerHandler.onWaypointReached(player, marker.targetLocation, mc.level);
+            CrowQuestMarkerRenderer.showCompletion(marker.targetLocation);
             clearQuestMarker(player.getUUID());
             return;
         }
 
         marker.tickCounter++;
 
-        // Draw quest arrow pointing to target
-        if (EntityConfig.crowQuestArrowEnabled && marker.tickCounter % EntityConfig.crowArrowUpdateInterval == 0) {
-            CrowQuestMarkerHandler.drawQuestArrow(player, marker.targetLocation, mc.level);
-        }
-
-        // Draw waypoint at target location
-        if (EntityConfig.crowWaypointEnabled) {
-            CrowQuestMarkerHandler.drawWaypoint(marker.targetLocation, mc.level);
-
-            // Play subtle ambient sound at waypoint (every 3 seconds)
-            if (mc.level.getGameTime() % 60 == 0) {
-                mc.level.playSound(mc.player,
-                    (int) marker.targetLocation.x, (int) marker.targetLocation.y, (int) marker.targetLocation.z,
-                    SoundEvents.BEACON_AMBIENT, SoundSource.BLOCKS, 0.3f, 1.2f);
-            }
+        // Play subtle ambient sound at waypoint (every 3 seconds).
+        if (EntityConfig.crowWaypointEnabled && mc.level.getGameTime() % 60 == 0) {
+            mc.level.playSound(mc.player,
+                (int) marker.targetLocation.x, (int) marker.targetLocation.y, (int) marker.targetLocation.z,
+                SoundEvents.BEACON_AMBIENT, SoundSource.BLOCKS, 0.3f, 1.2f);
         }
     }
 

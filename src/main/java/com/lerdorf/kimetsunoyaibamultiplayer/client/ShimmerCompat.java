@@ -2,11 +2,13 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -36,6 +38,7 @@ public final class ShimmerCompat {
 
     private static final Map<Integer, Object> ENTITY_LIGHTS = new HashMap<>();
     private static final Map<Integer, Object> TORNADO_LIGHTS = new HashMap<>();
+    private static final Map<java.util.UUID, Object> LIGHTNING_LIGHTS = new HashMap<>();
 
     private static Object lightManager;
     private static Object bloomPost;
@@ -120,6 +123,25 @@ public final class ShimmerCompat {
         }
     }
 
+    /** Adds world-space geometry to bloom using the view active when Shimmer draws it. */
+    public static void postWorldBloom(BiConsumer<PoseStack, MultiBufferSource> renderer) {
+        if (!isShimmerLoaded() || !initializeApi()) {
+            return;
+        }
+
+        try {
+            Consumer<MultiBufferSource> bloomRenderer = bufferSource -> {
+                PoseStack currentPoseStack = new PoseStack();
+                Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+                currentPoseStack.mulPose(camera.rotation());
+                renderer.accept(currentPoseStack, bufferSource);
+            };
+            postEntityForce.invoke(bloomPost, bloomRenderer);
+        } catch (ReflectiveOperationException exception) {
+            reportApiFailure(exception);
+        }
+    }
+
     /** Updates one short-lived colored light at the entity's interpolated position. */
     public static void updateEntityLight(Entity entity, float partialTick, int color, float radius) {
         if (!isShimmerLoaded() || !initializeApi()) {
@@ -167,6 +189,48 @@ public final class ShimmerCompat {
                 setPos.invoke(light, position.x, position.y, position.z);
                 updateLight.invoke(light);
             }
+        } catch (ReflectiveOperationException exception) {
+            reportApiFailure(exception);
+        }
+    }
+
+    /** Maintains a colored Shimmer light at the center of a custom lightning bolt. */
+    public static void updateLightningLight(java.util.UUID boltId, Vec3 position, int color, float radius) {
+        if (boltId == null || position == null || !isShimmerLoaded() || !initializeApi()) {
+            return;
+        }
+
+        cleanupEntityLights();
+        try {
+            Object light = LIGHTNING_LIGHTS.get(boltId);
+            if (light == null || (boolean) isRemoved.invoke(light)) {
+                light = addLight.invoke(lightManager,
+                    new Vector3f((float) position.x, (float) position.y, (float) position.z), color, radius);
+                if (light == null) {
+                    return;
+                }
+                LIGHTNING_LIGHTS.put(boltId, light);
+            } else {
+                setPos.invoke(light, (float) position.x, (float) position.y, (float) position.z);
+                updateLight.invoke(light);
+            }
+        } catch (ReflectiveOperationException exception) {
+            reportApiFailure(exception);
+        }
+    }
+
+    /** Removes the Shimmer light associated with a custom lightning bolt. */
+    public static void removeLightningLight(java.util.UUID boltId) {
+        if (boltId == null) {
+            return;
+        }
+
+        Object light = LIGHTNING_LIGHTS.remove(boltId);
+        if (light == null || remove == null) {
+            return;
+        }
+        try {
+            remove.invoke(light);
         } catch (ReflectiveOperationException exception) {
             reportApiFailure(exception);
         }
@@ -254,9 +318,10 @@ public final class ShimmerCompat {
     private static void removeAllEntityLights() {
         removeLights(ENTITY_LIGHTS);
         removeLights(TORNADO_LIGHTS);
+        removeLights(LIGHTNING_LIGHTS);
     }
 
-    private static void removeLights(Map<Integer, Object> lights) {
+    private static void removeLights(Map<?, Object> lights) {
         for (Object light : lights.values()) {
             try {
                 remove.invoke(light);
