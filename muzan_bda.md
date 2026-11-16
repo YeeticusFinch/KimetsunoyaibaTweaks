@@ -29,7 +29,19 @@ Between each segment, like at the joint between segments, the segments should ov
 
 **Muzan hands**
 
-- The biokineses_0 item (and the biokineses_0l rendered in the left hand)
+- The biokineses_0 item (and the biokineses_0l rendered in the left hand, if the ability calls for it)
+
+**Arm Blade**
+
+- The biokineses_1 item (and the biomineses_1l rendered in the left hand, if the ability calls for it)
+- this is an animated Geckolib item, it uses the kanroji sword animation file, so the same animations as the kanroji sword, with a similar handler, because it's basically a kanroji sword with a different model (but same bone groups)
+
+**Flesh Vines**
+
+- A thick rendered tentacle, similar to the back tentacles, but much thicker, with the flesh vine texture
+- the flesh_vine_tip model is rendered at the end of the flesh vine, facing the direction that the end is facing
+- the start of the flesh vine can either be connected to a location (which can move), it it can be connected to one of the bones of the user (like the torso or the arm, similar to the back tentacles)
+- the flesh vine should have a little bit of randomness in it's path, and it should be quite lumpy, the segments varying in thickness somewhat randomly, with some lumps and protrusions here and there, and they should be wriggling and writhing
 
 ## Black Blood, Brambles
 
@@ -65,28 +77,10 @@ Ticks 18-60
 - All living entities in that cone (length is brambleRange, radius is a third of brambleRange) will take damage every 2 ticks (and yes that should ignore/reset the damage cooldowns, using our Damager.hurt function), also whenever a living entity is damaged by this ability, it should get some blackred_impact particles on it
 - Every 2 ticks, raycast forward a full 60 blocks, at every solid block that intersects that raycast, place a blackred_slash
 
+
 ## Merciless Punishment
 
 _Muzan Hands_
-
-The user dashes forward at incredible speed, and uses his sharp fingernails to claw his target with both arms twice, creating red scratches.
-
-Tick 0 (setup)
-
-- Biokineses item uses the biokineses_0 model (and renders biokineses_0l on the left hand)
-- Raycast forward up to 40 blocks (from the user's head), setting the target location to the nearest living entity or block that intersects that raycast
-
-Tick 1
-
-- Spawn a line of blackred_impact particles between the current location and the target location
-- The user teleport to the target location
-- Play the sword_to_right animation with a red claw slash, doing AOE damage
-
-Tick 5
-
-- Play the left_sword_to_left animation with a red claw slash, doing AOE damage
-
-## Ultimate Authority
 
 _Muzan Hands_
 
@@ -108,6 +102,31 @@ Tick 21 (cleanup)
 
 - Form cleanup, the animation on the user is cancelled, the guard state is removed, the user is no longer slowed
 - The blood_tornado entity is removed
+
+## Ultimate Authority
+
+_Muzan Hands_
+
+The user stomps on the ground and a line of upwards flesh vines surges forward, give of them in a line rolling forward like a tidal wave of destruction.
+
+Ticks 0-15 (charge up)
+
+- Biokineses item uses the biokineses_0 model
+- play the right_arm_chargeup animation on the user
+- User moves at quarter speed and can't jump, user is hovering during this time, 3 blocks higher than where they started the form from (they will float up within the first 5 ticks of the charge up, and this "up" is local gravity aware)
+- Create 3 flesh vines on the user's location
+- The start location of all 3 flesh vines should be one block below the user's location (local gravity aware), and the end location should be 2 block's above the user (local gravity aware) and a random 1.5 block offset in any direction that is perpendicular to the upward vector (the upward vector in the local gravity)
+- The start and end location of all 3 of those flesh vines should be recalculated every tick (with a new random end location each tick)
+
+Tick 17
+
+- User slams downward while playing the stomp animation, and the attack happens as soon as the user hits the ground (if the user doesn't hit the ground in the next two seconds, then the ability is cancelled
+
+When the user hits the ground:
+
+- Calculate a 15 block horizontal line perpendicular to the user's facing direction (7.5 blocks to the left, 7.5 blocks to the right)
+- Calculate 5 evenly spaced points along that line (3 blocks apart)
+- on each of those 5 points, there will be a flesh vine that spawns, the start location being the nearest solid block underneath that point (do a 1 block offset below that solid block), and the end position being 1 block higher than the starting position
 
 ---
 
