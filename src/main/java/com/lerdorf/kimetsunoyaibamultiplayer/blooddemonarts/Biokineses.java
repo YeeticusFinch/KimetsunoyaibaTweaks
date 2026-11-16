@@ -9,8 +9,14 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.compat.MinecraftComesAliveCompat;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BloodTornadoEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BloodTornadoSpawner;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.FleshVineEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonEyesSyncHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame;
 import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.GravityDirectionHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
@@ -29,7 +35,13 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Pillager;
+import net.minecraft.world.entity.monster.Vindicator;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ClipContext;
@@ -60,6 +72,8 @@ public final class Biokineses {
     public static final int FORM_BIOKINETIC_GRASP = 3903;
     public static final int FORM_MERCILESS_PUNISHMENT = 3904;
     public static final int FORM_ULTIMATE_AUTHORITY = 3905;
+    public static final int FORM_BLACK_BLOOD_DESCENDENCE = 3906;
+    public static final int FORM_FORCED_TRANSITION = 3907;
 
     private static final int CHARGE_TICKS = 18;
     private static final int BRAMBLE_END_TICK = 60;
@@ -84,9 +98,47 @@ public final class Biokineses {
     private static final float CLAW_DAMAGE = 14.0F;
     private static final int CLAW_GUARD_TICKS = 10;
     private static final double CLAW_AOE_SIZE = 5.0D;
-    private static final int MERCILESS_END_TICK = 7;
-    private static final double MERCILESS_RANGE = 40.0D;
-    private static final int ULTIMATE_END_TICK = 21;
+    private static final int MERCILESS_END_TICK = 21;
+    private static final int ULTIMATE_CHARGE_END_TICK = 15;
+    private static final int ULTIMATE_SLAM_TICK = 17;
+    private static final int ULTIMATE_CANCEL_TICK = 57;
+    private static final int ULTIMATE_SEQUENCE_END_TICK = 62;
+    private static final int ULTIMATE_CHARGE_VINE_END_TICK = 19;
+    private static final int ULTIMATE_CHARGE_VINE_LIFETIME = ULTIMATE_CHARGE_VINE_END_TICK + 1;
+    private static final int ULTIMATE_SURGE_COUNT = 5;
+    private static final double ULTIMATE_HOVER_HEIGHT = 3.0D;
+    private static final double ULTIMATE_CHARGE_START_BELOW = 1.0D;
+    private static final double ULTIMATE_CHARGE_END_ABOVE = 2.0D;
+    private static final double ULTIMATE_SURGE_SPACING = 3.0D;
+    private static final double ULTIMATE_SURGE_HALF_WIDTH = 6.0D;
+    private static final double ULTIMATE_SURGE_START_BELOW_GROUND = 1.0D;
+    private static final int DESCENDENCE_CHARGE_END_TICK = 20;
+    private static final int DESCENDENCE_IMPACT_TICK = 25;
+    private static final int DESCENDENCE_CLEANUP_TICK = 56;
+    private static final int DESCENDENCE_BRAMBLE_LIFETIME = 30;
+    private static final int DESCENDENCE_BRAMBLE_COUNT = 10;
+    private static final double DESCENDENCE_HOVER_HEIGHT = 20.0D;
+    private static final double DESCENDENCE_BACKWARD_DISTANCE = 10.0D;
+    private static final double DESCENDENCE_TARGET_RANGE = 40.0D;
+    private static final double DESCENDENCE_FALLBACK_RAYCAST = 80.0D;
+    private static final double DESCENDENCE_IMPACT_RADIUS = 6.0D;
+    private static final float DESCENDENCE_IMPACT_DAMAGE = 14.0F;
+    private static final float DESCENDENCE_BRAMBLE_DAMAGE = 6.0F;
+    private static final double DESCENDENCE_KNOCKBACK = 1.35D;
+    private static final double DESCENDENCE_BRAMBLE_HEIGHT = 30.0D;
+    private static final double DESCENDENCE_BRAMBLE_HORIZONTAL_OFFSET = 6.0D;
+    private static final double DESCENDENCE_BRAMBLE_ARC = 3.0D;
+    private static final float DESCENDENCE_BRAMBLE_WIDTH = 0.12F;
+    private static final double DESCENDENCE_BRAMBLE_START_SPREAD = 6.0D;
+    private static final int FORCED_TRANSITION_END_TICK = 50;
+    private static final int FORCED_TRANSITION_LATCH_TICKS = 20;
+    private static final int FORCED_TRANSITION_DAMAGE_INTERVAL = 10;
+    private static final float FORCED_TRANSITION_DAMAGE = 30.0F;
+    private static final int FORCED_TRANSITION_DEBUFF_TICKS = 200;
+    private static final double FORCED_TRANSITION_RANGE = 80.0D;
+    private static final double FORCED_TRANSITION_VINE_SPEED = 2.0D;
+    private static final double FORCED_TRANSITION_VINE_WIDTH = 0.75D;
+    private static final double FORCED_TRANSITION_SLITHER_AMPLITUDE = 0.9D;
     private static final String LAST_CLAW_TICK_TAG = "BiokinesesLastClawTick";
     private static final String CLAW_ANIMATION_INDEX_TAG = "BiokinesesClawAnimationIndex";
     private static final String[] CLAW_ANIMATIONS = {
@@ -150,18 +202,32 @@ public final class Biokineses {
                new BloodDemonArtForm(
                    FORM_MERCILESS_PUNISHMENT,
                    "Merciless Punishment",
-                   "Dash to the nearest target and claw it twice with both arms.",
+                  "Swipe with a red claw storm and launch a blood tornado along the ground.",
                    3,
                    Biokineses::executeMercilessPunishment
                ),
-               new BloodDemonArtForm(
-                   FORM_ULTIMATE_AUTHORITY,
-                   "Ultimate Authority",
-                   "Unleash a red claw storm and launch a blood tornado across the ground.",
-                   4,
-                   Biokineses::executeUltimateAuthority
-               )
-            ),
+                new BloodDemonArtForm(
+                    FORM_ULTIMATE_AUTHORITY,
+                    "Ultimate Authority",
+                     "Stomp and send five sinusoidal flesh vines surging forward.",
+                     4,
+                     Biokineses::executeUltimateAuthority
+                ),
+                new BloodDemonArtForm(
+                    FORM_BLACK_BLOOD_DESCENDENCE,
+                    "Black Blood, Descendence",
+                    "Leap into the air and crash down in a storm of red-and-black brambles.",
+                    4,
+                    Biokineses::executeBlackBloodDescendence
+                ),
+                new BloodDemonArtForm(
+                    FORM_FORCED_TRANSITION,
+                    "Forced Transition",
+                    "Latch onto a living target with a flesh vine and force a demonic transformation.",
+                    4,
+                    Biokineses::executeForcedTransition
+                )
+             ),
             0x8B1018
         );
     }
@@ -218,47 +284,10 @@ public final class Biokineses {
         }
 
         CombatGravityFrame.run(entity, () -> {
-            final Vec3 target = findMercilessTarget(entity, serverLevel);
-            AbilityScheduler.scheduleRepeating(entity, new Runnable() {
-                private int tick;
-
-                @Override
-                public void run() {
-                    if (!entity.isAlive()) {
-                        return;
-                    }
-
-                    if (tick == 0) {
-                        AnimationHelper.playAnimation(entity, "sword_to_right", 6);
-                        GuardStateHelper.setGuardState(entity, CLAW_DAMAGE, formId, false);
-                    } else if (tick == 1) {
-                        spawnImpactLine(serverLevel, entity.getEyePosition(), target);
-                        entity.teleportTo(target.x, target.y, target.z);
-                        performClawSlash(entity, null, "sword_to_right", formId);
-                    } else if (tick == 5) {
-                        performClawSlash(entity, null, "left_sword_to_left", formId);
-                    } else if (tick == MERCILESS_END_TICK) {
-                        cleanupForm(entity);
-                    }
-
-                    tick++;
-                }
-            }, 1, MERCILESS_END_TICK + 1);
-        });
-    }
-
-    private static void executeUltimateAuthority(LivingEntity entity, Level level, int formId) {
-        if (!(level instanceof ServerLevel serverLevel)) {
-            return;
-        }
-
-        CombatGravityFrame.run(entity, () -> {
-            Vec3 localDirection = CombatGravityFrame.look(entity).normalize();
-            Vec3 worldDirection = CombatGravityFrame.world(localDirection).normalize();
-            Vec3 position = CombatGravityFrame.world(CombatGravityFrame.position(entity));
-            BloodTornadoEntity tornado = BloodTornadoSpawner.spawn(
-                serverLevel, position, worldDirection, entity, ULTIMATE_END_TICK);
-
+            final Vec3 direction = CombatGravityFrame.world(CombatGravityFrame.look(entity)).normalize();
+            final Vec3 position = CombatGravityFrame.world(CombatGravityFrame.position(entity));
+            final BloodTornadoEntity tornado = BloodTornadoSpawner.spawn(
+                serverLevel, position, direction, entity, MERCILESS_END_TICK);
             AbilityScheduler.scheduleRepeating(entity, new Runnable() {
                 private int tick;
 
@@ -276,9 +305,8 @@ public final class Biokineses {
                         limitMovement(entity, 0.5D);
                     }
                     if (tick == 0) {
-                        AnimationHelper.playAnimation(entity, "left_sword_overhead", ULTIMATE_END_TICK);
-                        performClawSlash(entity, null, "left_sword_overhead", formId);
-                    } else if (tick == ULTIMATE_END_TICK) {
+                        performClawSlash(entity, null, "left_arm_overhead", formId);
+                    } else if (tick == MERCILESS_END_TICK) {
                         if (tornado != null) {
                             tornado.discard();
                         }
@@ -287,46 +315,656 @@ public final class Biokineses {
 
                     tick++;
                 }
-            }, 1, ULTIMATE_END_TICK + 1);
+            }, 1, MERCILESS_END_TICK + 1);
         });
     }
 
-    private static Vec3 findMercilessTarget(LivingEntity entity, ServerLevel level) {
-        Vec3 start = CombatGravityFrame.world(CombatGravityFrame.eye(entity));
-        Vec3 direction = CombatGravityFrame.world(CombatGravityFrame.look(entity)).normalize();
-        Vec3 end = start.add(direction.scale(MERCILESS_RANGE));
-        BlockHitResult blockHit = level.clip(new ClipContext(
-            start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
+    private static void executeUltimateAuthority(LivingEntity entity, Level level, int formId) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
 
-        Vec3 target = blockHit.getType() == HitResult.Type.MISS ? end : blockHit.getLocation();
-        double targetDistance = start.distanceToSqr(target);
-        AABB searchArea = new AABB(start, end).inflate(1.5D);
+        CombatGravityFrame.run(entity, () -> {
+            Vec3 startPosition = entity.position();
+            List<FleshVineEntity> chargeVines = new ArrayList<>();
+            spawnChargeVines(serverLevel, entity, chargeVines, startPosition, 0);
+            Vec3 up = GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+            Vec3 hoverTarget = startPosition.add(up.scale(ULTIMATE_HOVER_HEIGHT));
+            GuardStateHelper.setGuardState(entity, CLAW_DAMAGE, formId, true);
+
+            AbilityScheduler.scheduleRepeating(entity, new Runnable() {
+                private int tick;
+                private boolean slamming;
+                private boolean impacted;
+
+                @Override
+                public void run() {
+                    if (!entity.isAlive()) {
+                        discardVines(chargeVines);
+                        cleanupForm(entity);
+                        return;
+                    }
+
+                    if (tick <= ULTIMATE_CHARGE_END_TICK) {
+                        limitMovement(entity, 0.25D);
+                        if (tick <= 5) {
+                            double rise = ULTIMATE_HOVER_HEIGHT * tick / 5.0D;
+                            entity.teleportTo(startPosition.add(up.scale(rise)).x,
+                                startPosition.add(up.scale(rise)).y,
+                                startPosition.add(up.scale(rise)).z);
+                        } else {
+                            entity.teleportTo(hoverTarget.x, hoverTarget.y, hoverTarget.z);
+                        }
+                        updateChargeVines(entity, chargeVines, tick);
+                    } else if (tick <= ULTIMATE_CHARGE_VINE_END_TICK) {
+                        // Keep the vine bases attached to the user while the slam begins.
+                        updateChargeVines(entity, chargeVines, tick);
+                    }
+                    if (tick == 0) {
+                        AnimationHelper.playAnimation(entity, "right_arm_chargeup", ULTIMATE_SLAM_TICK);
+                    } else if (tick == ULTIMATE_SLAM_TICK) {
+                        slamming = true;
+                        AnimationHelper.playAnimation(entity, "heel_drop", ULTIMATE_CANCEL_TICK - tick);
+                        MovementHelper.setVelocity(entity,
+                            GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, -1.1D, 0.0D)));
+                    } else if (slamming && !impacted && findGroundHit(serverLevel, entity) != null) {
+                        impacted = true;
+                        discardVines(chargeVines);
+                        spawnSurgeVines(serverLevel, entity, findGroundHit(serverLevel, entity));
+                        MovementHelper.setVelocity(entity, Vec3.ZERO);
+                    } else if (slamming && !impacted && tick >= ULTIMATE_CANCEL_TICK) {
+                        discardVines(chargeVines);
+                        cleanupForm(entity);
+                    } else if (impacted && tick >= ULTIMATE_SEQUENCE_END_TICK) {
+                        cleanupForm(entity);
+                    }
+
+                    if (tick == ULTIMATE_CHARGE_VINE_END_TICK + 1 && !impacted) {
+                        discardVines(chargeVines);
+                    }
+
+                    tick++;
+                }
+            }, 1, ULTIMATE_SEQUENCE_END_TICK + 1);
+        });
+    }
+
+    private static void executeBlackBloodDescendence(LivingEntity entity, Level level, int formId) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        CombatGravityFrame.run(entity, () -> {
+            Vec3 startPosition = entity.position();
+            Vec3 up = CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+            Vec3 forward = CombatGravityFrame.world(CombatGravityFrame.look(entity)).normalize();
+            Vec3 hoverTarget = startPosition.add(up.scale(DESCENDENCE_HOVER_HEIGHT))
+                .subtract(forward.scale(DESCENDENCE_BACKWARD_DISTANCE));
+            GuardStateHelper.setGuardState(entity, DESCENDENCE_IMPACT_DAMAGE, formId, true);
+
+            AbilityScheduler.scheduleRepeating(entity, new Runnable() {
+                private int tick;
+                private Vec3 targetPosition;
+                private final List<DescendenceBramble> brambles = new ArrayList<>();
+
+                @Override
+                public void run() {
+                    if (!entity.isAlive()) {
+                        clearDescendenceBrambles(serverLevel, entity, brambles);
+                        cleanupForm(entity);
+                        return;
+                    }
+
+                    if (tick <= DESCENDENCE_CHARGE_END_TICK) {
+                        limitMovement(entity, 0.25D);
+                        if (tick <= 10) {
+                            double progress = tick / 10.0D;
+                            Vec3 position = startPosition.lerp(hoverTarget, progress);
+                            entity.teleportTo(position.x, position.y, position.z);
+                        } else {
+                            entity.teleportTo(hoverTarget.x, hoverTarget.y, hoverTarget.z);
+                        }
+                        spawnDescendenceDust(serverLevel, entity, tick);
+                    }
+
+                    if (tick == 0) {
+                        AnimationHelper.playAnimation(entity, "right_arm_chargeup", DESCENDENCE_CHARGE_END_TICK);
+                    } else if (tick == DESCENDENCE_CHARGE_END_TICK) {
+                        targetPosition = findDescendenceTarget(serverLevel, entity);
+                        AnimationHelper.playAnimation(entity, "heel_drop",
+                            DESCENDENCE_CLEANUP_TICK - DESCENDENCE_CHARGE_END_TICK);
+                    } else if (tick > DESCENDENCE_CHARGE_END_TICK && tick <= DESCENDENCE_IMPACT_TICK) {
+                        double progress = (tick - DESCENDENCE_CHARGE_END_TICK)
+                            / (double) (DESCENDENCE_IMPACT_TICK - DESCENDENCE_CHARGE_END_TICK);
+                        Vec3 position = hoverTarget.lerp(targetPosition, progress);
+                        entity.teleportTo(position.x, position.y, position.z);
+                        MovementHelper.setVelocity(entity, Vec3.ZERO);
+                        if (tick == DESCENDENCE_IMPACT_TICK) {
+                            applyDescendenceImpact(serverLevel, entity, targetPosition);
+                            spawnDescendenceBrambles(serverLevel, entity, targetPosition, brambles);
+                        }
+                    } else if (tick <= DESCENDENCE_CLEANUP_TICK) {
+                        limitMovement(entity, 0.25D);
+                        if (tick == DESCENDENCE_CLEANUP_TICK) {
+                            clearDescendenceBrambles(serverLevel, entity, brambles);
+                            cleanupForm(entity);
+                        }
+                    }
+
+                    tick++;
+                }
+            }, 1, DESCENDENCE_CLEANUP_TICK + 1);
+        });
+    }
+
+    private static Vec3 findDescendenceTarget(ServerLevel level, LivingEntity entity) {
+        Vec3 start = CombatGravityFrame.world(CombatGravityFrame.eye(entity));
+        Vec3 forward = CombatGravityFrame.world(CombatGravityFrame.look(entity)).normalize();
+        Vec3 end = start.add(forward.scale(DESCENDENCE_TARGET_RANGE));
+        BlockHitResult forwardHit = level.clip(new ClipContext(start, end,
+            ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
+        Vec3 up = CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        if (forwardHit.getType() == HitResult.Type.BLOCK) {
+            return forwardHit.getLocation().add(up.scale(0.1D));
+        }
+
+        Vec3 down = up.scale(-1.0D);
+        Vec3 fallbackEnd = end.add(down.scale(DESCENDENCE_FALLBACK_RAYCAST));
+        BlockHitResult groundHit = level.clip(new ClipContext(end, fallbackEnd,
+            ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
+        return groundHit.getType() == HitResult.Type.BLOCK
+            ? groundHit.getLocation().add(up.scale(0.1D)) : end;
+    }
+
+    private static void applyDescendenceImpact(ServerLevel level, LivingEntity attacker, Vec3 impact) {
+        CombatGravityFrame.sendWorldParticles(level, ModParticles.BLACKRED_IMPACT.get(),
+            impact.x, impact.y, impact.z, 24, 1.0D, 0.25D, 1.0D, 0.05D);
+
+        AABB area = new AABB(impact, impact).inflate(DESCENDENCE_IMPACT_RADIUS);
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
+            candidate -> candidate != attacker && candidate.isAlive() && !candidate.isSpectator())) {
+            if (!EnhancedLoveForms.isTargetable(attacker, target)
+                || target.distanceToSqr(impact) > DESCENDENCE_IMPACT_RADIUS * DESCENDENCE_IMPACT_RADIUS) {
+                continue;
+            }
+            if (Damager.hurt(attacker, target, DESCENDENCE_IMPACT_DAMAGE, true)) {
+                Vec3 localOffset = CombatGravityFrame.local(target.position().subtract(impact));
+                if (localOffset.lengthSqr() < 1.0E-8D) {
+                    localOffset = new Vec3(0.0D, 0.0D, 1.0D);
+                }
+                Vec3 knockback = localOffset.normalize().scale(DESCENDENCE_KNOCKBACK)
+                    .add(0.0D, 0.75D, 0.0D);
+                MovementHelper.addVelocity(target, knockback);
+            }
+        }
+    }
+
+    private static void spawnDescendenceBrambles(ServerLevel level, LivingEntity owner,
+                                                  Vec3 impact, List<DescendenceBramble> brambles) {
+        Vec3 up = GravityDirectionHelper.localToWorld(owner, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 forward = GravityDirectionHelper.getLookDirection(owner);
+        forward = forward.subtract(up.scale(forward.dot(up)));
+        if (forward.lengthSqr() < 1.0E-8D) {
+            forward = new Vec3(0.0D, 0.0D, 1.0D);
+        } else {
+            forward = forward.normalize();
+        }
+        Vec3 side = up.cross(forward).normalize();
+
+        for (int index = 0; index < DESCENDENCE_BRAMBLE_COUNT; index++) {
+            double angle = owner.getRandom().nextDouble() * Math.PI * 2.0D;
+            double distance = Math.sqrt(owner.getRandom().nextDouble())
+                * DESCENDENCE_BRAMBLE_START_SPREAD;
+            Vec3 rawStart = impact
+                .add(side.scale(Math.cos(angle) * distance))
+                .add(forward.scale(Math.sin(angle) * distance));
+            BlockHitResult ground = findGroundBelow(level, owner, rawStart, up);
+            Vec3 start = ground == null ? rawStart : ground.getLocation();
+            Vec3 horizontalOffset = side.scale((owner.getRandom().nextDouble() * 2.0D - 1.0D)
+                * DESCENDENCE_BRAMBLE_HORIZONTAL_OFFSET)
+                .add(forward.scale((owner.getRandom().nextDouble() * 2.0D - 1.0D)
+                    * DESCENDENCE_BRAMBLE_HORIZONTAL_OFFSET));
+            Vec3 end = start.add(up.scale(DESCENDENCE_BRAMBLE_HEIGHT)).add(horizontalOffset);
+            Vec3 arcing = randomUnitVector().scale(owner.getRandom().nextDouble()
+                * DESCENDENCE_BRAMBLE_ARC);
+            DescendenceBramble bramble = new DescendenceBramble(UUID.randomUUID(), start, end,
+                arcing, DESCENDENCE_BRAMBLE_WIDTH);
+            brambles.add(bramble);
+            ModNetworking.sendToNearby(new BrambleSyncPacket(
+                bramble.id, true, true, bramble.start, bramble.end, Vec3.ZERO, bramble.arcing,
+                RED, BLACK, bramble.width, DESCENDENCE_BRAMBLE_LIFETIME), level,
+                start.x, start.y, start.z, 128.0D);
+            damageDescendenceBramble(level, owner, bramble);
+        }
+    }
+
+    private static void damageDescendenceBramble(ServerLevel level, LivingEntity attacker,
+                                                 DescendenceBramble bramble) {
+        AABB area = new AABB(bramble.start, bramble.end).inflate(1.0D);
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
+            candidate -> candidate != attacker && candidate.isAlive() && !candidate.isSpectator())) {
+            if (!EnhancedLoveForms.isTargetable(attacker, target)
+                || !isNearDescendenceBramble(target, bramble)) {
+                continue;
+            }
+            if (Damager.hurt(attacker, target, DESCENDENCE_BRAMBLE_DAMAGE, true)) {
+                Vec3 impact = target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
+                CombatGravityFrame.sendWorldParticles(level, ModParticles.BLACKRED_SLASH.get(),
+                    impact.x, impact.y, impact.z, 2, 0.15D, 0.15D, 0.15D, 0.02D);
+            }
+        }
+    }
+
+    private static boolean isNearDescendenceBramble(LivingEntity target, DescendenceBramble bramble) {
+        Vec3 targetPoint = target.position().add(0.0D, target.getBbHeight() * 0.5D, 0.0D);
+        Vec3 previous = bramble.start;
+        for (int segment = 1; segment <= 8; segment++) {
+            double progress = segment / 8.0D;
+            Vec3 current = bramble.start.lerp(bramble.end, progress)
+                .add(bramble.arcing.scale(1.0D - Math.abs(progress * 2.0D - 1.0D)));
+            if (distanceToSegmentSqr(targetPoint, previous, current)
+                <= Math.max(0.85D, target.getBbWidth() * 0.5D + bramble.width)
+                    * Math.max(0.85D, target.getBbWidth() * 0.5D + bramble.width)) {
+                return true;
+            }
+            previous = current;
+        }
+        return false;
+    }
+
+    private static double distanceToSegmentSqr(Vec3 point, Vec3 start, Vec3 end) {
+        Vec3 segment = end.subtract(start);
+        double lengthSqr = segment.lengthSqr();
+        if (lengthSqr < 1.0E-8D) {
+            return point.distanceToSqr(start);
+        }
+        double progress = point.subtract(start).dot(segment) / lengthSqr;
+        progress = Math.max(0.0D, Math.min(1.0D, progress));
+        return point.distanceToSqr(start.lerp(end, progress));
+    }
+
+    private static void clearDescendenceBrambles(ServerLevel level, LivingEntity owner,
+                                                  List<DescendenceBramble> brambles) {
+        Vec3 position = owner.position();
+        for (DescendenceBramble bramble : brambles) {
+            ModNetworking.sendToNearby(new BrambleSyncPacket(
+                bramble.id, false, false, Vec3.ZERO, Vec3.ZERO, Vec3.ZERO, Vec3.ZERO,
+                RED, BLACK, bramble.width, 1), level,
+                position.x, position.y, position.z, 128.0D);
+        }
+        brambles.clear();
+    }
+
+    private static void spawnDescendenceDust(ServerLevel level, LivingEntity entity, int tick) {
+        Vec3 center = CombatGravityFrame.position(entity).add(0.0D, entity.getBbHeight() * 0.5D, 0.0D);
+        for (int index = 0; index < 10; index++) {
+            double angle = tick * 0.35D + index * (Math.PI * 2.0D / 10.0D);
+            double radius = 0.65D + (index % 3) * 0.2D;
+            Vec3 point = center.add(Math.cos(angle) * radius, Math.sin(tick * 0.2D + index) * 0.8D,
+                Math.sin(angle) * radius);
+            DustParticleOptions dust = (index & 1) == 0 ? CHARGE_RED_DUST : CHARGE_BLACK_DUST;
+            CombatGravityFrame.sendParticles(level, dust, point.x, point.y, point.z,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
+    private static void executeForcedTransition(LivingEntity entity, Level level, int formId) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        CombatGravityFrame.run(entity, () -> {
+            TransitionTarget selectedTarget = selectForcedTransitionTarget(serverLevel, entity);
+            List<FleshVineEntity> vines = new ArrayList<>();
+            FleshVineEntity vine = ModEntities.FLESH_VINE.get().create(serverLevel);
+            if (vine != null) {
+                Vec3 start = forcedTransitionArmPosition(entity);
+                vine.initializeTransition(start, entity, entity.getRandom().nextInt(),
+                    FleshVineEntity.DEFAULT_DIAMETER, FORCED_TRANSITION_END_TICK + 4);
+                serverLevel.addFreshEntity(vine);
+                vines.add(vine);
+            }
+            GuardStateHelper.setGuardState(entity, FORCED_TRANSITION_DAMAGE, formId, true);
+
+            AbilityScheduler.scheduleRepeating(entity, new Runnable() {
+                private int tick;
+                 private LivingEntity latchedTarget;
+                 private int latchTick = -1;
+                 private boolean outcomeResolved;
+                 private Vec3 endpoint;
+                 private final List<Vec3> traversedPath = new ArrayList<>();
+
+                @Override
+                public void run() {
+                    if (!entity.isAlive()) {
+                        discardVines(vines);
+                        cleanupForm(entity);
+                        return;
+                    }
+
+                    if (tick <= 40) {
+                        limitMovement(entity, 0.5D);
+                        AnimationHelper.playAnimation(entity, "right_arm_forward", 2);
+                        Vec3 start = forcedTransitionArmPosition(entity);
+                         Vec3 targetPoint = selectedTarget == null
+                             ? start : forcedTransitionTargetPoint(selectedTarget);
+
+                         if (traversedPath.isEmpty()) {
+                             traversedPath.add(start);
+                             endpoint = start;
+                         } else {
+                             traversedPath.set(0, start);
+                         }
+
+                         if (latchedTarget == null) {
+                             endpoint = forcedTransitionNextEndpoint(endpoint, targetPoint, entity, tick);
+                             traversedPath.add(endpoint);
+                             if (!vines.isEmpty() && vines.get(0).isAlive()) {
+                                 vines.get(0).updateTransition(start, endpoint, traversedPath);
+                             }
+                            LivingEntity hit = findForcedTransitionHit(serverLevel, entity, start, endpoint,
+                                selectedTarget == null ? null : selectedTarget.entity);
+                            if (hit != null) {
+                                latchedTarget = hit;
+                                latchTick = tick;
+                            }
+                        } else {
+                             Vec3 attachedPoint = latchedTarget.position()
+                                 .add(0.0D, latchedTarget.getBbHeight() * 0.5D, 0.0D);
+                             if (!traversedPath.isEmpty()) {
+                                 traversedPath.set(traversedPath.size() - 1, attachedPoint);
+                             }
+                             if (!vines.isEmpty() && vines.get(0).isAlive()) {
+                                 vines.get(0).updateTransition(start, attachedPoint, traversedPath);
+                            }
+                            int attachedTicks = tick - latchTick;
+                            if (attachedTicks >= 0 && attachedTicks < FORCED_TRANSITION_LATCH_TICKS
+                                && attachedTicks % FORCED_TRANSITION_DAMAGE_INTERVAL == 0) {
+                                outcomeResolved = damageForcedTransitionTarget(entity, latchedTarget);
+                            }
+                            if (attachedTicks >= FORCED_TRANSITION_LATCH_TICKS && !outcomeResolved) {
+                                applyForcedTransitionDebuffs(latchedTarget);
+                                outcomeResolved = true;
+                            }
+                        }
+                     } else if (tick == FORCED_TRANSITION_END_TICK) {
+                         discardVines(vines);
+                         AnimationHelper.stopAnimation(entity, "right_arm_forward");
+                         cleanupForm(entity);
+                    }
+
+                    tick++;
+                }
+            }, 1, FORCED_TRANSITION_END_TICK + 1);
+        });
+    }
+
+    private static TransitionTarget selectForcedTransitionTarget(ServerLevel level, LivingEntity owner) {
+        Vec3 start = CombatGravityFrame.world(CombatGravityFrame.eye(owner));
+        Vec3 direction = CombatGravityFrame.world(CombatGravityFrame.look(owner)).normalize();
+        Vec3 maxEnd = start.add(direction.scale(FORCED_TRANSITION_RANGE));
+        BlockHitResult blockHit = level.clip(new ClipContext(start, maxEnd,
+            ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, owner));
+        Vec3 rayEnd = blockHit.getType() == HitResult.Type.BLOCK ? blockHit.getLocation() : maxEnd;
+
+        LivingEntity closest = null;
+        double closestDistance = Double.MAX_VALUE;
+        AABB searchArea = new AABB(start, rayEnd).inflate(FORCED_TRANSITION_VINE_WIDTH);
         for (LivingEntity candidate : level.getEntitiesOfClass(LivingEntity.class, searchArea,
-            living -> living != entity && living.isAlive() && !living.isSpectator())) {
-            var hit = candidate.getBoundingBox().clip(start, end);
+            target -> target != owner && target.isAlive() && !target.isSpectator())) {
+            var hit = candidate.getBoundingBox().clip(start, rayEnd);
             if (hit.isPresent()) {
                 double distance = start.distanceToSqr(hit.get());
-                if (distance < targetDistance) {
-                    target = hit.get();
-                    targetDistance = distance;
+                if (distance < closestDistance) {
+                    closest = candidate;
+                    closestDistance = distance;
                 }
             }
         }
-        return target;
+        return new TransitionTarget(closest, rayEnd);
     }
 
-    private static void spawnImpactLine(ServerLevel level, Vec3 start, Vec3 end) {
-        Vec3 delta = end.subtract(start);
-        double length = delta.length();
-        if (length < 1.0E-4D) {
+    private static Vec3 forcedTransitionArmPosition(LivingEntity entity) {
+        // PlayerAnimator's arm bone is client-only. Use the same head-relative
+        // right-arm anchor on the server, recalculated while the user moves.
+        Vec3 head = CombatGravityFrame.eye(entity);
+        Vec3 forward = CombatGravityFrame.look(entity).normalize();
+        Vec3 right = forward.cross(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 localArm = head.add(0.0D, -0.4D, 0.0D)
+            .add(right.scale(0.3D)).add(forward.scale(0.2D));
+        return CombatGravityFrame.world(localArm);
+    }
+
+    private static Vec3 forcedTransitionTargetPoint(TransitionTarget target) {
+        if (target.entity != null && target.entity.isAlive()) {
+            return target.entity.position().add(0.0D, target.entity.getBbHeight() * 0.5D, 0.0D);
+        }
+        return target.location;
+    }
+
+    private static Vec3 forcedTransitionNextEndpoint(Vec3 current, Vec3 target,
+                                                      LivingEntity owner, int tick) {
+        Vec3 toTarget = target.subtract(current);
+        if (toTarget.lengthSqr() <= FORCED_TRANSITION_VINE_SPEED * FORCED_TRANSITION_VINE_SPEED) {
+            return target;
+        }
+        Vec3 direction = toTarget.normalize();
+        Vec3 up = CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 side = up.cross(direction);
+        if (side.lengthSqr() < 1.0E-8D) {
+            side = direction.cross(new Vec3(1.0D, 0.0D, 0.0D));
+        }
+        side = side.normalize();
+        Vec3 otherSide = direction.cross(side).normalize();
+        double phase = owner.getId() * 0.37D;
+        Vec3 slither = side.scale(Math.sin(tick * 0.75D + phase) * FORCED_TRANSITION_SLITHER_AMPLITUDE)
+            .add(otherSide.scale(Math.cos(tick * 0.61D + phase) * 0.6D));
+        return current.add(direction.add(slither).normalize().scale(FORCED_TRANSITION_VINE_SPEED));
+    }
+
+    private static LivingEntity findForcedTransitionHit(ServerLevel level, LivingEntity owner,
+                                                         Vec3 start, Vec3 end, LivingEntity preferred) {
+        if (preferred != null && preferred.isAlive()
+            && preferred.getBoundingBox().inflate(FORCED_TRANSITION_VINE_WIDTH).clip(start, end).isPresent()) {
+            return preferred;
+        }
+
+        LivingEntity closest = null;
+        double closestDistance = Double.MAX_VALUE;
+        AABB area = new AABB(start, end).inflate(FORCED_TRANSITION_VINE_WIDTH);
+        for (LivingEntity candidate : level.getEntitiesOfClass(LivingEntity.class, area,
+            target -> target != owner && target.isAlive() && !target.isSpectator())) {
+            var hit = candidate.getBoundingBox().inflate(FORCED_TRANSITION_VINE_WIDTH).clip(start, end);
+            if (hit.isPresent()) {
+                double distance = start.distanceToSqr(hit.get());
+                if (distance < closestDistance) {
+                    closest = candidate;
+                    closestDistance = distance;
+                }
+            }
+        }
+        return closest;
+    }
+
+    private static boolean damageForcedTransitionTarget(LivingEntity owner, LivingEntity target) {
+        if (target == null || !target.isAlive()) {
+            return true;
+        }
+
+        if (target.getHealth() <= FORCED_TRANSITION_DAMAGE
+            && target.getRandom().nextBoolean() && tryInstantDemonize(target)) {
+            return true;
+        }
+        Damager.hurt(owner, target, FORCED_TRANSITION_DAMAGE, true);
+        return !target.isAlive();
+    }
+
+    private static void applyForcedTransitionDebuffs(LivingEntity target) {
+        if (target == null || !target.isAlive()) {
             return;
         }
-        Vec3 step = delta.scale(1.0D / length);
-        for (double distance = 0.0D; distance <= length; distance += 0.5D) {
-            Vec3 point = start.add(step.scale(distance));
-            CombatGravityFrame.sendWorldParticles(level, ModParticles.BLACKRED_IMPACT.get(),
-                point.x, point.y, point.z, 1, 0.04D, 0.04D, 0.04D, 0.02D);
+        target.addEffect(new MobEffectInstance(MobEffects.WITHER,
+            FORCED_TRANSITION_DEBUFF_TICKS, 4, false, true, true));
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
+            FORCED_TRANSITION_DEBUFF_TICKS, 2, false, true, true));
+    }
+
+    private static boolean tryInstantDemonize(LivingEntity target) {
+        if (Damager.isDemon(target)) {
+            return false;
         }
+        if (target instanceof ServerPlayer player) {
+            DemonTransformationHandler.cancelTransformation(player);
+            DemonTransformationHandler.consumeBaseMuzanBlood(player, 10 + player.getRandom().nextInt(11));
+            player.getPersistentData().putBoolean("oni", true);
+            DemonEyesSyncHandler.broadcastState(player);
+            return true;
+        }
+        if (target instanceof BreathingSlayerEntity slayer && !slayer.isDemonized()) {
+            slayer.demonize();
+            return true;
+        }
+        if (MinecraftComesAliveCompat.demonize(target)) {
+            return true;
+        }
+        Entity replacement = createForcedTransitionDemon(target);
+        return replacement != null;
+    }
+
+    private static Entity createForcedTransitionDemon(LivingEntity source) {
+        Entity replacement;
+        if (source instanceof Villager) {
+            replacement = ModEntities.DEMON_VILLAGER.get().create(source.level());
+        } else if (source instanceof Pillager) {
+            replacement = ModEntities.DEMON_PILLAGER.get().create(source.level());
+        } else if (source instanceof Creeper) {
+            replacement = ModEntities.DEMON_CREEPER.get().create(source.level());
+        } else if (source instanceof Vindicator) {
+            replacement = ModEntities.DEMON_VINDICATOR.get().create(source.level());
+        } else {
+            return null;
+        }
+        if (replacement == null) {
+            return null;
+        }
+        replacement.moveTo(source.getX(), source.getY(), source.getZ(), source.getYRot(), source.getXRot());
+        replacement.setCustomName(source.getCustomName());
+        replacement.setCustomNameVisible(source.isCustomNameVisible());
+        source.level().addFreshEntity(replacement);
+        source.discard();
+        return replacement;
+    }
+
+    private static void spawnChargeVines(ServerLevel level, LivingEntity owner,
+                                          List<FleshVineEntity> vines, Vec3 center, int tick) {
+        Vec3 up = GravityDirectionHelper.localToWorld(owner, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        for (int index = 0; index < 3; index++) {
+            FleshVineEntity vine = ModEntities.FLESH_VINE.get().create(level);
+            if (vine == null) {
+                continue;
+            }
+            Vec3 start = center.subtract(up.scale(ULTIMATE_CHARGE_START_BELOW));
+            Vec3 end = center.add(up.scale(ULTIMATE_CHARGE_END_ABOVE))
+                .add(randomPerpendicular(up, owner).scale(1.5D));
+            vine.initializeCharge(start, end, owner, owner.getRandom().nextInt(),
+                FleshVineEntity.DEFAULT_DIAMETER, ULTIMATE_CHARGE_VINE_LIFETIME);
+            vine.setUp(up);
+            level.addFreshEntity(vine);
+            vines.add(vine);
+        }
+    }
+
+    private static void updateChargeVines(LivingEntity owner, List<FleshVineEntity> vines, int tick) {
+        Vec3 center = owner.position();
+        Vec3 up = GravityDirectionHelper.localToWorld(owner, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 side = GravityDirectionHelper.getLookDirection(owner);
+        side = side.subtract(up.scale(side.dot(up)));
+        if (side.lengthSqr() < 1.0E-8D) {
+            side = randomPerpendicular(up, owner);
+        } else {
+            side = side.normalize();
+        }
+        Vec3 otherSide = up.cross(side).normalize();
+        for (int index = 0; index < vines.size(); index++) {
+            FleshVineEntity vine = vines.get(index);
+            if (!vine.isAlive()) {
+                continue;
+            }
+            Vec3 start = center.subtract(up.scale(ULTIMATE_CHARGE_START_BELOW));
+            double angle = tick * 0.55D + index * Math.PI * 2.0D / 3.0D;
+            Vec3 offset = side.scale(Math.cos(angle) * 1.5D)
+                .add(otherSide.scale(Math.sin(angle) * 1.5D));
+            Vec3 end = center.add(up.scale(ULTIMATE_CHARGE_END_ABOVE))
+                .add(offset);
+            vine.updateCharge(start, end);
+        }
+    }
+
+    private static void spawnSurgeVines(ServerLevel level, LivingEntity owner, BlockHitResult impact) {
+        Vec3 up = GravityDirectionHelper.localToWorld(owner, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 forward = GravityDirectionHelper.getLookDirection(owner);
+        forward = forward.subtract(up.scale(forward.dot(up)));
+        if (forward.lengthSqr() < 1.0E-8D) {
+            forward = new Vec3(0.0D, 0.0D, 1.0D);
+        }
+        forward = forward.normalize();
+        Vec3 line = forward.cross(up);
+        if (line.lengthSqr() < 1.0E-8D) {
+            line = new Vec3(1.0D, 0.0D, 0.0D);
+        }
+        line = line.normalize();
+
+        for (int index = 0; index < ULTIMATE_SURGE_COUNT; index++) {
+            double offset = (index - (ULTIMATE_SURGE_COUNT - 1) * 0.5D) * ULTIMATE_SURGE_SPACING;
+            Vec3 point = impact.getLocation().add(line.scale(offset));
+            BlockHitResult ground = findGroundBelow(level, owner, point, up);
+            Vec3 surface = ground == null ? point : ground.getLocation();
+            Vec3 start = surface.subtract(up.scale(ULTIMATE_SURGE_START_BELOW_GROUND));
+            FleshVineEntity vine = ModEntities.FLESH_VINE.get().create(level);
+            if (vine == null) {
+                continue;
+            }
+            vine.initializeSurge(start, forward, up, owner, owner.getRandom().nextInt(),
+                FleshVineEntity.DEFAULT_DIAMETER, owner.getRandom().nextDouble() * Math.PI * 2.0D);
+            vine.setHomingEnabled(true);
+            level.addFreshEntity(vine);
+        }
+    }
+
+    private static BlockHitResult findGroundHit(ServerLevel level, LivingEntity entity) {
+        Vec3 up = GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 position = entity.position();
+        return findGroundBelow(level, entity, position, up);
+    }
+
+    private static BlockHitResult findGroundBelow(ServerLevel level, LivingEntity entity,
+                                                   Vec3 point, Vec3 up) {
+        Vec3 from = point.add(up.scale(0.25D));
+        Vec3 to = point.subtract(up.scale(2.0D));
+        BlockHitResult hit = level.clip(new ClipContext(from, to,
+            ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
+        return hit.getType() == HitResult.Type.BLOCK ? hit : null;
+    }
+
+    private static void discardVines(List<FleshVineEntity> vines) {
+        for (FleshVineEntity vine : vines) {
+            if (vine.isAlive()) {
+                vine.beginFade();
+            }
+        }
+        vines.clear();
+    }
+
+    private static Vec3 randomPerpendicular(Vec3 normal, LivingEntity owner) {
+        Vec3 random = new Vec3(owner.getRandom().nextDouble() * 2.0D - 1.0D,
+            owner.getRandom().nextDouble() * 2.0D - 1.0D,
+            owner.getRandom().nextDouble() * 2.0D - 1.0D);
+        Vec3 perpendicular = random.subtract(normal.scale(random.dot(normal)));
+        if (perpendicular.lengthSqr() < 1.0E-8D) {
+            perpendicular = normal.cross(new Vec3(1.0D, 0.0D, 0.0D));
+        }
+        return perpendicular.lengthSqr() < 1.0E-8D
+            ? new Vec3(0.0D, 0.0D, 1.0D) : perpendicular.normalize();
     }
 
     private static void executeBlackBloodBrambles(LivingEntity entity, Level level, int formId) {
@@ -749,6 +1387,32 @@ public final class Biokineses {
             this.deviation = deviation;
             this.color = color;
             this.width = width;
+        }
+    }
+
+    private static final class DescendenceBramble {
+        private final UUID id;
+        private final Vec3 start;
+        private final Vec3 end;
+        private final Vec3 arcing;
+        private final float width;
+
+        private DescendenceBramble(UUID id, Vec3 start, Vec3 end, Vec3 arcing, float width) {
+            this.id = id;
+            this.start = start;
+            this.end = end;
+            this.arcing = arcing;
+            this.width = width;
+        }
+    }
+
+    private static final class TransitionTarget {
+        private final LivingEntity entity;
+        private final Vec3 location;
+
+        private TransitionTarget(LivingEntity entity, Vec3 location) {
+            this.entity = entity;
+            this.location = location;
         }
     }
 

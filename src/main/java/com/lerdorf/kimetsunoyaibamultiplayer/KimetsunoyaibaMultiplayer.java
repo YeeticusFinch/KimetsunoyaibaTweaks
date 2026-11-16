@@ -1291,6 +1291,8 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.LoveTornadoRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.BLOOD_TORNADO.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BloodTornadoRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.FLESH_VINE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.FleshVineRenderer::new);
 
             // Register renderers for generic demon slayers
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER.get(),
@@ -1421,9 +1423,12 @@ public class KimetsunoyaibaMultiplayer
             event.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "item/kanroji_sword_static"));
             // Register the static GUI model for Love sword
             event.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "item/nichirinsword_love_static"));
+            // The flesh-vine tip is rendered directly by FleshVineRenderer, so it is
+            // an additional baked model rather than an item registry entry.
+            event.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "item/flesh_vine_tip"));
 
             if (Config.logDebug)
-            Log.info("Registered additional models (kanroji_sword_static, nichirinsword_love_static)");
+            Log.info("Registered additional models (kanroji_sword_static, nichirinsword_love_static, flesh_vine_tip)");
         }
     }
 

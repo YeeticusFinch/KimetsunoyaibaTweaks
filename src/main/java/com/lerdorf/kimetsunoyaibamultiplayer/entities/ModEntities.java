@@ -304,6 +304,17 @@ public class ModEntities {
                 .fireImmune()
                 .build("blood_tornado"));
 
+    /** Server-tracked, procedural flesh vine used by Ultimate Authority. */
+    public static final RegistryObject<EntityType<FleshVineEntity>> FLESH_VINE =
+        ENTITY_TYPES.register("flesh_vine",
+            () -> EntityType.Builder.of(FleshVineEntity::new, MobCategory.MISC)
+                .sized(0.75F, 0.75F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("flesh_vine"));
+
     /**
      * After Image - Visual effect for Flower Breathing 7th Form and other speed techniques
      * Creates ghostly afterimages that fade out, giving the illusion of blinding speed

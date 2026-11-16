@@ -18,6 +18,13 @@ public class BiokinesesArmData implements IBiokinesesArmData {
     private final int[] targetEntityIds = new int[ARM_COUNT];
     private final long[] anchorBlockPositions = new long[ARM_COUNT];
     private final int[] anchorFaces = new int[ARM_COUNT];
+    private boolean locomotionActive;
+    private boolean noGravityBeforeLocomotion;
+    private float traversalForwardInput;
+    private float traversalStrafeInput;
+    private boolean traversalJumping;
+    private boolean traversalDescending;
+    private long traversalInputTick = Long.MIN_VALUE;
 
     public BiokinesesArmData() {
         for (int i = 0; i < ARM_COUNT; i++) {
@@ -184,12 +191,77 @@ public class BiokinesesArmData implements IBiokinesesArmData {
     }
 
     @Override
+    public boolean isLocomotionActive() {
+        return locomotionActive;
+    }
+
+    @Override
+    public void setLocomotionActive(boolean active) {
+        locomotionActive = active;
+    }
+
+    @Override
+    public boolean wasNoGravityBeforeLocomotion() {
+        return noGravityBeforeLocomotion;
+    }
+
+    @Override
+    public void setNoGravityBeforeLocomotion(boolean noGravity) {
+        noGravityBeforeLocomotion = noGravity;
+    }
+
+    @Override
+    public float getTraversalForwardInput() {
+        return traversalForwardInput;
+    }
+
+    @Override
+    public float getTraversalStrafeInput() {
+        return traversalStrafeInput;
+    }
+
+    @Override
+    public boolean isTraversalJumping() {
+        return traversalJumping;
+    }
+
+    @Override
+    public boolean isTraversalDescending() {
+        return traversalDescending;
+    }
+
+    @Override
+    public long getTraversalInputTick() {
+        return traversalInputTick;
+    }
+
+    @Override
+    public void setTraversalInput(float forward, float strafe, boolean jumping, boolean descending, long tick) {
+        traversalForwardInput = clamp(forward, -1.0F, 1.0F);
+        traversalStrafeInput = clamp(strafe, -1.0F, 1.0F);
+        traversalJumping = jumping;
+        traversalDescending = descending;
+        traversalInputTick = tick;
+    }
+
+    @Override
+    public void clearTraversalInput() {
+        traversalForwardInput = 0.0F;
+        traversalStrafeInput = 0.0F;
+        traversalJumping = false;
+        traversalDescending = false;
+        traversalInputTick = Long.MIN_VALUE;
+    }
+
+    @Override
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("Active", active);
         tag.putBoolean("Retracting", retracting);
         tag.putLong("ExpiresAt", expiresAt);
         tag.putInt("AllocationMode", allocationMode);
+        tag.putBoolean("LocomotionActive", locomotionActive);
+        tag.putBoolean("NoGravityBeforeLocomotion", noGravityBeforeLocomotion);
         for (int i = 0; i < ARM_COUNT; i++) {
             CompoundTag arm = new CompoundTag();
             Vec3 target = targets[i];
@@ -215,6 +287,8 @@ public class BiokinesesArmData implements IBiokinesesArmData {
         retracting = tag.getBoolean("Retracting");
         expiresAt = tag.getLong("ExpiresAt");
         allocationMode = tag.getInt("AllocationMode");
+        locomotionActive = tag.getBoolean("LocomotionActive");
+        noGravityBeforeLocomotion = tag.getBoolean("NoGravityBeforeLocomotion");
         for (int i = 0; i < ARM_COUNT; i++) {
             CompoundTag arm = tag.getCompound("Arm" + i);
             targets[i] = new Vec3(arm.getDouble("TargetX"), arm.getDouble("TargetY"), arm.getDouble("TargetZ"));

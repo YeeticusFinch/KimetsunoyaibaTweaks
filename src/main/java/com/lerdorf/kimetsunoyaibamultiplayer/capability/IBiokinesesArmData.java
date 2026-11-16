@@ -13,6 +13,8 @@ public interface IBiokinesesArmData extends INBTSerializable<CompoundTag> {
     int MODE_COMBAT = 2;
     int MODE_ABILITY = 3;
     int MODE_GRAB = 4;
+    int MODE_ATTACK = 5;
+    int MODE_FAST_RETRACT = 6;
 
     int ALLOCATION_NORMAL = 0;
     int ALLOCATION_ALL = 1;
@@ -70,4 +72,26 @@ public interface IBiokinesesArmData extends INBTSerializable<CompoundTag> {
     long getAnchorBlockPos(int arm);
 
     int getAnchorFace(int arm);
+
+    boolean isLocomotionActive();
+
+    void setLocomotionActive(boolean active);
+
+    boolean wasNoGravityBeforeLocomotion();
+
+    void setNoGravityBeforeLocomotion(boolean noGravity);
+
+    float getTraversalForwardInput();
+
+    float getTraversalStrafeInput();
+
+    boolean isTraversalJumping();
+
+    boolean isTraversalDescending();
+
+    long getTraversalInputTick();
+
+    void setTraversalInput(float forward, float strafe, boolean jumping, boolean descending, long tick);
+
+    void clearTraversalInput();
 }

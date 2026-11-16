@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.GravityDirectionHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -30,9 +31,10 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Server-authoritative animated tornado used by Ultimate Authority. */
+/** Server-authoritative animated tornado used by Merciless Punishment. */
 public final class BloodTornadoEntity extends Mob implements GeoEntity {
-    private static final double SPEED = 2.0D;
+    private static final double SPEED = 1.0D;
+    private static final double GRAVITY_ACCELERATION = 0.08D;
     private static final float DAMAGE = 8.0F;
     private static final double HORIZONTAL_KNOCKBACK = 0.45D;
     private static final double UPWARD_KNOCKBACK = 0.65D;
@@ -41,20 +43,29 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Float> DATA_DIRECTION_X =
         SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_DIRECTION_Y =
+        SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_DIRECTION_Z =
+        SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_UP_X =
+        SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_UP_Y =
+        SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_UP_Z =
         SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.FLOAT);
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private Vec3 direction = Vec3.ZERO;
+    private Vec3 gravityUp = new Vec3(0.0D, 1.0D, 0.0D);
     private int ticksAlive;
     private int lifetime = 21;
 
     public BloodTornadoEntity(EntityType<? extends BloodTornadoEntity> type, Level level) {
         super(type, level);
-        this.noPhysics = true;
+        this.noPhysics = false;
         this.setInvulnerable(true);
         this.setNoAi(true);
-        this.setNoGravity(true);
+        this.setNoGravity(false);
         this.setSilent(true);
     }
 
@@ -66,10 +77,9 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
 
     public void initialize(Vec3 position, Vec3 direction, LivingEntity owner, int lifetime) {
         setPos(position.x, position.y, position.z);
-        Vec3 groundDirection = new Vec3(direction.x, 0.0D, direction.z);
-        setDirection(groundDirection.lengthSqr() < 1.0E-8D
-            ? Vec3.ZERO
-            : groundDirection.normalize());
+        setGravityUp(owner == null ? new Vec3(0.0D, 1.0D, 0.0D)
+            : GravityDirectionHelper.localToWorld(owner, new Vec3(0.0D, 1.0D, 0.0D)).normalize());
+        setDirection(direction);
         setOwner(owner == null ? null : owner.getUUID());
         this.lifetime = Math.max(1, lifetime);
         setOldPosAndRot();
@@ -80,16 +90,34 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
     }
 
     private void setDirection(Vec3 direction) {
-        this.direction = direction;
-        entityData.set(DATA_DIRECTION_X, (float) direction.x);
-        entityData.set(DATA_DIRECTION_Z, (float) direction.z);
+        Vec3 tangent = direction.subtract(gravityUp.scale(direction.dot(gravityUp)));
+        this.direction = tangent.lengthSqr() < 1.0E-8D ? Vec3.ZERO : tangent.normalize();
+        entityData.set(DATA_DIRECTION_X, (float) this.direction.x);
+        entityData.set(DATA_DIRECTION_Y, (float) this.direction.y);
+        entityData.set(DATA_DIRECTION_Z, (float) this.direction.z);
+    }
+
+    private void setGravityUp(Vec3 up) {
+        gravityUp = up.lengthSqr() < 1.0E-8D ? new Vec3(0.0D, 1.0D, 0.0D) : up.normalize();
+        entityData.set(DATA_UP_X, (float) gravityUp.x);
+        entityData.set(DATA_UP_Y, (float) gravityUp.y);
+        entityData.set(DATA_UP_Z, (float) gravityUp.z);
     }
 
     private Vec3 getTravelDirection() {
         if (!level().isClientSide()) {
             return direction;
         }
-        return new Vec3(entityData.get(DATA_DIRECTION_X), 0.0D, entityData.get(DATA_DIRECTION_Z));
+        return new Vec3(entityData.get(DATA_DIRECTION_X), entityData.get(DATA_DIRECTION_Y),
+            entityData.get(DATA_DIRECTION_Z));
+    }
+
+    private Vec3 getGravityUp() {
+        if (!level().isClientSide()) {
+            return gravityUp;
+        }
+        return new Vec3(entityData.get(DATA_UP_X), entityData.get(DATA_UP_Y),
+            entityData.get(DATA_UP_Z)).normalize();
     }
 
     private LivingEntity getOwner() {
@@ -107,7 +135,11 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         super.defineSynchedData();
         entityData.define(DATA_OWNER, Optional.empty());
         entityData.define(DATA_DIRECTION_X, 0.0F);
+        entityData.define(DATA_DIRECTION_Y, 0.0F);
         entityData.define(DATA_DIRECTION_Z, 0.0F);
+        entityData.define(DATA_UP_X, 0.0F);
+        entityData.define(DATA_UP_Y, 1.0F);
+        entityData.define(DATA_UP_Z, 0.0F);
     }
 
     @Override
@@ -124,7 +156,7 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
     @Override
     public void tick() {
         baseTick();
-        setNoGravity(true);
+        setNoGravity(false);
 
         int age = ticksAlive++;
         if (age >= lifetime) {
@@ -132,7 +164,15 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
             return;
         }
 
-        Vec3 movement = getTravelDirection().scale(SPEED);
+        Vec3 up = getGravityUp();
+        Vec3 currentVelocity = getDeltaMovement();
+        double normalVelocity = currentVelocity.dot(up);
+        if (isSupported(up) && normalVelocity <= 0.0D) {
+            normalVelocity = 0.0D;
+        } else {
+            normalVelocity -= GRAVITY_ACCELERATION;
+        }
+        Vec3 movement = getTravelDirection().scale(SPEED).add(up.scale(normalVelocity));
         setDeltaMovement(movement);
         move(MoverType.SELF, movement);
         hasImpulse = true;
@@ -159,9 +199,7 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
             return;
         }
 
-        AABB damageBox = new AABB(
-            getX() - 1.5D, getY(), getZ() - 1.5D,
-            getX() + 1.5D, getY() + 4.0D, getZ() + 1.5D);
+        AABB damageBox = getBoundingBox().inflate(0.5D);
         for (LivingEntity target : serverLevel.getEntitiesOfClass(LivingEntity.class, damageBox,
             candidate -> candidate.isAlive() && !candidate.isSpectator()
                 && !candidate.getUUID().equals(owner.getUUID()))) {
@@ -174,18 +212,30 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
 
     private void launchTarget(LivingEntity target) {
         Vec3 away = target.position().subtract(position());
-        Vec3 horizontal = new Vec3(away.x, 0.0D, away.z);
+        Vec3 horizontal = away.subtract(gravityUp.scale(away.dot(gravityUp)));
         if (horizontal.lengthSqr() < 1.0E-8D) {
             horizontal = direction.scale(-1.0D);
         } else {
             horizontal = horizontal.normalize();
         }
         Vec3 current = target.getDeltaMovement();
+        Vec3 retained = current.scale(0.35D);
+        Vec3 horizontalVelocity = horizontal.scale(HORIZONTAL_KNOCKBACK);
+        Vec3 upward = gravityUp.scale(UPWARD_KNOCKBACK);
         target.setDeltaMovement(
-            current.x * 0.35D + horizontal.x * HORIZONTAL_KNOCKBACK,
-            Math.max(current.y, UPWARD_KNOCKBACK),
-            current.z * 0.35D + horizontal.z * HORIZONTAL_KNOCKBACK);
+            retained.x + horizontalVelocity.x + upward.x,
+            retained.y + horizontalVelocity.y + upward.y,
+            retained.z + horizontalVelocity.z + upward.z);
         target.hasImpulse = true;
+    }
+
+    private boolean isSupported(Vec3 up) {
+        Vec3 start = position().add(up.scale(0.25D));
+        Vec3 end = position().subtract(up.scale(0.5D));
+        net.minecraft.world.level.ClipContext context = new net.minecraft.world.level.ClipContext(
+            start, end, net.minecraft.world.level.ClipContext.Block.COLLIDER,
+            net.minecraft.world.level.ClipContext.Fluid.NONE, this);
+        return level().clip(context).getType() == net.minecraft.world.phys.HitResult.Type.BLOCK;
     }
 
     private static void spawnImpact(ServerLevel level, Vec3 position) {
@@ -226,7 +276,9 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         if (tag.hasUUID("Owner")) {
             setOwner(tag.getUUID("Owner"));
         }
-        setDirection(new Vec3(tag.getDouble("DirectionX"), 0.0D, tag.getDouble("DirectionZ")));
+        setGravityUp(new Vec3(tag.getDouble("UpX"), tag.getDouble("UpY"), tag.getDouble("UpZ")));
+        setDirection(new Vec3(tag.getDouble("DirectionX"), tag.getDouble("DirectionY"),
+            tag.getDouble("DirectionZ")));
     }
 
     @Override
@@ -239,6 +291,10 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
             tag.putUUID("Owner", ownerId);
         }
         tag.putDouble("DirectionX", direction.x);
+        tag.putDouble("DirectionY", direction.y);
         tag.putDouble("DirectionZ", direction.z);
+        tag.putDouble("UpX", gravityUp.x);
+        tag.putDouble("UpY", gravityUp.y);
+        tag.putDouble("UpZ", gravityUp.z);
     }
 }

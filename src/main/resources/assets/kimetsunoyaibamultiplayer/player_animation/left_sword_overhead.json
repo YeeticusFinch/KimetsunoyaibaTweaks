@@ -2,8 +2,7 @@
 	"format_version": "1.8.0",
 	"animations": {
 		"left_sword_overhead": {
-			"loop": "hold_on_last_frame",
-			"animation_length": 2.5,
+			"animation_length": 1,
 			"bones": {
 				"torso": {
 					"rotation": {

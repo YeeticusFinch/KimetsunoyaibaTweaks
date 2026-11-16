@@ -30,24 +30,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Renders the six pale bone-like Biokinesis arms and their blade tips. */
+/** Renders the six flesh-and-bone Biokinesis tentacles and their sharpened tips. */
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID,
     bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public final class BiokinesesArmRenderer {
     private static final Minecraft MINECRAFT = Minecraft.getInstance();
-    private static final ResourceLocation BLANK_TEXTURE = ResourceLocation.fromNamespaceAndPath(
-        KimetsunoyaibaMultiplayer.MODID, "textures/misc/blank.png");
     private static final ResourceLocation BONE_TEXTURE = ResourceLocation.fromNamespaceAndPath(
         "minecraft", "textures/block/bone_block_side.png");
-    private static final RenderType ARM_RENDER_TYPE = RenderType.entityCutoutNoCull(BLANK_TEXTURE);
+    private static final ResourceLocation FLESH_TEXTURE = ResourceLocation.fromNamespaceAndPath(
+        KimetsunoyaibaMultiplayer.MODID, "textures/misc/biokineses_flesh.png");
+    private static final RenderType ARM_RENDER_TYPE = RenderType.entityCutoutNoCull(FLESH_TEXTURE);
     private static final RenderType BONE_RENDER_TYPE = RenderType.entityCutoutNoCull(BONE_TEXTURE);
-    private static final int ARM_GREY = 0xC9C8C2;
-    private static final int ARM_HIGHLIGHT = 0xE7E5DE;
+    private static final int ARM_FLESH = 0x9E2634;
+    private static final int ARM_FLESH_HIGHLIGHT = 0xB53A48;
     private static final int BONE_TINT = 0xE2DCCF;
     private static final int SPIKE_WHITE = 0xF5F2E9;
     private static final int BASE_BONE_SEGMENTS = 3;
     private static final double ARM_REACH = 8.0D;
-    private static final float SMOOTH_FACTOR = 0.15F;
+    private static final float SMOOTH_FACTOR = 0.32F;
     private static final Map<Integer, Vec3> GEO_TORSO_ANCHORS = new HashMap<>();
     private static final Map<String, SmoothedArmState> SMOOTHED_ARMS = new HashMap<>();
 
@@ -262,7 +262,8 @@ public final class BiokinesesArmRenderer {
             float width = bone
                 ? Mth.lerp(segmentProgress, 0.105F, 0.072F)
                 : Mth.lerp(segmentProgress, 0.080F, 0.045F);
-            int color = bone ? BONE_TINT : ((i + arm) % 4 == 0 ? ARM_HIGHLIGHT : ARM_GREY);
+            int color = bone ? BONE_TINT
+                : ((i + arm) % 4 == 0 ? ARM_FLESH_HIGHLIGHT : ARM_FLESH);
             drawBeam(start, end, width, color, entity.level(), matrix, normal,
                 bone ? boneBuffer : armBuffer);
         }
@@ -279,9 +280,9 @@ public final class BiokinesesArmRenderer {
         if (side.lengthSqr() < 1.0E-6D) {
             side = direction.cross(new Vec3(1.0D, 0.0D, 0.0D));
         }
-        side = side.normalize().scale(0.075D);
-        Vec3 otherSide = direction.cross(side).normalize().scale(0.045D);
-        Vec3 base = tip.subtract(direction.scale(0.40D));
+        side = side.normalize().scale(0.07D);
+        Vec3 otherSide = direction.cross(side).normalize().scale(0.04D);
+        Vec3 base = tip.subtract(direction.scale(0.48D));
         Vec3 pointA = base.add(side).add(otherSide);
         Vec3 pointB = base.subtract(side).add(otherSide);
         Vec3 pointC = base.subtract(side).subtract(otherSide);

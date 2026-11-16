@@ -42,6 +42,7 @@ Between each segment, like at the joint between segments, the segments should ov
 - the flesh_vine_tip model is rendered at the end of the flesh vine, facing the direction that the end is facing
 - the start of the flesh vine can either be connected to a location (which can move), it it can be connected to one of the bones of the user (like the torso or the arm, similar to the back tentacles)
 - the flesh vine should have a little bit of randomness in it's path, and it should be quite lumpy, the segments varying in thickness somewhat randomly, with some lumps and protrusions here and there, and they should be wriggling and writhing
+- The flesh vines will also need an implementation to handle a custom defined path, with an array of points to define that path (like for the sinusoid motion of ultimate authority)
 
 ## Black Blood, Brambles
 
@@ -76,7 +77,6 @@ Ticks 18-60
 - Place a blackred_slash particle at the end position of every bramble
 - All living entities in that cone (length is brambleRange, radius is a third of brambleRange) will take damage every 2 ticks (and yes that should ignore/reset the damage cooldowns, using our Damager.hurt function), also whenever a living entity is damaged by this ability, it should get some blackred_impact particles on it
 - Every 2 ticks, raycast forward a full 60 blocks, at every solid block that intersects that raycast, place a blackred_slash
-
 
 ## Merciless Punishment
 
@@ -120,7 +120,7 @@ Ticks 0-15 (charge up)
 
 Tick 17
 
-- User slams downward while playing the stomp animation, and the attack happens as soon as the user hits the ground (if the user doesn't hit the ground in the next two seconds, then the ability is cancelled
+- User slams downward while playing the heel_drop animation, and the attack happens as soon as the user hits the ground (if the user doesn't hit the ground in the next two seconds, then the ability is cancelled)
 
 When the user hits the ground:
 
@@ -134,11 +134,9 @@ After the user hits the ground and those 5 flesh vines are created
 - The cosine function has an amplitude of 15 blocks
 - A damaging AABB box follows the end position of every one of these vines, using the Danaher.hurt function (using the user, the owner of these vines, as the damage source) on all (non-owner) living entities that intersect this AABB box (and they have blackred_impact particles spawned on entities that get damaged, and there will be explosion particles on the ends of these vines whenever the AABB box hits a full block)
 
----
+Form cleanup:
 
-## Ignore everything past this line, this is WIP
-
----
+- Clear the user's animation and guard state
 
 ## Black Blood, Descendence
 
@@ -146,15 +144,108 @@ _Muzan Hands_
 
 The user leaps into the air, and then teleports to their target unleashing a ground pound, with red and black brambles shooting out of the ground around the groundpound location.
 
+Ticks 0–20 (Charge-up)
+
+- Biokineses item uses the biokineses_0 model, rendering biokineses_0l on the left hand.
+- Play the right_arm_chargeup animation.
+- User hovers 20 blocks upwards (and 10 blocks backwards), taking 10 ticks to get there and hovering for 10 ticks
+- User movement is reduced to 0.25x speed.
+- Spawn small black and red swirling dust particles around the user's body.
+
+Tick 20
+
+- Select the target point (raycast up to 40 blocks from the user's head (in the direction the user is looking), choosing the point at the first intersecting solid block, if no blocks are found, then it will raycast downwards until a solid block is detected)
+
+Ticks 20-25
+
+- The user zooms towards that target location, such that they hit the target location on tick 25
+- Play the heel_drop animation
+
+Tick 25
+
+- Deal AOE damage to all living entities within a 6-block radius.
+- Apply strong knockback away from the impact point.
+- Create an explosion of blackred_impact particles.
+- Spawn 10 brambles in a 6 block radius around the user, coming out of the ground, shooting 30 blocks upwards and wriggling around, the tip moving around randomly with a horizontal displacement of up to 6 blocks, and some random arcing vectors of up to 3 blocks in magnitude
+- All entities within the path of those brambles take damage and will get the blackred_slash particles on them
+- These brambles stay for 30 ticks
+
+Ticks 25-55
+
+- The user is moving at 0.25x movement speed
+
+Tick 56 (cleanup)
+
+- Animations are cleared, guard state is cleared
+
 ## Forced Transition
 
 _Flesh arms_
 
 The flesh vines Upon making contact with a convertible mob begins the demonstrating of the entity, with a 50-50 chance of the process killing the target
 
+Tick 0:
+
+- Choose a target entity or location within 80 blocks (80 block raycast forward, select the nearest living entity to the crosshair, or select the block that the raycast intersects, or select the point at the end of the 80 blocks)
+
+Ticks 1-40:
+
+- Play the right_arm_forward animation on loop
+- User moves at half movement speed
+- A flesh vine with the starting point attached to the user's right arm starts moving forward, towards the target (so like the end position is always facing the target entity/location, and moving towards, slithering through the air randomly to get there)
+
+When the flesh vine hits a target entity, it latches on to the target and stays attached to that target entity for 20 ticks.
+
+- The target entity that the flesh vine is attached to takes 30 damage (using the Damager.hurt with the user / flesh vine owner as the damage source, so it can be scaled) every 10 ticks
+- If the user drops to zero HP during this ability from this damage (and they are a demonizeable entity or a player), then there is a 50% chance of instantly turning them into a demon (no demon transformation phase, just instant demon transformation, and if it's a player then it will instantly forcefully feed them 10 to 20 muzan blood, if the player is already a demon then it does nothing, it just lets them die)
+- If the user survives this attack, then they get 10 seconds of wither 5, and also slowness 3 for 10 seconds
+
+Tick 50 (cleanup):
+
+- Clear the animation on the user
+
 ## Shockwave Energy Blast
 
 The user releases a long-ranged shockwave that severely damages the nervous systems of those caught in it, causing seizures, convulsions, and even rendering them unable to breathe for a brief period of time due to damage inflicted to the target's lungs. He uses it by morphing his torso into a gigantic beastly mouth to release it in all directions.
+
+Tick 0
+
+- Play the shockwave animation on the user
+- Play the minecraft:entity.warden.sonic_charge sound effect at 0.75 pitch
+- Play the minecraft:entity.guardian.attack sound effect at 0.75 pitch
+
+Ticks 0-12 (chargeup)
+
+- 3 flesh vines will spawn, each one as a circle of radius R, centered on the user's center (halfway between their location and their head location) and circling rapidly around the user's center, with a random orientation that changes every tick
+- User moves at 0.25x speed during this chargeup phase
+- R starts at 4, and then decreases to 0 by the 12th tick
+
+Tick 13
+
+- Spawn 10 lightning sparks (yes the same ones from thunder breathing), they should each have a width of 0.8, and they should just be entirely white in color
+- Play the minecraft:entity.warden.sonic_boom sound effect
+- Play the thunder sound effect
+- Remove the 3 flesh vines
+- R starts at 1
+
+Ticks 13-20
+
+- R increases every tick, reaching 50 by tick 20
+- Every tick, spawn a sphere of radius R of flash particles around the user
+- For each lightning spark, the start point is set to the user's center location (halfway between their head and location), and the end point is a random point along the edge of the sphere of radius R centered on the user (same sphere as the flash particles)
+- For every living entity (other than the user) within R blocks of the user (use the distance squared trick to avoid the square root issue, comparing to R\*R, such that we don't have to use the slow power function), once they first enter the region, they become marked, meaning a new lightning spark will spawn on them (lasting 10 ticks), start point being the user's center position and end point being the living entity's center position (don't keep spawning more lightning sparks on the same living entity over and over again, if a living entity already has a lightning spark from this ability attached to them then just update the start and end positions every tick such that it tracks both entities)
+- All living entities who get his by this ability (they are within R of the user) will take a bynch of damage, and then immediately get slowness 20 for 5 seconds (no particles), and they will have the kimetsunoyaiba lightning particles on them for that duration, and they will also have the suffocation potion effect (from kimetsunoyaiba mod) for 5 seconds, and it will cancel any active abilities or breathing forms they have active (also any entity who has the suffocation effect shouldn't be able to use abilities, they cant use blood demon arts or breathing forms while they have the suffocation effect)
+
+Tick 30 (cleanup)
+
+- Give 5 seconds of slowness 10 to the user (no particles)
+- Clear the guard state and the animations on the user
+
+---
+
+## Ignore everything past this line, this is WIP
+
+---
 
 ## Blood King’s Massacre
 

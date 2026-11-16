@@ -25,6 +25,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderLightningSpa
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BrambleSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesM1AttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesArmsSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesTraversalInputPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderZenitsuClickPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonPropositionStatePacket;
@@ -556,6 +557,13 @@ public class ModNetworking {
                 .decoder(WebTraversalInputPacket::new)
                 .encoder(WebTraversalInputPacket::toBytes)
                 .consumerMainThread(WebTraversalInputPacket::handle)
+                .add();
+
+        int biokinesesTraversalInputPacketId = id();
+        net.messageBuilder(BiokinesesTraversalInputPacket.class, biokinesesTraversalInputPacketId)
+                .decoder(BiokinesesTraversalInputPacket::new)
+                .encoder(BiokinesesTraversalInputPacket::toBytes)
+                .consumerMainThread(BiokinesesTraversalInputPacket::handle)
                 .add();
 
         int configEditPacketId = id();

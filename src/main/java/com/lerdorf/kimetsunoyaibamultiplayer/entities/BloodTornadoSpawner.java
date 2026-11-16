@@ -15,6 +15,7 @@ public final class BloodTornadoSpawner {
         if (tornado == null) {
             return null;
         }
+        com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame.inheritVisual(tornado);
         tornado.initialize(position, direction, owner, lifetime);
         level.addFreshEntity(tornado);
         return tornado;

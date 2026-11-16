@@ -44,6 +44,10 @@ public class ModItems {
     public static final RegistryObject<Item> NICHIRINSWORD_MIST = ITEMS.register("nichirinsword_mist",
         () -> new NichirinSwordMist(new Item.Properties().stacksTo(1).durability(2000)));
 
+    /** Registered solely so the custom flesh-vine tip model is baked into the item atlas. */
+    public static final RegistryObject<Item> FLESH_VINE_TIP = ITEMS.register("flesh_vine_tip",
+        () -> new Item(new Item.Properties().stacksTo(1)));
+
     public static final RegistryObject<Item> NICHIRINSWORD_MUICHIRO = ITEMS.register("nichirinsword_muichiro",
         () -> new NichirinSwordMuichiro(new Item.Properties().stacksTo(1).durability(2000)));
 
