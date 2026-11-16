@@ -3,10 +3,12 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities.client;
 import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityCombatStateTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.EntityRenderContext;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.BiokinesesRenderHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.config.SwordDisplayConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordKanrojiAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordLoveAnimated;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.KyogaiDrumsItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.SwordParticleMapping;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -73,7 +75,14 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
 
         // OFF HAND
         if (boneName.equals("itemOffHand") || boneName.equals("itemOffHand2") || boneName.equals("itemOffHand3")) {
-            return animatable.getItemBySlot(EquipmentSlot.OFFHAND);
+            ItemStack offhand = animatable.getItemBySlot(EquipmentSlot.OFFHAND);
+            if (offhand.isEmpty()) {
+                ItemStack virtualBiokineses = BiokinesesRenderHandler.getVirtualOffhandStack(animatable);
+                if (!virtualBiokineses.isEmpty()) {
+                    return virtualBiokineses;
+                }
+            }
+            return offhand;
         }
 
         // HEAD (only render *non-armor* head items, like pumpkins)
@@ -166,24 +175,29 @@ public class GeoEquipmentLayer<T extends LivingEntity & GeoAnimatable> extends B
 
         // ✅ OFF HAND – shield or second weapon
         if (boneName.startsWith("itemOffHand")) {
-        	boolean isNichirinSword = false;
-        	 ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
-             if (key != null && key.toString().toLowerCase().contains("nichirin")) {
-                 // This is a Nichirin item
-             	isNichirinSword = true;
-             }
-             
+            boolean isNichirinSword = false;
+            boolean isBiokineses = stack.getItem() == ModItems.BIOKINESES.get();
+            ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
+            if (key != null && key.toString().toLowerCase().contains("nichirin")) {
+                // This is a Nichirin item
+                isNichirinSword = true;
+            }
+
             poseStack.pushPose();
-            if (isNichirinSword) {
-            	poseStack.translate(0.0, 0.2, -0.03);
-	            poseStack.mulPose(Axis.XP.rotationDegrees(-90f));
-	            poseStack.mulPose(Axis.YP.rotationDegrees(180f));
-	            poseStack.mulPose(Axis.ZP.rotationDegrees(0f));
+            if (isNichirinSword || isBiokineses) {
+                poseStack.translate(0.0, 0.2, -0.03);
+                poseStack.mulPose(Axis.XP.rotationDegrees(-90f));
+                poseStack.mulPose(Axis.YP.rotationDegrees(180f));
+                poseStack.mulPose(Axis.XP.rotationDegrees(180f));
+                poseStack.mulPose(Axis.ZP.rotationDegrees(0f));
+                if (isBiokineses) {
+                    BiokinesesRenderHandler.applyThirdPersonLeftHandOffset(poseStack);
+                }
             } else {
-	            poseStack.translate(0.0, 0.41, -0.2);
-	            poseStack.mulPose(Axis.XP.rotationDegrees(180f));
-	            poseStack.mulPose(Axis.YP.rotationDegrees(180f));
-	            poseStack.mulPose(Axis.ZP.rotationDegrees(0f));
+                poseStack.translate(0.0, 0.41, -0.2);
+                poseStack.mulPose(Axis.XP.rotationDegrees(180f));
+                poseStack.mulPose(Axis.YP.rotationDegrees(180f));
+                poseStack.mulPose(Axis.ZP.rotationDegrees(0f));
             }
 
             // Slight adjustment if it's a shield

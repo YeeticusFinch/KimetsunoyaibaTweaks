@@ -40,6 +40,23 @@ public class ModSounds {
     public static final RegistryObject<SoundEvent> LOVE_CATS_AND_CUTS = registerSoundEvent("love_cats_and_cuts");
     public static final RegistryObject<SoundEvent> LOVE_BIG_SLASH_MEOW = registerSoundEvent("love_big_slash_meow");
 
+    // Thunder Breathing form effects. Audio files can be supplied separately.
+    public static final RegistryObject<SoundEvent> THUNDER_CHARGEUP = registerSoundEvent("thunder_chargeup");
+    public static final RegistryObject<SoundEvent> THUNDER_CHARGEUP_SIXFOLD =
+        registerSoundEvent("thunder_chargeup_sixfold");
+    public static final RegistryObject<SoundEvent> THUNDER_CHARGEUP_EIGHTFOLD =
+        registerSoundEvent("thunder_chargeup_eightfold");
+    public static final RegistryObject<SoundEvent> THUNDER_CHARGEUP_GODSPEED =
+        registerSoundEvent("thunder_chargeup_godspeed");
+    public static final RegistryObject<SoundEvent> THUNDERCLAP = registerSoundEvent("thunderclap");
+    public static final RegistryObject<SoundEvent> THUNDER_GODSPEED = registerSoundEvent("thunder_godspeed");
+    public static final RegistryObject<SoundEvent> KAIGAKU_EFFECT = registerSoundEvent("kaigaku_effect");
+    public static final RegistryObject<SoundEvent> RICE_SPIRIT_DASH = registerSoundEvent("rice_spirit_dash");
+    public static final RegistryObject<SoundEvent> RICE_SPIRIT_ELECTRIC_DAMAGE =
+        registerSoundEvent("rice_spirit_electric_damage");
+    public static final RegistryObject<SoundEvent> RICE_SPIRIT_KNOCKBACK =
+        registerSoundEvent("rice_spirit_knockback");
+
     private static RegistryObject<SoundEvent> registerSoundEvent(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, name);
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(id));

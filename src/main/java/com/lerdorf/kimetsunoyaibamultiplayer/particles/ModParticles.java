@@ -25,6 +25,12 @@ public class ModParticles {
     public static final RegistryObject<SimpleParticleType> LOVE_SLASH = PARTICLE_TYPES.register("love_slash",
         () -> new SimpleParticleType(false));
 
+    public static final RegistryObject<SimpleParticleType> BLACKRED_IMPACT = PARTICLE_TYPES.register("blackred_impact",
+        () -> new SimpleParticleType(false));
+
+    public static final RegistryObject<SimpleParticleType> BLACKRED_SLASH = PARTICLE_TYPES.register("blackred_slash",
+        () -> new SimpleParticleType(false));
+
     public static final RegistryObject<SimpleParticleType> BLOOD = PARTICLE_TYPES.register("blood",
         () -> new SimpleParticleType(false));
 

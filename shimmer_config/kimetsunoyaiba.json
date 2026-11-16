@@ -67,6 +67,12 @@
       "b": 70,
       "a": 255
     },
+    "brambles_dark_red": {
+      "r": 139,
+      "g": 0,
+      "b": 0,
+      "a": 255
+    },
     "lantern_2_weight_average_color": {
       "r": 243,
       "g": 243,
@@ -360,6 +366,16 @@
       "radius": 15
     },
     {
+      "particle": "kimetsunoyaibamultiplayer:blackred_slash",
+      "color": "#brambles_dark_red",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaibamultiplayer:blackred_impact",
+      "color": "#brambles_dark_red",
+      "radius": 15
+    },
+    {
       "particle": "kimetsunoyaiba:particle_flame",
       "color": "#ds_flame",
       "radius": 15
@@ -466,6 +482,22 @@
     }
   ],
   "Particle": [
+    {
+      "particle": "kimetsunoyaibamultiplayer:blackred_slash",
+      "color": "#brambles_dark_red",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
+    {
+      "particle": "kimetsunoyaibamultiplayer:blackred_impact",
+      "color": "#brambles_dark_red",
+      "emissive": true,
+      "alpha": 1.0,
+      "blendMode": "additive",
+      "radius": 15
+    },
     {
       "particle": "kimetsunoyaiba:particle_flame",
       "color": "#ds_flame",

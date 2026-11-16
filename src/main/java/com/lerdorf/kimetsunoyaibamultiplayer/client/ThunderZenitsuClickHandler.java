@@ -1,7 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
-import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordZenitsu;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ThunderBreathingForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderZenitsuClickPacket;
 import net.minecraft.client.Minecraft;
@@ -26,7 +26,7 @@ public final class ThunderZenitsuClickHandler {
         }
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player != null
-            && minecraft.player.getMainHandItem().getItem() instanceof NichirinSwordZenitsu
+            && ThunderBreathingForms.isZenitsuSword(minecraft.player.getMainHandItem())
             && (minecraft.hitResult == null || minecraft.hitResult.getType() == HitResult.Type.MISS)) {
             ModNetworking.sendToServer(new ThunderZenitsuClickPacket());
         }

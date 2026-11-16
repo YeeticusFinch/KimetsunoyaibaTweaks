@@ -150,7 +150,8 @@ public class FirstPersonAnimationTracker {
         }
         return animationName.equals("left_sword_to_left")
                 || animationName.equals("left_sword_to_right")
-                || animationName.equals("left_sword_overhead");
+                || animationName.equals("left_sword_overhead")
+                || animationName.equals("left_brambles");
     }
 
     /**
@@ -254,7 +255,8 @@ public class FirstPersonAnimationTracker {
             "punch_right", "punch_left", "kick_right", "kick_left",
             "sprint", "sprint_senior",
             "backstep", "guard", "guard_0", "guard_1", "guard_2", "guard_3", "guard_4", "guard_5",
-            "iai1", "speed_attack_sword", "beast2", "breath_beast2"
+            "iai1", "speed_attack_sword", "beast2", "breath_beast2",
+            "brambles", "left_brambles"
         };
 
         for (String known : knownNames) {

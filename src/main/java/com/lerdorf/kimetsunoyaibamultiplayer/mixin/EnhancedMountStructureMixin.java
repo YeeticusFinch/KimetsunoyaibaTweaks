@@ -48,6 +48,8 @@ public class EnhancedMountStructureMixin {
         ResourceKey<Structure> key = entry.structure().unwrapKey().orElse(null);
         if (TSUZUMI_MANSION.equals(key)) {
             if (!TsuzumiMansionCandidates.isPreferred(
+                    (ChunkGenerator) (Object) this,
+                    randomState,
                     new RandomSpreadStructurePlacement(8, 4, RandomSpreadType.LINEAR, 733184921),
                     seed,
                     chunkPos)) {

@@ -47,6 +47,7 @@ public class KanrojiRenderer extends GeoEntityRenderer<KanrojiEntity> {
         // Sword display on back/hip (GeoRenderLayer, matches player positioning)
         this.addRenderLayer(new GeoSwordDisplayLayer<>(this));
         this.addRenderLayer(new SkinLayersGeoLayer<>(this));
+        this.addRenderLayer(new com.lerdorf.kimetsunoyaibamultiplayer.client.BiokinesesGeoAnchorLayer<>(this));
         this.addRenderLayer(new DemonSlayerDemonEyesLayer<>(this, "geo/biped_kanroji.geo.json", "animations/biped.animation.json"));
 
         // Add demon slayer mark rendering layer - renders Love mark on torso when activated

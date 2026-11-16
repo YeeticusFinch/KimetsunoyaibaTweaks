@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.worldgen;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import net.minecraft.core.Holder;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -11,6 +12,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -47,22 +49,26 @@ public final class TsuzumiMansionWorldgenHandler {
 
     @SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
-        if (!(event.getLevel() instanceof ServerLevel level)
-            || level.dimension() != Level.OVERWORLD) {
-            return;
-        }
-
-        net.minecraft.world.level.chunk.ChunkAccess chunk = event.getChunk();
-        ChunkPos chunkPos = chunk.getPos();
-        int minX = chunkPos.getMinBlockX();
-        int minZ = chunkPos.getMinBlockZ();
-        for (int dx = 0; dx < 16; dx += 4) {
-            for (int dz = 0; dz < 16; dz += 4) {
-                int x = minX + dx;
-                int z = minZ + dz;
-                int y = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, dx, dz);
-                findMansionStart(level, new net.minecraft.core.BlockPos(x, y, z));
+        try {
+            if (!(event.getLevel() instanceof ServerLevel level)
+                || level.dimension() != Level.OVERWORLD) {
+                return;
             }
+
+            net.minecraft.world.level.chunk.ChunkAccess chunk = event.getChunk();
+            ChunkPos chunkPos = chunk.getPos();
+            int minX = chunkPos.getMinBlockX();
+            int minZ = chunkPos.getMinBlockZ();
+            for (int dx = 0; dx < 16; dx += 4) {
+                for (int dz = 0; dz < 16; dz += 4) {
+                    int x = minX + dx;
+                    int z = minZ + dz;
+                    int y = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, dx, dz);
+                    findMansionStart(level, new BlockPos(x, y, z));
+                }
+            }
+        } catch (Exception exception) {
+            System.err.println("[Tsuzumi Mansion] Error checking loaded chunk: " + exception);
         }
     }
 
@@ -73,10 +79,14 @@ public final class TsuzumiMansionWorldgenHandler {
             if (!STRUCTURE_ID.equals(id)) {
                 continue;
             }
-            StructureStart start = level.structureManager().getStructureAt(probe, holder.value());
-            if (start != null && start.isValid()) {
-                BoundingBox box = start.getBoundingBox();
-                level.getServer().execute(() -> decorate(level, box));
+            try {
+                StructureStart start = level.structureManager().getStructureAt(probe, holder.value());
+                if (start != null && start.isValid()) {
+                    BoundingBox box = start.getBoundingBox();
+                    level.getServer().execute(() -> decorate(level, box));
+                }
+            } catch (Exception exception) {
+                System.err.println("[Tsuzumi Mansion] Error locating structure: " + exception);
             }
             return;
         }
@@ -85,13 +95,45 @@ public final class TsuzumiMansionWorldgenHandler {
     private static void decorate(ServerLevel level, BoundingBox box) {
         TsuzumiMansionSavedData data = TsuzumiMansionSavedData.get(level);
         long key = siteKey(box);
-        if (!data.sites.add(key)) {
+        if (data.sites.contains(key)) {
             return;
         }
 
-        prepareBlend(level, box);
-        growTrees(level, box);
-        data.setDirty();
+        try {
+            removeBiomeVegetation(level, box);
+            prepareBlend(level, box);
+            growTrees(level, box);
+            data.sites.add(key);
+            data.setDirty();
+        } catch (Exception exception) {
+            System.err.println("[Tsuzumi Mansion] Error decorating " + box + ": " + exception);
+        }
+    }
+
+    private static void removeBiomeVegetation(ServerLevel level, BoundingBox box) {
+        for (int x = box.minX(); x <= box.maxX(); x++) {
+            for (int y = box.minY(); y <= box.maxY(); y++) {
+                for (int z = box.minZ(); z <= box.maxZ(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (!isBiomeVegetation(level.getBlockState(pos))) {
+                        continue;
+                    }
+                    level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                    BlockPos below = pos.below();
+                    if (isBiomeVegetation(level.getBlockState(below))) {
+                        level.setBlock(below, Blocks.AIR.defaultBlockState(), 3);
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isBiomeVegetation(BlockState state) {
+        return state.is(Blocks.GRASS)
+            || state.is(Blocks.TALL_GRASS)
+            || state.is(Blocks.FERN)
+            || state.is(Blocks.LARGE_FERN)
+            || state.is(Blocks.DEAD_BUSH);
     }
 
     private static void prepareBlend(ServerLevel level, BoundingBox box) {
@@ -130,9 +172,12 @@ public final class TsuzumiMansionWorldgenHandler {
             return;
         }
 
+        RandomSource random = RandomSource.create(siteKey(box) ^ 0x5A17C0DE4B1DL);
+        int width = box.getXSpan() + BLEND_RADIUS * 2 + 1;
+        int depth = box.getZSpan() + BLEND_RADIUS * 2 + 1;
         for (int attempt = 0; attempt < TREE_ATTEMPTS; attempt++) {
-            int x = box.minX() - BLEND_RADIUS + level.random.nextInt(Math.max(1, box.getXSpan() + BLEND_RADIUS * 2));
-            int z = box.minZ() - BLEND_RADIUS + level.random.nextInt(Math.max(1, box.getZSpan() + BLEND_RADIUS * 2));
+            int x = box.minX() - BLEND_RADIUS + random.nextInt(Math.max(1, width));
+            int z = box.minZ() - BLEND_RADIUS + random.nextInt(Math.max(1, depth));
             if (x >= box.minX() && x <= box.maxX() && z >= box.minZ() && z <= box.maxZ()) {
                 continue;
             }
@@ -143,7 +188,7 @@ public final class TsuzumiMansionWorldgenHandler {
                 continue;
             }
             Holder<ConfiguredFeature<?, ?>> feature = attempt % 2 == 0 ? spruce.get() : darkOak.get();
-            feature.value().place(level, level.getChunkSource().getGenerator(), level.random, ground.above());
+            feature.value().place(level, level.getChunkSource().getGenerator(), random, ground.above());
         }
     }
 
@@ -159,6 +204,7 @@ public final class TsuzumiMansionWorldgenHandler {
 
     private static final class TsuzumiMansionSavedData extends SavedData {
         private static final String DATA_NAME = "kimetsunoyaibamultiplayer_tsuzumi_mansions";
+        private static final int DATA_VERSION = 2;
         private final Set<Long> sites = new HashSet<>();
 
         private static TsuzumiMansionSavedData get(ServerLevel level) {
@@ -170,6 +216,9 @@ public final class TsuzumiMansionWorldgenHandler {
 
         private static TsuzumiMansionSavedData load(CompoundTag tag) {
             TsuzumiMansionSavedData data = new TsuzumiMansionSavedData();
+            if (tag.getInt("version") != DATA_VERSION) {
+                return data;
+            }
             ListTag sites = tag.getList("sites", Tag.TAG_LONG_ARRAY);
             for (int i = 0; i < sites.size(); i++) {
                 long[] values = sites.getLongArray(i);
@@ -182,6 +231,7 @@ public final class TsuzumiMansionWorldgenHandler {
 
         @Override
         public CompoundTag save(CompoundTag tag) {
+            tag.putInt("version", DATA_VERSION);
             ListTag sites = new ListTag();
             for (Long site : this.sites) {
                 sites.add(new net.minecraft.nbt.LongArrayTag(new long[] {site}));

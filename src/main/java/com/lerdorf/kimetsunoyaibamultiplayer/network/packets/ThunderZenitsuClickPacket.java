@@ -1,7 +1,6 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.network.packets;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ThunderBreathingForms;
-import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordZenitsu;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -28,7 +27,7 @@ public class ThunderZenitsuClickPacket {
                 return;
             }
             ItemStack heldItem = player.getMainHandItem();
-            if (heldItem.getItem() instanceof NichirinSwordZenitsu) {
+            if (ThunderBreathingForms.isZenitsuSword(heldItem)) {
                 ThunderBreathingForms.handleZenitsuClick(player);
             }
         });

@@ -169,4 +169,27 @@ public class CustomRenderTypes extends RenderType {
                 renderState
         );
         }
+
+    /** Ordinary translucent entity rendering without the emissive shader or bloom. */
+    public static RenderType geoEntityTranslucent(ResourceLocation texture) {
+        CompositeState renderState = CompositeState.builder()
+                .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                .setTextureState(new TextureStateShard(texture, false, false))
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                .setLightmapState(LIGHTMAP)
+                .setOverlayState(OVERLAY)
+                .setCullState(NO_CULL)
+                .setWriteMaskState(COLOR_WRITE)
+                .setOutputState(TRANSLUCENT_TARGET)
+                .createCompositeState(true);
+
+        return create(
+                "geo_entity_translucent",
+                DefaultVertexFormat.NEW_ENTITY,
+                VertexFormat.Mode.QUADS,
+                256,
+                true,
+                true,
+                renderState);
+    }
 }

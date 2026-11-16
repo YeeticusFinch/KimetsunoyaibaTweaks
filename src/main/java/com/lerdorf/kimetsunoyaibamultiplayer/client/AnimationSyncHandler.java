@@ -185,6 +185,12 @@ public class AnimationSyncHandler {
                 if (Config.logDebug) {
                     Log.info("Successfully stopped animation for player {}", player.getName().getString());
                 }
+            } else {
+                // A local animation can outlive its tracking entry; clear the default action layer too.
+                AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
+                if (animationStack != null) {
+                    animationStack.removeLayer(3000);
+                }
             }
         } catch (Exception e) {
             Log.error("Failed to stop animation for player {}", player.getName().getString(), e);
@@ -385,6 +391,13 @@ public class AnimationSyncHandler {
 
         ActiveAnimation activeAnimation = syncedAnimations.get(playerUUID);
         if (activeAnimation == null || activeAnimation.animationId == null) {
+            return false;
+        }
+
+        IAnimation animation = activeAnimation.modifierLayer == null
+            ? null : activeAnimation.modifierLayer.getAnimation();
+        if (animation == null || !animation.isActive()) {
+            syncedAnimations.remove(playerUUID);
             return false;
         }
 

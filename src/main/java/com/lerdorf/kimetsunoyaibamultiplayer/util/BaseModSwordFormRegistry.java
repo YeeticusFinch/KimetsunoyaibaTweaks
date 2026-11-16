@@ -52,6 +52,9 @@ public final class BaseModSwordFormRegistry {
         register("nichirinsword_thunder", new int[]{101, 102, 103, 104, 105, 106});
         // Kaigaku cannot use Thunder Breathing's 1st Form.
         register("nichirinsword_kaigaku", new int[]{102, 103, 104, 105, 106});
+        register("nichirinsword_kaigaku_human", new int[]{302, 303, 304, 305, 306});
+        register("nichirinsword_hashira_thunder", new int[]{301, 302, 303, 304, 305, 306, 307});
+        register("nichirinsword_zenitsu_full_potential", new int[]{301, 302, 303, 304, 305, 306, 307});
         register("nichirinsword_zenitsu", new int[]{111, 112, 113, 101, 107});
         register("nichirinsword_flame", new int[]{301, 302, 303, 304, 305});
         register("nichirinsword_rengoku", new int[]{301, 302, 303, 304, 305, 309});
@@ -171,6 +174,9 @@ public final class BaseModSwordFormRegistry {
         // Thunder 101 is not mistaken for Water 101, and so on.
         aliasByPosition("nichirinsword_thunder", new int[]{301, 302, 303, 304, 305, 306});
         aliasByPosition("nichirinsword_kaigaku", new int[]{302, 303, 304, 305, 306});
+        aliasByPosition("nichirinsword_kaigaku_human", new int[]{302, 303, 304, 305, 306});
+        aliasByPosition("nichirinsword_hashira_thunder", new int[]{301, 302, 303, 304, 305, 306, 307});
+        aliasByPosition("nichirinsword_zenitsu_full_potential", new int[]{301, 302, 303, 304, 305, 306, 307});
         aliasByPosition("nichirinsword_flame", new int[]{401, 402, 403, 404, 405});
         aliasByPosition("nichirinsword_rengoku", new int[]{401, 402, 403, 404, 405, 409});
         aliasByPosition("nichirinsword_mist", new int[]{701, 702, 703, 704, 705, 707});

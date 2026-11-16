@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.items;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.CreepingRuin;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.Biokineses;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.DemonwebPuppetry;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.RuiBloodDemonArt;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.VindicatorsBane;
@@ -97,6 +98,16 @@ public class ModItems {
 
     public static final RegistryObject<Item> NICHIRINSWORD_KAIGAKU = ITEMS.register("nichirinsword_kaigaku",
         () -> new NichirinSwordKaigaku(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_KAIGAKU_HUMAN = ITEMS.register("nichirinsword_kaigaku_human",
+        () -> new NichirinSwordKaigakuHuman(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_HASHIRA_THUNDER = ITEMS.register("nichirinsword_hashira_thunder",
+        () -> new NichirinSwordHashiraThunder(new Item.Properties().stacksTo(1).durability(2000)));
+
+    public static final RegistryObject<Item> NICHIRINSWORD_ZENITSU_FULL_POTENTIAL =
+        ITEMS.register("nichirinsword_zenitsu_full_potential",
+            () -> new NichirinSwordZenitsuFullPotential(new Item.Properties().stacksTo(1).durability(2000)));
 
     public static final RegistryObject<Item> NICHIRINSWORD_GOLD = ITEMS.register("nichirinsword_gold",
         () -> new NichirinSwordGold(new Item.Properties().stacksTo(1).durability(2000)));
@@ -434,6 +445,9 @@ public class ModItems {
             new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> RUI_DEMON_ART = ITEMS.register("rui_demon_art",
         () -> new BloodDemonArtItem(RuiBloodDemonArt.ART_ID, 4.0F, 1.6F,
+            new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> BIOKINESES = ITEMS.register("biokineses",
+        () -> new BloodDemonArtItem(Biokineses.ART_ID, 14.0F, 1.6F,
             new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> CUSTOM_DEMON_ART = ITEMS.register("custom_demon_art",
         () -> new CustomDemonArtItem(new Item.Properties()));
@@ -941,11 +955,12 @@ public class ModItems {
                       CREEPER_DEMON_ART.get(),
                     VINDICATOR_DEMON_ART.get(),
                     SWAMP_DEMON_ART.get(),
-                    COMBUSTIBLE_BLOOD.get(),
-                    DAUGHTER_DEMON_ART.get(),
-                     MOTHER_DEMON_ART.get(),
-                     RUI_DEMON_ART.get()
-                );
+                     COMBUSTIBLE_BLOOD.get(),
+                     DAUGHTER_DEMON_ART.get(),
+                      MOTHER_DEMON_ART.get(),
+                      RUI_DEMON_ART.get(),
+                      BIOKINESES.get()
+                 );
                 addOptionalSpawnEggs(output);
 
                 addItems(output,
@@ -1041,8 +1056,11 @@ public class ModItems {
          addIfNotRegistryManaged(swords, NICHIRINSWORD_BLACK.get());
          addIfNotRegistryManaged(swords, NICHIRINSWORD_THUNDER.get());
          addIfNotRegistryManaged(swords, NICHIRINSWORD_THUNDER_BLUE.get());
-         addIfNotRegistryManaged(swords, NICHIRINSWORD_ZENITSU.get());
-         addIfNotRegistryManaged(swords, NICHIRINSWORD_KAIGAKU.get());
+          addIfNotRegistryManaged(swords, NICHIRINSWORD_ZENITSU.get());
+          addIfNotRegistryManaged(swords, NICHIRINSWORD_KAIGAKU.get());
+          addIfNotRegistryManaged(swords, NICHIRINSWORD_KAIGAKU_HUMAN.get());
+          addIfNotRegistryManaged(swords, NICHIRINSWORD_HASHIRA_THUNDER.get());
+          addIfNotRegistryManaged(swords, NICHIRINSWORD_ZENITSU_FULL_POTENTIAL.get());
 
         swords.sort(Comparator.comparing(ModItems::getCreativeSortName));
         swords.forEach(output::accept);

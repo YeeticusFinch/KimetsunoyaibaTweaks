@@ -72,8 +72,11 @@ public class SwordParticleMapping {
         // Thunder Breathing
         ResourceLocation thunderParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_thunder");
         SWORD_TO_PARTICLE_MAP.put("nichirinsword_thunder", thunderParticle);
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_zenitsu", thunderParticle);
-        SWORD_TO_PARTICLE_MAP.put("nichirinsword_kaigaku", thunderParticle);
+         SWORD_TO_PARTICLE_MAP.put("nichirinsword_zenitsu", thunderParticle);
+         SWORD_TO_PARTICLE_MAP.put("nichirinsword_kaigaku", thunderParticle);
+         SWORD_TO_PARTICLE_MAP.put("nichirinsword_kaigaku_human", thunderParticle);
+         SWORD_TO_PARTICLE_MAP.put("nichirinsword_hashira_thunder", thunderParticle);
+         SWORD_TO_PARTICLE_MAP.put("nichirinsword_zenitsu_full_potential", thunderParticle);
 
         // Water Breathing
         ResourceLocation waterParticle = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_blue_smoke");

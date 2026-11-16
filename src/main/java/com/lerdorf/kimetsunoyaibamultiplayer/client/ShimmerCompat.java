@@ -2,7 +2,6 @@ package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -123,18 +122,17 @@ public final class ShimmerCompat {
         }
     }
 
-    /** Adds world-space geometry to bloom using the view active when Shimmer draws it. */
-    public static void postWorldBloom(BiConsumer<PoseStack, MultiBufferSource> renderer) {
+    /** Adds world-space geometry to bloom using the exact pose from the world render stage. */
+    public static void postWorldBloom(PoseStack poseStack,
+                                      BiConsumer<PoseStack, MultiBufferSource> renderer) {
         if (!isShimmerLoaded() || !initializeApi()) {
             return;
         }
 
         try {
+            PoseStack copiedPoseStack = (PoseStack) copyPoseStack.invoke(null, poseStack);
             Consumer<MultiBufferSource> bloomRenderer = bufferSource -> {
-                PoseStack currentPoseStack = new PoseStack();
-                Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-                currentPoseStack.mulPose(camera.rotation());
-                renderer.accept(currentPoseStack, bufferSource);
+                renderer.accept(copiedPoseStack, bufferSource);
             };
             postEntityForce.invoke(bloomPost, bloomRenderer);
         } catch (ReflectiveOperationException exception) {

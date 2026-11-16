@@ -10,10 +10,12 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Log;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.DemonPropositionClientController;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.DualLayerSlashRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.SwordSlashRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.client.BiokinesesRenderHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker;
 import com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BonePositionTracker.SlashRenderRequest;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.MantisDemonEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
+import com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
@@ -39,6 +41,7 @@ import net.minecraftforge.client.event.RenderHandEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 
@@ -308,7 +311,7 @@ public class ClientRenderEvents {
         // Final hierarchy: vanilla base → vanilla swing → counter-swing → our keyframes → item model JSON → render
     }*/
     
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onRenderHand(RenderHandEvent event) {
         if (!Config.customFirstPersonSwingEnabled) return;
 
@@ -332,8 +335,23 @@ public class ClientRenderEvents {
             return;
         }
 
-        // Demon guard may be used with any held item; sword animations remain sword-only.
-        if (!isNichirinSword(stack) && !currentAnimation.equals("guard")) {
+        boolean bramblesAnimation = currentAnimation.equals("brambles")
+                || currentAnimation.equals("left_brambles");
+        boolean virtualBiokinesesOffhand = event.getHand() == InteractionHand.OFF_HAND
+                && stack.isEmpty()
+                && player.getOffhandItem().isEmpty()
+                && player.getMainHandItem().getItem() == ModItems.BIOKINESES.get();
+        if (virtualBiokinesesOffhand) {
+            stack = BiokinesesRenderHandler.createVirtualOffhandStack(player.getMainHandItem());
+        }
+
+        boolean biokinesesAnimation = stack.getItem() == ModItems.BIOKINESES.get()
+                && com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
+                    .isPlayingSwordAttack();
+        // Demon guard may be used with any held item; brambles also animates Biokineses in both hands.
+        if (!isNichirinSword(stack) && !currentAnimation.equals("guard")
+                && !(bramblesAnimation && stack.getItem() == ModItems.BIOKINESES.get())
+                && !biokinesesAnimation) {
             return;
         }
 
@@ -342,7 +360,8 @@ public class ClientRenderEvents {
         boolean shouldRenderOffhandOnly = com.lerdorf.kimetsunoyaibamultiplayer.client.FirstPersonAnimationTracker
                 .isOffhandAnimation(currentAnimation);
         boolean isDoubleHandAnimation = currentAnimation.equals("double_sword_overhead")
-                || currentAnimation.equals("beast10");
+                || currentAnimation.equals("beast10")
+                || currentAnimation.equals("brambles");
 
         // Determine the animation used for this hand.
         // During offhand-only swings, main hand plays sword_none to stay visible and stable.
@@ -351,6 +370,8 @@ public class ClientRenderEvents {
             animationForThisHand = "sword_none";
         } else if (currentAnimation.equals("beast10") && event.getHand() == InteractionHand.OFF_HAND) {
             animationForThisHand = "beast10left";
+        } else if (currentAnimation.equals("brambles") && event.getHand() == InteractionHand.OFF_HAND) {
+            animationForThisHand = "left_brambles";
         }
 
         // No keyframes for this hand's animation -> fall back to vanilla.

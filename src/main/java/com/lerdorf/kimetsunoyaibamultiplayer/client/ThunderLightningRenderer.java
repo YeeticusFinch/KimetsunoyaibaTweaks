@@ -126,6 +126,8 @@ public final class ThunderLightningRenderer {
         Camera camera = event.getCamera();
         Vec3 cameraPosition = camera.getPosition();
         PoseStack poseStack = event.getPoseStack();
+        poseStack.pushPose();
+        poseStack.translate(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
         Matrix4f matrix = poseStack.last().pose();
         Matrix3f normal = poseStack.last().normal();
         MultiBufferSource.BufferSource bufferSource = MINECRAFT.renderBuffers().bufferSource();
@@ -134,32 +136,32 @@ public final class ThunderLightningRenderer {
         for (Map.Entry<UUID, Bolt> entry : bolts.entrySet()) {
             Bolt bolt = entry.getValue();
             ShimmerCompat.updateLightningLight(entry.getKey(), lightPosition(bolt), lightColor(bolt), 8.0F);
-            renderBolt(entry.getKey(), bolt, cameraPosition, matrix, normal, buffer, false);
+            renderBolt(entry.getKey(), bolt, Vec3.ZERO, matrix, normal, buffer, false);
         }
         for (Spark spark : sparks.values()) {
             Vec3[] path = spark.path(gameTime);
             if (spark.shouldRender(gameTime)) {
-                renderSpark(spark, path, cameraPosition, matrix, normal, buffer, false);
+                renderSpark(spark, path, Vec3.ZERO, matrix, normal, buffer, false);
             }
         }
         bufferSource.endBatch(BEAM_RENDER_TYPE);
 
-        ShimmerCompat.postWorldBloom((bloomPoseStack, bloomBufferSource) -> {
-            Vec3 bloomCameraPosition = MINECRAFT.gameRenderer.getMainCamera().getPosition();
+        ShimmerCompat.postWorldBloom(poseStack, (bloomPoseStack, bloomBufferSource) -> {
             Matrix4f bloomMatrix = bloomPoseStack.last().pose();
             Matrix3f bloomNormal = bloomPoseStack.last().normal();
             VertexConsumer bloomBuffer = bloomBufferSource.getBuffer(BEAM_RENDER_TYPE);
             for (Map.Entry<UUID, Bolt> entry : bolts.entrySet()) {
-                renderBolt(entry.getKey(), entry.getValue(), bloomCameraPosition,
+                renderBolt(entry.getKey(), entry.getValue(), Vec3.ZERO,
                     bloomMatrix, bloomNormal, bloomBuffer, true);
             }
             for (Spark spark : sparks.values()) {
                 Vec3[] path = spark.path(gameTime);
                 if (spark.shouldRender(gameTime)) {
-                    renderSpark(spark, path, bloomCameraPosition, bloomMatrix, bloomNormal, bloomBuffer, true);
+                    renderSpark(spark, path, Vec3.ZERO, bloomMatrix, bloomNormal, bloomBuffer, true);
                 }
             }
         });
+        poseStack.popPose();
     }
 
     private static void renderBolt(UUID id, Bolt bolt, Vec3 cameraPosition, Matrix4f matrix,

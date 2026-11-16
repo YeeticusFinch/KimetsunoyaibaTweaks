@@ -22,6 +22,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.PuppetLineSyncPacke
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.LoveLineSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderLightningSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderLightningSparkSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BrambleSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesM1AttackPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesArmsSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderZenitsuClickPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonPropositionStatePacket;
@@ -380,6 +383,13 @@ public class ModNetworking {
                 .consumerMainThread(CombustibleBloodM1AttackPacket::handle)
                 .add();
 
+        int biokinesesM1AttackPacketId = id();
+        net.messageBuilder(BiokinesesM1AttackPacket.class, biokinesesM1AttackPacketId)
+                .decoder(BiokinesesM1AttackPacket::new)
+                .encoder(BiokinesesM1AttackPacket::toBytes)
+                .consumerMainThread(BiokinesesM1AttackPacket::handle)
+                .add();
+
         int swampPuddleStatePacketId = id();
         net.messageBuilder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwampPuddleStatePacket.class, swampPuddleStatePacketId)
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SwampPuddleStatePacket::new)
@@ -518,6 +528,20 @@ public class ModNetworking {
                 .decoder(ThunderLightningSparkSyncPacket::new)
                 .encoder(ThunderLightningSparkSyncPacket::toBytes)
                 .consumerMainThread(ThunderLightningSparkSyncPacket::handle)
+                .add();
+
+        int brambleSyncPacketId = id();
+        net.messageBuilder(BrambleSyncPacket.class, brambleSyncPacketId)
+                .decoder(BrambleSyncPacket::new)
+                .encoder(BrambleSyncPacket::toBytes)
+                .consumerMainThread(BrambleSyncPacket::handle)
+                .add();
+
+        int biokinesesArmsSyncPacketId = id();
+        net.messageBuilder(BiokinesesArmsSyncPacket.class, biokinesesArmsSyncPacketId)
+                .decoder(BiokinesesArmsSyncPacket::new)
+                .encoder(BiokinesesArmsSyncPacket::toBytes)
+                .consumerMainThread(BiokinesesArmsSyncPacket::handle)
                 .add();
 
         int thunderZenitsuClickPacketId = id();

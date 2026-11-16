@@ -14,13 +14,14 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.Map;
@@ -38,31 +39,51 @@ import java.util.Map;
  */
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class StructureSpawnHandler {
+    private static final ResourceLocation TSUZUMI_MANSION =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaibamultiplayer", "tsuzumi_mansion");
+
+    private static boolean isNaturalTsuzumiSpawn(MobSpawnType spawnType) {
+        return spawnType == MobSpawnType.NATURAL
+            || spawnType == MobSpawnType.CHUNK_GENERATION
+            || spawnType == MobSpawnType.PATROL;
+    }
+
+    private static boolean isVanillaMob(Mob entity) {
+        ResourceLocation entityId = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+        return entityId != null && "minecraft".equals(entityId.getNamespace());
+    }
 
     /**
      * Check and apply structure-specific spawning rules
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onMobSpawn(MobSpawnEvent.FinalizeSpawn event) {
-        // Check if enhanced spawning rules are enabled
-        if (!EnhancedSpawnConfig.enhancedSpawningRules) {
-            return;
-        }
-
-        // Only affect natural spawns
-        if (event.getSpawnType() != MobSpawnType.NATURAL &&
-            event.getSpawnType() != MobSpawnType.STRUCTURE) {
+        if (!(event.getLevel() instanceof ServerLevel serverLevel)) {
             return;
         }
 
         Mob entity = event.getEntity();
-        LevelAccessor levelAccessor = event.getLevel();
+        BlockPos pos = BlockPos.containing(event.getX(), event.getY(), event.getZ());
 
-        if (!(levelAccessor instanceof ServerLevel serverLevel)) {
+        // Keep scripted mansion encounters working while blocking vanilla natural spawns.
+        if (isVanillaMob(entity)
+            && isNaturalTsuzumiSpawn(event.getSpawnType())
+            && isInsideTsuzumiMansion(serverLevel, pos)) {
+            event.setSpawnCancelled(true);
+            event.setCanceled(true);
             return;
         }
 
-        BlockPos pos = BlockPos.containing(event.getX(), event.getY(), event.getZ());
+        // Check if enhanced spawning rules are enabled.
+        if (!EnhancedSpawnConfig.enhancedSpawningRules) {
+            return;
+        }
+
+        // Only affect natural and structure spawns for the remaining rules.
+        if (event.getSpawnType() != MobSpawnType.NATURAL &&
+            event.getSpawnType() != MobSpawnType.STRUCTURE) {
+            return;
+        }
 
         // Debug logging
         ResourceLocation entityId = EntityTagHelper.getEntityTypeId(entity);
@@ -111,6 +132,30 @@ public class StructureSpawnHandler {
             Log.error("[Structure Spawn Handler] Error processing structure spawn: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private static boolean isInsideTsuzumiMansion(ServerLevel level, BlockPos pos) {
+        try {
+            for (Holder<Structure> holder : level.registryAccess()
+                    .registryOrThrow(Registries.STRUCTURE).holders().toList()) {
+                ResourceLocation id = holder.unwrapKey().map(key -> key.location()).orElse(null);
+                if (!TSUZUMI_MANSION.equals(id)) {
+                    continue;
+                }
+                StructureStart start = level.structureManager().getStructureAt(pos, holder.value());
+                return start != null && start.isValid() && isInside(start, pos);
+            }
+        } catch (Exception exception) {
+            System.err.println("[Structure Spawn Handler] Error checking Tsuzumi Mansion: " + exception);
+        }
+        return false;
+    }
+
+    private static boolean isInside(StructureStart start, BlockPos pos) {
+        var box = start.getBoundingBox();
+        return pos.getX() >= box.minX() && pos.getX() <= box.maxX()
+            && pos.getY() >= box.minY() && pos.getY() <= box.maxY()
+            && pos.getZ() >= box.minZ() && pos.getZ() <= box.maxZ();
     }
 
     /**

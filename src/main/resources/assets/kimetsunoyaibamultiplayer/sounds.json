@@ -160,5 +160,41 @@
         "stream": false
       }
     ]
+  },
+  "thunder_chargeup": {
+    "sounds": ["kimetsunoyaibamultiplayer:thunder_chargeup"]
+  },
+  "thunder_chargeup_sixfold": {
+    "sounds": ["kimetsunoyaibamultiplayer:thunder_chargeup_sixfold"]
+  },
+  "thunder_chargeup_eightfold": {
+    "sounds": ["kimetsunoyaibamultiplayer:thunder_chargeup_eightfold"]
+  },
+  "thunder_chargeup_godspeed": {
+    "sounds": ["kimetsunoyaibamultiplayer:thunder_chargeup_godspeed"]
+  },
+  "thunder_godspeed": {
+    "sounds": ["kimetsunoyaibamultiplayer:thunder_godspeed"]
+  },
+  "thunderclap": {
+    "sounds": [
+      "kimetsunoyaibamultiplayer:thunderclap_1",
+      "kimetsunoyaibamultiplayer:thunderclap_2",
+      "kimetsunoyaibamultiplayer:thunderclap_3",
+      "kimetsunoyaibamultiplayer:thunderclap_4",
+      "kimetsunoyaibamultiplayer:thunderclap_5"
+    ]
+  },
+  "kaigaku_effect": {
+    "sounds": ["kimetsunoyaibamultiplayer:kaigaku_effect"]
+  },
+  "rice_spirit_dash": {
+    "sounds": ["kimetsunoyaibamultiplayer:rice_spirit_dash"]
+  },
+  "rice_spirit_electric_damage": {
+    "sounds": ["kimetsunoyaibamultiplayer:rice_spirit_electric_damage"]
+  },
+  "rice_spirit_knockback": {
+    "sounds": ["kimetsunoyaibamultiplayer:rice_spirit_knockback"]
   }
 }

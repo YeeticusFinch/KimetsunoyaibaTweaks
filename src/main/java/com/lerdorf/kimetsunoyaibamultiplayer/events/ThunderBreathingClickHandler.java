@@ -2,7 +2,6 @@ package com.lerdorf.kimetsunoyaibamultiplayer.events;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ThunderBreathingForms;
-import com.lerdorf.kimetsunoyaibamultiplayer.items.NichirinSwordZenitsu;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -19,7 +18,7 @@ public final class ThunderBreathingClickHandler {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onAttackEntity(AttackEntityEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)
-            || !(player.getMainHandItem().getItem() instanceof NichirinSwordZenitsu)) {
+            || !ThunderBreathingForms.isZenitsuSword(player.getMainHandItem())) {
             return;
         }
         if (ThunderBreathingForms.handleZenitsuClick(player)) {
@@ -30,7 +29,7 @@ public final class ThunderBreathingClickHandler {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player)
-            || !(player.getMainHandItem().getItem() instanceof NichirinSwordZenitsu)) {
+            || !ThunderBreathingForms.isZenitsuSword(player.getMainHandItem())) {
             return;
         }
         if (ThunderBreathingForms.handleZenitsuClick(player)) {

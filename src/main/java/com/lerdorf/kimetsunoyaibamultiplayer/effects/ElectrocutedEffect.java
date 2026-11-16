@@ -1,10 +1,12 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.effects;
 
+import com.lerdorf.kimetsunoyaibamultiplayer.sounds.ModSounds;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.sounds.SoundSource;
 
 import java.util.UUID;
 
@@ -32,6 +34,10 @@ public class ElectrocutedEffect extends MobEffect {
     public void applyEffectTick(LivingEntity entity, int amplifier) {
         if (!entity.level().isClientSide && entity.isAlive()) {
             entity.hurt(entity.damageSources().magic(), 1.0F + amplifier);
+            if (entity.tickCount % 20 == 0) {
+                entity.level().playSound(null, entity.blockPosition(), ModSounds.KAIGAKU_EFFECT.get(),
+                    SoundSource.PLAYERS, 0.65F, 1.0F);
+            }
         }
     }
 }

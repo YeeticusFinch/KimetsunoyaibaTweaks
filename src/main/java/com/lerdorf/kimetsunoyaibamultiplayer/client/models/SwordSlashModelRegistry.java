@@ -126,8 +126,11 @@ public class SwordSlashModelRegistry {
 
         // Register thunder breathing swords to use the generic slash geometry with a thunder texture.
         SWORD_TO_MODEL_MAP.put("nichirinsword_thunder", "thunder");
-        SWORD_TO_MODEL_MAP.put("nichirinsword_zenitsu", "thunder");
-        SWORD_TO_MODEL_MAP.put("nichirinsword_kaigaku", "thunder");
+         SWORD_TO_MODEL_MAP.put("nichirinsword_zenitsu", "thunder");
+         SWORD_TO_MODEL_MAP.put("nichirinsword_kaigaku", "thunder");
+         SWORD_TO_MODEL_MAP.put("nichirinsword_kaigaku_human", "thunder");
+         SWORD_TO_MODEL_MAP.put("nichirinsword_hashira_thunder", "thunder");
+         SWORD_TO_MODEL_MAP.put("nichirinsword_zenitsu_full_potential", "thunder");
 
         // Register serpent breathing swords to use the generic slash geometry with a serpent texture.
         SWORD_TO_MODEL_MAP.put("nichirinsword_serpent", "serpent");

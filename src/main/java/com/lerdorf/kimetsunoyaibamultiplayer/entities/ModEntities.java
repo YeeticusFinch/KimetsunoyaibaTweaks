@@ -294,6 +294,16 @@ public class ModEntities {
                 .fireImmune()
                 .build("love_tornado"));
 
+    public static final RegistryObject<EntityType<BloodTornadoEntity>> BLOOD_TORNADO =
+        ENTITY_TYPES.register("blood_tornado",
+            () -> EntityType.Builder.of(BloodTornadoEntity::new, MobCategory.MISC)
+                .sized(3.0F, 4.0F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("blood_tornado"));
+
     /**
      * After Image - Visual effect for Flower Breathing 7th Form and other speed techniques
      * Creates ghostly afterimages that fade out, giving the illusion of blinding speed
@@ -751,6 +761,7 @@ public class ModEntities {
 
             // Register attributes for Love Tornado (visual-only entity)
             event.put(LOVE_TORNADO.get(), LoveTornadoEntity.createAttributes().build());
+            event.put(BLOOD_TORNADO.get(), BloodTornadoEntity.createAttributes().build());
 
             // Register attributes for After Image (visual-only entity)
             event.put(AFTER_IMAGE.get(), AfterImageEntity.createAttributes().build());

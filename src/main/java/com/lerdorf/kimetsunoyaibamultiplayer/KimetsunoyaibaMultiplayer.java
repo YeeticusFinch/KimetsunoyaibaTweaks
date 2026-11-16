@@ -3,6 +3,8 @@ package com.lerdorf.kimetsunoyaibamultiplayer;
 import com.mojang.logging.LogUtils;
 import com.lerdorf.kimetsunoyaibamultiplayer.capability.ISwordWielderData;
 import com.lerdorf.kimetsunoyaibamultiplayer.capability.SwordWielderData;
+import com.lerdorf.kimetsunoyaibamultiplayer.capability.BiokinesesArmData;
+import com.lerdorf.kimetsunoyaibamultiplayer.capability.IBiokinesesArmData;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.DamageCalculator;
@@ -198,6 +200,7 @@ public class KimetsunoyaibaMultiplayer
     }
 
     public static final Capability<ISwordWielderData> SWORD_WIELDER_DATA = CapabilityManager.get(new CapabilityToken<>() {});
+    public static final Capability<IBiokinesesArmData> BIOKINESES_ARMS = CapabilityManager.get(new CapabilityToken<>() {});
     
     private void commonSetup(final FMLCommonSetupEvent event)
     {
@@ -419,15 +422,45 @@ public class KimetsunoyaibaMultiplayer
               DustParticleOptions kaigakuThunderParticle = new DustParticleOptions(
                   new Vector3f(0.05F, 0.16F, 0.72F), 0.6F);
               com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
-                  "nichirinsword_kaigaku",
-                  (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KAIGAKU.get(),
+                   "nichirinsword_kaigaku",
+                   (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KAIGAKU.get(),
                   "thunder_breathing",
                   com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
                   kaigakuThunderParticle,
                   SoundEvents.LIGHTNING_BOLT_THUNDER,
                   null,
+                   true,
+                   1);
+              com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                  "nichirinsword_kaigaku_human",
+                  (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_KAIGAKU_HUMAN.get(),
+                  "thunder_breathing",
+                  com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
+                  blueThunderParticle,
+                  SoundEvents.LIGHTNING_BOLT_THUNDER,
+                  null,
                   true,
                   1);
+              com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                  "nichirinsword_hashira_thunder",
+                  (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_HASHIRA_THUNDER.get(),
+                  "thunder_breathing",
+                  com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.NICHIRIN,
+                  thunderParticle,
+                  SoundEvents.LIGHTNING_BOLT_THUNDER,
+                  null,
+                  true,
+                  2);
+              com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.register(
+                  "nichirinsword_zenitsu_full_potential",
+                  (com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem) ModItems.NICHIRINSWORD_ZENITSU_FULL_POTENTIAL.get(),
+                  "thunder_breathing",
+                  com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry.SwordCategory.SPECIAL,
+                  thunderParticle,
+                  SoundEvents.LIGHTNING_BOLT_THUNDER,
+                  null,
+                  true,
+                  2);
              if (!com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.isRegistered("thunder_breathing")) {
                  com.lerdorf.kimetsunoyaibamultiplayer.api.BreathingStyleRegistry.register(
                      "thunder_breathing",
@@ -532,6 +565,7 @@ public class KimetsunoyaibaMultiplayer
             com.lerdorf.kimetsunoyaibamultiplayer.entities.MotherEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.entities.RuiEntity.registerBloodDemonArt();
             com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.KyogaiDrumsArt.register();
+            com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.Biokineses.register();
             com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI.registerDemon(
                 "kimetsunoyaibamultiplayer:daughter",
                 com.lerdorf.kimetsunoyaibamultiplayer.raids.EntityPowerScale.MEDIUM_DEMON,
@@ -662,6 +696,14 @@ public class KimetsunoyaibaMultiplayer
                         @Override
                         public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
                             return cap == SWORD_WIELDER_DATA ? LazyOptional.of(() -> backend).cast() : LazyOptional.empty();
+                        }
+                    });
+            event.addCapability(ResourceLocation.fromNamespaceAndPath(MODID, "biokineses_arms"),
+                    new ICapabilityProvider() {
+                        final BiokinesesArmData backend = new BiokinesesArmData();
+                        @Override
+                        public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
+                            return cap == BIOKINESES_ARMS ? LazyOptional.of(() -> backend).cast() : LazyOptional.empty();
                         }
                     });
         }
@@ -988,6 +1030,9 @@ public class KimetsunoyaibaMultiplayer
 
             LivingEntity target = event.getEntity();
 
+            com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.ThunderBreathingForms
+                .handleKaigakuAttack(event);
+
             // NOTE: AOE damage is now handled client-side via BreathingSwordSwingPacket
             // sent from onLeftClickEmpty and onClientLivingAttack events.
             // This server-side event is only for logging/debugging purposes.
@@ -1132,6 +1177,12 @@ public class KimetsunoyaibaMultiplayer
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "open"),
                     (stack, level, entity, seed) -> com.lerdorf.kimetsunoyaibamultiplayer.items.NezukoBoxItem.isOpen(stack) ? 1.0F : 0.0F
                 );
+                net.minecraft.client.renderer.item.ItemProperties.register(
+                    com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems.BIOKINESES.get(),
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "offhand"),
+                    (stack, level, entity, seed) -> stack.hasTag()
+                        && stack.getTag().getBoolean("kimetsunoyaibamultiplayer_biokineses_offhand") ? 1.0F : 0.0F
+                );
             });
 		if (Config.logDebug)
             Log.info("Animation sync system initialized for client");
@@ -1158,6 +1209,16 @@ public class KimetsunoyaibaMultiplayer
             event.registerSpriteSet(
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.LOVE_SLASH.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.particles.LoveSlashParticle.Provider::new
+            );
+
+            event.registerSpriteSet(
+                com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.BLACKRED_IMPACT.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BlackRedImpactParticle.Provider::new
+            );
+
+            event.registerSpriteSet(
+                com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.BLACKRED_SLASH.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.BlackRedSlashParticle.Provider::new
             );
 
             event.registerSpriteSet(
@@ -1228,6 +1289,8 @@ public class KimetsunoyaibaMultiplayer
 
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.LOVE_TORNADO.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.LoveTornadoRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.BLOOD_TORNADO.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BloodTornadoRenderer::new);
 
             // Register renderers for generic demon slayers
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER.get(),

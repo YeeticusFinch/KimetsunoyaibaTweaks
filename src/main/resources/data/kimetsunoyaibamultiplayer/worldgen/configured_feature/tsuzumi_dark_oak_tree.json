@@ -9,7 +9,7 @@
       }
     },
     "foliage_placer": {
-      "type": "minecraft:spruce_foliage_placer",
+      "type": "minecraft:dark_oak_foliage_placer",
       "radius": 2,
       "offset": 0,
       "trunk_height": 5
