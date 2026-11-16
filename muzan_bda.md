@@ -126,7 +126,13 @@ When the user hits the ground:
 
 - Calculate a 15 block horizontal line perpendicular to the user's facing direction (7.5 blocks to the left, 7.5 blocks to the right)
 - Calculate 5 evenly spaced points along that line (3 blocks apart)
-- on each of those 5 points, there will be a flesh vine that spawns, the start location being the nearest solid block underneath that point (do a 1 block offset below that solid block), and the end position being 1 block higher than the starting position
+- on each of those 5 points, there will be a flesh vine that spawns, the start location being the nearest solid block underneath that point (do a 1 block offset below that solid block), and the end position being 1 block higher than the starting position, facing vertically
+
+After the user hits the ground and those 5 flesh vines are created
+
+- The 5 vines travel forward in a large sinusoidal path, using a cosine function for the Y position, the vines themselves should take the shape of that sinusoid, as more of the cosine function gets traced out as ticks go on
+- The cosine function has an amplitude of 15 blocks
+- A damaging AABB box follows the end position of every one of these vines, using the Danaher.hurt function (using the user, the owner of these vines, as the damage source) on all (non-owner) living entities that intersect this AABB box (and they have blackred_impact particles spawned on entities that get damaged, and there will be explosion particles on the ends of these vines whenever the AABB box hits a full block)
 
 ---
 
