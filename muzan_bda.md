@@ -255,6 +255,34 @@ Tick 30 (cleanup)
 - Give 5 seconds of slowness 10 to the user (no particles)
 - Clear the guard state and the animations on the user
 
+## Blades of Disaster
+
+_Blade arms_
+
+The user grows long blade-like arms (or the bone whips), crossing them and unleashing them in a large crisscross slice, sending an aftershock of blood tornados that launch forward half a second later that cleaves through everything in its path
+
+Tick 0
+
+- Biokineses item uses biokineses_2 item (and the biokineses_2l is rendered on the user's left hand)
+- User plays one of the beast breath animations (the one with the criss crossing arms that does two slashes at once)
+
+Ticks 0-8
+
+- 2 bone whips spawn, each one has a start position on one of the arms (one on the right arm, one on the left arm), and each one is 30 blocks long and slightly curved
+- Both bone whips spin around the user 90 degrees in opposite directions, starting from a 30 degree offset from where the user is looking
+- Both bone whips are arcing in the same direction they are rotating
+- 2 crisscrossing arcs of blackred_slash particles launch forward from the user (forming a curved X shape, getting larger as they go further from the user, traveling rapidly in the direction the user is looking, doing damage to all living entities in their path)
+
+ Tick 15
+
+ - 6 blood tornados launch forward from the user, each traveling at a speed of 2 blocks per tick, in the direction the user is looking, each one trailing blackred_impact particles, they launch forward at degree offsets, 7 degrees apart from eachother in trajectory angle 
+ - The blood tornadoes travel for 40 ticks before dissapearing in a cloud of explosion particles
+
+Tick 30 (cleanup)
+
+- Bone whips are removed
+- User's animation and guard state are cleared
+
 ## Blood King’s Massacre
 
 _Flesh Arms, Tentacles_
@@ -312,6 +340,9 @@ Ticks 0-15 (chargeup)
 
 Ticks 16-66 
 
+- User hovers during this ability (no gravity)
+- Play the minecraft:entity.warden.sonic_charge sound effect at 0.75 pitch
+- Play the minecraft:entity.guardian.attack sound effect at 0.75 pitch
 - User moves at 0.25x speed
 - 25 block radius centered on the user's head
 - 4 bone whips (two attach to each arm on the user) will whip around randomly in this 25 block radius sphere, their endpoints being right at the edge of the 25 block radius, with some large random arcing vectors
@@ -320,17 +351,38 @@ Ticks 16-66
 - Spawn a bunch of blackred_slash particles randomly within this 25 block radius sphere
 - All entities within 25 blocks, every 5 ticks they have a 50% chance of getting hit, those that get hit will get 10 seconds of wither 5 potion effect
 - Those that get hit get the blackred_impact particles on them and also get tossed around randomly within the 25 block radius sphere (using MovementHelper.AddVelocity)
+- Every 2 ticks an explosion spawns at a random spot within this 25 block radius (with the explosion particles, the explosion damage and knockback, and breaking blocks (if the kimetsu block break gamerule for kimetsunoyaiba mod is enabled)
+- At tick 56, do the Shockwave Blast Sequence
 
 Ticks 67-82 (retraction)
 
 - The user moves at 0.1x speed during this retraction phase
-- R starts at 25 on tick 67, and decreases to 1 on tick 82 (the radius of the sphere around the user's head)
-- The 6 back tentacles and the 4 bone whips retract (their endpoints right on the edge of the sphere of radius R) as they slither back towards the user
+- R_2 starts at 25 on tick 67, and decreases to 1 on tick 82 (the radius of the sphere around the user's head)
+- Large black dust particles spawn in this retracting sphere
+- The 6 back tentacles and the 4 bone whips retract (their endpoints right on the edge of the sphere of radius R_2) as they slither back towards the user
+
+Shockwave Blast Sequence:
+First tick of the Shockwave Blast:
+
+- Spawn 10 lightning sparks (yes the same ones from thunder breathing), they should each have a width of 0.8, and they should just be entirely white in color
+- Play the minecraft:entity.warden.sonic_boom sound effect
+- Play the thunder sound effect
+- Remove the 3 flesh vines
+- R starts at 1
+
+The next 10 ticks of the Shockwave Blast:
+
+- R increases every tick, reaching 40 by the 10th tick
+- Every tick, spawn a sphere of radius R of flash particles around the user
+- For each lightning spark, the start point is set to the user's center location (halfway between their head and location), and the end point is a random point along the edge of the sphere of radius R centered on the user (same sphere as the flash particles)
+- For every living entity (other than the user) within R blocks of the user (use the distance squared trick to avoid the square root issue, comparing to R\*R, such that we don't have to use the slow power function), once they first enter the region, they become marked, meaning a new lightning spark will spawn on them (lasting 10 ticks), start point being the user's center position and end point being the living entity's center position (don't keep spawning more lightning sparks on the same living entity over and over again, if a living entity already has a lightning spark from this ability attached to them then just update the start and end positions every tick such that it tracks both entities)
+- All living entities who get hit by this ability (they are within R of the user) will take a bunch of damage, and then immediately get slowness 20 for 5 seconds (no particles), and they will have the kimetsunoyaiba lightning particles on them for that duration, and they will also have the suffocation potion effect (from kimetsunoyaiba mod) for 5 seconds, and it will cancel any active abilities or breathing forms they have active (also any entity who has the suffocation effect shouldn't be able to use abilities, they cant use blood demon arts or breathing forms while they have the suffocation effect), and their velocities will also be instantly zeroed when they get hit by this ability
 
 Tick 83 (cleanup)
 
 - User's animations and guard state are cleared
 - The 4 bone whips are removed
+- User stops hovering (they are now affected by gravity again)
 
 ---
 
@@ -344,11 +396,6 @@ _Tentacles_
 
 The ability selects up to the maximum of 15 mobs before automatically kneeling forward in a dance like motion whipping around multiple bone rips that tear apart the opponent’s bodies dealing high intensity damage in a mockery of a breathing style’s movement leaving the mob to bleed out at the end as they are unable to stop the user from walking off
 
-## Blades of Disaster
-
-_Blade arms_
-
-The user grows long blade-like arms (or flesh vines), crossing them and unleashing them in a large crisscross slice, sending an aftershock of blood tornados that launch forward half a second later that cleaves through everything in its path
 
 ## Vengeful Abyss, Fissure
 
