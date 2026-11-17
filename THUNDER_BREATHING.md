@@ -404,15 +404,44 @@ Tick 82 (cleanup):
 
 ## Fourth Form: Distant Thunder
 
-The user dashes forward at mid speed while performing multiple quick slashes, almost drawing a pound sign (#), lightning and thunder visuals appear, small at first, then a bigger electrocuting shows up only a second after the cuts, that's when the main damage hits. Visually it looks like zaps of thunder following the sword slashes at every slash, making an electric sound.
-Option 2: User makes the "Pound #" slashes where he stands, each slash sends a lightning ray forward, these rays flash and blind the opponent and do no damage, but as the opponent is flashed the user dashes towards the opponent and slashes them once, causing the real damage, with a thunder sound. Just like a distant thunder, first you're blinded by the lihgtning then the thunder arrives.
+User makes the "Pound #" slashes where he stands, each slash sends a lightning ray forward, these rays flash and blind the opponent and do no damage, but as the opponent is flashed the user dashes towards the opponent and slashes them once, causing the real damage, with a thunder sound. Just like a distant thunder, first you're blinded by the lihgtning then the thunder arrives.
 
+Tick 0:
 
-distant_thunder_blinding_slashes
+- The distant_thunder_blinding_slashes sound effect plays on the user, and for all players within 25 blocks
 
-distant_thunder_dash
+Ticks 0-8:
 
-distant_thunder_slash
+- User plays 4 different slash animations at triple speed in 2-tick increments, in this order: sword_to_left, sword_to_right, sword_overhead, sword_to_upper
+- Every 2 ticks a new lightning spark is created, each one 2 blocks in front of the user's head, in the direction the user is looking, the start location 1 block in one direction, and the end location 1 block in the other direction (so they start with a length of 2 blocks), these sparks have 0.08 width, and their color is primaryColor
+- The first lightning spark is right to left (the start position is one block to the right and 0.4 blocks up, the end position is one block to the left and 0.4 blocks up), the second lightning spark is left to right (the start position is one block to the left and 0.4 blocks down, the end position is one block to the right and 0.4 blocks down), the third lightning spark is up to down (the start position is one block up and 0.4 blocks left, the end position is one block down and 0.4 blocks left), and the 4th lightning spark is down to up (the start position is one block down and 0.4 blocks right, and the end position is one block up and 0.4 blocks right), each of them arcs 0.25 blocks forward (in the direction the user is looking)
+- During these 8 ticks, these lightning sparks will move with the user, such that they are always in that same relative position to the user, always 2 blocks in front of the user (and the correct length with the proper offsets on the start and end positions), and the arc direction is always in the direction that the user is looking
+
+Ticks 8-18
+
+- The 4 lightning sparks move forward (3 blocks per tick), those 8 independent start and end points scaling from their center, all moving away from eachother as the lightning sparks move forward (on a straight projectile path, no longer attached to the user by a fixed offset), their width slowly growing, such that their width is 0.4 by tick 18
+- Spawn some flash particles every tick randomly between those 8 independent start and end points.
+- All living entities anywhere near these lightning sparks (or between these lightning sparks), except for the owner, will get 6 seconds of blindness and slowness 3 and weakness 2 (no potion particles)
+
+Tick 13
+
+- Play the distant_thunder_dash sound effect
+- The user's step-up height is temporarily set to 3 blocks
+- The user plays the sword_rotate animation
+
+Ticks 13-23
+
+- The user sprints forward (don't play the sprinting animation, just let it do the sword_rotate animation) and let it use the sword slash visual appropriate for the sword_rotate animation (through bone position tracker)
+- All targetable living entities within 5 blocks of the user will get damaged and take knockback
+
+Tick 19
+
+- Play the distant_thunder_slash sound effect
+
+Tick 25 (cleanup)
+
+- Clear the user's guard state
+- Reset the user's stepheight back to the default (of 0.6)
 
 ## Fifth Form: Heat Lightning
 
