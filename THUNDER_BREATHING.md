@@ -365,9 +365,6 @@ Tick 31 (cleanup):
 
 (Lock on) The user dashes right past the opponent, twisting to slash them from behind, this is the first of many, the user retries, essentially teleporting behind the opponent again, slash, tp behind again, slash, over and over, this becomes worse as user's afterimage doubles the attack, so it always looks like the user is attacking the back while the after image attacks the front, and viceversa. These slashes are not very strong, but this form is pretty much impossible to be completely parried or dodged.
 
-thunder_swarm_dash
-
-thunder_swarm_after_image_swarm
 
 Ticks 0-10 (chargeup):
 
@@ -377,7 +374,33 @@ Ticks 0-10 (chargeup):
 
 Tick 10 (target selection):
 
-- The user selects the nearest valid target living entity on their crosshair (within 20 blocks)
+- The user selects the nearest target living entity on their crosshair (within 20 blocks)
+- If there is no target entity, then the ability cancels (and if the user is a player, then it will send an action bar message to the player saying that you must be looking at a target entity to use this form)
+- play the thunder_swarm_dash sound effect halfway between the user's location and the target's location
+
+Ticks 11-20
+
+- User dashes forward towards that position 2 blocks behind the target entity, arriving there by tick 20 (if not before), playing the speed_attack_sword animation
+
+Tick 21:
+
+- Spawn one after image entity two blocks in front of the target entity (if the user is using Kaigaku's sword, then also spawn an after image entity on the left side of the target and also on the right side
+- The user teleports to the location 2 blocks behind the target entity
+- Create 4 lightning sparks, 2 of them primary color, 2 of them secondary color, placing them in a circular pattern of 2 block radius around the target entity, each lightning spark with a width of 0.07, and they will last for 60 ticks
+- play the thunder_swarm_after_image_swarm sound on the target's location
+
+Ticks 21-81:
+
+- User is constantly facing the target entity
+- this ability locks on to the target entity, following it every tick, even if the target entity moves away
+- Every 8 ticks, the user swaps places with the after image entity (if the user is using the Kaigaku sword, then it will select the after image entity to swap with at random)
+- the lightning sparks will circle around the target entity
+- every 3 ticks, either the user or the after image (for kaigaku's version, a random after image) will attack, choosing a random attack animation (sword_to_left, sword_to_right, or sword_to_upper), playing the appropriate sword slash visual (through the bone position tracker), and the target will take some damage and knockback
+- there will be a spiral of spark particles circling around the target entity
+
+Tick 82 (cleanup):
+
+- Lock on ends, step height is reset, guard state clears, after images and lightning sparks dissapear
 
 ## Fourth Form: Distant Thunder
 
