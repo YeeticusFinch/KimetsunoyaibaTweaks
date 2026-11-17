@@ -31,18 +31,30 @@ Between each segment, like at the joint between segments, the segments should ov
 
 - The biokineses_0 item (and the biokineses_0l rendered in the left hand, if the ability calls for it)
 
+**Flesh Arm**
+
+- The biokineses_1 item (and the biokineses_1l rendered in the left hand, if the ability calls for it)
+- this is an animated Geckolib item
+
 **Arm Blade**
 
-- The biokineses_1 item (and the biomineses_1l rendered in the left hand, if the ability calls for it)
-- this is an animated Geckolib item, it uses the kanroji sword animation file, so the same animations as the kanroji sword, with a similar handler, because it's basically a kanroji sword with a different model (but same bone groups)
+- The biokineses_2 item (and the biokineses_2l rendered in the left hand, if the ability calls for it)
+- this is an animated Geckolib item
 
 **Flesh Vines**
 
 - A thick rendered tentacle, similar to the back tentacles, but much thicker, with the flesh vine texture
 - the flesh_vine_tip model is rendered at the end of the flesh vine, facing the direction that the end is facing
 - the start of the flesh vine can either be connected to a location (which can move), it it can be connected to one of the bones of the user (like the torso or the arm, similar to the back tentacles)
-- the flesh vine should have a little bit of randomness in it's path, and it should be quite lumpy, the segments varying in thickness somewhat randomly, with some lumps and protrusions here and there, and they should be wriggling and writhing
+- the flesh vine should have a little bit of randomness in its path, and it should be quite lumpy, the segments varying in thickness somewhat randomly, with some lumps and protrusions here and there, and they should be wriggling and writhing
 - The flesh vines will also need an implementation to handle a custom defined path, with an array of points to define that path (like for the sinusoid motion of ultimate authority)
+
+**Bone Whips**
+
+- A thinner version of the flesh vine, with the bone_whip texture
+- The bone_whip_tip model is rendered at the end of the bone whip, facing the direction that the end is facing
+- The start of the bone whip is connected to an entity (either connected to an entity with an offset), or connected to a specific bone of that entity, either their left arm or their right arm
+- The bone whip has a little bit of randomness in its path, and it should be quite lumpy, the segments varying in thickness somewhat randomly, with some lumps and protrusions here and there, and they should be wriggling and writhing
 
 ## Black Blood, Brambles
 
@@ -105,13 +117,13 @@ Tick 21 (cleanup)
 
 ## Ultimate Authority
 
-_Muzan Hands_
+_Flesh Arms_
 
 The user stomps on the ground and a line of upwards flesh vines surges forward, give of them in a line rolling forward like a tidal wave of destruction.
 
 Ticks 0-15 (charge up)
 
-- Biokineses item uses the biokineses_0 model
+- Biokineses item uses the biokineses_1 model
 - play the right_arm_chargeup animation on the user
 - User moves at quarter speed and can't jump, user is hovering during this time, 3 blocks higher than where they started the form from (they will float up within the first 5 ticks of the charge up, and this "up" is local gravity aware)
 - Create 3 flesh vines on the user's location
@@ -120,6 +132,7 @@ Ticks 0-15 (charge up)
 
 Tick 17
 
+- Render the biokineses_1l model on the left hand from tick 17 until the form cleanup
 - User slams downward while playing the heel_drop animation, and the attack happens as soon as the user hits the ground (if the user doesn't hit the ground in the next two seconds, then the ability is cancelled)
 
 When the user hits the ground:
@@ -142,7 +155,7 @@ Form cleanup:
 
 _Muzan Hands_
 
-The user leaps into the air, and then teleports to their target unleashing a ground pound, with red and black brambles shooting out of the ground around the groundpound location.
+The user leaps into the air, and then zooms to their target at immense speed, unleashing a ground pound, with red and black brambles shooting out of the ground around the groundpound location.
 
 Ticks 0–20 (Charge-up)
 
@@ -180,12 +193,13 @@ Tick 56 (cleanup)
 
 ## Forced Transition
 
-_Flesh arms_
+_Flesh Arms_
 
 The flesh vines Upon making contact with a convertible mob begins the demonstrating of the entity, with a 50-50 chance of the process killing the target
 
 Tick 0:
 
+- Biokineses item uses the biokineses_1 model
 - Choose a target entity or location within 80 blocks (80 block raycast forward, select the nearest living entity to the crosshair, or select the block that the raycast intersects, or select the point at the end of the 80 blocks)
 
 Ticks 1-40:
@@ -241,23 +255,88 @@ Tick 30 (cleanup)
 - Give 5 seconds of slowness 10 to the user (no particles)
 - Clear the guard state and the animations on the user
 
----
-
-## Ignore everything past this line, this is WIP
-
----
-
 ## Blood King’s Massacre
 
-_Tentacles_
+_Flesh Arms, Tentacles_
 
-Unleash multiple flesh vines in a 50 x 50 area ripping apart and tearing apart opponents, dragging the disemboweled courts back to be consumed by their body for high regeneration, can only be Blocked or negated by hashira or high tier Demon slayers, leaves lasting high-level poison on the survivors, slowly poison their bodies as the fight drags on
+Unleash multiple flesh vines in a 50 x 50 area ripping apart and tearing apart opponents, dragging the disemboweled corpses back to be consumed by their body for high regeneration, can only be Blocked or negated by hashira or high tier Demon slayers, leaves lasting high-level poison on the survivors, slowly poison their bodies as the fight drags on
+
+Tick 0
+
+- Activate the six back tentacles (if they aren't active already, if they are active, then just take them out of whatever mode they are currently on, ending the biokineses climbing if that's happening, and place them on standby)
+- Biokineses item uses the biokineses_1 model, and biokineses_1l is rendered in the left hand
+
+Ticks 0-10 (chargeup)
+
+- Play the summon animation while particles spiral around the user, user moves at 0.5x speed
+- The back tentacles will be spiraling upwards (above the user, local gravity aware)
+
+Ticks 11-61 
+
+- User moves at 0.25x speed
+- 25 block radius centered on the user's head
+- 4 flesh vines whips (two attach to each arm on the user) will whip around randomly in this 25 block radius sphere, their endpoints being right at the edge of the 25 block radius, with some large random arcing vectors
+- All 6 of the back tentacles will also whip around randomly in this 25 block radius sphere
+- Spawn a bunch of blackred_slash particles randomly within this 25 block radius sphere
+- All entities within 25 blocks, every 5 ticks they have a 50% chance of getting hit, those that get hit will get 10 seconds of wither 5 potion effect
+- Those that get hit get the blackred_impact particles on them and also get pulled towards the user (using MovementHelper.AddVelocity)
+- Entities within 10 blocks of the user will get marked by size 4 red dust particles on them while an extra flesh vine is created connecting them to the user (start point is on the user's torso, end point is on the target's torso), and this flesh vine will thrash them around and drag them closer and closer to the user, these marked entities taking 50% more damage from the form, and every time they take damage, half of the damage they take goes towards healing the user
+- Any living entities that are going to be killed by this damage will get launched towards the user (using MovementHelper.SetVelocity()) at great speed while repeatedly spawning size 4 red dust particles on them and blackred_impact particles on them (and the particles continue traveling towards the user, the red dust particles gradually getting smaller in size as they approach, to a minimum size of 1.5), and then once those red dust particles reach the user, the user heals 5% of their max HP and gains a level and +10 seconds of the killing intent potion effect
+
+Ticks 62-77 (retraction)
+
+- The user moves at 0.1x speed during this retraction phase
+- R starts at 25 on tick 67, and decreases to 1 on tick 82 (the radius of the sphere around the user's head)
+- The 6 back tentacles and all the flesh vines retract (their endpoints right on the edge of the sphere of radius R) as they slither back towards the user
+
+Tick 78 (cleanup)
+
+- User's animations and guard state are cleared
+- All the flesh vines are removed
 
 ## Demon King’s Wrath
 
 _Blade arms, tentacles_
 
-Unleash multiple flesh and bond vines that tear apart the battlefield and also cause aftershock of energy to tear up whatever is left, apart, trees, buildings, and even the hardest of stones nothing is safe besides Hashira who can dodge in time but surviving a hit from this does not mean much because it also inflicts high intensity poison that can once the health of the opponent mobs are low enough either kill or turn them into a demon against their will without being treated but the ability is followed up by consistent whipping slashes!
+Unleash multiple flesh and bone vines that tear apart the battlefield and also cause aftershock of energy to tear up whatever is left, apart, trees, buildings, and even the hardest of stones nothing is safe besides Hashira who can dodge in time but surviving a hit from this does not mean much because it also inflicts high intensity poison that can once the health of the opponent mobs are low enough either kill or turn them into a demon against their will without being treated but the ability is followed up by consistent whipping slashes!
+
+Tick 0
+
+- Activate the six back tentacles (if they aren't active already, if they are active, then just take them out of whatever mode they are currently on, ending the biokineses climbing if that's happening, and place them on standby)
+- Biokineses item uses the biokineses_2 model, and biokineses_2l is rendered in the left hand
+
+Ticks 0-15 (chargeup)
+
+- Play the summon animation while particles spiral around the user, user moves at 0.5x speed
+- The back tentacles will be spiraling upwards (above the user, local gravity aware)
+
+Ticks 16-66 
+
+- User moves at 0.25x speed
+- 25 block radius centered on the user's head
+- 4 bone whips (two attach to each arm on the user) will whip around randomly in this 25 block radius sphere, their endpoints being right at the edge of the 25 block radius, with some large random arcing vectors
+- All 6 of the back tentacles will also whip around randomly in this 25 block radius sphere
+- At the endpoints of each bone whip and each back tentacle there will be a blackred_slash particle
+- Spawn a bunch of blackred_slash particles randomly within this 25 block radius sphere
+- All entities within 25 blocks, every 5 ticks they have a 50% chance of getting hit, those that get hit will get 10 seconds of wither 5 potion effect
+- Those that get hit get the blackred_impact particles on them and also get tossed around randomly within the 25 block radius sphere (using MovementHelper.AddVelocity)
+
+Ticks 67-82 (retraction)
+
+- The user moves at 0.1x speed during this retraction phase
+- R starts at 25 on tick 67, and decreases to 1 on tick 82 (the radius of the sphere around the user's head)
+- The 6 back tentacles and the 4 bone whips retract (their endpoints right on the edge of the sphere of radius R) as they slither back towards the user
+
+Tick 83 (cleanup)
+
+- User's animations and guard state are cleared
+- The 4 bone whips are removed
+
+---
+
+## Ignore everything past this line, this is WIP
+
+---
 
 ## Demon King’s Blood Dance
 
