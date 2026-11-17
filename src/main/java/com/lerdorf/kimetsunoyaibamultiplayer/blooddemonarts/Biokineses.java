@@ -772,10 +772,10 @@ public final class Biokineses {
             level.addFreshEntity(vine);
         }
 
-            double radius = SHOCKWAVE_CHARGE_START_RADIUS
+        double radius = SHOCKWAVE_CHARGE_START_RADIUS
             * (1.0D - tick / (double) SHOCKWAVE_CHARGE_END_TICK);
-            double orientation = owner.getRandom().nextDouble() * Math.PI * 2.0D;
-            Vec3 up = CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        double orientation = owner.getRandom().nextDouble() * Math.PI * 2.0D;
+        Vec3 up = CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
         for (int index = 0; index < vines.size(); index++) {
             FleshVineEntity vine = vines.get(index);
             net.minecraft.util.RandomSource random = owner.getRandom();

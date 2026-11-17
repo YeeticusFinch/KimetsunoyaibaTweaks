@@ -45,9 +45,10 @@ public final class BiokinesesArmRenderer {
     private static final int ARM_FLESH_HIGHLIGHT = 0xB53A48;
     private static final int BONE_TINT = 0xE2DCCF;
     private static final int SPIKE_WHITE = 0xF5F2E9;
-    private static final int BASE_BONE_SEGMENTS = 3;
+    private static final int BASE_BONE_SEGMENTS = 2;
     private static final int PATH_SEGMENTS = 24;
     private static final double SPIKE_BASE_DISTANCE = 0.48D;
+    private static final float TENTACLE_THICKNESS_SCALE = 0.5F;
     private static final double ARM_REACH = 8.0D;
     private static final float SMOOTH_FACTOR = 0.32F;
     private static final Map<Integer, Vec3> GEO_TORSO_ANCHORS = new HashMap<>();
@@ -256,8 +257,8 @@ public final class BiokinesesArmRenderer {
             float segmentProgress = i / (float) Math.max(1, fleshPath.size() - 2);
             boolean bone = i < BASE_BONE_SEGMENTS;
             float width = bone
-                ? Mth.lerp(segmentProgress, 0.105F, 0.072F)
-                : Mth.lerp(segmentProgress, 0.080F, 0.045F);
+                ? Mth.lerp(segmentProgress, 0.105F, 0.072F) * TENTACLE_THICKNESS_SCALE
+                : Mth.lerp(segmentProgress, 0.080F, 0.045F) * TENTACLE_THICKNESS_SCALE;
             int color = bone ? BONE_TINT
                 : ((i + arm) % 4 == 0 ? ARM_FLESH_HIGHLIGHT : ARM_FLESH);
             drawBeam(start, end, width, color, entity.level(), matrix, normal,
