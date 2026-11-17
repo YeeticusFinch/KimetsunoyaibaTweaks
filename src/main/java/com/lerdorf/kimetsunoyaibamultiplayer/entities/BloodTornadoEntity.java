@@ -266,15 +266,27 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         if (movement.lengthSqr() < 1.0E-8D) {
             return false;
         }
+        // Lift the probe slightly away from the supporting surface so normal
+        // ground contact is not mistaken for a vertical wall.
+        AABB movedBox = getBoundingBox().move(movement).move(up.scale(0.05D));
+        if (level().noCollision(this, movedBox)) {
+            return false;
+        }
+
         Vec3 start = position();
         Vec3 end = start.add(movement);
         BlockHitResult hit = level().clip(new ClipContext(start, end,
             ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        if (hit.getType() != HitResult.Type.BLOCK) {
-            return false;
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            Vec3 normal = Vec3.atLowerCornerOf(hit.getDirection().getNormal());
+            if (Math.abs(normal.dot(up)) < 0.5D) {
+                return true;
+            }
         }
-        Vec3 normal = Vec3.atLowerCornerOf(hit.getDirection().getNormal());
-        return Math.abs(normal.dot(up)) < 0.5D;
+
+        // The tornado is wider than the center ray, so a blocked destination is
+        // still a wall impact when the ray misses an edge of the block.
+        return true;
     }
 
     private static void spawnImpact(ServerLevel level, Vec3 position) {
