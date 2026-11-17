@@ -321,6 +321,7 @@ Tick 78 (cleanup)
 
 - User's animations and guard state are cleared
 - All the flesh vines are removed
+- Back tentacles are put back into a default state
 
 ## Demon King’s Wrath
 
@@ -383,6 +384,7 @@ Tick 83 (cleanup)
 - User's animations and guard state are cleared
 - The 4 bone whips are removed
 - User stops hovering (they are now affected by gravity again)
+- Back tentacles are put back into a default state
 
 ---
 
@@ -392,10 +394,41 @@ Tick 83 (cleanup)
 
 ## Demon King’s Blood Dance
 
-_Tentacles_
+_Tentacles, Bone Whips_
 
 The ability selects up to the maximum of 15 mobs before automatically kneeling forward in a dance like motion whipping around multiple bone rips that tear apart the opponent’s bodies dealing high intensity damage in a mockery of a breathing style’s movement leaving the mob to bleed out at the end as they are unable to stop the user from walking off
 
+Tick 0:
+
+- The user plays a kneeling animation
+- Biokineses item uses the biokineses_2 model (and the biokineses_2l model is rendered on the user's left hand)
+- Activate the six back tentacles (if they aren't active already, if they are active, then just take them out of whatever mode they are currently on, ending the biokineses climbing if that's happening, and place them on standby)
+- Mark up to 15 random targetable living entities (other than the user) within a 25 block radius
+- If there are 6 or less entities, no bone whips will spawn (and it will just use the back tentacles)
+- For every entity above 6, a bone whip will spawn (up to 9 bone whips, if there are a total of 15 selected entities)
+- Each tentacle and bone whip is assigned a different target entity out of all of those selected entities
+- The start position of every bone whip is attached to the user's torso
+
+Ticks 0-15 (target acquisition):
+
+- The user can't move during this chargeup phase, their speed reduced to 0 (but they are still affected by gravity, they can still fall)
+- The tentacles and bone whips all shoot towards their respective targets (arcing upwards, local gravity aware), at a speed of 2 blocks per tick
+- As soon as a tentacle or bone whip connects with their target entity, then that target entity will get stuck to that endpoint, always following the position of that endpoint
+- If a tentacle / bone whip doesn't reach it's target within this 15 tick acquisition period, then it will lose the target (its target will be deselected) and it will just flail around randomly within the 25 block radius for the duration of the form
+
+Ticks 16-76 (dance):
+
+- All of the tentacles and bone whips flail around randomly, arcing randomly, within a 25 block radius of the user, dragging their targets along with them (that is if they were successful in reaching their target entities during the acquisition phase), and these target entities are also rotated and spun around randomly during this time, with 3 seconds of weakness 10 (no potion bubble particles), taking damage every 10 ticks and giving them the level 5 bleeding effect for 15 seconds
+
+Ticks 77-87 (retraction):
+
+- All the tentacles and bone whips dislodge from their targets (deselecting them, letting them go free) and retract towards the user
+
+Tick 88 (cleanup):
+
+- Clear the user's guard state and animation
+- The user can move again
+- Back tentacles are put back into a default state
 
 ## Vengeful Abyss, Fissure
 
