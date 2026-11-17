@@ -324,11 +324,42 @@ Tick 106
 
 The user dashes, seeminlgy going right through them, but in reality user delivers five very fast cuts, the opponent it's seemingly paralyzed after the user went past them, then they receive the five hit damage, the last one has great knockback, the visual is as if the opponent is electrified then receives a final shock that sends them flying. (Similar to love breathing first form except this only hits one target, has greater damage, paralysis, and extra knockback)
 
-rice_spirit_dash
+Tick 0:
 
-rice_spirit_electric_damage
+- Set the user's step-up height to 3 blocks (must be cleared by the end of the form)
+- Play the rice_spirit_dash sound effect on the user (and for all players within 20 blocks of the user)
 
-rice_spirit_knockback
+Ticks 0-5:
+
+- Play the sprinting animation as the user dashes forward
+- The user dashes up to 20 blocks forward in these 5 ticks
+- The closest valid target living entity within 10 blocks of the user's path gets marked (stored in a variable)
+- The target entity gets paralyzed (the immovable potion effect with no particles for 30 ticks)
+
+Ticks 6-30:
+
+- User plays the iai1 animation
+- User has 0 movement speed (can't move, but they can rotate)
+- The target is surrounded by thunder particles from the kimetsunoyaiba mod (same ones as for the amplifier)
+
+Tick 20:
+
+- The target takes the full damage of the ability (but no knockback yet)
+- The rice_spirit_electric_damage sound effect is played on the target (and for all players within 20 blocks of that target, including the user)
+- A vanilla sword sweep particle spawns on the target's center location (halfway between their location and their head location), along with some crit particles
+
+Tick 30:
+
+- The immovable potion effect is revoked from the target
+- Flash particles spawn on the target
+- 1 lightning spark is spawned on the target, the start position being the target's location at tick 30, and the end location tracking the target's location for the next 15 ticks, the color being secondaryColor, the width being 0.2
+- The rice_spirit_knockback sound effect is played on the target (and for all players within 20 blocks, including the user)
+- the target gets launched in a random sideways and upwards direction with a large magnitude velocity (using MovementHelper.SetVelocity)
+- Target gets the slowness 5 effect for 50 ticks
+
+Tick 31 (cleanup):
+
+- The user can move again, their step height is reset back to default (0.6 blocks), and their animation is cleared
 
 ## Third Form: Thunder Swarm
 
@@ -337,6 +368,16 @@ rice_spirit_knockback
 thunder_swarm_dash
 
 thunder_swarm_after_image_swarm
+
+Ticks 0-10 (chargeup):
+
+- User plays the iai1 animation
+- User cannot move during chargeup
+- Call the `MovementHelper.lookAtTarget(entity);` function
+
+Tick 10 (target selection):
+
+- The user selects the nearest valid target living entity on their crosshair (within 20 blocks)
 
 ## Fourth Form: Distant Thunder
 
