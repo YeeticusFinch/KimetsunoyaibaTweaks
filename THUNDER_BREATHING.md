@@ -416,6 +416,7 @@ Ticks 0-8:
 - Every 2 ticks a new lightning spark is created, each one 2 blocks in front of the user's head, in the direction the user is looking, the start location 1 block in one direction, and the end location 1 block in the other direction (so they start with a length of 2 blocks), these sparks have 0.08 width, and their color is primaryColor
 - The first lightning spark is right to left (the start position is one block to the right and 0.4 blocks up, the end position is one block to the left and 0.4 blocks up), the second lightning spark is left to right (the start position is one block to the left and 0.4 blocks down, the end position is one block to the right and 0.4 blocks down), the third lightning spark is up to down (the start position is one block up and 0.4 blocks left, the end position is one block down and 0.4 blocks left), and the 4th lightning spark is down to up (the start position is one block down and 0.4 blocks right, and the end position is one block up and 0.4 blocks right), each of them arcs 0.25 blocks forward (in the direction the user is looking)
 - During these 8 ticks, these lightning sparks will move with the user, such that they are always in that same relative position to the user, always 2 blocks in front of the user (and the correct length with the proper offsets on the start and end positions), and the arc direction is always in the direction that the user is looking
+- And yes the calculations for the locations of these start and end points for the lightning sparks should be local gravity aware
 
 Ticks 8-18
 
@@ -448,26 +449,109 @@ Tick 25 (cleanup)
 Hold pose as if charging power, red zaps all over
 The user dashes forward delivering an upwards very powerful slash, which leaves the opponent paralyzed and receiving burning damage even after hit, irradiating those red zaps, the damage is similar than that of stepping in fire.
 
+Tick 0
 
-heat_lightning_charging
+- Play the heat_lightning_charging sound effect on the user (and for all players within 20 blocks)
 
-heat_lightning_takeoff
+Ticks 0-15 (chargeup)
 
-heat_lightning_heat_slash
+- The user plays the iai1 animation
+- 4 red lightning sparks are created, their start position being the user's center (halfway between their location and their head position), the end position being a random solid block within 4 blocks, their width being 0.09, and they should have an upwards arcing vector of 0.7 magnitude (or if there are no nearby solid blocks, then they just go to random points within 4 blocks arcing in random directions rather than up), and those random positions should change and be recalculated every 3 ticks
+- The user cannot move during this chargeup phase (but they can rotate)
 
-heat_lightning_paralyzing_damage
+Tick 15 (direction selection)
 
-## Sixth Form: Rumble and Flahs
+- Play the heat_lightning_takeoff sound effect
+- Play the speed_attack_sword animation on the user
+- A direction is chosen (the direction the user is currently facing
+- Temporarily set the user's step-up height to 3
+
+Ticks 15-25
+
+- `B` starts at 0, and increases by 1 every tick, such that `B` is 10 by tick 25
+- The user runs forward, traveling 2 blocks per tick
+- Every tick a lightning bolt is created, the start location being 5 blocks behind the user, the end location being X blocks in front of and Z blocks above the user's position at that tick. `X = (6-B/2)`, and `Y = (15 * B)`, and yes these location calculations are local gravity aware. These lightning bolts have the colors orange and red (instead of primary and secondary colors)
+- All entities caught in the path of any of these lightning bolts will take damage and get marked
+
+Tick 21
+
+- The user plays the sword_to_upper animation
+- Play the heat_lightning_heat_slash sound effect on the user (and for all players within 20 blocks)
+
+Tick 30
+
+- The user plays the iai1 animation and is frozen still for 10 ticks
+- Play the heat_lightning_paralyzing_damage on all entities who got damaged (the ones who were marked)
+- A flash particle will spawn on all entities who got damaged (the ones who were marked)
+- All entities who got damaged will get a red lightning spark on them that lasts for 20 ticks, the start position being their location, and the end position being their head location, the spark following them every tick, with a random arc vector of up to 0.6 blocks in magnitude, their start and end location having a random offset of up to 0.2 blocks in magnitude, the width being 0.08, and the color being red
+- All entities who got damaged will get slowness 3 for 5 seconds (and if this is using Kaigaku's sword, or the user is a demon, then targeted entities will also get set on fire for 5 seconds, and nearby solid blocks will be ignited on fire)
+
+Tick 35 (cleanup)
+
+- The user's guard state is cleared
+- The user's step height is reset back to the default (0.6)
+- The user is unfrozen
+- The user's animation is cancelled/cleared
+
+
+## Sixth Form: Rumble and Flash
 
 The user holds a pose as black smoke starts to envelop them, then the user dashes forward enveloped in a cloud of dark smoke, delivering a single very strong, explosive sideways cut, 360° spin while cutting (similar to "rings of ember"), small lightnings appear on the cloud, then big ones irradiate from the sword strike, with higher range, the hitbox extends forward, the sound is like an explosion of thunder.
 
-rumble_and_flash_charging
+Tick 0
 
-rumble_and_flash_takeoff
+- Play the rumble_and_flash_charging sound effect on the user (and for all players within 20 blocks)
 
-rumble_and_flash_strong_slash
+Ticks 0-20 (chargeup)
 
-rumble_and_flash_leftover_lightning
+- The user plays the iai1 animation
+- The user cannot move (but they can look around)
+- The user is surrounded by dark smoke particles (use both smoke particles and black dust particles on size 4, being spawned within 3 blocks of the user)
+
+Tick 20 (aim and takeoff)
+
+- Play the rumble_and_flash_takeoff sound effect on the user (and for all players within 20 blocks)
+- Temporarily set the user's step height to 3 blocks
+
+Ticks 20-30 (dash phase)
+
+- User dashes forward 15 blocks in 10 ticks, trailing a dense cloud of dark cloud particles (use smoke particles and also black dust particles on size 4)
+- These particles should be arranged in circular rings around the user, the circle's axis being the user's look direction, centered on the user's center (halfway between their position and their head, spawning a ring of smoke particles and black dust particles every tick, the ring being a 2.5 block radius)
+- The user plays the side_flip animation
+- Create one lightning spark every tick, half of them should be primary color, the other half should be secondary color, and they should be flickering, and their width should be somewhere random between 0.05 and 0.09
+- These particles that spawn should continue to spawn for the next 20 ticks, essentially remaining as a tube of dark particles
+- All the lightning sparks should each get random start and end positions within this tube (their start and end positions being recalculated every 2 ticks to another random location), and their arcing vectors being random vectors of maximum magnitude of 1, and they should all have a lifetime between 40 and 50 ticks
+- All targetable entities that are within 3 blocks of the path of this dash will get damaged
+
+Tick 30
+
+- Play the rumble_and_flash_strong_slash sound effect on the user (and for all players within 25 blocks)
+- The user plays the sword_rotate animation
+- Flash particles are spawned on the user
+
+Ticks 30-40
+
+- User is frozen
+- All the lightning sparks (created during the dash phase) will have their width get 60% larger
+- The start positions of the lightning sparks will continue to choose random locations within that tube of smoke (and the smoke particles and black dust particles will continue)
+- The end positions of the lightning sparks will choose a random point up to 5 blocks in front of the user (with a random offset of up to 5 blocks in any direction), with a random arcing vector (maximum magnitude of 2)
+- These start and end positions will continue to be recalculated every 2 ticks, randomized
+
+Tick 40
+
+- Play the rumble_and_flash_leftover_lightning on the user
+- All of the lightning sparks (the ones that are still alive, because the lifetimes might have expired for a few by now), their width should be divided by 2
+
+Ticks 40-50
+
+- The lightning sparks start and end positions should be randomly around the tube of smoke (the smoke particles have stopped spawning, so they are clearing out now), with random arcing vectors of a maximum magnitude of 1
+
+Tick 50 (cleanup)
+
+- Clear the animation on the user
+- Reset the user's step-up height to the default (0.6 blocks)
+- Clear the user's guard state
+- User is unfrozen
 
 ## Seventh Form: Flaming Thunder God
 
