@@ -680,8 +680,9 @@ public final class Biokineses {
                      } else if (tick == FORCED_TRANSITION_END_TICK) {
                          discardVines(vines);
                          AnimationHelper.stopAnimation(entity, "right_arm_forward");
+                         AnimationHelper.playAnimation(entity, "kimetsunoyaiba:cancel", 1);
                          cleanupForm(entity);
-                    }
+                     }
 
                     tick++;
                 }
@@ -771,18 +772,23 @@ public final class Biokineses {
             level.addFreshEntity(vine);
         }
 
-        double radius = SHOCKWAVE_CHARGE_START_RADIUS
+            double radius = SHOCKWAVE_CHARGE_START_RADIUS
             * (1.0D - tick / (double) SHOCKWAVE_CHARGE_END_TICK);
-        double orientation = owner.getRandom().nextDouble() * Math.PI * 2.0D;
-        Vec3 up = CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+            double orientation = owner.getRandom().nextDouble() * Math.PI * 2.0D;
+            Vec3 up = CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
         for (int index = 0; index < vines.size(); index++) {
             FleshVineEntity vine = vines.get(index);
-            double angle = orientation + index * Math.PI * 2.0D / SHOCKWAVE_CHARGE_VINE_COUNT
-                + tick * 1.8D;
-            Vec3 radial = CombatGravityFrame.world(new Vec3(Math.cos(angle), 0.0D, Math.sin(angle)))
-                .normalize();
-            Vec3 tangent = CombatGravityFrame.world(new Vec3(-Math.sin(angle), 0.0D, Math.cos(angle)))
-                .normalize();
+            net.minecraft.util.RandomSource random = owner.getRandom();
+            Vec3 axis = randomUnitVector(random);
+            Vec3 reference = Math.abs(axis.y) < 0.9D
+                ? new Vec3(0.0D, 1.0D, 0.0D)
+                : new Vec3(1.0D, 0.0D, 0.0D);
+            Vec3 baseRadial = reference.cross(axis).normalize();
+            Vec3 baseTangent = axis.cross(baseRadial).normalize();
+            double spin = orientation + index * Math.PI * 2.0D / SHOCKWAVE_CHARGE_VINE_COUNT
+                + tick * (1.8D + random.nextDouble() * 1.2D);
+            Vec3 radial = baseRadial.scale(Math.cos(spin)).add(baseTangent.scale(Math.sin(spin))).normalize();
+            Vec3 tangent = axis.cross(radial).normalize();
             List<Vec3> arc = new ArrayList<>(SHOCKWAVE_CHARGE_VINE_ARC_POINTS + 1);
             for (int pointIndex = 0; pointIndex <= SHOCKWAVE_CHARGE_VINE_ARC_POINTS; pointIndex++) {
                 double arcAngle = SHOCKWAVE_CHARGE_VINE_ARC * pointIndex
@@ -806,6 +812,13 @@ public final class Biokineses {
             }
             vine.updateChargePath(start, end, arc);
         }
+    }
+
+    private static Vec3 randomUnitVector(net.minecraft.util.RandomSource random) {
+        double vertical = random.nextDouble() * 2.0D - 1.0D;
+        double angle = random.nextDouble() * Math.PI * 2.0D;
+        double horizontal = Math.sqrt(Math.max(0.0D, 1.0D - vertical * vertical));
+        return new Vec3(horizontal * Math.cos(angle), vertical, horizontal * Math.sin(angle));
     }
 
     private static void applyShockwaveTargets(ServerLevel level, LivingEntity owner, Vec3 center,

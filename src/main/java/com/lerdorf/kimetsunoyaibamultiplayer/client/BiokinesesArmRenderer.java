@@ -46,6 +46,8 @@ public final class BiokinesesArmRenderer {
     private static final int BONE_TINT = 0xE2DCCF;
     private static final int SPIKE_WHITE = 0xF5F2E9;
     private static final int BASE_BONE_SEGMENTS = 3;
+    private static final int PATH_SEGMENTS = 24;
+    private static final double SPIKE_BASE_DISTANCE = 0.48D;
     private static final double ARM_REACH = 8.0D;
     private static final float SMOOTH_FACTOR = 0.32F;
     private static final Map<Integer, Vec3> GEO_TORSO_ANCHORS = new HashMap<>();
@@ -128,7 +130,7 @@ public final class BiokinesesArmRenderer {
             }
             Vec3 tip = source.lerp(target, Mth.clamp(progress, 0.0D, 1.0D));
             List<Vec3> path = createIkPath(source, tip, entity, arm);
-            renderArmPath(path, entity, matrix, normal, armBuffer, boneBuffer, arm);
+            renderArmPath(path, SPIKE_BASE_DISTANCE, entity, matrix, normal, armBuffer, boneBuffer, arm);
             renderSpike(path.get(path.size() - 2), path.get(path.size() - 1), entity,
                 matrix, normal, boneBuffer);
         }
@@ -227,37 +229,31 @@ public final class BiokinesesArmRenderer {
             - (cosine * upperLength) * (cosine * upperLength)));
         Vec3 elbow = start.add(direction.scale(cosine * upperLength)).add(bendDirection.scale(jointHeight));
 
-        List<Vec3> path = new ArrayList<>(15);
-        appendSegment(path, start, elbow, 7, arm);
-        appendSegment(path, elbow, reachableTarget, 7, arm + 17);
+        Vec3 firstControl = start.lerp(elbow, 0.78D);
+        Vec3 secondControl = reachableTarget.lerp(elbow, 0.78D);
+        List<Vec3> path = new ArrayList<>(PATH_SEGMENTS + 1);
+        for (int i = 0; i <= PATH_SEGMENTS; i++) {
+            double progress = i / (double) PATH_SEGMENTS;
+            double inverse = 1.0D - progress;
+            Vec3 point = start.scale(inverse * inverse * inverse)
+                .add(firstControl.scale(3.0D * inverse * inverse * progress))
+                .add(secondControl.scale(3.0D * inverse * progress * progress))
+                .add(reachableTarget.scale(progress * progress * progress));
+            double sway = Math.sin(progress * Math.PI * 2.0D + arm * 0.85D) * 0.065D
+                * Math.sin(progress * Math.PI);
+            path.add(point.add(bendDirection.scale(sway)));
+        }
         return path;
     }
 
-    private static void appendSegment(List<Vec3> path, Vec3 start, Vec3 end, int count, int phase) {
-        Vec3 direction = end.subtract(start);
-        Vec3 side = direction.cross(new Vec3(0.0D, 1.0D, 0.0D));
-        if (side.lengthSqr() < 1.0E-6D) {
-            side = direction.cross(new Vec3(1.0D, 0.0D, 0.0D));
-        }
-        side = side.normalize();
-        for (int i = 0; i <= count; i++) {
-            if (!path.isEmpty() && i == 0) {
-                continue;
-            }
-            double progress = i / (double) count;
-            double arc = Math.sin(progress * Math.PI);
-            double ripple = Math.sin(phase * 0.37D + progress * Math.PI) * 0.035D;
-            path.add(start.lerp(end, progress).add(side.scale(arc * ripple)));
-        }
-    }
-
-    private static void renderArmPath(List<Vec3> path, LivingEntity entity, Matrix4f matrix,
+    private static void renderArmPath(List<Vec3> path, double tailDistance, LivingEntity entity, Matrix4f matrix,
                                       Matrix3f normal, VertexConsumer armBuffer,
                                       VertexConsumer boneBuffer, int arm) {
-        for (int i = 0; i < path.size() - 1; i++) {
-            Vec3 start = path.get(i);
-            Vec3 end = path.get(i + 1);
-            float segmentProgress = i / (float) Math.max(1, path.size() - 2);
+        List<Vec3> fleshPath = trimTail(path, tailDistance);
+        for (int i = 0; i < fleshPath.size() - 1; i++) {
+            Vec3 start = fleshPath.get(i);
+            Vec3 end = fleshPath.get(i + 1);
+            float segmentProgress = i / (float) Math.max(1, fleshPath.size() - 2);
             boolean bone = i < BASE_BONE_SEGMENTS;
             float width = bone
                 ? Mth.lerp(segmentProgress, 0.105F, 0.072F)
@@ -267,6 +263,25 @@ public final class BiokinesesArmRenderer {
             drawBeam(start, end, width, color, entity.level(), matrix, normal,
                 bone ? boneBuffer : armBuffer);
         }
+    }
+
+    private static List<Vec3> trimTail(List<Vec3> path, double distance) {
+        List<Vec3> trimmed = new ArrayList<>(path);
+        double remaining = distance;
+        while (trimmed.size() > 1 && remaining > 0.0D) {
+            int last = trimmed.size() - 1;
+            Vec3 start = trimmed.get(last - 1);
+            Vec3 end = trimmed.get(last);
+            double segmentLength = start.distanceTo(end);
+            if (segmentLength <= remaining) {
+                trimmed.remove(last);
+                remaining -= segmentLength;
+                continue;
+            }
+            trimmed.set(last, end.lerp(start, remaining / segmentLength));
+            break;
+        }
+        return trimmed;
     }
 
     private static void renderSpike(Vec3 previous, Vec3 tip, LivingEntity entity, Matrix4f matrix,

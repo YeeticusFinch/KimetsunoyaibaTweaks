@@ -5,6 +5,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.capability.IBiokinesesArmData;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesArmsSyncPacket;
@@ -72,7 +73,7 @@ public final class BiokinesesArmController {
     public static boolean isTraversalActive(LivingEntity entity) {
         IBiokinesesArmData data = data(entity);
         if (data == null || !data.isActive() || !data.isClimbing() || data.isRetracting()
-            || data.getAllocationMode() != IBiokinesesArmData.ALLOCATION_NORMAL || entity.onGround()) {
+            || data.getAllocationMode() != IBiokinesesArmData.ALLOCATION_NORMAL) {
             return false;
         }
         for (int arm : climbingAnchorArms()) {
@@ -210,7 +211,11 @@ public final class BiokinesesArmController {
         if (data == null) {
             return;
         }
+        boolean wasClimbing = data.isClimbing();
         stopLocomotion(entity, data);
+        if (wasClimbing) {
+            MovementHelper.setVelocity(entity, Vec3.ZERO);
+        }
         data.clearTraversalInput();
         releaseHeldEntities(entity, data);
         data.setActive(true);
@@ -479,9 +484,13 @@ public final class BiokinesesArmController {
             applyLocomotion(entity, data);
             startLocomotion(entity, data);
         } else {
+            boolean wasFlying = data.isLocomotionActive();
             data.clearTraversalInput();
-            CombatGravityFrame.velocity(entity, Vec3.ZERO);
+            MovementHelper.setVelocity(entity, Vec3.ZERO);
             stopLocomotion(entity, data);
+            if (wasFlying) {
+                retract(entity);
+            }
         }
         return anchors;
     }
@@ -567,9 +576,9 @@ public final class BiokinesesArmController {
     private static void applyLocomotion(LivingEntity entity, IBiokinesesArmData data) {
         Vec3 input = traversalInputLocal(entity, data);
         Vec3 velocity = input.lengthSqr() > 1.0E-6D
-            ? CombatGravityFrame.world(input.normalize().scale(flightSpeed(entity)))
+            ? input.normalize().scale(flightSpeed(entity))
             : Vec3.ZERO;
-        CombatGravityFrame.velocity(entity, velocity);
+        MovementHelper.setVelocity(entity, velocity);
     }
 
     private static double flightSpeed(LivingEntity entity) {
