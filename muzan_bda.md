@@ -283,7 +283,97 @@ Tick 30 (cleanup)
 - Bone whips are removed
 - User's animation and guard state are cleared
 
+## Vengeful Abyss, Fissure
+
+_Tentacles_
+
+The user extends a large fleshy arm in a straight line forwards, mottled with mouths. The mouths suck air inwards, pulling all nearby entities towards the arm. Arm then unleashed bursts of paralyzing energy bolts while the user's back tentacles and leg tentacles surge forward and decimate all the ensnared entities
+
+Tick 0:
+
+- Biokineses item uses the biokineses_1 model
+- Choose a target entity or location within 80 blocks (80 block raycast forward, select the nearest living entity to the crosshair, or select the block that the raycast intersects, or select the point at the end of the 80 blocks)
+
+Ticks 1-20:
+
+- Play the right_arm_forward animation on loop
+- User moves at half movement speed
+- A flesh vine with the starting point attached to the user's right arm starts moving forward, up to 40 blocks forward (in the direction the user is looking, the end position is always facing forward, moving in a mostly straight line)
+- The path of the flesh vine arcs between the user and the end point (similar to a bezier curve, with the control point being up to 20 blocks in front of the user (depending on the tick, it starts at 1 block in front, and then it's 20 blocks in front by tick 20)
+
+When the flesh vine hits a target entity, it latches on to the target and stays attached to that target entity for 20 ticks.
+
+- The target entity that the flesh vine is attached to takes 30 damage (using the Damager.hurt with the user / flesh vine owner as the damage source, so it can be scaled) every 10 ticks
+- If the user drops to zero HP during this ability from this damage (and they are a demonizeable entity or a player), then there is a 50% chance of instantly turning them into a demon (no demon transformation phase, just instant demon transformation, and if it's a player then it will instantly forcefully feed them 10 to 20 muzan blood, if the player is already a demon then it does nothing, it just lets them die)
+- If the user survives this attack, then they get 10 seconds of wither 5, and also slowness 3 for 10 seconds
+
+Tick 50 (cleanup):
+
+- Clear the animation on the user
+
 ## Blood King’s Massacre
+
+_Flesh Arms_
+
+Unleash multiple bone whips in a 50 x 50 area ripping apart and tearing apart opponents, dragging the disemboweled corpses back to be consumed by their body for high regeneration, can only be Blocked or negated by hashira or high tier Demon slayers, leaves lasting high-level poison on the survivors, slowly poison their bodies as the fight drags on
+
+Tick 0
+
+- Biokineses item uses the biokineses_2 model, and biokineses_2l is rendered in the left hand
+
+Ticks 0-10 (chargeup)
+
+- Play the summon animation while particles spiral around the user, user moves at 0.5x speed
+
+Ticks 11-53
+
+- User moves at 0.25x speed
+
+Tick 11 (first slash)
+
+- Spawn flash particles on the user
+- Spawn a circle of 12 outwards-facing blood lances around the user at a 2 block radius, launching outwards horizontally
+- 1 bone whip is created, the starting position anchored to the user's left arm, the end position and the path spiraling around the user counterclockwise horizontally with a bit of wobble and randomness (in a 5 block radius)
+- User plays the left_sword_to_left animation
+
+Tick 17 (second slash)
+
+- Spawn flash particles on the user
+- A 2nd bone whip is created, the starting position anchored to the user's right arm, the end position and the path spiraling vertically around the user with some wobble and randmoness (in an 10 block radius)
+- User plays the sword_overhead animation
+- Spawn a ring of 12 additional blood lances around the user, the circle is a 8 block radius, and the directions of these blood lances are tangential to the circle, these ones should move in a circular path (that 6 block radius circle) around the user
+
+Tick 23 (stomp)
+
+- Spawn flash particles on the user
+- The user plays the heel_drop animation
+- Activate the six back tentacles (if they aren't active already, if they are active, then just take them out of whatever mode they are currently on, ending the biokineses climbing if that's happening, and place them on standby)
+- Spawn a third ring of 12 more blood lances around the user, the circle is a 18 block radius, and the directions of these blood lances are tangential to the circle, these ones should move in a circular path (that 18 block radius circle) around the user
+
+Ticks 23-53:
+
+- User moves at 0.25x speed
+- 25 block radius centered on the user's head
+- The six back tentacles will whip around randomly in a 25 block radius from the user
+- The two bone whips continue to thrash and whip around in a 15 block radius
+- Spawn a bunch of blackred_slash particles randomly within this 25 block radius sphere
+- All entities within 25 blocks, every 5 ticks they have a 50% chance of getting hit, those that get hit will get 10 seconds of wither 5 potion effect
+- Those that get hit get the blackred_impact particles on them and also get pulled towards the user (using MovementHelper.AddVelocity)
+- Entities within 10 blocks of the user will get marked by size 4 red dust particles on them while an extra flesh vine is created connecting them to the user (start point is on the user's torso, end point is on the target's torso), and this flesh vine will thrash them around and drag them closer and closer to the user, these marked entities taking 50% more damage from the form, and every time they take damage, half of the damage they take goes towards healing the user
+
+Ticks 54-69 (retraction)
+
+- The user moves at 0.1x speed during this retraction phase
+- R starts at 25 on tick 54, and decreases to 1 on tick 69 (the radius of the sphere around the user's head)
+- The 6 back tentacles and all the flesh vines retract (their endpoints right on the edge of the sphere of radius R) as they slither back towards the user
+
+Tick 70 (cleanup)
+
+- User's animations and guard state are cleared
+- All the flesh vines are removed
+- Back tentacles are put back into a default state
+
+## Blood King’s Massacre, Genocide (variant of Blood King's Massacre)
 
 _Flesh Arms, Tentacles_
 
@@ -386,12 +476,6 @@ Tick 83 (cleanup)
 - User stops hovering (they are now affected by gravity again)
 - Back tentacles are put back into a default state
 
----
-
-## Ignore everything past this line, this is WIP
-
----
-
 ## Demon King’s Blood Dance
 
 _Tentacles, Bone Whips_
@@ -430,11 +514,12 @@ Tick 88 (cleanup):
 - The user can move again
 - Back tentacles are put back into a default state
 
-## Vengeful Abyss, Fissure
+---
 
-_Tentacles_
+## Ignore everything past this line, this is WIP
 
-The user extends a large fleshy arm in a straight line forwards, mottled with mouths. The mouths suck air inwards, pulling all nearby entities towards the arm. Arm then unleashed bursts of paralyzing energy bolts while the user's back tentacles and leg tentacles surge forward and decimate all the ensnared entities
+---
+
 
 ## Abhorrent Galaxy
 
