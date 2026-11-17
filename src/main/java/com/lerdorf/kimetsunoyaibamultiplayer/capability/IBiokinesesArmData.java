@@ -23,6 +23,10 @@ public interface IBiokinesesArmData extends INBTSerializable<CompoundTag> {
 
     void setActive(boolean active);
 
+    boolean isClimbing();
+
+    void setClimbing(boolean climbing);
+
     boolean isRetracting();
 
     void setRetracting(boolean retracting);
@@ -94,4 +98,8 @@ public interface IBiokinesesArmData extends INBTSerializable<CompoundTag> {
     void setTraversalInput(float forward, float strafe, boolean jumping, boolean descending, long tick);
 
     void clearTraversalInput();
+
+    int getAirborneTicks();
+
+    void setAirborneTicks(int ticks);
 }

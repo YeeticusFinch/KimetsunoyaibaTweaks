@@ -12,6 +12,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -20,6 +21,8 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -53,12 +56,15 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_UP_Z =
         SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_CLIMBING =
+        SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private Vec3 direction = Vec3.ZERO;
     private Vec3 gravityUp = new Vec3(0.0D, 1.0D, 0.0D);
     private int ticksAlive;
     private int lifetime = 21;
+    private boolean climbing;
 
     public BloodTornadoEntity(EntityType<? extends BloodTornadoEntity> type, Level level) {
         super(type, level);
@@ -140,6 +146,7 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         entityData.define(DATA_UP_X, 0.0F);
         entityData.define(DATA_UP_Y, 1.0F);
         entityData.define(DATA_UP_Z, 0.0F);
+        entityData.define(DATA_CLIMBING, false);
     }
 
     @Override
@@ -165,14 +172,31 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         }
 
         Vec3 up = getGravityUp();
+        if (level().isClientSide()) {
+            climbing = entityData.get(DATA_CLIMBING);
+        }
         Vec3 currentVelocity = getDeltaMovement();
         double normalVelocity = currentVelocity.dot(up);
-        if (isSupported(up) && normalVelocity <= 0.0D) {
+        Vec3 travelDirection = getTravelDirection();
+        Vec3 horizontalMovement = travelDirection.scale(SPEED);
+        if (!climbing && hitsWall(horizontalMovement, up)) {
+            // Let normal collision resolution place the tornado against the wall,
+            // then switch its synchronized trajectory to gravity-relative up.
+            move(MoverType.SELF, horizontalMovement);
+            climbing = true;
+            entityData.set(DATA_CLIMBING, true);
+            setDirection(up);
+            normalVelocity = 0.0D;
+            horizontalMovement = up.scale(SPEED);
+        } else if (climbing) {
+            normalVelocity = 0.0D;
+            horizontalMovement = up.scale(SPEED);
+        } else if (isSupported(up) && normalVelocity <= 0.0D) {
             normalVelocity = 0.0D;
         } else {
             normalVelocity -= GRAVITY_ACCELERATION;
         }
-        Vec3 movement = getTravelDirection().scale(SPEED).add(up.scale(normalVelocity));
+        Vec3 movement = horizontalMovement.add(up.scale(normalVelocity));
         setDeltaMovement(movement);
         move(MoverType.SELF, movement);
         hasImpulse = true;
@@ -238,6 +262,21 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         return level().clip(context).getType() == net.minecraft.world.phys.HitResult.Type.BLOCK;
     }
 
+    private boolean hitsWall(Vec3 movement, Vec3 up) {
+        if (movement.lengthSqr() < 1.0E-8D) {
+            return false;
+        }
+        Vec3 start = position();
+        Vec3 end = start.add(movement);
+        BlockHitResult hit = level().clip(new ClipContext(start, end,
+            ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        if (hit.getType() != HitResult.Type.BLOCK) {
+            return false;
+        }
+        Vec3 normal = Vec3.atLowerCornerOf(hit.getDirection().getNormal());
+        return Math.abs(normal.dot(up)) < 0.5D;
+    }
+
     private static void spawnImpact(ServerLevel level, Vec3 position) {
         level.sendParticles(ModParticles.BLACKRED_IMPACT.get(),
             position.x, position.y, position.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
@@ -279,6 +318,8 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         setGravityUp(new Vec3(tag.getDouble("UpX"), tag.getDouble("UpY"), tag.getDouble("UpZ")));
         setDirection(new Vec3(tag.getDouble("DirectionX"), tag.getDouble("DirectionY"),
             tag.getDouble("DirectionZ")));
+        climbing = tag.getBoolean("Climbing");
+        entityData.set(DATA_CLIMBING, climbing);
     }
 
     @Override
@@ -296,5 +337,6 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         tag.putDouble("UpX", gravityUp.x);
         tag.putDouble("UpY", gravityUp.y);
         tag.putDouble("UpZ", gravityUp.z);
+        tag.putBoolean("Climbing", climbing);
     }
 }

@@ -219,6 +219,15 @@ public class AnimationHelper {
     /** Explicitly removes one synchronized player animation from its animation layer. */
     public static void stopAnimation(LivingEntity entity, String animationName) {
         if (!(entity instanceof Player player)) {
+            if (entity == null) {
+                return;
+            }
+            if (!entity.level().isClientSide) {
+                ModNetworking.sendToAllClients(new MobAnimationSyncPacket(entity.getId(), "__stop__"));
+            } else {
+                DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () ->
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.MobAnimationHelper.stopAnimationOnMob(entity));
+            }
             return;
         }
         ResourceLocation animationLocation = parseAnimationName(animationName);

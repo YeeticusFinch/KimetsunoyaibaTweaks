@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.items;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
@@ -205,7 +206,8 @@ public class BloodDemonArtAxeItem extends AxeItem {
     }
 
     private static boolean canUseBloodDemonArt(Player player) {
-        return player.getAbilities().instabuild || Damager.isDemon(player);
+        return !KnYEffects.hasSuffocation(player)
+            && (player.getAbilities().instabuild || Damager.isDemon(player));
     }
 
     private static void setSelectedFormIndex(ItemStack stack, int index) {

@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.Config;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.capability.IBiokinesesArmData;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
@@ -13,6 +14,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -22,7 +24,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * High-level control surface for Biokineses' six arms.
@@ -41,10 +45,8 @@ public final class BiokinesesArmController {
 
     private static final int ACTIVE_TICKS = 2400;
     private static final double ARM_REACH = 8.0D;
-    private static final double ANCHOR_CORRECTION_SPEED = 0.08D;
-    private static final double FLIGHT_ACCELERATION = 0.12D;
-    private static final double FLIGHT_MAX_SPEED = 0.65D;
-    private static final double FLIGHT_DRAG = 0.72D;
+    private static final double FLIGHT_BASE_SPEED = 0.9D;
+    private static final int AIRBORNE_TICKS_BEFORE_ANCHOR = 10;
     private static final float COMBAT_DAMAGE = 6.0F;
     private static final long ANCHOR_RECHECK_INTERVAL = 5L;
     private static final long RETRACT_TICKS = 10L;
@@ -69,11 +71,11 @@ public final class BiokinesesArmController {
 
     public static boolean isTraversalActive(LivingEntity entity) {
         IBiokinesesArmData data = data(entity);
-        if (data == null || !data.isActive() || data.isRetracting()
+        if (data == null || !data.isActive() || !data.isClimbing() || data.isRetracting()
             || data.getAllocationMode() != IBiokinesesArmData.ALLOCATION_NORMAL || entity.onGround()) {
             return false;
         }
-        for (int arm : anchorArms()) {
+        for (int arm : climbingAnchorArms()) {
             if (data.getMode(arm) == IBiokinesesArmData.MODE_ANCHOR && data.hasAnchor(arm)) {
                 return true;
             }
@@ -87,7 +89,7 @@ public final class BiokinesesArmController {
             return;
         }
         IBiokinesesArmData data = data(player);
-        if (data == null || !data.isActive() || data.isRetracting()
+        if (data == null || !data.isActive() || !data.isClimbing() || data.isRetracting()
             || data.getAllocationMode() != IBiokinesesArmData.ALLOCATION_NORMAL) {
             return;
         }
@@ -96,6 +98,50 @@ public final class BiokinesesArmController {
 
     /** Activates the arms and extends their lifetime by two minutes. */
     public static void activateForAbility(LivingEntity entity) {
+        activateArms(entity);
+        IBiokinesesArmData data = data(entity);
+        if (data != null && !entity.level().isClientSide()) {
+            data.setClimbing(false);
+            sync(entity, true);
+        }
+    }
+
+    /** Activates the arms and enables the separate Biokineses climbing mode. */
+    public static void activateForClimbing(LivingEntity entity) {
+        activateArms(entity);
+        if (entity.level().isClientSide()) {
+            return;
+        }
+        IBiokinesesArmData data = data(entity);
+        if (data == null) {
+            return;
+        }
+        data.setClimbing(true);
+        data.setAirborneTicks(0);
+        data.setAllocationMode(IBiokinesesArmData.ALLOCATION_NORMAL);
+        releaseHeldEntities(entity, data);
+        for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
+            data.clearAnchor(arm);
+            data.setMode(arm, IBiokinesesArmData.MODE_COMBAT);
+            data.setTarget(arm, defaultTarget(entity, arm));
+        }
+        liftForClimbing(entity);
+        sync(entity, true);
+    }
+
+    private static void liftForClimbing(LivingEntity entity) {
+        if (!entity.onGround()) {
+            return;
+        }
+        AABB liftedBox = entity.getBoundingBox().move(0.0D, 1.0D, 0.0D);
+        if (entity.level().noCollision(entity, liftedBox)) {
+            entity.setPos(entity.getX(), entity.getY() + 1.0D, entity.getZ());
+            entity.setOnGround(false);
+            entity.setDeltaMovement(entity.getDeltaMovement().x, 0.0D, entity.getDeltaMovement().z);
+        }
+    }
+
+    private static void activateArms(LivingEntity entity) {
         if (entity.level().isClientSide()) {
             return;
         }
@@ -107,19 +153,18 @@ public final class BiokinesesArmController {
         data.setActive(true);
         data.setRetracting(false);
         data.setExpiresAt(Math.max(now, data.getExpiresAt()) + ACTIVE_TICKS);
+        data.setAirborneTicks(0);
         if (data.getAllocationMode() != IBiokinesesArmData.ALLOCATION_ALL) {
             data.setAllocationMode(IBiokinesesArmData.ALLOCATION_NORMAL);
         }
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
             if (data.getMode(arm) == IBiokinesesArmData.MODE_IDLE) {
-                data.setMode(arm, isAnchorArm(arm) && !entity.onGround()
-                    ? IBiokinesesArmData.MODE_ANCHOR : IBiokinesesArmData.MODE_COMBAT);
+                data.setMode(arm, IBiokinesesArmData.MODE_COMBAT);
                 data.setTarget(arm, defaultTarget(entity, arm));
                 data.setTargetEntityId(arm, -1);
                 data.setAttackCooldownUntil(arm, 0L);
             }
         }
-        sync(entity, true);
     }
 
     /** Claims all six arms for a form until that form releases them. */
@@ -150,8 +195,7 @@ public final class BiokinesesArmController {
         }
         data.setAllocationMode(IBiokinesesArmData.ALLOCATION_NORMAL);
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
-            data.setMode(arm, isAnchorArm(arm) && !entity.onGround()
-                ? IBiokinesesArmData.MODE_ANCHOR : IBiokinesesArmData.MODE_COMBAT);
+            data.setMode(arm, IBiokinesesArmData.MODE_COMBAT);
             data.setTarget(arm, defaultTarget(entity, arm));
         }
         sync(entity, true);
@@ -170,8 +214,10 @@ public final class BiokinesesArmController {
         data.clearTraversalInput();
         releaseHeldEntities(entity, data);
         data.setActive(true);
+        data.setClimbing(false);
         data.setRetracting(true);
         data.setExpiresAt(entity.level().getGameTime() + RETRACT_TICKS);
+        data.setAirborneTicks(0);
         data.setAllocationMode(IBiokinesesArmData.ALLOCATION_NORMAL);
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
             data.setMode(arm, IBiokinesesArmData.MODE_IDLE);
@@ -297,6 +343,28 @@ public final class BiokinesesArmController {
             return;
         }
 
+        if (!data.isClimbing()) {
+            stopLocomotion(entity, data);
+            data.clearTraversalInput();
+            data.setAirborneTicks(0);
+            if (data.getAllocationMode() == IBiokinesesArmData.ALLOCATION_NORMAL) {
+                clearAnchorAllocation(entity, data);
+            }
+            tickHeldEntities(entity, data);
+            updateProgress(data);
+            tickAttackArms(entity, data, now);
+            if (now % SYNC_INTERVAL == 0L) {
+                sync(entity, false);
+            }
+            return;
+        }
+
+        if (entity.onGround()) {
+            retract(entity);
+            return;
+        }
+
+        updateAirborneTicks(entity, data);
         updateAllocation(entity, data);
         refreshFollowTargets(entity, data);
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
@@ -313,12 +381,20 @@ public final class BiokinesesArmController {
         tickHeldEntities(entity, data);
         updateProgress(data);
         tickAttackArms(entity, data, now);
-        if (anchors.isEmpty()) {
+        if (data.getAllocationMode() != IBiokinesesArmData.ALLOCATION_NORMAL) {
             stopLocomotion(entity, data);
         }
 
         if (entity.level().getGameTime() % SYNC_INTERVAL == 0L) {
             sync(entity, false);
+        }
+    }
+
+    private static void clearAnchorAllocation(LivingEntity entity, IBiokinesesArmData data) {
+        for (int arm : climbingAnchorArms()) {
+            data.clearAnchor(arm);
+            data.setMode(arm, IBiokinesesArmData.MODE_COMBAT);
+            data.setTarget(arm, defaultTarget(entity, arm));
         }
     }
 
@@ -334,6 +410,7 @@ public final class BiokinesesArmController {
         }
         if (finished || entity.level().getGameTime() >= data.getExpiresAt()) {
             data.setActive(false);
+            data.setClimbing(false);
             data.setRetracting(false);
             data.setExpiresAt(0L);
             for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
@@ -345,8 +422,8 @@ public final class BiokinesesArmController {
 
     private static List<Vec3> tickAnchors(LivingEntity entity, IBiokinesesArmData data) {
         List<Vec3> anchors = new ArrayList<>();
-        if (entity.onGround()) {
-            for (int arm : anchorArms()) {
+        if (data.getAirborneTicks() < AIRBORNE_TICKS_BEFORE_ANCHOR) {
+            for (int arm : climbingAnchorArms()) {
                 data.clearAnchor(arm);
                 data.setMode(arm, IBiokinesesArmData.MODE_COMBAT);
                 data.setTarget(arm, defaultTarget(entity, arm));
@@ -355,18 +432,36 @@ public final class BiokinesesArmController {
             stopLocomotion(entity, data);
             return anchors;
         }
-        for (int arm : anchorArms()) {
+        if (entity.onGround()) {
+            for (int arm : climbingAnchorArms()) {
+                data.clearAnchor(arm);
+                data.setMode(arm, IBiokinesesArmData.MODE_COMBAT);
+                data.setTarget(arm, defaultTarget(entity, arm));
+            }
+            data.clearTraversalInput();
+            stopLocomotion(entity, data);
+            return anchors;
+        }
+        Set<BlockPos> occupiedBlocks = new HashSet<>();
+        for (int arm : climbingAnchorArms()) {
             boolean needsNewAnchor = hasValidAnchor(entity, data, arm)
                 && shouldReanchor(entity, data, data.getTarget(arm));
-            if (hasValidAnchor(entity, data, arm) && !needsNewAnchor) {
+            boolean duplicateAnchor = data.hasAnchor(arm)
+                && occupiedBlocks.contains(BlockPos.of(data.getAnchorBlockPos(arm)));
+            if (hasValidAnchor(entity, data, arm) && !needsNewAnchor && !duplicateAnchor) {
                 anchors.add(data.getTarget(arm));
+                occupiedBlocks.add(BlockPos.of(data.getAnchorBlockPos(arm)));
             } else if (entity.level().getGameTime() % ANCHOR_RECHECK_INTERVAL == 0L
-                || !data.hasAnchor(arm) || needsNewAnchor) {
-                AnchorTarget anchor = findAnchor(entity, data, arm);
+                || !data.hasAnchor(arm) || needsNewAnchor || duplicateAnchor) {
+                AnchorTarget anchor = findAnchor(entity, data, arm, occupiedBlocks);
+                if (anchor == null) {
+                    anchor = findAnchor(entity, data, arm, Set.of());
+                }
                 if (anchor != null) {
                     data.setAnchor(arm, anchor.blockPos().asLong(), anchor.face().get3DDataValue());
                     data.setTarget(arm, anchor.position());
                     anchors.add(anchor.position());
+                    occupiedBlocks.add(anchor.blockPos());
                     data.setMode(arm, IBiokinesesArmData.MODE_ANCHOR);
                 } else {
                     data.clearAnchor(arm);
@@ -381,15 +476,11 @@ public final class BiokinesesArmController {
         }
 
         if (!anchors.isEmpty()) {
-            Vec3 average = Vec3.ZERO;
-            for (Vec3 anchor : anchors) {
-                average = average.add(anchor);
-            }
-            average = average.scale(1.0D / anchors.size());
-            applyLocomotion(entity, data, average);
+            applyLocomotion(entity, data);
             startLocomotion(entity, data);
         } else {
             data.clearTraversalInput();
+            CombatGravityFrame.velocity(entity, Vec3.ZERO);
             stopLocomotion(entity, data);
         }
         return anchors;
@@ -437,14 +528,9 @@ public final class BiokinesesArmController {
         if (data.getAllocationMode() != IBiokinesesArmData.ALLOCATION_NORMAL) {
             return;
         }
-        boolean airborne = !entity.onGround();
-        for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
-            int mode = data.getMode(arm);
-            if (mode == IBiokinesesArmData.MODE_ATTACK || mode == IBiokinesesArmData.MODE_FAST_RETRACT
-                || mode == IBiokinesesArmData.MODE_GRAB) {
-                continue;
-            }
-            if (airborne && isAnchorArm(arm)) {
+        boolean airborne = data.getAirborneTicks() >= AIRBORNE_TICKS_BEFORE_ANCHOR;
+        for (int arm : climbingAnchorArms()) {
+            if (airborne) {
                 if (hasValidAnchor(entity, data, arm)) {
                     data.setMode(arm, IBiokinesesArmData.MODE_ANCHOR);
                 } else {
@@ -455,6 +541,15 @@ public final class BiokinesesArmController {
                 data.setMode(arm, IBiokinesesArmData.MODE_COMBAT);
                 data.clearAnchor(arm);
             }
+        }
+    }
+
+    private static void updateAirborneTicks(LivingEntity entity, IBiokinesesArmData data) {
+        if (entity.onGround()) {
+            data.setAirborneTicks(0);
+        } else {
+            data.setAirborneTicks(Math.min(AIRBORNE_TICKS_BEFORE_ANCHOR,
+                data.getAirborneTicks() + 1));
         }
     }
 
@@ -469,28 +564,24 @@ public final class BiokinesesArmController {
         }
     }
 
-    private static void applyLocomotion(LivingEntity entity, IBiokinesesArmData data, Vec3 averageAnchor) {
-        Vec3 velocity = CombatGravityFrame.velocity(entity);
+    private static void applyLocomotion(LivingEntity entity, IBiokinesesArmData data) {
         Vec3 input = traversalInputLocal(entity, data);
-        if (input.lengthSqr() > 1.0E-6D) {
-            velocity = velocity.add(input.normalize().scale(FLIGHT_ACCELERATION));
-        } else {
-            velocity = velocity.scale(FLIGHT_DRAG);
-        }
-
-        Vec3 anchorOffset = CombatGravityFrame.local(averageAnchor.subtract(entity.position()));
-        double anchorDistance = anchorOffset.length();
-        double correctionStart = ARM_REACH * 0.65D;
-        if (anchorDistance > correctionStart) {
-            double correction = Math.min(ANCHOR_CORRECTION_SPEED,
-                (anchorDistance - correctionStart) * 0.04D);
-            velocity = velocity.add(anchorOffset.normalize().scale(correction));
-        }
-
-        if (velocity.lengthSqr() > FLIGHT_MAX_SPEED * FLIGHT_MAX_SPEED) {
-            velocity = velocity.normalize().scale(FLIGHT_MAX_SPEED);
-        }
+        Vec3 velocity = input.lengthSqr() > 1.0E-6D
+            ? CombatGravityFrame.world(input.normalize().scale(flightSpeed(entity)))
+            : Vec3.ZERO;
         CombatGravityFrame.velocity(entity, velocity);
+    }
+
+    private static double flightSpeed(LivingEntity entity) {
+        double speed = FLIGHT_BASE_SPEED;
+        var speedEffect = entity.getEffect(MobEffects.MOVEMENT_SPEED);
+        if (speedEffect != null) {
+            speed *= 1.0D + 0.2D * (speedEffect.getAmplifier() + 1);
+        }
+        if (entity.isSprinting()) {
+            speed *= 2.0D;
+        }
+        return speed;
     }
 
     private static Vec3 traversalInputLocal(LivingEntity entity, IBiokinesesArmData data) {
@@ -501,13 +592,17 @@ public final class BiokinesesArmController {
         }
 
         Vec3 forward = CombatGravityFrame.look(entity);
-        forward = new Vec3(forward.x, 0.0D, forward.z);
         if (forward.lengthSqr() < 1.0E-6D) {
             forward = new Vec3(0.0D, 0.0D, 1.0D);
         } else {
             forward = forward.normalize();
         }
-        Vec3 right = new Vec3(0.0D, 1.0D, 0.0D).cross(forward).normalize();
+        Vec3 right = new Vec3(0.0D, 1.0D, 0.0D).cross(forward);
+        if (right.lengthSqr() < 1.0E-6D) {
+            right = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            right = right.normalize();
+        }
         double vertical = data.isTraversalJumping() == data.isTraversalDescending()
             ? 0.0D : data.isTraversalJumping() ? 1.0D : -1.0D;
         return forward.scale(data.getTraversalForwardInput())
@@ -668,11 +763,16 @@ public final class BiokinesesArmController {
         if (state.isAir() || state.getCollisionShape(entity.level(), blockPos).isEmpty()) {
             return false;
         }
-        double maxDistance = ARM_REACH + 1.0D;
+        double maxDistance = Config.biokinesesClimbingAnchorRange;
         return entity.position().distanceToSqr(data.getTarget(arm)) <= maxDistance * maxDistance;
     }
 
     private static AnchorTarget findAnchor(LivingEntity entity, IBiokinesesArmData data, int arm) {
+        return findAnchor(entity, data, arm, Set.of());
+    }
+
+    private static AnchorTarget findAnchor(LivingEntity entity, IBiokinesesArmData data, int arm,
+                                           Set<BlockPos> occupiedBlocks) {
         Vec3 localForward = CombatGravityFrame.look(entity).normalize();
         if (localForward.lengthSqr() < 1.0E-6D) {
             localForward = new Vec3(0.0D, 0.0D, 1.0D);
@@ -685,43 +785,66 @@ public final class BiokinesesArmController {
             localLeft = localLeft.normalize();
         }
 
-        Vec3 forward = CombatGravityFrame.world(localForward).normalize();
         Vec3 up = CombatGravityFrame.world(localUp).normalize();
         Vec3 left = CombatGravityFrame.world(localLeft).normalize();
+        Vec3 localSide = isLeftArm(arm) ? localLeft : localLeft.scale(-1.0D);
         Vec3 side = isLeftArm(arm) ? left : left.scale(-1.0D);
         Vec3 start = entity.position().add(up.scale(entity.getBbHeight() * 0.65D)).add(side.scale(0.35D));
-        boolean lowerArm = arm == ARM_LEFT_LOWER || arm == ARM_RIGHT_LOWER;
-        Vec3 down = up.scale(-1.0D);
-        Vec3 preferredLocal = movementDirectionLocal(entity, data);
-        Vec3 preferred = preferredLocal.lengthSqr() > 0.01D
-            ? CombatGravityFrame.world(preferredLocal).normalize() : forward;
-        Vec3[] directions = lowerArm
-            ? new Vec3[] { down, preferred.add(down.scale(0.35D)), side.add(down.scale(0.2D)),
-                forward.add(down.scale(0.15D)), forward.add(up.scale(0.25D)) }
-            : new Vec3[] { preferred.add(down.scale(0.15D)), forward.add(up.scale(0.3D)),
-                side.add(forward.scale(0.35D)), down, forward };
+        Vec3 backward = localForward.scale(-1.0D);
+        Vec3[] directions;
+        if (isTopAnchorArm(arm)) {
+            directions = new Vec3[] {
+                localUp.add(localForward), localUp.add(localForward.scale(0.4D)), localUp,
+                localForward, localUp.add(localSide), localSide, localUp.scale(-1.0D), backward
+            };
+        } else if (isMiddleAnchorArm(arm)) {
+            directions = new Vec3[] {
+                localForward, localSide, localSide.add(localForward.scale(0.45D)), backward,
+                localForward.add(localUp.scale(0.25D)), localForward.add(localUp.scale(-0.25D)),
+                localUp, localUp.scale(-1.0D)
+            };
+        } else {
+            directions = new Vec3[] {
+                localUp.scale(-1.0D).add(backward.scale(0.55D)), localUp.scale(-1.0D), backward,
+                localUp.scale(-1.0D).add(localSide), localSide.add(backward.scale(0.35D)),
+                localForward, localUp
+            };
+        }
 
         AnchorTarget best = null;
         double bestScore = Double.MAX_VALUE;
         for (Vec3 rawDirection : directions) {
             Vec3 direction = rawDirection.normalize();
-            BlockHitResult hit = entity.level().clip(new ClipContext(start, start.add(direction.scale(ARM_REACH)),
+            Vec3 worldDirection = CombatGravityFrame.world(direction).normalize();
+            BlockHitResult hit = entity.level().clip(new ClipContext(start,
+                start.add(worldDirection.scale(Config.biokinesesClimbingAnchorRange)),
                 ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
             if (hit.getType() != HitResult.Type.BLOCK) {
                 continue;
             }
             BlockPos blockPos = hit.getBlockPos();
+            if (occupiedBlocks.contains(blockPos)) {
+                continue;
+            }
             BlockState state = entity.level().getBlockState(blockPos);
             if (state.isAir() || state.getCollisionShape(entity.level(), blockPos).isEmpty()) {
                 continue;
             }
             Vec3 position = hit.getLocation().add(Vec3.atLowerCornerOf(hit.getDirection().getNormal()).scale(0.06D));
-            double score = start.distanceToSqr(position);
-            if (lowerArm && hit.getDirection() == Direction.UP) {
-                score -= 2.0D;
-            }
-            if (!lowerArm && hit.getDirection() != Direction.UP) {
-                score -= 0.5D;
+            Vec3 relativeLocal = CombatGravityFrame.local(position.subtract(entity.position()));
+            double distanceScore = start.distanceToSqr(position) * 0.08D;
+            Vec3 relativeDirection = relativeLocal.lengthSqr() > 1.0E-6D
+                ? relativeLocal.normalize() : Vec3.ZERO;
+            double preferenceScore = relativeDirection.dot(anchorPreference(arm, localForward,
+                localUp, localSide));
+            double sameLevelPenalty = isMiddleAnchorArm(arm) ? Math.abs(relativeLocal.y) * 2.0D : 0.0D;
+            double score = distanceScore - preferenceScore * 4.0D + sameLevelPenalty;
+            Vec3 faceNormalLocal = CombatGravityFrame.local(
+                Vec3.atLowerCornerOf(hit.getDirection().getNormal()));
+            if (isTopAnchorArm(arm) && faceNormalLocal.y < -0.5D) {
+                score -= 1.0D;
+            } else if (isBottomAnchorArm(arm) && faceNormalLocal.y > 0.5D) {
+                score -= 1.0D;
             }
             if (score < bestScore) {
                 bestScore = score;
@@ -770,8 +893,35 @@ public final class BiokinesesArmController {
         return arm == ARM_LEFT_UPPER || arm == ARM_LEFT_LOWER || arm == ARM_RIGHT_UPPER || arm == ARM_RIGHT_LOWER;
     }
 
+    private static boolean isTopAnchorArm(int arm) {
+        return arm == ARM_LEFT_UPPER || arm == ARM_RIGHT_UPPER;
+    }
+
+    private static boolean isMiddleAnchorArm(int arm) {
+        return arm == ARM_LEFT_COMBAT || arm == ARM_RIGHT_COMBAT;
+    }
+
+    private static boolean isBottomAnchorArm(int arm) {
+        return arm == ARM_LEFT_LOWER || arm == ARM_RIGHT_LOWER;
+    }
+
+    private static Vec3 anchorPreference(int arm, Vec3 forward, Vec3 up, Vec3 side) {
+        if (isTopAnchorArm(arm)) {
+            return up.add(forward).normalize();
+        }
+        if (isMiddleAnchorArm(arm)) {
+            return forward.add(side.scale(0.35D)).normalize();
+        }
+        return up.scale(-1.0D).add(forward.scale(-0.35D)).normalize();
+    }
+
     private static int[] anchorArms() {
         return new int[] { ARM_LEFT_UPPER, ARM_LEFT_LOWER, ARM_RIGHT_UPPER, ARM_RIGHT_LOWER };
+    }
+
+    private static int[] climbingAnchorArms() {
+        return new int[] { ARM_LEFT_UPPER, ARM_LEFT_LOWER, ARM_LEFT_COMBAT,
+            ARM_RIGHT_UPPER, ARM_RIGHT_LOWER, ARM_RIGHT_COMBAT };
     }
 
     private static boolean isLeftArm(int arm) {

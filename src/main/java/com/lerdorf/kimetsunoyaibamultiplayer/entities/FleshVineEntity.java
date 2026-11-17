@@ -160,6 +160,17 @@ public final class FleshVineEntity extends Entity {
         setOldPosAndRot();
     }
 
+    public void updateChargePath(Vec3 start, Vec3 end, List<Vec3> path) {
+        if (getMode() != MODE_CHARGE) {
+            return;
+        }
+        setStart(start);
+        setEnd(end);
+        setTrajectory(path);
+        setPos(start.x, start.y, start.z);
+        setOldPosAndRot();
+    }
+
     public void updateTransition(Vec3 start, Vec3 end, List<Vec3> trajectory) {
         if (getMode() != MODE_TRANSITION) {
             return;
@@ -350,6 +361,10 @@ public final class FleshVineEntity extends Entity {
             path.add(new Vec3(point.getDouble("X"), point.getDouble("Y"), point.getDouble("Z")));
         }
         return path;
+    }
+
+    public List<Vec3> getChargePath() {
+        return getTransitionPath();
     }
 
     public Vec3 getVineDirection() {

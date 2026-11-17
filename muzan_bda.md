@@ -228,13 +228,13 @@ Tick 13
 - Remove the 3 flesh vines
 - R starts at 1
 
-Ticks 13-20
+Ticks 13-26
 
-- R increases every tick, reaching 50 by tick 20
+- R increases every tick, reaching 50 by tick 26
 - Every tick, spawn a sphere of radius R of flash particles around the user
 - For each lightning spark, the start point is set to the user's center location (halfway between their head and location), and the end point is a random point along the edge of the sphere of radius R centered on the user (same sphere as the flash particles)
 - For every living entity (other than the user) within R blocks of the user (use the distance squared trick to avoid the square root issue, comparing to R\*R, such that we don't have to use the slow power function), once they first enter the region, they become marked, meaning a new lightning spark will spawn on them (lasting 10 ticks), start point being the user's center position and end point being the living entity's center position (don't keep spawning more lightning sparks on the same living entity over and over again, if a living entity already has a lightning spark from this ability attached to them then just update the start and end positions every tick such that it tracks both entities)
-- All living entities who get his by this ability (they are within R of the user) will take a bynch of damage, and then immediately get slowness 20 for 5 seconds (no particles), and they will have the kimetsunoyaiba lightning particles on them for that duration, and they will also have the suffocation potion effect (from kimetsunoyaiba mod) for 5 seconds, and it will cancel any active abilities or breathing forms they have active (also any entity who has the suffocation effect shouldn't be able to use abilities, they cant use blood demon arts or breathing forms while they have the suffocation effect)
+- All living entities who get hit by this ability (they are within R of the user) will take a bunch of damage, and then immediately get slowness 20 for 5 seconds (no particles), and they will have the kimetsunoyaiba lightning particles on them for that duration, and they will also have the suffocation potion effect (from kimetsunoyaiba mod) for 5 seconds, and it will cancel any active abilities or breathing forms they have active (also any entity who has the suffocation effect shouldn't be able to use abilities, they cant use blood demon arts or breathing forms while they have the suffocation effect), and their velocities will also be instantly zeroed when they get hit by this ability
 
 Tick 30 (cleanup)
 

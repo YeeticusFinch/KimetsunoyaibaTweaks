@@ -8,6 +8,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.SwampDemonArt;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.RuiBloodDemonArt;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.LocalizationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.PlayerAbilityCooldowns;
 import net.minecraft.ChatFormatting;
@@ -130,6 +131,9 @@ public class BloodDemonArtItem extends Item {
             tooltip.add(Component.translatable("tooltip.kimetsunoyaibamultiplayer.blood_demon_art.selected", formatFormName(artId, selectedForm))
                 .withStyle(ChatFormatting.GRAY));
         }
+        if ("biokineses".equals(artId)) {
+            tooltip.add(Component.literal("Press Z to use Biokineses Tentacles").withStyle(ChatFormatting.DARK_GRAY));
+        }
         tooltip.add(Component.literal("Sneak-right click: Cycle forms").withStyle(ChatFormatting.DARK_GRAY));
         tooltip.add(Component.literal("Right click: Use selected form").withStyle(ChatFormatting.DARK_GRAY));
     }
@@ -214,7 +218,8 @@ public class BloodDemonArtItem extends Item {
     }
 
     private static boolean canUseBloodDemonArt(Player player) {
-        return player.getAbilities().instabuild || Damager.isDemon(player);
+        return !KnYEffects.hasSuffocation(player)
+            && (player.getAbilities().instabuild || Damager.isDemon(player));
     }
 
     private static void setSelectedFormIndex(ItemStack stack, int index) {

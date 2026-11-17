@@ -5,9 +5,11 @@ import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtForm;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.BloodDemonArtTechnique;
 import com.lerdorf.kimetsunoyaibamultiplayer.api.KnYAPI;
+import com.lerdorf.kimetsunoyaibamultiplayer.api.SwordRegistry;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AbilityScheduler;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.compat.MinecraftComesAliveCompat;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BloodTornadoEntity;
@@ -23,10 +25,12 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BrambleSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderLightningSparkSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,6 +45,7 @@ import net.minecraft.world.entity.monster.Vindicator;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -55,11 +60,14 @@ import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -67,15 +75,15 @@ import java.util.UUID;
 public final class Biokineses {
     public static final String ART_ID = "biokineses";
     public static final int FORM_BLACK_BLOOD_BRAMBLES = 3900;
-    public static final int FORM_SUMMON_BIOKINESIS_ARMS = 3901;
-    public static final int FORM_RETRACT_BIOKINESIS_ARMS = 3902;
-    public static final int FORM_BIOKINETIC_GRASP = 3903;
     public static final int FORM_MERCILESS_PUNISHMENT = 3904;
     public static final int FORM_ULTIMATE_AUTHORITY = 3905;
     public static final int FORM_BLACK_BLOOD_DESCENDENCE = 3906;
     public static final int FORM_FORCED_TRANSITION = 3907;
+    public static final int FORM_SHOCKWAVE_ENERGY_BLAST = 3908;
 
     private static final int CHARGE_TICKS = 18;
+    private static final int ARM_TOGGLE_COOLDOWN_TICKS = 20;
+    private static final String ARM_TOGGLE_COOLDOWN_UNTIL_TAG = "BiokinesesArmToggleCooldownUntil";
     private static final int BRAMBLE_END_TICK = 60;
     private static final int SEQUENCE_END_TICK = 61;
     private static final int BRAMBLE_COUNT = 5;
@@ -139,6 +147,23 @@ public final class Biokineses {
     private static final double FORCED_TRANSITION_VINE_SPEED = 2.0D;
     private static final double FORCED_TRANSITION_VINE_WIDTH = 0.75D;
     private static final double FORCED_TRANSITION_SLITHER_AMPLITUDE = 0.9D;
+    private static final int SHOCKWAVE_CHARGE_END_TICK = 12;
+    private static final int SHOCKWAVE_BLAST_END_TICK = 26;
+    private static final int SHOCKWAVE_CLEANUP_TICK = 30;
+    private static final int SHOCKWAVE_TARGET_EFFECT_TICKS = 100;
+    private static final int SHOCKWAVE_TARGET_SPARK_TICKS = 10;
+    private static final int SHOCKWAVE_CHARGE_VINE_COUNT = 3;
+    private static final int SHOCKWAVE_CHARGE_VINE_ARC_POINTS = 24;
+    private static final int SHOCKWAVE_BLAST_SPARK_COUNT = 10;
+    private static final int SHOCKWAVE_FLASH_PARTICLE_COUNT = 48;
+    private static final double SHOCKWAVE_CHARGE_START_RADIUS = 4.0D;
+    private static final double SHOCKWAVE_CHARGE_VINE_ARC = Math.PI * 1.5D;
+    private static final double SHOCKWAVE_MAX_RADIUS = 50.0D;
+    private static final float SHOCKWAVE_SPARK_WIDTH = 0.8F;
+    private static final float SHOCKWAVE_DAMAGE = 24.0F;
+    private static final Vec3 WHITE = new Vec3(1.0D, 1.0D, 1.0D);
+    private static final ResourceLocation KNY_LIGHTNING_PARTICLE =
+        ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_lightning");
     private static final String LAST_CLAW_TICK_TAG = "BiokinesesLastClawTick";
     private static final String CLAW_ANIMATION_INDEX_TAG = "BiokinesesClawAnimationIndex";
     private static final String[] CLAW_ANIMATIONS = {
@@ -178,28 +203,7 @@ public final class Biokineses {
                  3,
                  Biokineses::executeBlackBloodBrambles
              ),
-             new BloodDemonArtForm(
-                 FORM_SUMMON_BIOKINESIS_ARMS,
-                 "Biokinesis Arms",
-                 "Summon six blood arms that anchor movement and lash out at attackers.",
-                 3,
-                 Biokineses::executeSummonArms
-             ),
               new BloodDemonArtForm(
-                  FORM_RETRACT_BIOKINESIS_ARMS,
-                  "Retract Biokinesis Arms",
-                  "Release the anchors and retract all six Biokinesis arms.",
-                  1,
-                  Biokineses::executeRetractArms
-              ),
-              new BloodDemonArtForm(
-                   FORM_BIOKINETIC_GRASP,
-                   "Biokinetic Grasp",
-                   "Use a Biokinesis arm to seize and suspend the living target in your sight.",
-                   2,
-                   Biokineses::executeBiokineticGrasp
-               ),
-               new BloodDemonArtForm(
                    FORM_MERCILESS_PUNISHMENT,
                    "Merciless Punishment",
                   "Swipe with a red claw storm and launch a blood tornado along the ground.",
@@ -226,56 +230,42 @@ public final class Biokineses {
                     "Latch onto a living target with a flesh vine and force a demonic transformation.",
                     4,
                     Biokineses::executeForcedTransition
+                ),
+                new BloodDemonArtForm(
+                    FORM_SHOCKWAVE_ENERGY_BLAST,
+                    "Shockwave Energy Blast",
+                    "Release a radial shockwave that stuns, damages, and suffocates nearby enemies.",
+                    6,
+                    Biokineses::executeShockwaveEnergyBlast
                 )
              ),
             0x8B1018
         );
     }
 
-    private static void executeSummonArms(LivingEntity entity, Level level, int formId) {
-        if (!level.isClientSide()) {
-            BiokinesesArmController.activateForAbility(entity);
-        }
-    }
-
-    private static void executeRetractArms(LivingEntity entity, Level level, int formId) {
-        if (!level.isClientSide()) {
-            BiokinesesArmController.retract(entity);
-        }
-    }
-
-    private static void executeBiokineticGrasp(LivingEntity entity, Level level, int formId) {
-        if (!(level instanceof ServerLevel serverLevel)) {
+    public static void toggleClimbing(Player player) {
+        if (player == null || player.level().isClientSide() || !isBiokinesesItem(player.getMainHandItem())
+            || KnYEffects.hasSuffocation(player)
+            || (!player.getAbilities().instabuild && !Damager.isDemon(player))) {
             return;
         }
-        LivingEntity target = findGraspTarget(entity, serverLevel);
-        if (target == null) {
+
+        ItemStack stack = player.getMainHandItem();
+        long now = player.level().getGameTime();
+        if (player.getPersistentData().getLong(ARM_TOGGLE_COOLDOWN_UNTIL_TAG) > now) {
             return;
         }
-        BiokinesesArmController.claimAllForAbility(entity);
-        BiokinesesArmController.grabEntity(entity,
-            BiokinesesArmController.ARM_LEFT_COMBAT, target);
-    }
 
-    private static LivingEntity findGraspTarget(LivingEntity entity, ServerLevel level) {
-        Vec3 start = CombatGravityFrame.world(CombatGravityFrame.eye(entity));
-        Vec3 direction = CombatGravityFrame.world(CombatGravityFrame.look(entity)).normalize();
-        Vec3 end = start.add(direction.scale(8.0D));
-        AABB searchArea = new AABB(start, end).inflate(1.0D);
-        LivingEntity closest = null;
-        double closestDistance = Double.MAX_VALUE;
-        for (LivingEntity candidate : level.getEntitiesOfClass(LivingEntity.class, searchArea,
-            target -> target != entity && target.isAlive() && !target.isSpectator())) {
-            var hit = candidate.getBoundingBox().clip(start, end);
-            if (hit.isPresent()) {
-                double distance = start.distanceToSqr(hit.get());
-                if (distance < closestDistance) {
-                    closest = candidate;
-                    closestDistance = distance;
-                }
-            }
+        var data = BiokinesesArmController.data(player);
+        if (data == null) {
+            return;
         }
-        return closest;
+        if (data.isClimbing()) {
+            BiokinesesArmController.retract(player);
+        } else {
+            BiokinesesArmController.activateForClimbing(player);
+        }
+        player.getPersistentData().putLong(ARM_TOGGLE_COOLDOWN_UNTIL_TAG, now + ARM_TOGGLE_COOLDOWN_TICKS);
     }
 
     private static void executeMercilessPunishment(LivingEntity entity, Level level, int formId) {
@@ -699,6 +689,253 @@ public final class Biokineses {
         });
     }
 
+    private static void executeShockwaveEnergyBlast(LivingEntity entity, Level level, int formId) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        CombatGravityFrame.run(entity, () -> {
+            List<FleshVineEntity> chargeVines = new ArrayList<>();
+            List<UUID> radialSparks = new ArrayList<>();
+            Map<UUID, UUID> targetSparks = new HashMap<>();
+            Set<UUID> shockedTargets = new HashSet<>();
+
+            AnimationHelper.playAnimation(entity, "shockwave", SHOCKWAVE_CLEANUP_TICK);
+            serverLevel.playSound(null, entity.blockPosition(), SoundEvents.WARDEN_SONIC_CHARGE,
+                SoundSource.HOSTILE, 1.0F, 0.75F);
+            serverLevel.playSound(null, entity.blockPosition(), SoundEvents.GUARDIAN_ATTACK,
+                SoundSource.HOSTILE, 1.0F, 0.75F);
+            GuardStateHelper.setGuardState(entity, SHOCKWAVE_DAMAGE, formId, true);
+
+            AbilityScheduler.scheduleRepeating(entity, new Runnable() {
+                private int tick;
+
+                @Override
+                public void run() {
+                    if (!entity.isAlive()) {
+                        discardShockwaveVines(chargeVines);
+                        clearShockwaveSparks(serverLevel, radialSparks, targetSparks, entity);
+                        cleanupForm(entity);
+                        return;
+                    }
+
+                    Vec3 center = shockwaveCenter(entity);
+                    if (tick <= SHOCKWAVE_CHARGE_END_TICK) {
+                        limitMovement(entity, 0.25D);
+                        updateShockwaveChargeVines(serverLevel, entity, chargeVines, center, tick);
+                    } else if (tick == SHOCKWAVE_CHARGE_END_TICK + 1) {
+                        discardShockwaveVines(chargeVines);
+                        serverLevel.playSound(null, entity.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,
+                            SoundSource.HOSTILE, 1.0F, 1.0F);
+                        serverLevel.playSound(null, entity.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER,
+                            SoundSource.HOSTILE, 1.0F, 1.0F);
+                        for (int index = 0; index < SHOCKWAVE_BLAST_SPARK_COUNT; index++) {
+                            UUID sparkId = UUID.randomUUID();
+                            radialSparks.add(sparkId);
+                            sendShockwaveSpark(serverLevel, sparkId, center,
+                                randomSpherePoint(center, 1.0D, entity), true, 10);
+                        }
+                    }
+
+                    if (tick >= SHOCKWAVE_CHARGE_END_TICK + 1 && tick <= SHOCKWAVE_BLAST_END_TICK) {
+                        double radius = shockwaveBlastRadius(tick);
+                        spawnShockwaveFlashSphere(serverLevel, center, radius, entity);
+                        for (UUID sparkId : radialSparks) {
+                            sendShockwaveSpark(serverLevel, sparkId, center,
+                                randomSpherePoint(center, radius, entity), false, 10);
+                        }
+                        applyShockwaveTargets(serverLevel, entity, center, radius,
+                            shockedTargets, targetSparks);
+                    }
+
+                    if (tick == SHOCKWAVE_CLEANUP_TICK) {
+                        entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
+                            SHOCKWAVE_TARGET_EFFECT_TICKS, 9, false, true, true));
+                        clearShockwaveSparks(serverLevel, radialSparks, targetSparks, entity);
+                        cleanupForm(entity);
+                    }
+                    tick++;
+                }
+            }, 1, SHOCKWAVE_CLEANUP_TICK + 1);
+        });
+    }
+
+    private static void updateShockwaveChargeVines(ServerLevel level, LivingEntity owner,
+                                                   List<FleshVineEntity> vines, Vec3 center, int tick) {
+        while (vines.size() < SHOCKWAVE_CHARGE_VINE_COUNT) {
+            FleshVineEntity vine = ModEntities.FLESH_VINE.get().create(level);
+            if (vine == null) {
+                break;
+            }
+            vines.add(vine);
+            level.addFreshEntity(vine);
+        }
+
+        double radius = SHOCKWAVE_CHARGE_START_RADIUS
+            * (1.0D - tick / (double) SHOCKWAVE_CHARGE_END_TICK);
+        double orientation = owner.getRandom().nextDouble() * Math.PI * 2.0D;
+        Vec3 up = CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        for (int index = 0; index < vines.size(); index++) {
+            FleshVineEntity vine = vines.get(index);
+            double angle = orientation + index * Math.PI * 2.0D / SHOCKWAVE_CHARGE_VINE_COUNT
+                + tick * 1.8D;
+            Vec3 radial = CombatGravityFrame.world(new Vec3(Math.cos(angle), 0.0D, Math.sin(angle)))
+                .normalize();
+            Vec3 tangent = CombatGravityFrame.world(new Vec3(-Math.sin(angle), 0.0D, Math.cos(angle)))
+                .normalize();
+            List<Vec3> arc = new ArrayList<>(SHOCKWAVE_CHARGE_VINE_ARC_POINTS + 1);
+            for (int pointIndex = 0; pointIndex <= SHOCKWAVE_CHARGE_VINE_ARC_POINTS; pointIndex++) {
+                double arcAngle = SHOCKWAVE_CHARGE_VINE_ARC * pointIndex
+                    / SHOCKWAVE_CHARGE_VINE_ARC_POINTS;
+                Vec3 offset = radial.scale(Math.cos(arcAngle) * radius)
+                    .add(tangent.scale(Math.sin(arcAngle) * radius));
+                arc.add(center.add(offset));
+            }
+            if (radius <= 1.0E-6D) {
+                arc.clear();
+                arc.add(center);
+                arc.add(center.add(tangent.scale(1.0E-4D)));
+            }
+            Vec3 start = arc.get(0);
+            Vec3 end = arc.get(arc.size() - 1);
+            vine.setUp(up);
+            if (tick == 0) {
+                vine.initializeCharge(start, end, owner, owner.getRandom().nextInt(),
+                    FleshVineEntity.DEFAULT_DIAMETER, SHOCKWAVE_CHARGE_END_TICK + 2);
+                vine.setUp(up);
+            }
+            vine.updateChargePath(start, end, arc);
+        }
+    }
+
+    private static void applyShockwaveTargets(ServerLevel level, LivingEntity owner, Vec3 center,
+                                              double radius, Set<UUID> shockedTargets,
+                                              Map<UUID, UUID> targetSparks) {
+        double radiusSquared = radius * radius;
+        AABB searchArea = new AABB(center, center).inflate(radius);
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, searchArea,
+            candidate -> candidate != owner && candidate.isAlive() && !candidate.isSpectator())) {
+            if (target.position().distanceToSqr(center) > radiusSquared) {
+                continue;
+            }
+
+            Vec3 targetCenter = target.getBoundingBox().getCenter();
+            UUID sparkId = targetSparks.computeIfAbsent(target.getUUID(), ignored -> {
+                UUID created = UUID.randomUUID();
+                sendShockwaveSpark(level, created, center, targetCenter, true,
+                    SHOCKWAVE_TARGET_SPARK_TICKS);
+                return created;
+            });
+            sendShockwaveSpark(level, sparkId, center, targetCenter, false,
+                SHOCKWAVE_TARGET_SPARK_TICKS);
+
+            if (shockedTargets.add(target.getUUID())) {
+                if (Damager.hurt(owner, target, SHOCKWAVE_DAMAGE, true)) {
+                    MovementHelper.setVelocity(target, Vec3.ZERO);
+                    target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
+                        SHOCKWAVE_TARGET_EFFECT_TICKS, 19, false, false, true));
+                    MobEffect suffocation = KnYEffects.getSuffocationEffect();
+                    if (suffocation != null) {
+                        target.addEffect(new MobEffectInstance(suffocation,
+                            SHOCKWAVE_TARGET_EFFECT_TICKS, 0, false, false, true));
+                    }
+                    cancelShockwaveTargetActions(target);
+                    scheduleShockwaveLightningParticles(owner, target);
+                }
+            }
+        }
+    }
+
+    private static void scheduleShockwaveLightningParticles(LivingEntity owner, LivingEntity target) {
+        AbilityScheduler.scheduleRepeating(owner, () -> {
+            if (!target.isAlive() || !(target.level() instanceof ServerLevel level)) {
+                return;
+            }
+            var particle = ForgeRegistries.PARTICLE_TYPES.getValue(KNY_LIGHTNING_PARTICLE);
+            if (particle instanceof SimpleParticleType simpleParticle) {
+                Vec3 point = target.getBoundingBox().getCenter();
+                level.sendParticles(simpleParticle, point.x, point.y, point.z,
+                    3, 0.25D, 0.4D, 0.25D, 0.0D);
+            }
+        }, 1, SHOCKWAVE_TARGET_EFFECT_TICKS);
+    }
+
+    private static void cancelShockwaveTargetActions(LivingEntity target) {
+        AbilityScheduler.cancelAll(target.getUUID());
+        GuardStateHelper.clearGuardState(target);
+        GuardStateHelper.clearAttackFlag(target);
+        if (target instanceof Player player) {
+            ModNetworking.sendToAllClients(AnimationSyncPacket.createStopPacket(player.getUUID()));
+        }
+    }
+
+    private static void sendShockwaveSpark(ServerLevel level, UUID sparkId, Vec3 start, Vec3 end,
+                                           boolean spawn, int lifetime) {
+        ThunderLightningSparkSyncPacket packet = new ThunderLightningSparkSyncPacket(
+            sparkId, true, spawn, start, end, Vec3.ZERO, Vec3.ZERO,
+            WHITE, WHITE, SHOCKWAVE_SPARK_WIDTH, lifetime, true);
+        ModNetworking.sendToNearby(packet, level, end.x, end.y, end.z, 128.0D);
+    }
+
+    private static void clearShockwaveSparks(ServerLevel level, List<UUID> radialSparks,
+                                             Map<UUID, UUID> targetSparks, LivingEntity owner) {
+        Vec3 center = shockwaveCenter(owner);
+        for (UUID sparkId : radialSparks) {
+            clearShockwaveSpark(level, sparkId, center);
+        }
+        for (UUID sparkId : targetSparks.values()) {
+            clearShockwaveSpark(level, sparkId, center);
+        }
+        radialSparks.clear();
+        targetSparks.clear();
+    }
+
+    private static void clearShockwaveSpark(ServerLevel level, UUID sparkId, Vec3 position) {
+        ModNetworking.sendToNearby(new ThunderLightningSparkSyncPacket(
+            sparkId, false, false, Vec3.ZERO, Vec3.ZERO, Vec3.ZERO, Vec3.ZERO,
+            WHITE, WHITE, SHOCKWAVE_SPARK_WIDTH, 1, true), level,
+            position.x, position.y, position.z, 128.0D);
+    }
+
+    private static void discardShockwaveVines(List<FleshVineEntity> vines) {
+        for (FleshVineEntity vine : vines) {
+            vine.discard();
+        }
+        vines.clear();
+    }
+
+    private static void spawnShockwaveFlashSphere(ServerLevel level, Vec3 center, double radius,
+                                                   LivingEntity owner) {
+        for (int index = 0; index < SHOCKWAVE_FLASH_PARTICLE_COUNT; index++) {
+            Vec3 point = randomSpherePoint(center, radius, owner);
+            level.sendParticles(ParticleTypes.FLASH, point.x, point.y, point.z,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
+    private static double shockwaveBlastRadius(int tick) {
+        double progress = (tick - (SHOCKWAVE_CHARGE_END_TICK + 1))
+            / (double) (SHOCKWAVE_BLAST_END_TICK - SHOCKWAVE_CHARGE_END_TICK - 1);
+        progress = Math.max(0.0D, Math.min(1.0D, progress));
+        return 1.0D + (SHOCKWAVE_MAX_RADIUS - 1.0D) * progress;
+    }
+
+    private static Vec3 shockwaveCenter(LivingEntity entity) {
+        Vec3 localFeet = CombatGravityFrame.position(entity);
+        Vec3 localHead = CombatGravityFrame.eye(entity);
+        return CombatGravityFrame.world(localFeet.lerp(localHead, 0.5D));
+    }
+
+    private static Vec3 randomSpherePoint(Vec3 center, double radius, LivingEntity owner) {
+        Vec3 direction;
+        do {
+            direction = new Vec3(owner.getRandom().nextDouble() * 2.0D - 1.0D,
+                owner.getRandom().nextDouble() * 2.0D - 1.0D,
+                owner.getRandom().nextDouble() * 2.0D - 1.0D);
+        } while (direction.lengthSqr() < 1.0E-8D || direction.lengthSqr() > 1.0D);
+        return center.add(direction.normalize().scale(radius));
+    }
+
     private static TransitionTarget selectForcedTransitionTarget(ServerLevel level, LivingEntity owner) {
         Vec3 start = CombatGravityFrame.world(CombatGravityFrame.eye(owner));
         Vec3 direction = CombatGravityFrame.world(CombatGravityFrame.look(owner)).normalize();
@@ -1021,7 +1258,7 @@ public final class Biokineses {
     }
 
     private static void handleLeftClick(LivingEntity attacker, Entity clickedEntity) {
-        if (!isBiokinesesItem(attacker.getMainHandItem())) {
+        if (KnYEffects.hasSuffocation(attacker) || !isBiokinesesItem(attacker.getMainHandItem())) {
             return;
         }
         if (!markClawHandled(attacker)) {
@@ -1341,6 +1578,15 @@ public final class Biokineses {
         public static void onLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
             if (!event.getEntity().level().isClientSide()) {
                 handleLeftClick(event.getEntity(), null);
+            }
+        }
+
+        @SubscribeEvent
+        public static void onRightClickItem(PlayerInteractEvent.RightClickItem event) {
+            if (!event.getEntity().level().isClientSide()
+                && KnYEffects.hasSuffocation(event.getEntity())
+                && SwordRegistry.getSword(event.getItemStack().getItem()) != null) {
+                event.setCanceled(true);
             }
         }
 

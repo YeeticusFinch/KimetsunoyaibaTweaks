@@ -177,6 +177,10 @@ public class Config
                      "Lower to reduce network traffic; Default: 100")
             .defineInRange("mob-slash-broadcast-range", 100.0, 8.0, 512.0);
 
+    private static final ForgeConfigSpec.DoubleValue BIOKINESES_CLIMBING_ANCHOR_RANGE = BUILDER
+            .comment("Maximum distance in blocks from the player to solid blocks used by Biokineses climbing")
+            .defineInRange("biokineses-climbing-anchor-range", 8.0, 1.0, 64.0);
+
     private static final ForgeConfigSpec.IntValue WISTERIA_INCENSE_MAX_POISON_AMPLIFIER = BUILDER
             .comment("Maximum MobEffect amplifier for wisteria poison from overlapping lit wisteria incense auras")
             .defineInRange("wisteria-incense-max-poison-amplifier", 50, 0, 255);
@@ -246,6 +250,7 @@ public class Config
     public static boolean entitiesAnnounceBreathingForms;
     public static double breathingFormAnnouncementRadius;
     public static double mobSlashBroadcastRange;
+    public static double biokinesesClimbingAnchorRange;
     public static int wisteriaIncenseMaxPoisonAmplifier = 50;
     public static double kanrojiEntityHandOffsetX;
     public static double kanrojiEntityHandOffsetY;
@@ -331,6 +336,7 @@ public class Config
         breathingFormAnnouncementRadius = BREATHING_FORM_ANNOUNCEMENT_RADIUS.get();
         Log.info("[KnY-MP] Config loaded - disableBaseModSwordSwingParticles: {}", disableBaseModSwordSwingParticles);
         mobSlashBroadcastRange = MOB_SLASH_BROADCAST_RANGE.get();
+        biokinesesClimbingAnchorRange = BIOKINESES_CLIMBING_ANCHOR_RANGE.get();
         wisteriaIncenseMaxPoisonAmplifier = WISTERIA_INCENSE_MAX_POISON_AMPLIFIER.get();
         kanrojiEntityHandOffsetX = KANROJI_ENTITY_HAND_OFFSET_X.get();
         kanrojiEntityHandOffsetY = KANROJI_ENTITY_HAND_OFFSET_Y.get();

@@ -18,6 +18,7 @@ public class KnYEffects {
     private static final ResourceLocation WISTERIA_POISON = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "wisteriapoison");
     private static final ResourceLocation REGENERATION_INHIBITION = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "regeneration_inhibition");
     private static final ResourceLocation IMMVABLE = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "immvable");
+    private static final ResourceLocation SUFFOCATION = ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "suffocation");
 
     /**
      * Gets the cold (Reiki) effect from KnY mod
@@ -87,5 +88,14 @@ public class KnYEffects {
 
     public static MobEffect getImmvableEffect() {
         return ForgeRegistries.MOB_EFFECTS.getValue(IMMVABLE);
+    }
+
+    public static MobEffect getSuffocationEffect() {
+        return ForgeRegistries.MOB_EFFECTS.getValue(SUFFOCATION);
+    }
+
+    public static boolean hasSuffocation(LivingEntity entity) {
+        MobEffect suffocation = getSuffocationEffect();
+        return suffocation != null && entity.hasEffect(suffocation);
     }
 }

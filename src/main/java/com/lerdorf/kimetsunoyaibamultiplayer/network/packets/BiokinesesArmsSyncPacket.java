@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 public class BiokinesesArmsSyncPacket {
     private final int entityId;
     private final boolean active;
+    private final boolean climbing;
     private final boolean retracting;
     private final long expiresAt;
     private final int allocationMode;
@@ -22,6 +23,7 @@ public class BiokinesesArmsSyncPacket {
     public BiokinesesArmsSyncPacket(int entityId, IBiokinesesArmData data) {
         this.entityId = entityId;
         this.active = data != null && data.isActive();
+        this.climbing = data != null && data.isClimbing();
         this.retracting = data != null && data.isRetracting();
         this.expiresAt = data == null ? 0L : data.getExpiresAt();
         this.allocationMode = data == null ? IBiokinesesArmData.ALLOCATION_NORMAL : data.getAllocationMode();
@@ -37,6 +39,7 @@ public class BiokinesesArmsSyncPacket {
     public BiokinesesArmsSyncPacket(FriendlyByteBuf buffer) {
         entityId = buffer.readVarInt();
         active = buffer.readBoolean();
+        climbing = buffer.readBoolean();
         retracting = buffer.readBoolean();
         expiresAt = buffer.readLong();
         allocationMode = buffer.readVarInt();
@@ -53,6 +56,7 @@ public class BiokinesesArmsSyncPacket {
     public void toBytes(FriendlyByteBuf buffer) {
         buffer.writeVarInt(entityId);
         buffer.writeBoolean(active);
+        buffer.writeBoolean(climbing);
         buffer.writeBoolean(retracting);
         buffer.writeLong(expiresAt);
         buffer.writeVarInt(allocationMode);
@@ -88,6 +92,7 @@ public class BiokinesesArmsSyncPacket {
             return;
         }
         data.setActive(active);
+        data.setClimbing(climbing);
         data.setRetracting(retracting);
         data.setExpiresAt(expiresAt);
             data.setAllocationMode(allocationMode);

@@ -8,6 +8,9 @@ import com.lerdorf.kimetsunoyaibamultiplayer.items.BreathingSwordItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.items.CustomDemonArtItem;
 import com.lerdorf.kimetsunoyaibamultiplayer.effects.FearEffectHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.util.TrainingSwordHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.Biokineses;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesTogglePacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -36,6 +39,13 @@ public class KeyInputHandler {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null)
                 return;
+            if (event.getAction() == GLFW.GLFW_PRESS && mc.screen == null
+                && net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.KEY_SPECIAL_ATTACK
+                    .matches(event.getKey(), event.getScanCode())
+                && Biokineses.isBiokinesesItem(mc.player.getMainHandItem())) {
+                ModNetworking.sendToServer(new BiokinesesTogglePacket());
+                return;
+            }
             if (EnhancedFormCycleHandler.handleKeyInput(event))
                 return;
             if (DemonSlayerSkillClient.handleKeyInput(event))

@@ -73,6 +73,10 @@ public final class FleshVineRenderer extends EntityRenderer<FleshVineEntity> {
                 ? transitionPath : List.of(entity.getStart(), entity.getEnd());
         }
         if (entity.getMode() == FleshVineEntity.MODE_CHARGE) {
+            List<Vec3> chargePath = entity.getChargePath();
+            if (chargePath.size() >= 2) {
+                return chargePath;
+            }
             Vec3 start = entity.getStart();
             Vec3 end = entity.getEnd();
             double distance = start.distanceTo(end);
@@ -192,7 +196,7 @@ public final class FleshVineRenderer extends EntityRenderer<FleshVineEntity> {
         poseStack.pushPose();
         poseStack.translate(tip.x, tip.y, tip.z);
         poseStack.mulPose(rotationBetween(new Vec3(0.0D, 0.0D, 1.0D), direction));
-        float scale = entity.getWidth() / (float) TIP_MODEL_DIAMETER;
+        float scale = entity.getWidth() / (float) TIP_MODEL_DIAMETER * 0.25F;
         poseStack.scale(scale, scale, scale);
         int light = LevelRenderer.getLightColor(entity.level(), BlockPos.containing(tip));
         VertexConsumer buffer = bufferSource.getBuffer(
