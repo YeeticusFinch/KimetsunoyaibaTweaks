@@ -277,29 +277,45 @@ Ticks 0-49
 
 Tick 50
 
-- Raycast 60 blocks forward from the user's head in the direction the user is looking, stopping the raycast only if a block is hit (the raycast goes through blocks but not entities)
-- Save that target location at the end of the raycast
-
-Tick 51
-
-- A lightning bolt is created, with the start point being 10 blocks behind the user's starting location, and the end point being the target location
-- Create 3 lightning sparks, with the start point being 10 blocks behind the user's starting location, and the end point being the target location, the color being primary color, and the outer width being 0.5 blocks
+- A lightning bolt is created, with the start point being 10 blocks behind the user's starting location, and the end point being the target location of the first launch
 - User plays the `speed_attack_sword` animation
 - Play a loud thunder_godspeed sound on the user, and for all players within 100 blocks
-- Teleport the user to the target location  (to the nearest unobstructed safe location that isn't underground or inside a block)
-- Flash particles and spark particles on the target location
-- User takes 6 points of damage
-- All entities within 6 blocks of the line of the form (between start location and end location) take damage
-- All entities within 12 blocks of the target location take the damage and get a primary color lightning spark going from their center (halfway between their location and their head location) to 1 block above the target location of the form (local gravity aware)
+
+Ticks 50-80
+
+Do a launch sequence every 3 ticks (the user doesn't need to continuously click to do them), it will automatically do 10 sequential launch sequences
+
+Tick 80
+- Do some flash particles with some spark particles at the final target location
+- All entities within 12 blocks of the final target location take the damage and get a primary color lightning spark going from their center (halfway between their location and their head location) to 1 block above the target location of the form (local gravity aware)
 - Create 5 lightning sparks at the target location, their start position being set to 1 block above the target location (local gravity aware), and their end position being set to a random location 12 blocks away, color being primary color
 - Every entity that gets damaged will get a flash particle on them
+- User takes 6 points of damage
 
-Ticks 52-77
+Launch:
+First tick of launch sequence (do this once per launch)
 
-- User plays the unsheathing animation
+- Raycast 10 blocks forward from the user's head in the direction the user is looking, stopping the raycast only if a block is hit (the raycast goes through blocks but not entities)
+- Save that target location at the end of the raycast
+- User plays the `speed_attack_sword` animation
+- Create 1 lightning spark, with the start point being the user's location location at the start of this launch sequence, and the end point following the user, the color being primary color, and the outer width being 0.5 blocks
+
+Ticks 1-3 of launch sequence (do this every tick)
+- User is launched to the target location, their velocity fixed such that they reach the target location by tick 3 of the launch sequence
+- The lightning bolt's end position gets updated every tick to be the user's location
+- The lightning spark's end position gets updated every tick to be the user's location
+
+Tick 3 of launch sequence (do this once per launch, at the end of the launch)
+- In the array of positions in the lightning bolt's path, set the last position to the target position
+- And then append another position to that array, being the player's position, that new appended position will be the new end position, and this will be the end position that will be updated in the next launch
+- All valid target entities within 6 blocks of this launch trajectory get damaged and get flash particles on them
+
+Ticks 80-105
+
+- User plays the iai1 animation
 - User is frozen
 
-Tick 78
+Tick 106
 
 - Cleanup, user is unfrozen, animation stops
 
