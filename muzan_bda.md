@@ -277,6 +277,7 @@ Ticks 0-8
 
  - 6 blood tornados launch forward from the user, each traveling at a speed of 2 blocks per tick, in the direction the user is looking, each one trailing blackred_impact particles, they launch forward at degree offsets, 7 degrees apart from eachother in trajectory angle 
  - The blood tornadoes travel for 40 ticks before dissapearing in a cloud of explosion particles
+ - 10 blood lances launch forward, 2 degrees apart from eachother in trajectory angle, spaced half a block apart in starting position, the blood lances travel forward for 50 blocks, damaging all entities in their paths
 
 Tick 30 (cleanup)
 
