@@ -285,31 +285,62 @@ Tick 30 (cleanup)
 
 ## Vengeful Abyss, Fissure
 
-_Tentacles_
+_Flesh vine, Tentacles_
 
 The user extends a large fleshy arm in a straight line forwards, mottled with mouths. The mouths suck air inwards, pulling all nearby entities towards the arm. Arm then unleashed bursts of paralyzing energy bolts while the user's back tentacles and leg tentacles surge forward and decimate all the ensnared entities
 
 Tick 0:
 
 - Biokineses item uses the biokineses_1 model
-- Choose a target entity or location within 80 blocks (80 block raycast forward, select the nearest living entity to the crosshair, or select the block that the raycast intersects, or select the point at the end of the 80 blocks)
+- Select the target location 60 blocks forward from the user's head, in the direction the user is looking
 
-Ticks 1-20:
+Ticks 1-10 (flesh vine extension):
 
 - Play the right_arm_forward animation on loop
 - User moves at half movement speed
-- A flesh vine with the starting point attached to the user's right arm starts moving forward, up to 40 blocks forward (in the direction the user is looking, the end position is always facing forward, moving in a mostly straight line)
+- A flesh vine with the starting point attached to the user's right arm starts moving towards that target location, (in the direction the user is looking, the end position is always facing forward, moving in a mostly straight line)
 - The path of the flesh vine arcs between the user and the end point (similar to a bezier curve, with the control point being up to 20 blocks in front of the user (depending on the tick, it starts at 1 block in front, and then it's 20 blocks in front by tick 20)
+- By tick 10 the flesh vine will reach the target location
 
-When the flesh vine hits a target entity, it latches on to the target and stays attached to that target entity for 20 ticks.
+Ticks 10-40 (flesh vine suction):
 
-- The target entity that the flesh vine is attached to takes 30 damage (using the Damager.hurt with the user / flesh vine owner as the damage source, so it can be scaled) every 10 ticks
-- If the user drops to zero HP during this ability from this damage (and they are a demonizeable entity or a player), then there is a 50% chance of instantly turning them into a demon (no demon transformation phase, just instant demon transformation, and if it's a player then it will instantly forcefully feed them 10 to 20 muzan blood, if the player is already a demon then it does nothing, it just lets them die)
-- If the user survives this attack, then they get 10 seconds of wither 5, and also slowness 3 for 10 seconds
+- Continue playing the right_arm_forward animation on loop
+- The user moves at half movement speed
+- The start position of the flesh vine is attached to the user's right arm
+- The end position of the flesh vine stays at the target location
+- The path of the flesh vine arcs between the user and the end point (similar to a bezier curve, with the control point being up to 20 blocks in front of the user (depending on the tick, it starts at 1 block in front, and then it's 20 blocks in front by tick 20)
+- 20 flesh mouths will be placed (evenly spaced) along the path of the flesh vine (and they will follow the flesh vine as it moves and twists, staying on their sparts on the flesh vine)
+- On each of these flesh mouths, an inhale particle will be attached, following its respective flesh mouth
+- All entities (except for the user) within 20 blocks of a flesh mouth will be pulled towards that flesh mouth (using MovementHelper.AddVelocity), and if kimetsu block break gamerule is enabled, then every 10 ticks a random (non-air and non-fluid) block within 10 blocks of each flesh mouth will turn into a falling block and get pulled towards the flesh mouth too. The closer an entity is to a flesh mouth, the stronger that suction force (the velocity pulling the entity towards the flesh mouth) is
+
+Tick 41:
+
+- User plays the heel_drop animation
+- 30 flash particles spawn along the path of the flesh vine
+- 10 white lightning sparks spawn along the path of the flesh vine (their width is 0.1), their starting points being on the flesh vine, their ending points being a random spot 5 blocks away, their arcing vectors being a random vector of magnitude up to 2
+- All living entities within 5 blocks of the flesh vine's path (or within 6 blocks of a flesh mouth, if that's easier) immediately get slowness 20 for 5 seconds (no particles), and they will have the kimetsunoyaiba lightning particles on them for that duration, and they will also have the suffocation potion effect (from kimetsunoyaiba mod) for 5 seconds, and it will cancel any active abilities or breathing forms they have active (also any entity who has the suffocation effect shouldn't be able to use abilities, they cant use blood demon arts or breathing forms while they have the suffocation effect), and their velocities will also be instantly zeroed when they get hit by this lightning spark flash
+- Play the minecraft:entity.warden.sonic_boom sound effect on the user and for all players within 30 blocks of the user or the flesh vine's end position
+- Play the thunder sound effect on the user and for all players within 30 blocks of the user or the flesh vine's end position
+- Activate the six back tentacles (if they aren't active already, if they are active, then just take them out of whatever mode they are currently on, ending the biokineses climbing if that's happening, and place them on standby)
+
+Ticks 41-51
+
+- The user's movement speed is reduced to 0.1x
+- The back tentacles zoom forward, following the path of the flesh vine (with a random offset of up to 3 blocks), and reaching the end position of the flesh vine (the target position) by tick 51
+- Every tick, play a blackred_slash particle on the end position of every tentacle
+- As the tentacles zoom forward, all living entities in their path (or within 5 blocks of the flesh vine path, or within 6 blocks of the flesh mouths) take damage (and get the blackred_impact particles on them) 
+
+Ticks 52-62 (retraction)
+
+- The flesh vine and the back tentacles all retract back towards the user
 
 Tick 50 (cleanup):
 
+- Flesh vine is removed
+- User's movement speed is reset back to normal
 - Clear the animation on the user
+- The right_arm_forward animation ends
+- Back tentacles retract and go back into default standby mode
 
 ## Blood King’s Massacre
 
@@ -514,16 +545,60 @@ Tick 88 (cleanup):
 - The user can move again
 - Back tentacles are put back into a default state
 
+## Abhorrent Galaxy
+
+_Flesh vines, tentacles_
+
+The user extends two large fleshy arms mottled with mouths, along with their back tentacles and leg tentacles, rotating them in a large spiral motion. The mouths on the arms are all sucking in air, pulling in nearby entities to be chewed by their hungry gnashing maws while the tentacles whip around and slice everything nearby
+
+Tick 0
+
+- Activate the six back tentacles (if they aren't active already, if they are active, then just take them out of whatever mode they are currently on, ending the biokineses climbing if that's happening, and place them on standby)
+- Biokineses item uses the biokineses_1 model, and biokineses_1l is rendered in the left hand
+- Place a small dark aura centered on the user's feet
+- Place two large red circles auras centered on the user's feet, one spinning clockwise, the other spinning counter clockwise
+
+Ticks 0-15 (chargeup)
+
+- The dark aura grows larger
+- The red circles auras grow smaller, and they spin faster and faster
+- The user plays the right_arm_chargeup animation
+- The six back tentacles spiral around the user in a 3 block radius sphere, curling inwards
+
+Tick 15
+
+- Create 4 flesh vines, their start location attached to one of the user's arms (two on the left arm, two on the right arm)
+- Create 4 blood tornados (these ones don't climb and don't have gravity), these blood tornados should be evenly spaced across a 18 block radius centered on the user
+
+Ticks 15-85
+
+- X starts at 0 on tick 15, and it increases by 1 every tick (so it will be 70 by tick 85)
+- The user plays the summon animation continuously
+- The six back tentacles spiral around the user in a 25 block radius circle, each one curving
+- The 4 flesh fines should spiral around the user like the arms of a spiral galaxy, curving appropriately, in a 25 block radius
+- Along the path of each flesh vine, there should be flesh mouths facing random directions, each one should have inhale particles particles attached to them, and there should also be inhale particles attached to the ends of the flesh vines
+- All living entities within 35 blocks of the user (and more than 5 blocks away from the user) are pulled towards the user, (if a living entity is within 3 blocks of being on the same Y level (or whatever the vertical coordinate is in the user's local gravity) of the user, then the living entity needs to be more than 20 blocks away to be pulled towards the user). This is to pull nearby entities into the 25 block radius disk
+- Every 2 ticks, launch 4  blood lances outwards from the user horizontally (local gravity aware) at 90 degree increments, with an offset of `X * 3` degrees. Each blood lance should travel 25 blocks out before being removed.
+- The blood tornados should follow the user, keep them in that circular pattern, they should be circling around the user in an 18 block radius
+- Every 10 ticks each living entity within the disk has a 50% chance of taking damage from this form, and this damage should ignore the damage cooldown, and entities can also get damaged by the blood tornados and the blood lances
+- If kimetsu block break gamerule is enabled, then every 10 ticks, up to 5 random blocks in the area of the disc will get tnt explosions, breaking blocks 
+
+Ticks 86-96
+
+- The back tentacles and the flesh vines retract back towards the user, taking a slithering path
+
+Tick 97 (cleanup)
+
+- The user's animations are cleared, the summon animation ends
+- The back tentacles go back into a standard mode
+- The flesh vines are removed
+
 ---
 
 ## Ignore everything past this line, this is WIP
 
 ---
 
-
-## Abhorrent Galaxy
-
-The user extends two large fleshy arms mottled with mouths, along with their back tentacles and leg tentacles, rotating them in a large spiral motion. The mouths on the arms are all sucking in air, pulling in nearby entities to be chewed by their hungry gnashing maws while the tentacles whip around and slice everything nearby
 
 ## Titanic Globe, Ball of Genocide
 
