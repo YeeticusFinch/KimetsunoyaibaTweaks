@@ -559,11 +559,104 @@ Charging pose, huge lightning irradiates from user, slow, growing, silent, here 
 Visually a flaming, yellow huge long dragon of thunder follows the user's trajectory, the after image of that dragon stays for a couple seconds after the hit was delivered (just to be appreciated, for due to the tremendous speed of the user, youll hardly be able to see it in movement). Downside: The user is paralyzed a few seconds after performing the attack, due to the great power output
 This form is ideal for an opponent at big distance, the closer you are, the more chance they'll have to get out of your corsshair and dodge it, the further away, the better chance you have, for you must aim with your crosshair, and the hitbox of the slash is wide, but if the attack misses, it leaves you sold...
 
+Gravity:
 
-thunder_god_charging
+- If a gravity mod is installed, this form manipulates the user's gravity, and that gravity should override any gravity fields that the user might be in or pass through for the entire duration of this form
 
-thunder_god_ultimate_slash
+Tick 0:
 
+- Play the thunder_god_charging sound effect on the user (and for all players within 20 blocks of the user)
+- Do a 5 block raytrace from the user's location downwards, to find the nearest solid block, and select the blockface that the raytrace hits
+- If that raytrace doesn't hit any blocks, then do a 5 block raytrace from the user's location in the positive X direction, if that doesn't hit anything, then do one in the negative X direction, if that doesn't hit any blocks then try the positive Z direction, then the negative Z direction, and then finally the positive Y direction (so essentially it should be finding the nearest solid block in one of the cardinal directions, straight along one of the axis lines)
+- If the raytraces don't find any solid blocks, then the user will be hovering during the chargeup
+- If a raytrace found a block, then for the duration of this form, the user's gravity direction will be set to the direction of that raytrace (this affects the up and down and left and right direction and coordinate calculations for the duration of this form)
+- If there is no gravity mod installed, then it ignores the gravity stuff and it just does the one downward raytrace to find the block underneath the user, if the downwards raytrace doesn't find a block below the user, then the user will be hovering during the chargeup
+- Create 6 lightning sparks, each one has a width of 0.15, and each one is of color secondaryColor, and 2 of them are flickering
 
+Ticks 0-70 (chargeup):
+
+- R starts at 1, and it increases continuously, such that R reaches 6 by tick 60
+- Play the iai1 animation continuously
+- User cannot move (but the user can rotate)
+- If the user is not hovering, the moves downward toward that blockface that the raytrace sequence from tick 0 found (so the user moves downward in their custom gravity direction that was set during tick 0
+- For each of the 6 lightning sparks, every tick, their start location is set to a random location between the user's location and the user's head location (local gravity aware)
+- Every 2 ticks, the end position of every spark will have a 60% chance of being updated. When the end position is updated, it should find a block within a `R` block radius that doesn't already have a spark connected to it (if it can't find a block, then it just chooses a random spot in the air within `R` blocks), and if it does find a block, then it connects the end position to a random spot within that block, and it sets the arc vector of that spark to a vector with the user's local upwards direction (depending on the user's gravity direction, so like this should be gravity aware), and the spark's arc vector should have a random magnitude between `R * 0.2` and `R * 0.5`, and the width of the spark should be set to `R * 0.05`
+- A spiral of spark particles should be swirling around the user during this charge up too, this charge up should look legendary
+
+Tick 30
+
+- 6 more lightning sparks should be created, their color should be primaryColor, and they should behave just like the other lightning sparks, but for them they use 0.5*R instead of R, so they have half the width and half the range, but other than that they should behave the exact same as the 6 secondaryColor lightning sparks until tick 70
+
+Tick 40
+
+- 10 more lightning sparks should be created, these are the 8 traveling lightning sparks, they are of color secondary color, 0.1 width, and they will travel along blockfaces
+- These 10 traveling lightning sparks will start arranged in a circle around the user (horizontal circle of 4 block radius, horizontal according to the user's current gravity direction, so the axis of rotation of this circle is the user's local upwards direction, gravity aware), and their arc vectors should be upwards (the user's local up), their end positions will each be 3 blocks further out
+
+Ticks 40-70 (traveling sparks)
+
+- Every 2 ticks, the 10 traveling lightning sparks will look for their next target, if there is a nearby living entity within 4 blocks (that hasn't been hit by a traveling spark yet), then it will target that living entity (the arc vector being that entity's local up according to their local gravity), and it will give that entity slowness 5 for 3 seconds (no potion bubble particles). Otherwise if there is no nearby living entity within 4 blocks that hasn't been hit by a traveling spark yet, then it will find a different block (other than the ones that the start position and end position are currently on) within 5 blocks of the current end position (choose a random one, but favor the ones further away from the user), and choose a blockface (ideally one that faces air, otherwise just select the center of the block). Once the target location is acquired, then it will set the current start location to the current end location, and then it will move the current end location over to the target location (leapfrogging, essentially the start location goes where the end location used to be), and the arcing vector will be set to the direction of the blockface on the end location (or if the end location is a living entity, it will be that entity's up direction depending on their gravity), or if there is no blockface on the end location, then it will just set the arc vector to a random direction. And the arc vector will have a random magnitude between 0.8 and 1.4
+- These traveling sparks will need to be optimized somehow, such that they don't create lag
+
+Tick 70:
+
+- Raycast up to 80 blocks forward starting from the user's head in the direction the user is looking
+- Select the location on that raycast that intersects the first living entity or solid block
+- That location is the target location
+
+Tick 71 (launch):
+
+- Play the thunder_god_ultimate_slash on the user and for all players within 50 blocks of the user
+- Create a lightning bolt with the start location being 10 blocks behind the user's start location, and the end location should track the user, for this lightning bolt the colors should be flipped, the secondaryColor should be on the start side of the gradient, and the primaryColor should be on the end side of the gradient
+- Create 5 lightning sparks, 3 of color primaryColor, and 2 of color secondaryColor, their start location should be 10 blocks behind the user's start location, and their end location should be within 2 blocks of the user's location (random offset up to 2 blocks, updating every tick to follow the user and be at a different random offset), and they should have a random arc vector of a magnitude up to 2.5 blocks, and their width should be 0.35
+
+Ticks 71-74 (first stage):
+
+- The user zooms 60% of the distance to the target location, such that they arrive at that 60% mark right at tick 74
+- The end location of the lightning bolt and the 5 lightning sparks should update to follow the user (the lightning sparks can have a random 2 block offset)
+
+Tick 74 (create the thunder dragon):
+
+- Create the thunder dragon (we will have a thunder_dragon model for a geckolib entity), the thunder dragon should share the exact same rotation and location and gravity as the user
+
+Ticks 74-76:
+
+- User continues playing the iai1 animation
+- The lightning bolt and the lightning sparks continue to render
+- The user hovers frozen in mid-air for these couple ticks
+- Flash particles spawn around the user
+
+Tick 77:
+
+- User plays the sword_to_right animation
+- The user teleports to the target (if the target is a living entity, then the user teleports to that living entity)
+- The dragon also teleports to the target, along with the user
+- The lightning bolt and the lightning sparks continue to render, their end positions updating to follow the user
+- All valid target living entities within 8 blocks of the target take the full damage of the form. This form should do 40 damage through the Damager.hurt() function, with the user as the damage source. All living entities that get damaged will have flash particles spawn on them
+- If the user is a demon, then the living entities that get damaged will also get set on fire for 60 ticks
+
+Tick 78-88:
+
+- Thunder Dragon is no longer tracking the user, it is now slowly moving in the user's direction
+- Flame particles spawn around the user
+- The user gets a large velocity in the same direction that they just traveled (the direction between the start location and the target location)
+
+Tick 88:
+
+- User gets weakness 10 for 3 seconds (no particles)
+- User gets mining fatigue 10 for 3 seconds (no particles)
+- The lightning bolt and lightning sparks are removed
+
+Ticks 89-149:
+
+- User plays the iai1 animation on repeat
+- User cannot move (but they can look around)
+- Smoke particles spawn around the user
+
+Tick 120:
+
+- Thunder Dragon is removed in a cloud of smoke particles
+
+Tick 150 (cleanup):
 
 - Cleanup, user is unfrozen, animation stops
+- Guard state is cleared
