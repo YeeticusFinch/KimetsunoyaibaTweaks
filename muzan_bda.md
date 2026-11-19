@@ -56,11 +56,27 @@ Between each segment, like at the joint between segments, the segments should ov
 - The start of the bone whip is connected to an entity (either connected to an entity with an offset), or connected to a specific bone of that entity, either their left arm or their right arm
 - The bone whip has a little bit of randomness in its path, and it should be quite lumpy, the segments varying in thickness somewhat randomly, with some lumps and protrusions here and there, and they should be wriggling and writhing
 
+**Auras**
+
+- Auras are textures that appear at the user's feet, or maybe a certain distance below the user's feet, like up to 10 blocks below
+- A block-column-based orthographic texture projector
+- This uses two types of geometry:
+  - Fallback quad: One large transparent quad at originY - maxDepth, displaying the complete texture
+  - Surface quads: One small transparent quad per block column, positioned on the highest qualifying block surface within the projection range
+   - Each surface quad displays only its corresponding portion of the original texture.
+- Full block ->	blockY + 1.0; Bottom slab -> blockY + 0.5; Top slab	-> blockY + 1.0; Double slab -> blockY + 1.0; Air	-> Continue searching downward; Other block shapes -> Ignore initially
+- Each aura has an aura texture (usually a 256x256 texture, and yes this texture will have an alpha channel, so it should have transparencies), it should have an opacity (which can be updated during runtime), it should have a radius, it should have an origin point (or an entity for it to follow), and it should have a maxDepth (how far below the origin to project, and also where to render the fallback quad), and it should also have an upwards offset (how far up the projection can start from, so like the projection starts from originY + upOffset, and goes down to originY - maxDepth, thus allowing the surface quads to appear on block faces above the user), and also a gravity direction (usually the user's local gravity)
+- The projection should also be terrain-wrapping, Render on top faces and exposed sides, allowing the texture to visually continue down cliffs, ledges, and block edges. For each block column, we'd render the top quad as usual. Then we'd check its four neighboring columns. If a neighboring column has a lower surface, we'd render a vertical quad covering the exposed side of the higher block. Extend the texture's edge color downward. This is simple but can look like vertical streaks.
+
 ## Black Blood, Brambles
 
 _Muzan hands_
 
 Muzan lifts and aims his left forearm towards his target, before uses his blood from his veins, that creates a red-and-black veins-like cracks, to create an array of thorny, thin tendrils to entangle and slash his target.
+
+<img width="618" height="334" alt="image" src="https://github.com/user-attachments/assets/b2718086-d814-4962-82cf-d3273ce0b2c4" />
+
+
 
 Tick 0
 
@@ -94,8 +110,6 @@ Ticks 18-60
 
 _Muzan Hands_
 
-_Muzan Hands_
-
 The user swipes his left arm, creating a violent storm of red scratches with his sharp fingernails, and unleashing a blood tornado.
 
 Tick 0 (setup)
@@ -120,6 +134,9 @@ Tick 21 (cleanup)
 _Flesh Arms_
 
 The user stomps on the ground and a line of upwards flesh vines surges forward, give of them in a line rolling forward like a tidal wave of destruction.
+
+<img width="1280" height="715" alt="image" src="https://github.com/user-attachments/assets/dfc9f614-1167-4ef1-9e61-3d50c51a6b34" />
+
 
 Ticks 0-15 (charge up)
 
@@ -349,6 +366,9 @@ _Flesh Arms_
 
 Unleash multiple bone whips in a 50 x 50 area ripping apart and tearing apart opponents, dragging the disemboweled corpses back to be consumed by their body for high regeneration, can only be Blocked or negated by hashira or high tier Demon slayers, leaves lasting high-level poison on the survivors, slowly poison their bodies as the fight drags on
 
+<img width="901" height="1400" alt="image" src="https://github.com/user-attachments/assets/558b49d3-05d5-489a-b50f-83d503b00903" />
+
+
 Tick 0
 
 - Biokineses item uses the biokineses_2 model, and biokineses_2l is rendered in the left hand
@@ -552,6 +572,9 @@ _Flesh vines, tentacles_
 
 The user extends two large fleshy arms mottled with mouths, along with their back tentacles and leg tentacles, rotating them in a large spiral motion. The mouths on the arms are all sucking in air, pulling in nearby entities to be chewed by their hungry gnashing maws while the tentacles whip around and slice everything nearby
 
+<img width="1448" height="1086" alt="image" src="https://github.com/user-attachments/assets/832eb478-95da-4492-96f4-71d448752df2" />
+
+
 Tick 0
 
 - Activate the six back tentacles (if they aren't active already, if they are active, then just take them out of whatever mode they are currently on, ending the biokineses climbing if that's happening, and place them on standby)
@@ -594,6 +617,48 @@ Tick 97 (cleanup)
 - The back tentacles go back into a standard mode
 - The flesh vines are removed
 
+## Titanic Globe, Ball of Genocide
+
+_Flesh vines_
+
+The user grows many fleshy arms and appendages, wrapping around themself, forming a large ball of flesh and mouths. The user (in this ball form) rolls forward, crushing everything in its path. Entities who get hit by the ball will get grabbed by a mouth and stay stuck to the ball for the duration of the form, taking damage as they continuously get rolled over (and chewed by the mouth)
+While in this form, the user can launch a flesh tentacle (on right click) and swing from it like a wrecking ball
+
+<img width="468" height="655" alt="image" src="https://github.com/user-attachments/assets/033d4705-3f54-4a6c-aa73-8178d0518c31" />
+
+
+Tick 0:
+
+- User plays the summon animation
+- A dark aura is created on the user
+- Biokineses item uses the biokineses_1 model, and biokineses_1l is rendered in the left hand
+- Create 4 flesh vines
+- The Ball of Genocide entity is created on the user (this is a geckolib entity), setting the user as the owner, and it plays the spawn animation
+
+Ticks 0-10 (chargeup):
+
+- 4 flesh vines spiral violently and chaotically around the user
+- Dark red dust particles of size 4 and black dust particles of size 4 spawn around the user within a 3 block radius
+- The user cannot move during the charge-up phase
+
+Tick 11:
+
+- The 4 flesh vines are removed
+
+**Ball of Genocide entity**
+
+- Ball of Genocide is a Geckolib entity with geckolib animations
+- When is spawns, it will play the spawn animation
+- The Ball of Genocide has an owner (stored in the NBT), the owner is immune to the Ball of Genocide's attacks and damage, and the ball of genocide follows the owner's location and velocity, facing the direction of the owner's motion
+- If the owner is a player, and that player is in first person, then the Ball of Genocide will render with 40% opacity (otherwise it renders with 100% opacity, and for all other players it renders with 100% opacity)
+- Any other living entities that the Ball of Genocide touches will get stuck to the ball and rotate with it (along the edge of the radius, their location being stuck to the edge as the ball rotates)
+- When it moves (it follows the owner's location and velocity), it should roll, and for it to roll, we need to change the orientation of the entity accordingly. The ball's radius is R, and that radius is also the ball's vertical offset (local gravity aware) from the owner's location (because the owner is at the bottom of the ball)
+  - Rotation axis (\(\^{u}\)): Take the cross product of the normalized roll direction vector \(\^{d}\) and the surface normal \(\^{n}\) (for example, \((0, 1, 0)\) or \((0, 0, 1)\) on a flat horizontal plane).
+  \(\vec{a}=\^{d}\times \^{n},\quad \^{u}=\frac{\vec{a}}{\|{}\vec{a}\|{}}\)
+  - Rotation angle (\(\theta \) in radians): Divide the linear displacement \(\Delta s\) (or speed \(\times \Delta t\)) by the ball's radius \(R\):
+  \(\theta =\frac{\Delta s}{R}\)
+  - Apply orientation: Build a rotation matrix or quaternion from \((\hat{u}, \theta)\) and multiply it into the ball's current orientation rather than accumulating Euler angles directly (which can suffer from gimbal lock). You can use the Rotation Calculator to test conversions between rotation matrices, Euler angles, and quaternions
+
 ---
 
 ## Ignore everything past this line, this is WIP
@@ -601,10 +666,7 @@ Tick 97 (cleanup)
 ---
 
 
-## Titanic Globe, Ball of Genocide
 
-The user grows many fleshy arms and appendages, wrapping around themself, forming a large ball of flesh and mouths. The user (in this ball form) rolls forward, crushing everything in its path. Entities who get hit by the ball will get grabbed by a mouth and stay stuck to the ball for the duration of the form, taking damage as they continuously get rolled over (and chewed by the mouth)
-While in this form, the user can launch a flesh tentacle (on right click) and swing from it like a wrecking ball
 
 Some random chargeup
 
