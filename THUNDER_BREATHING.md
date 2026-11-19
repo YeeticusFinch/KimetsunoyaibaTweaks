@@ -421,6 +421,8 @@ Ticks 0-8:
 Ticks 8-18
 
 - The 4 lightning sparks move forward (3 blocks per tick), those 8 independent start and end points scaling from their center, all moving away from eachother as the lightning sparks move forward (on a straight projectile path, no longer attached to the user by a fixed offset), their width slowly growing, such that their width is 0.4 by tick 18
+  - The 8 independent start and end points should scale from the center of the # symbol (average location between all 8 point), so the symbol that they form should grow in size
+  - Their width is also slowly growing (like the width of each lightning spark in the symbol), such that they all reach width 0.4 by tick 18
 - Spawn some flash particles every tick randomly between those 8 independent start and end points.
 - All living entities anywhere near these lightning sparks (or between these lightning sparks), except for the owner, will get 6 seconds of blindness and slowness 3 and weakness 2 (no potion particles)
 
@@ -470,8 +472,9 @@ Ticks 15-25
 
 - `B` starts at 0, and increases by 1 every tick, such that `B` is 10 by tick 25
 - The user runs forward, traveling 2 blocks per tick
-- Every tick a lightning bolt is created, the start location being 5 blocks behind the user, the end location being X blocks in front of and Z blocks above the user's position at that tick. `X = (6-B/2)`, and `Y = (15 * B)`, and yes these location calculations are local gravity aware. These lightning bolts have the colors orange and red (instead of primary and secondary colors)
+- Every tick a lightning bolt is created, the start location being `(5 - B*0.5)` blocks behind the user, the end location being X blocks in front of and Z blocks above the user's position at that tick. `X = (6-B/2)`, and `Y = (15 * B)`, and yes these location calculations are local gravity aware. These lightning bolts have the colors orange and red (instead of primary and secondary colors)
 - All entities caught in the path of any of these lightning bolts will take damage and get marked
+- Each of these lightning bolts is a new one, and each one lasts for 20 ticks lifetime
 
 Tick 21
 
