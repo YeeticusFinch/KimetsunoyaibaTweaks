@@ -150,6 +150,8 @@ Yushiro: At least you weren’t completely useless.
 Tamayo: Please remember what you learned here today.
 Tamayo: And if my research succeeds… perhaps this endless tragedy can finally end.
 
+**Rank** - After completing Asakusa, the user can now rank up to Mizunoe
+
 ### Mission No.3 - Tsuzumi Mansion
 
 The player(s) will venture to the nearest Tsuzumi Mansion structure.
@@ -249,6 +251,53 @@ Step 6: Travel with Zenitsu and Inosuke to the Wisteria House to meet the old la
 The waypoint will point to the nearest `kimetsunoyaiba:house_1` structure. Once you arrive at this structure, Zenitsu and Inosuke will stop following the player, and the quest will be complete
 
 ### Mission No.4 - Mount Natagumo
+
+Step 1: Travel to Mount Natagumo, Inosuke and Zenitsu will stay since they’re still recovering, meet Tanjiro outside the Wisteria house, he’ll tell you he came to rest as he’s wounded by entirely different battles, he carries Nezuko on his back (this way you will fight the demons alone)
+
+Talk to Tanjiro. The waypoint will point to Tanjiro (in the `kimetsunoyaiba:house_1` structure, if there is no tanjiro entity in that structure, then one will spawn). If the player isn't near a `kimetsunoyaiba:house_1` structure, then the waypoint will point towards the nearest `kimetsunoyaiba:house_1` structure. Inosuke will be standing next to Tanjiro (if there is an inosuke entity in the `kimetsunoyaiba:house_1` structure, then Inosuke will pathfind/teleport over to be 2 blocks away from Tanjiro, otherwise a new inosuke will spawn).
+
+20 ticks between each dialog line:
+
+Tanjiro: I came here to rest and recover from my battles.
+Tanjiro: I am chasing a dangerous demon who goes by the name "Mukago".
+Inosuke: Then I shall come with you!
+Kasugai Crow: CAWWWW! There's trouble on Mount Natagumo!
+Tanjiro: [insert player username], you shall go to Mount Natagumo in the meantime.
+
+The waypoint will then point towards the nearest Mount Natagumo (we have a function for locating mount natagumo)
+
+Step 2: Arrive to Mt Natagumo, meet Murata at the start of the mountain, he’ll warn you of what happened to his fellow demon slayers, enter the mount.
+
+Once the player gets near Mount Natagumo (within 20 blocks of the edge of Mount Natagumo, not the peak, but the edge), Murata will spawn right on the edge of Mount Natagumo.
+
+20 ticks between dialog lines:
+
+Murata: You're the backup I called for? I asked for at least 3 Hashiras!
+Player: What is going on?
+Murata: This mountain is a NIGHTMARE!
+Murata: My squad were all strung up onto webs like puppets, they are killing eachother!
+Murata: The demon slayers will attack you, but please don't kill them. Don't kill my friends!
+
+The quest waypoint will point towards the nearest point in the headless puppet ring. Once the player enters the headless puppet ring, the headless puppet demon will spawn in a point within the headless puppet ring, within 100 blocks of the player, and the quest waypoint will point towards that headless puppet demon.
+
+At this stage, the quest players can enter the puppets ring and the headless puppet ring of Mount Natagumo. The following areas still remain locked: Rui's Mother ring, Boss Minions ring, Rui's Brother area, Rui's Sister area, Rui's Father area, and Rui's area (the boss area).
+If a quest player tries to enter any of those locked areas, they will be forcefully pushed back where they came from, being entirely prevented from entering the locked areas.
+
+Step 3: You’ll be attacked by demon slayers controlled as puppets by strings, avoid fighting them, try to free them or evade them, these puppets are the first demon line of defense of Mt Natagumo, go forward up and eliminate the strongest puppet, other wise, you can’t go further up on the mountain. (A message will appear)
+
+Step 4: After defeating the headless puppet, find and eliminate Rui’s mother, the puppet master. (you cannot go further up until you have eliminated her)
+
+Step 5:  Choose your path to climb the mountain, depending on what direction you take you may find different minions leading to different bosses (Rui’s family members) you must eliminate at least one to move on to the top of the mount; you can continue exploring and defeat them all if you feel brave.
+
+Step 6: After defeating at least one of them, reach the top of the mountain, there you will find Rui, he will be angry as you’ve killed his family. Fight Rui.
+
+Step 7: Fight Rui. What happens next depends on if the player defeats Rui, or if Rui defeats the player.
+
+Ending 1 (Rui defeats the player): If you are defeated by Rui, Giyuu Tomioka will arrive and deal with him, meanwhile Shinobu will take you to safety, you will be teleported to Shinobu’s mansion, and you will be told you must stay and complete training before being able to go on another mission. Missions will pause again, you will have to reach a certain rank before being able to continue. (you can’t farm ranks without missions), you can occasionally find Tanjiro Zenitsu and Inosuke around the insect mansion just greeting, training and more, Kanao won’t talk (...) (Slayer Route)
+
+Ending 2 (The player defeats Rui): If you defeat Rui alone, Giyuu and Shinobu will arrive to the scene and be impressed that a low rank slayer has defeated a kizuki, you’ll rank up and be taken (teleported) to the master’s mansion and witness the hashira meeting, the master will inform them of your achievement and you’ll be recognized, you’ll be taken to Shinobu’s mansion for training and recovery, since you already leveled up, you can go to the next mission immediately. (Prodigy route)
+
+**Rank** - After completing Mount Natagumo, the player can now rank up to Kanoto
 
 ### Mission No.5 - Rehabilitation Training
 
