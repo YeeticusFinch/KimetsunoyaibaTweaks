@@ -196,5 +196,50 @@
   },
   "rice_spirit_knockback": {
     "sounds": ["kimetsunoyaibamultiplayer:rice_spirit_knockback"]
+  },
+  "thunder_swarm_dash": {
+    "sounds": ["kimetsunoyaibamultiplayer:thunder_swarm_dash"]
+  },
+  "thunder_swarm_after_image_swarm": {
+    "sounds": ["kimetsunoyaibamultiplayer:thunder_swarm_after_image_swarm"]
+  },
+  "distant_thunder_blinding_slashes": {
+    "sounds": ["kimetsunoyaibamultiplayer:distant_thunder_blinding_slashes"]
+  },
+  "distant_thunder_dash": {
+    "sounds": ["kimetsunoyaibamultiplayer:distant_thunder_dash"]
+  },
+  "distant_thunder_slash": {
+    "sounds": ["kimetsunoyaibamultiplayer:distant_thunder_slash"]
+  },
+  "heat_lightning_charging": {
+    "sounds": ["kimetsunoyaibamultiplayer:heat_lightning_charging"]
+  },
+  "heat_lightning_takeoff": {
+    "sounds": ["kimetsunoyaibamultiplayer:heat_lightning_takeoff"]
+  },
+  "heat_lightning_heat_slash": {
+    "sounds": ["kimetsunoyaibamultiplayer:heat_lightning_heat_slash"]
+  },
+  "heat_lightning_paralyzing_damage": {
+    "sounds": ["kimetsunoyaibamultiplayer:heat_lightning_paralyzing_damage"]
+  },
+  "rumble_and_flash_charging": {
+    "sounds": ["kimetsunoyaibamultiplayer:rumble_and_flash_charging"]
+  },
+  "rumble_and_flash_takeoff": {
+    "sounds": ["kimetsunoyaibamultiplayer:rumble_and_flash_takeoff"]
+  },
+  "rumble_and_flash_strong_slash": {
+    "sounds": ["kimetsunoyaibamultiplayer:rumble_and_flash_strong_slash"]
+  },
+  "rumble_and_flash_leftover_lightning": {
+    "sounds": ["kimetsunoyaibamultiplayer:rumble_and_flash_leftover_lightning"]
+  },
+  "thunder_god_charging": {
+    "sounds": ["kimetsunoyaibamultiplayer:thunder_god_charging"]
+  },
+  "thunder_god_ultimate_slash": {
+    "sounds": ["kimetsunoyaibamultiplayer:thunder_god_ultimate_slash"]
   }
 }

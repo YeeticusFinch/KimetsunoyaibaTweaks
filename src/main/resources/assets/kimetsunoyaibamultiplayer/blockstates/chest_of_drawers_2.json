@@ -1,0 +1,9 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "kimetsunoyaibamultiplayer:block/chest_of_drawers_2"
+      }
+    }
+  ]
+}

@@ -361,7 +361,8 @@ public class ClientRenderEvents {
                 .isOffhandAnimation(currentAnimation);
         boolean isDoubleHandAnimation = currentAnimation.equals("double_sword_overhead")
                 || currentAnimation.equals("beast10")
-                || currentAnimation.equals("brambles");
+                || currentAnimation.equals("brambles")
+                || currentAnimation.equals("beast2");
 
         // Determine the animation used for this hand.
         // During offhand-only swings, main hand plays sword_none to stay visible and stable.
@@ -372,6 +373,9 @@ public class ClientRenderEvents {
             animationForThisHand = "beast10left";
         } else if (currentAnimation.equals("brambles") && event.getHand() == InteractionHand.OFF_HAND) {
             animationForThisHand = "left_brambles";
+        } else if (currentAnimation.equals("beast2") && event.getHand() == InteractionHand.OFF_HAND) {
+            // Blades of Disaster uses the right-hand beast2 curve and its left-hand counterpart.
+            animationForThisHand = "breath_beast2";
         }
 
         // No keyframes for this hand's animation -> fall back to vanilla.

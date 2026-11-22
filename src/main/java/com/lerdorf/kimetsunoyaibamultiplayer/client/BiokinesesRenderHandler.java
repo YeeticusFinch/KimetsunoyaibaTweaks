@@ -31,9 +31,19 @@ public final class BiokinesesRenderHandler {
     private static final String[] MUZAN_HAND_ANIMATIONS = {
         "brambles",
         "left_brambles",
+        "beast2",
+        "left_sword_to_left",
+        "left_sword_to_right",
+        "left_sword_to_upper",
+        "left_sword_overhead",
+        "left_arm_overhead"
+    };
+    private static final String[] ARM_BLADE_ANIMATIONS = {
+        "sword_to_left",
         "sword_to_right",
         "left_sword_to_left",
         "left_sword_to_right",
+        "left_sword_to_upper",
         "left_sword_overhead"
     };
 
@@ -67,6 +77,23 @@ public final class BiokinesesRenderHandler {
         for (String animation : MUZAN_HAND_ANIMATIONS) {
             if (AnimationTracker.isAnimationActive(player.getUUID(), animation)
                 || AnimationSyncHandler.isAnimationActive(player.getUUID(), animation)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean shouldRenderArmBlade(LivingEntity entity) {
+        if (entity == null) {
+            return false;
+        }
+        ItemStack mainHand = entity.getMainHandItem();
+        if (mainHand.hasTag() && mainHand.getTag().getBoolean("BiokinesesArmBladeModel")) {
+            return true;
+        }
+        for (String animation : ARM_BLADE_ANIMATIONS) {
+            if (AnimationTracker.isAnimationActive(entity.getUUID(), animation)
+                || AnimationSyncHandler.isAnimationActive(entity.getUUID(), animation)) {
                 return true;
             }
         }
@@ -112,6 +139,9 @@ public final class BiokinesesRenderHandler {
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
         if (event.getHand() != net.minecraft.world.InteractionHand.OFF_HAND) {
+            return;
+        }
+        if (event.isCanceled()) {
             return;
         }
         LocalPlayer player = Minecraft.getInstance().player;

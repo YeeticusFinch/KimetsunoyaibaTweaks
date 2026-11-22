@@ -77,7 +77,7 @@ public class BloodDemonArtItem extends Item {
             return InteractionResultHolder.fail(stack);
         }
 
-        if (player.isShiftKeyDown()) {
+        if (player.isShiftKeyDown() && !"biokineses".equals(artId)) {
             if (!level.isClientSide) {
                 cycleForm(player, stack, 1);
             }
@@ -134,7 +134,9 @@ public class BloodDemonArtItem extends Item {
         if ("biokineses".equals(artId)) {
             tooltip.add(Component.literal("Press Z to use Biokineses Tentacles").withStyle(ChatFormatting.DARK_GRAY));
         }
-        tooltip.add(Component.literal("Sneak-right click: Cycle forms").withStyle(ChatFormatting.DARK_GRAY));
+        if (!"biokineses".equals(artId)) {
+            tooltip.add(Component.literal("Sneak-right click: Cycle forms").withStyle(ChatFormatting.DARK_GRAY));
+        }
         tooltip.add(Component.literal("Right click: Use selected form").withStyle(ChatFormatting.DARK_GRAY));
     }
 

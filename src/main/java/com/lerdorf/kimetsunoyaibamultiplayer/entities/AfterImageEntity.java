@@ -198,6 +198,19 @@ public class AfterImageEntity extends Mob implements GeoEntity {
         this.entityData.set(DATA_OPACITY, 1.0f); // Start at full opacity
     }
 
+    /** Makes the afterimage visible for a fixed duration without the legacy blink cycle. */
+    public void startVisibleFor(int ticks) {
+        this.invisibleTicks = 0;
+        this.fadingIn = false;
+        this.fadeOutOnly = false;
+        this.useBlinkBehavior = true;
+        this.fullOpacityTicks = Math.max(1, ticks);
+        this.blinkCount = 0;
+        this.blinkTimer = 0;
+        this.blinkOn = true;
+        this.entityData.set(DATA_OPACITY, 1.0f);
+    }
+
     /**
      * Legacy method for fade out behavior.
      * Makes this after image start fully visible and slowly fade out.

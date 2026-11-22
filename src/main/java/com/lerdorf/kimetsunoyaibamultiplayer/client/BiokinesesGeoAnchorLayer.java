@@ -13,7 +13,6 @@ import software.bernie.geckolib.core.animatable.GeoAnimatable;
 import software.bernie.geckolib.renderer.GeoRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 import software.bernie.geckolib.util.RenderUtils;
-import org.joml.Vector3f;
 
 /** Captures the animated GeckoLib torso bone for the world-space arm renderer. */
 public class BiokinesesGeoAnchorLayer<T extends LivingEntity & GeoAnimatable> extends GeoRenderLayer<T> {
@@ -35,11 +34,8 @@ public class BiokinesesGeoAnchorLayer<T extends LivingEntity & GeoAnimatable> ex
 
         poseStack.pushPose();
         RenderUtils.prepMatrixForBone(poseStack, body);
-        Vector3f position = new Vector3f(0.0F, 0.0F, 0.0F);
-        poseStack.last().pose().transformPosition(position);
         net.minecraft.world.phys.Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        BiokinesesArmRenderer.captureGeoTorsoAnchor(animatable.getId(),
-            new net.minecraft.world.phys.Vec3(position.x + camera.x, position.y + camera.y, position.z + camera.z));
+        BiokinesesArmRenderer.captureGeoTorsoTransform(animatable, poseStack, camera, partialTick);
         poseStack.popPose();
     }
 }

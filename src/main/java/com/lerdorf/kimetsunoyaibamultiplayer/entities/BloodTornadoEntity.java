@@ -58,6 +58,8 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_CLIMBING =
         SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_NO_GRAVITY =
+        SynchedEntityData.defineId(BloodTornadoEntity.class, EntityDataSerializers.BOOLEAN);
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private Vec3 direction = Vec3.ZERO;
@@ -89,6 +91,12 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         setOwner(owner == null ? null : owner.getUUID());
         this.lifetime = Math.max(1, lifetime);
         setOldPosAndRot();
+    }
+
+    public void initializeNoGravity(Vec3 position, Vec3 direction, LivingEntity owner, int lifetime) {
+        initialize(position, direction, owner, lifetime);
+        entityData.set(DATA_NO_GRAVITY, true);
+        setNoGravity(true);
     }
 
     private void setOwner(UUID ownerId) {
@@ -147,6 +155,7 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         entityData.define(DATA_UP_Y, 1.0F);
         entityData.define(DATA_UP_Z, 0.0F);
         entityData.define(DATA_CLIMBING, false);
+        entityData.define(DATA_NO_GRAVITY, false);
     }
 
     @Override
@@ -163,7 +172,8 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
     @Override
     public void tick() {
         baseTick();
-        setNoGravity(false);
+        boolean noGravity = entityData.get(DATA_NO_GRAVITY);
+        setNoGravity(noGravity);
 
         int age = ticksAlive++;
         if (age >= lifetime) {
@@ -179,18 +189,25 @@ public final class BloodTornadoEntity extends Mob implements GeoEntity {
         double normalVelocity = currentVelocity.dot(up);
         Vec3 travelDirection = getTravelDirection();
         Vec3 horizontalMovement = travelDirection.scale(SPEED);
-        if (!climbing && hitsWall(horizontalMovement, up)) {
+        if (noGravity) {
+            setDeltaMovement(horizontalMovement);
+            move(MoverType.SELF, horizontalMovement);
+        } else if (hitsWall(horizontalMovement, up)) {
             // Let normal collision resolution place the tornado against the wall,
             // then switch its synchronized trajectory to gravity-relative up.
-            move(MoverType.SELF, horizontalMovement);
+            if (!climbing) {
+                move(MoverType.SELF, horizontalMovement);
+            }
             climbing = true;
             entityData.set(DATA_CLIMBING, true);
-            setDirection(up);
             normalVelocity = 0.0D;
             horizontalMovement = up.scale(SPEED);
         } else if (climbing) {
+            // Keep the original forward direction and leave the wall as soon as
+            // the next forward movement is no longer blocked.
+            climbing = false;
+            entityData.set(DATA_CLIMBING, false);
             normalVelocity = 0.0D;
-            horizontalMovement = up.scale(SPEED);
         } else if (isSupported(up) && normalVelocity <= 0.0D) {
             normalVelocity = 0.0D;
         } else {

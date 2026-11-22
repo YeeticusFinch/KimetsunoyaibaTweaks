@@ -4,6 +4,7 @@
     "kimetsunoyaibamultiplayer:dark_oak_wall",
     "kimetsunoyaibamultiplayer:stripped_dark_oak_wall",
     "kimetsunoyaibamultiplayer:chest_of_drawers",
+    "kimetsunoyaibamultiplayer:chest_of_drawers_2",
     "kimetsunoyaibamultiplayer:wisteria_planks",
     "kimetsunoyaibamultiplayer:wisteria_stairs",
     "kimetsunoyaibamultiplayer:wisteria_slab",
@@ -15,6 +16,22 @@
     "kimetsunoyaibamultiplayer:wisteria_fence_gate",
     "kimetsunoyaibamultiplayer:wisteria_pressure_plate",
     "kimetsunoyaibamultiplayer:wisteria_button",
-    "kimetsunoyaibamultiplayer:sword_rack"
+    "kimetsunoyaibamultiplayer:sword_rack",
+    "kimetsunoyaibamultiplayer:stool",
+    "kimetsunoyaibamultiplayer:stool_orange",
+    "kimetsunoyaibamultiplayer:stool_magenta",
+    "kimetsunoyaibamultiplayer:stool_light_blue",
+    "kimetsunoyaibamultiplayer:stool_yellow",
+    "kimetsunoyaibamultiplayer:stool_lime",
+    "kimetsunoyaibamultiplayer:stool_pink",
+    "kimetsunoyaibamultiplayer:stool_gray",
+    "kimetsunoyaibamultiplayer:stool_light_gray",
+    "kimetsunoyaibamultiplayer:stool_cyan",
+    "kimetsunoyaibamultiplayer:stool_purple",
+    "kimetsunoyaibamultiplayer:stool_blue",
+    "kimetsunoyaibamultiplayer:stool_brown",
+    "kimetsunoyaibamultiplayer:stool_green",
+    "kimetsunoyaibamultiplayer:stool_red",
+    "kimetsunoyaibamultiplayer:stool_black"
   ]
 }

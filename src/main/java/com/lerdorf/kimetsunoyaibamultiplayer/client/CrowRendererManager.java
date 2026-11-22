@@ -7,6 +7,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.client.renderer.CrowGeoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.AfterImageRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DarkStarRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.ThunderDragonRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BenchSeatRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.CushionSeatRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DemonSlayerFemaleRenderer;
@@ -80,6 +81,9 @@ public class CrowRendererManager {
 
         // Register renderer for Dark Star visual entity
         event.registerEntityRenderer(ModEntities.DARK_STAR_VISUAL.get(), DarkStarRenderer::new);
+
+        // Register renderer for the Flaming Thunder God dragon
+        event.registerEntityRenderer(ModEntities.THUNDER_DRAGON.get(), ThunderDragonRenderer::new);
 
         // Register renderer for flower petal slash entity (Flower Breathing slash effect)
         event.registerEntityRenderer(ModEntities.FLOWER_PETAL_SLASH.get(), FlowerPetalSlashRenderer::new);

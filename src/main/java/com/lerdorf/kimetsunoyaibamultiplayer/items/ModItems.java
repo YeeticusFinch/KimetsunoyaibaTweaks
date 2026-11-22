@@ -48,6 +48,14 @@ public class ModItems {
     public static final RegistryObject<Item> FLESH_VINE_TIP = ITEMS.register("flesh_vine_tip",
         () -> new Item(new Item.Properties().stacksTo(1)));
 
+    /** Registered solely so the custom Bone Whip tip model is baked into the item atlas. */
+    public static final RegistryObject<Item> BONE_WHIP_TIP = ITEMS.register("bone_whip_tip",
+        () -> new Item(new Item.Properties().stacksTo(1)));
+
+    /** Registered solely so the Blood Lance projectile model is baked into the item atlas. */
+    public static final RegistryObject<Item> BLOOD_LANCE = ITEMS.register("blood_lance",
+        () -> new Item(new Item.Properties().stacksTo(1)));
+
     public static final RegistryObject<Item> NICHIRINSWORD_MUICHIRO = ITEMS.register("nichirinsword_muichiro",
         () -> new NichirinSwordMuichiro(new Item.Properties().stacksTo(1).durability(2000)));
 
@@ -453,6 +461,8 @@ public class ModItems {
     public static final RegistryObject<Item> BIOKINESES = ITEMS.register("biokineses",
         () -> new BloodDemonArtItem(Biokineses.ART_ID, 14.0F, 1.6F,
             new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<BiokinesesArmorRenderItem> BIOKINESES_ARMOR_RENDER_ITEM = ITEMS.register(
+        "biokineses_armor_render_item", BiokinesesArmorRenderItem::new);
     public static final RegistryObject<Item> CUSTOM_DEMON_ART = ITEMS.register("custom_demon_art",
         () -> new CustomDemonArtItem(new Item.Properties()));
     public static final RegistryObject<Item> PUDDLE = ITEMS.register("puddle",
@@ -815,7 +825,8 @@ public class ModItems {
                       com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_BAMBOO_FUSUMA_DARKER.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.DARK_OAK_WALL.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STRIPPED_DARK_OAK_WALL.get(),
-                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.CHEST_OF_DRAWERS_2.get(),
                       com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.LARGE_DOOR.get(),
                       com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.LARGE_DOOR_DARKER.get(),
                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SWORD_RACK.get(),
@@ -833,9 +844,25 @@ public class ModItems {
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_PURPLE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BLUE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BROWN.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_GREEN.get(),
-                    com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_RED.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_GREEN.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_RED.get(),
                       com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BENCH_BLACK.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_ORANGE.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_MAGENTA.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_LIGHT_BLUE.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_YELLOW.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_LIME.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_PINK.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_GRAY.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_LIGHT_GRAY.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_CYAN.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_PURPLE.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_BLUE.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_BROWN.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_GREEN.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_RED.get(),
+                      com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.STOOL_BLACK.get(),
                       com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.GRAVITY_BLOCK.get(),
                       com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BLOCK_DOOR.get(),
                       com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.BRIDGER_BLOCK.get(),

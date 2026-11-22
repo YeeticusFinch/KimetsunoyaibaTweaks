@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.blocks.BenchBlock;
+import com.lerdorf.kimetsunoyaibamultiplayer.blocks.StoolBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -197,6 +198,6 @@ public class BenchSeatEntity extends Mob {
     }
 
     public static boolean isValidSeatBlock(BlockState state) {
-        return state.getBlock() instanceof BenchBlock;
+        return state.getBlock() instanceof BenchBlock || state.getBlock() instanceof StoolBlock;
     }
 }

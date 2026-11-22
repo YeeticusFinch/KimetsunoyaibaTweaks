@@ -47,7 +47,15 @@ public final class BiokinesesArmController {
     private static final int ACTIVE_TICKS = 2400;
     private static final double ARM_REACH = 8.0D;
     private static final double FLIGHT_BASE_SPEED = 0.9D;
+    private static final double CLIMBING_MAX_DOWNWARD_SPEED = -0.03D;
+    private static final double FRONT_ANCHOR_PROJECTION = 1.0D;
+    private static final double FORCED_FRONT_PROJECTION = 3.0D;
+    private static final double REAR_ANCHOR_PROJECTION = -1.0D;
+    private static final double EXTENDED_ANCHOR_RANGE_FACTOR = 1.5D;
+    private static final double LATERAL_ANCHOR_DISTANCE = 3.0D;
+    private static final double LATERAL_DOWNWARD_SLOPE = 0.4D;
     private static final int AIRBORNE_TICKS_BEFORE_ANCHOR = 10;
+    private static final int CLIMBING_GROUND_GRACE_TICKS = 30;
     private static final float COMBAT_DAMAGE = 6.0F;
     private static final long ANCHOR_RECHECK_INTERVAL = 5L;
     private static final long RETRACT_TICKS = 10L;
@@ -119,6 +127,7 @@ public final class BiokinesesArmController {
         }
         data.setClimbing(true);
         data.setAirborneTicks(0);
+        data.setClimbingTicks(0);
         data.setAllocationMode(IBiokinesesArmData.ALLOCATION_NORMAL);
         releaseHeldEntities(entity, data);
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
@@ -155,6 +164,7 @@ public final class BiokinesesArmController {
         data.setRetracting(false);
         data.setExpiresAt(Math.max(now, data.getExpiresAt()) + ACTIVE_TICKS);
         data.setAirborneTicks(0);
+        data.setClimbingTicks(0);
         if (data.getAllocationMode() != IBiokinesesArmData.ALLOCATION_ALL) {
             data.setAllocationMode(IBiokinesesArmData.ALLOCATION_NORMAL);
         }
@@ -202,6 +212,19 @@ public final class BiokinesesArmController {
         sync(entity, true);
     }
 
+    /** Updates one claimed ability arm's world-space target for scripted forms. */
+    public static void setAbilityTarget(LivingEntity entity, int arm, Vec3 target) {
+        if (entity.level().isClientSide() || arm < 0 || arm >= IBiokinesesArmData.ARM_COUNT
+            || target == null) {
+            return;
+        }
+        IBiokinesesArmData data = data(entity);
+        if (data != null && data.getAllocationMode() == IBiokinesesArmData.ALLOCATION_ALL
+            && data.getMode(arm) == IBiokinesesArmData.MODE_ABILITY) {
+            data.setTarget(arm, target);
+        }
+    }
+
     /** Starts a short synchronized retraction and releases transient targets. */
     public static void retract(LivingEntity entity) {
         if (entity.level().isClientSide()) {
@@ -223,6 +246,7 @@ public final class BiokinesesArmController {
         data.setRetracting(true);
         data.setExpiresAt(entity.level().getGameTime() + RETRACT_TICKS);
         data.setAirborneTicks(0);
+        data.setClimbingTicks(0);
         data.setAllocationMode(IBiokinesesArmData.ALLOCATION_NORMAL);
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
             data.setMode(arm, IBiokinesesArmData.MODE_IDLE);
@@ -355,6 +379,7 @@ public final class BiokinesesArmController {
             if (data.getAllocationMode() == IBiokinesesArmData.ALLOCATION_NORMAL) {
                 clearAnchorAllocation(entity, data);
             }
+            refreshFollowTargets(entity, data);
             tickHeldEntities(entity, data);
             updateProgress(data);
             tickAttackArms(entity, data, now);
@@ -364,7 +389,9 @@ public final class BiokinesesArmController {
             return;
         }
 
-        if (entity.onGround()) {
+        data.setClimbingTicks(data.getClimbingTicks() + 1);
+        if (data.getClimbingTicks() > CLIMBING_GROUND_GRACE_TICKS
+            && entity.onGround() && data.getAirborneTicks() >= AIRBORNE_TICKS_BEFORE_ANCHOR) {
             retract(entity);
             return;
         }
@@ -417,6 +444,7 @@ public final class BiokinesesArmController {
             data.setActive(false);
             data.setClimbing(false);
             data.setRetracting(false);
+            data.setClimbingTicks(0);
             data.setExpiresAt(0L);
             for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
                 data.setProgress(arm, 0.0F);
@@ -448,19 +476,31 @@ public final class BiokinesesArmController {
             return anchors;
         }
         Set<BlockPos> occupiedBlocks = new HashSet<>();
+        AnchorAdvance advance = chooseAnchorAdvance(entity, data);
+        int forcedFrontArm = advance == null ? -1 : advance.arm();
+        Vec3 movementDirection = advance == null ? Vec3.ZERO : climbingVelocityDirection(entity);
         for (int arm : climbingAnchorArms()) {
+            boolean forcedFrontAnchor = arm == forcedFrontArm;
             boolean needsNewAnchor = hasValidAnchor(entity, data, arm)
                 && shouldReanchor(entity, data, data.getTarget(arm));
             boolean duplicateAnchor = data.hasAnchor(arm)
                 && occupiedBlocks.contains(BlockPos.of(data.getAnchorBlockPos(arm)));
-            if (hasValidAnchor(entity, data, arm) && !needsNewAnchor && !duplicateAnchor) {
+            if (hasValidAnchor(entity, data, arm) && !needsNewAnchor && !duplicateAnchor && !forcedFrontAnchor) {
                 anchors.add(data.getTarget(arm));
                 occupiedBlocks.add(BlockPos.of(data.getAnchorBlockPos(arm)));
             } else if (entity.level().getGameTime() % ANCHOR_RECHECK_INTERVAL == 0L
-                || !data.hasAnchor(arm) || needsNewAnchor || duplicateAnchor) {
-                AnchorTarget anchor = findAnchor(entity, data, arm, occupiedBlocks);
+                || !data.hasAnchor(arm) || needsNewAnchor || duplicateAnchor || forcedFrontAnchor) {
+                AnchorTarget anchor = findAnchor(entity, data, arm, occupiedBlocks,
+                    forcedFrontAnchor ? movementDirection : null,
+                    forcedFrontAnchor ? advance.minimumForwardProjection() : 0.0D, false);
                 if (anchor == null) {
-                    anchor = findAnchor(entity, data, arm, Set.of());
+                    anchor = findAnchor(entity, data, arm, occupiedBlocks,
+                        forcedFrontAnchor ? movementDirection : null,
+                        forcedFrontAnchor ? advance.minimumForwardProjection() : 0.0D, true);
+                }
+                if (anchor == null && forcedFrontAnchor && advance.minimumForwardProjection() > 0.0D) {
+                    anchor = findAnchor(entity, data, arm, occupiedBlocks, movementDirection,
+                        0.0D, false);
                 }
                 if (anchor != null) {
                     data.setAnchor(arm, anchor.blockPos().asLong(), anchor.face().get3DDataValue());
@@ -473,6 +513,9 @@ public final class BiokinesesArmController {
                     data.setTarget(arm, defaultTarget(entity, arm));
                     data.setMode(arm, IBiokinesesArmData.MODE_COMBAT);
                 }
+            } else if (forcedFrontAnchor && hasValidAnchor(entity, data, arm)) {
+                anchors.add(data.getTarget(arm));
+                occupiedBlocks.add(BlockPos.of(data.getAnchorBlockPos(arm)));
             } else {
                 data.clearAnchor(arm);
                 data.setTarget(arm, defaultTarget(entity, arm));
@@ -563,11 +606,10 @@ public final class BiokinesesArmController {
     }
 
     private static void refreshFollowTargets(LivingEntity entity, IBiokinesesArmData data) {
-        if (data.getAllocationMode() != IBiokinesesArmData.ALLOCATION_NORMAL) {
-            return;
-        }
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
-            if (data.getMode(arm) == IBiokinesesArmData.MODE_COMBAT) {
+            if ((data.getMode(arm) == IBiokinesesArmData.MODE_COMBAT
+                && data.getAllocationMode() == IBiokinesesArmData.ALLOCATION_NORMAL)
+                || data.getMode(arm) == IBiokinesesArmData.MODE_ABILITY) {
                 data.setTarget(arm, defaultTarget(entity, arm));
             }
         }
@@ -575,9 +617,16 @@ public final class BiokinesesArmController {
 
     private static void applyLocomotion(LivingEntity entity, IBiokinesesArmData data) {
         Vec3 input = traversalInputLocal(entity, data);
+        double speed = flightSpeed(entity);
         Vec3 velocity = input.lengthSqr() > 1.0E-6D
-            ? input.normalize().scale(flightSpeed(entity))
+            ? input.normalize().scale(speed)
             : Vec3.ZERO;
+        if (Math.abs(input.y) < 1.0E-6D) {
+            double currentVerticalVelocity = CombatGravityFrame.velocity(entity).y;
+            double verticalVelocity = Math.max(CLIMBING_MAX_DOWNWARD_SPEED,
+                Math.min(0.0D, currentVerticalVelocity));
+            velocity = new Vec3(velocity.x, verticalVelocity, velocity.z);
+        }
         MovementHelper.setVelocity(entity, velocity);
     }
 
@@ -615,7 +664,7 @@ public final class BiokinesesArmController {
         double vertical = data.isTraversalJumping() == data.isTraversalDescending()
             ? 0.0D : data.isTraversalJumping() ? 1.0D : -1.0D;
         return forward.scale(data.getTraversalForwardInput())
-            .add(right.scale(-data.getTraversalStrafeInput()))
+            .add(right.scale(data.getTraversalStrafeInput()))
             .add(0.0D, vertical, 0.0D);
     }
 
@@ -672,7 +721,7 @@ public final class BiokinesesArmController {
             forward = new Vec3(0.0D, 0.0D, 1.0D);
         }
         Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
-        Vec3 left = up.cross(forward);
+        Vec3 left = forward.cross(up);
         if (left.lengthSqr() < 1.0E-6D) {
             left = new Vec3(-1.0D, 0.0D, 0.0D);
         } else {
@@ -724,17 +773,14 @@ public final class BiokinesesArmController {
 
     private static void startLocomotion(LivingEntity entity, IBiokinesesArmData data) {
         if (!data.isLocomotionActive()) {
-            data.setNoGravityBeforeLocomotion(entity.isNoGravity());
             data.setLocomotionActive(true);
         }
-        entity.setNoGravity(true);
     }
 
     private static void stopLocomotion(LivingEntity entity, IBiokinesesArmData data) {
         if (!data.isLocomotionActive()) {
             return;
         }
-        entity.setNoGravity(data.wasNoGravityBeforeLocomotion());
         data.setLocomotionActive(false);
     }
 
@@ -772,22 +818,70 @@ public final class BiokinesesArmController {
         if (state.isAir() || state.getCollisionShape(entity.level(), blockPos).isEmpty()) {
             return false;
         }
-        double maxDistance = Config.biokinesesClimbingAnchorRange;
+        double maxDistance = Config.biokinesesClimbingAnchorRange * EXTENDED_ANCHOR_RANGE_FACTOR;
         return entity.position().distanceToSqr(data.getTarget(arm)) <= maxDistance * maxDistance;
     }
 
+    private static AnchorAdvance chooseAnchorAdvance(LivingEntity entity, IBiokinesesArmData data) {
+        Vec3 movement = climbingVelocityDirection(entity);
+        if (movement.lengthSqr() < 1.0E-4D) {
+            return null;
+        }
+        int frontCount = 0;
+        int leastForwardArm = -1;
+        double leastForwardProjection = Double.POSITIVE_INFINITY;
+        int rearArm = -1;
+        double furthestRearProjection = REAR_ANCHOR_PROJECTION;
+        for (int arm : climbingAnchorArms()) {
+            if (!hasValidAnchor(entity, data, arm)) {
+                continue;
+            }
+            Vec3 relative = CombatGravityFrame.local(data.getTarget(arm).subtract(entity.position()));
+            double projection = relative.dot(movement);
+            if (projection > FRONT_ANCHOR_PROJECTION) {
+                frontCount++;
+            }
+            if (projection < leastForwardProjection) {
+                leastForwardProjection = projection;
+                leastForwardArm = arm;
+            }
+            if (projection < furthestRearProjection) {
+                furthestRearProjection = projection;
+                rearArm = arm;
+            }
+        }
+        if (frontCount < 2 && leastForwardArm >= 0) {
+            return new AnchorAdvance(leastForwardArm, FORCED_FRONT_PROJECTION);
+        }
+        return rearArm >= 0 ? new AnchorAdvance(rearArm, FRONT_ANCHOR_PROJECTION) : null;
+    }
+
+    private static Vec3 climbingVelocityDirection(LivingEntity entity) {
+        Vec3 movement = CombatGravityFrame.local(CombatGravityFrame.velocity(entity));
+        return movement.lengthSqr() < 1.0E-4D ? Vec3.ZERO : movement.normalize();
+    }
+
     private static AnchorTarget findAnchor(LivingEntity entity, IBiokinesesArmData data, int arm) {
-        return findAnchor(entity, data, arm, Set.of());
+        return findAnchor(entity, data, arm, Set.of(), null, 0.0D, false);
     }
 
     private static AnchorTarget findAnchor(LivingEntity entity, IBiokinesesArmData data, int arm,
                                            Set<BlockPos> occupiedBlocks) {
+        return findAnchor(entity, data, arm, occupiedBlocks, null, 0.0D, false);
+    }
+
+    private static AnchorTarget findAnchor(LivingEntity entity, IBiokinesesArmData data, int arm,
+                                           Set<BlockPos> occupiedBlocks, Vec3 preferredForward,
+                                           double minimumForwardProjection, boolean allowOccupied) {
         Vec3 localForward = CombatGravityFrame.look(entity).normalize();
         if (localForward.lengthSqr() < 1.0E-6D) {
             localForward = new Vec3(0.0D, 0.0D, 1.0D);
         }
+        if (preferredForward != null && preferredForward.lengthSqr() > 1.0E-6D) {
+            localForward = preferredForward.normalize();
+        }
         Vec3 localUp = new Vec3(0.0D, 1.0D, 0.0D);
-        Vec3 localLeft = localUp.cross(localForward);
+        Vec3 localLeft = localForward.cross(localUp);
         if (localLeft.lengthSqr() < 1.0E-6D) {
             localLeft = new Vec3(-1.0D, 0.0D, 0.0D);
         } else {
@@ -800,21 +894,23 @@ public final class BiokinesesArmController {
         Vec3 side = isLeftArm(arm) ? left : left.scale(-1.0D);
         Vec3 start = entity.position().add(up.scale(entity.getBbHeight() * 0.65D)).add(side.scale(0.35D));
         Vec3 backward = localForward.scale(-1.0D);
+        Vec3 lateralDown = localSide.add(localUp.scale(-LATERAL_DOWNWARD_SLOPE));
         Vec3[] directions;
         if (isTopAnchorArm(arm)) {
             directions = new Vec3[] {
                 localUp.add(localForward), localUp.add(localForward.scale(0.4D)), localUp,
-                localForward, localUp.add(localSide), localSide, localUp.scale(-1.0D), backward
+                localForward, localUp.add(localSide), localSide, lateralDown,
+                localUp.scale(-1.0D), backward
             };
         } else if (isMiddleAnchorArm(arm)) {
             directions = new Vec3[] {
-                localForward, localSide, localSide.add(localForward.scale(0.45D)), backward,
+                localForward, localSide, lateralDown, localSide.add(localForward.scale(0.45D)), backward,
                 localForward.add(localUp.scale(0.25D)), localForward.add(localUp.scale(-0.25D)),
                 localUp, localUp.scale(-1.0D)
             };
         } else {
             directions = new Vec3[] {
-                localUp.scale(-1.0D).add(backward.scale(0.55D)), localUp.scale(-1.0D), backward,
+                lateralDown, localUp.scale(-1.0D).add(backward.scale(0.55D)), localUp.scale(-1.0D), backward,
                 localUp.scale(-1.0D).add(localSide), localSide.add(backward.scale(0.35D)),
                 localForward, localUp
             };
@@ -822,17 +918,21 @@ public final class BiokinesesArmController {
 
         AnchorTarget best = null;
         double bestScore = Double.MAX_VALUE;
+        double searchRange = preferredForward != null
+            ? Config.biokinesesClimbingAnchorRange * EXTENDED_ANCHOR_RANGE_FACTOR
+            : Config.biokinesesClimbingAnchorRange;
         for (Vec3 rawDirection : directions) {
             Vec3 direction = rawDirection.normalize();
             Vec3 worldDirection = CombatGravityFrame.world(direction).normalize();
             BlockHitResult hit = entity.level().clip(new ClipContext(start,
-                start.add(worldDirection.scale(Config.biokinesesClimbingAnchorRange)),
+                start.add(worldDirection.scale(searchRange)),
                 ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
             if (hit.getType() != HitResult.Type.BLOCK) {
                 continue;
             }
             BlockPos blockPos = hit.getBlockPos();
-            if (occupiedBlocks.contains(blockPos)) {
+            boolean occupied = occupiedBlocks.contains(blockPos);
+            if (occupied && !allowOccupied) {
                 continue;
             }
             BlockState state = entity.level().getBlockState(blockPos);
@@ -841,13 +941,26 @@ public final class BiokinesesArmController {
             }
             Vec3 position = hit.getLocation().add(Vec3.atLowerCornerOf(hit.getDirection().getNormal()).scale(0.06D));
             Vec3 relativeLocal = CombatGravityFrame.local(position.subtract(entity.position()));
-            double distanceScore = start.distanceToSqr(position) * 0.08D;
+            double forwardProjection = preferredForward == null ? 0.0D
+                : relativeLocal.dot(preferredForward);
+            if (forwardProjection < minimumForwardProjection) {
+                continue;
+            }
+            double distance = start.distanceTo(position);
+            double distanceScore = Math.max(0.0D,
+                Config.biokinesesClimbingAnchorRange - distance) * 0.12D;
             Vec3 relativeDirection = relativeLocal.lengthSqr() > 1.0E-6D
                 ? relativeLocal.normalize() : Vec3.ZERO;
             double preferenceScore = relativeDirection.dot(anchorPreference(arm, localForward,
                 localUp, localSide));
             double sameLevelPenalty = isMiddleAnchorArm(arm) ? Math.abs(relativeLocal.y) * 2.0D : 0.0D;
-            double score = distanceScore - preferenceScore * 4.0D + sameLevelPenalty;
+            double duplicatePenalty = occupied ? 6.0D : 0.0D;
+            double lateralProjection = relativeLocal.dot(localSide);
+            double lateralFallbackPenalty = relativeLocal.y < -0.25D
+                ? Math.abs(lateralProjection - LATERAL_ANCHOR_DISTANCE) * 1.25D
+                : 0.0D;
+            double score = distanceScore - preferenceScore * 4.0D + sameLevelPenalty
+                + duplicatePenalty + lateralFallbackPenalty;
             Vec3 faceNormalLocal = CombatGravityFrame.local(
                 Vec3.atLowerCornerOf(hit.getDirection().getNormal()));
             if (isTopAnchorArm(arm) && faceNormalLocal.y < -0.5D) {
@@ -875,7 +988,7 @@ public final class BiokinesesArmController {
         } else {
             forward = forward.normalize();
         }
-        Vec3 left = up.cross(forward).normalize();
+        Vec3 left = forward.cross(up).normalize();
         double side = isLeftArm(arm) ? 1.0D : -1.0D;
         double radius = isCombatArm(arm) ? 1.15D : 1.35D;
         double height = arm == ARM_LEFT_UPPER || arm == ARM_RIGHT_UPPER ? 1.75D
@@ -916,12 +1029,12 @@ public final class BiokinesesArmController {
 
     private static Vec3 anchorPreference(int arm, Vec3 forward, Vec3 up, Vec3 side) {
         if (isTopAnchorArm(arm)) {
-            return up.add(forward).normalize();
+            return up.scale(0.8D).add(forward.scale(1.6D)).add(side.scale(1.4D)).normalize();
         }
         if (isMiddleAnchorArm(arm)) {
-            return forward.add(side.scale(0.35D)).normalize();
+            return forward.scale(0.8D).add(side.scale(1.8D)).normalize();
         }
-        return up.scale(-1.0D).add(forward.scale(-0.35D)).normalize();
+        return up.scale(-1.0D).add(forward.scale(-0.35D)).add(side.scale(1.4D)).normalize();
     }
 
     private static int[] anchorArms() {
@@ -942,6 +1055,9 @@ public final class BiokinesesArmController {
     }
 
     private record AnchorTarget(Vec3 position, BlockPos blockPos, Direction face) {
+    }
+
+    private record AnchorAdvance(int arm, double minimumForwardProjection) {
     }
 
     private record AttackTarget(Vec3 position, int entityId) {

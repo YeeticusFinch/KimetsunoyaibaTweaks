@@ -81,10 +81,6 @@ public interface IBiokinesesArmData extends INBTSerializable<CompoundTag> {
 
     void setLocomotionActive(boolean active);
 
-    boolean wasNoGravityBeforeLocomotion();
-
-    void setNoGravityBeforeLocomotion(boolean noGravity);
-
     float getTraversalForwardInput();
 
     float getTraversalStrafeInput();
@@ -102,4 +98,8 @@ public interface IBiokinesesArmData extends INBTSerializable<CompoundTag> {
     int getAirborneTicks();
 
     void setAirborneTicks(int ticks);
+
+    int getClimbingTicks();
+
+    void setClimbingTicks(int ticks);
 }

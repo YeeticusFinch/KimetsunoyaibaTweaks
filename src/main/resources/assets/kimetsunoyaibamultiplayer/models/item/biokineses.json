@@ -6,6 +6,32 @@
         "kimetsunoyaibamultiplayer:offhand": 1.0
       },
       "model": "kimetsunoyaibamultiplayer:item/biokineses_0l"
+    },
+    {
+      "predicate": {
+        "kimetsunoyaibamultiplayer:model_variant": 1.0
+      },
+      "model": "kimetsunoyaibamultiplayer:item/biokineses_1"
+    },
+    {
+      "predicate": {
+        "kimetsunoyaibamultiplayer:offhand": 1.0,
+        "kimetsunoyaibamultiplayer:model_variant": 1.0
+      },
+      "model": "kimetsunoyaibamultiplayer:item/biokineses_1l"
+    },
+    {
+      "predicate": {
+        "kimetsunoyaibamultiplayer:model_variant": 2.0
+      },
+      "model": "kimetsunoyaibamultiplayer:item/biokineses_2"
+    },
+    {
+      "predicate": {
+        "kimetsunoyaibamultiplayer:offhand": 1.0,
+        "kimetsunoyaibamultiplayer:model_variant": 2.0
+      },
+      "model": "kimetsunoyaibamultiplayer:item/biokineses_2l"
     }
   ]
 }

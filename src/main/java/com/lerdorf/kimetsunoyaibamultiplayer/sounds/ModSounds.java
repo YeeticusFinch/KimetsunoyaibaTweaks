@@ -56,6 +56,36 @@ public class ModSounds {
         registerSoundEvent("rice_spirit_electric_damage");
     public static final RegistryObject<SoundEvent> RICE_SPIRIT_KNOCKBACK =
         registerSoundEvent("rice_spirit_knockback");
+    public static final RegistryObject<SoundEvent> THUNDER_SWARM_DASH =
+        registerSoundEvent("thunder_swarm_dash");
+    public static final RegistryObject<SoundEvent> THUNDER_SWARM_AFTER_IMAGE_SWARM =
+        registerSoundEvent("thunder_swarm_after_image_swarm");
+    public static final RegistryObject<SoundEvent> DISTANT_THUNDER_BLINDING_SLASHES =
+        registerSoundEvent("distant_thunder_blinding_slashes");
+    public static final RegistryObject<SoundEvent> DISTANT_THUNDER_DASH =
+        registerSoundEvent("distant_thunder_dash");
+    public static final RegistryObject<SoundEvent> DISTANT_THUNDER_SLASH =
+        registerSoundEvent("distant_thunder_slash");
+    public static final RegistryObject<SoundEvent> HEAT_LIGHTNING_CHARGING =
+        registerSoundEvent("heat_lightning_charging");
+    public static final RegistryObject<SoundEvent> HEAT_LIGHTNING_TAKEOFF =
+        registerSoundEvent("heat_lightning_takeoff");
+    public static final RegistryObject<SoundEvent> HEAT_LIGHTNING_HEAT_SLASH =
+        registerSoundEvent("heat_lightning_heat_slash");
+    public static final RegistryObject<SoundEvent> HEAT_LIGHTNING_PARALYZING_DAMAGE =
+        registerSoundEvent("heat_lightning_paralyzing_damage");
+    public static final RegistryObject<SoundEvent> RUMBLE_AND_FLASH_CHARGING =
+        registerSoundEvent("rumble_and_flash_charging");
+    public static final RegistryObject<SoundEvent> RUMBLE_AND_FLASH_TAKEOFF =
+        registerSoundEvent("rumble_and_flash_takeoff");
+    public static final RegistryObject<SoundEvent> RUMBLE_AND_FLASH_STRONG_SLASH =
+        registerSoundEvent("rumble_and_flash_strong_slash");
+    public static final RegistryObject<SoundEvent> RUMBLE_AND_FLASH_LEFTOVER_LIGHTNING =
+        registerSoundEvent("rumble_and_flash_leftover_lightning");
+    public static final RegistryObject<SoundEvent> THUNDER_GOD_CHARGING =
+        registerSoundEvent("thunder_god_charging");
+    public static final RegistryObject<SoundEvent> THUNDER_GOD_ULTIMATE_SLASH =
+        registerSoundEvent("thunder_god_ultimate_slash");
 
     private static RegistryObject<SoundEvent> registerSoundEvent(String name) {
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, name);

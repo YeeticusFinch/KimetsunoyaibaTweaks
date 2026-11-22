@@ -95,7 +95,7 @@ public class BiokinesesArmsSyncPacket {
         data.setClimbing(climbing);
         data.setRetracting(retracting);
         data.setExpiresAt(expiresAt);
-            data.setAllocationMode(allocationMode);
+        data.setAllocationMode(allocationMode);
             for (int i = 0; i < arms.length; i++) {
                 ArmState arm = arms[i];
                 data.setTarget(i, arm.target);

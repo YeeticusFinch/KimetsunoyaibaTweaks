@@ -32,7 +32,7 @@ public final class BenchSeatHandler {
         }
 
         BlockState state = event.getLevel().getBlockState(event.getPos());
-        if (!(state.getBlock() instanceof BenchBlock)) {
+        if (!(state.getBlock() instanceof BenchBlock) && !(state.getBlock() instanceof StoolBlock)) {
             return;
         }
 

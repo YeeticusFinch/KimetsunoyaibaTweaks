@@ -52,8 +52,15 @@ public class ChestOfDrawersBlock extends BaseEntityBlock implements SimpleWaterl
     private static final VoxelShape SHAPE_EAST = box(0.0, 0.0, 0.0, 16.0 - FRONT_INSET, 16.0, 16.0);
     private static final VoxelShape SHAPE_WEST = box(FRONT_INSET, 0.0, 0.0, 16.0, 16.0, 16.0);
 
+    private final boolean twoDrawerVariant;
+
     public ChestOfDrawersBlock(BlockBehaviour.Properties properties) {
+        this(properties, false);
+    }
+
+    public ChestOfDrawersBlock(BlockBehaviour.Properties properties, boolean twoDrawerVariant) {
         super(properties);
+        this.twoDrawerVariant = twoDrawerVariant;
         registerDefaultState(stateDefinition.any()
             .setValue(FACING, Direction.NORTH)
             .setValue(GRAVITY_DIRECTION, Direction.DOWN)
@@ -67,6 +74,10 @@ public class ChestOfDrawersBlock extends BaseEntityBlock implements SimpleWaterl
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if (twoDrawerVariant) {
+            return Shapes.block();
+        }
+
         return switch (state.getValue(FACING)) {
             case DOWN -> SHAPE_DOWN;
             case UP -> SHAPE_UP;
@@ -79,12 +90,16 @@ public class ChestOfDrawersBlock extends BaseEntityBlock implements SimpleWaterl
 
     @Override
     public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
-        return Shapes.empty();
+        return twoDrawerVariant ? Shapes.block() : Shapes.empty();
     }
 
     @Override
     public boolean useShapeForLightOcclusion(BlockState state) {
         return true;
+    }
+
+    public int getDrawerCount() {
+        return twoDrawerVariant ? 2 : 4;
     }
 
     @Override

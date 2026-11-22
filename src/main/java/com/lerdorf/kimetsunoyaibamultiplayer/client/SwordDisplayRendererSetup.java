@@ -85,6 +85,7 @@ public class SwordDisplayRendererSetup {
             playerRenderer.addLayer(new NezukoBoxBackLayer(playerRenderer));
             playerRenderer.addLayer(new KyogaiDrumsPlayerLayer(playerRenderer));
             playerRenderer.addLayer(new BiokinesesPlayerLayer(playerRenderer));
+            playerRenderer.addLayer(new BiokinesesArmorPlayerLayer(playerRenderer));
             playerRenderer.addLayer(new SwordDisplayRenderer(
                 playerRenderer,
                 Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer()

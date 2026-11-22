@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -24,6 +25,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,14 +53,24 @@ public final class BiokinesesArmRenderer {
     private static final float TENTACLE_THICKNESS_SCALE = 0.5F;
     private static final double ARM_REACH = 8.0D;
     private static final float SMOOTH_FACTOR = 0.32F;
-    private static final Map<Integer, Vec3> GEO_TORSO_ANCHORS = new HashMap<>();
+    private static final Map<Integer, TorsoTransform> GEO_TORSO_TRANSFORMS = new HashMap<>();
     private static final Map<String, SmoothedArmState> SMOOTHED_ARMS = new HashMap<>();
+    private static final Matrix4f WORLD_FROM_VIEW = new Matrix4f();
+    private static boolean hasViewTransform;
 
     private BiokinesesArmRenderer() {
     }
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
+            GEO_TORSO_TRANSFORMS.clear();
+            WORLD_FROM_VIEW.set(event.getPoseStack().last().pose())
+                .setTranslation(0.0F, 0.0F, 0.0F)
+                .invert();
+            hasViewTransform = true;
+            return;
+        }
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES
             || MINECRAFT.level == null || MINECRAFT.player == null) {
             return;
@@ -75,7 +87,6 @@ public final class BiokinesesArmRenderer {
 
         PoseStack poseStack = event.getPoseStack();
         poseStack.pushPose();
-        poseStack.translate(-cameraPosition.x, -cameraPosition.y, -cameraPosition.z);
         MultiBufferSource.BufferSource buffers = MINECRAFT.renderBuffers().bufferSource();
         VertexConsumer armBuffer = buffers.getBuffer(ARM_RENDER_TYPE);
         VertexConsumer boneBuffer = buffers.getBuffer(BONE_RENDER_TYPE);
@@ -83,7 +94,8 @@ public final class BiokinesesArmRenderer {
         Matrix3f normal = poseStack.last().normal();
 
         for (LivingEntity entity : entities) {
-            renderEntityArms(entity, event.getPartialTick(), matrix, normal, armBuffer, boneBuffer);
+            renderEntityArms(entity, event.getPartialTick(), cameraPosition, matrix, normal,
+                armBuffer, boneBuffer);
         }
 
         SMOOTHED_ARMS.entrySet().removeIf(entry -> {
@@ -106,14 +118,15 @@ public final class BiokinesesArmRenderer {
         poseStack.popPose();
     }
 
-    private static void renderEntityArms(LivingEntity entity, float partialTick, Matrix4f matrix,
-                                         Matrix3f normal, VertexConsumer armBuffer, VertexConsumer boneBuffer) {
+    private static void renderEntityArms(LivingEntity entity, float partialTick, Vec3 cameraPosition,
+                                         Matrix4f matrix, Matrix3f normal, VertexConsumer armBuffer,
+                                         VertexConsumer boneBuffer) {
         IBiokinesesArmData data = entity.getCapability(KimetsunoyaibaMultiplayer.BIOKINESES_ARMS).orElse(null);
         if (data == null || !data.isActive()) {
             return;
         }
 
-        Vec3 anchor = torsoAnchor(entity, partialTick);
+        TorsoTransform torso = torsoTransform(entity, partialTick);
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
             SmoothedArmState smoothed = smoothState(entity, arm, data);
             float progress = smoothed.progress();
@@ -121,7 +134,7 @@ public final class BiokinesesArmRenderer {
                 && !data.isRetracting())) {
                 continue;
             }
-            Vec3 source = armSource(anchor, entity, arm, partialTick);
+            Vec3 source = armSource(torso, arm);
             Vec3 target = smoothed.target();
             if (data.getHeldEntityId(arm) >= 0) {
                 Entity held = entity.level().getEntity(data.getHeldEntityId(arm));
@@ -130,10 +143,12 @@ public final class BiokinesesArmRenderer {
                 }
             }
             Vec3 tip = source.lerp(target, Mth.clamp(progress, 0.0D, 1.0D));
-            List<Vec3> path = createIkPath(source, tip, entity, arm);
-            renderArmPath(path, SPIKE_BASE_DISTANCE, entity, matrix, normal, armBuffer, boneBuffer, arm);
+            Vec3 terminalDirection = anchorTerminalDirection(entity, data, arm, target);
+            List<Vec3> path = createIkPath(source, tip, torso, arm, terminalDirection);
+            renderArmPath(path, SPIKE_BASE_DISTANCE, entity, cameraPosition, matrix, normal,
+                armBuffer, boneBuffer, arm);
             renderSpike(path.get(path.size() - 2), path.get(path.size() - 1), entity,
-                matrix, normal, boneBuffer);
+                cameraPosition, matrix, normal, boneBuffer);
         }
     }
 
@@ -154,24 +169,23 @@ public final class BiokinesesArmRenderer {
         return current;
     }
 
-    private static Vec3 torsoAnchor(LivingEntity entity, float partialTick) {
-        Vec3 geoAnchor = GEO_TORSO_ANCHORS.get(entity.getId());
-        if (geoAnchor != null) {
-            return geoAnchor;
+    private static TorsoTransform torsoTransform(LivingEntity entity, float partialTick) {
+        TorsoTransform geoTransform = GEO_TORSO_TRANSFORMS.get(entity.getId());
+        if (geoTransform != null) {
+            return geoTransform;
         }
         double x = Mth.lerp(partialTick, entity.xOld, entity.getX());
         double y = Mth.lerp(partialTick, entity.yOld, entity.getY()) + entity.getBbHeight() * 0.58D;
         double z = Mth.lerp(partialTick, entity.zOld, entity.getZ());
         float bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
         Vec3 forward = Vec3.directionFromRotation(0.0F, bodyYaw).normalize();
-        return new Vec3(x, y, z).subtract(forward.scale(0.24D));
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+        Vec3 left = forward.cross(up).normalize();
+        return new TorsoTransform(new Vec3(x, y, z).subtract(forward.scale(0.24D)),
+            forward.scale(-1.0D), up, left);
     }
 
-    private static Vec3 armSource(Vec3 torso, LivingEntity entity, int arm, float partialTick) {
-        float bodyYaw = Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
-        Vec3 forward = Vec3.directionFromRotation(0.0F, bodyYaw).normalize();
-        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
-        Vec3 left = up.cross(forward).normalize();
+    private static Vec3 armSource(TorsoTransform torso, int arm) {
         boolean leftArm = arm == BiokinesesArmController.ARM_LEFT_UPPER
             || arm == BiokinesesArmController.ARM_LEFT_LOWER
             || arm == BiokinesesArmController.ARM_LEFT_COMBAT;
@@ -184,17 +198,86 @@ public final class BiokinesesArmRenderer {
             || arm == BiokinesesArmController.ARM_RIGHT_COMBAT ? 0.4D : 0.3D;
         double forwardOffset = arm == BiokinesesArmController.ARM_LEFT_COMBAT
             || arm == BiokinesesArmController.ARM_RIGHT_COMBAT ? 0.18D : -0.08D;
-        return torso.add(left.scale(side * sideOffset)).add(up.scale(height)).add(forward.scale(forwardOffset));
+        return torso.origin().add(torso.left().scale(side * sideOffset)).add(torso.up().scale(height))
+            .subtract(torso.backward().scale(forwardOffset));
     }
 
-    /** Called by the GeckoLib layer after it resolves the animated body bone. */
-    public static void captureGeoTorsoAnchor(int entityId, Vec3 worldPosition) {
-        if (worldPosition != null) {
-            GEO_TORSO_ANCHORS.put(entityId, worldPosition);
+    private static Vec3 abilityHoverTarget(TorsoTransform torso, int arm) {
+        boolean leftArm = isLeftArm(arm);
+        double side = leftArm ? 1.0D : -1.0D;
+        double height = arm == BiokinesesArmController.ARM_LEFT_UPPER
+            || arm == BiokinesesArmController.ARM_RIGHT_UPPER ? 0.42D
+            : arm == BiokinesesArmController.ARM_LEFT_LOWER
+                || arm == BiokinesesArmController.ARM_RIGHT_LOWER ? -0.42D : 0.0D;
+        double radius = isCombatArm(arm) ? 1.15D : 1.35D;
+        return torso.origin().add(torso.left().scale(side * radius)).add(torso.up().scale(height))
+            .add(torso.backward().scale(0.2D));
+    }
+
+    private static Vec3 anchorTerminalDirection(LivingEntity entity, IBiokinesesArmData data,
+                                                int arm, Vec3 anchor) {
+        if (data.getMode(arm) != IBiokinesesArmData.MODE_ANCHOR || !data.hasAnchor(arm)) {
+            return null;
         }
+        Direction face = Direction.from3DDataValue(data.getAnchorFace(arm));
+        Vec3 intoFace = new Vec3(-face.getStepX(), -face.getStepY(), -face.getStepZ()).normalize();
+        Vec3 towardUser = entity.position().add(0.0D, entity.getBbHeight() * 0.5D, 0.0D)
+            .subtract(anchor);
+        if (towardUser.lengthSqr() < 1.0E-6D) {
+            return intoFace;
+        }
+        towardUser = towardUser.normalize();
+        double angle = Math.min(Math.toRadians(20.0D),
+            Math.acos(Mth.clamp(intoFace.dot(towardUser), -1.0D, 1.0D)));
+        Vec3 axis = intoFace.cross(towardUser);
+        if (axis.lengthSqr() < 1.0E-6D || angle < 1.0E-6D) {
+            return intoFace;
+        }
+        axis = axis.normalize();
+        double cosine = Math.cos(angle);
+        double sine = Math.sin(angle);
+        return intoFace.scale(cosine)
+            .add(axis.cross(intoFace).scale(sine))
+            .add(axis.scale(axis.dot(intoFace) * (1.0D - cosine)))
+            .normalize();
     }
 
-    private static List<Vec3> createIkPath(Vec3 start, Vec3 target, LivingEntity entity, int arm) {
+    /** Called by the model layers after they resolve the animated torso. */
+    public static void captureGeoTorsoTransform(LivingEntity entity, PoseStack poseStack, Vec3 cameraPosition,
+                                                float partialTick) {
+        if (entity == null || poseStack == null || cameraPosition == null) {
+            return;
+        }
+        Matrix4f pose = poseStack.last().pose();
+        Vector3f origin = new Vector3f(0.0F, 0.0F, 0.0F);
+        Vector3f backward = new Vector3f(0.0F, 0.0F, 1.0F);
+        Vector3f up = new Vector3f(0.0F, 1.0F, 0.0F);
+        Vector3f left = new Vector3f(-1.0F, 0.0F, 0.0F);
+        pose.transformPosition(origin);
+        pose.transformPosition(backward);
+        pose.transformPosition(up);
+        pose.transformPosition(left);
+        Matrix4f worldFromView = hasViewTransform ? new Matrix4f(WORLD_FROM_VIEW) : new Matrix4f();
+        Vector3f worldOriginVector = new Vector3f(origin);
+        worldFromView.transformPosition(worldOriginVector);
+        Vec3 worldOrigin = cameraPosition.add(worldOriginVector.x, worldOriginVector.y, worldOriginVector.z);
+        GEO_TORSO_TRANSFORMS.put(entity.getId(), new TorsoTransform(worldOrigin,
+            transformDirection(origin, backward, worldFromView),
+            transformDirection(origin, up, worldFromView),
+            transformDirection(origin, left, worldFromView)));
+    }
+
+    private static Vec3 transformDirection(Vector3f origin, Vector3f point, Matrix4f worldFromView) {
+        Vector3f direction = new Vector3f(point).sub(origin);
+        if (direction.lengthSquared() < 1.0E-6F) {
+            return Vec3.ZERO;
+        }
+        worldFromView.transformDirection(direction).normalize();
+        return new Vec3(direction.x, direction.y, direction.z);
+    }
+
+    private static List<Vec3> createIkPath(Vec3 start, Vec3 target, TorsoTransform torso, int arm,
+                                           Vec3 terminalDirection) {
         Vec3 difference = target.subtract(start);
         double distance = difference.length();
         if (distance < 1.0E-5D) {
@@ -208,18 +291,11 @@ public final class BiokinesesArmRenderer {
         Vec3 reachableTarget = distance > totalLength
             ? start.add(direction.scale(totalLength - 0.04D)) : target;
 
-        Vec3 forward = Vec3.directionFromRotation(0.0F, entity.yBodyRot).normalize();
-        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
-        Vec3 side = up.cross(forward).normalize();
-        if (arm == BiokinesesArmController.ARM_RIGHT_UPPER
-            || arm == BiokinesesArmController.ARM_RIGHT_LOWER
-            || arm == BiokinesesArmController.ARM_RIGHT_COMBAT) {
-            side = side.scale(-1.0D);
-        }
-        Vec3 pole = side.scale(0.85D).add(up.scale(0.9D)).add(forward.scale(0.25D));
+        Vec3 startDirection = startDirection(torso, arm);
+        Vec3 pole = startDirection.scale(0.85D);
         Vec3 bendDirection = pole.subtract(direction.scale(pole.dot(direction)));
         if (bendDirection.lengthSqr() < 1.0E-6D) {
-            bendDirection = up.subtract(direction.scale(up.dot(direction)));
+            bendDirection = torso.up().subtract(direction.scale(torso.up().dot(direction)));
         }
         bendDirection = bendDirection.normalize();
 
@@ -230,7 +306,7 @@ public final class BiokinesesArmRenderer {
             - (cosine * upperLength) * (cosine * upperLength)));
         Vec3 elbow = start.add(direction.scale(cosine * upperLength)).add(bendDirection.scale(jointHeight));
 
-        Vec3 firstControl = start.lerp(elbow, 0.78D);
+        Vec3 firstControl = start.add(startDirection.scale(Math.min(0.75D, upperLength * 0.42D)));
         Vec3 secondControl = reachableTarget.lerp(elbow, 0.78D);
         List<Vec3> path = new ArrayList<>(PATH_SEGMENTS + 1);
         for (int i = 0; i <= PATH_SEGMENTS; i++) {
@@ -244,11 +320,47 @@ public final class BiokinesesArmRenderer {
                 * Math.sin(progress * Math.PI);
             path.add(point.add(bendDirection.scale(sway)));
         }
+        if (terminalDirection != null && path.size() > 1) {
+            Vec3 tip = path.get(path.size() - 1);
+            double terminalLength = Math.min(SPIKE_BASE_DISTANCE,
+                Math.max(0.12D, tip.distanceTo(start) * 0.25D));
+            path.set(path.size() - 2, tip.subtract(terminalDirection.scale(terminalLength)));
+        }
         return path;
     }
 
-    private static void renderArmPath(List<Vec3> path, double tailDistance, LivingEntity entity, Matrix4f matrix,
-                                      Matrix3f normal, VertexConsumer armBuffer,
+    private static Vec3 startDirection(TorsoTransform torso, int arm) {
+        double vertical = isTopArm(arm) ? 0.35D : isBottomArm(arm) ? -0.35D : 0.0D;
+        return torso.backward().add(torso.up().scale(vertical)).normalize();
+    }
+
+    private static boolean isLeftArm(int arm) {
+        return arm == BiokinesesArmController.ARM_LEFT_UPPER
+            || arm == BiokinesesArmController.ARM_LEFT_LOWER
+            || arm == BiokinesesArmController.ARM_LEFT_COMBAT;
+    }
+
+    private static boolean isCombatArm(int arm) {
+        return arm == BiokinesesArmController.ARM_LEFT_COMBAT
+            || arm == BiokinesesArmController.ARM_RIGHT_COMBAT;
+    }
+
+    private static boolean isTopArm(int arm) {
+        return arm == BiokinesesArmController.ARM_LEFT_UPPER
+            || arm == BiokinesesArmController.ARM_RIGHT_UPPER;
+    }
+
+    private static boolean isBottomArm(int arm) {
+        return arm == BiokinesesArmController.ARM_LEFT_LOWER
+            || arm == BiokinesesArmController.ARM_RIGHT_LOWER;
+    }
+
+    private record TorsoTransform(Vec3 origin, Vec3 backward, Vec3 up, Vec3 left) {
+    }
+
+    private static void renderArmPath(List<Vec3> path, double tailDistance, LivingEntity entity,
+                                      Vec3 cameraPosition, Matrix4f matrix, Matrix3f normal,
+                                      VertexConsumer armBuffer,
                                       VertexConsumer boneBuffer, int arm) {
         List<Vec3> fleshPath = trimTail(path, tailDistance);
         for (int i = 0; i < fleshPath.size() - 1; i++) {
@@ -261,7 +373,7 @@ public final class BiokinesesArmRenderer {
                 : Mth.lerp(segmentProgress, 0.080F, 0.045F) * TENTACLE_THICKNESS_SCALE;
             int color = bone ? BONE_TINT
                 : ((i + arm) % 4 == 0 ? ARM_FLESH_HIGHLIGHT : ARM_FLESH);
-            drawBeam(start, end, width, color, entity.level(), matrix, normal,
+            drawBeam(start, end, width, color, entity.level(), cameraPosition, matrix, normal,
                 bone ? boneBuffer : armBuffer);
         }
     }
@@ -285,8 +397,8 @@ public final class BiokinesesArmRenderer {
         return trimmed;
     }
 
-    private static void renderSpike(Vec3 previous, Vec3 tip, LivingEntity entity, Matrix4f matrix,
-                                    Matrix3f normal, VertexConsumer buffer) {
+    private static void renderSpike(Vec3 previous, Vec3 tip, LivingEntity entity, Vec3 cameraPosition,
+                                    Matrix4f matrix, Matrix3f normal, VertexConsumer buffer) {
         Vec3 direction = tip.subtract(previous);
         if (direction.lengthSqr() < 1.0E-6D) {
             return;
@@ -303,19 +415,19 @@ public final class BiokinesesArmRenderer {
         Vec3 pointB = base.subtract(side).add(otherSide);
         Vec3 pointC = base.subtract(side).subtract(otherSide);
         Vec3 pointD = base.add(side).subtract(otherSide);
-        drawTriangle(tip, pointA, pointB, SPIKE_WHITE, entity.level(), matrix, normal, buffer,
+        drawTriangle(tip, pointA, pointB, SPIKE_WHITE, entity.level(), cameraPosition, matrix, normal, buffer,
             0.5F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-        drawTriangle(tip, pointB, pointC, SPIKE_WHITE, entity.level(), matrix, normal, buffer,
+        drawTriangle(tip, pointB, pointC, SPIKE_WHITE, entity.level(), cameraPosition, matrix, normal, buffer,
             0.5F, 0.0F, 1.0F, 1.0F, 0.5F, 1.0F);
-        drawTriangle(tip, pointC, pointD, SPIKE_WHITE, entity.level(), matrix, normal, buffer,
+        drawTriangle(tip, pointC, pointD, SPIKE_WHITE, entity.level(), cameraPosition, matrix, normal, buffer,
             0.5F, 0.0F, 0.5F, 1.0F, 0.0F, 1.0F);
-        drawTriangle(tip, pointD, pointA, SPIKE_WHITE, entity.level(), matrix, normal, buffer,
+        drawTriangle(tip, pointD, pointA, SPIKE_WHITE, entity.level(), cameraPosition, matrix, normal, buffer,
             0.5F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private static void drawBeam(Vec3 start, Vec3 end, float width, int color,
-                                 net.minecraft.world.level.Level level, Matrix4f matrix,
-                                 Matrix3f normal, VertexConsumer buffer) {
+                                 net.minecraft.world.level.Level level, Vec3 cameraPosition,
+                                 Matrix4f matrix, Matrix3f normal, VertexConsumer buffer) {
         Vec3 direction = end.subtract(start).normalize();
         Vec3 side = direction.cross(new Vec3(0.0D, 1.0D, 0.0D));
         if (side.lengthSqr() < 1.0E-6D) {
@@ -329,39 +441,47 @@ public final class BiokinesesArmRenderer {
             end.add(side).add(otherSide), end.subtract(side).add(otherSide),
             end.subtract(side).subtract(otherSide), end.add(side).subtract(otherSide)
         };
-        drawQuad(corners[0], corners[4], corners[5], corners[1], color, level, matrix, normal, buffer);
-        drawQuad(corners[1], corners[5], corners[6], corners[2], color, level, matrix, normal, buffer);
-        drawQuad(corners[2], corners[6], corners[7], corners[3], color, level, matrix, normal, buffer);
-        drawQuad(corners[3], corners[7], corners[4], corners[0], color, level, matrix, normal, buffer);
-        drawQuad(corners[0], corners[4], corners[7], corners[3], color, level, matrix, normal, buffer);
-        drawQuad(corners[1], corners[2], corners[6], corners[5], color, level, matrix, normal, buffer);
+        drawQuad(corners[0], corners[4], corners[5], corners[1], color, level, cameraPosition,
+            matrix, normal, buffer);
+        drawQuad(corners[1], corners[5], corners[6], corners[2], color, level, cameraPosition,
+            matrix, normal, buffer);
+        drawQuad(corners[2], corners[6], corners[7], corners[3], color, level, cameraPosition,
+            matrix, normal, buffer);
+        drawQuad(corners[3], corners[7], corners[4], corners[0], color, level, cameraPosition,
+            matrix, normal, buffer);
+        drawQuad(corners[0], corners[4], corners[7], corners[3], color, level, cameraPosition,
+            matrix, normal, buffer);
+        drawQuad(corners[1], corners[2], corners[6], corners[5], color, level, cameraPosition,
+            matrix, normal, buffer);
     }
 
     private static void drawQuad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, int color,
-                                 net.minecraft.world.level.Level level, Matrix4f matrix,
-                                 Matrix3f normal, VertexConsumer buffer) {
-        vertex(a, color, level, matrix, normal, buffer, 0.0F, 0.0F);
-        vertex(b, color, level, matrix, normal, buffer, 1.0F, 0.0F);
-        vertex(c, color, level, matrix, normal, buffer, 1.0F, 1.0F);
-        vertex(d, color, level, matrix, normal, buffer, 0.0F, 1.0F);
+                                 net.minecraft.world.level.Level level, Vec3 cameraPosition,
+                                 Matrix4f matrix, Matrix3f normal, VertexConsumer buffer) {
+        vertex(a, color, level, cameraPosition, matrix, normal, buffer, 0.0F, 0.0F);
+        vertex(b, color, level, cameraPosition, matrix, normal, buffer, 1.0F, 0.0F);
+        vertex(c, color, level, cameraPosition, matrix, normal, buffer, 1.0F, 1.0F);
+        vertex(d, color, level, cameraPosition, matrix, normal, buffer, 0.0F, 1.0F);
     }
 
     private static void drawTriangle(Vec3 a, Vec3 b, Vec3 c, int color,
-                                     net.minecraft.world.level.Level level, Matrix4f matrix,
-                                     Matrix3f normal, VertexConsumer buffer,
+                                     net.minecraft.world.level.Level level, Vec3 cameraPosition,
+                                     Matrix4f matrix, Matrix3f normal, VertexConsumer buffer,
                                      float au, float av, float bu, float bv, float cu, float cv) {
-        vertex(a, color, level, matrix, normal, buffer, au, av);
-        vertex(b, color, level, matrix, normal, buffer, bu, bv);
-        vertex(c, color, level, matrix, normal, buffer, cu, cv);
+        vertex(a, color, level, cameraPosition, matrix, normal, buffer, au, av);
+        vertex(b, color, level, cameraPosition, matrix, normal, buffer, bu, bv);
+        vertex(c, color, level, cameraPosition, matrix, normal, buffer, cu, cv);
     }
 
     private static void vertex(Vec3 position, int color, net.minecraft.world.level.Level level,
-                               Matrix4f matrix, Matrix3f normal, VertexConsumer buffer,
+                               Vec3 cameraPosition, Matrix4f matrix, Matrix3f normal,
+                               VertexConsumer buffer,
                                float u, float v) {
         float red = ((color >> 16) & 0xFF) / 255.0F;
         float green = ((color >> 8) & 0xFF) / 255.0F;
         float blue = (color & 0xFF) / 255.0F;
-        buffer.vertex(matrix, (float) position.x, (float) position.y, (float) position.z)
+        Vec3 cameraRelative = position.subtract(cameraPosition);
+        buffer.vertex(matrix, (float) cameraRelative.x, (float) cameraRelative.y, (float) cameraRelative.z)
             .color(red, green, blue, 1.0F)
             .uv(u, v)
             .overlayCoords(OverlayTexture.NO_OVERLAY)

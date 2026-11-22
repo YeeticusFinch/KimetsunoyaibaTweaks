@@ -11,14 +11,18 @@ import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.AnimationHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.GuardStateHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.KnYEffects;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.MovementHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.capability.IBiokinesesArmData;
 import com.lerdorf.kimetsunoyaibamultiplayer.compat.MinecraftComesAliveCompat;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BloodTornadoEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BloodTornadoSpawner;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BloodLanceEntity;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.BoneWhipEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.BreathingSlayerEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.FleshVineEntity;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonEyesSyncHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
+import com.lerdorf.kimetsunoyaibamultiplayer.events.BleedingHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame;
 import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.GravityDirectionHelper;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
@@ -37,6 +41,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Creeper;
@@ -64,6 +69,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -80,6 +86,11 @@ public final class Biokineses {
     public static final int FORM_BLACK_BLOOD_DESCENDENCE = 3906;
     public static final int FORM_FORCED_TRANSITION = 3907;
     public static final int FORM_SHOCKWAVE_ENERGY_BLAST = 3908;
+    public static final int FORM_BLADES_OF_DISASTER = 3909;
+    public static final int FORM_BLOOD_KINGS_MASSACRE = 3910;
+    public static final int FORM_DEMON_KINGS_WRATH = 3911;
+    public static final int FORM_DEMON_KINGS_BLOOD_DANCE = 3912;
+    public static final int FORM_ABHORRENT_GALAXY = 3913;
 
     private static final int CHARGE_TICKS = 18;
     private static final int ARM_TOGGLE_COOLDOWN_TICKS = 20;
@@ -161,6 +172,31 @@ public final class Biokineses {
     private static final double SHOCKWAVE_MAX_RADIUS = 50.0D;
     private static final float SHOCKWAVE_SPARK_WIDTH = 0.8F;
     private static final float SHOCKWAVE_DAMAGE = 24.0F;
+    private static final int BLADES_CLEANUP_TICK = 30;
+    private static final int BLADES_WHIP_END_TICK = 8;
+    private static final double BLADES_WHIP_START_ANGLE = Math.toRadians(45.0D);
+    private static final double BLADES_WHIP_SWEEP_ANGLE = Math.toRadians(90.0D);
+    private static final double BLADES_WHIP_ARC = 8.0D;
+    private static final float BLADES_DAMAGE = 10.0F;
+    private static final int MASSACRE_CLEANUP_TICK = 70;
+    private static final int MASSACRE_RETRACTION_TICK = 54;
+    private static final float MASSACRE_DAMAGE = 12.0F;
+    private static final int WRATH_CLEANUP_TICK = 83;
+    private static final int WRATH_WHIP_START_TICK = 16;
+    private static final int WRATH_WHIP_END_TICK = 66;
+    private static final int WRATH_SHOCKWAVE_TICK = 56;
+    private static final float WRATH_DAMAGE = 16.0F;
+    private static final int BLOOD_DANCE_TARGET_TICK = 15;
+    private static final int BLOOD_DANCE_DANCE_END_TICK = 76;
+    private static final int BLOOD_DANCE_RETRACTION_END_TICK = 87;
+    private static final int BLOOD_DANCE_CLEANUP_TICK = 88;
+    private static final float BLOOD_DANCE_DAMAGE = 14.0F;
+    private static final int ABHORRENT_CHARGE_END_TICK = 15;
+    private static final int ABHORRENT_DANCE_END_TICK = 85;
+    private static final int ABHORRENT_RETRACTION_END_TICK = 96;
+    private static final int ABHORRENT_CLEANUP_TICK = 97;
+    private static final float ABHORRENT_DAMAGE = 12.0F;
+    public static final String MODEL_VARIANT_TAG = "BiokinesesModelVariant";
     private static final Vec3 WHITE = new Vec3(1.0D, 1.0D, 1.0D);
     private static final ResourceLocation KNY_LIGHTNING_PARTICLE =
         ResourceLocation.fromNamespaceAndPath("kimetsunoyaiba", "particle_lightning");
@@ -237,10 +273,982 @@ public final class Biokineses {
                     "Release a radial shockwave that stuns, damages, and suffocates nearby enemies.",
                     6,
                     Biokineses::executeShockwaveEnergyBlast
+                ),
+                new BloodDemonArtForm(
+                    FORM_BLADES_OF_DISASTER,
+                    "Blades of Disaster",
+                    "Cross two bone whips into a devastating slash followed by blood projectiles.",
+                    6,
+                    Biokineses::executeBladesOfDisaster
+                ),
+                new BloodDemonArtForm(
+                    FORM_BLOOD_KINGS_MASSACRE,
+                    "Blood King's Massacre",
+                    "Thrash two bone whips through a wide area and drag nearby victims inward.",
+                    8,
+                    Biokineses::executeBloodKingsMassacre
+                ),
+                new BloodDemonArtForm(
+                    FORM_DEMON_KINGS_WRATH,
+                    "Demon King's Wrath",
+                    "Unleash four bone whips, explosions, and a final expanding shockwave.",
+                    10,
+                    Biokineses::executeDemonKingsWrath
+                ),
+                new BloodDemonArtForm(
+                    FORM_DEMON_KINGS_BLOOD_DANCE,
+                    "Demon King's Blood Dance",
+                    "Assign tentacles and bone whips to nearby enemies before tearing through them in a deadly dance.",
+                    12,
+                    Biokineses::executeDemonKingsBloodDance
+                ),
+                new BloodDemonArtForm(
+                    FORM_ABHORRENT_GALAXY,
+                    "Abhorrent Galaxy",
+                    "Spiral flesh vines and tentacles around the user while lances and blood tornadoes tear through the disk.",
+                    14,
+                    Biokineses::executeAbhorrentGalaxy
                 )
              ),
             0x8B1018
         );
+    }
+
+    private static void setModelVariant(LivingEntity entity, int variant) {
+        ItemStack stack = entity.getMainHandItem();
+        if (!isBiokinesesItem(stack)) {
+            return;
+        }
+        stack.getOrCreateTag().putInt(MODEL_VARIANT_TAG, variant);
+    }
+
+    private static BoneWhipEntity createBoneWhip(ServerLevel level, LivingEntity owner,
+                                                  Vec3 start, Vec3 end, List<Vec3> path,
+                                                  int lifetime) {
+        BoneWhipEntity whip = ModEntities.BONE_WHIP.get().create(level);
+        if (whip == null) {
+            return null;
+        }
+        whip.initializeCharge(start, end, owner, owner.getRandom().nextInt(),
+            BoneWhipEntity.DEFAULT_DIAMETER, lifetime);
+        whip.updateChargePath(start, end, path);
+        level.addFreshEntity(whip);
+        return whip;
+    }
+
+    private static void updateBoneWhip(BoneWhipEntity whip, Vec3 start, Vec3 end,
+                                       Vec3 up, List<Vec3> path) {
+        if (whip == null || !whip.isAlive() || whip.getMode() != FleshVineEntity.MODE_CHARGE) {
+            return;
+        }
+        whip.setUp(up);
+        whip.updateChargePath(start, end, path);
+    }
+
+    private static List<Vec3> buildWhipPath(Vec3 start, Vec3 end, Vec3 arc,
+                                            double wobble, int seed) {
+        int points = 16;
+        List<Vec3> path = new ArrayList<>(points + 1);
+        Vec3 tangent = end.subtract(start);
+        Vec3 reference = Math.abs(tangent.y) < 0.9D
+            ? new Vec3(0.0D, 1.0D, 0.0D) : new Vec3(1.0D, 0.0D, 0.0D);
+        Vec3 side = tangent.cross(reference);
+        if (side.lengthSqr() < 1.0E-8D) {
+            side = tangent.cross(new Vec3(0.0D, 0.0D, 1.0D));
+        }
+        side = side.lengthSqr() < 1.0E-8D ? new Vec3(1.0D, 0.0D, 0.0D) : side.normalize();
+        Vec3 otherSide = tangent.cross(side).normalize();
+        for (int index = 0; index <= points; index++) {
+            double progress = index / (double) points;
+            double envelope = Math.sin(progress * Math.PI);
+            double wave = seed * 0.17D + index * 1.31D;
+            Vec3 point = start.lerp(end, progress).add(arc.scale(envelope));
+            point = point.add(side.scale(Math.sin(wave) * wobble * envelope))
+                .add(otherSide.scale(Math.cos(wave * 0.73D) * wobble * envelope));
+            path.add(point);
+        }
+        return path;
+    }
+
+    private static Vec3 armAnchor(LivingEntity entity, boolean left) {
+        Vec3 center = CombatGravityFrame.world(CombatGravityFrame.position(entity));
+        Vec3 up = GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 forward = GravityDirectionHelper.getLookDirection(entity).normalize();
+        Vec3 side = up.cross(forward);
+        if (side.lengthSqr() < 1.0E-8D) {
+            side = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            side = side.normalize();
+        }
+        return center.add(up.scale(entity.getBbHeight() * 0.62D))
+            .add(side.scale(left ? -0.42D : 0.42D)).add(forward.scale(0.25D));
+    }
+
+    private static Vec3 horizontalDirection(Vec3 forward, Vec3 up, double angle) {
+        Vec3 side = up.cross(forward);
+        if (side.lengthSqr() < 1.0E-8D) {
+            side = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            side = side.normalize();
+        }
+        return forward.scale(Math.cos(angle)).add(side.scale(Math.sin(angle))).normalize();
+    }
+
+    private static void discardBoneWhips(List<BoneWhipEntity> whips) {
+        for (BoneWhipEntity whip : whips) {
+            if (whip.isAlive()) {
+                whip.beginFade();
+            }
+        }
+        whips.clear();
+    }
+
+    private static void damageBoneWhipPath(ServerLevel level, LivingEntity owner, List<Vec3> path,
+                                            float damage, double radius) {
+        if (path.size() < 2) {
+            return;
+        }
+        Vec3 min = path.get(0);
+        Vec3 max = min;
+        for (Vec3 point : path) {
+            min = new Vec3(Math.min(min.x, point.x), Math.min(min.y, point.y), Math.min(min.z, point.z));
+            max = new Vec3(Math.max(max.x, point.x), Math.max(max.y, point.y), Math.max(max.z, point.z));
+        }
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
+            new AABB(min, max).inflate(radius), candidate -> candidate != owner
+                && candidate.isAlive() && !candidate.isSpectator())) {
+            Vec3 targetPoint = target.getBoundingBox().getCenter();
+            boolean hit = false;
+            for (int index = 1; index < path.size(); index++) {
+                if (distanceToSegmentSqr(targetPoint, path.get(index - 1), path.get(index))
+                    <= (radius + target.getBbWidth() * 0.5D) * (radius + target.getBbWidth() * 0.5D)) {
+                    hit = true;
+                    break;
+                }
+            }
+            if (hit && Damager.hurt(owner, target, damage, true)) {
+                Vec3 impact = target.getBoundingBox().getCenter();
+                level.sendParticles(ModParticles.BLACKRED_IMPACT.get(), impact.x, impact.y, impact.z,
+                    2, 0.15D, 0.15D, 0.15D, 0.02D);
+            }
+        }
+    }
+
+    private static void spawnBloodLanceFan(ServerLevel level, LivingEntity owner, Vec3 center,
+                                           Vec3 forward, Vec3 up, int count, double spacing,
+                                           double angleSpacing, float damage) {
+        Vec3 side = up.cross(forward);
+        if (side.lengthSqr() < 1.0E-8D) {
+            side = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            side = side.normalize();
+        }
+        for (int index = 0; index < count; index++) {
+            double centered = index - (count - 1) * 0.5D;
+            Vec3 position = center.add(side.scale(centered * spacing));
+            Vec3 direction = horizontalDirection(forward, up, centered * angleSpacing);
+            BloodLanceEntity lance = BloodLanceEntity.create(level, owner, position,
+                direction.scale(1.4D), damage);
+            level.addFreshEntity(lance);
+        }
+    }
+
+    private static void spawnBloodLanceRing(ServerLevel level, LivingEntity owner, Vec3 center,
+                                            Vec3 forward, Vec3 up, int count, double radius,
+                                            boolean tangential, float damage) {
+        for (int index = 0; index < count; index++) {
+            double angle = index * Math.PI * 2.0D / count;
+            Vec3 radial = horizontalDirection(forward, up, angle);
+            Vec3 direction;
+            if (tangential) {
+                direction = up.cross(radial).normalize();
+            } else {
+                direction = radial;
+            }
+            Vec3 position = center.add(radial.scale(radius));
+            BloodLanceEntity lance = BloodLanceEntity.create(level, owner, position,
+                direction.scale(1.4D), damage);
+            level.addFreshEntity(lance);
+        }
+    }
+
+    private static void applyMassacreDamage(ServerLevel level, LivingEntity owner, Vec3 center,
+                                            double radius, float damage) {
+        AABB area = new AABB(center, center).inflate(radius);
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
+            candidate -> candidate != owner && candidate.isAlive() && !candidate.isSpectator())) {
+            if (target.getRandom().nextBoolean() && Damager.hurt(owner, target, damage, true)) {
+                target.addEffect(new MobEffectInstance(MobEffects.WITHER, 200, 4, false, true, true));
+                Vec3 pull = center.subtract(target.position());
+                if (pull.lengthSqr() > 1.0E-8D) {
+                    MovementHelper.addVelocity(target, pull.normalize().scale(0.3D));
+                }
+                Vec3 impact = target.getBoundingBox().getCenter();
+                level.sendParticles(ModParticles.BLACKRED_IMPACT.get(), impact.x, impact.y, impact.z,
+                    2, 0.15D, 0.15D, 0.15D, 0.02D);
+            }
+        }
+    }
+
+    private static void updateMassacreTethers(ServerLevel level, LivingEntity owner,
+                                               Map<UUID, FleshVineEntity> tethers) {
+        Set<UUID> activeTargets = new HashSet<>();
+        Vec3 center = CombatGravityFrame.world(CombatGravityFrame.position(owner))
+            .add(0.0D, owner.getBbHeight() * 0.5D, 0.0D);
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
+            new AABB(center, center).inflate(10.0D), candidate -> candidate != owner
+                && candidate.isAlive() && !candidate.isSpectator())) {
+            activeTargets.add(target.getUUID());
+            Vec3 end = target.getBoundingBox().getCenter();
+            Vec3 start = center;
+            List<Vec3> path = buildWhipPath(start, end, new Vec3(0.0D, 1.0D, 0.0D), 0.3D,
+                owner.getId() + target.getId());
+            FleshVineEntity vine = tethers.get(target.getUUID());
+            if (vine == null || !vine.isAlive()) {
+                vine = ModEntities.FLESH_VINE.get().create(level);
+                if (vine == null) {
+                    continue;
+                }
+                vine.initializeTransition(start, owner, owner.getRandom().nextInt(),
+                    FleshVineEntity.DEFAULT_DIAMETER, 30);
+                vine.updateTransition(start, end, path);
+                level.addFreshEntity(vine);
+                tethers.put(target.getUUID(), vine);
+            }
+            vine.updateTransition(start, end, path);
+        }
+        tethers.entrySet().removeIf(entry -> {
+            if (activeTargets.contains(entry.getKey())) {
+                return false;
+            }
+            if (entry.getValue().isAlive()) {
+                entry.getValue().beginFade();
+            }
+            return true;
+        });
+    }
+
+    private static void discardTethers(Map<UUID, FleshVineEntity> tethers) {
+        for (FleshVineEntity vine : tethers.values()) {
+            if (vine.isAlive()) {
+                vine.beginFade();
+            }
+        }
+        tethers.clear();
+    }
+
+    private static void executeBladesOfDisaster(LivingEntity entity, Level level, int formId) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        CombatGravityFrame.run(entity, () -> {
+            List<BoneWhipEntity> whips = new ArrayList<>();
+            setModelVariant(entity, 2);
+            GuardStateHelper.setGuardState(entity, BLADES_DAMAGE, formId, true);
+            AnimationHelper.playAnimation(entity, "beast2", BLADES_CLEANUP_TICK);
+            Vec3 center = shockwaveCenter(entity);
+            Vec3 up = GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+            Vec3 forward = GravityDirectionHelper.getLookDirection(entity).normalize();
+            for (boolean left : new boolean[] {true, false}) {
+                Vec3 start = armAnchor(entity, left);
+                double rotationSign = left ? -1.0D : 1.0D;
+                double angle = -rotationSign * BLADES_WHIP_START_ANGLE;
+                Vec3 direction = horizontalDirection(forward, up, angle);
+                Vec3 tangent = horizontalDirection(forward, up, angle + rotationSign * Math.PI * 0.5D);
+                BoneWhipEntity whip = createBoneWhip(serverLevel, entity, start,
+                    start.add(direction.scale(30.0D)),
+                    buildWhipPath(start, start.add(direction.scale(30.0D)), tangent.scale(BLADES_WHIP_ARC), 0.25D,
+                        entity.getRandom().nextInt()), BLADES_CLEANUP_TICK + 2);
+                if (whip != null) {
+                    whips.add(whip);
+                }
+            }
+
+            AbilityScheduler.scheduleRepeating(entity, new Runnable() {
+                private int tick;
+
+                @Override
+                public void run() {
+                    if (!entity.isAlive()) {
+                        discardBoneWhips(whips);
+                        setModelVariant(entity, 0);
+                        cleanupForm(entity);
+                        return;
+                    }
+                    Vec3 currentCenter = shockwaveCenter(entity);
+                    Vec3 currentUp = GravityDirectionHelper.localToWorld(entity,
+                        new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+                    Vec3 currentForward = GravityDirectionHelper.getLookDirection(entity).normalize();
+                    if (tick <= BLADES_WHIP_END_TICK) {
+                        for (int index = 0; index < whips.size(); index++) {
+                            boolean left = index == 0;
+                            Vec3 start = armAnchor(entity, left);
+                            double rotationSign = left ? -1.0D : 1.0D;
+                            double angle = -rotationSign * BLADES_WHIP_START_ANGLE
+                                + rotationSign * BLADES_WHIP_SWEEP_ANGLE * tick / BLADES_WHIP_END_TICK;
+                            Vec3 direction = horizontalDirection(currentForward, currentUp, angle);
+                            Vec3 tangent = horizontalDirection(currentForward, currentUp,
+                                angle + rotationSign * Math.PI * 0.5D);
+                            Vec3 end = currentCenter.add(direction.scale(30.0D));
+                            List<Vec3> path = buildWhipPath(start, end,
+                                tangent.scale(BLADES_WHIP_ARC), 0.3D, entity.getId() + index);
+                            updateBoneWhip(whips.get(index), start, end, currentUp, path);
+                            damageBoneWhipPath(serverLevel, entity, path, BLADES_DAMAGE, 0.75D);
+                            for (int pathIndex = 1; pathIndex < path.size(); pathIndex += 2) {
+                                Vec3 particle = path.get(pathIndex);
+                                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                                    particle.x, particle.y, particle.z, 1,
+                                    0.0D, 0.0D, 0.0D, 0.0D);
+                                serverLevel.sendParticles(ParticleTypes.CRIT,
+                                    particle.x, particle.y, particle.z, 1,
+                                    0.08D, 0.08D, 0.08D, 0.12D);
+                            }
+                            Vec3 slash = path.get(path.size() - 1);
+                            serverLevel.sendParticles(ModParticles.BLACKRED_SLASH.get(), slash.x, slash.y, slash.z,
+                                1, 0.0D, 0.0D, 0.0D, 0.0D);
+                        }
+                    }
+                    if (tick == 15) {
+                        spawnBloodLanceFan(serverLevel, entity, currentCenter, currentForward, currentUp,
+                            10, 0.5D, Math.toRadians(2.0D), BLADES_DAMAGE);
+                        for (int index = -2; index <= 3; index++) {
+                            Vec3 direction = horizontalDirection(currentForward, currentUp, Math.toRadians(index * 7.0D));
+                            BloodTornadoSpawner.spawn(serverLevel, currentCenter, direction, entity, 40);
+                        }
+                    }
+                    if (tick == BLADES_CLEANUP_TICK) {
+                        discardBoneWhips(whips);
+                        setModelVariant(entity, 0);
+                        cleanupForm(entity);
+                    }
+                    tick++;
+                }
+            }, 1, BLADES_CLEANUP_TICK + 1);
+        });
+    }
+
+    private static void executeDemonKingsBloodDance(LivingEntity entity, Level level, int formId) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        CombatGravityFrame.run(entity, () -> {
+            List<LivingEntity> targets = selectBloodDanceTargets(serverLevel, entity);
+            List<BoneWhipEntity> whips = new ArrayList<>();
+            List<LivingEntity> whipTargets = new ArrayList<>();
+            setModelVariant(entity, 2);
+            BiokinesesArmController.claimAllForAbility(entity);
+            GuardStateHelper.setGuardState(entity, BLOOD_DANCE_DAMAGE, formId, true);
+            AnimationHelper.playAnimation(entity, "kneel", BLOOD_DANCE_CLEANUP_TICK);
+            setBloodDanceArmTargets(entity, targets, 0);
+
+            for (int index = IBiokinesesArmData.ARM_COUNT; index < targets.size(); index++) {
+                LivingEntity target = targets.get(index);
+                Vec3 start = shockwaveCenter(entity);
+                Vec3 end = target.getBoundingBox().getCenter();
+                BoneWhipEntity whip = createBoneWhip(serverLevel, entity, start, end,
+                    buildWhipPath(start, end, GravityDirectionHelper.localToWorld(entity,
+                        new Vec3(0.0D, 1.5D, 0.0D)), 0.35D, entity.getId() + index),
+                    BLOOD_DANCE_CLEANUP_TICK + 2);
+                if (whip != null) {
+                    whips.add(whip);
+                    whipTargets.add(target);
+                }
+            }
+
+            AbilityScheduler.scheduleRepeating(entity, new Runnable() {
+                private int tick;
+
+                @Override
+                public void run() {
+                    if (!entity.isAlive()) {
+                        discardBoneWhips(whips);
+                        clearAbilityTargets(entity);
+                        BiokinesesArmController.releaseAbilityClaim(entity);
+                        cleanupForm(entity);
+                        return;
+                    }
+
+                    if (tick <= BLOOD_DANCE_TARGET_TICK) {
+                        limitMovement(entity, 0.0D);
+                    }
+                    setBloodDanceArmTargets(entity, targets, tick);
+
+                    for (int index = 0; index < whipTargets.size(); index++) {
+                        LivingEntity target = whipTargets.get(index);
+                        if (target == null || !target.isAlive()) {
+                            continue;
+                        }
+                        Vec3 start = shockwaveCenter(entity);
+                        Vec3 targetPoint = tick <= BLOOD_DANCE_TARGET_TICK
+                            ? start.lerp(target.getBoundingBox().getCenter(),
+                                Math.min(1.0D, tick / (double) BLOOD_DANCE_TARGET_TICK))
+                            : bloodDanceTargetPoint(entity, index + IBiokinesesArmData.ARM_COUNT, tick);
+                        List<Vec3> path = buildWhipPath(start, targetPoint,
+                            GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.5D, 0.0D)),
+                            0.45D, entity.getId() + index * 13 + tick);
+                        updateBoneWhip(whips.get(index), start, targetPoint,
+                            GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)), path);
+                        if (tick >= BLOOD_DANCE_TARGET_TICK && tick <= BLOOD_DANCE_DANCE_END_TICK) {
+                            moveDanceTarget(target, targetPoint);
+                        }
+                    }
+
+                    if (tick >= BLOOD_DANCE_TARGET_TICK && tick <= BLOOD_DANCE_DANCE_END_TICK) {
+                        for (int index = 0; index < Math.min(IBiokinesesArmData.ARM_COUNT, targets.size()); index++) {
+                            LivingEntity target = targets.get(index);
+                            if (target != null && target.isAlive()) {
+                                moveDanceTarget(target, bloodDanceTargetPoint(entity, index, tick));
+                            }
+                        }
+                        if (tick % 10 == 0) {
+                            damageBloodDanceTargets(serverLevel, entity, targets);
+                        }
+                    } else if (tick == BLOOD_DANCE_TARGET_TICK + 1) {
+                        attachAbilityTargets(entity, targets);
+                    } else if (tick > BLOOD_DANCE_DANCE_END_TICK
+                        && tick <= BLOOD_DANCE_RETRACTION_END_TICK) {
+                        clearAbilityTargets(entity);
+                    }
+
+                    if (tick == BLOOD_DANCE_CLEANUP_TICK) {
+                        discardBoneWhips(whips);
+                        clearAbilityTargets(entity);
+                        BiokinesesArmController.releaseAbilityClaim(entity);
+                        setModelVariant(entity, 0);
+                        cleanupForm(entity);
+                    }
+                    tick++;
+                }
+            }, 1, BLOOD_DANCE_CLEANUP_TICK + 1);
+        });
+    }
+
+    private static void executeAbhorrentGalaxy(LivingEntity entity, Level level, int formId) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        CombatGravityFrame.run(entity, () -> {
+            List<FleshVineEntity> vines = new ArrayList<>();
+            List<BloodTornadoEntity> tornados = new ArrayList<>();
+            setModelVariant(entity, 1);
+            BiokinesesArmController.claimAllForAbility(entity);
+            GuardStateHelper.setGuardState(entity, ABHORRENT_DAMAGE, formId, true);
+            AnimationHelper.playAnimation(entity, "right_arm_chargeup", ABHORRENT_CHARGE_END_TICK);
+
+            AbilityScheduler.scheduleRepeating(entity, new Runnable() {
+                private int tick;
+
+                @Override
+                public void run() {
+                    if (!entity.isAlive()) {
+                        discardVines(vines);
+                        discardBloodTornados(tornados);
+                        BiokinesesArmController.releaseAbilityClaim(entity);
+                        cleanupForm(entity);
+                        return;
+                    }
+
+                    Vec3 center = shockwaveCenter(entity);
+                    Vec3 up = GravityDirectionHelper.localToWorld(entity,
+                        new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+                    Vec3 forward = GravityDirectionHelper.getLookDirection(entity).normalize();
+                    if (tick <= ABHORRENT_CHARGE_END_TICK) {
+                        limitMovement(entity, 0.25D);
+                        renderAbhorrentAuras(serverLevel, center, up, tick);
+                        setAbhorrentArmTargets(entity, tick, 3.0D);
+                    }
+                    if (tick == ABHORRENT_CHARGE_END_TICK) {
+                        spawnAbhorrentVines(serverLevel, entity, vines);
+                        spawnAbhorrentTornados(serverLevel, entity, tornados, center, forward, up);
+                        AnimationHelper.playAnimation(entity, "summon", ABHORRENT_DANCE_END_TICK - tick + 1);
+                    }
+                    if (tick >= ABHORRENT_CHARGE_END_TICK && tick <= ABHORRENT_DANCE_END_TICK) {
+                        setAbhorrentArmTargets(entity, tick, 25.0D);
+                        updateAbhorrentVines(entity, vines, tick, center, forward, up);
+                        updateAbhorrentTornados(entity, tornados, center, forward, up, tick);
+                        pullAbhorrentTargets(serverLevel, entity, center, up);
+                        if (tick % 2 == 0) {
+                            spawnAbhorrentLances(serverLevel, entity, center, forward, up, tick);
+                        }
+                        if (tick % 10 == 0) {
+                            damageAbhorrentDisk(serverLevel, entity, center, up);
+                            Vec3 explosion = randomDiskPoint(center, up, entity.getRandom());
+                            serverLevel.explode(entity, explosion.x, explosion.y, explosion.z,
+                                1.0F, Level.ExplosionInteraction.MOB);
+                        }
+                    } else if (tick > ABHORRENT_DANCE_END_TICK
+                        && tick <= ABHORRENT_RETRACTION_END_TICK) {
+                        setAbhorrentArmTargets(entity, tick, 1.0D);
+                        updateAbhorrentVines(entity, vines, tick, center, forward, up);
+                    }
+                    if (tick == ABHORRENT_CLEANUP_TICK) {
+                        discardVines(vines);
+                        discardBloodTornados(tornados);
+                        BiokinesesArmController.releaseAbilityClaim(entity);
+                        setModelVariant(entity, 0);
+                        cleanupForm(entity);
+                    }
+                    tick++;
+                }
+            }, 1, ABHORRENT_CLEANUP_TICK + 1);
+        });
+    }
+
+    private static List<LivingEntity> selectBloodDanceTargets(ServerLevel level, LivingEntity owner) {
+        List<LivingEntity> targets = new ArrayList<>(level.getEntitiesOfClass(LivingEntity.class,
+            owner.getBoundingBox().inflate(25.0D), candidate -> candidate != owner
+                && candidate.isAlive() && !candidate.isSpectator()
+                && EnhancedLoveForms.isTargetable(owner, candidate)));
+        Collections.shuffle(targets, new java.util.Random(owner.getRandom().nextLong()));
+        return targets.size() > 15 ? new ArrayList<>(targets.subList(0, 15)) : targets;
+    }
+
+    private static void setBloodDanceArmTargets(LivingEntity owner, List<LivingEntity> targets, int tick) {
+        for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
+            if (arm >= targets.size() || !targets.get(arm).isAlive()) {
+                continue;
+            }
+            Vec3 target = tick <= BLOOD_DANCE_TARGET_TICK
+                ? targets.get(arm).getBoundingBox().getCenter()
+                : tick <= BLOOD_DANCE_DANCE_END_TICK
+                    ? bloodDanceTargetPoint(owner, arm, tick) : shockwaveCenter(owner);
+            BiokinesesArmController.setAbilityTarget(owner, arm, target);
+        }
+    }
+
+    private static Vec3 bloodDanceTargetPoint(LivingEntity owner, int index, int tick) {
+        Vec3 center = shockwaveCenter(owner);
+        Vec3 up = GravityDirectionHelper.localToWorld(owner, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 forward = GravityDirectionHelper.getLookDirection(owner).normalize();
+        double angle = tick * 0.34D + index * Math.PI * 0.41D;
+        double radius = 8.0D + (index % 8) * 1.65D;
+        Vec3 radial = horizontalDirection(forward, up, angle);
+        return center.add(radial.scale(radius)).add(up.scale(Math.sin(angle * 1.7D) * 4.0D));
+    }
+
+    private static void attachAbilityTargets(LivingEntity owner, List<LivingEntity> targets) {
+        IBiokinesesArmData data = BiokinesesArmController.data(owner);
+        if (data == null) {
+            return;
+        }
+        for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
+            if (arm < targets.size() && targets.get(arm).isAlive()) {
+                data.setHeldEntityId(arm, targets.get(arm).getId());
+                data.setTargetEntityId(arm, targets.get(arm).getId());
+            }
+        }
+    }
+
+    private static void clearAbilityTargets(LivingEntity owner) {
+        IBiokinesesArmData data = BiokinesesArmController.data(owner);
+        if (data == null) {
+            return;
+        }
+        for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
+            data.setHeldEntityId(arm, -1);
+            data.setTargetEntityId(arm, -1);
+        }
+    }
+
+    private static void moveDanceTarget(LivingEntity target, Vec3 center) {
+        target.teleportTo(center.x, center.y - target.getBbHeight() * 0.5D, center.z);
+        target.setDeltaMovement(Vec3.ZERO);
+        target.fallDistance = 0.0F;
+    }
+
+    private static void damageBloodDanceTargets(ServerLevel level, LivingEntity owner,
+                                                List<LivingEntity> targets) {
+        for (LivingEntity target : targets) {
+            if (!target.isAlive() || !target.getRandom().nextBoolean()) {
+                continue;
+            }
+            if (Damager.hurt(owner, target, BLOOD_DANCE_DAMAGE, true)) {
+                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 60, 9, false, false, false));
+                BleedingHandler.applyOrRefreshBleeding(target, 300, 4);
+                Vec3 impact = target.getBoundingBox().getCenter();
+                level.sendParticles(ModParticles.BLACKRED_IMPACT.get(), impact.x, impact.y, impact.z,
+                    2, 0.15D, 0.15D, 0.15D, 0.02D);
+            }
+        }
+    }
+
+    private static void setAbhorrentArmTargets(LivingEntity owner, int tick, double radius) {
+        Vec3 center = shockwaveCenter(owner);
+        Vec3 up = GravityDirectionHelper.localToWorld(owner, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 forward = GravityDirectionHelper.getLookDirection(owner).normalize();
+        for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
+            double angle = tick * 0.16D + arm * Math.PI * 2.0D / IBiokinesesArmData.ARM_COUNT;
+            Vec3 radial = horizontalDirection(forward, up, angle);
+            Vec3 target = center.add(radial.scale(radius)).add(up.scale(Math.sin(angle * 2.0D) * 2.5D));
+            BiokinesesArmController.setAbilityTarget(owner, arm, target);
+        }
+    }
+
+    private static void renderAbhorrentAuras(ServerLevel level, Vec3 center, Vec3 up, int tick) {
+        int count = 16;
+        double darkRadius = 0.5D + tick * 0.12D;
+        double redRadius = 3.5D - tick * 0.12D;
+        Vec3 side = up.cross(new Vec3(0.0D, 1.0D, 0.0D));
+        if (side.lengthSqr() < 1.0E-8D) {
+            side = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            side = side.normalize();
+        }
+        Vec3 otherSide = up.cross(side).normalize();
+        level.sendParticles(CHARGE_BLACK_DUST, center.x, center.y, center.z,
+            1, darkRadius, 0.05D, darkRadius, 0.0D);
+        for (int index = 0; index < count; index++) {
+            double angle = tick * 0.3D + index * Math.PI * 2.0D / count;
+            Vec3 point = center.add(side.scale(Math.cos(angle) * redRadius))
+                .add(otherSide.scale(Math.sin(angle) * redRadius));
+            level.sendParticles(CHARGE_RED_DUST, point.x, point.y, point.z,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
+    private static void spawnAbhorrentVines(ServerLevel level, LivingEntity owner,
+                                            List<FleshVineEntity> vines) {
+        Vec3 center = shockwaveCenter(owner);
+        Vec3 up = GravityDirectionHelper.localToWorld(owner, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 forward = GravityDirectionHelper.getLookDirection(owner).normalize();
+        for (int index = 0; index < 4; index++) {
+            Vec3 start = galaxyArmStart(owner, index, up, forward);
+            Vec3 end = center.add(horizontalDirection(forward, up,
+                index * Math.PI * 0.5D).scale(25.0D));
+            FleshVineEntity vine = ModEntities.FLESH_VINE.get().create(level);
+            if (vine == null) {
+                continue;
+            }
+            vine.initializeTransition(start, owner, owner.getRandom().nextInt(),
+                FleshVineEntity.DEFAULT_DIAMETER, ABHORRENT_CLEANUP_TICK + 2);
+            vine.updateTransition(start, end, buildWhipPath(start, end, up.scale(4.0D), 0.5D,
+                owner.getId() + index));
+            level.addFreshEntity(vine);
+            vines.add(vine);
+        }
+    }
+
+    private static Vec3 galaxyArmStart(LivingEntity owner, int index, Vec3 up, Vec3 forward) {
+        Vec3 side = up.cross(forward).normalize();
+        boolean left = index < 2;
+        Vec3 start = armAnchor(owner, left);
+        return start.add(side.scale((index % 2 == 0 ? -1.0D : 1.0D) * 0.35D))
+            .add(up.scale((index % 2 == 0 ? 0.25D : -0.25D)));
+    }
+
+    private static void updateAbhorrentVines(LivingEntity owner, List<FleshVineEntity> vines, int tick,
+                                             Vec3 center, Vec3 forward, Vec3 up) {
+        double retract = tick > ABHORRENT_DANCE_END_TICK
+            ? (tick - ABHORRENT_DANCE_END_TICK) / 11.0D : 0.0D;
+        double radius = 25.0D + (1.0D - 25.0D) * Math.min(1.0D, retract);
+        for (int index = 0; index < vines.size(); index++) {
+            FleshVineEntity vine = vines.get(index);
+            if (!vine.isAlive()) {
+                continue;
+            }
+            Vec3 start = galaxyArmStart(owner, index, up, forward);
+            double angle = tick * 0.15D + index * Math.PI * 0.5D;
+            Vec3 direction = horizontalDirection(forward, up, angle);
+            Vec3 end = center.add(direction.scale(radius)).add(up.scale(Math.sin(angle * 1.5D) * 5.0D));
+            Vec3 tangent = horizontalDirection(forward, up, angle + Math.PI * 0.5D);
+            List<Vec3> path = buildWhipPath(start, end, tangent.scale(9.0D), 0.65D,
+                owner.getId() + index * 17 + tick);
+            vine.updateTransition(start, end, path);
+            if (tick % 3 == 0) {
+                for (int pathIndex = 2; pathIndex < path.size(); pathIndex += 4) {
+                    Vec3 mouth = path.get(pathIndex);
+                    if (owner.level() instanceof ServerLevel level) {
+                        level.sendParticles(ParticleTypes.CLOUD, mouth.x, mouth.y, mouth.z,
+                            1, 0.0D, 0.02D, 0.0D, 0.0D);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void spawnAbhorrentTornados(ServerLevel level, LivingEntity owner,
+                                               List<BloodTornadoEntity> tornados, Vec3 center,
+                                               Vec3 forward, Vec3 up) {
+        for (int index = 0; index < 4; index++) {
+            double angle = index * Math.PI * 0.5D;
+            Vec3 radial = horizontalDirection(forward, up, angle);
+            BloodTornadoEntity tornado = BloodTornadoSpawner.spawnNoGravity(level, center.add(radial.scale(18.0D)),
+                up.cross(radial).normalize(), owner, ABHORRENT_CLEANUP_TICK - ABHORRENT_CHARGE_END_TICK + 2);
+            if (tornado != null) {
+                tornados.add(tornado);
+            }
+        }
+    }
+
+    private static void updateAbhorrentTornados(LivingEntity owner, List<BloodTornadoEntity> tornados,
+                                                Vec3 center, Vec3 forward, Vec3 up, int tick) {
+        for (int index = 0; index < tornados.size(); index++) {
+            BloodTornadoEntity tornado = tornados.get(index);
+            if (!tornado.isAlive()) {
+                continue;
+            }
+            Vec3 radial = horizontalDirection(forward, up,
+                index * Math.PI * 0.5D + tick * 0.12D);
+            tornado.setPos(center.add(radial.scale(18.0D)));
+            tornado.setDeltaMovement(Vec3.ZERO);
+        }
+    }
+
+    private static void pullAbhorrentTargets(ServerLevel level, LivingEntity owner, Vec3 center, Vec3 up) {
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
+            new AABB(center, center).inflate(35.0D), candidate -> candidate != owner
+                && candidate.isAlive() && !candidate.isSpectator())) {
+            Vec3 delta = center.subtract(target.position());
+            double vertical = delta.dot(up);
+            Vec3 horizontal = delta.subtract(up.scale(vertical));
+            double distance = horizontal.length();
+            if (distance > 5.0D && (Math.abs(vertical) > 3.0D || distance > 20.0D)) {
+                MovementHelper.addVelocity(target, delta.normalize().scale(0.12D));
+            }
+        }
+    }
+
+    private static void spawnAbhorrentLances(ServerLevel level, LivingEntity owner, Vec3 center,
+                                             Vec3 forward, Vec3 up, int tick) {
+        double offset = Math.toRadians(tick * 3.0D);
+        for (int index = 0; index < 4; index++) {
+            Vec3 direction = horizontalDirection(forward, up, offset + index * Math.PI * 0.5D);
+            BloodLanceEntity lance = BloodLanceEntity.create(level, owner, center,
+                direction.scale(1.4D), ABHORRENT_DAMAGE);
+            level.addFreshEntity(lance);
+        }
+    }
+
+    private static void damageAbhorrentDisk(ServerLevel level, LivingEntity owner, Vec3 center, Vec3 up) {
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
+            new AABB(center, center).inflate(25.0D), candidate -> candidate != owner
+                && candidate.isAlive() && !candidate.isSpectator())) {
+            Vec3 delta = target.position().subtract(center);
+            double vertical = delta.dot(up);
+            double horizontal = delta.subtract(up.scale(vertical)).length();
+            if (horizontal <= 25.0D && Math.abs(vertical) <= 4.0D
+                && target.getRandom().nextBoolean() && Damager.hurt(owner, target, ABHORRENT_DAMAGE, true)) {
+                Vec3 impact = target.getBoundingBox().getCenter();
+                level.sendParticles(ModParticles.BLACKRED_IMPACT.get(), impact.x, impact.y, impact.z,
+                    2, 0.15D, 0.15D, 0.15D, 0.02D);
+            }
+        }
+    }
+
+    private static Vec3 randomDiskPoint(Vec3 center, Vec3 up, RandomSource random) {
+        Vec3 side = up.cross(new Vec3(0.0D, 1.0D, 0.0D));
+        if (side.lengthSqr() < 1.0E-8D) {
+            side = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            side = side.normalize();
+        }
+        Vec3 otherSide = up.cross(side).normalize();
+        double angle = random.nextDouble() * Math.PI * 2.0D;
+        double radius = Math.sqrt(random.nextDouble()) * 25.0D;
+        return center.add(side.scale(Math.cos(angle) * radius))
+            .add(otherSide.scale(Math.sin(angle) * radius));
+    }
+
+    private static void discardBloodTornados(List<BloodTornadoEntity> tornados) {
+        for (BloodTornadoEntity tornado : tornados) {
+            if (tornado.isAlive()) {
+                tornado.discard();
+            }
+        }
+        tornados.clear();
+    }
+
+    private static void executeBloodKingsMassacre(LivingEntity entity, Level level, int formId) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        CombatGravityFrame.run(entity, () -> {
+            List<BoneWhipEntity> whips = new ArrayList<>();
+            Map<UUID, FleshVineEntity> tethers = new HashMap<>();
+            setModelVariant(entity, 2);
+            BiokinesesArmController.claimAllForAbility(entity);
+            GuardStateHelper.setGuardState(entity, MASSACRE_DAMAGE, formId, true);
+            AnimationHelper.playAnimation(entity, "summon", MASSACRE_CLEANUP_TICK);
+            AbilityScheduler.scheduleRepeating(entity, new Runnable() {
+                private int tick;
+
+                @Override
+                public void run() {
+                    if (!entity.isAlive()) {
+                        discardBoneWhips(whips);
+                        discardTethers(tethers);
+                        BiokinesesArmController.releaseAbilityClaim(entity);
+                        setModelVariant(entity, 0);
+                        cleanupForm(entity);
+                        return;
+                    }
+                    Vec3 center = shockwaveCenter(entity);
+                    Vec3 up = GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+                    Vec3 forward = GravityDirectionHelper.getLookDirection(entity).normalize();
+                    if (tick == 11) {
+                        Vec3 start = armAnchor(entity, true);
+                        Vec3 end = center.add(horizontalDirection(forward, up, -Math.PI * 0.5D).scale(5.0D));
+                        BoneWhipEntity whip = createBoneWhip(serverLevel, entity, start, end,
+                            buildWhipPath(start, end, up.scale(1.4D), 0.35D, entity.getId()), MASSACRE_CLEANUP_TICK);
+                        if (whip != null) {
+                            whips.add(whip);
+                        }
+                        AnimationHelper.playAnimation(entity, "left_sword_to_left", 12);
+                        spawnBloodLanceRing(serverLevel, entity, center, forward, up, 12, 2.0D, false, MASSACRE_DAMAGE);
+                    } else if (tick == 17) {
+                        Vec3 start = armAnchor(entity, false);
+                        Vec3 end = center.add(up.scale(8.0D)).add(forward.scale(2.0D));
+                        BoneWhipEntity whip = createBoneWhip(serverLevel, entity, start, end,
+                            buildWhipPath(start, end, forward.scale(2.0D), 0.45D, entity.getId() + 1), MASSACRE_CLEANUP_TICK);
+                        if (whip != null) {
+                            whips.add(whip);
+                        }
+                        AnimationHelper.playAnimation(entity, "sword_overhead", 12);
+                        spawnBloodLanceRing(serverLevel, entity, center, forward, up, 12, 8.0D, true, MASSACRE_DAMAGE);
+                    } else if (tick == 23) {
+                        AnimationHelper.playAnimation(entity, "heel_drop", 30);
+                        spawnBloodLanceRing(serverLevel, entity, center, forward, up, 12, 18.0D, true, MASSACRE_DAMAGE);
+                    }
+
+                    if (tick >= 11 && tick <= 53 && whips.size() == 2) {
+                        double progress = (tick - 11) / 42.0D;
+                        Vec3 leftStart = armAnchor(entity, true);
+                        Vec3 leftEnd = center.add(horizontalDirection(forward, up,
+                            -Math.PI * 0.5D + progress * Math.PI * 4.0D).scale(5.0D));
+                        updateBoneWhip(whips.get(0), leftStart, leftEnd, up,
+                            buildWhipPath(leftStart, leftEnd, up.scale(1.5D), 0.4D, tick));
+                        Vec3 rightStart = armAnchor(entity, false);
+                        Vec3 rightEnd = center.add(up.scale(Math.sin(progress * Math.PI * 6.0D) * 8.0D))
+                            .add(forward.scale(Math.cos(progress * Math.PI * 6.0D) * 8.0D));
+                        updateBoneWhip(whips.get(1), rightStart, rightEnd, up,
+                            buildWhipPath(rightStart, rightEnd, forward.scale(2.0D), 0.5D, tick + 7));
+                    }
+                    if (tick >= 23 && tick <= 53) {
+                        applyMassacreDamage(serverLevel, entity, center, 25.0D, MASSACRE_DAMAGE);
+                        updateMassacreTethers(serverLevel, entity, tethers);
+                    }
+                    if (tick == MASSACRE_RETRACTION_TICK) {
+                        AnimationHelper.playAnimation(entity, "kimetsunoyaiba:cancel", 1);
+                    }
+                    if (tick == MASSACRE_CLEANUP_TICK) {
+                        discardBoneWhips(whips);
+                        discardTethers(tethers);
+                        BiokinesesArmController.releaseAbilityClaim(entity);
+                        setModelVariant(entity, 0);
+                        cleanupForm(entity);
+                    }
+                    tick++;
+                }
+            }, 1, MASSACRE_CLEANUP_TICK + 1);
+        });
+    }
+
+    private static void executeDemonKingsWrath(LivingEntity entity, Level level, int formId) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        CombatGravityFrame.run(entity, () -> {
+            List<BoneWhipEntity> whips = new ArrayList<>();
+            List<UUID> radialSparks = new ArrayList<>();
+            Map<UUID, UUID> targetSparks = new HashMap<>();
+            Set<UUID> shockedTargets = new HashSet<>();
+            setModelVariant(entity, 2);
+            BiokinesesArmController.claimAllForAbility(entity);
+            GuardStateHelper.setGuardState(entity, WRATH_DAMAGE, formId, true);
+            AnimationHelper.playAnimation(entity, "summon", WRATH_CLEANUP_TICK);
+            AbilityScheduler.scheduleRepeating(entity, new Runnable() {
+                private int tick;
+
+                @Override
+                public void run() {
+                    if (!entity.isAlive()) {
+                        discardBoneWhips(whips);
+                        clearShockwaveSparks(serverLevel, radialSparks, targetSparks, entity);
+                        entity.setNoGravity(false);
+                        BiokinesesArmController.releaseAbilityClaim(entity);
+                        setModelVariant(entity, 0);
+                        cleanupForm(entity);
+                        return;
+                    }
+                    Vec3 center = shockwaveCenter(entity);
+                    Vec3 up = GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+                    if (tick >= WRATH_WHIP_START_TICK && tick <= WRATH_WHIP_END_TICK) {
+                        entity.setNoGravity(true);
+                        limitMovement(entity, 0.25D);
+                        while (whips.size() < 4) {
+                            boolean left = whips.size() < 2;
+                            Vec3 start = armAnchor(entity, left);
+                            Vec3 end = center.add(randomUnitVector(entity.getRandom()).scale(25.0D));
+                            BoneWhipEntity whip = createBoneWhip(serverLevel, entity, start, end,
+                                buildWhipPath(start, end, randomUnitVector(entity.getRandom()).scale(5.0D), 0.8D,
+                                    entity.getRandom().nextInt()), WRATH_CLEANUP_TICK);
+                            if (whip == null) {
+                                break;
+                            }
+                            whips.add(whip);
+                        }
+                        for (int index = 0; index < whips.size(); index++) {
+                            Vec3 start = armAnchor(entity, index >= 2);
+                            Vec3 end = center.add(randomUnitVector(entity.getRandom()).scale(25.0D));
+                            List<Vec3> path = buildWhipPath(start, end,
+                                randomUnitVector(entity.getRandom()).scale(5.0D), 0.8D, tick + index * 19);
+                            updateBoneWhip(whips.get(index), start, end, up, path);
+                            serverLevel.sendParticles(ModParticles.BLACKRED_SLASH.get(), end.x, end.y, end.z,
+                                1, 0.0D, 0.0D, 0.0D, 0.0D);
+                        }
+                        if (tick % 5 == 0) {
+                            applyMassacreDamage(serverLevel, entity, center, 25.0D, WRATH_DAMAGE);
+                        }
+                        if (tick % 2 == 0) {
+                            Vec3 explosion = randomSpherePoint(center, 25.0D, entity);
+                            serverLevel.explode(entity, explosion.x, explosion.y, explosion.z, 1.0F,
+                                Level.ExplosionInteraction.MOB);
+                        }
+                    }
+                    if (tick == WRATH_SHOCKWAVE_TICK) {
+                        serverLevel.playSound(null, entity.blockPosition(), SoundEvents.WARDEN_SONIC_BOOM,
+                            SoundSource.HOSTILE, 1.0F, 1.0F);
+                        serverLevel.playSound(null, entity.blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER,
+                            SoundSource.HOSTILE, 1.0F, 1.0F);
+                        for (int index = 0; index < SHOCKWAVE_BLAST_SPARK_COUNT; index++) {
+                            UUID sparkId = UUID.randomUUID();
+                            radialSparks.add(sparkId);
+                            sendShockwaveSpark(serverLevel, sparkId, center,
+                                randomSpherePoint(center, 1.0D, entity), true, 10);
+                        }
+                    }
+                    if (tick >= WRATH_SHOCKWAVE_TICK && tick <= WRATH_SHOCKWAVE_TICK + 10) {
+                        double radius = 1.0D + 39.0D * (tick - WRATH_SHOCKWAVE_TICK) / 10.0D;
+                        spawnShockwaveFlashSphere(serverLevel, center, radius, entity);
+                        for (UUID sparkId : radialSparks) {
+                            sendShockwaveSpark(serverLevel, sparkId, center,
+                                randomSpherePoint(center, radius, entity), false, 10);
+                        }
+                        applyShockwaveTargets(serverLevel, entity, center, radius, shockedTargets, targetSparks);
+                    }
+                    if (tick >= 67 && tick <= 82) {
+                        entity.setNoGravity(false);
+                        limitMovement(entity, 0.1D);
+                        double radius = 25.0D - 24.0D * (tick - 67) / 15.0D;
+                        for (BoneWhipEntity whip : whips) {
+                            Vec3 start = armAnchor(entity, whips.indexOf(whip) >= 2);
+                            Vec3 end = center.add(randomUnitVector(entity.getRandom()).scale(radius));
+                            updateBoneWhip(whip, start, end, up,
+                                buildWhipPath(start, end, randomUnitVector(entity.getRandom()).scale(2.0D), 0.35D, tick));
+                        }
+                    }
+                    if (tick == WRATH_CLEANUP_TICK) {
+                        discardBoneWhips(whips);
+                        clearShockwaveSparks(serverLevel, radialSparks, targetSparks, entity);
+                        entity.setNoGravity(false);
+                        BiokinesesArmController.releaseAbilityClaim(entity);
+                        setModelVariant(entity, 0);
+                        cleanupForm(entity);
+                    }
+                    tick++;
+                }
+            }, 1, WRATH_CLEANUP_TICK + 1);
+        });
     }
 
     public static void toggleClimbing(Player player) {
@@ -274,6 +1282,7 @@ public final class Biokineses {
         }
 
         CombatGravityFrame.run(entity, () -> {
+            setModelVariant(entity, 0);
             final Vec3 direction = CombatGravityFrame.world(CombatGravityFrame.look(entity)).normalize();
             final Vec3 position = CombatGravityFrame.world(CombatGravityFrame.position(entity));
             final BloodTornadoEntity tornado = BloodTornadoSpawner.spawn(
@@ -315,6 +1324,7 @@ public final class Biokineses {
         }
 
         CombatGravityFrame.run(entity, () -> {
+            setModelVariant(entity, 1);
             Vec3 startPosition = entity.position();
             List<FleshVineEntity> chargeVines = new ArrayList<>();
             spawnChargeVines(serverLevel, entity, chargeVines, startPosition, 0);
@@ -385,6 +1395,7 @@ public final class Biokineses {
         }
 
         CombatGravityFrame.run(entity, () -> {
+            setModelVariant(entity, 0);
             Vec3 startPosition = entity.position();
             Vec3 up = CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
             Vec3 forward = CombatGravityFrame.world(CombatGravityFrame.look(entity)).normalize();
@@ -604,6 +1615,7 @@ public final class Biokineses {
         }
 
         CombatGravityFrame.run(entity, () -> {
+            setModelVariant(entity, 1);
             TransitionTarget selectedTarget = selectForcedTransitionTarget(serverLevel, entity);
             List<FleshVineEntity> vines = new ArrayList<>();
             FleshVineEntity vine = ModEntities.FLESH_VINE.get().create(serverLevel);
@@ -696,6 +1708,7 @@ public final class Biokineses {
         }
 
         CombatGravityFrame.run(entity, () -> {
+            setModelVariant(entity, 0);
             List<FleshVineEntity> chargeVines = new ArrayList<>();
             List<UUID> radialSparks = new ArrayList<>();
             Map<UUID, UUID> targetSparks = new HashMap<>();
@@ -1222,6 +2235,7 @@ public final class Biokineses {
             return;
         }
 
+        setModelVariant(entity, 0);
         if (entity instanceof Player player) {
             KnYAPI.playAnimation(player, "brambles", BRAMBLE_END_TICK);
         }
@@ -1628,6 +2642,7 @@ public final class Biokineses {
     }
 
     private static void cleanupForm(LivingEntity entity) {
+        setModelVariant(entity, 0);
         GuardStateHelper.clearGuardState(entity);
         GuardStateHelper.clearAttackFlag(entity);
         if (entity instanceof Player player) {

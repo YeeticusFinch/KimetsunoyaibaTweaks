@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 /** Server-authoritative flesh vine used by Biokineses' Ultimate Authority. */
-public final class FleshVineEntity extends Entity {
+public class FleshVineEntity extends Entity {
     public static final int MODE_CHARGE = 0;
     public static final int MODE_SURGE = 1;
     public static final int MODE_TRANSITION = 2;

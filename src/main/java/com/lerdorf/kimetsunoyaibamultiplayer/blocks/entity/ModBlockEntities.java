@@ -15,7 +15,8 @@ public final class ModBlockEntities {
 
     public static final RegistryObject<BlockEntityType<ChestOfDrawersBlockEntity>> CHEST_OF_DRAWERS =
         BLOCK_ENTITIES.register("chest_of_drawers",
-            () -> BlockEntityType.Builder.of(ChestOfDrawersBlockEntity::new, ModBlocks.CHEST_OF_DRAWERS.get()).build(null));
+            () -> BlockEntityType.Builder.of(ChestOfDrawersBlockEntity::new,
+                ModBlocks.CHEST_OF_DRAWERS.get(), ModBlocks.CHEST_OF_DRAWERS_2.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<LargeDoorBlockEntity>> LARGE_DOOR =
         BLOCK_ENTITIES.register("large_door",

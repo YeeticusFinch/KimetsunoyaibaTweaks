@@ -14,9 +14,6 @@ import net.minecraftforge.fml.common.Mod;
 /** Sends and consumes movement input while the Biokineses arms are traversing. */
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID, value = Dist.CLIENT)
 public final class BiokinesesTraversalClientHandler {
-    private static boolean clientNoGravityApplied;
-    private static boolean previousNoGravity;
-
     private BiokinesesTraversalClientHandler() {
     }
 
@@ -24,15 +21,9 @@ public final class BiokinesesTraversalClientHandler {
     public static void onMovementInput(MovementInputUpdateEvent event) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null || !BiokinesesArmController.isTraversalActive(player)) {
-            restoreNoGravity(player);
             return;
         }
 
-        if (!clientNoGravityApplied) {
-            previousNoGravity = player.isNoGravity();
-            clientNoGravityApplied = true;
-        }
-        player.setNoGravity(true);
         var input = event.getInput();
         ModNetworking.sendToServer(new BiokinesesTraversalInputPacket(
             input.forwardImpulse, input.leftImpulse, input.jumping, input.shiftKeyDown));
@@ -40,12 +31,5 @@ public final class BiokinesesTraversalClientHandler {
         input.leftImpulse = 0.0F;
         input.jumping = false;
         input.shiftKeyDown = false;
-    }
-
-    private static void restoreNoGravity(LocalPlayer player) {
-        if (player != null && clientNoGravityApplied) {
-            player.setNoGravity(previousNoGravity);
-        }
-        clientNoGravityApplied = false;
     }
 }

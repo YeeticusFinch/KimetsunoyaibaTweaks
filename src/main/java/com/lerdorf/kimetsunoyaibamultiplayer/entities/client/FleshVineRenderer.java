@@ -29,10 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Renders a thick, irregular flesh vine and the baked model at its tip. */
-public final class FleshVineRenderer extends EntityRenderer<FleshVineEntity> {
+public class FleshVineRenderer<T extends FleshVineEntity> extends EntityRenderer<T> {
     private static final ResourceLocation BODY_TEXTURE = ResourceLocation.fromNamespaceAndPath(
         KimetsunoyaibaMultiplayer.MODID, "textures/item/flesh_vine.png");
-    private static final RenderType BODY_RENDER_TYPE = RenderType.entityTranslucent(BODY_TEXTURE);
     private static final int RING_SIDES = 8;
     private static final int MAX_POINTS = 96;
     private static final double TEXTURE_REPEAT_LENGTH = 0.85D;
@@ -43,7 +42,7 @@ public final class FleshVineRenderer extends EntityRenderer<FleshVineEntity> {
     }
 
     @Override
-    public void render(FleshVineEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
+    public void render(T entity, float entityYaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
         List<Vec3> path = buildPath(entity, partialTick);
         if (path.size() < 2) {
@@ -56,7 +55,7 @@ public final class FleshVineRenderer extends EntityRenderer<FleshVineEntity> {
 
         Matrix4f matrix = poseStack.last().pose();
         Matrix3f normal = poseStack.last().normal();
-        VertexConsumer buffer = bufferSource.getBuffer(BODY_RENDER_TYPE);
+        VertexConsumer buffer = bufferSource.getBuffer(RenderType.entityTranslucent(getBodyTexture()));
         renderTube(path, entity, matrix, normal, buffer);
         renderTip(path, entity, poseStack, bufferSource, packedLight);
 
@@ -130,8 +129,8 @@ public final class FleshVineRenderer extends EntityRenderer<FleshVineEntity> {
         return side.lengthSqr() < 1.0E-6D ? new Vec3(0.0D, 0.0D, 1.0D) : side.normalize();
     }
 
-    private static void renderTube(List<Vec3> path, FleshVineEntity entity, Matrix4f matrix,
-                                   Matrix3f normal, VertexConsumer buffer) {
+    protected void renderTube(List<Vec3> path, FleshVineEntity entity, Matrix4f matrix,
+                              Matrix3f normal, VertexConsumer buffer) {
         float diameter = entity.getWidth();
         int seed = entity.getSeed();
         double distanceAlongPath = 0.0D;
@@ -179,7 +178,7 @@ public final class FleshVineRenderer extends EntityRenderer<FleshVineEntity> {
                            MultiBufferSource bufferSource, int packedLight) {
         Minecraft minecraft = Minecraft.getInstance();
         BakedModel model = minecraft.getItemRenderer().getModel(
-            new net.minecraft.world.item.ItemStack(ModItems.FLESH_VINE_TIP.get()),
+            new net.minecraft.world.item.ItemStack(getTipItem()),
             entity.level(), null, entity.getId());
         if (model == null || model == minecraft.getModelManager().getMissingModel()) {
             return;
@@ -239,19 +238,19 @@ public final class FleshVineRenderer extends EntityRenderer<FleshVineEntity> {
         return new Quaternionf().fromAxisAngleRad(axis, (float) Math.acos(dot));
     }
 
-    private static void quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, float u0, float u1,
-                             float v0, float v1, Vec3 faceNormal,
-                             net.minecraft.world.level.Level level, Matrix4f matrix,
-                             Matrix3f normal, VertexConsumer buffer, float alpha) {
+    protected static void quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, float u0, float u1,
+                               float v0, float v1, Vec3 faceNormal,
+                               net.minecraft.world.level.Level level, Matrix4f matrix,
+                               Matrix3f normal, VertexConsumer buffer, float alpha) {
         vertex(a, u0, v0, faceNormal, level, matrix, normal, buffer, alpha);
         vertex(b, u1, v0, faceNormal, level, matrix, normal, buffer, alpha);
         vertex(c, u1, v1, faceNormal, level, matrix, normal, buffer, alpha);
         vertex(d, u0, v1, faceNormal, level, matrix, normal, buffer, alpha);
     }
 
-    private static void vertex(Vec3 position, float u, float v, Vec3 faceNormal,
-                               net.minecraft.world.level.Level level, Matrix4f matrix,
-                                Matrix3f normal, VertexConsumer buffer, float alpha) {
+    protected static void vertex(Vec3 position, float u, float v, Vec3 faceNormal,
+                                 net.minecraft.world.level.Level level, Matrix4f matrix,
+                                 Matrix3f normal, VertexConsumer buffer, float alpha) {
         buffer.vertex(matrix, (float) position.x, (float) position.y, (float) position.z)
             .color(1.0F, 1.0F, 1.0F, alpha)
             .uv(u, v)
@@ -262,7 +261,15 @@ public final class FleshVineRenderer extends EntityRenderer<FleshVineEntity> {
     }
 
     @Override
-    public ResourceLocation getTextureLocation(FleshVineEntity entity) {
+    public ResourceLocation getTextureLocation(T entity) {
+        return getBodyTexture();
+    }
+
+    protected ResourceLocation getBodyTexture() {
         return BODY_TEXTURE;
+    }
+
+    protected net.minecraft.world.item.Item getTipItem() {
+        return ModItems.FLESH_VINE_TIP.get();
     }
 }

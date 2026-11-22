@@ -149,11 +149,11 @@ public class ChestOfDrawersBlockEntity extends BlockEntity implements GeoBlockEn
             return true;
         }
 
-        if (drawerState < 4 && !isFrontClear()) {
+        if (drawerState < getDrawerCount() && !isFrontClear()) {
             return false;
         }
 
-        startClosing(drawerState == 4 ? 0 : drawerState + 1);
+        startClosing(drawerState == getDrawerCount() ? 0 : drawerState + 1);
         return true;
     }
 
@@ -213,8 +213,8 @@ public class ChestOfDrawersBlockEntity extends BlockEntity implements GeoBlockEn
         return switch (drawerState) {
             case 1 -> slot == SLOT_TOP;
             case 2 -> slot == SLOT_TOP_MIDDLE;
-            case 3 -> slot == SLOT_MIDDLE_BOTTOM;
-            case 4 -> slot == SLOT_BOTTOM_LEFT || slot == SLOT_BOTTOM_RIGHT;
+            case 3 -> getDrawerCount() > 2 && slot == SLOT_MIDDLE_BOTTOM;
+            case 4 -> getDrawerCount() > 2 && (slot == SLOT_BOTTOM_LEFT || slot == SLOT_BOTTOM_RIGHT);
             default -> false;
         };
     }
@@ -287,8 +287,8 @@ public class ChestOfDrawersBlockEntity extends BlockEntity implements GeoBlockEn
         return switch (drawerState) {
             case 1 -> SLOT_TOP;
             case 2 -> SLOT_TOP_MIDDLE;
-            case 3 -> SLOT_MIDDLE_BOTTOM;
-            case 4 -> resolveBottomSlot(clickLocation);
+            case 3 -> getDrawerCount() > 2 ? SLOT_MIDDLE_BOTTOM : -1;
+            case 4 -> getDrawerCount() > 2 ? resolveBottomSlot(clickLocation) : -1;
             default -> -1;
         };
     }
@@ -305,10 +305,14 @@ public class ChestOfDrawersBlockEntity extends BlockEntity implements GeoBlockEn
         return switch (slot) {
             case SLOT_TOP -> 0;
             case SLOT_TOP_MIDDLE -> 1;
-            case SLOT_MIDDLE_BOTTOM -> 2;
-            case SLOT_BOTTOM_LEFT, SLOT_BOTTOM_RIGHT -> 3;
+            case SLOT_MIDDLE_BOTTOM -> getDrawerCount() > 2 ? 2 : -1;
+            case SLOT_BOTTOM_LEFT, SLOT_BOTTOM_RIGHT -> getDrawerCount() > 2 ? 3 : -1;
             default -> -1;
         };
+    }
+
+    private int getDrawerCount() {
+        return getBlockState().getBlock() instanceof ChestOfDrawersBlock drawers ? drawers.getDrawerCount() : 4;
     }
 
     private int resolveBottomSlot(Vec3 clickLocation) {
@@ -356,10 +360,16 @@ public class ChestOfDrawersBlockEntity extends BlockEntity implements GeoBlockEn
         switch (drawerState) {
             case 1 -> spawnInteraction(SLOT_TOP, 0.0, 0.84, 0.9f, 0.22f);
             case 2 -> spawnInteraction(SLOT_TOP_MIDDLE, 0.0, 0.63, 0.9f, 0.22f);
-            case 3 -> spawnInteraction(SLOT_MIDDLE_BOTTOM, 0.0, 0.41, 0.9f, 0.22f);
+            case 3 -> {
+                if (getDrawerCount() > 2) {
+                    spawnInteraction(SLOT_MIDDLE_BOTTOM, 0.0, 0.41, 0.9f, 0.22f);
+                }
+            }
             case 4 -> {
-                spawnInteraction(SLOT_BOTTOM_LEFT, -0.23, 0.16, 0.42f, 0.26f);
-                spawnInteraction(SLOT_BOTTOM_RIGHT, 0.23, 0.16, 0.42f, 0.26f);
+                if (getDrawerCount() > 2) {
+                    spawnInteraction(SLOT_BOTTOM_LEFT, -0.23, 0.16, 0.42f, 0.26f);
+                    spawnInteraction(SLOT_BOTTOM_RIGHT, 0.23, 0.16, 0.42f, 0.26f);
+                }
             }
             default -> {
             }

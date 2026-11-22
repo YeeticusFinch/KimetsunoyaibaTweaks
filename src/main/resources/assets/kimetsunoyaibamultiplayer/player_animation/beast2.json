@@ -2,7 +2,7 @@
 	"format_version": "1.8.0",
 	"animations": {
 		"beast2": {
-			"animation_length": 360,
+			"animation_length": 2,
 			"bones": {
 				"body": {
 					"rotation": {

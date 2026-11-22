@@ -33,7 +33,7 @@ Between each segment, like at the joint between segments, the segments should ov
 
 **Flesh Arm**
 
-- The biokineses_1 item (and the biokineses_1l rendered in the left hand, if the ability calls for it)
+- The biokineses_1 item (and the biokineses_1 rendered in the left hand, if the ability calls for it)
 - this is an animated Geckolib item
 
 **Arm Blade**
@@ -63,8 +63,8 @@ Between each segment, like at the joint between segments, the segments should ov
 - This uses two types of geometry:
   - Fallback quad: One large transparent quad at originY - maxDepth, displaying the complete texture
   - Surface quads: One small transparent quad per block column, positioned on the highest qualifying block surface within the projection range
-   - Each surface quad displays only its corresponding portion of the original texture.
-- Full block ->	blockY + 1.0; Bottom slab -> blockY + 0.5; Top slab	-> blockY + 1.0; Double slab -> blockY + 1.0; Air	-> Continue searching downward; Other block shapes -> Ignore initially
+  - Each surface quad displays only its corresponding portion of the original texture.
+- Full block -> blockY + 1.0; Bottom slab -> blockY + 0.5; Top slab -> blockY + 1.0; Double slab -> blockY + 1.0; Air -> Continue searching downward; Other block shapes -> Ignore initially
 - Each aura has an aura texture (usually a 256x256 texture, and yes this texture will have an alpha channel, so it should have transparencies), it should have an opacity (which can be updated during runtime), it should have a radius, it should have an origin point (or an entity for it to follow), and it should have a maxDepth (how far below the origin to project, and also where to render the fallback quad), and it should also have an upwards offset (how far up the projection can start from, so like the projection starts from originY + upOffset, and goes down to originY - maxDepth, thus allowing the surface quads to appear on block faces above the user), and also a gravity direction (usually the user's local gravity)
 - The projection should also be terrain-wrapping, Render on top faces and exposed sides, allowing the texture to visually continue down cliffs, ledges, and block edges. For each block column, we'd render the top quad as usual. Then we'd check its four neighboring columns. If a neighboring column has a lower surface, we'd render a vertical quad covering the exposed side of the higher block. Extend the texture's edge color downward. This is simple but can look like vertical streaks.
 
@@ -75,8 +75,6 @@ _Muzan hands_
 Muzan lifts and aims his left forearm towards his target, before uses his blood from his veins, that creates a red-and-black veins-like cracks, to create an array of thorny, thin tendrils to entangle and slash his target.
 
 <img width="618" height="334" alt="image" src="https://github.com/user-attachments/assets/b2718086-d814-4962-82cf-d3273ce0b2c4" />
-
-
 
 Tick 0
 
@@ -137,7 +135,6 @@ The user stomps on the ground and a line of upwards flesh vines surges forward, 
 
 <img width="1280" height="715" alt="image" src="https://github.com/user-attachments/assets/dfc9f614-1167-4ef1-9e61-3d50c51a6b34" />
 
-
 Ticks 0-15 (charge up)
 
 - Biokineses item uses the biokineses_1 model
@@ -149,7 +146,7 @@ Ticks 0-15 (charge up)
 
 Tick 17
 
-- Render the biokineses_1l model on the left hand from tick 17 until the form cleanup
+- Render the biokineses_1 model on the left hand from tick 17 until the form cleanup
 - User slams downward while playing the heel_drop animation, and the attack happens as soon as the user hits the ground (if the user doesn't hit the ground in the next two seconds, then the ability is cancelled)
 
 When the user hits the ground:
@@ -290,11 +287,11 @@ Ticks 0-8
 - Both bone whips are arcing in the same direction they are rotating
 - 2 crisscrossing arcs of blackred_slash particles launch forward from the user (forming a curved X shape, getting larger as they go further from the user, traveling rapidly in the direction the user is looking, doing damage to all living entities in their path)
 
- Tick 15
+Tick 15
 
- - 6 blood tornados launch forward from the user, each traveling at a speed of 2 blocks per tick, in the direction the user is looking, each one trailing blackred_impact particles, they launch forward at degree offsets, 7 degrees apart from eachother in trajectory angle 
- - The blood tornadoes travel for 40 ticks before dissapearing in a cloud of explosion particles
- - 10 blood lances launch forward, 2 degrees apart from eachother in trajectory angle, spaced half a block apart in starting position, the blood lances travel forward for 50 blocks, damaging all entities in their paths
+- 6 blood tornados launch forward from the user, each traveling at a speed of 2 blocks per tick, in the direction the user is looking, each one trailing blackred_impact particles, they launch forward at degree offsets, 7 degrees apart from eachother in trajectory angle
+- The blood tornadoes travel for 40 ticks before dissapearing in a cloud of explosion particles
+- 10 blood lances launch forward, 2 degrees apart from eachother in trajectory angle, spaced half a block apart in starting position, the blood lances travel forward for 50 blocks, damaging all entities in their paths
 
 Tick 30 (cleanup)
 
@@ -346,7 +343,7 @@ Ticks 41-51
 - The user's movement speed is reduced to 0.1x
 - The back tentacles zoom forward, following the path of the flesh vine (with a random offset of up to 3 blocks), and reaching the end position of the flesh vine (the target position) by tick 51
 - Every tick, play a blackred_slash particle on the end position of every tentacle
-- As the tentacles zoom forward, all living entities in their path (or within 5 blocks of the flesh vine path, or within 6 blocks of the flesh mouths) take damage (and get the blackred_impact particles on them) 
+- As the tentacles zoom forward, all living entities in their path (or within 5 blocks of the flesh vine path, or within 6 blocks of the flesh mouths) take damage (and get the blackred_impact particles on them)
 
 Ticks 52-62 (retraction)
 
@@ -367,7 +364,6 @@ _Flesh Arms_
 Unleash multiple bone whips in a 50 x 50 area ripping apart and tearing apart opponents, dragging the disemboweled corpses back to be consumed by their body for high regeneration, can only be Blocked or negated by hashira or high tier Demon slayers, leaves lasting high-level poison on the survivors, slowly poison their bodies as the fight drags on
 
 <img width="901" height="1400" alt="image" src="https://github.com/user-attachments/assets/558b49d3-05d5-489a-b50f-83d503b00903" />
-
 
 Tick 0
 
@@ -434,14 +430,14 @@ Unleash multiple flesh vines in a 50 x 50 area ripping apart and tearing apart o
 Tick 0
 
 - Activate the six back tentacles (if they aren't active already, if they are active, then just take them out of whatever mode they are currently on, ending the biokineses climbing if that's happening, and place them on standby)
-- Biokineses item uses the biokineses_1 model, and biokineses_1l is rendered in the left hand
+- Biokineses item uses the biokineses_1 model, and biokineses_1 is rendered in the left hand
 
 Ticks 0-10 (chargeup)
 
 - Play the summon animation while particles spiral around the user, user moves at 0.5x speed
 - The back tentacles will be spiraling upwards (above the user, local gravity aware)
 
-Ticks 11-61 
+Ticks 11-61
 
 - User moves at 0.25x speed
 - 25 block radius centered on the user's head
@@ -481,7 +477,7 @@ Ticks 0-15 (chargeup)
 - Play the summon animation while particles spiral around the user, user moves at 0.5x speed
 - The back tentacles will be spiraling upwards (above the user, local gravity aware)
 
-Ticks 16-66 
+Ticks 16-66
 
 - User hovers during this ability (no gravity)
 - Play the minecraft:entity.warden.sonic_charge sound effect at 0.75 pitch
@@ -574,11 +570,10 @@ The user extends two large fleshy arms mottled with mouths, along with their bac
 
 <img width="1448" height="1086" alt="image" src="https://github.com/user-attachments/assets/832eb478-95da-4492-96f4-71d448752df2" />
 
-
 Tick 0
 
 - Activate the six back tentacles (if they aren't active already, if they are active, then just take them out of whatever mode they are currently on, ending the biokineses climbing if that's happening, and place them on standby)
-- Biokineses item uses the biokineses_1 model, and biokineses_1l is rendered in the left hand
+- Biokineses item uses the biokineses_1 model, and biokineses_1 is rendered in the left hand
 - Place a small dark aura centered on the user's feet
 - Place two large red circles auras centered on the user's feet, one spinning clockwise, the other spinning counter clockwise
 
@@ -602,10 +597,10 @@ Ticks 15-85
 - The 4 flesh fines should spiral around the user like the arms of a spiral galaxy, curving appropriately, in a 25 block radius
 - Along the path of each flesh vine, there should be flesh mouths facing random directions, each one should have inhale particles particles attached to them, and there should also be inhale particles attached to the ends of the flesh vines
 - All living entities within 35 blocks of the user (and more than 5 blocks away from the user) are pulled towards the user, (if a living entity is within 3 blocks of being on the same Y level (or whatever the vertical coordinate is in the user's local gravity) of the user, then the living entity needs to be more than 20 blocks away to be pulled towards the user). This is to pull nearby entities into the 25 block radius disk
-- Every 2 ticks, launch 4  blood lances outwards from the user horizontally (local gravity aware) at 90 degree increments, with an offset of `X * 3` degrees. Each blood lance should travel 25 blocks out before being removed.
+- Every 2 ticks, launch 4 blood lances outwards from the user horizontally (local gravity aware) at 90 degree increments, with an offset of `X * 3` degrees. Each blood lance should travel 25 blocks out before being removed.
 - The blood tornados should follow the user, keep them in that circular pattern, they should be circling around the user in an 18 block radius
 - Every 10 ticks each living entity within the disk has a 50% chance of taking damage from this form, and this damage should ignore the damage cooldown, and entities can also get damaged by the blood tornados and the blood lances
-- If kimetsu block break gamerule is enabled, then every 10 ticks, up to 5 random blocks in the area of the disc will get tnt explosions, breaking blocks 
+- If kimetsu block break gamerule is enabled, then every 10 ticks, up to 5 random blocks in the area of the disc will get tnt explosions, breaking blocks
 
 Ticks 86-96
 
@@ -626,12 +621,11 @@ While in this form, the user can launch a flesh tentacle (on right click) and sw
 
 <img width="468" height="655" alt="image" src="https://github.com/user-attachments/assets/033d4705-3f54-4a6c-aa73-8178d0518c31" />
 
-
 Tick 0:
 
 - User plays the summon animation
 - A dark aura is created on the user
-- Biokineses item uses the biokineses_1 model, and biokineses_1l is rendered in the left hand
+- Biokineses item uses the biokineses_1 model, and biokineses_1 is rendered in the left hand
 - Create 4 flesh vines
 - The Ball of Genocide entity is created on the user (this is a geckolib entity), setting the user as the owner, and it plays the spawn animation
 
@@ -654,9 +648,9 @@ Tick 11:
 - Any other living entities that the Ball of Genocide touches will get stuck to the ball and rotate with it (along the edge of the radius, their location being stuck to the edge as the ball rotates)
 - When it moves (it follows the owner's location and velocity), it should roll, and for it to roll, we need to change the orientation of the entity accordingly. The ball's radius is R, and that radius is also the ball's vertical offset (local gravity aware) from the owner's location (because the owner is at the bottom of the ball)
   - Rotation axis (\(\^{u}\)): Take the cross product of the normalized roll direction vector \(\^{d}\) and the surface normal \(\^{n}\) (for example, \((0, 1, 0)\) or \((0, 0, 1)\) on a flat horizontal plane).
-  \(\vec{a}=\^{d}\times \^{n},\quad \^{u}=\frac{\vec{a}}{\|{}\vec{a}\|{}}\)
+    \(\vec{a}=\^{d}\times \^{n},\quad \^{u}=\frac{\vec{a}}{\|{}\vec{a}\|{}}\)
   - Rotation angle (\(\theta \) in radians): Divide the linear displacement \(\Delta s\) (or speed \(\times \Delta t\)) by the ball's radius \(R\):
-  \(\theta =\frac{\Delta s}{R}\)
+    \(\theta =\frac{\Delta s}{R}\)
   - Apply orientation: Build a rotation matrix or quaternion from \((\hat{u}, \theta)\) and multiply it into the ball's current orientation rather than accumulating Euler angles directly (which can suffer from gimbal lock). You can use the Rotation Calculator to test conversions between rotation matrices, Euler angles, and quaternions
 
 ---
@@ -664,9 +658,6 @@ Tick 11:
 ## Ignore everything past this line, this is WIP
 
 ---
-
-
-
 
 Some random chargeup
 

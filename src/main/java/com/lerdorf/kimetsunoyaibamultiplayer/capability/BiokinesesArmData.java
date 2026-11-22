@@ -20,13 +20,13 @@ public class BiokinesesArmData implements IBiokinesesArmData {
     private final long[] anchorBlockPositions = new long[ARM_COUNT];
     private final int[] anchorFaces = new int[ARM_COUNT];
     private boolean locomotionActive;
-    private boolean noGravityBeforeLocomotion;
     private float traversalForwardInput;
     private float traversalStrafeInput;
     private boolean traversalJumping;
     private boolean traversalDescending;
     private long traversalInputTick = Long.MIN_VALUE;
     private int airborneTicks;
+    private int climbingTicks;
 
     public BiokinesesArmData() {
         for (int i = 0; i < ARM_COUNT; i++) {
@@ -213,16 +213,6 @@ public class BiokinesesArmData implements IBiokinesesArmData {
     }
 
     @Override
-    public boolean wasNoGravityBeforeLocomotion() {
-        return noGravityBeforeLocomotion;
-    }
-
-    @Override
-    public void setNoGravityBeforeLocomotion(boolean noGravity) {
-        noGravityBeforeLocomotion = noGravity;
-    }
-
-    @Override
     public float getTraversalForwardInput() {
         return traversalForwardInput;
     }
@@ -276,6 +266,16 @@ public class BiokinesesArmData implements IBiokinesesArmData {
     }
 
     @Override
+    public int getClimbingTicks() {
+        return climbingTicks;
+    }
+
+    @Override
+    public void setClimbingTicks(int ticks) {
+        climbingTicks = Math.max(0, ticks);
+    }
+
+    @Override
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putBoolean("Active", active);
@@ -284,8 +284,8 @@ public class BiokinesesArmData implements IBiokinesesArmData {
         tag.putLong("ExpiresAt", expiresAt);
         tag.putInt("AllocationMode", allocationMode);
         tag.putBoolean("LocomotionActive", locomotionActive);
-        tag.putBoolean("NoGravityBeforeLocomotion", noGravityBeforeLocomotion);
         tag.putInt("AirborneTicks", airborneTicks);
+        tag.putInt("ClimbingTicks", climbingTicks);
         for (int i = 0; i < ARM_COUNT; i++) {
             CompoundTag arm = new CompoundTag();
             Vec3 target = targets[i];
@@ -313,8 +313,8 @@ public class BiokinesesArmData implements IBiokinesesArmData {
         expiresAt = tag.getLong("ExpiresAt");
         allocationMode = tag.getInt("AllocationMode");
         locomotionActive = tag.getBoolean("LocomotionActive");
-        noGravityBeforeLocomotion = tag.getBoolean("NoGravityBeforeLocomotion");
         airborneTicks = tag.getInt("AirborneTicks");
+        climbingTicks = tag.getInt("ClimbingTicks");
         for (int i = 0; i < ARM_COUNT; i++) {
             CompoundTag arm = tag.getCompound("Arm" + i);
             targets[i] = new Vec3(arm.getDouble("TargetX"), arm.getDouble("TargetY"), arm.getDouble("TargetZ"));

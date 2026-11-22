@@ -304,6 +304,28 @@ public class ModEntities {
                 .fireImmune()
                 .build("blood_tornado"));
 
+    /** Fast, glowing projectile used by Muzan's Blood Demon Arts. */
+    public static final RegistryObject<EntityType<BloodLanceEntity>> BLOOD_LANCE =
+        ENTITY_TYPES.register("blood_lance",
+            () -> EntityType.Builder.<BloodLanceEntity>of(BloodLanceEntity::new, MobCategory.MISC)
+                .sized(0.35F, 0.35F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("blood_lance"));
+
+    /** Temporary GeckoLib visual for Thunder Breathing's Flaming Thunder God. */
+    public static final RegistryObject<EntityType<ThunderDragonEntity>> THUNDER_DRAGON =
+        ENTITY_TYPES.register("thunder_dragon",
+            () -> EntityType.Builder.of(ThunderDragonEntity::new, MobCategory.MISC)
+                .sized(8.0F, 8.0F)
+                .clientTrackingRange(128)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("thunder_dragon"));
+
     /** Server-tracked, procedural flesh vine used by Ultimate Authority. */
     public static final RegistryObject<EntityType<FleshVineEntity>> FLESH_VINE =
         ENTITY_TYPES.register("flesh_vine",
@@ -314,6 +336,17 @@ public class ModEntities {
                 .noSave()
                 .fireImmune()
                 .build("flesh_vine"));
+
+    /** Narrower bone-whip variant used by Biokineses attacks. */
+    public static final RegistryObject<EntityType<BoneWhipEntity>> BONE_WHIP =
+        ENTITY_TYPES.register("bone_whip",
+            () -> EntityType.Builder.of(BoneWhipEntity::new, MobCategory.MISC)
+                .sized(0.375F, 0.375F)
+                .clientTrackingRange(64)
+                .updateInterval(1)
+                .noSave()
+                .fireImmune()
+                .build("bone_whip"));
 
     /**
      * After Image - Visual effect for Flower Breathing 7th Form and other speed techniques
@@ -773,6 +806,7 @@ public class ModEntities {
             // Register attributes for Love Tornado (visual-only entity)
             event.put(LOVE_TORNADO.get(), LoveTornadoEntity.createAttributes().build());
             event.put(BLOOD_TORNADO.get(), BloodTornadoEntity.createAttributes().build());
+            event.put(THUNDER_DRAGON.get(), ThunderDragonEntity.createAttributes().build());
 
             // Register attributes for After Image (visual-only entity)
             event.put(AFTER_IMAGE.get(), AfterImageEntity.createAttributes().build());

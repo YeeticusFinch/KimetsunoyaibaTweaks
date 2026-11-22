@@ -1183,6 +1183,14 @@ public class KimetsunoyaibaMultiplayer
                     (stack, level, entity, seed) -> stack.hasTag()
                         && stack.getTag().getBoolean("kimetsunoyaibamultiplayer_biokineses_offhand") ? 1.0F : 0.0F
                 );
+                net.minecraft.client.renderer.item.ItemProperties.register(
+                    com.lerdorf.kimetsunoyaibamultiplayer.items.ModItems.BIOKINESES.get(),
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "model_variant"),
+                    (stack, level, entity, seed) ->
+                        stack.hasTag() ? stack.getTag().getInt(
+                            com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.Biokineses.MODEL_VARIANT_TAG)
+                            : 0.0F
+                );
             });
 		if (Config.logDebug)
             Log.info("Animation sync system initialized for client");
@@ -1245,6 +1253,11 @@ public class KimetsunoyaibaMultiplayer
                 com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.ENERGY.get(),
                 com.lerdorf.kimetsunoyaibamultiplayer.client.particles.EnergyParticle.Provider::new
             );
+
+            event.registerSpriteSet(
+                com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles.INHALE.get(),
+                com.lerdorf.kimetsunoyaibamultiplayer.client.particles.InhaleParticle.Provider::new
+            );
         }
 
         @SubscribeEvent
@@ -1291,8 +1304,12 @@ public class KimetsunoyaibaMultiplayer
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.LoveTornadoRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.BLOOD_TORNADO.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BloodTornadoRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.BLOOD_LANCE.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BloodLanceRenderer::new);
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.FLESH_VINE.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.entities.client.FleshVineRenderer::new);
+            event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.BONE_WHIP.get(),
+                    com.lerdorf.kimetsunoyaibamultiplayer.entities.client.BoneWhipRenderer::new);
 
             // Register renderers for generic demon slayers
             event.registerEntityRenderer(com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.DEMON_SLAYER.get(),
@@ -1426,9 +1443,10 @@ public class KimetsunoyaibaMultiplayer
             // The flesh-vine tip is rendered directly by FleshVineRenderer, so it is
             // an additional baked model rather than an item registry entry.
             event.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "item/flesh_vine_tip"));
+            event.register(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MODID, "item/bone_whip_tip"));
 
             if (Config.logDebug)
-            Log.info("Registered additional models (kanroji_sword_static, nichirinsword_love_static, flesh_vine_tip)");
+            Log.info("Registered additional models (kanroji_sword_static, nichirinsword_love_static, flesh_vine_tip, bone_whip_tip)");
         }
     }
 

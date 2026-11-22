@@ -308,6 +308,12 @@ public class ModBlocks {
             .strength(2.0f, 3.0f)
             .noOcclusion()));
 
+    public static final RegistryObject<Block> CHEST_OF_DRAWERS_2 = registerBlock("chest_of_drawers_2",
+        () -> new ChestOfDrawersBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(MapColor.WOOD)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f), true));
+
     public static final RegistryObject<Block> LARGE_DOOR = registerBlock("large_door",
         () -> new LargeDoorBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
             .mapColor(MapColor.WOOD)
@@ -936,6 +942,61 @@ public class ModBlocks {
         BENCH_BLUE, BENCH_BROWN, BENCH_GREEN, BENCH_RED, BENCH_BLACK
     );
 
+    // Stool - the cushion is tinted to match the wool used in its recipe.
+    public static final RegistryObject<Block> STOOL = registerBlock("stool",
+        () -> new StoolBlock(stoolProperties(MapColor.SNOW)));
+
+    public static final RegistryObject<Block> STOOL_ORANGE = registerBlock("stool_orange",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_ORANGE)));
+
+    public static final RegistryObject<Block> STOOL_MAGENTA = registerBlock("stool_magenta",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_MAGENTA)));
+
+    public static final RegistryObject<Block> STOOL_LIGHT_BLUE = registerBlock("stool_light_blue",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_LIGHT_BLUE)));
+
+    public static final RegistryObject<Block> STOOL_YELLOW = registerBlock("stool_yellow",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_YELLOW)));
+
+    public static final RegistryObject<Block> STOOL_LIME = registerBlock("stool_lime",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_LIGHT_GREEN)));
+
+    public static final RegistryObject<Block> STOOL_PINK = registerBlock("stool_pink",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_PINK)));
+
+    public static final RegistryObject<Block> STOOL_GRAY = registerBlock("stool_gray",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_GRAY)));
+
+    public static final RegistryObject<Block> STOOL_LIGHT_GRAY = registerBlock("stool_light_gray",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_LIGHT_GRAY)));
+
+    public static final RegistryObject<Block> STOOL_CYAN = registerBlock("stool_cyan",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_CYAN)));
+
+    public static final RegistryObject<Block> STOOL_PURPLE = registerBlock("stool_purple",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_PURPLE)));
+
+    public static final RegistryObject<Block> STOOL_BLUE = registerBlock("stool_blue",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_BLUE)));
+
+    public static final RegistryObject<Block> STOOL_BROWN = registerBlock("stool_brown",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_BROWN)));
+
+    public static final RegistryObject<Block> STOOL_GREEN = registerBlock("stool_green",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_GREEN)));
+
+    public static final RegistryObject<Block> STOOL_RED = registerBlock("stool_red",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_RED)));
+
+    public static final RegistryObject<Block> STOOL_BLACK = registerBlock("stool_black",
+        () -> new StoolBlock(stoolProperties(MapColor.COLOR_BLACK)));
+
+    public static final java.util.List<RegistryObject<Block>> STOOL_VARIANTS = java.util.List.of(
+        STOOL, STOOL_ORANGE, STOOL_MAGENTA, STOOL_LIGHT_BLUE, STOOL_YELLOW, STOOL_LIME,
+        STOOL_PINK, STOOL_GRAY, STOOL_LIGHT_GRAY, STOOL_CYAN, STOOL_PURPLE, STOOL_BLUE,
+        STOOL_BROWN, STOOL_GREEN, STOOL_RED, STOOL_BLACK
+    );
+
     public static final RegistryObject<Block> HEMOLITH_ORE = registerBlock("hemolith_ore",
         () -> new Block(BlockBehaviour.Properties.copy(Blocks.STONE)
             .mapColor(MapColor.STONE)
@@ -1088,6 +1149,14 @@ public class ModBlocks {
         RegistryObject<T> toReturn = BLOCKS.register(name, block);
         registerBlockItem(name, toReturn);
         return toReturn;
+    }
+
+    private static BlockBehaviour.Properties stoolProperties(MapColor mapColor) {
+        return BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+            .mapColor(mapColor)
+            .sound(SoundType.WOOD)
+            .strength(2.0f, 3.0f)
+            .noOcclusion();
     }
 
     private static RegistryObject<LotusBlock> registerLotusBlock() {

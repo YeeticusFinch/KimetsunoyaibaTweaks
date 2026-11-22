@@ -150,6 +150,7 @@ public class FirstPersonAnimationTracker {
         }
         return animationName.equals("left_sword_to_left")
                 || animationName.equals("left_sword_to_right")
+                || animationName.equals("left_sword_to_upper")
                 || animationName.equals("left_sword_overhead")
                 || animationName.equals("left_brambles");
     }
@@ -164,6 +165,7 @@ public class FirstPersonAnimationTracker {
                currentAnimation.equals("sword_to_right") ||
                currentAnimation.equals("left_sword_to_left") ||
                currentAnimation.equals("left_sword_to_right") ||
+               currentAnimation.equals("left_sword_to_upper") ||
                currentAnimation.equals("sword_rotate") ||
                currentAnimation.equals("sword_overhead") ||
                currentAnimation.equals("left_sword_overhead") ||
@@ -250,7 +252,8 @@ public class FirstPersonAnimationTracker {
     private static boolean isKnownAnimationName(String name) {
         String[] knownNames = {
             "sword_to_right", "sword_to_left", "sword_rotate", "sword_overhead",
-            "left_sword_to_right", "left_sword_to_left", "left_sword_overhead", "double_sword_overhead",
+            "left_sword_to_right", "left_sword_to_left", "left_sword_to_upper", "left_sword_overhead",
+            "double_sword_overhead",
             "sword_to_right_reverse", "sword_to_left_reverse", "sword_to_upper",
             "punch_right", "punch_left", "kick_right", "kick_left",
             "sprint", "sprint_senior",

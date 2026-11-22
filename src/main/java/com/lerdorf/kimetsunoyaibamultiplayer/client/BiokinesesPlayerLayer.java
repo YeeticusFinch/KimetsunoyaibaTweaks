@@ -23,6 +23,12 @@ public final class BiokinesesPlayerLayer extends RenderLayer<AbstractClientPlaye
     public void render(PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                        AbstractClientPlayer player, float limbSwing, float limbSwingAmount,
                        float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
+        poseStack.pushPose();
+        getParentModel().body.translateAndRotate(poseStack);
+        BiokinesesArmRenderer.captureGeoTorsoTransform(player, poseStack,
+            Minecraft.getInstance().gameRenderer.getMainCamera().getPosition(), partialTick);
+        poseStack.popPose();
+
         ItemStack virtualStack = BiokinesesRenderHandler.getVirtualOffhandStack(player);
         if (virtualStack.isEmpty()) {
             return;

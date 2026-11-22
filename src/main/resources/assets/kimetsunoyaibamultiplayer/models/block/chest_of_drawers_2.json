@@ -1,0 +1,9 @@
+{
+  "parent": "kimetsunoyaibamultiplayer:custom/tansu",
+  "textures": {
+    "all": "kimetsunoyaibamultiplayer:block/chest_of_drawers_2",
+    "particle": "kimetsunoyaibamultiplayer:block/chest_of_drawers_2",
+    "0": "kimetsunoyaibamultiplayer:block/chest_of_drawers_2"
+  },
+  "render_type": "solid"
+}

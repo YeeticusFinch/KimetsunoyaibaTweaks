@@ -20,6 +20,7 @@ public class BlockRenderTypeHandler {
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.CHEST_OF_DRAWERS.get(), RenderType.cutout());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.CHEST_OF_DRAWERS_2.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.SWORD_RACK.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.BIRDHOUSE.get(), RenderType.cutout());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.LOTUS.get(), RenderType.cutout());

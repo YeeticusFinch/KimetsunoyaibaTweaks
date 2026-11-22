@@ -414,7 +414,8 @@ public class AnimationTracker {
             "breath_beast1", "breath_beast2", "beast2", "sword_to_upper", "puddle_enter",
             "puddle_idle", "puddle_walk", "puddle_attack", "puddle_hide", "puddle_hide_attack",
             "puddle_show", "puddle_exit",
-            "left_sword_to_left", "left_sword_to_right", "left_sword_overhead", "double_sword_overhead"
+            "left_sword_to_left", "left_sword_to_right", "left_sword_to_upper", "left_sword_overhead",
+            "double_sword_overhead"
         };
 
         for (String known : knownNames) {
