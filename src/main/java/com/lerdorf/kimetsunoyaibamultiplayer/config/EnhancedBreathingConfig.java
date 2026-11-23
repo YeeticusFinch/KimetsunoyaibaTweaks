@@ -266,6 +266,10 @@ public class EnhancedBreathingConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         enhancedMistBreathing = ENHANCED_MIST_BREATHING.get();
         enhancedFlowerBreathing = ENHANCED_FLOWER_BREATHING.get();
         enhancedBeastBreathing = ENHANCED_BEAST_BREATHING.get();

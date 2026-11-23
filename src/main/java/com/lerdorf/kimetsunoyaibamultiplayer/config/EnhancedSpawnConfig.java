@@ -263,6 +263,10 @@ public class EnhancedSpawnConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         Log.debug("ENHANCED SPAWN CONFIG LOADING...");
         updateCache();
         Log.debug("Enhanced spawn config loaded successfully.");

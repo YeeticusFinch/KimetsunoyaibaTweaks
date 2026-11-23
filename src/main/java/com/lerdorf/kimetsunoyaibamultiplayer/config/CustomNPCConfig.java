@@ -227,6 +227,10 @@ public class CustomNPCConfig {
      */
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         if (isDebugEnabled()) {
             Log.debug("[KnY Custom NPCs] Config loaded!");
             Log.debug("  Enabled: " + isEnabled());

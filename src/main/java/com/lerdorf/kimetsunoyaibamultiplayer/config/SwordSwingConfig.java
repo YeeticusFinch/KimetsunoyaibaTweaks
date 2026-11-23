@@ -435,6 +435,10 @@ public class SwordSwingConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         // General
         useSwordSwingModel = USE_SWORD_SWING_MODEL.get();
         modelScale = (float) (double) MODEL_SCALE.get();

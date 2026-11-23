@@ -307,7 +307,10 @@ public final class BiokinesesArmRenderer {
         Vec3 elbow = start.add(direction.scale(cosine * upperLength)).add(bendDirection.scale(jointHeight));
 
         Vec3 firstControl = start.add(startDirection.scale(Math.min(0.75D, upperLength * 0.42D)));
-        Vec3 secondControl = reachableTarget.lerp(elbow, 0.78D);
+        double terminalControlDistance = Math.min(1.1D, Math.max(0.65D, totalLength * 0.22D));
+        Vec3 secondControl = terminalDirection == null
+            ? reachableTarget.lerp(elbow, 0.78D)
+            : reachableTarget.subtract(terminalDirection.scale(terminalControlDistance));
         List<Vec3> path = new ArrayList<>(PATH_SEGMENTS + 1);
         for (int i = 0; i <= PATH_SEGMENTS; i++) {
             double progress = i / (double) PATH_SEGMENTS;

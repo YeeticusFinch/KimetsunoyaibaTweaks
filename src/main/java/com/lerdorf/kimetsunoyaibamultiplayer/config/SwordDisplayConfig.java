@@ -385,6 +385,10 @@ public class SwordDisplayConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         Log.debug("SWORD DISPLAY CONFIG LOADING...");
         enabled = ENABLED.get();
         scale = SCALE.get();

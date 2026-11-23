@@ -97,6 +97,10 @@ public final class EntitySkinLayersConfig {
 
     @SubscribeEvent
     public static void onLoad(ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         // ForgeConfigSpec values are read lazily, so no cached copy is needed.
     }
 }

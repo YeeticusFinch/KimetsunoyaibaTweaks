@@ -30,6 +30,10 @@ public final class SwordsmithVillageConfig {
 
     @SubscribeEvent
     public static void onLoad(ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         maxPopulation = MAX_POPULATION.get();
         noonRecoveryChance = NOON_RECOVERY_CHANCE.get();
     }

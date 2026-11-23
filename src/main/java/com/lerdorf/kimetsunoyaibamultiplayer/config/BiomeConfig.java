@@ -141,6 +141,10 @@ public class BiomeConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         enableBiomeFix = ENABLE_BIOME_FIX.get();
         logBiomeChanges = LOG_BIOME_CHANGES.get();
 

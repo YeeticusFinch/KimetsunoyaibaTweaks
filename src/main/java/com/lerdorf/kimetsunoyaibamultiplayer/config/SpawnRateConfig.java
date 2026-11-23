@@ -170,6 +170,10 @@ public class SpawnRateConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         Log.debug("SPAWN RATE CONFIG LOADING...");
         // Update the cache when config is loaded
         updateCache();

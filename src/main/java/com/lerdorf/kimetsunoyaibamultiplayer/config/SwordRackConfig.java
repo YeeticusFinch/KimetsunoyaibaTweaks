@@ -62,6 +62,10 @@ public final class SwordRackConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         Log.info("Loaded sword rack config");
     }
 

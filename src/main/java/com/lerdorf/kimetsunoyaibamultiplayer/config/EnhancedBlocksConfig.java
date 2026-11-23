@@ -31,6 +31,10 @@ public class EnhancedBlocksConfig {
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         enhancedChestOfDrawers = ENHANCED_CHEST_OF_DRAWERS.get();
         enhancedVialRack = ENHANCED_VIAL_RACK.get();
         Log.info("Loaded enhanced blocks config: enhancedChestOfDrawers={}, enhancedVialRack={}",

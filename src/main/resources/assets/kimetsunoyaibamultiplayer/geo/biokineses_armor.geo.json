@@ -477,7 +477,7 @@
 				{
 					"name": "armorLeftArm",
 					"parent": "bipedLeftArm",
-					"pivot": [-5, 22, 0],
+					"pivot": [5, 22, 0],
 					"cubes": [
 						{
 							"origin": [7, 12.75, 1],

@@ -124,6 +124,10 @@ public class EntityConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         Log.debug("ENTITY CONFIG LOADING...");
         crowEnhancementsEnabled = CROW_ENHANCEMENTS_ENABLED.get();
         crowFlyingDodgeEnabled = CROW_FLYING_DODGE_ENABLED.get();

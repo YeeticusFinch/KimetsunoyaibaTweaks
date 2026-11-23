@@ -55,6 +55,10 @@ public class VariationConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         List<? extends String> blacklist = VARIATION_BLACKLIST.get();
         blacklistedVariations = new HashSet<>(blacklist);
 

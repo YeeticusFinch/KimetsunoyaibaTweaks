@@ -1,9 +1,11 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -18,10 +20,15 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
 /** Server-authoritative blood lance projectile used by Muzan's Blood Demon Arts. */
 public final class BloodLanceEntity extends Projectile {
     private static final float DEFAULT_DAMAGE = 4.0F;
+    private static final int MAX_LIFETIME_TICKS = 60;
+    private static final double SPEED_MULTIPLIER = 1.5D;
+    private static final DustParticleOptions TRAIL_DUST =
+        new DustParticleOptions(new Vector3f(0.8F, 0.02F, 0.02F), 0.45F);
 
     private float damage = DEFAULT_DAMAGE;
 
@@ -46,8 +53,9 @@ public final class BloodLanceEntity extends Projectile {
     }
 
     public void setVelocity(Vec3 velocity) {
-        setDeltaMovement(velocity);
-        alignToVelocity(velocity);
+        Vec3 fasterVelocity = velocity.scale(SPEED_MULTIPLIER);
+        setDeltaMovement(fasterVelocity);
+        alignToVelocity(fasterVelocity);
     }
 
     public void setDamage(float damage) {
@@ -61,6 +69,11 @@ public final class BloodLanceEntity extends Projectile {
     @Override
     public void tick() {
         super.tick();
+
+        if (tickCount >= MAX_LIFETIME_TICKS) {
+            discard();
+            return;
+        }
 
         Vec3 velocity = getDeltaMovement();
         if (velocity.lengthSqr() > 1.0E-8D) {
@@ -78,6 +91,13 @@ public final class BloodLanceEntity extends Projectile {
 
         move(MoverType.SELF, velocity);
         checkInsideBlocks();
+
+        if (!isRemoved() && level() instanceof ServerLevel serverLevel
+            && velocity.lengthSqr() > 1.0E-8D) {
+            Vec3 trailPosition = position().subtract(velocity.normalize().scale(0.45D));
+            serverLevel.sendParticles(TRAIL_DUST, trailPosition.x, trailPosition.y, trailPosition.z,
+                2, 0.08D, 0.08D, 0.08D, 0.01D);
+        }
     }
 
     @Override

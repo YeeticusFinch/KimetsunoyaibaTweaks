@@ -112,7 +112,11 @@ public class BenchSeatEntity extends Mob {
 
     private void refreshSeatPosition() {
         BlockPos pos = getSeatPos();
-        setPos(pos.getX() + 0.5D, pos.getY() + SEAT_Y_OFFSET, pos.getZ() + 0.5D);
+        double seatYOffset = SEAT_Y_OFFSET;
+        if (level().getBlockState(pos).getBlock() instanceof StoolBlock) {
+            seatYOffset += 0.3D;
+        }
+        setPos(pos.getX() + 0.5D, pos.getY() + seatYOffset, pos.getZ() + 0.5D);
     }
 
     @Override

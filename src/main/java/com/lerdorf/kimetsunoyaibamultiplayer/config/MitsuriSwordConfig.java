@@ -31,6 +31,10 @@ public class MitsuriSwordConfig {
 	/*
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
     	 mitsuriSwordCurveResolution = CURVE_RESOLUTION.get();
     }
     */

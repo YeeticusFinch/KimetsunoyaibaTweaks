@@ -106,6 +106,10 @@ public final class EnhancedMountBiomeConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         // Keep a single generation-settings snapshot for the loaded world. Hot
         // reloads must not mix old noise caches with a new radius/height/profile.
         if (event.getConfig().getSpec() != SPEC || !(event instanceof ModConfigEvent.Loading)) {

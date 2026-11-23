@@ -90,12 +90,12 @@ public class ChestOfDrawersBlock extends BaseEntityBlock implements SimpleWaterl
 
     @Override
     public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
-        return twoDrawerVariant ? Shapes.block() : Shapes.empty();
+        return Shapes.empty();
     }
 
     @Override
     public boolean useShapeForLightOcclusion(BlockState state) {
-        return true;
+        return false;
     }
 
     public int getDrawerCount() {

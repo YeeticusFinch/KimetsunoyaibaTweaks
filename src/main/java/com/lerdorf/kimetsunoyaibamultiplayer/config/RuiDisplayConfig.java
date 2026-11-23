@@ -112,6 +112,10 @@ public final class RuiDisplayConfig {
 
     @SubscribeEvent
     public static void onLoad(ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         // Values are read lazily so renderer changes are visible after config reload.
     }
 }

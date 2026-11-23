@@ -312,7 +312,8 @@ public class ModBlocks {
         () -> new ChestOfDrawersBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
             .mapColor(MapColor.WOOD)
             .sound(SoundType.WOOD)
-            .strength(2.0f, 3.0f), true));
+            .strength(2.0f, 3.0f)
+            .noOcclusion(), true));
 
     public static final RegistryObject<Block> LARGE_DOOR = registerBlock("large_door",
         () -> new LargeDoorBlock(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)

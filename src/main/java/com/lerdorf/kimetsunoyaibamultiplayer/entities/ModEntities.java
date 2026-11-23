@@ -308,7 +308,7 @@ public class ModEntities {
     public static final RegistryObject<EntityType<BloodLanceEntity>> BLOOD_LANCE =
         ENTITY_TYPES.register("blood_lance",
             () -> EntityType.Builder.<BloodLanceEntity>of(BloodLanceEntity::new, MobCategory.MISC)
-                .sized(0.35F, 0.35F)
+                .sized(0.7F, 0.7F)
                 .clientTrackingRange(64)
                 .updateInterval(1)
                 .noSave()

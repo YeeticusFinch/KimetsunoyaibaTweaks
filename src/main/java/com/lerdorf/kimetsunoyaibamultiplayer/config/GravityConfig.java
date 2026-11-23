@@ -52,6 +52,10 @@ public final class GravityConfig {
 
     @SubscribeEvent
     public static void onLoad(ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         enableGravityChanging = ENABLE_GRAVITY_CHANGING.get();
         rotationTimeMs = ROTATION_TIME_MS.get();
         gravityStrengthMultiplier = GRAVITY_STRENGTH_MULTIPLIER.get();

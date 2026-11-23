@@ -298,6 +298,9 @@ public class Config
         if (event.getConfig().getSpec() != SPEC) {
             return;
         }
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
         Log.debug("COMMON CONFIG LOADING...");
         logDebug = LOG_DEBUG.get();
         logWarning = LOG_WARNING.get();

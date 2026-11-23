@@ -197,6 +197,10 @@ public class ParticleConfig {
 
     @SubscribeEvent
     public static void onLoad(final ModConfigEvent event) {
+        if (event.getConfig().getSpec() != SPEC) {
+            return;
+        }
+
         Log.debug("PARTICLE CONFIG LOADING...");
         swordParticlesEnabled = SWORD_PARTICLES_ENABLED.get();
         swordParticlesForOtherEntities = SWORD_PARTICLES_FOR_OTHER_ENTITIES.get();
