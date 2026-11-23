@@ -858,6 +858,7 @@ public class KimetsunoyaibaMultiplayer
          com.lerdorf.kimetsunoyaibamultiplayer.commands.DemonRankCommand.register(event.getDispatcher());
          com.lerdorf.kimetsunoyaibamultiplayer.commands.SetDemonSlayerRankCommand.register(event.getDispatcher());
          com.lerdorf.kimetsunoyaibamultiplayer.commands.SpiderPuppetCommand.register(event.getDispatcher());
+         com.lerdorf.kimetsunoyaibamultiplayer.commands.TestAuraCommand.register(event.getDispatcher());
         if (com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity.isEnabled()) {
             com.lerdorf.kimetsunoyaibamultiplayer.commands.KNYGravityCommand.register(event.getDispatcher());
         }

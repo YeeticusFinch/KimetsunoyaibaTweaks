@@ -25,9 +25,11 @@ import com.lerdorf.kimetsunoyaibamultiplayer.events.DemonTransformationHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.events.BleedingHandler;
 import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame;
 import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.GravityDirectionHelper;
+import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.KNYGravity;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.ModNetworking;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BrambleSyncPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesAuraSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.MobSwordSlashPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderLightningSparkSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
@@ -36,6 +38,7 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -181,6 +184,10 @@ public final class Biokineses {
     private static final int MASSACRE_CLEANUP_TICK = 70;
     private static final int MASSACRE_RETRACTION_TICK = 54;
     private static final float MASSACRE_DAMAGE = 12.0F;
+    private static final double MASSACRE_AURA_RADIUS = 25.0D;
+    private static final float MASSACRE_AURA_OPACITY = 0.72F;
+    private static final double MASSACRE_AURA_MAX_DEPTH = 10.0D;
+    private static final double MASSACRE_AURA_UP_OFFSET = 2.0D;
     private static final int WRATH_CLEANUP_TICK = 83;
     private static final int WRATH_WHIP_START_TICK = 16;
     private static final int WRATH_WHIP_END_TICK = 66;
@@ -730,6 +737,9 @@ public final class Biokineses {
         CombatGravityFrame.run(entity, () -> {
             List<FleshVineEntity> vines = new ArrayList<>();
             List<BloodTornadoEntity> tornados = new ArrayList<>();
+            UUID darkAuraId = UUID.randomUUID();
+            UUID redAuraClockwiseId = UUID.randomUUID();
+            UUID redAuraCounterClockwiseId = UUID.randomUUID();
             setModelVariant(entity, 1);
             BiokinesesArmController.claimAllForAbility(entity);
             GuardStateHelper.setGuardState(entity, ABHORRENT_DAMAGE, formId, true);
@@ -743,6 +753,9 @@ public final class Biokineses {
                     if (!entity.isAlive()) {
                         discardVines(vines);
                         discardBloodTornados(tornados);
+                        clearAura(serverLevel, entity, darkAuraId);
+                        clearAura(serverLevel, entity, redAuraClockwiseId);
+                        clearAura(serverLevel, entity, redAuraCounterClockwiseId);
                         BiokinesesArmController.releaseAbilityClaim(entity);
                         cleanupForm(entity);
                         return;
@@ -754,8 +767,13 @@ public final class Biokineses {
                     Vec3 forward = GravityDirectionHelper.getLookDirection(entity).normalize();
                     if (tick <= ABHORRENT_CHARGE_END_TICK) {
                         limitMovement(entity, 0.25D);
-                        renderAbhorrentAuras(serverLevel, center, up, tick);
+                        updateAbhorrentAuras(serverLevel, entity, darkAuraId, redAuraClockwiseId,
+                            redAuraCounterClockwiseId, tick);
                         setAbhorrentArmTargets(entity, tick, 3.0D);
+                    } else if (tick == ABHORRENT_CHARGE_END_TICK + 1) {
+                        clearAura(serverLevel, entity, darkAuraId);
+                        clearAura(serverLevel, entity, redAuraClockwiseId);
+                        clearAura(serverLevel, entity, redAuraCounterClockwiseId);
                     }
                     if (tick == ABHORRENT_CHARGE_END_TICK) {
                         spawnAbhorrentVines(serverLevel, entity, vines);
@@ -784,6 +802,9 @@ public final class Biokineses {
                     if (tick == ABHORRENT_CLEANUP_TICK) {
                         discardVines(vines);
                         discardBloodTornados(tornados);
+                        clearAura(serverLevel, entity, darkAuraId);
+                        clearAura(serverLevel, entity, redAuraClockwiseId);
+                        clearAura(serverLevel, entity, redAuraCounterClockwiseId);
                         BiokinesesArmController.releaseAbilityClaim(entity);
                         setModelVariant(entity, 0);
                         cleanupForm(entity);
@@ -884,26 +905,36 @@ public final class Biokineses {
         }
     }
 
-    private static void renderAbhorrentAuras(ServerLevel level, Vec3 center, Vec3 up, int tick) {
-        int count = 16;
+    private static void updateAbhorrentAuras(ServerLevel level, LivingEntity owner, UUID darkAuraId,
+                                             UUID redClockwiseId, UUID redCounterClockwiseId, int tick) {
         double darkRadius = 0.5D + tick * 0.12D;
         double redRadius = 3.5D - tick * 0.12D;
-        Vec3 side = up.cross(new Vec3(0.0D, 1.0D, 0.0D));
-        if (side.lengthSqr() < 1.0E-8D) {
-            side = new Vec3(1.0D, 0.0D, 0.0D);
-        } else {
-            side = side.normalize();
-        }
-        Vec3 otherSide = up.cross(side).normalize();
-        level.sendParticles(CHARGE_BLACK_DUST, center.x, center.y, center.z,
-            1, darkRadius, 0.05D, darkRadius, 0.0D);
-        for (int index = 0; index < count; index++) {
-            double angle = tick * 0.3D + index * Math.PI * 2.0D / count;
-            Vec3 point = center.add(side.scale(Math.cos(angle) * redRadius))
-                .add(otherSide.scale(Math.sin(angle) * redRadius));
-            level.sendParticles(CHARGE_RED_DUST, point.x, point.y, point.z,
-                1, 0.0D, 0.0D, 0.0D, 0.0D);
-        }
+        float spin = 0.12F + tick * 0.025F;
+        updateAura(level, owner, darkAuraId, BiokinesesAuraTexture.DARK, 0.9F, darkRadius,
+            10.0D, 1.0D, tick * 0.05F, 0.0F, tick == 0, ABHORRENT_CLEANUP_TICK + 2);
+        updateAura(level, owner, redClockwiseId, BiokinesesAuraTexture.RED_CIRCLES, 0.82F,
+            redRadius, 10.0D, 1.0D, tick * spin, spin, tick == 0, ABHORRENT_CLEANUP_TICK + 2);
+        updateAura(level, owner, redCounterClockwiseId, BiokinesesAuraTexture.RED_CIRCLES, 0.82F,
+            redRadius, 10.0D, 1.0D, -tick * spin, -spin, tick == 0, ABHORRENT_CLEANUP_TICK + 2);
+    }
+
+    private static void updateAura(ServerLevel level, LivingEntity owner, UUID auraId,
+                                   BiokinesesAuraTexture texture, float opacity, double radius,
+                                   double maxDepth, double upOffset, float rotation,
+                                   float rotationSpeed, boolean resetLifetime, int lifetime) {
+        Vec3 origin = CombatGravityFrame.world(CombatGravityFrame.position(owner));
+        Direction gravity = KNYGravity.getGravityDirection(owner);
+        ModNetworking.sendToNearby(new BiokinesesAuraSyncPacket(auraId, true, resetLifetime, texture,
+            origin, owner.getId(), gravity, opacity, (float) radius, maxDepth, upOffset,
+            rotation, rotationSpeed, lifetime), level, origin.x, origin.y, origin.z, 128.0D);
+    }
+
+    private static void clearAura(ServerLevel level, LivingEntity owner, UUID auraId) {
+        Vec3 origin = owner.position();
+        ModNetworking.sendToNearby(new BiokinesesAuraSyncPacket(auraId, false, false,
+            BiokinesesAuraTexture.DARK, origin, owner.getId(), Direction.DOWN,
+            0.0F, 1.0F, 0.0D, 0.0D, 0.0F, 0.0F, 1), level,
+            origin.x, origin.y, origin.z, 128.0D);
     }
 
     private static void spawnAbhorrentVines(ServerLevel level, LivingEntity owner,
@@ -1065,6 +1096,7 @@ public final class Biokineses {
         CombatGravityFrame.run(entity, () -> {
             List<BoneWhipEntity> whips = new ArrayList<>();
             Map<UUID, FleshVineEntity> tethers = new HashMap<>();
+            UUID crackedAuraId = UUID.randomUUID();
             setModelVariant(entity, 2);
             BiokinesesArmController.claimAllForAbility(entity);
             GuardStateHelper.setGuardState(entity, MASSACRE_DAMAGE, formId, true);
@@ -1077,6 +1109,7 @@ public final class Biokineses {
                     if (!entity.isAlive()) {
                         discardBoneWhips(whips);
                         discardTethers(tethers);
+                        clearAura(serverLevel, entity, crackedAuraId);
                         BiokinesesArmController.releaseAbilityClaim(entity);
                         setModelVariant(entity, 0);
                         cleanupForm(entity);
@@ -1085,6 +1118,12 @@ public final class Biokineses {
                     Vec3 center = shockwaveCenter(entity);
                     Vec3 up = GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
                     Vec3 forward = GravityDirectionHelper.getLookDirection(entity).normalize();
+                    if (tick < MASSACRE_CLEANUP_TICK) {
+                        updateAura(serverLevel, entity, crackedAuraId, BiokinesesAuraTexture.CRACKED,
+                            MASSACRE_AURA_OPACITY, MASSACRE_AURA_RADIUS, MASSACRE_AURA_MAX_DEPTH,
+                            MASSACRE_AURA_UP_OFFSET, tick * 0.02F, 0.02F,
+                            tick == 0, MASSACRE_CLEANUP_TICK + 2);
+                    }
                     if (tick == 11) {
                         Vec3 start = armAnchor(entity, true);
                         Vec3 end = center.add(horizontalDirection(forward, up, -Math.PI * 0.5D).scale(5.0D));
@@ -1133,6 +1172,7 @@ public final class Biokineses {
                     if (tick == MASSACRE_CLEANUP_TICK) {
                         discardBoneWhips(whips);
                         discardTethers(tethers);
+                        clearAura(serverLevel, entity, crackedAuraId);
                         BiokinesesArmController.releaseAbilityClaim(entity);
                         setModelVariant(entity, 0);
                         cleanupForm(entity);

@@ -27,6 +27,7 @@ import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesM1AttackP
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesArmsSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesTraversalInputPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesTogglePacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesAuraSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ThunderZenitsuClickPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.RequestBloodDemonArtBuilderPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.SetDemonPropositionStatePacket;
@@ -544,6 +545,13 @@ public class ModNetworking {
                 .decoder(BiokinesesArmsSyncPacket::new)
                 .encoder(BiokinesesArmsSyncPacket::toBytes)
                 .consumerMainThread(BiokinesesArmsSyncPacket::handle)
+                .add();
+
+        int biokinesesAuraSyncPacketId = id();
+        net.messageBuilder(BiokinesesAuraSyncPacket.class, biokinesesAuraSyncPacketId)
+                .decoder(BiokinesesAuraSyncPacket::new)
+                .encoder(BiokinesesAuraSyncPacket::toBytes)
+                .consumerMainThread(BiokinesesAuraSyncPacket::handle)
                 .add();
 
         int thunderZenitsuClickPacketId = id();

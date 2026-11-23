@@ -24564,6 +24564,32 @@
 					}
 				}
 			}
+		},
+		"float": {
+			"loop": true,
+			"bones": {
+				"body": {
+					"rotation": ["-math.min(query.ground_speed * 180, 65)", 0, "math.clamp(query.yaw_speed * -1.5, -25, 25)"]
+				},
+				"head": {
+					"rotation": ["math.min(query.ground_speed * 70, 25)", 0, 0]
+				},
+				"torso": {
+					"rotation": [0, 0, "math.clamp(query.yaw_speed * -0.3, -8, 8)"]
+				},
+				"right_arm": {
+					"rotation": ["math.min(query.ground_speed * 120, 35) + math.clamp(query.vertical_speed * 45, -20, 20)", 0, "8 + math.sin(query.anim_time * 150) * 3"]
+				},
+				"left_arm": {
+					"rotation": ["math.min(query.ground_speed * 120, 35) + math.clamp(query.vertical_speed * 45, -20, 20)", 0, "-8 - math.sin(query.anim_time * 150) * 3"]
+				},
+				"right_leg": {
+					"rotation": ["-math.min(query.ground_speed * 65, 22) - math.clamp(query.vertical_speed * 25, -12, 12)", 0, 3]
+				},
+				"left_leg": {
+					"rotation": ["-math.min(query.ground_speed * 65, 22) - math.clamp(query.vertical_speed * 25, -12, 12)", 0, -3]
+				}
+			}
 		}
 	}
 }

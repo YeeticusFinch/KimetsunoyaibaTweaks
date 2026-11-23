@@ -192,4 +192,27 @@ public class CustomRenderTypes extends RenderType {
                 true,
                 renderState);
     }
+
+    /** Translucent, full-bright textured geometry used by terrain aura overlays. */
+    public static RenderType auraTranslucent(ResourceLocation texture) {
+        CompositeState renderState = CompositeState.builder()
+            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
+            .setTextureState(new TextureStateShard(texture, false, false))
+            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+            .setLightmapState(LIGHTMAP)
+            .setOverlayState(OVERLAY)
+            .setCullState(NO_CULL)
+            .setWriteMaskState(COLOR_WRITE)
+            .setOutputState(TRANSLUCENT_TARGET)
+            .createCompositeState(true);
+
+        return create(
+            "biokineses_aura",
+            DefaultVertexFormat.NEW_ENTITY,
+            VertexFormat.Mode.QUADS,
+            256,
+            true,
+            true,
+            renderState);
+    }
 }
