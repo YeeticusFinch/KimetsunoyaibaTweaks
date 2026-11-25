@@ -353,7 +353,7 @@ public final class Biokineses {
     }
 
     private static List<Vec3> buildWhipPath(Vec3 start, Vec3 end, Vec3 arc,
-                                            double wobble, int seed) {
+                                             double wobble, int seed) {
         int points = 16;
         List<Vec3> path = new ArrayList<>(points + 1);
         Vec3 tangent = end.subtract(start);
@@ -375,6 +375,132 @@ public final class Biokineses {
             path.add(point);
         }
         return path;
+    }
+
+    private static List<Vec3> buildMassacreHorizontalSpiral(Vec3 start, Vec3 center,
+                                                             Vec3 forward, Vec3 up,
+                                                             double angle, double radius,
+                                                             int seed) {
+        int points = 24;
+        List<Vec3> path = new ArrayList<>(points + 1);
+        for (int index = 0; index <= points; index++) {
+            double progress = index / (double) points;
+            if (index == 0) {
+                path.add(start);
+                continue;
+            }
+            double spiralAngle = angle + progress * Math.PI * 2.5D;
+            double spiralRadius = Math.max(0.5D, radius * progress);
+            Vec3 spiralPoint = center.add(horizontalDirection(forward, up, spiralAngle)
+                .scale(spiralRadius)).add(up.scale(Math.sin(progress * Math.PI) * 1.2D));
+            Vec3 wobble = horizontalDirection(forward, up,
+                seed * 0.071D + progress * Math.PI * 5.0D)
+                .scale(Math.sin(seed * 0.13D + progress * Math.PI * 9.0D)
+                    * 0.35D * Math.sin(progress * Math.PI));
+            path.add(start.lerp(spiralPoint, progress).add(wobble));
+        }
+        return path;
+    }
+
+    private static List<Vec3> buildMassacreVerticalSpiral(Vec3 start, Vec3 center,
+                                                           Vec3 forward, Vec3 up,
+                                                           double angle, double radius,
+                                                           int seed) {
+        int points = 24;
+        List<Vec3> path = new ArrayList<>(points + 1);
+        for (int index = 0; index <= points; index++) {
+            double progress = index / (double) points;
+            if (index == 0) {
+                path.add(start);
+                continue;
+            }
+            double spiralAngle = angle + progress * Math.PI * 3.0D;
+            Vec3 horizontal = horizontalDirection(forward, up, spiralAngle)
+                .scale(radius * progress * Math.cos(progress * Math.PI * 3.0D));
+            Vec3 spiralPoint = center.add(horizontal)
+                .add(up.scale(radius * progress * Math.sin(progress * Math.PI * 3.0D)));
+            Vec3 wobble = horizontalDirection(forward, up,
+                seed * 0.097D - progress * Math.PI * 7.0D)
+                .scale(Math.cos(seed * 0.11D + progress * Math.PI * 8.0D)
+                    * 0.45D * Math.sin(progress * Math.PI));
+            path.add(start.lerp(spiralPoint, progress).add(wobble));
+        }
+        return path;
+    }
+
+    private static List<Vec3> buildMassacreThrashPath(Vec3 start, Vec3 end,
+                                                       RandomSource random, int seed) {
+        int points = 28;
+        List<Vec3> path = new ArrayList<>(points + 1);
+        Vec3 tangent = end.subtract(start).normalize();
+        Vec3 reference = Math.abs(tangent.y) < 0.9D
+            ? new Vec3(0.0D, 1.0D, 0.0D) : new Vec3(1.0D, 0.0D, 0.0D);
+        Vec3 side = tangent.cross(reference).normalize();
+        Vec3 otherSide = tangent.cross(side).normalize();
+        Vec3 arc = randomUnitVector(random).scale(5.0D);
+        for (int index = 0; index <= points; index++) {
+            double progress = index / (double) points;
+            double envelope = Math.sin(progress * Math.PI);
+            double phase = seed * 0.17D + progress * Math.PI * 6.0D;
+            Vec3 point = start.lerp(end, progress).add(arc.scale(envelope))
+                .add(side.scale(Math.sin(phase) * 0.9D * envelope))
+                .add(otherSide.scale(Math.cos(phase * 0.73D) * 0.9D * envelope));
+            path.add(point);
+        }
+        return path;
+    }
+
+    private static void spawnMassacreWhipParticles(ServerLevel level, List<Vec3> path) {
+        if (path.size() < 2) {
+            return;
+        }
+        for (int index = 1; index < path.size(); index += 3) {
+            Vec3 point = path.get(index);
+            level.sendParticles(ParticleTypes.SWEEP_ATTACK, point.x, point.y, point.z,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+            level.sendParticles(ParticleTypes.CRIT, point.x, point.y, point.z,
+                2, 0.08D, 0.08D, 0.08D, 0.08D);
+        }
+        Vec3 tip = path.get(path.size() - 1);
+        level.sendParticles(ParticleTypes.SWEEP_ATTACK, tip.x, tip.y, tip.z,
+            2, 0.12D, 0.12D, 0.12D, 0.0D);
+        level.sendParticles(ParticleTypes.CRIT, tip.x, tip.y, tip.z,
+            4, 0.12D, 0.12D, 0.12D, 0.12D);
+        level.sendParticles(ModParticles.BLACKRED_SLASH.get(), tip.x, tip.y, tip.z,
+            1, 0.0D, 0.0D, 0.0D, 0.0D);
+    }
+
+    private static void spawnMassacreFlash(ServerLevel level, LivingEntity owner, Vec3 center) {
+        level.sendParticles(ParticleTypes.FLASH, center.x, center.y, center.z,
+            1, 0.0D, 0.0D, 0.0D, 0.0D);
+        for (int index = 0; index < 24; index++) {
+            Vec3 point = center.add(randomUnitVector(owner.getRandom())
+                .scale(Math.cbrt(owner.getRandom().nextDouble()) * 2.5D));
+            level.sendParticles(ParticleTypes.FLASH, point.x, point.y, point.z,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
+    private static void spawnMassacreSlashField(ServerLevel level, LivingEntity owner, Vec3 center) {
+        for (int index = 0; index < 14; index++) {
+            Vec3 point = center.add(randomUnitVector(owner.getRandom())
+                .scale(Math.cbrt(owner.getRandom().nextDouble()) * MASSACRE_AURA_RADIUS));
+            level.sendParticles(ModParticles.BLACKRED_SLASH.get(), point.x, point.y, point.z,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
+    private static Vec3 randomMassacreWhipTarget(LivingEntity owner, Vec3 center, Vec3 avoid) {
+        return randomMassacreWhipTarget(owner, center, avoid, MASSACRE_AURA_RADIUS);
+    }
+
+    private static Vec3 randomMassacreWhipTarget(LivingEntity owner, Vec3 center, Vec3 avoid,
+                                                  double radius) {
+        Vec3 target = randomSpherePoint(center, radius, owner);
+        for (int attempt = 0; attempt < 6 && avoid != null && target.distanceToSqr(avoid) < 36.0D; attempt++) {
+            target = randomSpherePoint(center, radius, owner);
+        }
+        return target;
     }
 
     private static Vec3 armAnchor(LivingEntity entity, boolean left) {
@@ -402,9 +528,17 @@ public final class Biokineses {
     }
 
     private static void discardBoneWhips(List<BoneWhipEntity> whips) {
+        discardBoneWhips(whips, false);
+    }
+
+    private static void discardBoneWhips(List<BoneWhipEntity> whips, boolean retract) {
         for (BoneWhipEntity whip : whips) {
             if (whip.isAlive()) {
-                whip.beginFade();
+                if (retract) {
+                    whip.beginRetract();
+                } else {
+                    whip.beginFade();
+                }
             }
         }
         whips.clear();
@@ -462,7 +596,8 @@ public final class Biokineses {
 
     private static void spawnBloodLanceRing(ServerLevel level, LivingEntity owner, Vec3 center,
                                             Vec3 forward, Vec3 up, int count, double radius,
-                                            boolean tangential, float damage) {
+                                            boolean tangential, boolean orbit, double orbitRadius,
+                                            float damage) {
         for (int index = 0; index < count; index++) {
             double angle = index * Math.PI * 2.0D / count;
             Vec3 radial = horizontalDirection(forward, up, angle);
@@ -475,6 +610,9 @@ public final class Biokineses {
             Vec3 position = center.add(radial.scale(radius));
             BloodLanceEntity lance = BloodLanceEntity.create(level, owner, position,
                 direction.scale(1.4D), damage);
+            if (orbit) {
+                lance.initializeOrbit(center, up, orbitRadius, 0.16D);
+            }
             level.addFreshEntity(lance);
         }
     }
@@ -536,9 +674,17 @@ public final class Biokineses {
     }
 
     private static void discardTethers(Map<UUID, FleshVineEntity> tethers) {
+        discardTethers(tethers, false);
+    }
+
+    private static void discardTethers(Map<UUID, FleshVineEntity> tethers, boolean retract) {
         for (FleshVineEntity vine : tethers.values()) {
             if (vine.isAlive()) {
-                vine.beginFade();
+                if (retract) {
+                    vine.beginRetract();
+                } else {
+                    vine.beginFade();
+                }
             }
         }
         tethers.clear();
@@ -577,7 +723,7 @@ public final class Biokineses {
                 @Override
                 public void run() {
                     if (!entity.isAlive()) {
-                        discardBoneWhips(whips);
+                        discardBoneWhips(whips, true);
                         setModelVariant(entity, 0);
                         cleanupForm(entity);
                         return;
@@ -624,7 +770,7 @@ public final class Biokineses {
                         }
                     }
                     if (tick == BLADES_CLEANUP_TICK) {
-                        discardBoneWhips(whips);
+                        discardBoneWhips(whips, true);
                         setModelVariant(entity, 0);
                         cleanupForm(entity);
                     }
@@ -751,7 +897,7 @@ public final class Biokineses {
                 @Override
                 public void run() {
                     if (!entity.isAlive()) {
-                        discardVines(vines);
+                        discardVines(vines, true);
                         discardBloodTornados(tornados);
                         clearAura(serverLevel, entity, darkAuraId);
                         clearAura(serverLevel, entity, redAuraClockwiseId);
@@ -800,7 +946,7 @@ public final class Biokineses {
                         updateAbhorrentVines(entity, vines, tick, center, forward, up);
                     }
                     if (tick == ABHORRENT_CLEANUP_TICK) {
-                        discardVines(vines);
+                        discardVines(vines, true);
                         discardBloodTornados(tornados);
                         clearAura(serverLevel, entity, darkAuraId);
                         clearAura(serverLevel, entity, redAuraClockwiseId);
@@ -902,6 +1048,27 @@ public final class Biokineses {
             Vec3 radial = horizontalDirection(forward, up, angle);
             Vec3 target = center.add(radial.scale(radius)).add(up.scale(Math.sin(angle * 2.0D) * 2.5D));
             BiokinesesArmController.setAbilityTarget(owner, arm, target);
+        }
+    }
+
+    private static void setMassacreArmTargets(LivingEntity owner, int tick) {
+        setMassacreArmTargets(owner, tick, MASSACRE_AURA_RADIUS);
+    }
+
+    private static void setMassacreArmTargets(LivingEntity owner, int tick, double radius) {
+        Vec3 center = shockwaveCenter(owner);
+        Vec3 up = GravityDirectionHelper.localToWorld(owner,
+            new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 forward = GravityDirectionHelper.getLookDirection(owner).normalize();
+        int armCount = IBiokinesesArmData.ARM_COUNT;
+        for (int arm = 0; arm < armCount; arm++) {
+            double phase = tick * 0.72D + arm * Math.PI * 2.0D / armCount;
+            double elevation = Math.sin(tick * 0.91D + arm * 1.37D) * 0.62D;
+            Vec3 horizontal = horizontalDirection(forward, up, phase);
+            Vec3 direction = horizontal.scale(Math.cos(elevation))
+                .add(up.scale(Math.sin(elevation))).normalize();
+            BiokinesesArmController.setAbilityTarget(owner, arm,
+                center.add(direction.scale(radius)));
         }
     }
 
@@ -1098,7 +1265,6 @@ public final class Biokineses {
             Map<UUID, FleshVineEntity> tethers = new HashMap<>();
             UUID crackedAuraId = UUID.randomUUID();
             setModelVariant(entity, 2);
-            BiokinesesArmController.claimAllForAbility(entity);
             GuardStateHelper.setGuardState(entity, MASSACRE_DAMAGE, formId, true);
             AnimationHelper.playAnimation(entity, "summon", MASSACRE_CLEANUP_TICK);
             AbilityScheduler.scheduleRepeating(entity, new Runnable() {
@@ -1107,8 +1273,8 @@ public final class Biokineses {
                 @Override
                 public void run() {
                     if (!entity.isAlive()) {
-                        discardBoneWhips(whips);
-                        discardTethers(tethers);
+                        discardBoneWhips(whips, true);
+                        discardTethers(tethers, true);
                         clearAura(serverLevel, entity, crackedAuraId);
                         BiokinesesArmController.releaseAbilityClaim(entity);
                         setModelVariant(entity, 0);
@@ -1125,42 +1291,107 @@ public final class Biokineses {
                             tick == 0, MASSACRE_CLEANUP_TICK + 2);
                     }
                     if (tick == 11) {
+                        spawnMassacreFlash(serverLevel, entity, center);
                         Vec3 start = armAnchor(entity, true);
-                        Vec3 end = center.add(horizontalDirection(forward, up, -Math.PI * 0.5D).scale(5.0D));
+                        Vec3 end = center.add(horizontalDirection(forward, up, -Math.PI * 0.5D).scale(0.75D));
+                        List<Vec3> path = buildMassacreHorizontalSpiral(start, center, forward, up,
+                            -Math.PI * 0.5D, 0.75D, entity.getId());
                         BoneWhipEntity whip = createBoneWhip(serverLevel, entity, start, end,
-                            buildWhipPath(start, end, up.scale(1.4D), 0.35D, entity.getId()), MASSACRE_CLEANUP_TICK);
+                            path, MASSACRE_CLEANUP_TICK);
                         if (whip != null) {
                             whips.add(whip);
+                            spawnMassacreWhipParticles(serverLevel, path);
                         }
                         AnimationHelper.playAnimation(entity, "left_sword_to_left", 12);
-                        spawnBloodLanceRing(serverLevel, entity, center, forward, up, 12, 2.0D, false, MASSACRE_DAMAGE);
+                        spawnBloodLanceRing(serverLevel, entity, center, forward, up, 12, 2.0D,
+                            false, false, 0.0D, MASSACRE_DAMAGE);
                     } else if (tick == 17) {
+                        spawnMassacreFlash(serverLevel, entity, center);
                         Vec3 start = armAnchor(entity, false);
-                        Vec3 end = center.add(up.scale(8.0D)).add(forward.scale(2.0D));
+                        Vec3 end = center.add(horizontalDirection(forward, up, Math.PI * 0.25D).scale(1.0D));
+                        List<Vec3> path = buildMassacreVerticalSpiral(start, center, forward, up,
+                            Math.PI * 0.25D, 1.0D, entity.getId() + 1);
                         BoneWhipEntity whip = createBoneWhip(serverLevel, entity, start, end,
-                            buildWhipPath(start, end, forward.scale(2.0D), 0.45D, entity.getId() + 1), MASSACRE_CLEANUP_TICK);
+                            path, MASSACRE_CLEANUP_TICK);
                         if (whip != null) {
                             whips.add(whip);
+                            spawnMassacreWhipParticles(serverLevel, path);
                         }
                         AnimationHelper.playAnimation(entity, "sword_overhead", 12);
-                        spawnBloodLanceRing(serverLevel, entity, center, forward, up, 12, 8.0D, true, MASSACRE_DAMAGE);
+                        spawnBloodLanceRing(serverLevel, entity, center, forward, up, 12, 8.0D,
+                            true, true, 6.0D, MASSACRE_DAMAGE);
                     } else if (tick == 23) {
+                        spawnMassacreFlash(serverLevel, entity, center);
+                        serverLevel.playSound(null, center.x, center.y, center.z,
+                            SoundEvents.LIGHTNING_BOLT_THUNDER, SoundSource.HOSTILE, 1.0F, 0.75F);
+                        BiokinesesArmController.claimAllForAbility(entity);
+                        setMassacreArmTargets(entity, tick);
                         AnimationHelper.playAnimation(entity, "heel_drop", 30);
-                        spawnBloodLanceRing(serverLevel, entity, center, forward, up, 12, 18.0D, true, MASSACRE_DAMAGE);
+                        spawnBloodLanceRing(serverLevel, entity, center, forward, up, 12, 18.0D,
+                            true, true, 18.0D, MASSACRE_DAMAGE);
                     }
 
-                    if (tick >= 11 && tick <= 53 && whips.size() == 2) {
-                        double progress = (tick - 11) / 42.0D;
+                    if (tick >= 23 && tick <= 53) {
+                        setMassacreArmTargets(entity, tick);
+                    }
+
+                    if (tick >= 11 && tick < 23 && !whips.isEmpty()) {
                         Vec3 leftStart = armAnchor(entity, true);
-                        Vec3 leftEnd = center.add(horizontalDirection(forward, up,
-                            -Math.PI * 0.5D + progress * Math.PI * 4.0D).scale(5.0D));
-                        updateBoneWhip(whips.get(0), leftStart, leftEnd, up,
-                            buildWhipPath(leftStart, leftEnd, up.scale(1.5D), 0.4D, tick));
+                        double progress = (tick - 11) / 12.0D;
+                        double radius = 0.75D + progress * 4.25D;
+                        double angle = -Math.PI * 0.5D + progress * Math.PI * 2.5D;
+                        Vec3 leftEnd = center.add(horizontalDirection(forward, up, angle).scale(radius));
+                        List<Vec3> leftPath = buildMassacreHorizontalSpiral(leftStart, center, forward, up,
+                            angle, radius, entity.getId() + tick);
+                        updateBoneWhip(whips.get(0), leftStart, leftEnd, up, leftPath);
+                        spawnMassacreWhipParticles(serverLevel, leftPath);
+                    }
+                    if (tick >= 17 && tick < 23 && whips.size() > 1) {
                         Vec3 rightStart = armAnchor(entity, false);
-                        Vec3 rightEnd = center.add(up.scale(Math.sin(progress * Math.PI * 6.0D) * 8.0D))
-                            .add(forward.scale(Math.cos(progress * Math.PI * 6.0D) * 8.0D));
-                        updateBoneWhip(whips.get(1), rightStart, rightEnd, up,
-                            buildWhipPath(rightStart, rightEnd, forward.scale(2.0D), 0.5D, tick + 7));
+                        double progress = (tick - 17) / 6.0D;
+                        double radius = 1.0D + progress * 9.0D;
+                        double angle = Math.PI * 0.25D + progress * Math.PI * 3.0D;
+                        Vec3 rightEnd = center.add(horizontalDirection(forward, up, angle)
+                            .scale(radius * Math.cos(progress * Math.PI * 3.0D)))
+                            .add(up.scale(radius * Math.sin(progress * Math.PI * 3.0D)));
+                        List<Vec3> rightPath = buildMassacreVerticalSpiral(rightStart, center, forward, up,
+                            angle, radius, entity.getId() + tick + 7);
+                        updateBoneWhip(whips.get(1), rightStart, rightEnd, up, rightPath);
+                        spawnMassacreWhipParticles(serverLevel, rightPath);
+                    }
+                    if (tick >= 23 && tick <= 53 && whips.size() == 2) {
+                        Vec3 leftStart = armAnchor(entity, true);
+                        Vec3 leftEnd = randomMassacreWhipTarget(entity, center, null);
+                        List<Vec3> leftPath = buildMassacreThrashPath(leftStart, leftEnd,
+                            entity.getRandom(), entity.getId() + tick);
+                        updateBoneWhip(whips.get(0), leftStart, leftEnd, up, leftPath);
+                        spawnMassacreWhipParticles(serverLevel, leftPath);
+                        damageBoneWhipPath(serverLevel, entity, leftPath, MASSACRE_DAMAGE, 0.75D);
+
+                        Vec3 rightStart = armAnchor(entity, false);
+                        Vec3 rightEnd = randomMassacreWhipTarget(entity, center, leftEnd);
+                        List<Vec3> rightPath = buildMassacreThrashPath(rightStart, rightEnd,
+                            entity.getRandom(), entity.getId() + tick + 31);
+                        updateBoneWhip(whips.get(1), rightStart, rightEnd, up, rightPath);
+                        spawnMassacreWhipParticles(serverLevel, rightPath);
+                        damageBoneWhipPath(serverLevel, entity, rightPath, MASSACRE_DAMAGE, 0.75D);
+                        spawnMassacreSlashField(serverLevel, entity, center);
+                    }
+                    if (tick >= MASSACRE_RETRACTION_TICK && tick < MASSACRE_CLEANUP_TICK
+                        && whips.size() == 2) {
+                        double progress = (tick - MASSACRE_RETRACTION_TICK) / 15.0D;
+                        double radius = 25.0D - progress * 24.0D;
+                        setMassacreArmTargets(entity, tick, radius);
+                        Vec3 leftStart = armAnchor(entity, true);
+                        Vec3 leftEnd = randomMassacreWhipTarget(entity, center, null, radius);
+                        List<Vec3> leftPath = buildMassacreThrashPath(leftStart, leftEnd,
+                            entity.getRandom(), entity.getId() + tick + 61);
+                        updateBoneWhip(whips.get(0), leftStart, leftEnd, up, leftPath);
+                        Vec3 rightStart = armAnchor(entity, false);
+                        Vec3 rightEnd = randomMassacreWhipTarget(entity, center, leftEnd, radius);
+                        List<Vec3> rightPath = buildMassacreThrashPath(rightStart, rightEnd,
+                            entity.getRandom(), entity.getId() + tick + 83);
+                        updateBoneWhip(whips.get(1), rightStart, rightEnd, up, rightPath);
                     }
                     if (tick >= 23 && tick <= 53) {
                         applyMassacreDamage(serverLevel, entity, center, 25.0D, MASSACRE_DAMAGE);
@@ -1170,8 +1401,8 @@ public final class Biokineses {
                         AnimationHelper.playAnimation(entity, "kimetsunoyaiba:cancel", 1);
                     }
                     if (tick == MASSACRE_CLEANUP_TICK) {
-                        discardBoneWhips(whips);
-                        discardTethers(tethers);
+                        discardBoneWhips(whips, true);
+                        discardTethers(tethers, true);
                         clearAura(serverLevel, entity, crackedAuraId);
                         BiokinesesArmController.releaseAbilityClaim(entity);
                         setModelVariant(entity, 0);
@@ -2250,9 +2481,17 @@ public final class Biokineses {
     }
 
     private static void discardVines(List<FleshVineEntity> vines) {
+        discardVines(vines, false);
+    }
+
+    private static void discardVines(List<FleshVineEntity> vines, boolean retract) {
         for (FleshVineEntity vine : vines) {
             if (vine.isAlive()) {
-                vine.beginFade();
+                if (retract) {
+                    vine.beginRetract();
+                } else {
+                    vine.beginFade();
+                }
             }
         }
         vines.clear();

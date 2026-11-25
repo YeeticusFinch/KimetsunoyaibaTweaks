@@ -52,6 +52,9 @@ public final class MeditationMenuService {
         new MeditationMenuData.LocationEntry("house_ubuyashiki", "Ubuyashiki House", "Waypoint for kimetsunoyaiba:house_ubuyashiki.", false),
         new MeditationMenuData.LocationEntry("house_urokodaki", "Urokodaki House", "Waypoint for kimetsunoyaiba:house_urokodaki.", false)
     );
+    private static final MeditationMenuData.LocationEntry HEADQUARTERS_LOCATION =
+        new MeditationMenuData.LocationEntry("headquarters", "Demon Slayer Headquarters",
+            "Waypoint for the nearest Demon Slayer Headquarters.", false);
     private MeditationMenuService() {
     }
 
@@ -278,6 +281,9 @@ public final class MeditationMenuService {
         switch (role) {
             case DEMON_SLAYER, KAKUSHI, SWORDSMITH:
                 locations.addAll(CORPS_STRUCTURE_LOCATIONS);
+                if (role == PlayerRole.DEMON_SLAYER || role == PlayerRole.KAKUSHI) {
+                    locations.add(HEADQUARTERS_LOCATION);
+                }
                 break;
             case DEMON:
                 locations.add(new MeditationMenuData.LocationEntry("mt_yoko", "Mt. Yoko",

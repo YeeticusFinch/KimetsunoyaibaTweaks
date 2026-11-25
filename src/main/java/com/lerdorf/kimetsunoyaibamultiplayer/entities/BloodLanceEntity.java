@@ -5,6 +5,9 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -29,6 +32,32 @@ public final class BloodLanceEntity extends Projectile {
     private static final double SPEED_MULTIPLIER = 1.5D;
     private static final DustParticleOptions TRAIL_DUST =
         new DustParticleOptions(new Vector3f(0.8F, 0.02F, 0.02F), 0.45F);
+    private static final EntityDataAccessor<Boolean> DATA_ORBITING =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_CENTER_X =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_CENTER_Y =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_CENTER_Z =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_AXIS_X =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_AXIS_Y =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_AXIS_Z =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_BASIS_X =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_BASIS_Y =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_BASIS_Z =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_RADIUS =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_SPEED =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_ORBIT_ANGLE =
+        SynchedEntityData.defineId(BloodLanceEntity.class, EntityDataSerializers.FLOAT);
 
     private float damage = DEFAULT_DAMAGE;
 
@@ -50,6 +79,47 @@ public final class BloodLanceEntity extends Projectile {
 
     @Override
     protected void defineSynchedData() {
+        entityData.define(DATA_ORBITING, false);
+        entityData.define(DATA_ORBIT_CENTER_X, 0.0F);
+        entityData.define(DATA_ORBIT_CENTER_Y, 0.0F);
+        entityData.define(DATA_ORBIT_CENTER_Z, 0.0F);
+        entityData.define(DATA_ORBIT_AXIS_X, 0.0F);
+        entityData.define(DATA_ORBIT_AXIS_Y, 1.0F);
+        entityData.define(DATA_ORBIT_AXIS_Z, 0.0F);
+        entityData.define(DATA_ORBIT_BASIS_X, 1.0F);
+        entityData.define(DATA_ORBIT_BASIS_Y, 0.0F);
+        entityData.define(DATA_ORBIT_BASIS_Z, 0.0F);
+        entityData.define(DATA_ORBIT_RADIUS, 1.0F);
+        entityData.define(DATA_ORBIT_SPEED, 0.0F);
+        entityData.define(DATA_ORBIT_ANGLE, 0.0F);
+    }
+
+    public void initializeOrbit(Vec3 center, Vec3 axis, double radius, double angularSpeed) {
+        Vec3 normalizedAxis = axis.lengthSqr() < 1.0E-8D
+            ? new Vec3(0.0D, 1.0D, 0.0D) : axis.normalize();
+        Vec3 radial = position().subtract(center);
+        radial = radial.subtract(normalizedAxis.scale(radial.dot(normalizedAxis)));
+        if (radial.lengthSqr() < 1.0E-8D) {
+            radial = normalizedAxis.cross(new Vec3(1.0D, 0.0D, 0.0D));
+            if (radial.lengthSqr() < 1.0E-8D) {
+                radial = normalizedAxis.cross(new Vec3(0.0D, 0.0D, 1.0D));
+            }
+        }
+        radial = radial.normalize();
+        entityData.set(DATA_ORBIT_CENTER_X, (float) center.x);
+        entityData.set(DATA_ORBIT_CENTER_Y, (float) center.y);
+        entityData.set(DATA_ORBIT_CENTER_Z, (float) center.z);
+        entityData.set(DATA_ORBIT_AXIS_X, (float) normalizedAxis.x);
+        entityData.set(DATA_ORBIT_AXIS_Y, (float) normalizedAxis.y);
+        entityData.set(DATA_ORBIT_AXIS_Z, (float) normalizedAxis.z);
+        entityData.set(DATA_ORBIT_BASIS_X, (float) radial.x);
+        entityData.set(DATA_ORBIT_BASIS_Y, (float) radial.y);
+        entityData.set(DATA_ORBIT_BASIS_Z, (float) radial.z);
+        entityData.set(DATA_ORBIT_RADIUS, (float) Math.max(0.1D, radius));
+        entityData.set(DATA_ORBIT_SPEED, (float) angularSpeed);
+        entityData.set(DATA_ORBIT_ANGLE, 0.0F);
+        entityData.set(DATA_ORBITING, true);
+        setDeltaMovement(normalizedAxis.cross(radial).scale(radius * angularSpeed));
     }
 
     public void setVelocity(Vec3 velocity) {
@@ -75,7 +145,12 @@ public final class BloodLanceEntity extends Projectile {
             return;
         }
 
-        Vec3 velocity = getDeltaMovement();
+        Vec3 velocity;
+        if (entityData.get(DATA_ORBITING)) {
+            velocity = advanceOrbit();
+        } else {
+            velocity = getDeltaMovement();
+        }
         if (velocity.lengthSqr() > 1.0E-8D) {
             alignToVelocity(velocity);
         }
@@ -98,6 +173,23 @@ public final class BloodLanceEntity extends Projectile {
             serverLevel.sendParticles(TRAIL_DUST, trailPosition.x, trailPosition.y, trailPosition.z,
                 2, 0.08D, 0.08D, 0.08D, 0.01D);
         }
+    }
+
+    private Vec3 advanceOrbit() {
+        Vec3 center = new Vec3(entityData.get(DATA_ORBIT_CENTER_X),
+            entityData.get(DATA_ORBIT_CENTER_Y), entityData.get(DATA_ORBIT_CENTER_Z));
+        Vec3 axis = new Vec3(entityData.get(DATA_ORBIT_AXIS_X), entityData.get(DATA_ORBIT_AXIS_Y),
+            entityData.get(DATA_ORBIT_AXIS_Z)).normalize();
+        Vec3 basis = new Vec3(entityData.get(DATA_ORBIT_BASIS_X), entityData.get(DATA_ORBIT_BASIS_Y),
+            entityData.get(DATA_ORBIT_BASIS_Z)).normalize();
+        double angle = entityData.get(DATA_ORBIT_ANGLE) + entityData.get(DATA_ORBIT_SPEED);
+        entityData.set(DATA_ORBIT_ANGLE, (float) angle);
+        Vec3 perpendicular = axis.cross(basis).normalize();
+        Vec3 radial = basis.scale(Math.cos(angle)).add(perpendicular.scale(Math.sin(angle)));
+        Vec3 next = center.add(radial.scale(entityData.get(DATA_ORBIT_RADIUS)));
+        Vec3 velocity = next.subtract(position());
+        setDeltaMovement(velocity);
+        return velocity;
     }
 
     @Override

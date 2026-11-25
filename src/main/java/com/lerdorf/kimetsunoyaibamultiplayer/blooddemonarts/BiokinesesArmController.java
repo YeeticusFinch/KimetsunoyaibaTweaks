@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.Config;
+import com.lerdorf.kimetsunoyaibamultiplayer.BiokinesesTentacleConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.capability.IBiokinesesArmData;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
@@ -45,13 +46,12 @@ public final class BiokinesesArmController {
     public static final int ARM_RIGHT_COMBAT = 5;
 
     private static final int ACTIVE_TICKS = 2400;
-    private static final double ARM_REACH = 8.0D;
+    public static final double TENTACLE_REACH = 12.8D;
     private static final double FLIGHT_BASE_SPEED = 0.9D;
     private static final double CLIMBING_MAX_DOWNWARD_SPEED = -0.03D;
     private static final double FRONT_ANCHOR_PROJECTION = 1.0D;
     private static final double FORCED_FRONT_PROJECTION = 3.0D;
     private static final double REAR_ANCHOR_PROJECTION = -1.0D;
-    private static final double EXTENDED_ANCHOR_RANGE_FACTOR = 1.5D;
     private static final double LATERAL_ANCHOR_DISTANCE = 3.0D;
     private static final double LATERAL_DOWNWARD_SLOPE = 0.4D;
     private static final int AIRBORNE_TICKS_BEFORE_ANCHOR = 10;
@@ -59,7 +59,7 @@ public final class BiokinesesArmController {
     private static final float COMBAT_DAMAGE = 6.0F;
     private static final long ANCHOR_RECHECK_INTERVAL = 5L;
     private static final long RETRACT_TICKS = 10L;
-    private static final double ANCHOR_BEHIND_DISTANCE = ARM_REACH * 0.5D;
+    private static final double ANCHOR_BEHIND_DISTANCE = TENTACLE_REACH * 0.5D;
     private static final float ATTACK_EXTEND_SPEED = 0.42F;
     private static final float FAST_RETRACT_SPEED = 0.35F;
     private static final long ATTACK_MAX_TICKS = 12L;
@@ -250,7 +250,7 @@ public final class BiokinesesArmController {
         data.setAllocationMode(IBiokinesesArmData.ALLOCATION_NORMAL);
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
             data.setMode(arm, IBiokinesesArmData.MODE_IDLE);
-            data.setTarget(arm, Vec3.ZERO);
+            data.setTarget(arm, entity.position());
             data.setHeldEntityId(arm, -1);
             data.setAttackUntil(arm, 0L);
             data.setAttackCooldownUntil(arm, 0L);
@@ -527,13 +527,8 @@ public final class BiokinesesArmController {
             applyLocomotion(entity, data);
             startLocomotion(entity, data);
         } else {
-            boolean wasFlying = data.isLocomotionActive();
             data.clearTraversalInput();
-            MovementHelper.setVelocity(entity, Vec3.ZERO);
             stopLocomotion(entity, data);
-            if (wasFlying) {
-                retract(entity);
-            }
         }
         return anchors;
     }
@@ -736,10 +731,10 @@ public final class BiokinesesArmController {
     private static AttackTarget resolveAttackTarget(LivingEntity attacker, Entity clickedTarget) {
         Vec3 start = CombatGravityFrame.world(CombatGravityFrame.eye(attacker));
         Vec3 direction = CombatGravityFrame.world(CombatGravityFrame.look(attacker)).normalize();
-        Vec3 maximum = start.add(direction.scale(ARM_REACH));
+        Vec3 maximum = start.add(direction.scale(TENTACLE_REACH));
         if (clickedTarget instanceof LivingEntity living && living != attacker && living.isAlive()
             && EnhancedLoveForms.isTargetable(attacker, living)
-            && attacker.distanceTo(living) <= ARM_REACH) {
+            && attacker.distanceTo(living) <= TENTACLE_REACH) {
             return new AttackTarget(living.position().add(0.0D, living.getBbHeight() * 0.5D, 0.0D), living.getId());
         }
 
@@ -818,7 +813,7 @@ public final class BiokinesesArmController {
         if (state.isAir() || state.getCollisionShape(entity.level(), blockPos).isEmpty()) {
             return false;
         }
-        double maxDistance = Config.biokinesesClimbingAnchorRange * EXTENDED_ANCHOR_RANGE_FACTOR;
+        double maxDistance = Config.biokinesesClimbingAnchorRange;
         return entity.position().distanceToSqr(data.getTarget(arm)) <= maxDistance * maxDistance;
     }
 
@@ -916,11 +911,24 @@ public final class BiokinesesArmController {
             };
         }
 
+        Vec3 preferredOffset = localLeft.scale(BiokinesesTentacleConfig.anchorLeft(arm))
+            .add(localUp.scale(BiokinesesTentacleConfig.anchorUp(arm)))
+            .add(localForward.scale(BiokinesesTentacleConfig.anchorForward(arm)));
+        Vec3 preferredDirection = preferredOffset.lengthSqr() > 1.0E-6D
+            ? preferredOffset.normalize() : Vec3.ZERO;
+        if (preferredDirection.lengthSqr() > 1.0E-6D) {
+            Vec3[] configuredDirections = new Vec3[directions.length + 1];
+            configuredDirections[0] = preferredDirection;
+            System.arraycopy(directions, 0, configuredDirections, 1, directions.length);
+            directions = configuredDirections;
+        }
+        Vec3 preferredPosition = entity.position().add(CombatGravityFrame.world(preferredOffset));
+        double preferredRadius = Math.max(BiokinesesTentacleConfig.anchorStrayRadius,
+            BiokinesesTentacleConfig.anchorRadius(arm));
+
         AnchorTarget best = null;
         double bestScore = Double.MAX_VALUE;
-        double searchRange = preferredForward != null
-            ? Config.biokinesesClimbingAnchorRange * EXTENDED_ANCHOR_RANGE_FACTOR
-            : Config.biokinesesClimbingAnchorRange;
+        double searchRange = Config.biokinesesClimbingAnchorRange;
         for (Vec3 rawDirection : directions) {
             Vec3 direction = rawDirection.normalize();
             Vec3 worldDirection = CombatGravityFrame.world(direction).normalize();
@@ -941,6 +949,7 @@ public final class BiokinesesArmController {
             }
             Vec3 position = hit.getLocation().add(Vec3.atLowerCornerOf(hit.getDirection().getNormal()).scale(0.06D));
             Vec3 relativeLocal = CombatGravityFrame.local(position.subtract(entity.position()));
+            double preferredDistance = position.distanceTo(preferredPosition);
             double forwardProjection = preferredForward == null ? 0.0D
                 : relativeLocal.dot(preferredForward);
             if (forwardProjection < minimumForwardProjection) {
@@ -949,6 +958,7 @@ public final class BiokinesesArmController {
             double distance = start.distanceTo(position);
             double distanceScore = Math.max(0.0D,
                 Config.biokinesesClimbingAnchorRange - distance) * 0.12D;
+            double preferredRegionPenalty = Math.max(0.0D, preferredDistance - preferredRadius) * 0.18D;
             Vec3 relativeDirection = relativeLocal.lengthSqr() > 1.0E-6D
                 ? relativeLocal.normalize() : Vec3.ZERO;
             double preferenceScore = relativeDirection.dot(anchorPreference(arm, localForward,
@@ -960,7 +970,7 @@ public final class BiokinesesArmController {
                 ? Math.abs(lateralProjection - LATERAL_ANCHOR_DISTANCE) * 1.25D
                 : 0.0D;
             double score = distanceScore - preferenceScore * 4.0D + sameLevelPenalty
-                + duplicatePenalty + lateralFallbackPenalty;
+                + duplicatePenalty + lateralFallbackPenalty + preferredRegionPenalty;
             Vec3 faceNormalLocal = CombatGravityFrame.local(
                 Vec3.atLowerCornerOf(hit.getDirection().getNormal()));
             if (isTopAnchorArm(arm) && faceNormalLocal.y < -0.5D) {
@@ -989,12 +999,9 @@ public final class BiokinesesArmController {
             forward = forward.normalize();
         }
         Vec3 left = forward.cross(up).normalize();
-        double side = isLeftArm(arm) ? 1.0D : -1.0D;
-        double radius = isCombatArm(arm) ? 1.15D : 1.35D;
-        double height = arm == ARM_LEFT_UPPER || arm == ARM_RIGHT_UPPER ? 1.75D
-            : arm == ARM_LEFT_LOWER || arm == ARM_RIGHT_LOWER ? 0.95D : 1.35D;
-        double forwardOffset = isCombatArm(arm) ? 0.45D : 0.1D;
-        Vec3 localOffset = left.scale(side * radius).add(up.scale(height)).add(forward.scale(forwardOffset));
+        Vec3 localOffset = left.scale(BiokinesesTentacleConfig.targetLeft(arm))
+            .add(up.scale(BiokinesesTentacleConfig.targetUp(arm)))
+            .add(forward.scale(BiokinesesTentacleConfig.targetForward(arm)));
         return entity.position().add(CombatGravityFrame.world(localOffset));
     }
 

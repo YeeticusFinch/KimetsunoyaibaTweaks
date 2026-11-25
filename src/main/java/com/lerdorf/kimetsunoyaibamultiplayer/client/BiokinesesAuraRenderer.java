@@ -40,7 +40,6 @@ public final class BiokinesesAuraRenderer {
     private static final Minecraft MINECRAFT = Minecraft.getInstance();
     private static final double EPSILON = 1.0E-4D;
     private static final double SURFACE_OFFSET = 0.01D;
-    private static final double SIDE_EDGE_UV = 1.0D / 256.0D;
     private static final Map<UUID, Aura> AURAS = new HashMap<>();
     private static final Map<UUID, ProjectionCache> PROJECTION_CACHE = new HashMap<>();
     private static final Map<ResourceLocation, RenderType> RENDER_TYPES = new HashMap<>();
@@ -434,13 +433,10 @@ public final class BiokinesesAuraRenderer {
         }
 
         private float[] uv(Vec3 point, Vec3 origin, Basis basis, double radius, double rotation) {
-            float[] projected = BiokinesesAuraRenderer.uv(point, origin, basis, radius, rotation);
-            if (a != 0) {
-                projected[0] = sign > 0 ? (float) (1.0D - SIDE_EDGE_UV) : (float) SIDE_EDGE_UV;
-            } else {
-                projected[1] = sign > 0 ? (float) (1.0D - SIDE_EDGE_UV) : (float) SIDE_EDGE_UV;
-            }
-            return projected;
+            // Keep the actual projected edge coordinate. The texture's outermost
+            // pixels are transparent on the aura assets, so forcing U/V to 0 or 1
+            // makes the terrain-wrapping quad disappear.
+            return BiokinesesAuraRenderer.uv(point, origin, basis, radius, rotation);
         }
     }
 

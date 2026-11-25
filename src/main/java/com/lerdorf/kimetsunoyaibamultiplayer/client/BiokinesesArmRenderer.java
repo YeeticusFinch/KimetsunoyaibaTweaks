@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.BiokinesesTentacleConfig;
 import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.BiokinesesArmController;
 import com.lerdorf.kimetsunoyaibamultiplayer.capability.IBiokinesesArmData;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -47,11 +48,7 @@ public final class BiokinesesArmRenderer {
     private static final int ARM_FLESH_HIGHLIGHT = 0xB53A48;
     private static final int BONE_TINT = 0xE2DCCF;
     private static final int SPIKE_WHITE = 0xF5F2E9;
-    private static final int BASE_BONE_SEGMENTS = 2;
     private static final int PATH_SEGMENTS = 24;
-    private static final double SPIKE_BASE_DISTANCE = 0.48D;
-    private static final float TENTACLE_THICKNESS_SCALE = 0.5F;
-    private static final double ARM_REACH = 8.0D;
     private static final float SMOOTH_FACTOR = 0.32F;
     private static final Map<Integer, TorsoTransform> GEO_TORSO_TRANSFORMS = new HashMap<>();
     private static final Map<String, SmoothedArmState> SMOOTHED_ARMS = new HashMap<>();
@@ -143,12 +140,17 @@ public final class BiokinesesArmRenderer {
                 }
             }
             Vec3 tip = source.lerp(target, Mth.clamp(progress, 0.0D, 1.0D));
-            Vec3 terminalDirection = anchorTerminalDirection(entity, data, arm, target);
-            List<Vec3> path = createIkPath(source, tip, torso, arm, terminalDirection);
-            renderArmPath(path, SPIKE_BASE_DISTANCE, entity, cameraPosition, matrix, normal,
+            Vec3 terminalDirection = anchorTerminalDirection(entity, data, arm, target, torso);
+            double maxReach = data.getMode(arm) == IBiokinesesArmData.MODE_ABILITY
+                ? Math.max(BiokinesesArmController.TENTACLE_REACH,
+                    source.distanceTo(target) + 0.8D)
+                : BiokinesesArmController.TENTACLE_REACH;
+            List<Vec3> path = createIkPath(source, tip, torso, arm, terminalDirection, maxReach);
+            renderArmPath(path, BiokinesesTentacleConfig.spikeLength, entity, cameraPosition, matrix, normal,
                 armBuffer, boneBuffer, arm);
             renderSpike(path.get(path.size() - 2), path.get(path.size() - 1), entity,
-                cameraPosition, matrix, normal, boneBuffer);
+                cameraPosition, matrix, normal, boneBuffer, BiokinesesTentacleConfig.spikeLength,
+                BiokinesesTentacleConfig.spikeWidth, BiokinesesTentacleConfig.spikeDepth);
         }
     }
 
@@ -186,20 +188,9 @@ public final class BiokinesesArmRenderer {
     }
 
     private static Vec3 armSource(TorsoTransform torso, int arm) {
-        boolean leftArm = arm == BiokinesesArmController.ARM_LEFT_UPPER
-            || arm == BiokinesesArmController.ARM_LEFT_LOWER
-            || arm == BiokinesesArmController.ARM_LEFT_COMBAT;
-        double side = leftArm ? 1.0D : -1.0D;
-        double height = arm == BiokinesesArmController.ARM_LEFT_UPPER
-            || arm == BiokinesesArmController.ARM_RIGHT_UPPER ? 0.34D
-            : arm == BiokinesesArmController.ARM_LEFT_LOWER
-                || arm == BiokinesesArmController.ARM_RIGHT_LOWER ? -0.18D : 0.18D;
-        double sideOffset = arm == BiokinesesArmController.ARM_LEFT_COMBAT
-            || arm == BiokinesesArmController.ARM_RIGHT_COMBAT ? 0.4D : 0.3D;
-        double forwardOffset = arm == BiokinesesArmController.ARM_LEFT_COMBAT
-            || arm == BiokinesesArmController.ARM_RIGHT_COMBAT ? 0.18D : -0.08D;
-        return torso.origin().add(torso.left().scale(side * sideOffset)).add(torso.up().scale(height))
-            .subtract(torso.backward().scale(forwardOffset));
+        Vec3 localOffset = new Vec3(BiokinesesTentacleConfig.startLeft(arm),
+            BiokinesesTentacleConfig.startUp(arm), BiokinesesTentacleConfig.startForward(arm));
+        return torso.origin().add(torsoVector(torso, localOffset));
     }
 
     private static Vec3 abilityHoverTarget(TorsoTransform torso, int arm) {
@@ -215,9 +206,9 @@ public final class BiokinesesArmRenderer {
     }
 
     private static Vec3 anchorTerminalDirection(LivingEntity entity, IBiokinesesArmData data,
-                                                int arm, Vec3 anchor) {
+                                                 int arm, Vec3 anchor, TorsoTransform torso) {
         if (data.getMode(arm) != IBiokinesesArmData.MODE_ANCHOR || !data.hasAnchor(arm)) {
-            return null;
+            return configuredTargetDirection(torso, arm);
         }
         Direction face = Direction.from3DDataValue(data.getAnchorFace(arm));
         Vec3 intoFace = new Vec3(-face.getStepX(), -face.getStepY(), -face.getStepZ()).normalize();
@@ -226,20 +217,20 @@ public final class BiokinesesArmRenderer {
         if (towardUser.lengthSqr() < 1.0E-6D) {
             return intoFace;
         }
-        towardUser = towardUser.normalize();
-        double angle = Math.min(Math.toRadians(20.0D),
-            Math.acos(Mth.clamp(intoFace.dot(towardUser), -1.0D, 1.0D)));
-        Vec3 axis = intoFace.cross(towardUser);
-        if (axis.lengthSqr() < 1.0E-6D || angle < 1.0E-6D) {
-            return intoFace;
+        Vec3 configured = intoFace.scale(BiokinesesTentacleConfig.faceInwardWeight)
+            .add(towardUser.normalize().scale(BiokinesesTentacleConfig.faceTowardUserWeight));
+        return configured.lengthSqr() < 1.0E-6D ? intoFace : configured.normalize();
+    }
+
+    private static Vec3 configuredTargetDirection(TorsoTransform torso, int arm) {
+        if (Math.abs(BiokinesesTentacleConfig.targetPitch(arm)) < 1.0E-6D
+            && Math.abs(BiokinesesTentacleConfig.targetYaw(arm)) < 1.0E-6D
+            && Math.abs(BiokinesesTentacleConfig.targetRoll(arm)) < 1.0E-6D) {
+            return null;
         }
-        axis = axis.normalize();
-        double cosine = Math.cos(angle);
-        double sine = Math.sin(angle);
-        return intoFace.scale(cosine)
-            .add(axis.cross(intoFace).scale(sine))
-            .add(axis.scale(axis.dot(intoFace) * (1.0D - cosine)))
-            .normalize();
+        return torso == null ? null : torsoVector(torso, rotateLocal(new Vec3(0.0D, 0.0D, 1.0D),
+            BiokinesesTentacleConfig.targetPitch(arm), BiokinesesTentacleConfig.targetYaw(arm),
+            BiokinesesTentacleConfig.targetRoll(arm))).normalize();
     }
 
     /** Called by the model layers after they resolve the animated torso. */
@@ -277,7 +268,7 @@ public final class BiokinesesArmRenderer {
     }
 
     private static List<Vec3> createIkPath(Vec3 start, Vec3 target, TorsoTransform torso, int arm,
-                                           Vec3 terminalDirection) {
+                                           Vec3 terminalDirection, double maxReach) {
         Vec3 difference = target.subtract(start);
         double distance = difference.length();
         if (distance < 1.0E-5D) {
@@ -285,7 +276,7 @@ public final class BiokinesesArmRenderer {
         }
 
         Vec3 direction = difference.scale(1.0D / distance);
-        double totalLength = Mth.clamp(distance + 0.8D, 2.4D, ARM_REACH);
+        double totalLength = Mth.clamp(distance + 0.8D, 2.4D, maxReach);
         double upperLength = totalLength * 0.53D;
         double lowerLength = totalLength - upperLength;
         Vec3 reachableTarget = distance > totalLength
@@ -319,13 +310,16 @@ public final class BiokinesesArmRenderer {
                 .add(firstControl.scale(3.0D * inverse * inverse * progress))
                 .add(secondControl.scale(3.0D * inverse * progress * progress))
                 .add(reachableTarget.scale(progress * progress * progress));
+            Vec3 arc = torsoVector(torso, new Vec3(BiokinesesTentacleConfig.arcLeft(arm),
+                BiokinesesTentacleConfig.arcUp(arm), BiokinesesTentacleConfig.arcForward(arm)));
+            point = point.add(arc.scale(2.0D * Math.min(progress, 1.0D - progress)));
             double sway = Math.sin(progress * Math.PI * 2.0D + arm * 0.85D) * 0.065D
                 * Math.sin(progress * Math.PI);
             path.add(point.add(bendDirection.scale(sway)));
         }
         if (terminalDirection != null && path.size() > 1) {
             Vec3 tip = path.get(path.size() - 1);
-            double terminalLength = Math.min(SPIKE_BASE_DISTANCE,
+            double terminalLength = Math.min(BiokinesesTentacleConfig.spikeLength,
                 Math.max(0.12D, tip.distanceTo(start) * 0.25D));
             path.set(path.size() - 2, tip.subtract(terminalDirection.scale(terminalLength)));
         }
@@ -334,7 +328,28 @@ public final class BiokinesesArmRenderer {
 
     private static Vec3 startDirection(TorsoTransform torso, int arm) {
         double vertical = isTopArm(arm) ? 0.35D : isBottomArm(arm) ? -0.35D : 0.0D;
-        return torso.backward().add(torso.up().scale(vertical)).normalize();
+        Vec3 localDirection = rotateLocal(new Vec3(0.0D, vertical, -1.0D),
+            BiokinesesTentacleConfig.startPitch(arm), BiokinesesTentacleConfig.startYaw(arm),
+            BiokinesesTentacleConfig.startRoll(arm));
+        return torsoVector(torso, localDirection).normalize();
+    }
+
+    private static Vec3 torsoVector(TorsoTransform torso, Vec3 local) {
+        return torso.left().scale(local.x).add(torso.up().scale(local.y))
+            .subtract(torso.backward().scale(local.z));
+    }
+
+    private static Vec3 rotateLocal(Vec3 vector, double pitch, double yaw, double roll) {
+        Vec3 result = rotateAround(vector, new Vec3(1.0D, 0.0D, 0.0D), pitch);
+        result = rotateAround(result, new Vec3(0.0D, 1.0D, 0.0D), yaw);
+        return rotateAround(result, new Vec3(0.0D, 0.0D, 1.0D), roll);
+    }
+
+    private static Vec3 rotateAround(Vec3 vector, Vec3 axis, double angle) {
+        double cosine = Math.cos(angle);
+        double sine = Math.sin(angle);
+        return vector.scale(cosine).add(axis.cross(vector).scale(sine))
+            .add(axis.scale(axis.dot(vector) * (1.0D - cosine)));
     }
 
     private static boolean isLeftArm(int arm) {
@@ -366,18 +381,18 @@ public final class BiokinesesArmRenderer {
                                       VertexConsumer armBuffer,
                                       VertexConsumer boneBuffer, int arm) {
         List<Vec3> fleshPath = trimTail(path, tailDistance);
+        double distanceFromStart = 0.0D;
         for (int i = 0; i < fleshPath.size() - 1; i++) {
             Vec3 start = fleshPath.get(i);
             Vec3 end = fleshPath.get(i + 1);
-            float segmentProgress = i / (float) Math.max(1, fleshPath.size() - 2);
-            boolean bone = i < BASE_BONE_SEGMENTS;
-            float width = bone
-                ? Mth.lerp(segmentProgress, 0.105F, 0.072F) * TENTACLE_THICKNESS_SCALE
-                : Mth.lerp(segmentProgress, 0.080F, 0.045F) * TENTACLE_THICKNESS_SCALE;
+            boolean bone = distanceFromStart < BiokinesesTentacleConfig.boneLength;
+            float width = (float) ((bone ? BiokinesesTentacleConfig.boneWidth
+                : BiokinesesTentacleConfig.fleshWidth) * 0.5D);
             int color = bone ? BONE_TINT
                 : ((i + arm) % 4 == 0 ? ARM_FLESH_HIGHLIGHT : ARM_FLESH);
             drawBeam(start, end, width, color, entity.level(), cameraPosition, matrix, normal,
                 bone ? boneBuffer : armBuffer);
+            distanceFromStart += start.distanceTo(end);
         }
     }
 
@@ -401,7 +416,8 @@ public final class BiokinesesArmRenderer {
     }
 
     private static void renderSpike(Vec3 previous, Vec3 tip, LivingEntity entity, Vec3 cameraPosition,
-                                    Matrix4f matrix, Matrix3f normal, VertexConsumer buffer) {
+                                    Matrix4f matrix, Matrix3f normal, VertexConsumer buffer,
+                                    double spikeLength, double spikeWidth, double spikeDepth) {
         Vec3 direction = tip.subtract(previous);
         if (direction.lengthSqr() < 1.0E-6D) {
             return;
@@ -411,9 +427,9 @@ public final class BiokinesesArmRenderer {
         if (side.lengthSqr() < 1.0E-6D) {
             side = direction.cross(new Vec3(1.0D, 0.0D, 0.0D));
         }
-        side = side.normalize().scale(0.07D);
-        Vec3 otherSide = direction.cross(side).normalize().scale(0.04D);
-        Vec3 base = tip.subtract(direction.scale(0.48D));
+        side = side.normalize().scale(spikeWidth * 0.5D);
+        Vec3 otherSide = direction.cross(side).normalize().scale(spikeDepth * 0.5D);
+        Vec3 base = tip.subtract(direction.scale(spikeLength));
         Vec3 pointA = base.add(side).add(otherSide);
         Vec3 pointB = base.subtract(side).add(otherSide);
         Vec3 pointC = base.subtract(side).subtract(otherSide);

@@ -15,6 +15,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -36,6 +37,9 @@ public class FleshVineEntity extends Entity {
     public static final int MODE_CHARGE = 0;
     public static final int MODE_SURGE = 1;
     public static final int MODE_TRANSITION = 2;
+    public static final int REMOVAL_NONE = 0;
+    public static final int REMOVAL_FADE = 1;
+    public static final int REMOVAL_RETRACT = 2;
 
     public static final double DEFAULT_DIAMETER = 0.75D;
     public static final double SURGE_SPEED = 1.35D;
@@ -88,6 +92,8 @@ public class FleshVineEntity extends Entity {
         SynchedEntityData.defineId(FleshVineEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_FADE_TICKS =
         SynchedEntityData.defineId(FleshVineEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_REMOVAL_MODE =
+        SynchedEntityData.defineId(FleshVineEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<UUID>> DATA_HOMING_TARGET =
         SynchedEntityData.defineId(FleshVineEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> DATA_HOMING_ENABLED =
@@ -96,6 +102,9 @@ public class FleshVineEntity extends Entity {
         SynchedEntityData.defineId(FleshVineEntity.class, EntityDataSerializers.COMPOUND_TAG);
 
     private BlockPos lastImpactBlock;
+    private List<Vec3> retractionPath;
+    private Vec3 retractionAnchorOffset = Vec3.ZERO;
+    private int retractionTick;
 
     public FleshVineEntity(EntityType<? extends FleshVineEntity> type, Level level) {
         super(type, level);
@@ -204,6 +213,7 @@ public class FleshVineEntity extends Entity {
         entityData.define(DATA_WIDTH, (float) DEFAULT_DIAMETER);
         entityData.define(DATA_LIFETIME, 1);
         entityData.define(DATA_FADE_TICKS, 0);
+        entityData.define(DATA_REMOVAL_MODE, REMOVAL_NONE);
         entityData.define(DATA_HOMING_TARGET, Optional.empty());
         entityData.define(DATA_HOMING_ENABLED, false);
         entityData.define(DATA_TRAJECTORY, new CompoundTag());
@@ -213,6 +223,9 @@ public class FleshVineEntity extends Entity {
     public void tick() {
         super.tick();
         if (getFadeTicks() > 0) {
+            if (getRemovalMode() == REMOVAL_RETRACT && !level().isClientSide()) {
+                tickRetraction();
+            }
             if (!level().isClientSide() && level() instanceof ServerLevel serverLevel) {
                 spawnFadeParticles(serverLevel);
             }
@@ -424,6 +437,10 @@ public class FleshVineEntity extends Entity {
         return entityData.get(DATA_FADE_TICKS);
     }
 
+    public int getRemovalMode() {
+        return entityData.get(DATA_REMOVAL_MODE);
+    }
+
     public float getFadeAlpha() {
         return getFadeTicks() <= 0 ? 1.0F : getFadeTicks() / (float) FADE_DURATION;
     }
@@ -437,9 +454,34 @@ public class FleshVineEntity extends Entity {
     }
 
     public void beginFade() {
-        if (getFadeTicks() <= 0) {
-            setFadeTicks(FADE_DURATION);
+        if (getFadeTicks() > 0) {
+            return;
         }
+        setRemovalMode(REMOVAL_FADE);
+        setFadeTicks(FADE_DURATION);
+    }
+
+    /** Fades while shrinking the current path back to its owner-side anchor. */
+    public void beginRetract() {
+        if (getFadeTicks() > 0) {
+            return;
+        }
+        retractionPath = captureRetractionPath();
+        if (retractionPath.size() < 2) {
+            beginFade();
+            return;
+        }
+
+        Vec3 anchor = retractionPath.get(0);
+        LivingEntity owner = getOwnerIfPresent();
+        if (owner != null) {
+            retractionAnchorOffset = anchor.subtract(owner.position());
+        }
+        retractionTick = 0;
+        setRemovalMode(REMOVAL_RETRACT);
+        setTrajectory(retractionPath);
+        setEnd(retractionPath.get(retractionPath.size() - 1));
+        setFadeTicks(FADE_DURATION);
     }
 
     public void setHomingEnabled(boolean enabled) {
@@ -537,8 +579,78 @@ public class FleshVineEntity extends Entity {
         entityData.set(DATA_LIFETIME, Math.max(1, lifetime));
     }
 
+    private void setRemovalMode(int mode) {
+        entityData.set(DATA_REMOVAL_MODE, mode);
+    }
+
     private void setFadeTicks(int ticks) {
         entityData.set(DATA_FADE_TICKS, Math.max(0, ticks));
+    }
+
+    private List<Vec3> captureRetractionPath() {
+        List<Vec3> path;
+        if (getMode() == MODE_SURGE) {
+            int count = Mth.clamp((int) Math.ceil(Math.max(1.0D, getProgress()) * 2.0D), 4, 32);
+            path = new ArrayList<>(count + 1);
+            for (int index = 0; index <= count; index++) {
+                path.add(getSurgePoint(getProgress() * index / count));
+            }
+        } else {
+            path = getTransitionPath();
+        }
+        if (path.size() < 2) {
+            path = new ArrayList<>(List.of(getStart(), getEnd()));
+        } else {
+            path = new ArrayList<>(path);
+            path.set(0, getStart());
+        }
+        return path;
+    }
+
+    private void tickRetraction() {
+        if (retractionPath == null || retractionPath.size() < 2) {
+            return;
+        }
+
+        double progress = (FADE_DURATION - getFadeTicks() + 1.0D) / FADE_DURATION;
+        double remaining = Math.max(0.0D, 1.0D - progress);
+        Vec3 originalAnchor = retractionPath.get(0);
+        Vec3 anchor = originalAnchor;
+        LivingEntity owner = getOwnerIfPresent();
+        if (owner != null) {
+            anchor = owner.position().add(retractionAnchorOffset);
+        }
+
+        List<Vec3> path = new ArrayList<>(retractionPath.size());
+        path.add(anchor);
+        for (int index = 1; index < retractionPath.size(); index++) {
+            Vec3 offset = retractionPath.get(index).subtract(originalAnchor);
+            Vec3 point = anchor.add(offset.scale(remaining));
+            if (offset.lengthSqr() > 1.0E-8D && remaining > 0.0D) {
+                Vec3 direction = offset.normalize();
+                Vec3 reference = Math.abs(direction.y) < 0.9D
+                    ? new Vec3(0.0D, 1.0D, 0.0D) : new Vec3(1.0D, 0.0D, 0.0D);
+                Vec3 side = direction.cross(reference);
+                if (side.lengthSqr() > 1.0E-8D) {
+                    double ratio = index / (double) (retractionPath.size() - 1);
+                    double amplitude = Math.min(0.45D, offset.length() * 0.08D)
+                        * Math.sin(ratio * Math.PI) * remaining;
+                    double phase = getSeed() * 0.071D + retractionTick * 0.85D + index * 1.37D;
+                    point = point.add(side.normalize().scale(Math.sin(phase) * amplitude));
+                }
+            }
+            path.add(point);
+        }
+        setStart(anchor);
+        setEnd(path.get(path.size() - 1));
+        setTrajectory(path);
+        setPos(anchor.x, anchor.y, anchor.z);
+        setOldPosAndRot();
+        retractionTick++;
+    }
+
+    private LivingEntity getOwnerIfPresent() {
+        return level() instanceof ServerLevel serverLevel ? getOwner(serverLevel) : null;
     }
 
     private LivingEntity getOwner(ServerLevel level) {

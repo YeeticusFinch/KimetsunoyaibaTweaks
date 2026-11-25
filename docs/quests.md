@@ -304,7 +304,7 @@ The waypoint points towards the nearest point in the Rui's Mother ring to the pl
 
 The waypoint now points towards the spider demon mother. During this battle, more demon slayers with the puppetry effect will occasionally spawn near the players (their owner being that spider demon mother).
 
-Step 5:  Choose your path to climb the mountain, depending on what direction you take you may find different minions leading to different bosses (Rui’s family members) you must eliminate at least one to move on to the top of the mount; you can continue exploring and defeat them all if you feel brave.
+Step 5: Choose your path to climb the mountain, depending on what direction you take you may find different minions leading to different bosses (Rui’s family members) you must eliminate at least one to move on to the top of the mount; you can continue exploring and defeat them all if you feel brave.
 
 At this stage, the quest players can now enter the Boss Minions ring of Mount Natagumo, including the Rui's Brother area, the Rui's Sister area, and the Rui's Father area. The following areas still remain locked: Rui's area (the boss area).
 If a quest player tries to enter any of those locked areas, they will be forcefully pushed back where they came from, being entirely prevented from entering the locked areas.
@@ -338,38 +338,42 @@ Ending 1 (Rui defeats the player): If you are defeated by Rui, Giyu Tomioka will
 - When the player drops to 0 HP, that damage is cancelled, and all quest players are given 5 seconds of resistance 5, slowness 5, and blindness, and all players are immediately teleported to the Butterfly Mansion, and Rui is removed (perform an entity cleanup on Mount Natagumo)
 - Shinobu will spawn next to the player (or if there is already a Shinobu in butterfly mansion, Shinobu will be teleported to be near the player, her pathfinding keeping her within 3 blocks of the player), after 4 seconds, the Shinobu dialog will start (with 30 ticks between dialog lines)
 - [if the player(s) killed less than 4 demon slayers on Mount Natagumo (including demon slayers with the puppetry effect]:
-  -   Shinobu: You're finally awake
-      Player: What happened?
-      Shinobu: You took quite the fall in Mount Natagumo.
-      Shinobu: Giyu and I arrived in time to save you.
-      Player: And what about Rui?
-      Shinobu: Rui is dead. Kanao, Giyu, and I cleared out all the demons on that mountain.
-      Shinobu: I am now sending you to Rehabilitation Training.
+  - Shinobu: You're finally awake
+    Player: What happened?
+    Shinobu: You took quite the fall in Mount Natagumo.
+    Shinobu: Giyu and I arrived in time to save you.
+    Player: And what about Rui?
+    Shinobu: Rui is dead. Kanao, Giyu, and I cleared out all the demons on that mountain.
+    Shinobu: I am now sending you to Rehabilitation Training.
 - [if the player(s) killed 4 or more demon slayers on Mount Natagumo (including demon slayers with the puppetry effect]:
-  -   Shinobu: Oh, you woke up...
-      Player: What happened?
-      Shinobu: Giyu and I cleaned up the mess you made.
-      Player: What about Rui?
-      Shinobu: Despite your reckless behavior, Giyu decapitated Rui.
-      Shinobu: You are a liability.
-      Shinobu: You killed [insert demon slayer kill count] demon slayers on Mount Natagumo!
-      Shinobu: Now get up and come to Rehabilitation Training!
+  - Shinobu: Oh, you woke up...
+    Player: What happened?
+    Shinobu: Giyu and I cleaned up the mess you made.
+    Player: What about Rui?
+    Shinobu: Despite your reckless behavior, Giyu decapitated Rui.
+    Shinobu: You are a liability.
+    Shinobu: You killed [insert demon slayer kill count] demon slayers on Mount Natagumo!
+    Shinobu: Now get up and come to Rehabilitation Training!
 - Once the dialog finishes, the player will unlock the sidequest "Rehabilitation Training"
 
 Ending 2 (The player defeats Rui): If you defeat Rui alone, Giyu and Shinobu will arrive to the scene and be impressed that a low rank slayer has defeated a kizuki, you’ll rank up and be taken (teleported) to the Demon Slayer Headquarters and witness the hashira meeting, the master will inform them of your achievement and you’ll be recognized, you’ll be taken to Shinobu’s mansion for training and recovery, since you already leveled up, you can go to the next mission immediately. (Prodigy route)
 
 - When Rui is killed, 3 seconds later, both Giyu and Shinobu will spawn, their pathfinding will keep them within 5 blocks of the player (30 ticks between dialog lines).
-  -   Shinobu: You defeated a Kizuki demon all on your own?
-  -   Giyu: Very impressive, especially for a Mizunoe rank
-  -   [if the player(s) killed 4 or more demon slayers in mount natagumo, then play these dialogs]:
-    -   Shinobu: You need to learn some discipline.
-    -   Shinobu: You killed [insert demon slayer kill count] demon slayers on Mount Natagumo!
-    -   Giyu: No accomplishments will erase the blood on your hands
- - Once the dialogs are complete, the quest waypoint will point towards the nearest Demon Slayer Headquarters structure
- - Shinobu: We will clean up the mountain, and then we will meet you at headquarters.
- - For the next 60 ticks, Shinobu and Giyu will each start sprinting in a random direction (choosing a random pathfinding target within 200 blocks), and then after those 60 ticks they will both be removed
- - Once the player arrives at the Demon Slayer Headquarters structure, these dialogs will play (30 ticks between each line):
-   -   Ubuyashiki: [player name], you defeated lower rank 5 demon all on your own, that is very impressive.
+  - Shinobu: You defeated a Kizuki demon all on your own?
+  - Giyu: Very impressive, especially for a Mizunoe rank
+  - [if the player(s) killed 4 or more demon slayers in mount natagumo, then play these dialogs]:
+  - Shinobu: You need to learn some discipline.
+  - Shinobu: You killed [insert demon slayer kill count] demon slayers on Mount Natagumo!
+  - Giyu: No accomplishments will erase the blood on your hands
+- Once the dialogs are complete, the quest waypoint will point towards the nearest Demon Slayer Headquarters structure
+- Shinobu: We will clean up the mountain, and then we will meet you at headquarters.
+- For the next 60 ticks, Shinobu and Giyu will each start sprinting in a random direction (choosing a random pathfinding target within 200 blocks), and then after those 60 ticks they will both be removed
+- The player is teleported to the path_0 structure marker in demon slayer headquarters, facing path_1
+  - The quest waypoint points towards path_1, once the player reaches path_1, the waypoint will point towards path_2, then the waypoint will point towards path_3, then the waypoint will point towards path_4, then the waypoint will point towards yard_1
+  - The hashira entities will spawn within 5 blocks of yard_0, yard_1, and yard_2, facing towards the ubuyashiki structure marker, and kimetsunoyaiba:ubuyashiki will spawn on the ubuyashiki structure marker, facing yard_1, and none of the hashira entities nor ubuyashiki will do any moving, in fact the hashira entities should play the kneel animation from kimetsunoyaiba mod
+  - Hashira entities include kimetsunoyaibamultiplayer:kanawo, kimetsunoyaibamultiplayer:muichiro, kimetsunoyaiba:uzui, kimetsunoyaiba:rengoku, kimetsunoyaiba:iguro, kimetsunoyaiba:shinazugawa, kimetsunoyaiba:tomioka, and kimetsunoyaiba:kocho
+- Once the player arrives at the Demon Slayer Headquarters structure, these dialogs will play (30 ticks between each line):
+  - Ubuyashiki: [player name], you defeated lower rank 5 demon all on your own, that is very impressive.
 
 **Rank** - After completing Mount Natagumo, the player can now rank up to Kanoto
 

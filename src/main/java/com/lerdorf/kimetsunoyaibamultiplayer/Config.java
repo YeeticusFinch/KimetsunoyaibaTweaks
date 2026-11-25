@@ -179,7 +179,7 @@ public class Config
 
     private static final ForgeConfigSpec.DoubleValue BIOKINESES_CLIMBING_ANCHOR_RANGE = BUILDER
             .comment("Maximum distance in blocks from the player to solid blocks used by Biokineses climbing")
-            .defineInRange("biokineses-climbing-anchor-range", 8.0, 1.0, 64.0);
+            .defineInRange("biokineses-climbing-anchor-range", 10.24, 1.0, 64.0);
 
     private static final ForgeConfigSpec.IntValue WISTERIA_INCENSE_MAX_POISON_AMPLIFIER = BUILDER
             .comment("Maximum MobEffect amplifier for wisteria poison from overlapping lit wisteria incense auras")
@@ -209,6 +209,7 @@ public class Config
     static {
         // Initialize first-person sword swing config
         com.lerdorf.kimetsunoyaibamultiplayer.config.FirstPersonSwordSwingConfig.init(BUILDER);
+        BiokinesesTentacleConfig.init(BUILDER);
 
         BUILDER.pop(); // common
     }
@@ -340,6 +341,7 @@ public class Config
         Log.info("[KnY-MP] Config loaded - disableBaseModSwordSwingParticles: {}", disableBaseModSwordSwingParticles);
         mobSlashBroadcastRange = MOB_SLASH_BROADCAST_RANGE.get();
         biokinesesClimbingAnchorRange = BIOKINESES_CLIMBING_ANCHOR_RANGE.get();
+        BiokinesesTentacleConfig.load();
         wisteriaIncenseMaxPoisonAmplifier = WISTERIA_INCENSE_MAX_POISON_AMPLIFIER.get();
         kanrojiEntityHandOffsetX = KANROJI_ENTITY_HAND_OFFSET_X.get();
         kanrojiEntityHandOffsetY = KANROJI_ENTITY_HAND_OFFSET_Y.get();

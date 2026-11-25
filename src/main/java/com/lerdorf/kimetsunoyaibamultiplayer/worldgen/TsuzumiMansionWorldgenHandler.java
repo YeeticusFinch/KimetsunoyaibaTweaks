@@ -30,11 +30,13 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-/** Blends generated Tsuzumi Mansion sites into the surface and adds nearby trees. */
+/** Blends generated quest structures into the surface and adds nearby trees. */
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID)
 public final class TsuzumiMansionWorldgenHandler {
     private static final ResourceLocation STRUCTURE_ID = ResourceLocation.fromNamespaceAndPath(
         KimetsunoyaibaMultiplayer.MODID, "tsuzumi_mansion");
+    private static final ResourceLocation HEADQUARTERS_STRUCTURE_ID = ResourceLocation.fromNamespaceAndPath(
+        KimetsunoyaibaMultiplayer.MODID, "headquarters");
     private static final ResourceKey<ConfiguredFeature<?, ?>> SPRUCE_TREE = ResourceKey.create(
         Registries.CONFIGURED_FEATURE,
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "tsuzumi_spruce_tree"));
@@ -65,6 +67,7 @@ public final class TsuzumiMansionWorldgenHandler {
                     int z = minZ + dz;
                     int y = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, dx, dz);
                     findMansionStart(level, new BlockPos(x, y, z));
+                    findHeadquartersStart(level, new BlockPos(x, y, z));
                 }
             }
         } catch (Exception exception) {
@@ -73,10 +76,19 @@ public final class TsuzumiMansionWorldgenHandler {
     }
 
     private static void findMansionStart(ServerLevel level, net.minecraft.core.BlockPos probe) {
+        findStructureStart(level, probe, STRUCTURE_ID, "Tsuzumi Mansion");
+    }
+
+    private static void findHeadquartersStart(ServerLevel level, net.minecraft.core.BlockPos probe) {
+        findStructureStart(level, probe, HEADQUARTERS_STRUCTURE_ID, "Demon Slayer Headquarters");
+    }
+
+    private static void findStructureStart(ServerLevel level, net.minecraft.core.BlockPos probe,
+                                           ResourceLocation structureId, String structureName) {
         var registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
         for (Holder<Structure> holder : registry.holders().toList()) {
             ResourceLocation id = holder.unwrapKey().map(ResourceKey::location).orElse(null);
-            if (!STRUCTURE_ID.equals(id)) {
+            if (!structureId.equals(id)) {
                 continue;
             }
             try {
@@ -86,7 +98,7 @@ public final class TsuzumiMansionWorldgenHandler {
                     level.getServer().execute(() -> decorate(level, box));
                 }
             } catch (Exception exception) {
-                System.err.println("[Tsuzumi Mansion] Error locating structure: " + exception);
+                System.err.println("[" + structureName + "] Error locating structure: " + exception);
             }
             return;
         }

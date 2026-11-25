@@ -84,6 +84,33 @@ Player sheath position is selected per player in the meditation menu Cosmetics t
 | `common.kanroji-entity-hand-offset-y` | Y offset for Kanroji entity sword position to compensate for model alignment (in pixels, divided by 16) |
 | `common.kanroji-entity-hand-offset-z` | Z offset for Kanroji entity sword position to compensate for model alignment (in pixels, divided by 16) |
 
+### BiokinesesTentacleConfig
+
+- Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/BiokinesesTentacleConfig.java`
+- Config file: `config/kimetsunoyaibamultiplayer/common.toml` (embedded in `Config.java`)
+- Side: `COMMON` (client and server)
+
+Coordinates use the user's torso-relative basis: `left`, `up`, and `forward`. Rotations are in degrees. The six arm names are `left_upper`, `left_lower`, `left_combat`, `right_upper`, `right_lower`, and `right_combat`.
+
+| Option path | Description |
+| --- | --- |
+| `common.biokineses-tentacles.flesh-width` | Full width of the thin red flesh section |
+| `common.biokineses-tentacles.bone-width` | Full width of the bone section |
+| `common.biokineses-tentacles.bone-length` | Length of the bone section |
+| `common.biokineses-tentacles.spike-length` | Length of each spike |
+| `common.biokineses-tentacles.spike-width` | Full width of each spike |
+| `common.biokineses-tentacles.spike-depth` | Full depth of each spike |
+| `common.biokineses-tentacles.anchor-stray-radius` | Shared fallback radius for climbing anchor preference regions |
+| `common.biokineses-tentacles.blockface-inward-weight` | Weight of the direction into the contacted block face |
+| `common.biokineses-tentacles.blockface-toward-user-weight` | Weight of the direction from the contacted face toward the user |
+| `common.biokineses-tentacles.<arm>.start-left/up/forward` | Starting offset from the torso |
+| `common.biokineses-tentacles.<arm>.start-pitch/yaw/roll` | Starting rotation relative to the torso |
+| `common.biokineses-tentacles.<arm>.default-left/up/forward` | Default floating endpoint offset |
+| `common.biokineses-tentacles.<arm>.default-pitch/yaw/roll` | Default floating endpoint rotation |
+| `common.biokineses-tentacles.<arm>.anchor-left/up/forward` | Preferred climbing anchor offset |
+| `common.biokineses-tentacles.<arm>.anchor-radius` | Per-tentacle climbing anchor stray radius |
+| `common.biokineses-tentacles.<arm>.arc-left/up/forward` | Visual arc vector applied at the path midpoint |
+
 ### FutonConfig
 
 - Source: `src/main/java/com/lerdorf/kimetsunoyaibamultiplayer/config/FutonConfig.java`

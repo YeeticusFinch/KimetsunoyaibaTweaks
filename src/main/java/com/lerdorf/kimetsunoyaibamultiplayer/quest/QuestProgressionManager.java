@@ -1507,6 +1507,7 @@ public final class QuestProgressionManager {
             case "house_tanjiro" -> "Tanjiro House";
             case "house_ubuyashiki" -> "Ubuyashiki House";
             case "house_urokodaki" -> "Urokodaki House";
+            case "headquarters" -> "Demon Slayer Headquarters";
             case SWORDSMITH_VILLAGE_LOCATION_ID -> "Swordsmith Village";
             default -> locationId;
         };
