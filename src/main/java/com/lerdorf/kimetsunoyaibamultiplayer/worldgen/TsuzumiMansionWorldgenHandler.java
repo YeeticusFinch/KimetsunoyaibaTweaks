@@ -19,7 +19,6 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraftforge.event.level.ChunkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import net.minecraft.nbt.CompoundTag;
@@ -35,8 +34,6 @@ import java.util.Set;
 public final class TsuzumiMansionWorldgenHandler {
     private static final ResourceLocation STRUCTURE_ID = ResourceLocation.fromNamespaceAndPath(
         KimetsunoyaibaMultiplayer.MODID, "tsuzumi_mansion");
-    private static final ResourceLocation HEADQUARTERS_STRUCTURE_ID = ResourceLocation.fromNamespaceAndPath(
-        KimetsunoyaibaMultiplayer.MODID, "headquarters");
     private static final ResourceKey<ConfiguredFeature<?, ?>> SPRUCE_TREE = ResourceKey.create(
         Registries.CONFIGURED_FEATURE,
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "tsuzumi_spruce_tree"));
@@ -44,14 +41,14 @@ public final class TsuzumiMansionWorldgenHandler {
         Registries.CONFIGURED_FEATURE,
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "tsuzumi_dark_oak_tree"));
     private static final int BLEND_RADIUS = 14;
-    private static final int HEADQUARTERS_BLEND_RADIUS = 32;
     private static final int TREE_ATTEMPTS = 32;
     private static final Set<Long> PENDING_SITES = new HashSet<>();
 
     private TsuzumiMansionWorldgenHandler() {
     }
 
-    @SubscribeEvent
+    // Structure lookup from ChunkEvent.Load can synchronously request neighboring chunks
+    // while those chunks are being generated, causing a server-thread deadlock.
     public static void onChunkLoad(ChunkEvent.Load event) {
         try {
             if (!(event.getLevel() instanceof ServerLevel level)
@@ -69,7 +66,6 @@ public final class TsuzumiMansionWorldgenHandler {
                     int z = minZ + dz;
                     int y = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, dx, dz);
                     findMansionStart(level, new BlockPos(x, y, z));
-                    findHeadquartersStart(level, new BlockPos(x, y, z));
                 }
             }
         } catch (Exception exception) {
@@ -79,10 +75,6 @@ public final class TsuzumiMansionWorldgenHandler {
 
     private static void findMansionStart(ServerLevel level, net.minecraft.core.BlockPos probe) {
         findStructureStart(level, probe, STRUCTURE_ID, "Tsuzumi Mansion");
-    }
-
-    private static void findHeadquartersStart(ServerLevel level, net.minecraft.core.BlockPos probe) {
-        findStructureStart(level, probe, HEADQUARTERS_STRUCTURE_ID, "Demon Slayer Headquarters");
     }
 
     private static void findStructureStart(ServerLevel level, net.minecraft.core.BlockPos probe,
@@ -99,10 +91,9 @@ public final class TsuzumiMansionWorldgenHandler {
                     BoundingBox box = start.getBoundingBox();
                     long siteKey = siteKey(box);
                     if (PENDING_SITES.add(siteKey)) {
-                        boolean growTrees = STRUCTURE_ID.equals(structureId);
                         level.getServer().execute(() -> {
                             try {
-                                decorate(level, box, growTrees);
+                                decorate(level, box);
                             } finally {
                                 PENDING_SITES.remove(siteKey);
                             }
@@ -116,7 +107,7 @@ public final class TsuzumiMansionWorldgenHandler {
         }
     }
 
-    private static void decorate(ServerLevel level, BoundingBox box, boolean growTrees) {
+    private static void decorate(ServerLevel level, BoundingBox box) {
         TsuzumiMansionSavedData data = TsuzumiMansionSavedData.get(level);
         long key = siteKey(box);
         if (data.sites.contains(key)) {
@@ -125,13 +116,8 @@ public final class TsuzumiMansionWorldgenHandler {
 
         try {
             removeBiomeVegetation(level, box);
-            if (growTrees) {
-                prepareBlend(level, box, BLEND_RADIUS);
-                growTrees(level, box);
-            } else {
-                blendHeadquartersTerrain(level, box);
-                prepareBlend(level, box, HEADQUARTERS_BLEND_RADIUS);
-            }
+            prepareBlend(level, box, BLEND_RADIUS);
+            growTrees(level, box);
             data.sites.add(key);
             data.setDirty();
         } catch (Exception exception) {
@@ -188,41 +174,6 @@ public final class TsuzumiMansionWorldgenHandler {
                 if (distance < blendRadius / 2) {
                     level.setBlock(top.below(2), Blocks.DIRT.defaultBlockState(), 3);
                 }
-            }
-        }
-    }
-
-    private static void blendHeadquartersTerrain(ServerLevel level, BoundingBox box) {
-        int groundY = box.minY() - 1;
-        int minX = box.minX() - HEADQUARTERS_BLEND_RADIUS;
-        int maxX = box.maxX() + HEADQUARTERS_BLEND_RADIUS;
-        int minZ = box.minZ() - HEADQUARTERS_BLEND_RADIUS;
-        int maxZ = box.maxZ() + HEADQUARTERS_BLEND_RADIUS;
-
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                if (x >= box.minX() && x <= box.maxX() && z >= box.minZ() && z <= box.maxZ()) {
-                    continue;
-                }
-
-                int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-                int distance = horizontalDistanceToBox(box, x, z);
-                float influence = (HEADQUARTERS_BLEND_RADIUS - distance)
-                    / (float) HEADQUARTERS_BLEND_RADIUS;
-                int targetY = Math.round(surfaceY + (groundY - surfaceY) * influence);
-                targetY = Math.max(level.getMinBuildHeight() + 1, targetY);
-
-                if (surfaceY > targetY) {
-                    for (int y = targetY + 1; y <= surfaceY; y++) {
-                        level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 3);
-                    }
-                } else if (surfaceY < targetY) {
-                    for (int y = surfaceY + 1; y <= targetY; y++) {
-                        level.setBlock(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState(), 3);
-                    }
-                }
-
-                level.setBlock(new BlockPos(x, targetY, z), Blocks.GRASS_BLOCK.defaultBlockState(), 3);
             }
         }
     }
