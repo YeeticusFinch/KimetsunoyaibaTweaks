@@ -655,7 +655,11 @@ public class FleshVineEntity extends Entity {
 
     private LivingEntity getOwnerIfPresent() {
         UUID ownerId = entityData.get(DATA_OWNER).orElse(null);
-        return ownerId == null || !(level().getEntity(ownerId) instanceof LivingEntity owner)
+        Entity ownerEntity = ownerId == null ? null
+            : level() instanceof ServerLevel serverLevel
+                ? serverLevel.getEntity(ownerId)
+                : level().getPlayerByUUID(ownerId);
+        return !(ownerEntity instanceof LivingEntity owner)
             ? null : owner;
     }
 

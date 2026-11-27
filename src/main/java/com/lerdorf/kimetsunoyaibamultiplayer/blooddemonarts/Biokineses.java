@@ -770,7 +770,9 @@ public final class Biokineses {
                             BloodTornadoSpawner.spawn(serverLevel, currentCenter, direction, entity, 40);
                         }
                     }
-                    if (tick == BLADES_CLEANUP_TICK) {
+                    // The scheduler expires at the end tick before invoking the callback,
+                    // so the last callback for a 30-tick duration is tick 29.
+                    if (tick == BLADES_CLEANUP_TICK - 1) {
                         discardBoneWhips(whips, true);
                         setModelVariant(entity, 0);
                         cleanupForm(entity);

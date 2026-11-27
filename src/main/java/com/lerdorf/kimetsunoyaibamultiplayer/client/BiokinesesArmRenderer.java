@@ -167,7 +167,8 @@ public final class BiokinesesArmRenderer {
         // Entity render types use model/world coordinates, unlike GuiGraphics fills and text.
         // Match InventoryScreen's translated preview space instead of submitting pixel positions.
         poseStack.translate(centerX, baseY, 50.0D);
-        poseStack.scale(scale, -scale, scale);
+        // InventoryScreen uses (scale, scale, -scale) for its entity preview.
+        poseStack.scale(scale, scale, -scale);
         MultiBufferSource.BufferSource buffers = graphics.bufferSource();
         VertexConsumer armBuffer = buffers.getBuffer(ARM_RENDER_TYPE);
         VertexConsumer boneBuffer = buffers.getBuffer(BONE_RENDER_TYPE);
@@ -204,7 +205,7 @@ public final class BiokinesesArmRenderer {
     private static Vec3 previewPoint(Vec3 point, float orbitYaw, float orbitPitch) {
         Vec3 rotated = rotateAround(point, new Vec3(0.0D, 1.0D, 0.0D), Math.toRadians(orbitYaw));
         rotated = rotateAround(rotated, new Vec3(1.0D, 0.0D, 0.0D), Math.toRadians(orbitPitch));
-        return rotated;
+        return new Vec3(rotated.x, -rotated.y, rotated.z);
     }
 
     private static void renderPreviewArmPath(List<Vec3> path, double tailDistance, Matrix4f matrix,
