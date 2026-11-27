@@ -40,6 +40,11 @@ public class KeyInputHandler {
             if (mc.player == null)
                 return;
             if (event.getAction() == GLFW.GLFW_PRESS && mc.screen == null
+                && ModKeyBindings.OPEN_BIOKINESES_TENTACLE_EDITOR.matches(event.getKey(), event.getScanCode())) {
+                mc.setScreen(new BiokinesesTentacleEditorScreen(null));
+                return;
+            }
+            if (event.getAction() == GLFW.GLFW_PRESS && mc.screen == null
                 && net.mcreator.kimetsunoyaiba.init.KimetsunoyaibaModKeyMappings.KEY_SPECIAL_ATTACK
                     .matches(event.getKey(), event.getScanCode())
                 && Biokineses.isBiokinesesItem(mc.player.getMainHandItem())) {

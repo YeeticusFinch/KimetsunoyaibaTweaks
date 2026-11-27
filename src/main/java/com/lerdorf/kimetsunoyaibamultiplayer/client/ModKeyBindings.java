@@ -36,6 +36,14 @@ public class ModKeyBindings {
         CATEGORY
     );
 
+    /** Optional shortcut for opening the live Biokineses tentacle editor. */
+    public static final KeyMapping OPEN_BIOKINESES_TENTACLE_EDITOR = new KeyMapping(
+        "key.kimetsunoyaibamultiplayer.open_biokineses_tentacle_editor",
+        KeyConflictContext.IN_GAME,
+        InputConstants.UNKNOWN,
+        CATEGORY
+    );
+
     public static final KeyMapping DEMON_SLAYER_GUARD = new KeyMapping(
         "key.kimetsunoyaibamultiplayer.demon_slayer_guard",
         KeyConflictContext.IN_GAME,

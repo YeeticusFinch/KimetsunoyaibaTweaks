@@ -37,8 +37,8 @@ public final class BiokinesesFloatAnimation implements IAnimation {
     private static final int FLOAT_BASE_LAYER_PRIORITY = 490;
     private static final int PROCEDURAL_LAYER_PRIORITY = 500;
     private static final float DEG_TO_RAD = Mth.DEG_TO_RAD;
-    private static final float ROTATION_SMOOTHING = 0.10F;
-    private static final float POSE_SMOOTHING = 0.16F;
+    private static final float ROTATION_SMOOTHING = 0.035F;
+    private static final float POSE_SMOOTHING = 0.12F;
     private static final Map<UUID, ActiveLayer> ACTIVE_LAYERS = new HashMap<>();
 
     private final AbstractClientPlayer player;
@@ -51,7 +51,6 @@ public final class BiokinesesFloatAnimation implements IAnimation {
     private float headRoll;
     private float armPitch;
     private float legPitch;
-    private float torsoRoll;
     private float rightArmRoll;
     private float leftArmRoll;
     private float rightLegRoll;
@@ -158,7 +157,7 @@ public final class BiokinesesFloatAnimation implements IAnimation {
         float y = 0.0F;
         float z = 0.0F;
         switch (modelName) {
-            case "body" -> {
+            case "body", "torso" -> {
                 x = bodyPitch;
                 z = bodyRoll;
             }
@@ -168,20 +167,19 @@ public final class BiokinesesFloatAnimation implements IAnimation {
                 x = headPitch;
                 z = headRoll;
             }
-            case "torso" -> z = torsoRoll;
-            case "right_arm" -> {
+            case "right_arm", "rightArm" -> {
                 x = armPitch;
                 z = rightArmRoll;
             }
-            case "left_arm" -> {
+            case "left_arm", "leftArm" -> {
                 x = armPitch;
                 z = leftArmRoll;
             }
-            case "right_leg" -> {
+            case "right_leg", "rightLeg" -> {
                 x = legPitch;
                 z = rightLegRoll;
             }
-            case "left_leg" -> {
+            case "left_leg", "leftLeg" -> {
                 x = legPitch;
                 z = leftLegRoll;
             }
@@ -190,10 +188,13 @@ public final class BiokinesesFloatAnimation implements IAnimation {
             }
         }
 
+        // Player Animator expects rotation transforms in radians, while the
+        // procedural pose values are kept in degrees for readable tuning.
+        float rotationScale = DEG_TO_RAD * poseStrength;
         return new Vec3f(
-            current.getX().floatValue() + x * poseStrength,
-            current.getY().floatValue() + y * poseStrength,
-            current.getZ().floatValue() + z * poseStrength);
+            current.getX().floatValue() + x * rotationScale,
+            current.getY().floatValue() + y * rotationScale,
+            current.getZ().floatValue() + z * rotationScale);
     }
 
     @Override
@@ -201,17 +202,14 @@ public final class BiokinesesFloatAnimation implements IAnimation {
         Vec3 velocity = previousVelocity.lerp(currentVelocity, Mth.clamp(partialTick, 0.0F, 1.0F));
         float yaw = Mth.rotLerp(partialTick, player.yRotO, player.getYRot()) * DEG_TO_RAD;
 
-        // Convert world velocity into the player's local forward/right axes. The
-        // Player Animator rotation convention is opposite to the movement pitch
-        // convention, so invert only the forward component. Strafe already has
-        // the correct sign for the model.
-        float forward = (float) (velocity.x * Math.sin(yaw) - velocity.z * Math.cos(yaw));
+        // Convert world velocity into the player's local forward/right axes.
+        float forward = (float) (-velocity.x * Math.sin(yaw) + velocity.z * Math.cos(yaw));
         float strafe = (float) (velocity.x * Math.cos(yaw) + velocity.z * Math.sin(yaw));
 
         // Only horizontal motion drives the whole-body tilt. Vertical speed and
         // yaw changes must not turn a fall or a look rotation into a spin.
-        float targetBodyPitch = Mth.clamp(-forward * 24.0F, -8.0F, 8.0F);
-        float targetBodyRoll = Mth.clamp(-strafe * 24.0F, -6.0F, 6.0F);
+        float targetBodyPitch = Mth.clamp(-forward * 45.0F, -20.0F, 20.0F);
+        float targetBodyRoll = Mth.clamp(-strafe * 45.0F, -20.0F, 20.0F);
         float targetArmPitch = Mth.clamp(forward * 78.0F, -30.0F, 30.0F);
         float targetLegPitch = Mth.clamp(-forward * 52.0F, -21.0F, 21.0F);
         float sway = Mth.sin((age + partialTick) * 0.15F) * 2.0F;
@@ -228,7 +226,6 @@ public final class BiokinesesFloatAnimation implements IAnimation {
         leftArmRoll = smooth(leftArmRoll, targetLeftArmRoll);
         rightLegRoll = smooth(rightLegRoll, 3.0F);
         leftLegRoll = smooth(leftLegRoll, -3.0F);
-        torsoRoll = smooth(torsoRoll, 0.0F);
     }
 
     private static float smooth(float current, float target) {

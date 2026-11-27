@@ -12,6 +12,7 @@ import net.minecraft.util.Mth;
 public final class PlayerHeadFacingArmModifier extends AbstractModifier {
     private static final float BRAMBLES_FOLLOW_START_SECONDS = 0.9167F;
     private static final float BRAMBLES_LENGTH_SECONDS = 3.0F;
+    private static final float DEG_TO_RAD = Mth.DEG_TO_RAD;
 
     private final AbstractClientPlayer player;
     private final String animationName;
@@ -46,8 +47,8 @@ public final class PlayerHeadFacingArmModifier extends AbstractModifier {
         // modifier contributes the same delta after Player Animator evaluates
         // the ordinary keyframes.
         return new Vec3f(
-            transformed.getX().floatValue() + headPitch,
-            transformed.getY().floatValue() + headYaw,
+            transformed.getX().floatValue() + headPitch * DEG_TO_RAD,
+            transformed.getY().floatValue() + headYaw * DEG_TO_RAD,
             transformed.getZ().floatValue());
     }
 
@@ -68,7 +69,9 @@ public final class PlayerHeadFacingArmModifier extends AbstractModifier {
     }
 
     private boolean isTargetBone(String modelName) {
-        return isRightArmPose() ? "right_arm".equals(modelName) : "left_arm".equals(modelName);
+        return isRightArmPose()
+            ? "right_arm".equals(modelName) || "rightArm".equals(modelName)
+            : "left_arm".equals(modelName) || "leftArm".equals(modelName);
     }
 
     private boolean isRightArmPose() {
@@ -79,7 +82,7 @@ public final class PlayerHeadFacingArmModifier extends AbstractModifier {
         if (animationName == null) {
             return "";
         }
-        int separator = animationName.lastIndexOf(':');
+        int separator = Math.max(animationName.lastIndexOf(':'), animationName.lastIndexOf('/'));
         return separator >= 0 ? animationName.substring(separator + 1) : animationName;
     }
 }

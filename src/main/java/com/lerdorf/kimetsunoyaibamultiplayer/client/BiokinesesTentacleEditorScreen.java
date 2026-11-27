@@ -38,11 +38,9 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
     private String status = "Changes apply and save as soon as a valid value is entered.";
     private int statusColor = 0xFFB9AA9D;
     private float orbitYaw = 25.0F;
-    private float orbitPitch = 6.0F;
     private float previewZoom = 1.0F;
     private boolean draggingPreview;
     private double lastMouseX;
-    private double lastMouseY;
     private boolean updatingFields;
 
     public BiokinesesTentacleEditorScreen(Screen parent) {
@@ -201,18 +199,17 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
             int baseY = bottom - 14;
             Quaternionf rotation = new Quaternionf()
                 .rotateZ((float) Math.PI)
-                .rotateY((float) -Math.toRadians(orbitYaw))
-                .rotateX((float) Math.toRadians(orbitPitch));
+                .rotateY((float) -Math.toRadians(orbitYaw));
             InventoryScreen.renderEntityInInventory(graphics, centerX, baseY, playerScale, rotation,
                 new Quaternionf(), player);
             BiokinesesArmRenderer.renderPreviewArms(graphics, centerX, baseY,
-                playerScale * previewZoom, orbitYaw, orbitPitch);
+                playerScale * previewZoom, orbitYaw);
         } else {
             graphics.drawCenteredString(font, Component.literal("Join a world to preview the rig."), centerX,
                 (top + bottom) / 2, 0xFFC8B9AC);
         }
-        graphics.drawCenteredString(font, Component.literal("Yaw " + Math.round(orbitYaw) + "°  |  Pitch "
-            + Math.round(orbitPitch) + "°  |  Zoom " + String.format("%.1f", previewZoom)), centerX,
+        graphics.drawCenteredString(font, Component.literal("Yaw " + Math.round(orbitYaw) + "°  |  Zoom "
+            + String.format("%.1f", previewZoom)), centerX,
             bottom + 8, 0xFFB9AA9D);
         if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom) {
             graphics.fill(left + 6, bottom - 25, right - 6, bottom - 7, 0xAA08090D);
@@ -253,7 +250,6 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
         if (button == 0 && isInsidePreview(mouseX, mouseY)) {
             draggingPreview = true;
             lastMouseX = mouseX;
-            lastMouseY = mouseY;
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
@@ -263,10 +259,7 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         if (draggingPreview && button == 0) {
             orbitYaw = normalizeDegrees(orbitYaw + (float) (mouseX - lastMouseX) * 0.7F);
-            orbitPitch = Math.max(-55.0F, Math.min(55.0F,
-                orbitPitch + (float) (mouseY - lastMouseY) * 0.55F));
             lastMouseX = mouseX;
-            lastMouseY = mouseY;
             return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);

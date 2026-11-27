@@ -1267,6 +1267,7 @@ public class KimetsunoyaibaMultiplayer
             Log.debug("[KimetsunoyaibaMultiplayer] onKeyRegister() called - registering keybindings");
             //event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM);
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_BREATHING_FORM_BACKWARD);
+            event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.OPEN_BIOKINESES_TENTACLE_EDITOR);
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.CYCLE_FORM_VARIATION);
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.DEMON_SLAYER_GUARD);
             event.register(com.lerdorf.kimetsunoyaibamultiplayer.client.ModKeyBindings.DEMON_SLAYER_DASH);
