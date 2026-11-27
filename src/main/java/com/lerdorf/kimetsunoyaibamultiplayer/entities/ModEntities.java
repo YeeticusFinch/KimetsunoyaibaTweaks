@@ -86,6 +86,14 @@ public class ModEntities {
                 .updateInterval(3)
                 .build("kanroji"));
 
+    public static final RegistryObject<EntityType<CrimsonbladeKanrojiEntity>> CRIMSONBLADE_KANROJI =
+        ENTITY_TYPES.register("crimsonblade_kanroji",
+            () -> EntityType.Builder.of(CrimsonbladeKanrojiEntity::new, MobCategory.MISC)
+                .sized(0.6F, 1.8F)
+                .clientTrackingRange(10)
+                .updateInterval(3)
+                .build("crimsonblade_kanroji"));
+
     /** Kyogai, rendered with the custom biped model and his drum equipment. */
     public static final RegistryObject<EntityType<KyogaiEntity>> KYOGAI =
         ENTITY_TYPES.register("kyogai",
@@ -537,6 +545,14 @@ public class ModEntities {
                 .updateInterval(2)
                 .build("nezuko"));
 
+    public static final RegistryObject<EntityType<CrimsonbladeNezukoEntity>> CRIMSONBLADE_NEZUKO =
+        ENTITY_TYPES.register("crimsonblade_nezuko",
+            () -> EntityType.Builder.of(CrimsonbladeNezukoEntity::new, MobCategory.MISC)
+                .sized(0.6F, 2.0F)
+                .clientTrackingRange(10)
+                .updateInterval(2)
+                .build("crimsonblade_nezuko"));
+
     public static final RegistryObject<EntityType<DaughterEntity>> DAUGHTER =
         ENTITY_TYPES.register("daughter",
             () -> EntityType.Builder.of(DaughterEntity::new, MobCategory.MONSTER)
@@ -763,6 +779,7 @@ public class ModEntities {
 
             // Register attributes for Mitsuri Kanroji
             event.put(KANROJI.get(), KanrojiEntity.createAttributes().build());
+            event.put(CRIMSONBLADE_KANROJI.get(), KanrojiEntity.createAttributes().build());
             event.put(KYOGAI.get(), KyogaiEntity.createAttributes().build());
             event.put(KYOGAI_CLAW.get(), KyogaiClawEntity.createAttributes().build());
 
@@ -781,6 +798,7 @@ public class ModEntities {
             event.put(RUI_DECAPITATED_HEAD.get(), RuiDecapitatedHeadEntity.createAttributes().build());
             event.put(DISSOLUTION_COCOON.get(), DissolutionCocoonEntity.createAttributes().build());
             event.put(NEZUKO.get(), NezukoEntity.createAttributes().build());
+            event.put(CRIMSONBLADE_NEZUKO.get(), NezukoEntity.createAttributes().build());
 
             // Register attributes for Kanae and Kanawo
             event.put(KANAE.get(), KanaeEntity.createAttributes().build());

@@ -81,6 +81,68 @@ public final class BiokinesesTentacleConfig {
     private BiokinesesTentacleConfig() {
     }
 
+    /** Fields exposed by the dedicated in-game tentacle editor. Values are expressed in config units. */
+    public enum EditorField {
+        FLESH_WIDTH("Flesh width", 0.001D, 2.0D),
+        BONE_WIDTH("Bone width", 0.001D, 2.0D),
+        BONE_LENGTH("Bone length", 0.01D, 8.0D),
+        SPIKE_LENGTH("Spike length", 0.01D, 4.0D),
+        SPIKE_WIDTH("Spike width", 0.001D, 2.0D),
+        SPIKE_DEPTH("Spike depth", 0.001D, 2.0D),
+        ANCHOR_STRAY_RADIUS("Anchor stray radius", 0.0D, 32.0D),
+        FACE_INWARD_WEIGHT("Blockface inward weight", -4.0D, 4.0D),
+        FACE_TOWARD_USER_WEIGHT("Blockface toward-user weight", -4.0D, 4.0D),
+        START_LEFT("Start left", -64.0D, 64.0D),
+        START_UP("Start up", -64.0D, 64.0D),
+        START_FORWARD("Start forward", -64.0D, 64.0D),
+        START_PITCH("Start pitch", -180.0D, 180.0D),
+        START_YAW("Start yaw", -180.0D, 180.0D),
+        START_ROLL("Start roll", -180.0D, 180.0D),
+        TARGET_LEFT("Default left", -64.0D, 64.0D),
+        TARGET_UP("Default up", -64.0D, 64.0D),
+        TARGET_FORWARD("Default forward", -64.0D, 64.0D),
+        TARGET_PITCH("Default pitch", -180.0D, 180.0D),
+        TARGET_YAW("Default yaw", -180.0D, 180.0D),
+        TARGET_ROLL("Default roll", -180.0D, 180.0D),
+        ANCHOR_LEFT("Anchor left", -64.0D, 64.0D),
+        ANCHOR_UP("Anchor up", -64.0D, 64.0D),
+        ANCHOR_FORWARD("Anchor forward", -64.0D, 64.0D),
+        ANCHOR_RADIUS("Anchor radius", 0.0D, 32.0D),
+        ARC_LEFT("Arc left", -64.0D, 64.0D),
+        ARC_UP("Arc up", -64.0D, 64.0D),
+        ARC_FORWARD("Arc forward", -64.0D, 64.0D);
+
+        private final String label;
+        private final double minimum;
+        private final double maximum;
+
+        EditorField(String label, double minimum, double maximum) {
+            this.label = label;
+            this.minimum = minimum;
+            this.maximum = maximum;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        public double minimum() {
+            return minimum;
+        }
+
+        public double maximum() {
+            return maximum;
+        }
+
+        public boolean isShared() {
+            return ordinal() <= FACE_TOWARD_USER_WEIGHT.ordinal();
+        }
+
+        public boolean isAngle() {
+            return name().endsWith("PITCH") || name().endsWith("YAW") || name().endsWith("ROLL");
+        }
+    }
+
     public static void init(ForgeConfigSpec.Builder builder) {
         builder.push("biokineses-tentacles");
         fleshWidthSpec = builder.comment("Full width of the thin red flesh section in blocks")
@@ -182,6 +244,82 @@ public final class BiokinesesTentacleConfig {
             arcUpValue[arm] = arcUp[arm].get();
             arcForwardValue[arm] = arcForward[arm].get();
         }
+    }
+
+    public static double editorValue(EditorField field, int arm) {
+        return editorSpec(field, arm).get();
+    }
+
+    public static double editorDefault(EditorField field, int arm) {
+        return editorSpec(field, arm).getDefault();
+    }
+
+    public static void setEditorValue(EditorField field, int arm, double value) {
+        if (!Double.isFinite(value) || value < field.minimum() || value > field.maximum()) {
+            throw new IllegalArgumentException("Value outside range for " + field.label());
+        }
+        editorSpec(field, arm).set(value);
+        Config.SPEC.save();
+        load();
+    }
+
+    public static void resetEditorValues() {
+        for (EditorField field : EditorField.values()) {
+            if (field.isShared()) {
+                editorSpec(field, -1).set(editorSpec(field, -1).getDefault());
+            } else {
+                for (int arm = 0; arm < ARM_COUNT; arm++) {
+                    editorSpec(field, arm).set(editorSpec(field, arm).getDefault());
+                }
+            }
+        }
+        Config.SPEC.save();
+        load();
+    }
+
+    private static ForgeConfigSpec.DoubleValue editorSpec(EditorField field, int arm) {
+        if (field.isShared()) {
+            if (arm != -1) {
+                throw new IllegalArgumentException("Shared fields do not accept an arm index");
+            }
+            return switch (field) {
+                case FLESH_WIDTH -> fleshWidthSpec;
+                case BONE_WIDTH -> boneWidthSpec;
+                case BONE_LENGTH -> boneLengthSpec;
+                case SPIKE_LENGTH -> spikeLengthSpec;
+                case SPIKE_WIDTH -> spikeWidthSpec;
+                case SPIKE_DEPTH -> spikeDepthSpec;
+                case ANCHOR_STRAY_RADIUS -> anchorStrayRadiusSpec;
+                case FACE_INWARD_WEIGHT -> faceInwardWeightSpec;
+                case FACE_TOWARD_USER_WEIGHT -> faceTowardUserWeightSpec;
+                default -> throw new IllegalArgumentException("Not a shared field: " + field);
+            };
+        }
+        if (arm < 0 || arm >= ARM_COUNT) {
+            throw new IllegalArgumentException("Invalid arm index: " + arm);
+        }
+        return switch (field) {
+            case START_LEFT -> startLeft[arm];
+            case START_UP -> startUp[arm];
+            case START_FORWARD -> startForward[arm];
+            case START_PITCH -> startPitch[arm];
+            case START_YAW -> startYaw[arm];
+            case START_ROLL -> startRoll[arm];
+            case TARGET_LEFT -> targetLeft[arm];
+            case TARGET_UP -> targetUp[arm];
+            case TARGET_FORWARD -> targetForward[arm];
+            case TARGET_PITCH -> targetPitch[arm];
+            case TARGET_YAW -> targetYaw[arm];
+            case TARGET_ROLL -> targetRoll[arm];
+            case ANCHOR_LEFT -> anchorLeft[arm];
+            case ANCHOR_UP -> anchorUp[arm];
+            case ANCHOR_FORWARD -> anchorForward[arm];
+            case ANCHOR_RADIUS -> anchorRadius[arm];
+            case ARC_LEFT -> arcLeft[arm];
+            case ARC_UP -> arcUp[arm];
+            case ARC_FORWARD -> arcForward[arm];
+            default -> throw new IllegalArgumentException("Not an arm field: " + field);
+        };
     }
 
     public static double startLeft(int arm) { return startLeftValue[arm]; }

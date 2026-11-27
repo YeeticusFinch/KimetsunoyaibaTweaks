@@ -226,7 +226,8 @@ public class FleshVineEntity extends Entity {
             if (getRemovalMode() == REMOVAL_RETRACT && !level().isClientSide()) {
                 tickRetraction();
             }
-            if (!level().isClientSide() && level() instanceof ServerLevel serverLevel) {
+            if (getRemovalMode() != REMOVAL_RETRACT
+                && !level().isClientSide() && level() instanceof ServerLevel serverLevel) {
                 spawnFadeParticles(serverLevel);
             }
             int remaining = getFadeTicks() - 1;
@@ -463,7 +464,7 @@ public class FleshVineEntity extends Entity {
 
     /** Fades while shrinking the current path back to its owner-side anchor. */
     public void beginRetract() {
-        if (getFadeTicks() > 0) {
+        if (getRemovalMode() == REMOVAL_RETRACT) {
             return;
         }
         retractionPath = captureRetractionPath();

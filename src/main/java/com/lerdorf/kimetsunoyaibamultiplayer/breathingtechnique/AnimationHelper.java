@@ -174,7 +174,8 @@ public class AnimationHelper {
             }
 
             DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT, () -> () -> {
-                ModifierLayer<IAnimation> layer = com.lerdorf.kimetsunoyaibamultiplayer.client.ClientAnimationHelper.playAnimationOnPlayer(player, animation, speed, layerPriority);
+                ModifierLayer<IAnimation> layer = com.lerdorf.kimetsunoyaibamultiplayer.client.ClientAnimationHelper.playAnimationOnPlayer(
+                    player, animation, speed, layerPriority, animationName);
 
                 if (maxDurationTicks > 0 && layer != null) {
                     com.lerdorf.kimetsunoyaibamultiplayer.client.ClientAnimationHelper.scheduleAnimationCancellation(layer, maxDurationTicks);

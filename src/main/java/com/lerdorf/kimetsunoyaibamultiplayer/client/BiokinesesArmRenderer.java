@@ -8,6 +8,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -152,6 +153,155 @@ public final class BiokinesesArmRenderer {
                 cameraPosition, matrix, normal, boneBuffer, BiokinesesTentacleConfig.spikeLength,
                 BiokinesesTentacleConfig.spikeWidth, BiokinesesTentacleConfig.spikeDepth);
         }
+    }
+
+    /** Renders a configuration-only preview using the same path and geometry as live arms. */
+    public static void renderPreviewArms(GuiGraphics graphics, int centerX, int baseY, float scale,
+                                         float orbitYaw, float orbitPitch) {
+        if (MINECRAFT.level == null) {
+            return;
+        }
+
+        PoseStack poseStack = graphics.pose();
+        poseStack.pushPose();
+        MultiBufferSource.BufferSource buffers = MINECRAFT.renderBuffers().bufferSource();
+        VertexConsumer armBuffer = buffers.getBuffer(ARM_RENDER_TYPE);
+        VertexConsumer boneBuffer = buffers.getBuffer(BONE_RENDER_TYPE);
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normal = poseStack.last().normal();
+        TorsoTransform torso = new TorsoTransform(Vec3.ZERO, new Vec3(0.0D, 0.0D, 1.0D),
+            new Vec3(0.0D, 1.0D, 0.0D), new Vec3(1.0D, 0.0D, 0.0D));
+
+        for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
+            Vec3 source = armSource(torso, arm);
+            Vec3 target = torso.origin().add(torsoVector(torso, new Vec3(
+                BiokinesesTentacleConfig.targetLeft(arm),
+                BiokinesesTentacleConfig.targetUp(arm),
+                BiokinesesTentacleConfig.targetForward(arm))));
+            Vec3 terminalDirection = configuredTargetDirection(torso, arm);
+            double maxReach = Math.max(BiokinesesArmController.TENTACLE_REACH,
+                source.distanceTo(target) + 0.8D);
+            List<Vec3> path = createIkPath(source, target, torso, arm, terminalDirection, maxReach);
+            List<Vec3> screenPath = path.stream()
+                .map(point -> previewPoint(point, centerX, baseY, scale, orbitYaw, orbitPitch))
+                .toList();
+            renderPreviewArmPath(screenPath, BiokinesesTentacleConfig.spikeLength, matrix, normal,
+                armBuffer, boneBuffer, arm);
+            renderPreviewSpike(screenPath.get(screenPath.size() - 2), screenPath.get(screenPath.size() - 1),
+                matrix, normal, boneBuffer, BiokinesesTentacleConfig.spikeLength,
+                BiokinesesTentacleConfig.spikeWidth, BiokinesesTentacleConfig.spikeDepth);
+        }
+
+        buffers.endBatch(ARM_RENDER_TYPE);
+        buffers.endBatch(BONE_RENDER_TYPE);
+        poseStack.popPose();
+    }
+
+    private static Vec3 previewPoint(Vec3 point, int centerX, int baseY, float scale,
+                                     float orbitYaw, float orbitPitch) {
+        Vec3 rotated = rotateAround(point, new Vec3(0.0D, 1.0D, 0.0D), Math.toRadians(orbitYaw));
+        rotated = rotateAround(rotated, new Vec3(1.0D, 0.0D, 0.0D), Math.toRadians(orbitPitch));
+        return new Vec3(centerX + rotated.x * scale, baseY - rotated.y * scale, rotated.z * 0.01D);
+    }
+
+    private static void renderPreviewArmPath(List<Vec3> path, double tailDistance, Matrix4f matrix,
+                                             Matrix3f normal, VertexConsumer armBuffer,
+                                             VertexConsumer boneBuffer, int arm) {
+        List<Vec3> fleshPath = trimTail(path, tailDistance);
+        double distanceFromStart = 0.0D;
+        for (int i = 0; i < fleshPath.size() - 1; i++) {
+            Vec3 start = fleshPath.get(i);
+            Vec3 end = fleshPath.get(i + 1);
+            boolean bone = distanceFromStart < BiokinesesTentacleConfig.boneLength;
+            float width = (float) ((bone ? BiokinesesTentacleConfig.boneWidth
+                : BiokinesesTentacleConfig.fleshWidth) * 0.5D);
+            int color = bone ? BONE_TINT
+                : ((i + arm) % 4 == 0 ? ARM_FLESH_HIGHLIGHT : ARM_FLESH);
+            drawPreviewBeam(start, end, width, color, matrix, normal, bone ? boneBuffer : armBuffer);
+            distanceFromStart += start.distanceTo(end);
+        }
+    }
+
+    private static void renderPreviewSpike(Vec3 previous, Vec3 tip, Matrix4f matrix, Matrix3f normal,
+                                           VertexConsumer buffer, double spikeLength, double spikeWidth,
+                                           double spikeDepth) {
+        Vec3 direction = tip.subtract(previous);
+        if (direction.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+        direction = direction.normalize();
+        Vec3 side = direction.cross(new Vec3(0.0D, 1.0D, 0.0D));
+        if (side.lengthSqr() < 1.0E-6D) {
+            side = direction.cross(new Vec3(1.0D, 0.0D, 0.0D));
+        }
+        side = side.normalize().scale(spikeWidth * 0.5D);
+        Vec3 otherSide = direction.cross(side).normalize().scale(spikeDepth * 0.5D);
+        Vec3 base = tip.subtract(direction.scale(spikeLength));
+        Vec3 pointA = base.add(side).add(otherSide);
+        Vec3 pointB = base.subtract(side).add(otherSide);
+        Vec3 pointC = base.subtract(side).subtract(otherSide);
+        Vec3 pointD = base.add(side).subtract(otherSide);
+        drawPreviewTriangle(tip, pointA, pointB, matrix, normal, buffer, 0.5F, 0.0F, 0.0F,
+            1.0F, 1.0F, 1.0F);
+        drawPreviewTriangle(tip, pointB, pointC, matrix, normal, buffer, 0.5F, 0.0F, 1.0F,
+            1.0F, 0.5F, 1.0F);
+        drawPreviewTriangle(tip, pointC, pointD, matrix, normal, buffer, 0.5F, 0.0F, 0.5F,
+            1.0F, 0.0F, 1.0F);
+        drawPreviewTriangle(tip, pointD, pointA, matrix, normal, buffer, 0.5F, 0.0F, 0.0F,
+            1.0F, 1.0F, 1.0F);
+    }
+
+    private static void drawPreviewBeam(Vec3 start, Vec3 end, float width, int color,
+                                        Matrix4f matrix, Matrix3f normal, VertexConsumer buffer) {
+        Vec3 direction = end.subtract(start).normalize();
+        Vec3 side = direction.cross(new Vec3(0.0D, 1.0D, 0.0D));
+        if (side.lengthSqr() < 1.0E-6D) {
+            side = direction.cross(new Vec3(1.0D, 0.0D, 0.0D));
+        }
+        side = side.normalize().scale(width);
+        Vec3 otherSide = direction.cross(side).normalize().scale(width);
+        Vec3[] corners = {
+            start.add(side).add(otherSide), start.subtract(side).add(otherSide),
+            start.subtract(side).subtract(otherSide), start.add(side).subtract(otherSide),
+            end.add(side).add(otherSide), end.subtract(side).add(otherSide),
+            end.subtract(side).subtract(otherSide), end.add(side).subtract(otherSide)
+        };
+        drawPreviewQuad(corners[0], corners[4], corners[5], corners[1], color, matrix, normal, buffer);
+        drawPreviewQuad(corners[1], corners[5], corners[6], corners[2], color, matrix, normal, buffer);
+        drawPreviewQuad(corners[2], corners[6], corners[7], corners[3], color, matrix, normal, buffer);
+        drawPreviewQuad(corners[3], corners[7], corners[4], corners[0], color, matrix, normal, buffer);
+        drawPreviewQuad(corners[0], corners[4], corners[7], corners[3], color, matrix, normal, buffer);
+        drawPreviewQuad(corners[1], corners[2], corners[6], corners[5], color, matrix, normal, buffer);
+    }
+
+    private static void drawPreviewQuad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, int color,
+                                        Matrix4f matrix, Matrix3f normal, VertexConsumer buffer) {
+        previewVertex(a, color, matrix, normal, buffer, 0.0F, 0.0F);
+        previewVertex(b, color, matrix, normal, buffer, 1.0F, 0.0F);
+        previewVertex(c, color, matrix, normal, buffer, 1.0F, 1.0F);
+        previewVertex(d, color, matrix, normal, buffer, 0.0F, 1.0F);
+    }
+
+    private static void drawPreviewTriangle(Vec3 a, Vec3 b, Vec3 c, Matrix4f matrix,
+                                            Matrix3f normal, VertexConsumer buffer,
+                                            float au, float av, float bu, float bv, float cu, float cv) {
+        previewVertex(a, SPIKE_WHITE, matrix, normal, buffer, au, av);
+        previewVertex(b, SPIKE_WHITE, matrix, normal, buffer, bu, bv);
+        previewVertex(c, SPIKE_WHITE, matrix, normal, buffer, cu, cv);
+    }
+
+    private static void previewVertex(Vec3 position, int color, Matrix4f matrix, Matrix3f normal,
+                                      VertexConsumer buffer, float u, float v) {
+        float red = ((color >> 16) & 0xFF) / 255.0F;
+        float green = ((color >> 8) & 0xFF) / 255.0F;
+        float blue = (color & 0xFF) / 255.0F;
+        buffer.vertex(matrix, (float) position.x, (float) position.y, (float) position.z)
+            .color(red, green, blue, 1.0F)
+            .uv(u, v)
+            .overlayCoords(OverlayTexture.NO_OVERLAY)
+            .uv2(0xF000F0)
+            .normal(normal, 0.0F, 1.0F, 0.0F)
+            .endVertex();
     }
 
     private static SmoothedArmState smoothState(LivingEntity entity, int arm, IBiokinesesArmData data) {

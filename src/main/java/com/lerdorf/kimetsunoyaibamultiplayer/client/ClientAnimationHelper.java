@@ -21,6 +21,13 @@ public class ClientAnimationHelper {
      * @return The animation layer, or null if failed
      */
     public static ModifierLayer<IAnimation> playAnimationOnPlayer(Player player, KeyframeAnimation animation, float speed, int layerPriority) {
+        return playAnimationOnPlayer(player, animation, speed, layerPriority, null);
+    }
+
+    /** Plays an animation and adds procedural head-following for supported arm poses. */
+    public static ModifierLayer<IAnimation> playAnimationOnPlayer(Player player, KeyframeAnimation animation,
+                                                                   float speed, int layerPriority,
+                                                                   String animationName) {
         if (!(player instanceof AbstractClientPlayer clientPlayer)) {
             return null;
         }
@@ -36,6 +43,9 @@ public class ClientAnimationHelper {
                     : new KeyframeAnimationPlayer(animation);
                 ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
                 modifierLayer.setAnimation(animPlayer);
+                if (PlayerHeadFacingArmModifier.supports(animationName)) {
+                    modifierLayer.addModifierLast(new PlayerHeadFacingArmModifier(clientPlayer, animationName));
+                }
                 animationStack.addAnimLayer(layerPriority, modifierLayer);
                 return modifierLayer;
             }

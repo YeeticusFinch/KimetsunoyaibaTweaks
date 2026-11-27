@@ -4,6 +4,7 @@
 - Added Muzan BDA rework
 - Added new chest of drawers 2
 - Added stool block
+- Added arachnid eyes, mandibles, and strength armor pieces
 
 1.6.5705
 - Fixed the glitch where you can use multiple forms at the same time with enhanced form cycler

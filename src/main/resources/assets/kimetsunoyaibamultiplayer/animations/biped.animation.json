@@ -24188,7 +24188,7 @@
 						"0.7917": [-168.9864, -0.7621, 3.5705],
 						"0.8333": [-167.5, 0, 0],
 						"0.875": [-173.3407, 0.4179, -3.7186],
-						"0.9167": [-90, 0, 0]
+						"0.9167": ["-90 + query.head_x_rotation", "query.head_y_rotation", 0]
 					},
 					"position": {
 						"0.0": [-1, -1, -6.25],
@@ -24309,7 +24309,7 @@
 				"right_arm": {
 					"rotation": {
 						"0.0": {
-							"post": [-90, 0, 0],
+							"post": ["-90 + query.head_x_rotation", "query.head_y_rotation", 0],
 							"lerp_mode": "catmullrom"
 						}
 					},
@@ -24569,25 +24569,41 @@
 			"loop": true,
 			"bones": {
 				"body": {
-					"rotation": ["-math.min(query.ground_speed * 180, 65)", 0, "math.clamp(query.yaw_speed * -1.5, -25, 25)"]
+					"rotation": [
+						"-math.clamp(query.ground_speed * 180 + math.clamp(query.vertical_speed * 45, -20, 20), -65, 65)",
+						0,
+						"math.clamp(query.yaw_speed * -1.5, -25, 25)"
+					]
 				},
 				"head": {
-					"rotation": ["math.min(query.ground_speed * 70, 25)", 0, 0]
+					"rotation": [
+						"math.clamp(query.ground_speed * 180 + math.clamp(query.vertical_speed * 45, -20, 20), -65, 65)",
+						0,
+						"math.clamp(query.yaw_speed * 1.5, -25, 25)"
+					]
 				},
 				"torso": {
 					"rotation": [0, 0, "math.clamp(query.yaw_speed * -0.3, -8, 8)"]
 				},
 				"right_arm": {
-					"rotation": ["math.min(query.ground_speed * 120, 35) + math.clamp(query.vertical_speed * 45, -20, 20)", 0, "8 + math.sin(query.anim_time * 150) * 3"]
+					"rotation": [
+						"math.clamp(query.ground_speed * 120 + math.clamp(query.vertical_speed * 45, -20, 20), -35, 35)",
+						0,
+						"8 + math.sin(query.anim_time * 150) * 3"
+					]
 				},
 				"left_arm": {
-					"rotation": ["math.min(query.ground_speed * 120, 35) + math.clamp(query.vertical_speed * 45, -20, 20)", 0, "-8 - math.sin(query.anim_time * 150) * 3"]
+					"rotation": [
+						"math.clamp(query.ground_speed * 120 + math.clamp(query.vertical_speed * 45, -20, 20), -35, 35)",
+						0,
+						"-8 - math.sin(query.anim_time * 150) * 3"
+					]
 				},
 				"right_leg": {
-					"rotation": ["-math.min(query.ground_speed * 65, 22) - math.clamp(query.vertical_speed * 25, -12, 12)", 0, 3]
+					"rotation": ["math.clamp(-query.ground_speed * 65 - math.clamp(query.vertical_speed * 25, -12, 12), -22, 22)", 0, 3]
 				},
 				"left_leg": {
-					"rotation": ["-math.min(query.ground_speed * 65, 22) - math.clamp(query.vertical_speed * 25, -12, 12)", 0, -3]
+					"rotation": ["math.clamp(-query.ground_speed * 65 - math.clamp(query.vertical_speed * 25, -12, 12), -22, 22)", 0, -3]
 				}
 			}
 		}

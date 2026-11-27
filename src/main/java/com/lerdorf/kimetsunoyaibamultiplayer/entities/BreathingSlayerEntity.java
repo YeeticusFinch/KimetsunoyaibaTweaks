@@ -577,6 +577,11 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
         }
     }
 
+    /** Namespace used for idle/walk state animations selected by an entity controller. */
+    protected String getAnimationNamespaceForMovement(String animation) {
+        return KimetsunoyaibaMultiplayer.MODID;
+    }
+
     @Override
     public void tick() {
         super.tick();
@@ -593,7 +598,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
                 // Animation finished, return to idle/walk
                 String newAnim = this.getDeltaMovement().horizontalDistanceSqr() > 0.0001 ? "walk" : "idle";
                 this.entityData.set(CURRENT_ANIMATION, newAnim);
-                this.entityData.set(ANIMATION_NAMESPACE, KimetsunoyaibaMultiplayer.MODID);
+                this.entityData.set(ANIMATION_NAMESPACE, getAnimationNamespaceForMovement(newAnim));
             }
         } else {
             // No special animation playing, update based on movement
@@ -601,7 +606,7 @@ public abstract class BreathingSlayerEntity extends PathfinderMob implements Geo
             String currentAnim = this.entityData.get(CURRENT_ANIMATION);
             if (!currentAnim.equals(newAnim)) {
                 this.entityData.set(CURRENT_ANIMATION, newAnim);
-                this.entityData.set(ANIMATION_NAMESPACE, KimetsunoyaibaMultiplayer.MODID);
+                this.entityData.set(ANIMATION_NAMESPACE, getAnimationNamespaceForMovement(newAnim));
             }
         }
     }

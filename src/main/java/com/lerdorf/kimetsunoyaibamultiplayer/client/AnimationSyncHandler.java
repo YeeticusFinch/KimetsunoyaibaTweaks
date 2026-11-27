@@ -224,6 +224,9 @@ public class AnimationSyncHandler {
             // Create modifier layer and set the animation
             ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
             modifierLayer.setAnimation(newAnimation);
+            if (PlayerHeadFacingArmModifier.supports(animationId.getPath())) {
+                modifierLayer.addModifierLast(new PlayerHeadFacingArmModifier(player, animationId.getPath()));
+            }
 
             // Add to animation stack with specified layer priority
             animationStack.addAnimLayer(layerPriority, modifierLayer);

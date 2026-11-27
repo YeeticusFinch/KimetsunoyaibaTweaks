@@ -493,7 +493,7 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 			int animTicks = getAnimationTicks();
 
 			// Attack and ability animations (play once)
-			if (animTicks > 0 && !anim.equals("idle") && !anim.equals("walk") && !anim.equals("walk_female") && !anim.equals("sprint")) {
+			if (animTicks > 0 && !anim.equals(getIdleAnimationName()) && !anim.equals(getWalkAnimationName()) && !anim.equals(getSprintAnimationName())) {
 				return state.setAndContinue(RawAnimation.begin().thenPlay(anim));
 			}
 
@@ -505,14 +505,26 @@ public class KanrojiEntity extends BreathingSlayerEntity {
 						|| (this.getTarget() != null && this.getDeltaMovement().horizontalDistanceSqr() > 0.01);
 
 				if (shouldSprint) {
-					return state.setAndContinue(RawAnimation.begin().thenLoop("sprint"));
+					return state.setAndContinue(RawAnimation.begin().thenLoop(getSprintAnimationName()));
 				} else {
-					return state.setAndContinue(RawAnimation.begin().thenLoop("walk_female"));
+					return state.setAndContinue(RawAnimation.begin().thenLoop(getWalkAnimationName()));
 				}
 			} else {
-				return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
+				return state.setAndContinue(RawAnimation.begin().thenLoop(getIdleAnimationName()));
 			}
 		}));
+	}
+
+	protected String getIdleAnimationName() {
+		return "idle";
+	}
+
+	protected String getWalkAnimationName() {
+		return "walk_female";
+	}
+
+	protected String getSprintAnimationName() {
+		return "sprint";
 	}
 
 	/**

@@ -3,6 +3,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.network;
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AnimationSyncPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.AdjustPassiveSkillPacket;
+import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ArachnidMandiblesAttackPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CloseDemonPropositionPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.CycleRuiWebSnatchVariantPacket;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.ConfigEditPacket;
@@ -106,6 +107,13 @@ public class ModNetworking {
                 .decoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket::new)
                 .encoder(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket::toBytes)
                 .consumerMainThread(com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BreathingSwordSwingPacket::handle)
+                .add();
+
+        int arachnidMandiblesAttackPacketId = id();
+        net.messageBuilder(ArachnidMandiblesAttackPacket.class, arachnidMandiblesAttackPacketId)
+                .decoder(ArachnidMandiblesAttackPacket::new)
+                .encoder(ArachnidMandiblesAttackPacket::toBytes)
+                .consumerMainThread(ArachnidMandiblesAttackPacket::handle)
                 .add();
 
         // Register breathing form cycle packet (client -> server)

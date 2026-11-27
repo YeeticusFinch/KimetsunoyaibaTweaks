@@ -19,7 +19,11 @@ public enum CosmeticArmorMaterial implements ArmorMaterial {
     MUICHIRO_HAORI("muichiro_haori", 25, new int[]{0, 12, 0, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY),
     MUICHIRO_HAORI_UNIFORM("muichiro_haori_uniform", 25, new int[]{0, 0, 12, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY),
     MUICHIRO_FP_HAIR("muichiro_fp_hair", 25, new int[]{0, 0, 0, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY),
-    MUICHIRO_HAKAMA("muichiro_hakama", 25, new int[]{0, 0, 10, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY);
+    MUICHIRO_HAKAMA("muichiro_hakama", 25, new int[]{0, 0, 10, 0}, 0, SoundEvents.ARMOR_EQUIP_LEATHER, 2.0F, 0.0F, () -> Ingredient.EMPTY),
+    ARACHNID_MANDIBLES("arachnid_mandibles", 0, new int[]{0, 0, 0, 3}, 10,
+        SoundEvents.ARMOR_EQUIP_DIAMOND, 2.0F, 0.0F, () -> Ingredient.EMPTY),
+    ARACHNID_MANDIBLES_AND_EYES("arachnid_mandibles_and_eyes", 0, new int[]{0, 0, 0, 4}, 10,
+        SoundEvents.ARMOR_EQUIP_DIAMOND, 5.0F, 0.0F, () -> Ingredient.EMPTY);
 
     private final String name;
     private final int durabilityMultiplier;

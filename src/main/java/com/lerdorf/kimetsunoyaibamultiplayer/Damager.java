@@ -337,6 +337,9 @@ public class Damager {
 
 		// Apply difficulty scaling if source is not a player
 		float scaledDamage = dontScale ? damage : calculateScaledDamage(source, damage);
+		if (source.hasEffect(ModEffects.ARACHNID_STRENGTH.get())) {
+			scaledDamage *= 1.20F;
+		}
 		scaledDamage = applyMidasBonus(source, target, scaledDamage);
 
 		if (isDemonSlayer(source) && isDemonSlayer(target)) {

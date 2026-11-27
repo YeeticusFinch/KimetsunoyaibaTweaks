@@ -148,6 +148,26 @@ public class ModItems {
             com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.SIX_EYE_DEMON_HEAD.get(),
             new Item.Properties().stacksTo(1)));
 
+    public static final RegistryObject<Item> ARACHNID_MANDIBLES = ITEMS.register("arachnid_mandibles",
+        () -> new ArachnidMandiblesItem(CosmeticArmorMaterial.ARACHNID_MANDIBLES,
+            net.minecraft.world.item.ArmorItem.Type.HELMET,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> ARACHNID_EYES = ITEMS.register("arachnid_eyes",
+        () -> new ArachnidEyesItem(CosmeticArmorMaterial.ARACHNID_MANDIBLES,
+            net.minecraft.world.item.ArmorItem.Type.HELMET,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> ARACHNID_MANDIBLES_AND_EYES = ITEMS.register("arachnid_mandibles_and_eyes",
+        () -> new ArachnidMandiblesAndEyesItem(CosmeticArmorMaterial.ARACHNID_MANDIBLES_AND_EYES,
+            net.minecraft.world.item.ArmorItem.Type.HELMET,
+            new Item.Properties().stacksTo(1)));
+
+    public static final RegistryObject<Item> ARACHNID_STRENGTH = ITEMS.register("arachnid_strength",
+        () -> new ArachnidStrengthItem(CosmeticArmorMaterial.COSMETIC,
+            net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
+            new Item.Properties().stacksTo(1)));
+
     public static final RegistryObject<Item> KYOGAI_DRUMS = ITEMS.register("kyogai_drums",
         () -> new KyogaiDrumsItem(new Item.Properties().stacksTo(1)));
 
@@ -225,6 +245,12 @@ public class ModItems {
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.KANROJI,
             0xFFB6D9, 0x9FE88D, // Pink body (Mitsuri's hair), light green spots (hair gradient)
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> CRIMSONBLADE_KANROJI_SPAWN_EGG = ITEMS.register("crimsonblade_kanroji_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.CRIMSONBLADE_KANROJI,
+            0xB7194B, 0xF5A6C7,
             new Item.Properties().stacksTo(64)));
 
     public static final RegistryObject<Item> KANAE_SPAWN_EGG = ITEMS.register("kanae_spawn_egg",
@@ -436,6 +462,12 @@ public class ModItems {
         () -> new net.minecraftforge.common.ForgeSpawnEggItem(
             com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.NEZUKO,
             0x8b3b44, 0xf3a2b4,
+            new Item.Properties().stacksTo(64)));
+
+    public static final RegistryObject<Item> CRIMSONBLADE_NEZUKO_SPAWN_EGG = ITEMS.register("crimsonblade_nezuko_spawn_egg",
+        () -> new net.minecraftforge.common.ForgeSpawnEggItem(
+            com.lerdorf.kimetsunoyaibamultiplayer.entities.ModEntities.CRIMSONBLADE_NEZUKO,
+            0x5B1D2A, 0xD64A70,
             new Item.Properties().stacksTo(64)));
 
     public static final RegistryObject<Item> CREEPER_DEMON_ART = ITEMS.register("creeper_demon_art",
@@ -871,7 +903,11 @@ public class ModItems {
                       TRAINING_GOURD_LARGE_EASY.get(), TRAINING_GOURD_LARGE_HARD.get(), TRAINING_GOURD_LARGE_EXTREME.get(),
                       TRAINING_GOURD_HUGE_EASY.get(), TRAINING_GOURD_HUGE_HARD.get(), TRAINING_GOURD_HUGE_EXTREME.get(),
                       TRAINING_GOURD_GARGANTUAN_EASY.get(), TRAINING_GOURD_GARGANTUAN_HARD.get(), TRAINING_GOURD_GARGANTUAN_EXTREME.get(),
-                      SIX_EYE_DEMON_HEAD.get(),
+                     SIX_EYE_DEMON_HEAD.get(),
+                     ARACHNID_MANDIBLES.get(),
+                     ARACHNID_EYES.get(),
+                     ARACHNID_MANDIBLES_AND_EYES.get(),
+                     ARACHNID_STRENGTH.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_PINK.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_CYAN.get(),
                     com.lerdorf.kimetsunoyaibamultiplayer.blocks.ModBlocks.WISTERIA_LEAVES_LAVENDER.get(),
@@ -946,6 +982,7 @@ public class ModItems {
                      MUICHIRO_FP_SPAWN_EGG.get(),
                      KYOGAI_SPAWN_EGG.get(),
                      KANROJI_SPAWN_EGG.get(),
+                     CRIMSONBLADE_KANROJI_SPAWN_EGG.get(),
                     KANAE_SPAWN_EGG.get(),
                     KANAWO_SPAWN_EGG.get(),
                     KANATA_SPAWN_EGG.get(),
@@ -963,8 +1000,9 @@ public class ModItems {
                     DEMON_VILLAGER_SPAWN_EGG.get(),
                     DEMON_PILLAGER_SPAWN_EGG.get(),
                     DEMON_VINDICATOR_SPAWN_EGG.get(),
-                    SWAMP_DEMON_SPAWN_EGG.get(),
-                    NEZUKO_SPAWN_EGG.get(),
+                     SWAMP_DEMON_SPAWN_EGG.get(),
+                     NEZUKO_SPAWN_EGG.get(),
+                     CRIMSONBLADE_NEZUKO_SPAWN_EGG.get(),
                      DAUGHTER_SPAWN_EGG.get(),
                       MOTHER_SPAWN_EGG.get(),
                       RUI_SPAWN_EGG.get(),

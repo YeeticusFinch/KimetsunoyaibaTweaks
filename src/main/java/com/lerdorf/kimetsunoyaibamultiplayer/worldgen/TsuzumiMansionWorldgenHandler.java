@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-/** Blends generated quest structures into the surface and adds nearby trees. */
+/** Blends generated quest structures into the surface and decorates Tsuzumi Mansion sites. */
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID)
 public final class TsuzumiMansionWorldgenHandler {
     private static final ResourceLocation STRUCTURE_ID = ResourceLocation.fromNamespaceAndPath(
@@ -44,7 +44,9 @@ public final class TsuzumiMansionWorldgenHandler {
         Registries.CONFIGURED_FEATURE,
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "tsuzumi_dark_oak_tree"));
     private static final int BLEND_RADIUS = 14;
+    private static final int HEADQUARTERS_BLEND_RADIUS = 32;
     private static final int TREE_ATTEMPTS = 32;
+    private static final Set<Long> PENDING_SITES = new HashSet<>();
 
     private TsuzumiMansionWorldgenHandler() {
     }
@@ -95,7 +97,17 @@ public final class TsuzumiMansionWorldgenHandler {
                 StructureStart start = level.structureManager().getStructureAt(probe, holder.value());
                 if (start != null && start.isValid()) {
                     BoundingBox box = start.getBoundingBox();
-                    level.getServer().execute(() -> decorate(level, box));
+                    long siteKey = siteKey(box);
+                    if (PENDING_SITES.add(siteKey)) {
+                        boolean growTrees = STRUCTURE_ID.equals(structureId);
+                        level.getServer().execute(() -> {
+                            try {
+                                decorate(level, box, growTrees);
+                            } finally {
+                                PENDING_SITES.remove(siteKey);
+                            }
+                        });
+                    }
                 }
             } catch (Exception exception) {
                 System.err.println("[" + structureName + "] Error locating structure: " + exception);
@@ -104,7 +116,7 @@ public final class TsuzumiMansionWorldgenHandler {
         }
     }
 
-    private static void decorate(ServerLevel level, BoundingBox box) {
+    private static void decorate(ServerLevel level, BoundingBox box, boolean growTrees) {
         TsuzumiMansionSavedData data = TsuzumiMansionSavedData.get(level);
         long key = siteKey(box);
         if (data.sites.contains(key)) {
@@ -113,8 +125,13 @@ public final class TsuzumiMansionWorldgenHandler {
 
         try {
             removeBiomeVegetation(level, box);
-            prepareBlend(level, box);
-            growTrees(level, box);
+            if (growTrees) {
+                prepareBlend(level, box, BLEND_RADIUS);
+                growTrees(level, box);
+            } else {
+                flattenHeadquartersTerrain(level, box);
+                prepareBlend(level, box, HEADQUARTERS_BLEND_RADIUS);
+            }
             data.sites.add(key);
             data.setDirty();
         } catch (Exception exception) {
@@ -124,16 +141,15 @@ public final class TsuzumiMansionWorldgenHandler {
 
     private static void removeBiomeVegetation(ServerLevel level, BoundingBox box) {
         for (int x = box.minX(); x <= box.maxX(); x++) {
-            for (int y = box.minY(); y <= box.maxY(); y++) {
-                for (int z = box.minZ(); z <= box.maxZ(); z++) {
+            for (int z = box.minZ(); z <= box.maxZ(); z++) {
+                // Vegetation is surface-level; never scan the full structure height.
+                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1;
+                int minY = Math.max(box.minY(), surfaceY - 2);
+                int maxY = Math.min(box.maxY(), surfaceY + 1);
+                for (int y = minY; y <= maxY; y++) {
                     BlockPos pos = new BlockPos(x, y, z);
-                    if (!isBiomeVegetation(level.getBlockState(pos))) {
-                        continue;
-                    }
-                    level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-                    BlockPos below = pos.below();
-                    if (isBiomeVegetation(level.getBlockState(below))) {
-                        level.setBlock(below, Blocks.AIR.defaultBlockState(), 3);
+                    if (isBiomeVegetation(level.getBlockState(pos))) {
+                        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                     }
                 }
             }
@@ -148,18 +164,18 @@ public final class TsuzumiMansionWorldgenHandler {
             || state.is(Blocks.DEAD_BUSH);
     }
 
-    private static void prepareBlend(ServerLevel level, BoundingBox box) {
-        int minX = box.minX() - BLEND_RADIUS;
-        int maxX = box.maxX() + BLEND_RADIUS;
-        int minZ = box.minZ() - BLEND_RADIUS;
-        int maxZ = box.maxZ() + BLEND_RADIUS;
+    private static void prepareBlend(ServerLevel level, BoundingBox box, int blendRadius) {
+        int minX = box.minX() - blendRadius;
+        int maxX = box.maxX() + blendRadius;
+        int minZ = box.minZ() - blendRadius;
+        int maxZ = box.maxZ() + blendRadius;
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
                 if (x >= box.minX() && x <= box.maxX() && z >= box.minZ() && z <= box.maxZ()) {
                     continue;
                 }
                 int distance = horizontalDistanceToBox(box, x, z);
-                if (distance > BLEND_RADIUS) {
+                if (distance > blendRadius) {
                     continue;
                 }
                 int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
@@ -169,9 +185,38 @@ public final class TsuzumiMansionWorldgenHandler {
                 net.minecraft.core.BlockPos top = new net.minecraft.core.BlockPos(x, y, z);
                 level.setBlock(top, Blocks.GRASS_BLOCK.defaultBlockState(), 3);
                 level.setBlock(top.below(), Blocks.DIRT.defaultBlockState(), 3);
-                if (distance < BLEND_RADIUS / 2) {
+                if (distance < blendRadius / 2) {
                     level.setBlock(top.below(2), Blocks.DIRT.defaultBlockState(), 3);
                 }
+            }
+        }
+    }
+
+    private static void flattenHeadquartersTerrain(ServerLevel level, BoundingBox box) {
+        int groundY = box.minY() - 1;
+        int minX = box.minX() - HEADQUARTERS_BLEND_RADIUS;
+        int maxX = box.maxX() + HEADQUARTERS_BLEND_RADIUS;
+        int minZ = box.minZ() - HEADQUARTERS_BLEND_RADIUS;
+        int maxZ = box.maxZ() + HEADQUARTERS_BLEND_RADIUS;
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                if (x >= box.minX() && x <= box.maxX() && z >= box.minZ() && z <= box.maxZ()) {
+                    continue;
+                }
+
+                int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
+                if (surfaceY > groundY) {
+                    for (int y = groundY + 1; y <= surfaceY; y++) {
+                        level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 3);
+                    }
+                } else if (surfaceY < groundY) {
+                    for (int y = surfaceY + 1; y <= groundY; y++) {
+                        level.setBlock(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState(), 3);
+                    }
+                }
+
+                level.setBlock(new BlockPos(x, groundY, z), Blocks.GRASS_BLOCK.defaultBlockState(), 3);
             }
         }
     }

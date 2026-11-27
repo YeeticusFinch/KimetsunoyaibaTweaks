@@ -29,6 +29,11 @@
       "type": "single",
       "resource": "minecraft:block/cobweb",
       "sprite": "kimetsunoyaibamultiplayer:web_traversal"
+    },
+    {
+      "type": "single",
+      "resource": "kimetsunoyaibamultiplayer:item/arachnid_strength",
+      "sprite": "kimetsunoyaibamultiplayer:arachnid_strength"
     }
   ]
 }

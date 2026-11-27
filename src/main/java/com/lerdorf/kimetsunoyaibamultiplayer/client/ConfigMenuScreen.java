@@ -41,6 +41,11 @@ public final class ConfigMenuScreen extends Screen {
             .bounds(left + 35, buttonY, panelWidth() - 70, 24).build());
         buttonY += 30;
 
+        addRenderableWidget(Button.builder(Component.literal("Edit Biokineses Tentacles"), button ->
+                minecraft.setScreen(new BiokinesesTentacleEditorScreen(this)))
+            .bounds(left + 35, buttonY, panelWidth() - 70, 24).build());
+        buttonY += 30;
+
         Button tweaksButton = Button.builder(Component.literal("Edit Tweaks Config"), button ->
                 openConfiguredConfig(TWEAKS_MOD_ID))
             .bounds(left + 35, buttonY, panelWidth() - 70, 24).build();
@@ -111,7 +116,7 @@ public final class ConfigMenuScreen extends Screen {
     }
 
     private int panelHeight() {
-        int buttonCount = configuredInstalled ? 5 : 6;
+        int buttonCount = configuredInstalled ? 6 : 7;
         return 80 + buttonCount * 30;
     }
 

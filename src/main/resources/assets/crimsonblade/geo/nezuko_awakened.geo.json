@@ -4736,7 +4736,7 @@
 					]
 				},
 				{
-					"name": "itemMainHand2",
+					"name": "itemOffHand",
 					"parent": "left_hand",
 					"pivot": [4.00846, 16.12767, -0.93278]
 				},

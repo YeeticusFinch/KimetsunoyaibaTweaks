@@ -23,6 +23,8 @@ import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KyogaiRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KyogaiClawRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.DirectionArrowRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.KanrojiRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.CrimsonbladeKanrojiRenderer;
+import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.CrimsonbladeNezukoRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.MuichiroFPRenderer;
 import com.lerdorf.kimetsunoyaibamultiplayer.entities.client.RuiWebRenderer;
@@ -58,6 +60,8 @@ public class CrowRendererManager {
 
         // Register renderer for Mitsuri Kanroji
         event.registerEntityRenderer(ModEntities.KANROJI.get(), KanrojiRenderer::new);
+         event.registerEntityRenderer(ModEntities.CRIMSONBLADE_KANROJI.get(), CrimsonbladeKanrojiRenderer::new);
+         event.registerEntityRenderer(ModEntities.CRIMSONBLADE_NEZUKO.get(), CrimsonbladeNezukoRenderer::new);
          event.registerEntityRenderer(ModEntities.KYOGAI.get(), KyogaiRenderer::new);
          event.registerEntityRenderer(ModEntities.KYOGAI_CLAW.get(), KyogaiClawRenderer::new);
         event.registerEntityRenderer(ModEntities.DIRECTION_ARROW.get(), DirectionArrowRenderer::new);

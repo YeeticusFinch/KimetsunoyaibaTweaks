@@ -79,7 +79,7 @@ public class ClientCommandHandler {
 
             if (animation != null) {
                 // Play the animation locally on the client player
-                playAnimationOnPlayer(player, animation);
+                 playAnimationOnPlayer(player, animation, animationName);
 
                 // Check if this is a sword slash animation
                 if (isSwordSlashAnimation(animationName)) {
@@ -230,7 +230,8 @@ public class ClientCommandHandler {
     }
 
 
-    private static void playAnimationOnPlayer(AbstractClientPlayer player, KeyframeAnimation animation) {
+    private static void playAnimationOnPlayer(AbstractClientPlayer player, KeyframeAnimation animation,
+                                              String animationName) {
         try {
             AnimationStack animationStack = PlayerAnimationAccess.getPlayerAnimLayer(player);
             if (animationStack != null) {
@@ -240,6 +241,9 @@ public class ClientCommandHandler {
                 // Create modifier layer and set animation
                 ModifierLayer<IAnimation> modifierLayer = new ModifierLayer<>();
                 modifierLayer.setAnimation(animPlayer);
+                if (PlayerHeadFacingArmModifier.supports(animationName)) {
+                    modifierLayer.addModifierLast(new PlayerHeadFacingArmModifier(player, animationName));
+                }
 
                 // Add to animation stack with high priority
                 animationStack.addAnimLayer(3000, modifierLayer);
