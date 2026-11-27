@@ -2,6 +2,7 @@ package com.lerdorf.kimetsunoyaibamultiplayer.entities;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.Damager;
 import com.lerdorf.kimetsunoyaibamultiplayer.breathingtechnique.EnhancedLoveForms;
+import com.lerdorf.kimetsunoyaibamultiplayer.gravity.api.CombatGravityFrame;
 import com.lerdorf.kimetsunoyaibamultiplayer.particles.ModParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -104,6 +105,13 @@ public class FleshVineEntity extends Entity {
     private BlockPos lastImpactBlock;
     private List<Vec3> retractionPath;
     private Vec3 retractionAnchorOffset = Vec3.ZERO;
+    private Vec3 retractionBasisForward = new Vec3(0.0D, 0.0D, 1.0D);
+    private Vec3 retractionBasisUp = new Vec3(0.0D, 1.0D, 0.0D);
+    private Vec3 retractionBasisSide = new Vec3(1.0D, 0.0D, 0.0D);
+    private double retractionLocalForward;
+    private double retractionLocalUp;
+    private double retractionLocalSide;
+    private boolean retractionFollowsOwner;
     private int retractionTick;
 
     public FleshVineEntity(EntityType<? extends FleshVineEntity> type, Level level) {
@@ -223,10 +231,7 @@ public class FleshVineEntity extends Entity {
     public void tick() {
         super.tick();
         if (getFadeTicks() > 0) {
-            if (getRemovalMode() == REMOVAL_RETRACT) {
-                if (retractionPath == null) {
-                    retractionPath = captureRetractionPath();
-                }
+            if (getRemovalMode() == REMOVAL_RETRACT && !level().isClientSide()) {
                 tickRetraction();
             }
             if (getRemovalMode() != REMOVAL_RETRACT
@@ -479,8 +484,28 @@ public class FleshVineEntity extends Entity {
         Vec3 anchor = retractionPath.get(0);
         LivingEntity owner = getOwnerIfPresent();
         if (owner != null) {
-            retractionAnchorOffset = anchor.subtract(owner.position());
+            initializeOwnerRetractionFrame(anchor, getOwnerFrame(owner));
         }
+        retractionTick = 0;
+        setRemovalMode(REMOVAL_RETRACT);
+        setTrajectory(retractionPath);
+        setEnd(retractionPath.get(retractionPath.size() - 1));
+        setFadeTicks(FADE_DURATION);
+    }
+
+    /** Starts retraction with an arm-relative anchor and curve orientation. */
+    public void beginRetract(Vec3 anchor, Vec3 ownerCenter, Vec3 forward, Vec3 up) {
+        if (getRemovalMode() == REMOVAL_RETRACT) {
+            return;
+        }
+        retractionPath = captureRetractionPath();
+        if (retractionPath.size() < 2) {
+            beginFade();
+            return;
+        }
+
+        retractionPath.set(0, anchor);
+        initializeOwnerRetractionFrame(anchor, new OwnerFrame(ownerCenter, forward, up));
         retractionTick = 0;
         setRemovalMode(REMOVAL_RETRACT);
         setTrajectory(retractionPath);
@@ -621,7 +646,17 @@ public class FleshVineEntity extends Entity {
         Vec3 originalAnchor = retractionPath.get(0);
         Vec3 anchor = originalAnchor;
         LivingEntity owner = getOwnerIfPresent();
-        if (owner != null) {
+        OwnerFrame currentFrame = owner != null && retractionFollowsOwner ? getOwnerFrame(owner) : null;
+        if (currentFrame != null) {
+            if (retractionFollowsOwner) {
+                anchor = currentFrame.center()
+                    .add(currentFrame.forward().scale(retractionLocalForward))
+                    .add(currentFrame.up().scale(retractionLocalUp))
+                    .add(currentFrame.side().scale(retractionLocalSide));
+            } else {
+                anchor = owner.position().add(retractionAnchorOffset);
+            }
+        } else if (owner != null) {
             anchor = owner.position().add(retractionAnchorOffset);
         }
 
@@ -629,6 +664,15 @@ public class FleshVineEntity extends Entity {
         path.add(anchor);
         for (int index = 1; index < retractionPath.size(); index++) {
             Vec3 offset = retractionPath.get(index).subtract(originalAnchor);
+            if (currentFrame != null) {
+                Vec3 localOffset = new Vec3(
+                    offset.dot(retractionBasisForward),
+                    offset.dot(retractionBasisUp),
+                    offset.dot(retractionBasisSide));
+                offset = currentFrame.forward().scale(localOffset.x)
+                    .add(currentFrame.up().scale(localOffset.y))
+                    .add(currentFrame.side().scale(localOffset.z));
+            }
             Vec3 point = anchor.add(offset.scale(remaining));
             if (offset.lengthSqr() > 1.0E-8D && remaining > 0.0D) {
                 Vec3 direction = offset.normalize();
@@ -651,6 +695,35 @@ public class FleshVineEntity extends Entity {
         setPos(anchor.x, anchor.y, anchor.z);
         setOldPosAndRot();
         retractionTick++;
+    }
+
+    private void initializeOwnerRetractionFrame(Vec3 anchor, OwnerFrame frame) {
+        Vec3 offset = anchor.subtract(frame.center());
+        retractionBasisForward = frame.forward();
+        retractionBasisUp = frame.up();
+        retractionBasisSide = frame.side();
+        retractionLocalForward = offset.dot(retractionBasisForward);
+        retractionLocalUp = offset.dot(retractionBasisUp);
+        retractionLocalSide = offset.dot(retractionBasisSide);
+        retractionFollowsOwner = true;
+        retractionAnchorOffset = offset;
+    }
+
+    private OwnerFrame getOwnerFrame(LivingEntity owner) {
+        final Vec3[] values = new Vec3[3];
+        CombatGravityFrame.run(owner, () -> {
+            values[0] = CombatGravityFrame.world(
+                CombatGravityFrame.position(owner).lerp(CombatGravityFrame.eye(owner), 0.5D));
+            values[1] = CombatGravityFrame.world(CombatGravityFrame.look(owner)).normalize();
+            values[2] = CombatGravityFrame.world(new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        });
+        return new OwnerFrame(values[0], values[1], values[2]);
+    }
+
+    private record OwnerFrame(Vec3 center, Vec3 forward, Vec3 up, Vec3 side) {
+        private OwnerFrame(Vec3 center, Vec3 forward, Vec3 up) {
+            this(center, forward, up, up.cross(forward).normalize());
+        }
     }
 
     private LivingEntity getOwnerIfPresent() {

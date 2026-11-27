@@ -180,6 +180,7 @@ public final class Biokineses {
     private static final double BLADES_WHIP_START_ANGLE = Math.toRadians(45.0D);
     private static final double BLADES_WHIP_SWEEP_ANGLE = Math.toRadians(90.0D);
     private static final double BLADES_WHIP_ARC = 8.0D;
+    private static final double BLADES_MAX_HORIZONTAL_SPEED = 0.08D;
     private static final float BLADES_DAMAGE = 10.0F;
     private static final int MASSACRE_CLEANUP_TICK = 70;
     private static final int MASSACRE_RETRACTION_TICK = 54;
@@ -517,6 +518,20 @@ public final class Biokineses {
             .add(side.scale(left ? -0.42D : 0.42D)).add(forward.scale(0.25D));
     }
 
+    private static Vec3 bladesArmAnchor(LivingEntity entity, boolean left) {
+        Vec3 center = CombatGravityFrame.world(CombatGravityFrame.position(entity));
+        Vec3 up = GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 forward = GravityDirectionHelper.getLookDirection(entity).normalize();
+        Vec3 side = up.cross(forward);
+        if (side.lengthSqr() < 1.0E-8D) {
+            side = new Vec3(1.0D, 0.0D, 0.0D);
+        } else {
+            side = side.normalize();
+        }
+        return center.add(up.scale(entity.getBbHeight() * 0.62D))
+            .add(side.scale(left ? 0.42D : -0.42D)).add(forward.scale(0.25D));
+    }
+
     private static Vec3 horizontalDirection(Vec3 forward, Vec3 up, double angle) {
         Vec3 side = up.cross(forward);
         if (side.lengthSqr() < 1.0E-8D) {
@@ -542,6 +557,33 @@ public final class Biokineses {
             }
         }
         whips.clear();
+    }
+
+    private static void retractBladesWhips(List<BoneWhipEntity> whips, LivingEntity owner) {
+        Vec3 center = shockwaveCenter(owner);
+        Vec3 up = GravityDirectionHelper.localToWorld(owner,
+            new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 forward = GravityDirectionHelper.getLookDirection(owner).normalize();
+        for (int index = 0; index < whips.size(); index++) {
+            BoneWhipEntity whip = whips.get(index);
+            if (whip.isAlive()) {
+                whip.beginRetract(bladesArmAnchor(owner, index == 0), center, forward, up);
+            }
+        }
+        whips.clear();
+    }
+
+    private static void maintainBladesMovement(LivingEntity entity, float lockedYaw, float lockedPitch) {
+        MovementHelper.setRotation(entity, lockedYaw, lockedPitch);
+        Vec3 up = GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
+        Vec3 velocity = CombatGravityFrame.velocity(entity);
+        double verticalSpeed = velocity.dot(up);
+        Vec3 horizontalVelocity = velocity.subtract(up.scale(verticalSpeed));
+        if (horizontalVelocity.lengthSqr() > BLADES_MAX_HORIZONTAL_SPEED * BLADES_MAX_HORIZONTAL_SPEED) {
+            velocity = up.scale(verticalSpeed)
+                .add(horizontalVelocity.normalize().scale(BLADES_MAX_HORIZONTAL_SPEED));
+            MovementHelper.setVelocity(entity, velocity);
+        }
     }
 
     private static void damageBoneWhipPath(ServerLevel level, LivingEntity owner, List<Vec3> path,
@@ -696,6 +738,8 @@ public final class Biokineses {
         }
         CombatGravityFrame.run(entity, () -> {
             List<BoneWhipEntity> whips = new ArrayList<>();
+            final float lockedYaw = entity.getYRot();
+            final float lockedPitch = entity.getXRot();
             setModelVariant(entity, 2);
             GuardStateHelper.setGuardState(entity, BLADES_DAMAGE, formId, true);
             AnimationHelper.playAnimation(entity, "beast2", BLADES_CLEANUP_TICK);
@@ -703,7 +747,7 @@ public final class Biokineses {
             Vec3 up = GravityDirectionHelper.localToWorld(entity, new Vec3(0.0D, 1.0D, 0.0D)).normalize();
             Vec3 forward = GravityDirectionHelper.getLookDirection(entity).normalize();
             for (boolean left : new boolean[] {true, false}) {
-                Vec3 start = armAnchor(entity, left);
+                Vec3 start = bladesArmAnchor(entity, left);
                 double rotationSign = left ? -1.0D : 1.0D;
                 double angle = -rotationSign * BLADES_WHIP_START_ANGLE;
                 Vec3 direction = horizontalDirection(forward, up, angle);
@@ -729,17 +773,19 @@ public final class Biokineses {
                         cleanupForm(entity);
                         return;
                     }
+                    maintainBladesMovement(entity, lockedYaw, lockedPitch);
                     Vec3 currentCenter = shockwaveCenter(entity);
                     Vec3 currentUp = GravityDirectionHelper.localToWorld(entity,
                         new Vec3(0.0D, 1.0D, 0.0D)).normalize();
                     Vec3 currentForward = GravityDirectionHelper.getLookDirection(entity).normalize();
-                    if (tick <= BLADES_WHIP_END_TICK) {
+                    if (tick < BLADES_CLEANUP_TICK) {
                         for (int index = 0; index < whips.size(); index++) {
                             boolean left = index == 0;
-                            Vec3 start = armAnchor(entity, left);
+                            Vec3 start = bladesArmAnchor(entity, left);
                             double rotationSign = left ? -1.0D : 1.0D;
+                            int sweepTick = Math.min(tick, BLADES_WHIP_END_TICK);
                             double angle = -rotationSign * BLADES_WHIP_START_ANGLE
-                                + rotationSign * BLADES_WHIP_SWEEP_ANGLE * tick / BLADES_WHIP_END_TICK;
+                                + rotationSign * BLADES_WHIP_SWEEP_ANGLE * sweepTick / BLADES_WHIP_END_TICK;
                             Vec3 direction = horizontalDirection(currentForward, currentUp, angle);
                             Vec3 tangent = horizontalDirection(currentForward, currentUp,
                                 angle + rotationSign * Math.PI * 0.5D);
@@ -747,19 +793,21 @@ public final class Biokineses {
                             List<Vec3> path = buildWhipPath(start, end,
                                 tangent.scale(BLADES_WHIP_ARC), 0.3D, entity.getId() + index);
                             updateBoneWhip(whips.get(index), start, end, currentUp, path);
-                            damageBoneWhipPath(serverLevel, entity, path, BLADES_DAMAGE, 0.75D);
-                            for (int pathIndex = 1; pathIndex < path.size(); pathIndex += 2) {
-                                Vec3 particle = path.get(pathIndex);
-                                serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                                    particle.x, particle.y, particle.z, 1,
-                                    0.0D, 0.0D, 0.0D, 0.0D);
-                                serverLevel.sendParticles(ParticleTypes.CRIT,
-                                    particle.x, particle.y, particle.z, 1,
-                                    0.08D, 0.08D, 0.08D, 0.12D);
+                            if (tick <= BLADES_WHIP_END_TICK) {
+                                damageBoneWhipPath(serverLevel, entity, path, BLADES_DAMAGE, 0.75D);
+                                for (int pathIndex = 1; pathIndex < path.size(); pathIndex += 2) {
+                                    Vec3 particle = path.get(pathIndex);
+                                    serverLevel.sendParticles(ParticleTypes.SWEEP_ATTACK,
+                                        particle.x, particle.y, particle.z, 1,
+                                        0.0D, 0.0D, 0.0D, 0.0D);
+                                    serverLevel.sendParticles(ParticleTypes.CRIT,
+                                        particle.x, particle.y, particle.z, 1,
+                                        0.08D, 0.08D, 0.08D, 0.12D);
+                                }
+                                Vec3 slash = path.get(path.size() - 1);
+                                serverLevel.sendParticles(ModParticles.BLACKRED_SLASH.get(), slash.x, slash.y, slash.z,
+                                    1, 0.0D, 0.0D, 0.0D, 0.0D);
                             }
-                            Vec3 slash = path.get(path.size() - 1);
-                            serverLevel.sendParticles(ModParticles.BLACKRED_SLASH.get(), slash.x, slash.y, slash.z,
-                                1, 0.0D, 0.0D, 0.0D, 0.0D);
                         }
                     }
                     if (tick == 15) {
@@ -773,13 +821,13 @@ public final class Biokineses {
                     // The scheduler expires at the end tick before invoking the callback,
                     // so the last callback for a 30-tick duration is tick 29.
                     if (tick == BLADES_CLEANUP_TICK - 1) {
-                        discardBoneWhips(whips, true);
+                        retractBladesWhips(whips, entity);
                         setModelVariant(entity, 0);
                         cleanupForm(entity);
                     }
                     tick++;
                 }
-            }, 1, BLADES_CLEANUP_TICK + 1);
+            }, 1, BLADES_CLEANUP_TICK + FleshVineEntity.FADE_DURATION + 1);
         });
     }
 

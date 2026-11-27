@@ -164,7 +164,7 @@ public class ModItems {
             new Item.Properties().stacksTo(1)));
 
     public static final RegistryObject<Item> ARACHNID_STRENGTH = ITEMS.register("arachnid_strength",
-        () -> new ArachnidStrengthItem(CosmeticArmorMaterial.COSMETIC,
+        () -> new ArachnidStrengthItem(CosmeticArmorMaterial.ARACHNID_STRENGTH,
             net.minecraft.world.item.ArmorItem.Type.CHESTPLATE,
             new Item.Properties().stacksTo(1)));
 

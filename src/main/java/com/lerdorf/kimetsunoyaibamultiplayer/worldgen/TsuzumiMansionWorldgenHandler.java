@@ -15,8 +15,11 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.world.level.levelgen.structure.PoolElementStructurePiece;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -26,6 +29,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -34,6 +38,8 @@ import java.util.Set;
 public final class TsuzumiMansionWorldgenHandler {
     private static final ResourceLocation STRUCTURE_ID = ResourceLocation.fromNamespaceAndPath(
         KimetsunoyaibaMultiplayer.MODID, "tsuzumi_mansion");
+    private static final ResourceLocation HEADQUARTERS_ID = ResourceLocation.fromNamespaceAndPath(
+        KimetsunoyaibaMultiplayer.MODID, "headquarters");
     private static final ResourceKey<ConfiguredFeature<?, ?>> SPRUCE_TREE = ResourceKey.create(
         Registries.CONFIGURED_FEATURE,
         ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "tsuzumi_spruce_tree"));
@@ -45,6 +51,52 @@ public final class TsuzumiMansionWorldgenHandler {
     private static final Set<Long> PENDING_SITES = new HashSet<>();
 
     private TsuzumiMansionWorldgenHandler() {
+    }
+
+    /** Replays the large HQ piece for the chunk currently being loaded. */
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onHeadquartersChunkLoad(ChunkEvent.Load event) {
+        try {
+            if (!(event.getLevel() instanceof ServerLevel level)
+                || level.dimension() != Level.OVERWORLD) {
+                return;
+            }
+
+            Structure headquarters = level.registryAccess().registryOrThrow(Registries.STRUCTURE)
+                .get(HEADQUARTERS_ID);
+            if (headquarters == null) {
+                return;
+            }
+
+            ChunkPos chunkPos = event.getChunk().getPos();
+            BoundingBox chunkBox = new BoundingBox(
+                chunkPos.getMinBlockX(), level.getMinBuildHeight() + 1, chunkPos.getMinBlockZ(),
+                chunkPos.getMaxBlockX(), level.getMaxBuildHeight() - 1, chunkPos.getMaxBlockZ());
+            for (StructureStart start : level.structureManager().startsForStructure(
+                SectionPos.of(chunkPos, level.getMinSection()), headquarters)) {
+                if (start == null || !start.isValid() || !start.getBoundingBox().intersects(chunkBox)) {
+                    continue;
+                }
+
+                List<StructurePiece> pieces = start.getPieces();
+                if (pieces.isEmpty()) {
+                    continue;
+                }
+                BoundingBox firstBox = pieces.get(0).getBoundingBox();
+                BlockPos placementAnchor = new BlockPos(
+                    firstBox.getCenter().getX(), firstBox.minY(), firstBox.getCenter().getZ());
+                for (StructurePiece piece : pieces) {
+                    if (piece instanceof PoolElementStructurePiece poolPiece
+                        && piece.getBoundingBox().intersects(chunkBox)) {
+                        poolPiece.place(level, level.structureManager(),
+                            level.getChunkSource().getGenerator(), level.random, chunkBox,
+                            placementAnchor, false);
+                    }
+                }
+            }
+        } catch (Exception exception) {
+            System.err.println("[Headquarters] Error placing structure piece: " + exception);
+        }
     }
 
     // Structure lookup from ChunkEvent.Load can synchronously request neighboring chunks

@@ -23,6 +23,8 @@ public enum CosmeticArmorMaterial implements ArmorMaterial {
     ARACHNID_MANDIBLES("arachnid_mandibles", 0, new int[]{0, 0, 0, 3}, 10,
         SoundEvents.ARMOR_EQUIP_DIAMOND, 2.0F, 0.0F, () -> Ingredient.EMPTY),
     ARACHNID_MANDIBLES_AND_EYES("arachnid_mandibles_and_eyes", 0, new int[]{0, 0, 0, 4}, 10,
+        SoundEvents.ARMOR_EQUIP_DIAMOND, 5.0F, 0.0F, () -> Ingredient.EMPTY),
+    ARACHNID_STRENGTH("arachnid_strength", 0, new int[]{0, 0, 8, 0}, 10,
         SoundEvents.ARMOR_EQUIP_DIAMOND, 5.0F, 0.0F, () -> Ingredient.EMPTY);
 
     private final String name;

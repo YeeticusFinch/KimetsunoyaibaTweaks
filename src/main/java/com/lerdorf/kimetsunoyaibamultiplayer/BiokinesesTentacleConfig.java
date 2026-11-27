@@ -108,9 +108,9 @@ public final class BiokinesesTentacleConfig {
         ANCHOR_UP("Anchor up", -64.0D, 64.0D),
         ANCHOR_FORWARD("Anchor forward", -64.0D, 64.0D),
         ANCHOR_RADIUS("Anchor radius", 0.0D, 32.0D),
-        ARC_LEFT("Arc left", -64.0D, 64.0D),
-        ARC_UP("Arc up", -64.0D, 64.0D),
-        ARC_FORWARD("Arc forward", -64.0D, 64.0D);
+        ARC_LEFT("Arc factor left", -64.0D, 64.0D),
+        ARC_UP("Arc factor up", -64.0D, 64.0D),
+        ARC_FORWARD("Arc factor forward", -64.0D, 64.0D);
 
         private final String label;
         private final double minimum;
@@ -195,9 +195,9 @@ public final class BiokinesesTentacleConfig {
             anchorRadius[arm] = builder.comment("Maximum preferred-region stray radius in blocks")
                 .defineInRange("anchor-radius", 3.0D, 0.0D, 32.0D);
 
-            arcLeft[arm] = offset(builder, "arc-left", 0.0D, "Visual arc vector toward the user's left");
-            arcUp[arm] = offset(builder, "arc-up", 0.0D, "Visual arc vector upward");
-            arcForward[arm] = offset(builder, "arc-forward", 0.0D, "Visual arc vector forward");
+            arcLeft[arm] = offset(builder, "arc-left", 0.0D, "Visual arc factor toward the user's left");
+            arcUp[arm] = offset(builder, "arc-up", 0.0D, "Visual arc factor upward");
+            arcForward[arm] = offset(builder, "arc-forward", 0.0D, "Visual arc factor forward");
             builder.pop();
         }
         builder.pop();
@@ -259,7 +259,6 @@ public final class BiokinesesTentacleConfig {
             throw new IllegalArgumentException("Value outside range for " + field.label());
         }
         editorSpec(field, arm).set(value);
-        Config.SPEC.save();
         load();
     }
 
@@ -273,8 +272,18 @@ public final class BiokinesesTentacleConfig {
                 }
             }
         }
-        Config.SPEC.save();
         load();
+    }
+
+    /** Persists pending editor changes without allowing a locked config file to crash the client. */
+    public static boolean saveEditorValues() {
+        try {
+            Config.SPEC.save();
+            return true;
+        } catch (RuntimeException exception) {
+            System.err.println("Unable to save Biokineses tentacle config: " + exception.getMessage());
+            return false;
+        }
     }
 
     private static ForgeConfigSpec.DoubleValue editorSpec(EditorField field, int arm) {

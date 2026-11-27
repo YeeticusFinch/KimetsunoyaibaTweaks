@@ -16,14 +16,6 @@
 						}
 					}
 				},
-				"torso": {
-					"rotation": {
-						"0.0": {
-							"post": [0, 0, 0],
-							"lerp_mode": "catmullrom"
-						}
-					}
-				},
 				"right_arm": {
 					"rotation": {
 						"0.0": {

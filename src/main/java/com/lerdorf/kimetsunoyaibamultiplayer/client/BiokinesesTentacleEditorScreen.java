@@ -9,7 +9,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import org.joml.Quaternionf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +22,7 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
     private static final int FOOTER_HEIGHT = 38;
     private static final int SECTION_HEIGHT = 30;
     private static final int ROW_HEIGHT = 52;
+    private static final int SAVE_DELAY_TICKS = 10;
 
     private final Screen parent;
     private final List<LayoutRow> rows = new ArrayList<>();
@@ -35,13 +35,15 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
     private int maxScroll;
     private Button resetButton;
     private Button backButton;
-    private String status = "Changes apply and save as soon as a valid value is entered.";
+    private String status = "Changes apply live and save shortly after editing stops.";
     private int statusColor = 0xFFB9AA9D;
     private float orbitYaw = 25.0F;
     private float previewZoom = 1.0F;
     private boolean draggingPreview;
     private double lastMouseX;
     private boolean updatingFields;
+    private boolean savePending;
+    private int saveDelayTicks;
 
     public BiokinesesTentacleEditorScreen(Screen parent) {
         super(Component.literal("Biokineses Tentacle Editor"));
@@ -197,13 +199,13 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
         if (player != null) {
             int playerScale = Math.max(34, Math.min(70, (bottom - top) * 2 / 5));
             int baseY = bottom - 14;
-            Quaternionf rotation = new Quaternionf()
-                .rotateZ((float) Math.PI)
-                .rotateY((float) -Math.toRadians(orbitYaw));
-            InventoryScreen.renderEntityInInventory(graphics, centerX, baseY, playerScale, rotation,
-                new Quaternionf(), player);
-            BiokinesesArmRenderer.renderPreviewArms(graphics, centerX, baseY,
-                playerScale * previewZoom, orbitYaw);
+            BiokinesesArmRenderer.beginPreviewCapture();
+            try {
+                InventoryScreen.renderEntityInInventoryFollowsAngle(graphics, centerX, baseY,
+                    (int) (playerScale * previewZoom), orbitYaw / 20.0F, 0.0F, player);
+            } finally {
+                BiokinesesArmRenderer.endPreviewCapture();
+            }
         } else {
             graphics.drawCenteredString(font, Component.literal("Join a world to preview the rig."), centerX,
                 (top + bottom) / 2, 0xFFC8B9AC);
@@ -276,8 +278,29 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
 
     @Override
     public void onClose() {
+        if (savePending) {
+            BiokinesesTentacleConfig.saveEditorValues();
+            savePending = false;
+        }
         if (minecraft != null) {
             minecraft.setScreen(parent);
+        }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!savePending || --saveDelayTicks > 0) {
+            return;
+        }
+        if (BiokinesesTentacleConfig.saveEditorValues()) {
+            savePending = false;
+            status = "Changes applied and saved.";
+            statusColor = 0xFFB9E1B3;
+        } else {
+            saveDelayTicks = SAVE_DELAY_TICKS;
+            status = "Changes applied, but the config file is busy; retrying save.";
+            statusColor = 0xFFE09A8E;
         }
     }
 
@@ -296,7 +319,8 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
                 return;
             }
             BiokinesesTentacleConfig.setEditorValue(control.field, control.arm, value);
-            status = control.field.label() + " updated immediately.";
+            scheduleSave();
+            status = control.field.label() + " updated live.";
             statusColor = 0xFFB9E1B3;
         } catch (IllegalArgumentException ignored) {
             status = "Enter a value between " + format(control.field.minimum()) + " and "
@@ -316,8 +340,14 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
         } finally {
             updatingFields = false;
         }
+        scheduleSave();
         status = "All tentacle values reset to their defaults.";
         statusColor = 0xFFE6C887;
+    }
+
+    private void scheduleSave() {
+        savePending = true;
+        saveDelayTicks = SAVE_DELAY_TICKS;
     }
 
     private void repositionFields() {

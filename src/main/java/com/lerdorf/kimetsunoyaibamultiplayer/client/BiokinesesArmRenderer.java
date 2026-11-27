@@ -8,7 +8,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -55,6 +54,7 @@ public final class BiokinesesArmRenderer {
     private static final Map<String, SmoothedArmState> SMOOTHED_ARMS = new HashMap<>();
     private static final Matrix4f WORLD_FROM_VIEW = new Matrix4f();
     private static boolean hasViewTransform;
+    private static boolean previewCaptureActive;
 
     private BiokinesesArmRenderer() {
     }
@@ -146,7 +146,10 @@ public final class BiokinesesArmRenderer {
                 ? Math.max(BiokinesesArmController.TENTACLE_REACH,
                     source.distanceTo(target) + 0.8D)
                 : BiokinesesArmController.TENTACLE_REACH;
-            List<Vec3> path = createIkPath(source, tip, torso, arm, terminalDirection, maxReach);
+            boolean applyVisualArc = data.getMode(arm) == IBiokinesesArmData.MODE_ANCHOR
+                && data.hasAnchor(arm);
+            List<Vec3> path = createIkPath(source, tip, torso, arm, terminalDirection, maxReach,
+                applyVisualArc);
             renderArmPath(path, BiokinesesTentacleConfig.spikeLength, entity, cameraPosition, matrix, normal,
                 armBuffer, boneBuffer, arm);
             renderSpike(path.get(path.size() - 2), path.get(path.size() - 1), entity,
@@ -155,29 +158,27 @@ public final class BiokinesesArmRenderer {
         }
     }
 
-    /** Renders a configuration-only preview using the same path and geometry as live arms. */
-    public static void renderPreviewArms(GuiGraphics graphics, int centerX, int baseY, float scale,
-                                         float orbitYaw) {
-        if (MINECRAFT.level == null) {
+    public static void beginPreviewCapture() {
+        previewCaptureActive = true;
+    }
+
+    public static void endPreviewCapture() {
+        previewCaptureActive = false;
+    }
+
+    public static void renderPreviewArms(PoseStack poseStack, MultiBufferSource buffers) {
+        if (!previewCaptureActive || poseStack == null || buffers == null) {
             return;
         }
 
-        PoseStack poseStack = graphics.pose();
-        poseStack.pushPose();
-        // Entity render types use model/world coordinates, unlike GuiGraphics fills and text.
-        // Match InventoryScreen's translated preview space instead of submitting pixel positions.
-        poseStack.translate(centerX, baseY, 50.0D);
-        // InventoryScreen uses (scale, scale, -scale) for its entity preview.
-        poseStack.scale(scale, scale, -scale);
-        MultiBufferSource.BufferSource buffers = graphics.bufferSource();
         VertexConsumer armBuffer = buffers.getBuffer(ARM_RENDER_TYPE);
         VertexConsumer boneBuffer = buffers.getBuffer(BONE_RENDER_TYPE);
         Matrix4f matrix = poseStack.last().pose();
         Matrix3f normal = poseStack.last().normal();
-        double torsoHeight = MINECRAFT.player == null ? 1.0D : MINECRAFT.player.getBbHeight() * 0.58D;
-        TorsoTransform torso = new TorsoTransform(new Vec3(0.0D, torsoHeight, 0.0D),
+        // Match the axes used by capturePlayerTorsoTransform while the body bone is active.
+        TorsoTransform torso = new TorsoTransform(Vec3.ZERO,
             new Vec3(0.0D, 0.0D, 1.0D),
-            new Vec3(0.0D, 1.0D, 0.0D), new Vec3(1.0D, 0.0D, 0.0D));
+            new Vec3(0.0D, -1.0D, 0.0D), new Vec3(-1.0D, 0.0D, 0.0D));
 
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
             Vec3 source = armSource(torso, arm);
@@ -188,26 +189,13 @@ public final class BiokinesesArmRenderer {
             Vec3 terminalDirection = configuredTargetDirection(torso, arm);
             double maxReach = Math.max(BiokinesesArmController.TENTACLE_REACH,
                 source.distanceTo(target) + 0.8D);
-            List<Vec3> path = createIkPath(source, target, torso, arm, terminalDirection, maxReach);
-            List<Vec3> previewPath = path.stream()
-                .map(point -> previewPoint(point, orbitYaw))
-                .toList();
-            renderPreviewArmPath(previewPath, BiokinesesTentacleConfig.spikeLength, matrix, normal,
+            List<Vec3> path = createIkPath(source, target, torso, arm, terminalDirection, maxReach, true);
+            renderPreviewArmPath(path, BiokinesesTentacleConfig.spikeLength, matrix, normal,
                 armBuffer, boneBuffer, arm);
-            renderPreviewSpike(previewPath.get(previewPath.size() - 2), previewPath.get(previewPath.size() - 1),
+            renderPreviewSpike(path.get(path.size() - 2), path.get(path.size() - 1),
                 matrix, normal, boneBuffer, BiokinesesTentacleConfig.spikeLength,
                 BiokinesesTentacleConfig.spikeWidth, BiokinesesTentacleConfig.spikeDepth);
         }
-
-        buffers.endBatch(ARM_RENDER_TYPE);
-        buffers.endBatch(BONE_RENDER_TYPE);
-        poseStack.popPose();
-    }
-
-    private static Vec3 previewPoint(Vec3 point, float orbitYaw) {
-        // InventoryScreen rotates the player by -orbitYaw. Keep the tentacle rig on that same axis.
-        Vec3 rotated = rotateAround(point, new Vec3(0.0D, 1.0D, 0.0D), Math.toRadians(-orbitYaw));
-        return new Vec3(rotated.x, -rotated.y, rotated.z);
     }
 
     private static void renderPreviewArmPath(List<Vec3> path, double tailDistance, Matrix4f matrix,
@@ -255,6 +243,10 @@ public final class BiokinesesArmRenderer {
             1.0F, 0.0F, 1.0F);
         drawPreviewTriangle(tip, pointD, pointA, matrix, normal, buffer, 0.5F, 0.0F, 0.0F,
             1.0F, 1.0F, 1.0F);
+        drawPreviewTriangle(pointA, pointD, pointC, matrix, normal, buffer, 0.0F, 0.0F, 1.0F,
+            0.0F, 1.0F, 1.0F);
+        drawPreviewTriangle(pointA, pointC, pointB, matrix, normal, buffer, 0.0F, 0.0F, 1.0F,
+            1.0F, 0.0F, 1.0F);
     }
 
     private static void drawPreviewBeam(Vec3 start, Vec3 end, float width, int color,
@@ -391,14 +383,25 @@ public final class BiokinesesArmRenderer {
 
     /** Called by the model layers after they resolve the animated torso. */
     public static void captureGeoTorsoTransform(LivingEntity entity, PoseStack poseStack, Vec3 cameraPosition,
-                                                float partialTick) {
+                                                 float partialTick) {
+        captureTorsoTransform(entity, poseStack, cameraPosition, 1.0F);
+    }
+
+    /** Captures the vanilla player model, whose local model-space up axis is negative Y. */
+    public static void capturePlayerTorsoTransform(LivingEntity entity, PoseStack poseStack, Vec3 cameraPosition,
+                                                   float partialTick) {
+        captureTorsoTransform(entity, poseStack, cameraPosition, -1.0F);
+    }
+
+    private static void captureTorsoTransform(LivingEntity entity, PoseStack poseStack, Vec3 cameraPosition,
+                                              float localUpY) {
         if (entity == null || poseStack == null || cameraPosition == null) {
             return;
         }
         Matrix4f pose = poseStack.last().pose();
         Vector3f origin = new Vector3f(0.0F, 0.0F, 0.0F);
         Vector3f backward = new Vector3f(0.0F, 0.0F, 1.0F);
-        Vector3f up = new Vector3f(0.0F, 1.0F, 0.0F);
+        Vector3f up = new Vector3f(0.0F, localUpY, 0.0F);
         Vector3f left = new Vector3f(-1.0F, 0.0F, 0.0F);
         pose.transformPosition(origin);
         pose.transformPosition(backward);
@@ -424,7 +427,7 @@ public final class BiokinesesArmRenderer {
     }
 
     private static List<Vec3> createIkPath(Vec3 start, Vec3 target, TorsoTransform torso, int arm,
-                                           Vec3 terminalDirection, double maxReach) {
+                                           Vec3 terminalDirection, double maxReach, boolean applyVisualArc) {
         Vec3 difference = target.subtract(start);
         double distance = difference.length();
         if (distance < 1.0E-5D) {
@@ -466,9 +469,13 @@ public final class BiokinesesArmRenderer {
                 .add(firstControl.scale(3.0D * inverse * inverse * progress))
                 .add(secondControl.scale(3.0D * inverse * progress * progress))
                 .add(reachableTarget.scale(progress * progress * progress));
-            Vec3 arc = torsoVector(torso, new Vec3(BiokinesesTentacleConfig.arcLeft(arm),
-                BiokinesesTentacleConfig.arcUp(arm), BiokinesesTentacleConfig.arcForward(arm)));
-            point = point.add(arc.scale(2.0D * Math.min(progress, 1.0D - progress)));
+            if (applyVisualArc) {
+                Vec3 arcFactor = torsoVector(torso, new Vec3(BiokinesesTentacleConfig.arcLeft(arm),
+                    BiokinesesTentacleConfig.arcUp(arm), BiokinesesTentacleConfig.arcForward(arm)));
+                double smoothArc = Math.sin(progress * Math.PI);
+                smoothArc *= smoothArc;
+                point = point.add(arcFactor.scale(totalLength * smoothArc));
+            }
             double sway = Math.sin(progress * Math.PI * 2.0D + arm * 0.85D) * 0.065D
                 * Math.sin(progress * Math.PI);
             path.add(point.add(bendDirection.scale(sway)));
@@ -598,6 +605,10 @@ public final class BiokinesesArmRenderer {
             0.5F, 0.0F, 0.5F, 1.0F, 0.0F, 1.0F);
         drawTriangle(tip, pointD, pointA, SPIKE_WHITE, entity.level(), cameraPosition, matrix, normal, buffer,
             0.5F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+        drawTriangle(pointA, pointD, pointC, SPIKE_WHITE, entity.level(), cameraPosition, matrix, normal, buffer,
+            0.0F, 0.0F, 1.0F, 0.0F, 1.0F, 1.0F);
+        drawTriangle(pointA, pointC, pointB, SPIKE_WHITE, entity.level(), cameraPosition, matrix, normal, buffer,
+            0.0F, 0.0F, 1.0F, 1.0F, 0.0F, 1.0F);
     }
 
     private static void drawBeam(Vec3 start, Vec3 end, float width, int color,

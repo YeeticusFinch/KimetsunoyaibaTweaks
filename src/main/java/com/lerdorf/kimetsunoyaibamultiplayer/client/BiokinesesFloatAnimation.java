@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.BiokinesesArmController;
 import dev.kosmx.playerAnim.api.TransformType;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
@@ -47,8 +48,6 @@ public final class BiokinesesFloatAnimation implements IAnimation {
     private float poseStrength;
     private float bodyPitch;
     private float bodyRoll;
-    private float headPitch;
-    private float headRoll;
     private float armPitch;
     private float legPitch;
     private float rightArmRoll;
@@ -121,7 +120,8 @@ public final class BiokinesesFloatAnimation implements IAnimation {
             }
             visiblePlayers.add(clientPlayer.getUUID());
             clientPlayer.getCapability(KimetsunoyaibaMultiplayer.BIOKINESES_ARMS)
-                .ifPresent(data -> update(clientPlayer, data.isClimbing()));
+                .ifPresent(data -> update(clientPlayer,
+                    BiokinesesArmController.isTraversalActive(clientPlayer)));
         }
 
         // A player can leave the tracking range without sending a final state packet.
@@ -157,15 +157,16 @@ public final class BiokinesesFloatAnimation implements IAnimation {
         float y = 0.0F;
         float z = 0.0F;
         switch (modelName) {
-            case "body", "torso" -> {
+            case "body" -> {
                 x = bodyPitch;
                 z = bodyRoll;
             }
+            case "torso" -> {
+                return current;
+            }
             case "head" -> {
-                // Body is the parent of the head and every limb. Counter-rotate
-                // it so the player's view remains stable while the body banks.
-                x = headPitch;
-                z = headRoll;
+                // Leave the head entirely to the player's look direction.
+                return current;
             }
             case "right_arm", "rightArm" -> {
                 x = armPitch;
@@ -209,23 +210,23 @@ public final class BiokinesesFloatAnimation implements IAnimation {
         // Only horizontal motion drives the whole-body tilt. Vertical speed and
         // yaw changes must not turn a fall or a look rotation into a spin.
         float targetBodyPitch = Mth.clamp(-forward * 45.0F, -20.0F, 20.0F);
-        float targetBodyRoll = Mth.clamp(-strafe * 45.0F, -20.0F, 20.0F);
+        float targetBodyRoll = Mth.clamp(strafe * 45.0F, -20.0F, 20.0F);
         float targetArmPitch = Mth.clamp(forward * 78.0F, -30.0F, 30.0F);
-        float targetLegPitch = Mth.clamp(-forward * 52.0F, -21.0F, 21.0F);
+        float targetLegPitch = Mth.clamp(forward * 52.0F, -21.0F, 21.0F);
         float sway = Mth.sin((age + partialTick) * 0.15F) * 2.0F;
-        float targetRightArmRoll = 8.0F + sway + strafe * 12.0F;
-        float targetLeftArmRoll = -8.0F - sway + strafe * 12.0F;
+        float targetRightArmRoll = 8.0F + sway - strafe * 12.0F;
+        float targetLeftArmRoll = -8.0F - sway - strafe * 12.0F;
+        float targetRightLegRoll = 3.0F - strafe * 8.0F;
+        float targetLeftLegRoll = -3.0F - strafe * 8.0F;
 
         bodyPitch = smooth(bodyPitch, targetBodyPitch);
         bodyRoll = smooth(bodyRoll, targetBodyRoll);
-        headPitch = smooth(headPitch, -targetBodyPitch);
-        headRoll = smooth(headRoll, -targetBodyRoll);
         armPitch = smooth(armPitch, targetArmPitch);
         legPitch = smooth(legPitch, targetLegPitch);
         rightArmRoll = smooth(rightArmRoll, targetRightArmRoll);
         leftArmRoll = smooth(leftArmRoll, targetLeftArmRoll);
-        rightLegRoll = smooth(rightLegRoll, 3.0F);
-        leftLegRoll = smooth(leftLegRoll, -3.0F);
+        rightLegRoll = smooth(rightLegRoll, targetRightLegRoll);
+        leftLegRoll = smooth(leftLegRoll, targetLeftLegRoll);
     }
 
     private static float smooth(float current, float target) {

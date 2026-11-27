@@ -48,7 +48,6 @@ public final class BiokinesesArmController {
     private static final int ACTIVE_TICKS = 2400;
     public static final double TENTACLE_REACH = 12.8D;
     private static final double FLIGHT_BASE_SPEED = 0.9D;
-    private static final double CLIMBING_MAX_DOWNWARD_SPEED = -0.03D;
     private static final double FRONT_ANCHOR_PROJECTION = 1.0D;
     private static final double FORCED_FRONT_PROJECTION = 3.0D;
     private static final double REAR_ANCHOR_PROJECTION = -1.0D;
@@ -617,10 +616,9 @@ public final class BiokinesesArmController {
             ? input.normalize().scale(speed)
             : Vec3.ZERO;
         if (Math.abs(input.y) < 1.0E-6D) {
-            double currentVerticalVelocity = CombatGravityFrame.velocity(entity).y;
-            double verticalVelocity = Math.max(CLIMBING_MAX_DOWNWARD_SPEED,
-                Math.min(0.0D, currentVerticalVelocity));
-            velocity = new Vec3(velocity.x, verticalVelocity, velocity.z);
+            // Neutral traversal input holds altitude instead of allowing gravity
+            // to accumulate a slow downward drift between anchor updates.
+            velocity = new Vec3(velocity.x, 0.0D, velocity.z);
         }
         MovementHelper.setVelocity(entity, velocity);
     }
@@ -868,7 +866,7 @@ public final class BiokinesesArmController {
     private static AnchorTarget findAnchor(LivingEntity entity, IBiokinesesArmData data, int arm,
                                            Set<BlockPos> occupiedBlocks, Vec3 preferredForward,
                                            double minimumForwardProjection, boolean allowOccupied) {
-        Vec3 localForward = CombatGravityFrame.look(entity).normalize();
+        Vec3 localForward = horizontalFacing(entity);
         if (localForward.lengthSqr() < 1.0E-6D) {
             localForward = new Vec3(0.0D, 0.0D, 1.0D);
         }
@@ -987,22 +985,19 @@ public final class BiokinesesArmController {
     }
 
     private static Vec3 defaultTarget(LivingEntity entity, int arm) {
-        Vec3 forward = CombatGravityFrame.look(entity).normalize();
-        if (forward.lengthSqr() < 1.0E-6D) {
-            forward = new Vec3(0.0D, 0.0D, 1.0D);
-        }
+        Vec3 forward = horizontalFacing(entity);
         Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
-        forward = new Vec3(forward.x, 0.0D, forward.z);
-        if (forward.lengthSqr() < 1.0E-6D) {
-            forward = new Vec3(0.0D, 0.0D, 1.0D);
-        } else {
-            forward = forward.normalize();
-        }
         Vec3 left = forward.cross(up).normalize();
         Vec3 localOffset = left.scale(BiokinesesTentacleConfig.targetLeft(arm))
             .add(up.scale(BiokinesesTentacleConfig.targetUp(arm)))
             .add(forward.scale(BiokinesesTentacleConfig.targetForward(arm)));
         return entity.position().add(CombatGravityFrame.world(localOffset));
+    }
+
+    private static Vec3 horizontalFacing(LivingEntity entity) {
+        Vec3 forward = Vec3.directionFromRotation(0.0F, CombatGravityFrame.yaw(entity));
+        return forward.lengthSqr() < 1.0E-6D
+            ? new Vec3(0.0D, 0.0D, 1.0D) : forward.normalize();
     }
 
     private static void releaseHeldEntities(LivingEntity owner, IBiokinesesArmData data) {

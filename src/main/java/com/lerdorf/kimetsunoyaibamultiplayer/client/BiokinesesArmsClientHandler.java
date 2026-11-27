@@ -1,6 +1,7 @@
 package com.lerdorf.kimetsunoyaibamultiplayer.client;
 
 import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
+import com.lerdorf.kimetsunoyaibamultiplayer.blooddemonarts.BiokinesesArmController;
 import com.lerdorf.kimetsunoyaibamultiplayer.network.packets.BiokinesesArmsSyncPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -23,7 +24,8 @@ public final class BiokinesesArmsClientHandler {
                 .ifPresent(data -> {
                     packet.applyTo(data);
                     if (living instanceof AbstractClientPlayer player) {
-                        BiokinesesFloatAnimation.update(player, data.isClimbing());
+                        BiokinesesFloatAnimation.update(player,
+                            BiokinesesArmController.isTraversalActive(player));
                     }
                 });
         }
