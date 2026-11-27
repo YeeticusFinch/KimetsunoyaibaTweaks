@@ -33,9 +33,12 @@ import java.util.UUID;
  */
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID, value = Dist.CLIENT)
 public final class BiokinesesFloatAnimation implements IAnimation {
-    private static final int FLOAT_BASE_LAYER_PRIORITY = 1900;
-    private static final int PROCEDURAL_LAYER_PRIORITY = 2000;
+    // Keep float motion above locomotion layers but below attacks and abilities.
+    private static final int FLOAT_BASE_LAYER_PRIORITY = 490;
+    private static final int PROCEDURAL_LAYER_PRIORITY = 500;
     private static final float DEG_TO_RAD = Mth.DEG_TO_RAD;
+    private static final float ROTATION_SMOOTHING = 0.10F;
+    private static final float POSE_SMOOTHING = 0.16F;
     private static final Map<UUID, ActiveLayer> ACTIVE_LAYERS = new HashMap<>();
 
     private final AbstractClientPlayer player;
@@ -137,7 +140,7 @@ public final class BiokinesesFloatAnimation implements IAnimation {
         age += 1.0F;
 
         float targetStrength = climbing ? 1.0F : 0.0F;
-        poseStrength = Mth.lerp(0.22F, poseStrength, targetStrength);
+        poseStrength = Mth.lerp(POSE_SMOOTHING, poseStrength, targetStrength);
     }
 
     @Override
@@ -198,25 +201,38 @@ public final class BiokinesesFloatAnimation implements IAnimation {
         Vec3 velocity = previousVelocity.lerp(currentVelocity, Mth.clamp(partialTick, 0.0F, 1.0F));
         float yaw = Mth.rotLerp(partialTick, player.yRotO, player.getYRot()) * DEG_TO_RAD;
 
-        // Convert world velocity into the player's local forward/right axes.
-        float forward = (float) (-velocity.x * Math.sin(yaw) + velocity.z * Math.cos(yaw));
+        // Convert world velocity into the player's local forward/right axes. The
+        // Player Animator rotation convention is opposite to the movement pitch
+        // convention, so invert only the forward component. Strafe already has
+        // the correct sign for the model.
+        float forward = (float) (velocity.x * Math.sin(yaw) - velocity.z * Math.cos(yaw));
         float strafe = (float) (velocity.x * Math.cos(yaw) + velocity.z * Math.sin(yaw));
 
         // Only horizontal motion drives the whole-body tilt. Vertical speed and
         // yaw changes must not turn a fall or a look rotation into a spin.
-        bodyPitch = Mth.clamp(-forward * 45.0F, -18.0F, 18.0F);
-        bodyRoll = Mth.clamp(-strafe * 45.0F, -12.0F, 12.0F);
-        headPitch = -bodyPitch;
-        headRoll = -bodyRoll;
+        float targetBodyPitch = Mth.clamp(-forward * 24.0F, -8.0F, 8.0F);
+        float targetBodyRoll = Mth.clamp(-strafe * 24.0F, -6.0F, 6.0F);
+        float targetArmPitch = Mth.clamp(forward * 78.0F, -30.0F, 30.0F);
+        float targetLegPitch = Mth.clamp(-forward * 52.0F, -21.0F, 21.0F);
+        float sway = Mth.sin((age + partialTick) * 0.15F) * 2.0F;
+        float targetRightArmRoll = 8.0F + sway + strafe * 12.0F;
+        float targetLeftArmRoll = -8.0F - sway + strafe * 12.0F;
 
-        armPitch = Mth.clamp(forward * 60.0F, -25.0F, 25.0F);
-        legPitch = Mth.clamp(-forward * 35.0F, -16.0F, 16.0F);
-        float sway = Mth.sin((age + partialTick) * 0.15F) * 3.0F;
-        rightArmRoll = 8.0F + sway + strafe * 10.0F;
-        leftArmRoll = -8.0F - sway + strafe * 10.0F;
-        rightLegRoll = 3.0F;
-        leftLegRoll = -3.0F;
-        torsoRoll = 0.0F;
+        bodyPitch = smooth(bodyPitch, targetBodyPitch);
+        bodyRoll = smooth(bodyRoll, targetBodyRoll);
+        headPitch = smooth(headPitch, -targetBodyPitch);
+        headRoll = smooth(headRoll, -targetBodyRoll);
+        armPitch = smooth(armPitch, targetArmPitch);
+        legPitch = smooth(legPitch, targetLegPitch);
+        rightArmRoll = smooth(rightArmRoll, targetRightArmRoll);
+        leftArmRoll = smooth(leftArmRoll, targetLeftArmRoll);
+        rightLegRoll = smooth(rightLegRoll, 3.0F);
+        leftLegRoll = smooth(leftLegRoll, -3.0F);
+        torsoRoll = smooth(torsoRoll, 0.0F);
+    }
+
+    private static float smooth(float current, float target) {
+        return Mth.lerp(ROTATION_SMOOTHING, current, target);
     }
 
     private static KeyframeAnimation findFloatAnimation() {

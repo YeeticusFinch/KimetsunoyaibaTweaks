@@ -205,8 +205,8 @@ public final class BiokinesesTentacleEditorScreen extends Screen {
                 .rotateX((float) Math.toRadians(orbitPitch));
             InventoryScreen.renderEntityInInventory(graphics, centerX, baseY, playerScale, rotation,
                 new Quaternionf(), player);
-            BiokinesesArmRenderer.renderPreviewArms(graphics, centerX, baseY - playerScale / 3,
-                17.0F * previewZoom, orbitYaw, orbitPitch);
+            BiokinesesArmRenderer.renderPreviewArms(graphics, centerX, baseY,
+                playerScale * previewZoom, orbitYaw, orbitPitch);
         } else {
             graphics.drawCenteredString(font, Component.literal("Join a world to preview the rig."), centerX,
                 (top + bottom) / 2, 0xFFC8B9AC);

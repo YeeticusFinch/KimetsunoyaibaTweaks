@@ -25,7 +25,8 @@ public final class PlayerHeadFacingArmModifier extends AbstractModifier {
         String normalized = normalize(animationName);
         return "right_arm_forward".equals(normalized)
             || "right_arm_up".equals(normalized)
-            || "brambles".equals(normalized);
+            || "brambles".equals(normalized)
+            || "left_brambles".equals(normalized);
     }
 
     @Override
@@ -54,7 +55,7 @@ public final class PlayerHeadFacingArmModifier extends AbstractModifier {
         if (!(getAnim() instanceof KeyframeAnimationPlayer animationPlayer)) {
             return false;
         }
-        if ("right_arm_forward".equals(animationName) || "right_arm_up".equals(animationName)) {
+        if (isRightArmPose()) {
             return true;
         }
 
@@ -67,9 +68,11 @@ public final class PlayerHeadFacingArmModifier extends AbstractModifier {
     }
 
     private boolean isTargetBone(String modelName) {
-        return "right_arm_forward".equals(animationName) || "right_arm_up".equals(animationName)
-            ? "right_arm".equals(modelName)
-            : "left_arm".equals(modelName);
+        return isRightArmPose() ? "right_arm".equals(modelName) : "left_arm".equals(modelName);
+    }
+
+    private boolean isRightArmPose() {
+        return "right_arm_forward".equals(animationName) || "right_arm_up".equals(animationName);
     }
 
     private static String normalize(String animationName) {

@@ -174,7 +174,9 @@ public final class BiokinesesArmRenderer {
         VertexConsumer boneBuffer = buffers.getBuffer(BONE_RENDER_TYPE);
         Matrix4f matrix = poseStack.last().pose();
         Matrix3f normal = poseStack.last().normal();
-        TorsoTransform torso = new TorsoTransform(Vec3.ZERO, new Vec3(0.0D, 0.0D, 1.0D),
+        double torsoHeight = MINECRAFT.player == null ? 1.0D : MINECRAFT.player.getBbHeight() * 0.58D;
+        TorsoTransform torso = new TorsoTransform(new Vec3(0.0D, torsoHeight, 0.0D),
+            new Vec3(0.0D, 0.0D, 1.0D),
             new Vec3(0.0D, 1.0D, 0.0D), new Vec3(1.0D, 0.0D, 0.0D));
 
         for (int arm = 0; arm < IBiokinesesArmData.ARM_COUNT; arm++) {
