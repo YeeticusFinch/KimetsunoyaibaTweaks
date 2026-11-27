@@ -223,7 +223,10 @@ public class FleshVineEntity extends Entity {
     public void tick() {
         super.tick();
         if (getFadeTicks() > 0) {
-            if (getRemovalMode() == REMOVAL_RETRACT && !level().isClientSide()) {
+            if (getRemovalMode() == REMOVAL_RETRACT) {
+                if (retractionPath == null) {
+                    retractionPath = captureRetractionPath();
+                }
                 tickRetraction();
             }
             if (getRemovalMode() != REMOVAL_RETRACT
@@ -651,7 +654,9 @@ public class FleshVineEntity extends Entity {
     }
 
     private LivingEntity getOwnerIfPresent() {
-        return level() instanceof ServerLevel serverLevel ? getOwner(serverLevel) : null;
+        UUID ownerId = entityData.get(DATA_OWNER).orElse(null);
+        return ownerId == null || !(level().getEntity(ownerId) instanceof LivingEntity owner)
+            ? null : owner;
     }
 
     private LivingEntity getOwner(ServerLevel level) {

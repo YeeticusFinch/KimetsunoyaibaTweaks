@@ -3,6 +3,7 @@
 	"animations": {
 		"float": {
 			"loop": true,
+			"animation_length": 1,
 			"bones": {
 				"body": {
 					"rotation": [0, 0, 0]

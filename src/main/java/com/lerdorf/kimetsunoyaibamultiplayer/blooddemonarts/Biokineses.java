@@ -708,10 +708,11 @@ public final class Biokineses {
                 double angle = -rotationSign * BLADES_WHIP_START_ANGLE;
                 Vec3 direction = horizontalDirection(forward, up, angle);
                 Vec3 tangent = horizontalDirection(forward, up, angle + rotationSign * Math.PI * 0.5D);
-                BoneWhipEntity whip = createBoneWhip(serverLevel, entity, start,
-                    start.add(direction.scale(30.0D)),
-                    buildWhipPath(start, start.add(direction.scale(30.0D)), tangent.scale(BLADES_WHIP_ARC), 0.25D,
-                        entity.getRandom().nextInt()), BLADES_CLEANUP_TICK + 2);
+                    BoneWhipEntity whip = createBoneWhip(serverLevel, entity, start,
+                        start.add(direction.scale(30.0D)),
+                        buildWhipPath(start, start.add(direction.scale(30.0D)), tangent.scale(BLADES_WHIP_ARC), 0.25D,
+                            entity.getRandom().nextInt()),
+                        BLADES_CLEANUP_TICK + FleshVineEntity.FADE_DURATION + 2);
                 if (whip != null) {
                     whips.add(whip);
                 }

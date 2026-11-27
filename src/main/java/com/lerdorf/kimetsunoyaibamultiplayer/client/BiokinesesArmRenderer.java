@@ -164,7 +164,11 @@ public final class BiokinesesArmRenderer {
 
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
-        MultiBufferSource.BufferSource buffers = MINECRAFT.renderBuffers().bufferSource();
+        // Entity render types use model/world coordinates, unlike GuiGraphics fills and text.
+        // Match InventoryScreen's translated preview space instead of submitting pixel positions.
+        poseStack.translate(centerX, baseY, 50.0D);
+        poseStack.scale(scale, -scale, scale);
+        MultiBufferSource.BufferSource buffers = graphics.bufferSource();
         VertexConsumer armBuffer = buffers.getBuffer(ARM_RENDER_TYPE);
         VertexConsumer boneBuffer = buffers.getBuffer(BONE_RENDER_TYPE);
         Matrix4f matrix = poseStack.last().pose();
@@ -182,12 +186,12 @@ public final class BiokinesesArmRenderer {
             double maxReach = Math.max(BiokinesesArmController.TENTACLE_REACH,
                 source.distanceTo(target) + 0.8D);
             List<Vec3> path = createIkPath(source, target, torso, arm, terminalDirection, maxReach);
-            List<Vec3> screenPath = path.stream()
-                .map(point -> previewPoint(point, centerX, baseY, scale, orbitYaw, orbitPitch))
+            List<Vec3> previewPath = path.stream()
+                .map(point -> previewPoint(point, orbitYaw, orbitPitch))
                 .toList();
-            renderPreviewArmPath(screenPath, BiokinesesTentacleConfig.spikeLength, matrix, normal,
+            renderPreviewArmPath(previewPath, BiokinesesTentacleConfig.spikeLength, matrix, normal,
                 armBuffer, boneBuffer, arm);
-            renderPreviewSpike(screenPath.get(screenPath.size() - 2), screenPath.get(screenPath.size() - 1),
+            renderPreviewSpike(previewPath.get(previewPath.size() - 2), previewPath.get(previewPath.size() - 1),
                 matrix, normal, boneBuffer, BiokinesesTentacleConfig.spikeLength,
                 BiokinesesTentacleConfig.spikeWidth, BiokinesesTentacleConfig.spikeDepth);
         }
@@ -197,11 +201,10 @@ public final class BiokinesesArmRenderer {
         poseStack.popPose();
     }
 
-    private static Vec3 previewPoint(Vec3 point, int centerX, int baseY, float scale,
-                                     float orbitYaw, float orbitPitch) {
+    private static Vec3 previewPoint(Vec3 point, float orbitYaw, float orbitPitch) {
         Vec3 rotated = rotateAround(point, new Vec3(0.0D, 1.0D, 0.0D), Math.toRadians(orbitYaw));
         rotated = rotateAround(rotated, new Vec3(1.0D, 0.0D, 0.0D), Math.toRadians(orbitPitch));
-        return new Vec3(centerX + rotated.x * scale, baseY - rotated.y * scale, rotated.z * 0.01D);
+        return rotated;
     }
 
     private static void renderPreviewArmPath(List<Vec3> path, double tailDistance, Matrix4f matrix,
