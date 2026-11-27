@@ -33,15 +33,16 @@ public final class ArachnidEyesClientHandler {
             && minecraft.level != null
             && (ArachnidEyesItem.isEquipped(minecraft.player)
                 || ArachnidMandiblesAndEyesItem.isEquipped(minecraft.player));
+        boolean firstPerson = minecraft.options.getCameraType().isFirstPerson();
 
-        if (active && !shaderLoaded) {
+        if (active && firstPerson && !shaderLoaded) {
             try {
                 minecraft.gameRenderer.loadEffect(SPIDER_SHADER);
                 shaderLoaded = true;
             } catch (Exception exception) {
                 System.err.println("Failed to load vanilla spider vision shader: " + exception.getMessage());
             }
-        } else if (!active && shaderLoaded) {
+        } else if ((!active || !firstPerson) && shaderLoaded) {
             minecraft.gameRenderer.shutdownEffect();
             shaderLoaded = false;
         }

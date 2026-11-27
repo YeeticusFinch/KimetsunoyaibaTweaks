@@ -4,11 +4,15 @@ import com.lerdorf.kimetsunoyaibamultiplayer.KimetsunoyaibaMultiplayer;
 import dev.kosmx.playerAnim.api.TransformType;
 import dev.kosmx.playerAnim.api.layered.AnimationStack;
 import dev.kosmx.playerAnim.api.layered.IAnimation;
+import dev.kosmx.playerAnim.api.layered.KeyframeAnimationPlayer;
 import dev.kosmx.playerAnim.api.layered.ModifierLayer;
+import dev.kosmx.playerAnim.core.data.KeyframeAnimation;
 import dev.kosmx.playerAnim.core.util.Vec3f;
 import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
+import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -29,7 +33,8 @@ import java.util.UUID;
  */
 @Mod.EventBusSubscriber(modid = KimetsunoyaibaMultiplayer.MODID, value = Dist.CLIENT)
 public final class BiokinesesFloatAnimation implements IAnimation {
-    private static final int LAYER_PRIORITY = 2000;
+    private static final int FLOAT_BASE_LAYER_PRIORITY = 1900;
+    private static final int PROCEDURAL_LAYER_PRIORITY = 2000;
     private static final float DEG_TO_RAD = Mth.DEG_TO_RAD;
     private static final Map<UUID, ActiveLayer> ACTIVE_LAYERS = new HashMap<>();
 
@@ -76,14 +81,23 @@ public final class BiokinesesFloatAnimation implements IAnimation {
             }
 
             BiokinesesFloatAnimation animation = new BiokinesesFloatAnimation(player);
-            ModifierLayer<IAnimation> layer = new ModifierLayer<>();
-            layer.setAnimation(animation);
-            stack.addAnimLayer(LAYER_PRIORITY, layer);
-            ACTIVE_LAYERS.put(player.getUUID(), new ActiveLayer(animation));
+            ModifierLayer<IAnimation> proceduralLayer = new ModifierLayer<>();
+            proceduralLayer.setAnimation(animation);
+            stack.addAnimLayer(PROCEDURAL_LAYER_PRIORITY, proceduralLayer);
+
+            KeyframeAnimation floatAnimation = findFloatAnimation();
+            ModifierLayer<IAnimation> baseLayer = null;
+            if (floatAnimation != null) {
+                baseLayer = new ModifierLayer<>();
+                baseLayer.setAnimation(new KeyframeAnimationPlayer(floatAnimation));
+                stack.addAnimLayer(FLOAT_BASE_LAYER_PRIORITY, baseLayer);
+            }
+
+            ACTIVE_LAYERS.put(player.getUUID(), new ActiveLayer(animation, baseLayer, floatAnimation));
             return;
         }
 
-        active.animation.climbing = climbing;
+        active.setClimbing(climbing);
     }
 
     @SubscribeEvent
@@ -111,7 +125,7 @@ public final class BiokinesesFloatAnimation implements IAnimation {
         // A player can leave the tracking range without sending a final state packet.
         for (Map.Entry<UUID, ActiveLayer> entry : ACTIVE_LAYERS.entrySet()) {
             if (!visiblePlayers.contains(entry.getKey())) {
-                entry.getValue().animation.climbing = false;
+                entry.getValue().setClimbing(false);
             }
         }
     }
@@ -187,24 +201,58 @@ public final class BiokinesesFloatAnimation implements IAnimation {
         // Convert world velocity into the player's local forward/right axes.
         float forward = (float) (-velocity.x * Math.sin(yaw) + velocity.z * Math.cos(yaw));
         float strafe = (float) (velocity.x * Math.cos(yaw) + velocity.z * Math.sin(yaw));
-        float vertical = (float) velocity.y;
-        float turn = Mth.wrapDegrees(player.getYRot() - player.yRotO);
 
-        bodyPitch = Mth.clamp(-forward * 180.0F - vertical * 45.0F, -65.0F, 65.0F);
-        bodyRoll = Mth.clamp(-strafe * 100.0F - turn * 1.5F, -25.0F, 25.0F);
+        // Only horizontal motion drives the whole-body tilt. Vertical speed and
+        // yaw changes must not turn a fall or a look rotation into a spin.
+        bodyPitch = Mth.clamp(-forward * 45.0F, -18.0F, 18.0F);
+        bodyRoll = Mth.clamp(-strafe * 45.0F, -12.0F, 12.0F);
         headPitch = -bodyPitch;
         headRoll = -bodyRoll;
 
-        armPitch = Mth.clamp(forward * 120.0F + vertical * 45.0F, -35.0F, 35.0F);
-        legPitch = Mth.clamp(-forward * 65.0F - vertical * 25.0F, -22.0F, 22.0F);
+        armPitch = Mth.clamp(forward * 60.0F, -25.0F, 25.0F);
+        legPitch = Mth.clamp(-forward * 35.0F, -16.0F, 16.0F);
         float sway = Mth.sin((age + partialTick) * 0.15F) * 3.0F;
-        rightArmRoll = 8.0F + sway + strafe * 18.0F;
-        leftArmRoll = -8.0F - sway + strafe * 18.0F;
+        rightArmRoll = 8.0F + sway + strafe * 10.0F;
+        leftArmRoll = -8.0F - sway + strafe * 10.0F;
         rightLegRoll = 3.0F;
         leftLegRoll = -3.0F;
-        torsoRoll = Mth.clamp(-turn * 0.3F, -8.0F, 8.0F);
+        torsoRoll = 0.0F;
     }
 
-    private record ActiveLayer(BiokinesesFloatAnimation animation) {
+    private static KeyframeAnimation findFloatAnimation() {
+        try {
+            return PlayerAnimationRegistry.getAnimation(
+                ResourceLocation.fromNamespaceAndPath(KimetsunoyaibaMultiplayer.MODID, "float"));
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static final class ActiveLayer {
+        private final BiokinesesFloatAnimation animation;
+        private final ModifierLayer<IAnimation> baseLayer;
+        private final KeyframeAnimation baseAnimation;
+
+        private ActiveLayer(BiokinesesFloatAnimation animation,
+                            ModifierLayer<IAnimation> baseLayer,
+                            KeyframeAnimation baseAnimation) {
+            this.animation = animation;
+            this.baseLayer = baseLayer;
+            this.baseAnimation = baseAnimation;
+        }
+
+        private void setClimbing(boolean climbing) {
+            animation.climbing = climbing;
+            if (baseLayer == null || baseAnimation == null) {
+                return;
+            }
+            if (climbing) {
+                if (baseLayer.getAnimation() == null || !baseLayer.getAnimation().isActive()) {
+                    baseLayer.setAnimation(new KeyframeAnimationPlayer(baseAnimation));
+                }
+            } else {
+                baseLayer.setAnimation(null);
+            }
+        }
     }
 }

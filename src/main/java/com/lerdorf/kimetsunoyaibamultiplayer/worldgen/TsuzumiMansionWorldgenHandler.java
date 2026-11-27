@@ -129,7 +129,7 @@ public final class TsuzumiMansionWorldgenHandler {
                 prepareBlend(level, box, BLEND_RADIUS);
                 growTrees(level, box);
             } else {
-                flattenHeadquartersTerrain(level, box);
+                blendHeadquartersTerrain(level, box);
                 prepareBlend(level, box, HEADQUARTERS_BLEND_RADIUS);
             }
             data.sites.add(key);
@@ -192,7 +192,7 @@ public final class TsuzumiMansionWorldgenHandler {
         }
     }
 
-    private static void flattenHeadquartersTerrain(ServerLevel level, BoundingBox box) {
+    private static void blendHeadquartersTerrain(ServerLevel level, BoundingBox box) {
         int groundY = box.minY() - 1;
         int minX = box.minX() - HEADQUARTERS_BLEND_RADIUS;
         int maxX = box.maxX() + HEADQUARTERS_BLEND_RADIUS;
@@ -206,17 +206,23 @@ public final class TsuzumiMansionWorldgenHandler {
                 }
 
                 int surfaceY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) - 1;
-                if (surfaceY > groundY) {
-                    for (int y = groundY + 1; y <= surfaceY; y++) {
+                int distance = horizontalDistanceToBox(box, x, z);
+                float influence = (HEADQUARTERS_BLEND_RADIUS - distance)
+                    / (float) HEADQUARTERS_BLEND_RADIUS;
+                int targetY = Math.round(surfaceY + (groundY - surfaceY) * influence);
+                targetY = Math.max(level.getMinBuildHeight() + 1, targetY);
+
+                if (surfaceY > targetY) {
+                    for (int y = targetY + 1; y <= surfaceY; y++) {
                         level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 3);
                     }
-                } else if (surfaceY < groundY) {
-                    for (int y = surfaceY + 1; y <= groundY; y++) {
+                } else if (surfaceY < targetY) {
+                    for (int y = surfaceY + 1; y <= targetY; y++) {
                         level.setBlock(new BlockPos(x, y, z), Blocks.DIRT.defaultBlockState(), 3);
                     }
                 }
 
-                level.setBlock(new BlockPos(x, groundY, z), Blocks.GRASS_BLOCK.defaultBlockState(), 3);
+                level.setBlock(new BlockPos(x, targetY, z), Blocks.GRASS_BLOCK.defaultBlockState(), 3);
             }
         }
     }

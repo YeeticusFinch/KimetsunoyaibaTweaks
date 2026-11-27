@@ -4595,7 +4595,7 @@
 			"bones": {
 				"right_arm": {
 					"rotation": {
-						"vector": [-162.44201, -21.68996, -20.71246]
+						"vector": ["-162.44201 + query.head_x_rotation", "-21.68996 + query.head_y_rotation", -20.71246]
 					},
 					"position": {
 						"vector": [0, 2, 0]
